@@ -1,0 +1,300 @@
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useWishlist } from "../../context/WishlistContext";
+import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
+import { CloudinaryImage } from "./CloudinaryImage";
+
+export function ProductCard({
+  id,
+  _id,
+  title,
+  teluguTitle,
+  nameTE,
+  teluguName,
+  price,
+  oldPrice,
+  rating = 4.8,
+  imageSrc,
+  hoverImage,
+  category,
+  badges = [],
+  onQuickView,
+  hideDetails = false,
+  loading = false,
+  sizes = "(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 25vw",
+}) {
+  const navigate = useNavigate();
+  const { toggleItem, isWishlisted } = useWishlist();
+  const { addItem } = useCart();
+  const { runProtectedAction } = useAuth();
+  const [added, setAdded] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-4 animate-pulse">
+        <div className="aspect-[4/5] w-full bg-surface-container-high rounded-2xl md:rounded-[32px] overflow-hidden" />
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <div className="h-3 w-1/4 bg-surface-container rounded-full" />
+            <div className="h-3 w-1/6 bg-surface-container rounded-full" />
+          </div>
+          <div className="h-6 w-3/4 bg-surface-container rounded-lg" />
+          <div className="flex gap-2">
+            <div className="h-8 w-1/3 bg-surface-container rounded-lg" />
+            <div className="h-8 w-1/4 bg-surface-container rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const productId = id || _id;
+  const wishlisted = isWishlisted(productId);
+
+  const parseNumericPrice = (val) => {
+    if (typeof val === "number") return val;
+    if (!val) return 0;
+    const clean = String(val).replace(/[₹\s,]/g, "").replace(/[Rr][Ss].?/g, "");
+    const num = parseFloat(clean);
+    return isNaN(num) ? 0 : num;
+  };
+
+  const formatPrice = (val) => {
+    if (val === undefined || val === null) return "0";
+    if (typeof val === "number") {
+      return val.toLocaleString("en-IN");
+    }
+    const str = String(val).trim();
+    const cleanStr = str.replace(/[₹\s,]/g, "").replace(/[Rr][Ss].?/g, "");
+    const num = parseFloat(cleanStr);
+    return isNaN(num) ? str : num.toLocaleString("en-IN");
+  };
+
+  const numericPrice = parseNumericPrice(price);
+  const numericOldPrice = parseNumericPrice(oldPrice);
+
+  const discount = numericOldPrice > 0
+    ? Math.round(((numericOldPrice - numericPrice) / numericOldPrice) * 100)
+    : null;
+
+  const handleCardClick = (e) => {
+    // If the user clicked a button or any interactive element inside a button, don't trigger the card link
+    if (e.target.closest("button")) return;
+    navigate(`/product/${productId}`);
+  };
+
+  const handleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    runProtectedAction(() => {
+      toggleItem({ id: productId, title, price, imageSrc });
+    });
+  };
+
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    runProtectedAction(() => {
+      addItem({ id: productId, title, price, imageSrc, quantity: 1, variant: "Default" });
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    });
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      navigate(`/product/${productId}`);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="link"
+      aria-label={`View details of ${title}`}
+      className="group relative flex flex-col transition-all duration-700 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl md:rounded-[32px]"
+    >
+      {/* 1. VISUAL CANVAS */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5">
+        <Link to={`/product/${productId}`} className="block h-full">
+          <CloudinaryImage
+            src={imageSrc}
+            alt={title}
+            className="transition-all duration-[1.5s] cubic-bezier(0.2, 1, 0.2, 1) group-hover:scale-110"
+            containerClassName="w-full h-full"
+            loading="lazy"
+            width={400}
+            height={500}
+            sizes={sizes}
+          />
+        </Link>
+
+        {/* Floating Utility Actions */}
+        <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex flex-col gap-2">
+          <button
+            onClick={handleWishlist}
+            className="w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-95"
+            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <motion.span
+              animate={{
+                scale: wishlisted ? [1, 1.4, 1] : 1,
+                color: wishlisted ? "#ff2d55" : "#1a1817",
+                fontVariationSettings: wishlisted ? "'FILL' 1" : "'FILL' 0",
+              }}
+              whileTap={{ scale: 0.8 }}
+              transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+              className="material-symbols-outlined text-[16px] md:text-[18px]"
+            >
+              favorite
+            </motion.span>
+          </button>
+        </div>
+
+        {/* Badges */}
+        <div className="absolute top-2 left-2 md:top-4 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
+          {discount && (
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[8px] md:text-[10px] uppercase font-bold shadow-lg border-2 border-white z-[5] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
+              <span className="leading-none">{discount}%</span>
+              <span className="text-[6px] md:text-[7px] tracking-tighter opacity-80 uppercase mt-0.5">
+                Off
+              </span>
+            </div>
+          )}
+          {badges.slice(0, 2).map((badge, idx) => {
+            const words = String(badge).trim().split(/\s+/);
+            const displayContent = words.length > 1 ? (
+              <>
+                <span className="leading-none text-[7px] md:text-[9px]">{words[0]}</span>
+                <span className="text-[5px] md:text-[6px] tracking-tighter opacity-80 uppercase mt-0.5">
+                  {words.slice(1).join(" ")}
+                </span>
+              </>
+            ) : (
+              <span className="leading-none text-[7px] md:text-[9px] truncate max-w-full px-0.5">
+                {badge}
+              </span>
+            );
+
+            return (
+              <div
+                key={badge}
+                style={{ zIndex: 4 - idx }}
+                className="w-8 h-8 md:w-10 md:h-10 bg-white/95 backdrop-blur-md text-black/80 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white hover:z-30 hover:scale-110 transition-all duration-300 select-none"
+              >
+                {displayContent}
+              </div>
+            );
+          })}
+          {badges.length > 2 && (
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-md text-black/60 rounded-full flex items-center justify-center font-label text-[9px] md:text-[11px] font-bold shadow-md border-2 border-white select-none" style={{ zIndex: 1 }}>
+              +{badges.length - 2}
+            </div>
+          )}
+        </div>
+
+        {/* Immersive Hover Actions (Desktop Only) */}
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 xl:group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6 pointer-events-none xl:group-hover:pointer-events-auto">
+          <div className="space-y-2 transform translate-y-4 xl:group-hover:translate-y-0 transition-transform duration-500">
+            <button
+              onClick={handleAddToCart}
+              className={`w-full py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                added
+                  ? "bg-[#e0d6b8] text-[#1a1c1a]"
+                  : "bg-white text-black hover:bg-[#e0d6b8] hover:text-[#1a1c1a]"
+              }`}
+            >
+              {added ? (
+                <>
+                  <span className="material-symbols-outlined text-[14px]">
+                    check
+                  </span>
+                  Added
+                </>
+              ) : (
+                "Add to Bag"
+              )}
+            </button>
+            <button
+              onClick={onQuickView}
+              className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
+            >
+              Quick View
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile & Tablet Quick Add Button */}
+        <div className="xl:hidden absolute bottom-2 right-2 z-20">
+          <button
+            onClick={handleAddToCart}
+            className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer ${
+              added
+                ? "bg-[#e0d6b8] text-[#1a1c1a]"
+                : "bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a]"
+            }`}
+            aria-label="Add to bag"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              {added ? "check" : "add"}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2. REFINED INFO SECTION */}
+      <div
+        className={`py-3 md:py-4 flex flex-col flex-1 transition-opacity duration-500 ${hideDetails ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+      >
+        <div className="flex items-center gap-1.5 mb-1.5 md:mb-2">
+          <span className="text-black/60 font-label text-[8px] md:text-[9px] uppercase tracking-[0.15em] md:tracking-[0.2em] font-bold truncate flex-1 min-w-0">
+            {category}
+          </span>
+
+          <div className="w-0.5 h-0.5 rounded-full bg-black/10" />
+          <div className="flex items-center gap-0.5">
+            <span
+              className="material-symbols-outlined text-[9px] md:text-[10px] text-primary"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              star
+            </span>
+            <span className="font-label text-[9px] md:text-[10px] text-black/60 font-bold">
+              {rating}
+            </span>
+          </div>
+        </div>
+
+        <Link to={`/product/${productId}`} className="mb-2 md:mb-3 group/link">
+          {(teluguTitle || nameTE || teluguName) && (
+            <span className="block font-label text-[9px] md:text-[11px] text-black/60 mb-0.5 tracking-wider truncate leading-[1.8]">
+              {teluguTitle || nameTE || teluguName}
+            </span>
+          )}
+          <h3 className="font-display text-[14px] md:text-[19px] text-black group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-1">
+            {title}
+          </h3>
+        </Link>
+
+        <div className="mt-auto flex items-baseline gap-2">
+          <span className="font-display text-[16px] md:text-[22px] text-black leading-none">
+            ₹{formatPrice(price)}
+          </span>
+          {oldPrice && (
+            <span className="font-label text-[9px] md:text-[10px] text-black/60 line-through">
+              ₹{formatPrice(oldPrice)}
+            </span>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
