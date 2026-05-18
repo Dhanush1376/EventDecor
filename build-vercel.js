@@ -4,10 +4,18 @@ const path = require('path');
 
 try {
   console.log('📦 Installing frontend dependencies...');
-  execSync('npm install', { cwd: path.join(__dirname, 'frontend'), stdio: 'inherit' });
+  execSync('npm install', { 
+    cwd: path.join(__dirname, 'frontend'), 
+    stdio: 'inherit',
+    env: { ...process.env, CI: 'false' }
+  });
 
   console.log('🚀 Building frontend static assets...');
-  execSync('npm run build', { cwd: path.join(__dirname, 'frontend'), stdio: 'inherit' });
+  execSync('npm run build', { 
+    cwd: path.join(__dirname, 'frontend'), 
+    stdio: 'inherit',
+    env: { ...process.env, CI: 'false' }
+  });
 
   console.log('🧹 Preparing root deployment directory...');
   const distPath = path.join(__dirname, 'dist');
@@ -28,6 +36,8 @@ try {
 
   console.log('✨ Build completed successfully for Vercel deployment!');
 } catch (error) {
-  console.error('❌ Build failed:', error);
+  console.error('❌ Build failed with error:', error);
+  if (error.stdout) console.error('stdout:', error.stdout.toString());
+  if (error.stderr) console.error('stderr:', error.stderr.toString());
   process.exit(1);
 }
