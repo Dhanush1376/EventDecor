@@ -1,0 +1,44 @@
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import connectDB from '../config/db';
+import User from '../models/User';
+import { isSameEmail } from '../utils/emailHelper';
+
+dotenv.config();
+
+const createAdmin = async () => {
+  try {
+    await connectDB();
+
+    const email = (process.env.ADMIN_EMAIL || 'admin@siriartsandcrafts.com').trim().toLowerCase();
+    
+    // Fetch all users to perform a robust canonical email match (handles Gmail dot variation)
+    const users = await User.find({});
+    const existingUser = users.find(u => isSameEmail(u.email, email));
+
+    if (existingUser) {
+      console.log(`User ${existingUser.email} matches configured admin email. Updating role to admin...`);
+      existingUser.role = 'admin';
+      await existingUser.save();
+      console.log('✅ User updated to admin successfully!');
+    } else {
+      console.log(`Creating new admin user: ${email}...`);
+      await User.create({
+        name: 'Admin User',
+        email: email,
+        role: 'admin',
+        isVerified: true,
+      });
+      console.log('✅ Admin user created successfully!');
+      console.log(`📧 Email: ${email}`);
+    }
+
+    process.exit(0);
+  } catch (error) {
+    console.error(`❌ Operation failed: ${error}`);
+    process.exit(1);
+  }
+};
+
+createAdmin();
+
