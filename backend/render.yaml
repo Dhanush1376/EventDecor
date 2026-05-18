@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: siri-arts-backend
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        fromConfig: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: REFRESH_TOKEN_EXPIRES_DAYS
+        value: 30
+      - key: ADMIN_PASSWORD
+        fromConfig: true
+      - key: OTP_EXPIRY_MINUTES
+        value: 5
+      - key: RAZORPAY_KEY_ID
+        fromConfig: true
+      - key: RAZORPAY_KEY_SECRET
+        fromConfig: true
+      - key: CLOUDINARY_CLOUD_NAME
+        fromConfig: true
+      - key: CLOUDINARY_API_KEY
+        fromConfig: true
+      - key: CLOUDINARY_API_SECRET
+        fromConfig: true
+      - key: FRONTEND_URLS
+        fromConfig: true
+      - key: SENTRY_DSN
+        fromConfig: true
+      - key: SMTP_USER
+        fromConfig: true
+      - key: SMTP_PASS
+        fromConfig: true

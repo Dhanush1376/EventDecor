@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+dist
+logs
+.env
+.env.local
+.git
+.github
+README.md
+Dockerfile
+render.yaml
+docker-compose.yml
+npx
+tmp
+scratch
