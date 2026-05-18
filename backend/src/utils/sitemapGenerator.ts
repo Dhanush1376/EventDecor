@@ -154,7 +154,7 @@ function escapeXml(unsafe: string): string {
 }
 
 // Debounce timer reference
-let sitemapTimeout: NodeJS.Timeout | null = null;
+let sitemapTimeout: any = null;
 
 /**
  * Enterprise debounced sitemap updater.
@@ -162,10 +162,10 @@ let sitemapTimeout: NodeJS.Timeout | null = null;
  */
 export function triggerSitemapUpdate(): void {
   if (sitemapTimeout) {
-    clearTimeout(sitemapTimeout);
+    (globalThis as any).clearTimeout(sitemapTimeout);
   }
   
-  sitemapTimeout = setTimeout(async () => {
+  sitemapTimeout = (globalThis as any).setTimeout(async () => {
     try {
       await generateSitemap();
     } catch (err: any) {
