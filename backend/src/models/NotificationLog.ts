@@ -1,0 +1,57 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface INotificationLog extends Document {
+  userId?: mongoose.Types.ObjectId;
+  recipientEmail: string;
+  campaignId?: mongoose.Types.ObjectId;
+  type: 'marketing' | 'order' | 'account' | 'engagement' | 'system' | 'security';
+  action: string; // e.g. welcome_email, otp_verification, order_placed, abandoned_cart
+  status: 'pending' | 'delivered' | 'failed';
+  errorDetails?: string;
+  trackingToken: string;
+  openedAt?: Date;
+  clicks: Array<{
+    url: string;
+    clickedAt: Date;
+  }>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const NotificationLogSchema: Schema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
+    recipientEmail: { type: String, required: true, lowercase: true, trim: true },
+    campaignId: { type: Schema.Types.ObjectId, ref: 'EmailCampaign' },
+    type: { 
+      type: String, 
+      enum: ['marketing', 'order', 'account', 'engagement', 'system', 'security'], 
+      required: true 
+    },
+    action: { type: String, required: true },
+    status: { 
+      type: String, 
+      enum: ['pending', 'delivered', 'failed'], 
+      default: 'pending' 
+    },
+    errorDetails: { type: String },
+    trackingToken: { type: String, required: true, unique: true },
+    openedAt: { type: Date },
+    clicks: [
+      {
+        url: { type: String, required: true },
+        clickedAt: { type: Date, default: Date.now }
+      }
+    ]
+  },
+  { timestamps: true }
+);
+
+NotificationLogSchema.index({ recipientEmail: 1 });
+NotificationLogSchema.index({ campaignId: 1 }, { sparse: true });
+NotificationLogSchema.index({ type: 1 });
+NotificationLogSchema.index({ createdAt: -1 });
+
+const NotificationLog = mongoose.model<INotificationLog>('NotificationLog', NotificationLogSchema);
+
+export default NotificationLog;
