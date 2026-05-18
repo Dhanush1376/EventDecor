@@ -1,0 +1,1031 @@
+@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap");
+@import "tailwindcss";
+
+
+
+@theme {
+  /* Luxury Design Palette - Digital Studio */
+  --color-primary: #735c00;
+  --color-primary-container: #d4af37;
+  --color-primary-fixed: #ffe088;
+  --color-primary-fixed-dim: #e9c349;
+  --color-on-primary: #1a1c1a;
+
+  --color-secondary: #685c57;
+  --color-secondary-container: #f0dfd9;
+
+  --color-tertiary: #5c624c; /* Olive/Moss Green for Heritage vibe */
+  --color-error: #ba1a1a;
+
+  --color-on-primary-container: #1a1c1a;
+  --color-on-secondary-container: #211a18;
+
+  --color-surface: #faf9f6; /* Ivory */
+  --color-surface-bright: #ffffff;
+  --color-surface-dim: #dbdad7;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f4f3f1; /* Soft Beige */
+  --color-surface-container: #efeeeb;
+  --color-surface-container-high: #e9e8e5;
+  --color-surface-container-highest: #e3e2e0; /* Warm Beige */
+
+  --color-on-surface: #000000;
+  --color-on-surface-variant: #2d2b29; /* Refined dark grey for depth */
+
+  --color-outline: #7f7663;
+  --color-outline-variant: #d0c5af;
+
+  /* Additional Luxury Tones */
+  --color-gold-metallic: linear-gradient(
+    135deg,
+    #d4af37 0%,
+    #f1d592 50%,
+    #d4af37 100%
+  );
+  --color-champagne: #f7e7ce;
+
+  /* Fonts */
+  --font-display: "Playfair Display", serif;
+  --font-headline: "Playfair Display", serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Inter", sans-serif;
+  --font-signature: "Dancing Script", cursive;
+
+  /* Spacing & Breakpoints */
+  --spacing-margin-desktop: clamp(22px, 4.5vw, 72px);
+  --spacing-margin-mobile: 18px;
+  --spacing-gutter: 22px;
+  --spacing-max-width: 1440px;
+  --bottom-nav-height: 64px;
+  --breakpoint-xs: 360px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  body {
+    @apply bg-surface text-on-surface antialiased selection:bg-[#e0d6b8] selection:text-[#1a1c1a];
+    width: 100%;
+    min-width: 320px;
+    overflow-x: clip;
+    font-family: var(--font-body);
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    @apply font-medium;
+  }
+
+  /* Global Minimal Micro-Interaction for all Buttons */
+  button {
+    @apply transition-transform active:scale-[0.97] cursor-pointer;
+  }
+
+  /* Accessibility Focus Rings */
+  :focus {
+    outline: 2px solid transparent;
+  }
+
+  :focus-visible,
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-surface;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 40px;
+  }
+
+  /* Global Form Input Focus - Premium Dual-Transition Shadow */
+  input:focus,
+  textarea:focus,
+  select:focus,
+  [type="text"]:focus,
+  [type="email"]:focus,
+  [type="url"]:focus,
+  [type="password"]:focus,
+  [type="number"]:focus,
+  [type="date"]:focus,
+  [type="search"]:focus,
+  [type="tel"]:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(115, 92, 0, 0.08) !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+
+  /* Preserve Compound Input Borders */
+  input.border-none:focus,
+  input.border-transparent:focus,
+  input.bg-transparent:focus {
+    border-color: transparent !important;
+  }
+
+  /* Material Symbols Global Fix */
+  .material-symbols-outlined {
+    font-family: "Material Symbols Outlined" !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none !important;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+  }
+}
+
+@layer components {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .glass {
+    @apply bg-surface/80 backdrop-blur-xl border border-outline-variant/30 shadow-sm;
+  }
+
+  .app-container {
+    width: min(100% - 32px, var(--spacing-max-width));
+    margin-inline: auto;
+  }
+
+  @media (min-width: 768px) {
+    .app-container {
+      width: min(100% - 72px, var(--spacing-max-width));
+    }
+  }
+
+  .skip-link {
+    @apply fixed left-4 top-3 z-[9999] -translate-y-16 rounded-full bg-on-surface px-4 py-2 text-xs font-bold uppercase tracking-wider text-surface shadow-xl transition-transform;
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+
+  .ui-card {
+    @apply rounded-2xl border border-outline-variant/20 bg-surface-bright shadow-sm;
+  }
+
+  .admin-card {
+    @apply rounded-2xl border border-black/5 bg-white shadow-sm;
+  }
+
+  .responsive-table {
+    @apply w-full overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .responsive-table table {
+    min-width: 760px;
+  }
+
+  .form-field {
+    @apply w-full rounded-xl border border-outline-variant/40 bg-surface-bright px-4 py-3 text-sm text-on-surface transition-colors placeholder:text-on-surface-variant/40 focus:border-primary focus:ring-2 focus:ring-primary/10;
+  }
+
+  .section-title {
+    @apply font-display text-[26px] leading-tight text-on-surface md:text-[34px];
+  }
+
+  .section-kicker {
+    @apply font-label text-[10px] font-bold uppercase tracking-[0.24em] text-primary;
+  }
+
+  .card-hover {
+    @apply transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(115,92,0,0.08)];
+  }
+
+  .btn-primary {
+    @apply bg-on-surface-variant text-surface font-semibold px-8 py-4 rounded-full hover:bg-primary-container hover:text-on-primary-container transition-all duration-300 shadow-lg shadow-on-surface-variant/10 uppercase tracking-[0.3em] text-[12px];
+  }
+
+  .btn-outline {
+    @apply border border-outline-variant/50 hover:border-primary text-on-surface font-semibold px-8 py-4 rounded-full transition-all duration-300 bg-transparent uppercase tracking-[0.3em] text-[12px];
+  }
+
+  .badge-premium {
+    @apply px-3 py-1 rounded-full border border-outline-variant/30 bg-surface/90 backdrop-blur-md font-label-sm text-[12px] uppercase tracking-widest text-on-surface-variant;
+  }
+
+  .btn-minimal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background-color: white;
+    color: #2d2b29;
+    border: 1px solid rgba(208, 197, 175, 0.5);
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .btn-minimal:hover {
+    background-color: #2d2b29;
+    color: #faf9f6;
+    border-color: #2d2b29;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-minimal:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-surface;
+  }
+
+  .btn-minimal:active {
+    transform: scale(0.96);
+  }
+
+  .shadow-luxury {
+    box-shadow:
+      0 30px 60px -12px rgba(115, 92, 0, 0.08),
+      0 18px 36px -18px rgba(115, 92, 0, 0.1);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #7f7663;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #735c00;
+  }
+}
+
+@utility bg-marble {
+  background-image: url("/marble-texture.png");
+  background-repeat: repeat;
+}
+
+@utility text-gold {
+  @apply bg-clip-text text-transparent bg-gradient-to-tr from-primary-container via-[#f1d592] to-primary-container;
+}
+
+@utility animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@utility animate-slow-spin {
+  animation: slow-spin 120s linear infinite;
+}
+
+@keyframes slow-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@utility animate-slow-spin-reverse {
+  animation: slow-spin-reverse 150s linear infinite;
+}
+
+@keyframes slow-spin-reverse {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* Typography Utilities */
+@utility font-headline-xl {
+  font-size: clamp(36px, 8vw, 75px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+@utility font-headline-lg {
+  font-size: clamp(28px, 6vw, 50px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+@utility font-display-lg {
+  font-size: clamp(24px, 5vw, 43px);
+  line-height: 1.15;
+  font-family: var(--font-display);
+}
+@utility font-headline-md {
+  font-size: clamp(22px, 4vw, 36px);
+  line-height: 1.2;
+}
+
+@utility font-headline-sm {
+  font-size: clamp(16px, 3.6vw, 22px);
+  line-height: 1.4;
+}
+
+@utility font-label-md {
+  font-size: 13px;
+  line-height: 18px;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+@utility font-label-sm {
+  font-size: 11px;
+  line-height: 15px;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+}
+
+@utility font-body-lg {
+  font-size: clamp(14px, 2vw, 16px);
+  line-height: 1.8;
+}
+@utility font-body-md {
+  font-size: clamp(13px, 2vw, 14px);
+  line-height: 1.6;
+}
+
+@utility pb-safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pt-safe-area-inset-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility font-fill {
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24 !important;
+}
+
+@utility animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Modal & Drawer Scroll Lock */
+body.quickview-active,
+body.filters-open {
+  overflow: hidden !important;
+}
+
+/* Gallery Mode Immersion */
+body.gallery-mode-active .top-navbar {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.3s ease-in-out,
+    opacity 0.2s ease;
+}
+
+body.gallery-mode-active .bottom-nav {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.3s ease-in-out,
+    opacity 0.2s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ENTERPRISE ADMIN DESIGN SYSTEM
+   Premium minimalist SaaS dashboard tokens & utilities
+   ═══════════════════════════════════════════════════════════════ */
+
+.admin-section-root {
+  /* Font overrides */
+  --font-display: "Inter", sans-serif !important;
+  --font-headline: "Inter", sans-serif !important;
+  --font-label: "Inter", sans-serif !important;
+  --font-signature: "Inter", sans-serif !important;
+  font-family: "Inter", sans-serif !important;
+
+  /* ── Enterprise Color Palette ── */
+  --admin-bg: #F8F9FB;
+  --admin-surface: #FFFFFF;
+  --admin-surface-hover: #F9FAFB;
+  --admin-surface-muted: #F3F4F6;
+  --admin-border: #E5E7EB;
+  --admin-border-subtle: #F0F1F3;
+  --admin-text-primary: #111827;
+  --admin-text-secondary: #6B7280;
+  --admin-text-tertiary: #9CA3AF;
+  --admin-text-placeholder: #D1D5DB;
+  --admin-accent: #000000;
+  --admin-accent-hover: #111827;
+  --admin-accent-light: #F3F4F6;
+  --admin-accent-muted: rgba(0, 0, 0, 0.05);
+  --admin-success: #059669;
+  --admin-success-light: #ECFDF5;
+  --admin-warning: #D97706;
+  --admin-warning-light: #FFFBEB;
+  --admin-error: #DC2626;
+  --admin-error-light: #FEF2F2;
+  --admin-info: #000000;
+  --admin-info-light: #F3F4F6;
+
+  /* ── Typography Scale ── */
+  --admin-text-xxs: 10px;
+  --admin-text-xs: 11px;
+  --admin-text-sm: 12px;
+  --admin-text-base: 13px;
+  --admin-text-md: 14px;
+  --admin-text-lg: 15px;
+  --admin-text-xl: 18px;
+  --admin-text-2xl: 22px;
+  --admin-text-3xl: 28px;
+
+  /* ── Spacing ── */
+  --admin-space-xs: 4px;
+  --admin-space-sm: 8px;
+  --admin-space-md: 12px;
+  --admin-space-lg: 16px;
+  --admin-space-xl: 20px;
+  --admin-space-2xl: 24px;
+  --admin-space-3xl: 32px;
+  --admin-space-4xl: 40px;
+
+  /* ── Shadows ── */
+  --admin-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --admin-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --admin-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --admin-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --admin-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  --admin-shadow-overlay: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+
+  /* ── Radii ── */
+  --admin-radius-sm: 6px;
+  --admin-radius-md: 8px;
+  --admin-radius-lg: 12px;
+  --admin-radius-xl: 16px;
+  --admin-radius-full: 9999px;
+
+  /* ── Transitions ── */
+  --admin-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Admin Card ── */
+.admin-section-root .admin-card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-xs);
+}
+
+/* ── Admin Scrollbar ── */
+.admin-section-root .custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.admin-section-root .custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-section-root .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--admin-text-placeholder);
+  border-radius: 10px;
+}
+.admin-section-root .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-text-tertiary);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM LUXURY DARK THEME SYSTEM OVERRIDES
+   Scopes all admin nodes to deep zinc/coal tones with gold/white pops
+   ═══════════════════════════════════════════════════════════════ */
+
+.admin-section-root.dark {
+  --admin-bg: #09090B;
+  --admin-surface: #121214;
+  --admin-surface-hover: #1C1C1E;
+  --admin-surface-muted: #1E1E24;
+  --admin-border: rgba(255, 255, 255, 0.08);
+  --admin-border-subtle: rgba(255, 255, 255, 0.04);
+  --admin-text-primary: #F4F4F5;
+  --admin-text-secondary: #A1A1AA;
+  --admin-text-tertiary: #71717A;
+  --admin-text-placeholder: #52525B;
+  --admin-accent: #FFFFFF;
+  --admin-accent-hover: #E4E4E7;
+  --admin-accent-light: #27272A;
+  --admin-accent-muted: rgba(255, 255, 255, 0.08);
+
+  /* Map Tailwind v4 design token custom properties to the dark theme values */
+  --color-on-surface: #F4F4F5 !important;
+  --color-on-surface-variant: #A1A1AA !important;
+  --color-surface: #121214 !important;
+  --color-surface-bright: #121214 !important;
+  --color-surface-dim: #09090B !important;
+  --color-surface-container-lowest: #09090B !important;
+  --color-surface-container-low: rgba(255, 255, 255, 0.03) !important;
+  --color-surface-container: rgba(255, 255, 255, 0.04) !important;
+  --color-surface-container-high: rgba(255, 255, 255, 0.06) !important;
+  --color-surface-container-highest: rgba(255, 255, 255, 0.08) !important;
+  --color-outline: #A1A1AA !important;
+  --color-outline-variant: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Scoped elements dark overrides */
+.admin-section-root.dark,
+.admin-section-root.dark .min-h-screen,
+.admin-section-root.dark main {
+  background-color: var(--admin-bg) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+.admin-section-root.dark header,
+.admin-section-root.dark aside,
+.admin-section-root.dark nav,
+.admin-section-root.dark .bg-white {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.admin-section-root.dark .bg-stone-50,
+.admin-section-root.dark .bg-slate-50,
+.admin-section-root.dark .bg-neutral-50,
+.admin-section-root.dark .bg-\[\#F8F9FB\],
+.admin-section-root.dark .bg-\[\#F8F9FB\]\/40,
+.admin-section-root.dark .bg-zinc-50 {
+  background-color: var(--admin-bg) !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+/* Cards & Modals */
+.admin-section-root.dark .admin-card,
+.admin-section-root.dark .ui-card,
+.admin-section-root.dark .rounded-2xl.bg-white,
+.admin-section-root.dark .rounded-xl.bg-white,
+.admin-section-root.dark .rounded-lg.bg-white,
+.admin-section-root.dark .shadow-lg.bg-white,
+.admin-section-root.dark .bg-white\/80 {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+/* Inputs & Form Fields */
+.admin-section-root.dark input,
+.admin-section-root.dark select,
+.admin-section-root.dark textarea {
+  background-color: #1A1A1E !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.admin-section-root.dark input::placeholder,
+.admin-section-root.dark textarea::placeholder {
+  color: var(--admin-text-placeholder) !important;
+}
+
+/* Buttons */
+.admin-section-root.dark .bg-black,
+.admin-section-root.dark .bg-slate-900 {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+.admin-section-root.dark .bg-black:hover,
+.admin-section-root.dark .bg-slate-900:hover {
+  background-color: #E4E4E7 !important;
+}
+
+.admin-section-root.dark .bg-black span,
+.admin-section-root.dark .bg-slate-900 span {
+  color: #000000 !important;
+}
+
+.admin-section-root.dark .bg-stone-100,
+.admin-section-root.dark .bg-slate-100,
+.admin-section-root.dark .bg-stone-200,
+.admin-section-root.dark .bg-neutral-100 {
+  background-color: #27272A !important;
+  color: #F4F4F5 !important;
+  border-color: transparent !important;
+}
+
+.admin-section-root.dark .bg-stone-100:hover,
+.admin-section-root.dark .bg-slate-100:hover,
+.admin-section-root.dark .bg-stone-200:hover {
+  background-color: #3F3F46 !important;
+}
+
+.admin-section-root.dark .bg-stone-100 span,
+.admin-section-root.dark .bg-slate-100 span {
+  color: #F4F4F5 !important;
+}
+
+/* Navigation items & sub-bars */
+.admin-section-root.dark .bg-slate-100 {
+  background-color: #27272A !important;
+}
+
+.admin-section-root.dark .text-slate-600 {
+  color: var(--admin-text-secondary) !important;
+}
+
+.admin-section-root.dark .hover\:bg-slate-50:hover,
+.admin-section-root.dark .hover\:bg-slate-100:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Typography & Text overrides */
+.admin-section-root.dark .text-slate-900,
+.admin-section-root.dark .text-stone-900,
+.admin-section-root.dark .text-zinc-900,
+.admin-section-root.dark .text-neutral-900,
+.admin-section-root.dark .text-slate-950,
+.admin-section-root.dark .text-zinc-950,
+.admin-section-root.dark .text-stone-950,
+.admin-section-root.dark .text-neutral-950,
+.admin-section-root.dark .text-slate-800,
+.admin-section-root.dark .text-zinc-800,
+.admin-section-root.dark .text-stone-800,
+.admin-section-root.dark .text-neutral-800,
+.admin-section-root.dark .text-slate-700,
+.admin-section-root.dark .text-zinc-700,
+.admin-section-root.dark .text-stone-700,
+.admin-section-root.dark .text-neutral-700,
+.admin-section-root.dark .text-\[\#0F172A\],
+.admin-section-root.dark .text-\[\#0f172a\],
+.admin-section-root.dark .text-\[\#1a1a1a\],
+.admin-section-root.dark .text-\[\#111827\],
+.admin-section-root.dark .text-black,
+.admin-section-root.dark h1,
+.admin-section-root.dark h2,
+.admin-section-root.dark h3,
+.admin-section-root.dark h4,
+.admin-section-root.dark h5,
+.admin-section-root.dark h6 {
+  color: var(--admin-text-primary) !important;
+}
+
+.admin-section-root.dark .text-slate-500,
+.admin-section-root.dark .text-zinc-500,
+.admin-section-root.dark .text-stone-500,
+.admin-section-root.dark .text-slate-400,
+.admin-section-root.dark .text-zinc-400,
+.admin-section-root.dark .text-stone-400 {
+  color: var(--admin-text-secondary) !important;
+}
+
+/* Border styles */
+.admin-section-root.dark .border-slate-200,
+.admin-section-root.dark .border-neutral-200,
+.admin-section-root.dark .border-stone-200,
+.admin-section-root.dark .border-black\/5,
+.admin-section-root.dark .border-slate-100,
+.admin-section-root.dark .divide-slate-100,
+.admin-section-root.dark .divide-slate-200,
+.admin-section-root.dark .divide-neutral-200,
+.admin-section-root.dark .border-zinc-200,
+.admin-section-root.dark .border-slate-200\/60,
+.admin-section-root.dark .border-slate-200\/80,
+.admin-section-root.dark .divide-y,
+.admin-section-root.dark .divide-x {
+  border-color: var(--admin-border) !important;
+}
+
+.admin-section-root.dark tr:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.admin-section-root.dark .border-black {
+  border-color: #ffffff !important;
+}
+
+/* Badges & Pill Components */
+.admin-section-root.dark .badge-premium,
+.admin-section-root.dark .rounded-full.bg-stone-100 {
+  background-color: #27272A !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM LUXURY DARK THEME REFINEMENTS
+   Ensures 100% color compliance & perfect premium aesthetic pops
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1. Universal Text & Labels Color Compliance */
+.admin-section-root.dark .text-stone-600,
+.admin-section-root.dark .text-slate-600,
+.admin-section-root.dark .text-zinc-600,
+.admin-section-root.dark .text-stone-700,
+.admin-section-root.dark .text-slate-700,
+.admin-section-root.dark .text-zinc-700,
+.admin-section-root.dark .text-\[\#000000\],
+.admin-section-root.dark .text-\[\#000000\]\/80 {
+  color: var(--admin-text-primary) !important;
+}
+
+.admin-section-root.dark .text-stone-400,
+.admin-section-root.dark .text-slate-400,
+.admin-section-root.dark .text-zinc-400,
+.admin-section-root.dark .text-stone-500,
+.admin-section-root.dark .text-slate-500,
+.admin-section-root.dark .text-zinc-500,
+.admin-section-root.dark .text-outline,
+.admin-section-root.dark .text-outline-variant {
+  color: var(--admin-text-secondary) !important;
+}
+
+/* 2. Gradient Overrides on Storefront Curation Cards */
+.admin-section-root.dark .bg-gradient-to-tr.from-white.to-\[\#F1F5F9\],
+.admin-section-root.dark .bg-gradient-to-tr {
+  background-image: none !important;
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* 3. Translucent White Containers & Input Variations */
+.admin-section-root.dark .bg-white\/95,
+.admin-section-root.dark .bg-white\/90,
+.admin-section-root.dark .bg-white\/80,
+.admin-section-root.dark .bg-white\/70,
+.admin-section-root.dark .bg-white\/60,
+.admin-section-root.dark .bg-white\/50,
+.admin-section-root.dark .bg-white\/40,
+.admin-section-root.dark .bg-white\/30,
+.admin-section-root.dark .bg-white\/20,
+.admin-section-root.dark .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: blur(12px) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+.admin-section-root.dark .bg-\[\#F8F9FB\]\/40 {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+.admin-section-root.dark .bg-\[\#F1F5F9\] {
+  background-color: var(--admin-bg) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* 4. Border Color Normalization */
+.admin-section-root.dark .border-stone-200\/80,
+.admin-section-root.dark .border-stone-200\/85,
+.admin-section-root.dark .border-neutral-200,
+.admin-section-root.dark .border-slate-205,
+.admin-section-root.dark .border-\[\#000000\]\/10,
+.admin-section-root.dark .border-\[\#000000\]\/15,
+.admin-section-root.dark .border-\[\#000000\]\/30,
+.admin-section-root.dark .border-surface-container-highest,
+.admin-section-root.dark .border-surface-container-highest\/30,
+.admin-section-root.dark .border-surface-container-highest\/60 {
+  border-color: var(--admin-border) !important;
+}
+
+/* 5. Dropdown Options & Autocomplete */
+.admin-section-root.dark option {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* 6. Success/Warning/Error Translucent Glow Pills */
+.admin-section-root.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.08) !important;
+  border-color: rgba(239, 68, 68, 0.18) !important;
+}
+.admin-section-root.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.18) !important;
+}
+.admin-section-root.dark .bg-emerald-50,
+.admin-section-root.dark .bg-green-50 {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.18) !important;
+}
+
+.admin-section-root.dark .text-red-600,
+.admin-section-root.dark .text-rose-600,
+.admin-section-root.dark .text-red-700,
+.admin-section-root.dark .text-rose-700 {
+  color: #EF4444 !important;
+}
+
+.admin-section-root.dark .text-amber-600,
+.admin-section-root.dark .text-amber-700 {
+  color: #F59E0B !important;
+}
+
+.admin-section-root.dark .text-emerald-600,
+.admin-section-root.dark .text-green-600,
+.admin-section-root.dark .text-emerald-700,
+.admin-section-root.dark .text-green-700 {
+  color: #10B981 !important;
+}
+
+/* 7. Metric Pills & Progress Rails */
+.admin-section-root.dark .bg-surface {
+  background-color: var(--admin-surface) !important;
+}
+
+.admin-section-root.dark .bg-surface-container-low,
+.admin-section-root.dark .bg-surface-container-low\/20,
+.admin-section-root.dark .bg-surface-container-low\/40,
+.admin-section-root.dark .bg-slate-105 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Progress bar fill - bg-black under dark mode */
+.admin-section-root.dark .bg-black {
+  background-color: var(--admin-text-primary) !important;
+}
+
+/* 8. Interactive element hover fixes */
+.admin-section-root.dark .bg-\[\#000000\]\/10,
+.admin-section-root.dark .hover\:bg-\[\#000000\]\/10:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.admin-section-root.dark button.bg-black,
+.admin-section-root.dark a.bg-black {
+  background-color: var(--admin-text-primary) !important;
+  color: var(--admin-bg) !important;
+}
+
+.admin-section-root.dark button.bg-black *,
+.admin-section-root.dark a.bg-black * {
+  color: var(--admin-bg) !important;
+}
+
+/* Chart Tooltips */
+.admin-section-root.dark .recharts-tooltip-wrapper,
+.admin-section-root.dark .recharts-default-tooltip {
+  background-color: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* 9. Translucent Black Text Overrides */
+.admin-section-root.dark .text-black\/10,
+.admin-section-root.dark .text-black\/15,
+.admin-section-root.dark .text-black\/20,
+.admin-section-root.dark .text-black\/30,
+.admin-section-root.dark .text-black\/35,
+.admin-section-root.dark .text-black\/40,
+.admin-section-root.dark .text-black\/45,
+.admin-section-root.dark .text-black\/50,
+.admin-section-root.dark .text-black\/55 {
+  color: var(--admin-text-secondary) !important;
+}
+
+.admin-section-root.dark .text-black\/60,
+.admin-section-root.dark .text-black\/70,
+.admin-section-root.dark .text-black\/80,
+.admin-section-root.dark .text-black\/90,
+.admin-section-root.dark .hover\:text-black:hover,
+.admin-section-root.dark .group-hover\:text-black:hover {
+  color: var(--admin-text-primary) !important;
+}
+
+/* 10. Translucent Black Borders & Dividers */
+.admin-section-root.dark .border-black\/5,
+.admin-section-root.dark .border-black\/10,
+.admin-section-root.dark .border-black\/15,
+.admin-section-root.dark .border-black\/20,
+.admin-section-root.dark .divide-black\/5,
+.admin-section-root.dark .divide-black\/10,
+.admin-section-root.dark .divide-black\/15 {
+  border-color: var(--admin-border) !important;
+}
+
+/* Active tab button adjustments */
+.admin-section-root.dark .bg-white.text-black {
+  background-color: var(--admin-accent) !important;
+  color: var(--admin-bg) !important;
+}
+.admin-section-root.dark .bg-white.text-black span {
+  color: var(--admin-bg) !important;
+}
+
+/* 11. Custom Tactile Switch Toggle Overrides */
+.admin-section-root.dark button[role="switch"] {
+  background-color: #27272A !important;
+}
+
+.admin-section-root.dark button[role="switch"][aria-checked="true"] {
+  background-color: var(--admin-accent) !important;
+}
+
+.admin-section-root.dark button[role="switch"][aria-checked="true"] > div {
+  background-color: var(--admin-bg) !important;
+}
+
+
+
