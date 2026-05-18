@@ -1,0 +1,285 @@
+import React, { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
+import { handleImageError } from "../../utils/imageUtils";
+
+const EMPTY_CART_ILLU = "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129342/event_decor_ecommerce/assets/event_decor_empty_cart_illustration.jpg";
+
+export function CartDrawer({ isOpen, onClose }) {
+  const { items, removeItem, updateQuantity, subtotal, cartCount } = useCart();
+  const [confirmingRemove, setConfirmingRemove] = React.useState(null); // { id, variant }
+
+  const drawerRef = React.useRef(null);
+  const triggerElementRef = React.useRef(null);
+
+  // Lock body scroll and handle focus trap when drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      triggerElementRef.current = document.activeElement;
+      document.body.style.overflow = "hidden";
+
+      // Simple focus trap
+      const focusableElements = drawerRef.current?.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusableElements && focusableElements.length > 0) {
+        focusableElements[0].focus();
+      }
+
+      const handleKeyDown = (e) => {
+        if (e.key === "Escape") onClose();
+        if (e.key === "Tab" && focusableElements) {
+          const first = focusableElements[0];
+          const last = focusableElements[focusableElements.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            last.focus();
+            e.preventDefault();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            first.focus();
+            e.preventDefault();
+          }
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
+        if (triggerElementRef.current) {
+          triggerElementRef.current.focus();
+        }
+      };
+    }
+  }, [isOpen, onClose]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-on-surface/40 backdrop-blur-sm z-[200]"
+          />
+
+          {/* Drawer Panel */}
+          <motion.div
+            ref={drawerRef}
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="fixed right-0 top-0 w-full max-w-[calc(100vw-48px)] sm:max-w-md h-[100dvh] bg-white z-[210] flex flex-col shadow-2xl"
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-outline-variant/10">
+              <div className="flex items-center gap-3">
+                <h2 className="font-display text-[22px]">Shopping Bag</h2>
+                {cartCount > 0 && (
+                  <span className="bg-primary/10 text-primary text-[12px] font-bold px-2.5 py-0.5 rounded-full">
+                    {cartCount}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={onClose}
+                className="touch-target text-secondary hover:text-on-surface transition-colors"
+                aria-label="Close shopping bag"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Items List */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {items.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-surface-bright/50">
+                  <div className="w-full max-w-[200px] aspect-square relative mb-12">
+                    <div className="absolute inset-0 bg-primary/5 rounded-full blur-3xl" />
+                    <img
+                      src={EMPTY_CART_ILLU}
+                      alt="Your shopping bag is currently empty"
+                      className="relative z-10 w-full h-full object-contain opacity-90 transition-all duration-1000 ease-out animate-float"
+                    />
+                  </div>
+
+                  <div className="space-y-4 mb-12">
+                    <h3 className="font-display text-[28px] text-on-surface tracking-tight leading-tight">
+                      Your bag is empty
+                    </h3>
+                    <p className="font-body text-[15px] text-secondary/60 font-light max-w-[240px] mx-auto leading-relaxed">
+                      Discover our curated pieces and start building your dream
+                      event.
+                    </p>
+                  </div>
+
+                  <Link
+                    to="/collections"
+                    onClick={onClose}
+                    className="group flex items-center gap-4 bg-on-surface text-surface px-10 py-4 rounded-full font-label text-[12px] uppercase tracking-[0.25em] transition-all hover:bg-primary active:scale-95 font-bold shadow-lg shadow-on-surface/5"
+                  >
+                    <span>Explore Collections</span>
+                    <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
+                      east
+                    </span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {items.map((item) => (
+                    <div
+                      key={`${item.id}-${item.variant || ""}`}
+                      className="flex gap-4 p-4 rounded-[20px] bg-surface-container-low border border-outline-variant/10"
+                    >
+                      <div className="w-20 h-24 rounded-[12px] overflow-hidden flex-shrink-0 bg-surface-container">
+                        <img
+                          onError={handleImageError}
+                          src={item.imageSrc || item.image}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-display text-[16px] truncate">
+                          {item.title}
+                        </h3>
+                        {item.variant && (
+                          <p className="font-body text-[12px] text-secondary/60 mt-0.5">
+                            {item.variant}
+                          </p>
+                        )}
+                        <p className="font-display text-[15px] text-primary mt-1">
+                          ₹{item.price?.toLocaleString()}
+                        </p>
+                        <div className="flex items-center gap-3 mt-3">
+                          <div className="flex items-center gap-3 bg-surface p-1 rounded-full border border-outline-variant/10 shadow-sm">
+                            {item.quantity > 1 ? (
+                              <button
+                                onClick={() =>
+                                  updateQuantity(
+                                    item.id,
+                                    item.variant,
+                                    item.quantity - 1,
+                                  )
+                                }
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container hover:text-primary transition-all"
+                                aria-label="Decrease quantity"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">
+                                  remove
+                                </span>
+                              </button>
+                            ) : (
+                              <div className="relative">
+                                <button
+                                  onClick={() =>
+                                    setConfirmingRemove({
+                                      id: item.id,
+                                      variant: item.variant,
+                                    })
+                                  }
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${confirmingRemove?.id === item.id ? "bg-error text-white scale-110 shadow-lg" : "text-error/60 hover:bg-error/10 hover:text-error"}`}
+                                  aria-label="Confirm remove"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">
+                                    {confirmingRemove?.id === item.id
+                                      ? "check"
+                                      : "delete"}
+                                  </span>
+                                </button>
+                                {confirmingRemove?.id === item.id && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] py-1 px-2 rounded whitespace-nowrap z-10"
+                                  >
+                                    Confirm?
+                                  </motion.div>
+                                )}
+                              </div>
+                            )}
+                            <span className="font-body text-[14px] w-6 text-center font-bold">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() =>
+                                updateQuantity(
+                                  item.id,
+                                  item.variant,
+                                  item.quantity + 1,
+                                )
+                              }
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container hover:text-primary transition-all"
+                              aria-label="Increase quantity"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                add
+                              </span>
+                            </button>
+                          </div>
+                          {confirmingRemove?.id === item.id && (
+                            <button
+                              onClick={() => {
+                                removeItem(item.id, item.variant);
+                                setConfirmingRemove(null);
+                              }}
+                              className="absolute inset-0 z-20 bg-error/95 text-white flex items-center justify-center gap-2 rounded-[20px] font-label text-[12px] uppercase tracking-widest font-bold"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">
+                                delete_forever
+                              </span>
+                              Confirm Removal
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer with Totals */}
+            {items.length > 0 && (
+              <div
+                className="p-6 border-t border-outline-variant/10 space-y-4 bg-white"
+                style={{
+                  paddingBottom: `calc(24px + env(safe-area-inset-bottom, 24px))`,
+                }}
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-body text-[14px] text-secondary">
+                    Subtotal
+                  </span>
+                  <span className="font-display text-[20px]">
+                    ₹{subtotal.toLocaleString()}
+                  </span>
+                </div>
+                <p className="font-body text-[12px] text-secondary/60 font-light">
+                  Shipping calculated at checkout
+                </p>
+                <Link
+                  to="/checkout"
+                  onClick={onClose}
+                  className="block w-full bg-primary text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-primary/95 transition-all shadow-xl shadow-primary/10"
+                >
+                  Proceed to Checkout
+                </Link>
+                <Link
+                  to="/cart"
+                  onClick={onClose}
+                  className="block w-full text-center py-3 font-label text-[12px] uppercase tracking-widest text-secondary hover:text-primary transition-colors font-bold"
+                >
+                  View Full Bag
+                </Link>
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
