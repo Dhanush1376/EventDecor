@@ -1,0 +1,853 @@
+import crypto from 'crypto';
+import mongoose from 'mongoose';
+import razorpay from '../config/razorpay';
+import Order, { IOrder } from '../models/Order';
+import Product from '../models/Product';
+import User from '../models/User';
+import Coupon from '../models/Coupon';
+import ApiError from '../utils/ApiError';
+import logger from '../config/logger';
+import { formatPaginationResponse } from '../utils/pagination';
+import { sendDirectEmail } from './notificationService';
+import AnalyticsService from './analyticsService';
+import { cmsCache } from '../utils/MemoryCache';
+
+class OrderService {
+  static async validateTotals(userId: string, data: any) {
+    const { items, couponCode } = data;
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      throw new ApiError(400, 'Items array is required');
+    }
+
+    let subtotal = 0;
+    const productIds = [...new Set(items.map((item: any) => String(item.productId)).filter(Boolean))] as any[];
+    const products = await Product.find({ _id: { $in: productIds } }).select('title price stock category isActive');
+    const productsById = new Map(products.map((product) => [product._id.toString(), product]));
+    
+    // 1. Validate stock availability and calculate actual subtotal from DB
+    for (const item of items) {
+      const product = productsById.get(String(item.productId));
+      if (!product) throw new ApiError(404, `Product not found: ${item.productId}`);
+      if (!product.isActive) throw new ApiError(400, `Product is no longer active: ${product.title}`);
+      if (product.stock < item.quantity) {
+        throw new ApiError(400, `Insufficient stock for product: ${product.title}`);
+      }
+      subtotal += product.price * item.quantity;
+    }
+
+    // Fetch user details first (for tier validation and wallet checking)
+    let availableWallet = 0;
+    let loyaltyTier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum' = 'Bronze';
+    if (userId) {
+      const user = await User.findById(userId);
+      if (user) {
+        availableWallet = user.walletBalance || 0;
+        loyaltyTier = user.loyaltyTier || 'Bronze';
+      }
+    }
+
+    // 2. Validate Coupon Validity on DB
+    let discount = 0;
+    let couponValid = false;
+    let couponMessage = '';
+    let cashbackPercentage = 0;
+    let cashbackFixed = 0;
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+      if (!coupon) {
+        couponMessage = 'Invalid coupon code';
+      } else if (new Date() > coupon.expiryDate) {
+        couponMessage = 'Coupon has expired';
+      } else if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+        couponMessage = 'Coupon usage limit has been reached';
+      } else if (subtotal < coupon.minOrderAmount) {
+        couponMessage = `Minimum order amount of ₹${coupon.minOrderAmount} is required`;
+      } else {
+        // Customer Eligibility checks
+        if (coupon.targetType === 'tiers' && coupon.targetUserTiers && coupon.targetUserTiers.length > 0) {
+          if (!coupon.targetUserTiers.includes(loyaltyTier)) {
+            couponMessage = `This coupon is exclusively reserved for loyalty levels: ${coupon.targetUserTiers.join(', ')}`;
+          }
+        }
+
+        if (!couponMessage) {
+          // Dynamic Product/Category targeting checks
+          let applicableAmount = 0;
+          if (coupon.targetType === 'products' && coupon.targetProductIds && coupon.targetProductIds.length > 0) {
+            const productIdsStr = coupon.targetProductIds.map(id => id.toString());
+            for (const item of items) {
+              if (productIdsStr.includes(item.productId.toString())) {
+                const product = productsById.get(String(item.productId));
+                if (product) {
+                  applicableAmount += product.price * item.quantity;
+                }
+              }
+            }
+            if (applicableAmount === 0) {
+              couponMessage = 'This coupon code is only valid for selected premium products.';
+            }
+          } else if (coupon.targetType === 'categories' && coupon.targetCategories && coupon.targetCategories.length > 0) {
+            const targetCatsLower = coupon.targetCategories.map(c => c.toLowerCase());
+            for (const item of items) {
+              const product = productsById.get(String(item.productId));
+              if (product && targetCatsLower.includes(product.category.toLowerCase())) {
+                applicableAmount += product.price * item.quantity;
+              }
+            }
+            if (applicableAmount === 0) {
+              couponMessage = `This coupon is only valid for categories: ${coupon.targetCategories.join(', ')}`;
+            }
+          } else {
+            applicableAmount = subtotal;
+          }
+
+          if (!couponMessage) {
+            couponValid = true;
+            if (coupon.discountType === 'percentage') {
+              discount = (applicableAmount * coupon.discountValue) / 100;
+              if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+                discount = coupon.maxDiscount;
+              }
+            } else {
+              discount = Math.min(applicableAmount, coupon.discountValue);
+            }
+            discount = Math.round(discount);
+            cashbackPercentage = coupon.cashbackPercentage || 0;
+            cashbackFixed = coupon.cashbackFixed || 0;
+            couponMessage = `Coupon applied! ₹${discount} discount saved.`;
+          }
+        }
+      }
+    }
+
+    const { paymentMethod, useWallet } = data;
+    const shippingFee = subtotal > 2000 || subtotal === 0 ? 0 : 100;
+    const platformFee = 0;
+    
+    let codFee = 0;
+    if (paymentMethod && paymentMethod.toLowerCase() === 'cod') {
+      try {
+        const settingsSection = await cmsCache.getOrSet('studio_settings', async () => {
+          const ContentSection = require('../models/ContentSection').default;
+          return await ContentSection.findOne({ sectionKey: 'studio_settings' });
+        });
+        if (settingsSection && settingsSection.data && settingsSection.data.codFee) {
+          codFee = Number(settingsSection.data.codFee) || 0;
+        } else {
+          codFee = 90;
+        }
+      } catch (err) {
+        codFee = 90;
+      }
+    }
+
+    const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
+    
+    let walletDeduction = 0;
+    if (useWallet) {
+      walletDeduction = Math.min(preliminaryTotal, availableWallet);
+    }
+
+    const total = preliminaryTotal - walletDeduction;
+
+    // Estimate Siri Coins (1 Siri Coin per ₹10 spent on subtotal)
+    const coinsToEarn = Math.round(subtotal / 10);
+    
+    // Estimate Cashback percentage based on membership tier
+    let cashbackRate = 0.02; // Bronze: 2%
+    if (loyaltyTier === 'Silver') cashbackRate = 0.05;
+    else if (loyaltyTier === 'Gold') cashbackRate = 0.08;
+    else if (loyaltyTier === 'Platinum') cashbackRate = 0.12;
+
+    let estimatedCashback = Math.round(total * cashbackRate);
+
+    // Dynamic Coupon Cashback Integration
+    if (couponValid) {
+      if (cashbackPercentage > 0) {
+        estimatedCashback += Math.round((subtotal * cashbackPercentage) / 100);
+      }
+      if (cashbackFixed > 0) {
+        estimatedCashback += cashbackFixed;
+      }
+    }
+
+    return {
+      subtotal,
+      discount,
+      shippingFee,
+      platformFee,
+      codFee,
+      walletBalance: availableWallet,
+      walletDeduction,
+      coinsEarned: coinsToEarn,
+      cashbackEarned: estimatedCashback,
+      total,
+      couponValid,
+      couponMessage,
+    };
+  }
+
+  static async createOrder(userId: string, orderData: any) {
+    const { items, shippingAddress, couponCode, notes, needByDate, paymentMethod, useWallet } = orderData;
+    const isCod = paymentMethod === 'cod';
+
+    let subtotal = 0;
+    const orderItems = [];
+
+    // 1. Batch-query products at once to eliminate N+1 findById queries inside the loop
+    const productIds = [...new Set(items.map((item: any) => String(item.productId)).filter(Boolean))] as any[];
+    const products = await Product.find({ _id: { $in: productIds } }).select('title price stock isActive imageSrc category');
+    const productsById = new Map(products.map(p => [p._id.toString(), p]));
+
+    // Pre-validate all items before doing any stock updates to maintain transactional integrity
+    for (const item of items) {
+      const product = productsById.get(String(item.productId));
+      if (!product) throw new ApiError(404, `Product ${item.productId} not found`);
+      if (!product.isActive) throw new ApiError(400, `Product is no longer active: ${product.title}`);
+      if (product.stock < item.quantity) {
+        throw new ApiError(400, `Insufficient stock for product: ${product.title}`);
+      }
+    }
+
+    // Reserve stock atomically now that pre-validation has passed
+    const reservedItems: { productId: string; quantity: number }[] = [];
+    try {
+      for (const item of items) {
+        const product = productsById.get(String(item.productId))!;
+        const updatedProduct = await Product.findOneAndUpdate(
+          { _id: item.productId, stock: { $gte: item.quantity }, isActive: true },
+          { $inc: { stock: -item.quantity } },
+          { new: true }
+        );
+
+        if (!updatedProduct) {
+          throw new ApiError(400, `Insufficient stock or inactive product: ${product.title}`);
+        }
+
+        reservedItems.push({ productId: String(item.productId), quantity: item.quantity });
+        
+        const itemTotal = product.price * item.quantity;
+        subtotal += itemTotal;
+        
+        orderItems.push({
+          productId: product._id,
+          title: product.title,
+          price: product.price,
+          quantity: item.quantity,
+          variant: item.variant || 'Default',
+          imageSrc: product.imageSrc,
+          category: product.category,
+        });
+      }
+    } catch (err) {
+      // Rollback successfully reserved stock to prevent stock leaks
+      for (const reserved of reservedItems) {
+        await Product.findByIdAndUpdate(reserved.productId, { $inc: { stock: reserved.quantity } });
+      }
+      throw err;
+    }
+
+    // 2. Validate and apply Coupon discounts securely on the backend
+    let discount = 0;
+    let couponValid = false;
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+      if (coupon && new Date() <= coupon.expiryDate && (!coupon.usageLimit || coupon.usedCount < coupon.usageLimit) && subtotal >= coupon.minOrderAmount) {
+        couponValid = true;
+        if (coupon.discountType === 'percentage') {
+          discount = (subtotal * coupon.discountValue) / 100;
+          if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+            discount = coupon.maxDiscount;
+          }
+        } else {
+          discount = coupon.discountValue;
+        }
+        discount = Math.round(discount);
+      }
+    }
+
+    let codFee = 0;
+    if (isCod) {
+      try {
+        const settingsSection = await cmsCache.getOrSet('studio_settings', async () => {
+          const ContentSection = require('../models/ContentSection').default;
+          return await ContentSection.findOne({ sectionKey: 'studio_settings' });
+        });
+        if (settingsSection && settingsSection.data && settingsSection.data.codFee) {
+          codFee = Number(settingsSection.data.codFee) || 0;
+        } else {
+          codFee = 90;
+        }
+      } catch (err) {
+        codFee = 90;
+      }
+    }
+
+    const shippingFee = subtotal > 2000 ? 0 : 100;
+    const user = await User.findById(userId);
+    let walletDeduction = 0;
+    const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
+
+    if (useWallet && user) {
+      walletDeduction = Math.min(preliminaryTotal, user.walletBalance || 0);
+    }
+
+    const total = preliminaryTotal - walletDeduction;
+
+    // Apply wallet deduction atomically
+    if (walletDeduction > 0 && user) {
+      user.walletBalance = Math.max(0, (user.walletBalance || 0) - walletDeduction);
+      await user.save();
+
+      // Log wallet debit transaction
+      const WalletTransaction = require('../models/WalletTransaction').default;
+      await WalletTransaction.create({
+        userId: user._id,
+        type: 'debit',
+        amount: walletDeduction,
+        source: 'checkout_redeem',
+        description: `Redeemed Siri Cash at checkout`,
+        status: 'active'
+      });
+    }
+
+    // Auto-generate enterprise logistics fields
+    const count = await Order.countDocuments();
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(5, '0')}`;
+    const trackingNumber = `TRK${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+    const publicTrackingToken = crypto.randomBytes(24).toString('hex');
+    const courierPartner = 'Delhivery';
+    const barcodeData = invoiceNumber;
+    const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'http://localhost:5173';
+    const qrCodeData = `${frontendUrl}/track/${encodeURIComponent('pending')}`;
+
+    let order;
+
+    if (isCod) {
+      // Pre-assign tracking URL synchronously (order._id is generated on instantiation)
+      const pendingOrderId = new mongoose.Types.ObjectId();
+      const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
+
+      order = new Order({
+        _id: pendingOrderId,
+        user: userId,
+        items: orderItems,
+        shippingAddress,
+        subtotal,
+        shippingFee,
+        discount,
+        codFee,
+        walletDeduction,
+        total,
+        couponCode: couponValid ? couponCode.toUpperCase() : undefined,
+        paymentMethod: 'cod',
+        paymentStatus: 'Pending COD',
+        orderStatus: 'Confirmed',
+        statusHistory: [{ status: 'Confirmed', note: 'Cash on Delivery order successfully placed' }],
+        invoiceNumber,
+        trackingNumber,
+        courierPartner,
+        weight: 1.8,
+        dimensions: { length: 30, width: 20, height: 15 },
+        packageType: 'Standard Box',
+        barcodeData,
+        qrCodeData: finalQrCodeData,
+        publicTrackingToken,
+        notes,
+        needByDate,
+        codCollected: false,
+        settlementStatus: 'Pending',
+        settledAmount: 0,
+        courierCharges: Math.round((shippingFee || 120) + codFee), // Shipping fee + COD handling fee
+        earnings: 0,
+      });
+
+      await order.save();
+      AnalyticsService.clearCache();
+
+      // Clear the user's cart in database immediately
+      await User.findByIdAndUpdate(userId, { $set: { cart: [] } });
+
+      // Increment Coupon used count if applicable
+      if (couponValid) {
+        await Coupon.findOneAndUpdate({ code: couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
+      }
+
+      // Trigger Dispatch alert Confirmation Email in background
+      try {
+        const user = await User.findById(userId);
+        if (user) {
+          const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+          await sendDirectEmail({
+            email: user.email,
+            subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
+            templateName: 'Order Confirmation',
+            templateData: {
+              name: user.name,
+              orderId: order._id.toString(),
+              totalAmount: order.total.toLocaleString('en-IN'),
+              shippingAddress: order.shippingAddress,
+              frontend_url: frontendUrl,
+            },
+            type: 'order',
+            action: 'order_placed',
+            userId: user._id.toString(),
+          });
+        }
+      } catch (emailErr) {
+        logger.error('Failed to dispatch COD confirmation email:', emailErr);
+      }
+
+      return { order };
+    } else {
+      // 3b. Handle online Razorpay payment
+      const options = {
+        amount: Math.round(total * 100),
+        currency: "INR",
+        receipt: `rcpt_${Date.now()}`,
+      };
+
+      if (!razorpay) {
+        if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+          logger.info(`[PAYMENT SIMULATION] Creating simulated Razorpay order for total: ₹${total}`);
+          const simulatedRazorpayOrderId = `order_sim_${crypto.randomBytes(8).toString('hex')}`;
+          
+          const pendingOrderId = new mongoose.Types.ObjectId();
+          const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
+
+          order = new Order({
+            _id: pendingOrderId,
+            user: userId,
+            items: orderItems,
+            shippingAddress,
+            subtotal,
+            shippingFee,
+            discount,
+            walletDeduction,
+            total,
+            couponCode: couponValid ? couponCode.toUpperCase() : undefined,
+            paymentMethod: 'razorpay',
+            razorpayOrderId: simulatedRazorpayOrderId,
+            paymentStatus: 'pending',
+            orderStatus: 'Pending',
+            statusHistory: [{ status: 'Pending', note: 'Simulated payment initiated' }],
+            invoiceNumber,
+            trackingNumber,
+            courierPartner,
+            weight: 1.8,
+            dimensions: { length: 30, width: 20, height: 15 },
+            packageType: 'Standard Box',
+            barcodeData,
+            qrCodeData: finalQrCodeData,
+            publicTrackingToken,
+            notes,
+            needByDate,
+          });
+
+          await order.save();
+
+          return {
+            order,
+            razorpayOrder: {
+              id: simulatedRazorpayOrderId,
+              amount: Math.round(total * 100),
+              currency: "INR",
+              isSimulated: true
+            }
+          };
+        }
+
+        // Return stock if Razorpay isn't configured
+        for (const item of orderItems) {
+          await Product.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } });
+        }
+        throw new ApiError(500, 'Razorpay payments are not configured on this server');
+      }
+
+      let razorpayOrder;
+      try {
+        razorpayOrder = await razorpay.orders.create(options);
+      } catch (err: any) {
+        // Return stock if Razorpay API fails
+        for (const item of orderItems) {
+          await Product.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } });
+        }
+        logger.error('Razorpay order creation failed:', err);
+        throw new ApiError(500, 'Payment initialization failed');
+      }
+
+      const pendingOrderId = new mongoose.Types.ObjectId();
+      const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
+
+      // 4. Save pending order with Razorpay details
+      order = new Order({
+        _id: pendingOrderId,
+        user: userId,
+        items: orderItems,
+        shippingAddress,
+        subtotal,
+        shippingFee,
+        discount,
+        walletDeduction,
+        total,
+        couponCode: couponValid ? couponCode.toUpperCase() : undefined,
+        paymentMethod: 'razorpay',
+        razorpayOrderId: razorpayOrder.id,
+        paymentStatus: 'pending',
+        orderStatus: 'Pending',
+        statusHistory: [{ status: 'Pending', note: 'Order initiated and stock reserved' }],
+        invoiceNumber,
+        trackingNumber,
+        courierPartner,
+        weight: 1.8,
+        dimensions: { length: 30, width: 20, height: 15 },
+        packageType: 'Standard Box',
+        barcodeData,
+        qrCodeData: finalQrCodeData,
+        publicTrackingToken,
+        notes,
+        needByDate,
+      });
+
+      await order.save();
+
+      return {
+        order,
+        razorpayOrder: {
+          id: razorpayOrder.id,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+        }
+      };
+    }
+  }
+
+  static async verifyPayment(paymentData: any, userId: string, role: string) {
+    const razorpay_order_id = paymentData.razorpay_order_id || paymentData.razorpayOrderId;
+    const razorpay_payment_id = paymentData.razorpay_payment_id || paymentData.razorpayPaymentId;
+    const razorpay_signature = paymentData.razorpay_signature || paymentData.razorpaySignature;
+
+    if (!razorpay_order_id || !razorpay_payment_id) {
+      throw new ApiError(400, 'Missing payment verification parameters');
+    }
+
+    // 1. Atomically lock the order in "processing" state to prevent race conditions
+    let order: any = await Order.findOneAndUpdate(
+      { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
+      { $set: { paymentStatus: 'processing' } },
+      { new: true }
+    );
+
+    if (!order) {
+      // Check if it's already marked as paid by a webhook or concurrent request
+      const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+      if (existingOrder && existingOrder.paymentStatus === 'paid') {
+        logger.info(`[PAYMENT REDUNDANCY] Payment already processed successfully for order: ${existingOrder._id}`);
+        return existingOrder;
+      }
+      throw new ApiError(404, 'Order record not found or cannot be locked for processing');
+    }
+
+    if (order.user.toString() !== userId && role !== 'admin') {
+      // Rollback lock state
+      order.paymentStatus = 'pending';
+      await order.save();
+      throw new ApiError(403, 'You are not authorized to verify this payment');
+    }
+
+    // Handle payment simulation in development mode
+    if (razorpay_order_id.startsWith('order_sim_')) {
+      if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV) {
+        throw new ApiError(400, 'Simulated payment verification only allowed in development mode');
+      }
+
+      logger.info(`[PAYMENT SIMULATION SUCCESS] Verifying simulated payment for order: ${order._id}`);
+      
+      order.paymentStatus = 'paid';
+      order.orderStatus = 'Confirmed';
+      order.razorpayPaymentId = razorpay_payment_id;
+      order.razorpaySignature = razorpay_signature || 'simulated_signature';
+      order.statusHistory.push({ status: 'Confirmed', note: 'Simulated payment verified successfully' });
+      
+      await order.save();
+      await User.findByIdAndUpdate(order.user, { $set: { cart: [] } });
+      AnalyticsService.clearCache();
+
+      if (order.couponCode) {
+        await Coupon.findOneAndUpdate({ code: order.couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
+      }
+
+      // Trigger Order Confirmation Email in background
+      try {
+        const user = await User.findById(order.user);
+        if (user) {
+          const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+          await sendDirectEmail({
+            email: user.email,
+            subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
+            templateName: 'Order Confirmation',
+            templateData: {
+              name: user.name,
+              orderId: order._id.toString(),
+              totalAmount: order.total.toLocaleString('en-IN'),
+              shippingAddress: order.shippingAddress,
+              frontend_url: frontendUrl,
+            },
+            type: 'order',
+            action: 'order_placed',
+            userId: user._id.toString(),
+          });
+        }
+      } catch (emailErr) {
+        logger.error('Failed to dispatch simulated confirmation email:', emailErr);
+      }
+
+      logger.info(`[PAYMENT SUCCESS] Successful Razorpay simulated payment logs verified for order: ${order._id}`);
+      return order;
+    }
+
+    if (!razorpay_signature) {
+      throw new ApiError(400, 'Missing payment signature verification parameter');
+    }
+
+    // 1. Verify Razorpay signature using HMAC SHA256
+    const shasum = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!);
+    shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+    const digest = shasum.digest('hex');
+
+    if (digest !== razorpay_signature) {
+      // 2. Handle failed payment: Return reserved stock
+      for (const item of order.items) {
+        await Product.findByIdAndUpdate(item.productId, {
+          $inc: { stock: item.quantity }
+        });
+      }
+
+      order.paymentStatus = 'failed';
+      order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Signature Mismatch) - Stock Released' });
+      await order.save();
+      throw new ApiError(400, 'Invalid payment signature. Payment untrusted.');
+    }
+
+    // 3. Mark order as confirmed and paid
+    order.paymentStatus = 'paid';
+    order.orderStatus = 'Confirmed';
+    order.razorpayPaymentId = razorpay_payment_id;
+    order.razorpaySignature = razorpay_signature;
+    order.statusHistory.push({ status: 'Confirmed', note: 'Payment verified and order confirmed' });
+    
+    await order.save();
+    AnalyticsService.clearCache();
+
+    // 4. Clear the user's cart in the database upon successful verification
+    await User.findByIdAndUpdate(order.user, { $set: { cart: [] } });
+
+    // 5. Increment Coupon used count if coupon was active
+    if (order.couponCode) {
+      await Coupon.findOneAndUpdate({ code: order.couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
+    }
+    
+    // Trigger Order Confirmation Email
+    try {
+      const user = await User.findById(order.user);
+      if (user) {
+        const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+        await sendDirectEmail({
+          email: user.email,
+          subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
+          templateName: 'Order Confirmation',
+          templateData: {
+            name: user.name,
+            orderId: order._id.toString(),
+            totalAmount: order.total.toLocaleString('en-IN'),
+            shippingAddress: order.shippingAddress,
+            frontend_url: frontendUrl,
+          },
+          type: 'order',
+          action: 'order_placed',
+          userId: user._id.toString(),
+        });
+      }
+    } catch (emailErr) {
+      logger.error('Failed to dispatch order confirmation email in background:', emailErr);
+    }
+    
+    logger.info(`Payment successful for order: ${order._id}`);
+    return order;
+  }
+
+  static async getMyOrders(userId: string) {
+    return await Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
+  }
+
+  static async getAllOrders(query: any) {
+    const { page = 1, limit = 10, paymentStatus, orderStatus } = query;
+    const filter: any = {};
+    if (paymentStatus) filter.paymentStatus = paymentStatus;
+    if (orderStatus) filter.orderStatus = orderStatus;
+
+    const totalCount = await Order.countDocuments(filter);
+    const orders = await Order.find(filter)
+      .populate('user', 'name email phone')
+      .sort({ createdAt: -1 })
+      .skip((Number(page) - 1) * Number(limit))
+      .limit(Number(limit))
+      .lean();
+
+    return formatPaginationResponse(orders, totalCount, Number(page), Number(limit));
+  }
+
+  static async updateOrderStatus(id: string, status: string, note?: string, courierCharges?: number) {
+    const order = await Order.findById(id);
+    if (!order) throw new ApiError(404, 'Order not found');
+
+    // Compatibility Mapping for lowercase status strings
+    let finalStatus = status;
+    if (status === 'placed') finalStatus = 'Pending';
+    else if (status === 'confirmed') finalStatus = 'Confirmed';
+    else if (status === 'processing') finalStatus = 'Packed';
+    else if (status === 'shipped') finalStatus = 'Shipped';
+    else if (status === 'delivered') finalStatus = 'Delivered';
+    else if (status === 'cancelled') finalStatus = 'Cancelled';
+    else if (status === 'settled') finalStatus = 'Settled';
+
+    order.orderStatus = finalStatus as any;
+
+    if (courierCharges !== undefined && courierCharges !== null) {
+      order.courierCharges = courierCharges;
+    }
+
+    // Automatic COD Remittance Transitions
+    if (order.paymentMethod?.toLowerCase() === 'cod') {
+      if (finalStatus === 'Delivered') {
+        order.codCollected = true;
+        order.paymentStatus = 'COD Collected';
+        order.settlementStatus = 'Pending';
+        if (!order.courierCharges) {
+          order.courierCharges = courierCharges !== undefined ? courierCharges : Math.round((order.shippingFee || 120) + 30);
+        }
+        order.statusHistory.push({ 
+          status: 'COD Collected', 
+          timestamp: new Date(), 
+          note: 'Package delivered. Cash collected by courier agent. Reconciliation pending.' 
+        });
+      } else if (finalStatus === 'Settled') {
+        order.codCollected = true;
+        order.paymentStatus = 'paid';
+        order.settlementStatus = 'Settled';
+        const charges = courierCharges !== undefined ? courierCharges : (order.courierCharges || Math.round((order.shippingFee || 120) + 30));
+        order.courierCharges = charges;
+        order.settledAmount = Math.max(0, order.total - charges);
+        order.earnings = order.settledAmount;
+        order.statusHistory.push({ 
+          status: 'Settled', 
+          timestamp: new Date(), 
+          note: `COD Remittance Settled. Received amount: ₹${order.settledAmount} (Total: ₹${order.total} - Courier fee: ₹${charges})` 
+        });
+      }
+    }
+
+    order.statusHistory.push({ status: finalStatus, timestamp: new Date(), note });
+    
+    // Process Loyalty/Wallet adjustments based on status change
+    if (finalStatus === 'Delivered') {
+      try {
+        const { LoyaltyService } = require('./loyaltyService');
+        await LoyaltyService.processPurchaseRewards(order.user.toString(), order._id.toString(), order.total);
+      } catch (rewardsErr) {
+        logger.error('Failed to process purchase rewards on delivery:', rewardsErr);
+      }
+    } else if (finalStatus === 'Cancelled' || finalStatus === 'Returned' || finalStatus === 'Refunded') {
+      try {
+        const { LoyaltyService } = require('./loyaltyService');
+        await LoyaltyService.reversePurchaseRewards(order._id.toString());
+      } catch (reversalErr) {
+        logger.error('Failed to reverse purchase rewards on status transition:', reversalErr);
+      }
+
+      // Automated Razorpay refund integration for online paid orders
+      if (order.paymentStatus === 'paid' && order.razorpayPaymentId && (order.paymentMethod?.toLowerCase() === 'razorpay')) {
+        if (razorpay) {
+          try {
+            logger.info(`[PAYMENT REFUND] Initiating Razorpay automatic refund of ₹${order.total} for order: ${order._id}`);
+            const refund = await (razorpay as any).refunds.create({
+              payment_id: order.razorpayPaymentId,
+              amount: Math.round(order.total * 100), // convert to paise
+              speed: 'normal',
+              notes: {
+                orderId: order._id.toString(),
+                reason: `Automatic refund for order status: ${finalStatus}`
+              }
+            });
+            logger.info(`[REFUND SUCCESS] Razorpay refund successful. ID: ${refund.id}`);
+            order.paymentStatus = 'refunded';
+            order.statusHistory.push({
+              status: 'Refunded' as any,
+              timestamp: new Date(),
+              note: `Razorpay Refund successfully created: ${refund.id}`
+            });
+          } catch (refundErr: any) {
+            logger.error('🏥 [REFUND FAILED] Razorpay API refund failed:', refundErr);
+            order.statusHistory.push({
+              status: 'Pending' as any,
+              timestamp: new Date(),
+              note: `Automated Razorpay refund failed: ${refundErr.message || 'API error'}`
+            });
+          }
+        } else {
+          logger.warn('[REFUND SIMULATION] Razorpay not configured. Simulating successful refund.');
+          order.paymentStatus = 'refunded';
+          order.statusHistory.push({
+            status: 'Refunded' as any,
+            timestamp: new Date(),
+            note: 'Simulated payment refund completed successfully'
+          });
+        }
+      }
+    }
+
+    await order.save();
+
+    // Trigger Order Status Email
+    try {
+      const user = await User.findById(order.user);
+      if (user) {
+        const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:3000';
+        await sendDirectEmail({
+          email: user.email,
+          subject: `Order Updated to ${finalStatus.toUpperCase()}! ✦ Siri Arts Studio [${order._id}]`,
+          customHtml: `
+            <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 50px 30px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29; box-shadow: 0 15px 40px rgba(115, 92, 0, 0.04); text-align: center;">
+              <div style="margin-bottom: 25px; text-align: center;">
+                <div style="font-size: 28px; color: #735c00; margin-bottom: 12px; font-weight: 300;">✦</div>
+                <h1 style="color: #735c00; font-size: 24px; font-weight: 300; letter-spacing: 4px; margin: 0; text-transform: uppercase;">Siri Arts</h1>
+                <div style="width: 50px; height: 1px; background-color: #735c00; margin: 12px auto 0 auto; opacity: 0.25;"></div>
+              </div>
+              <h2 style="font-size: 18px; font-weight: 400; color: #2d2b29; margin-bottom: 20px;">Order Dispatch Update</h2>
+              <p style="font-family: 'Inter', sans-serif; font-size: 13px; color: #7f7663; line-height: 1.8; font-weight: 300;">
+                Dear ${user.name},<br/><br/>
+                We are pleased to inform you that your order <strong>${order._id}</strong> has been updated to <strong>${finalStatus.toUpperCase()}</strong>.
+                <br/><br/>
+                Atelier Note: <em>${note || 'Your exquisite items are being handled with care.'}</em>
+              </p>
+              <div style="margin-top: 30px; text-align: center;">
+                <a href="${frontendUrl}/dashboard?tab=orders" style="display: inline-block; background-color: #735c00; color: #ffffff; text-decoration: none; padding: 13px 30px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-family: 'Inter', sans-serif;">Track Live Dispatch</a>
+              </div>
+            </div>
+          `,
+          type: 'order',
+          action: `order_${finalStatus.toLowerCase().replace(/ /g, '_')}`,
+          userId: user._id.toString(),
+        });
+      }
+    } catch (emailErr) {
+      logger.error('Failed to dispatch order status update email in background:', emailErr);
+    }
+
+    return order;
+  }
+}
+
+export default OrderService;
