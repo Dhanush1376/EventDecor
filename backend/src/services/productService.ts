@@ -82,7 +82,7 @@ class ProductService {
       // Clean up removed auxiliary product images if replaced
       if (data.images && oldProduct.images && Array.isArray(oldProduct.images)) {
         const newImagesSet = new Set(data.images);
-        const removedImages = oldProduct.images.filter((img) => !newImagesSet.has(img));
+        const removedImages = oldProduct.images.filter((img: string) => !newImagesSet.has(img));
         for (const img of removedImages) {
           const publicId = extractPublicId(img);
           if (publicId) {

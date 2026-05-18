@@ -7,7 +7,7 @@ interface CacheEntry<T> {
 
 export class MemoryCache {
   private cache = new Map<string, CacheEntry<any>>();
-  private cleanupInterval: NodeJS.Timeout | null = null;
+  private cleanupInterval: any = null;
   private maxKeys: number;
   private defaultTtlMs: number;
 
@@ -17,10 +17,10 @@ export class MemoryCache {
     
     // Periodically sweep expired entries to prevent memory leaks
     const interval = options.cleanupIntervalMs || 60 * 1000; // default 1 minute
-    this.cleanupInterval = setInterval(() => this.sweep(), interval);
+    this.cleanupInterval = (globalThis as any).setInterval(() => this.sweep(), interval);
     
     // Avoid blocking node process termination in tests or script executions
-    if (this.cleanupInterval.unref) {
+    if (this.cleanupInterval && this.cleanupInterval.unref) {
       this.cleanupInterval.unref();
     }
   }

@@ -22,7 +22,7 @@ class OrderService {
     let subtotal = 0;
     const productIds = [...new Set(items.map((item: any) => String(item.productId)).filter(Boolean))] as any[];
     const products = await Product.find({ _id: { $in: productIds } }).select('title price stock category isActive');
-    const productsById = new Map(products.map((product) => [product._id.toString(), product]));
+    const productsById = new Map<string, any>(products.map((product: any) => [product._id.toString(), product]));
     
     // 1. Validate stock availability and calculate actual subtotal from DB
     for (const item of items) {
@@ -75,7 +75,7 @@ class OrderService {
           // Dynamic Product/Category targeting checks
           let applicableAmount = 0;
           if (coupon.targetType === 'products' && coupon.targetProductIds && coupon.targetProductIds.length > 0) {
-            const productIdsStr = coupon.targetProductIds.map(id => id.toString());
+            const productIdsStr = coupon.targetProductIds.map((id: any) => id.toString());
             for (const item of items) {
               if (productIdsStr.includes(item.productId.toString())) {
                 const product = productsById.get(String(item.productId));
@@ -88,7 +88,7 @@ class OrderService {
               couponMessage = 'This coupon code is only valid for selected premium products.';
             }
           } else if (coupon.targetType === 'categories' && coupon.targetCategories && coupon.targetCategories.length > 0) {
-            const targetCatsLower = coupon.targetCategories.map(c => c.toLowerCase());
+            const targetCatsLower = coupon.targetCategories.map((c: any) => c.toLowerCase());
             for (const item of items) {
               const product = productsById.get(String(item.productId));
               if (product && targetCatsLower.includes(product.category.toLowerCase())) {
@@ -198,7 +198,7 @@ class OrderService {
     // 1. Batch-query products at once to eliminate N+1 findById queries inside the loop
     const productIds = [...new Set(items.map((item: any) => String(item.productId)).filter(Boolean))] as any[];
     const products = await Product.find({ _id: { $in: productIds } }).select('title price stock isActive imageSrc category');
-    const productsById = new Map(products.map(p => [p._id.toString(), p]));
+    const productsById = new Map<string, any>(products.map((p: any) => [p._id.toString(), p]));
 
     // Pre-validate all items before doing any stock updates to maintain transactional integrity
     for (const item of items) {
