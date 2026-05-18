@@ -1,0 +1,206 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IBookingPayment {
+  amount: number;
+  date: Date;
+  transactionId?: string;
+  status: 'pending' | 'success' | 'failed';
+  note?: string;
+}
+
+export interface IBookingChat {
+  sender: 'client' | 'admin';
+  message: string;
+  timestamp: Date;
+  attachments?: string[];
+}
+
+export interface IBookingAddon {
+  name: string;
+  price: number;
+}
+
+export interface IBookingCustomization {
+  themeColor?: string;
+  floralPreference?: string;
+  lightingPreference?: string;
+  stageSize?: string;
+  additionalRequests?: string;
+}
+
+export interface IAssignedTeam {
+  name: string;
+  role: string;
+  contact?: string;
+}
+
+export interface IRentedInventory {
+  item: string;
+  quantity: number;
+  returnStatus: 'pending' | 'returned' | 'damaged';
+  notes?: string;
+}
+
+export interface IEventBooking extends Document {
+  user: mongoose.Types.ObjectId;
+  eventPackage?: mongoose.Types.ObjectId;
+  title: string;
+  eventType: string;
+  date: Date;
+  timing: {
+    start: string;
+    end: string;
+  };
+  setupTiming?: Date;
+  pickupTiming?: Date;
+  guestCount: number;
+  venue: {
+    address: string;
+    googleMapsLink?: string;
+    isOutdoor: boolean;
+  };
+  customization?: IBookingCustomization;
+  selectedAddons?: IBookingAddon[];
+  inspirationImages?: string[];
+  pricing: {
+    rentalFee: number;
+    setupCharges: number;
+    transportationCost: number;
+    addOnCharges: number;
+    depositAmount: number;
+    totalPrice: number;
+    pendingBalance: number;
+    paymentStatus: 'unpaid' | 'partial' | 'paid';
+  };
+  payments?: IBookingPayment[];
+  status:
+    | 'inquiry'
+    | 'review'
+    | 'discussion'
+    | 'quotation_sent'
+    | 'awaiting_approval'
+    | 'confirmed'
+    | 'team_assigned'
+    | 'setup_in_progress'
+    | 'active'
+    | 'pickup_scheduled'
+    | 'completed';
+  assignedTeam?: IAssignedTeam[];
+  rentedInventory?: IRentedInventory[];
+  adminNotes?: string;
+  clientApproved: boolean;
+  chatHistory?: IBookingChat[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const BookingPaymentSchema = new Schema({
+  amount: { type: Number, required: true },
+  date: { type: Date, default: Date.now },
+  transactionId: { type: String },
+  status: { type: String, enum: ['pending', 'success', 'failed'], default: 'success' },
+  note: { type: String },
+});
+
+const BookingChatSchema = new Schema({
+  sender: { type: String, enum: ['client', 'admin'], required: true },
+  message: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now },
+  attachments: [{ type: String }],
+});
+
+const BookingAddonSchema = new Schema({
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+});
+
+const BookingCustomizationSchema = new Schema({
+  themeColor: { type: String },
+  floralPreference: { type: String },
+  lightingPreference: { type: String },
+  stageSize: { type: String },
+  additionalRequests: { type: String },
+});
+
+const AssignedTeamSchema = new Schema({
+  name: { type: String, required: true },
+  role: { type: String, required: true },
+  contact: { type: String },
+});
+
+const RentedInventorySchema = new Schema({
+  item: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  returnStatus: { type: String, enum: ['pending', 'returned', 'damaged'], default: 'pending' },
+  notes: { type: String },
+});
+
+const EventBookingSchema: Schema = new Schema(
+  {
+    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    eventPackage: { type: Schema.Types.ObjectId, ref: 'Event' },
+    title: { type: String, required: true },
+    eventType: { type: String, required: true },
+    date: { type: Date, required: true },
+    timing: {
+      start: { type: String, required: true },
+      end: { type: String, required: true },
+    },
+    setupTiming: { type: Date },
+    pickupTiming: { type: Date },
+    guestCount: { type: Number, required: true },
+    venue: {
+      address: { type: String, required: true },
+      googleMapsLink: { type: String },
+      isOutdoor: { type: Boolean, default: false },
+    },
+    customization: BookingCustomizationSchema,
+    selectedAddons: [BookingAddonSchema],
+    inspirationImages: [{ type: String }],
+    pricing: {
+      rentalFee: { type: Number, default: 0 },
+      setupCharges: { type: Number, default: 0 },
+      transportationCost: { type: Number, default: 0 },
+      addOnCharges: { type: Number, default: 0 },
+      depositAmount: { type: Number, default: 0 },
+      totalPrice: { type: Number, default: 0 },
+      pendingBalance: { type: Number, default: 0 },
+      paymentStatus: { type: String, enum: ['unpaid', 'partial', 'paid'], default: 'unpaid' },
+    },
+    payments: [BookingPaymentSchema],
+    status: {
+      type: String,
+      enum: [
+        'inquiry',
+        'review',
+        'discussion',
+        'quotation_sent',
+        'awaiting_approval',
+        'confirmed',
+        'team_assigned',
+        'setup_in_progress',
+        'active',
+        'pickup_scheduled',
+        'completed',
+      ],
+      default: 'inquiry',
+    },
+    assignedTeam: [AssignedTeamSchema],
+    rentedInventory: [RentedInventorySchema],
+    adminNotes: { type: String },
+    clientApproved: { type: Boolean, default: false },
+    chatHistory: [BookingChatSchema],
+  },
+  { timestamps: true }
+);
+
+EventBookingSchema.index({ user: 1 });
+EventBookingSchema.index({ date: 1 });
+EventBookingSchema.index({ status: 1 });
+
+// High-Performance Production Compound Indexes for User and Admin Paginated Pipelines
+EventBookingSchema.index({ user: 1, createdAt: -1 });
+EventBookingSchema.index({ status: 1, createdAt: -1 });
+
+const EventBooking = mongoose.model<IEventBooking>('EventBooking', EventBookingSchema);
+export default EventBooking;
