@@ -8,6 +8,5 @@ dist
 README.md
 Dockerfile
 vercel.json
-nginx.conf
 tmp
 scratch
