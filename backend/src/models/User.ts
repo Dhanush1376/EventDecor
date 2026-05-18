@@ -1,0 +1,145 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IUser extends Document {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: 'user' | 'customer' | 'admin' | 'manager' | 'coordinator';
+  avatar?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  addresses: Array<{
+    id: string;
+    name: string;
+    phone: string;
+    alternatePhone?: string;
+    email: string;
+    pincode: string;
+    locality: string;
+    addressString: string;
+    landmark?: string;
+    city: string;
+    state: string;
+    country: string;
+    tag: string;
+    isDefault: boolean;
+    deliveryInstructions?: string;
+    latitude?: number;
+    longitude?: number;
+  }>;
+  wishlist: mongoose.Types.ObjectId[];
+  cart: Array<{
+    product: mongoose.Types.ObjectId;
+    quantity: number;
+    variant?: string;
+  }>;
+  orders: mongoose.Types.ObjectId[];
+  recentlyViewed?: Array<{
+    product: mongoose.Types.ObjectId;
+    viewedAt: Date;
+  }>;
+  notificationPreferences?: {
+    email: boolean;
+    marketing: boolean;
+  };
+  accountPreferences?: {
+    theme: string;
+    language: string;
+  };
+  isVerified: boolean;
+  lastLogin?: Date;
+  refreshTokenHash?: string;
+  refreshTokenExpiresAt?: Date;
+  walletBalance: number;
+  siriCoins: number;
+  loyaltyTier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+  referralCode?: string;
+  referredBy?: mongoose.Types.ObjectId;
+  referralsCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const UserSchema: Schema = new Schema(
+  {
+    name: { type: String, default: 'Customer', trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    phone: { type: String, trim: true },
+    role: { 
+      type: String, 
+      enum: ['user', 'customer', 'admin', 'manager', 'coordinator'], 
+      default: 'customer' 
+    },
+    avatar: { type: String, default: '' },
+    gender: { type: String, default: '', trim: true },
+    dateOfBirth: { type: String, default: '', trim: true },
+    addresses: [
+      {
+        name: { type: String },
+        phone: { type: String },
+        alternatePhone: { type: String },
+        email: { type: String },
+        pincode: { type: String },
+        locality: { type: String },
+        addressString: { type: String },
+        landmark: { type: String },
+        city: { type: String },
+        state: { type: String },
+        country: { type: String, default: 'India' },
+        tag: { type: String, default: 'Home' },
+        isDefault: { type: Boolean, default: false },
+        deliveryInstructions: { type: String },
+        latitude: { type: Number },
+        longitude: { type: Number },
+      }
+    ],
+    wishlist: [{ type: Schema.Types.ObjectId, ref: 'Product', default: [] }],
+    cart: [
+      {
+        product: { type: Schema.Types.ObjectId, ref: 'Product' },
+        quantity: { type: Number, default: 1 },
+        variant: { type: String, default: 'Default' }
+      }
+    ],
+    orders: [{ type: Schema.Types.ObjectId, ref: 'Order', default: [] }],
+    recentlyViewed: [
+      {
+        product: { type: Schema.Types.ObjectId, ref: 'Product' },
+        viewedAt: { type: Date, default: Date.now }
+      }
+    ],
+    notificationPreferences: {
+      email: { type: Boolean, default: true },
+      marketing: { type: Boolean, default: true }
+    },
+    accountPreferences: {
+      theme: { type: String, default: 'light' },
+      language: { type: String, default: 'en' }
+    },
+    isVerified: { type: Boolean, default: false },
+    lastLogin: { type: Date },
+    refreshTokenHash: { type: String, select: false },
+    refreshTokenExpiresAt: { type: Date, select: false },
+    walletBalance: { type: Number, default: 0 },
+    siriCoins: { type: Number, default: 0 },
+    loyaltyTier: { type: String, enum: ['Bronze', 'Silver', 'Gold', 'Platinum'], default: 'Bronze' },
+    referralCode: { type: String, unique: true, sparse: true },
+    referredBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    referralsCount: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
+
+UserSchema.index({ role: 1 });
+UserSchema.index({ isVerified: 1 });
+UserSchema.index({ "recentlyViewed.product": 1 });
+UserSchema.index({ loyaltyTier: 1 });
+UserSchema.index({ refreshTokenHash: 1 }, { sparse: true });
+
+// High-Performance Production Compound Index for Paginated Staff and Admin Lists
+UserSchema.index({ role: 1, createdAt: -1 });
+
+const User = mongoose.model<IUser>('User', UserSchema);
+
+export default User;
