@@ -1,0 +1,33 @@
+import { Request, Response } from 'express';
+import Event from '../models/Event';
+import asyncHandler from '../utils/asyncHandler';
+import ApiResponse from '../utils/ApiResponse';
+import ApiError from '../utils/ApiError';
+
+export const getEvents = asyncHandler(async (req: Request, res: Response) => {
+  const { category, style } = req.query;
+  const filter: any = { isActive: true };
+  if (category) filter.category = category;
+  if (style) filter.style = style;
+
+  const events = await Event.find(filter);
+  res.status(200).json(new ApiResponse(true, 'Events fetched', events));
+});
+
+export const getEventById = asyncHandler(async (req: Request, res: Response) => {
+  const event = await Event.findById(req.params.id);
+  if (!event) throw new ApiError(404, 'Event not found');
+  res.status(200).json(new ApiResponse(true, 'Event details', event));
+});
+
+export const createEvent = asyncHandler(async (req: Request, res: Response) => {
+  const event = new Event(req.body);
+  await event.save();
+  res.status(201).json(new ApiResponse(true, 'Event created', event));
+});
+
+export const updateEvent = asyncHandler(async (req: Request, res: Response) => {
+  const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!event) throw new ApiError(404, 'Event not found');
+  res.status(200).json(new ApiResponse(true, 'Event updated', event));
+});
