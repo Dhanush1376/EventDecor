@@ -166,6 +166,17 @@ app.use((req, res, next) => {
   next();
 });
 
+// Welcome / health-check redirect at root level
+app.get('/', (req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(200).json({
+    success: true,
+    message: 'Welcome to Siri Arts & Crafts API Gateway. Systems are fully functional.',
+    timestamp: new Date().toISOString(),
+    documentation: 'https://github.com/Dhanush1376/EventDecor',
+  });
+});
+
 // Ignore favicon
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
