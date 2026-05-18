@@ -1,0 +1,327 @@
+import React from "react";
+import { useCart } from "../../context/CartContext";
+import { useWishlist } from "../../context/WishlistContext";
+import { useAuth } from "../../context/AuthContext";
+import { motion } from "framer-motion";
+import { ShareButton } from "./ShareButton";
+
+export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
+  const { addItem } = useCart();
+  const { toggleItem, isWishlisted } = useWishlist();
+  const { runProtectedAction } = useAuth();
+  const [quantity, setQuantity] = React.useState(1);
+  const [added, setAdded] = React.useState(false);
+
+  if (!product) return null;
+
+  const oldPrice = product?.oldPrice || 0;
+  const discount =
+    oldPrice > 0 && product?.price
+      ? Math.round(((oldPrice - product.price) / oldPrice) * 100)
+      : 0;
+  const wishlisted = isWishlisted(product?._id || product?.id);
+
+  const handleWishlist = () => {
+    if (!product) return;
+    runProtectedAction(() => {
+      toggleItem({
+        id: product._id || product.id,
+        title: product.title,
+        price: product.price,
+        imageSrc: product.imageSrc || product.image,
+      });
+    });
+  };
+
+  const handleAddToCart = () => {
+    runProtectedAction(() => {
+      addItem({
+        id: product._id || product.id,
+        title: product.title,
+        price: product.price,
+        imageSrc: product.imageSrc || product.image,
+        formattedPrice: `Rs. ${product.price?.toLocaleString()}`,
+        quantity: quantity,
+      });
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-6 md:gap-7 lg:sticky lg:top-32">
+      {/* Category & Badge Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 md:gap-3">
+          <span className="font-label text-[12px] md:text-[13px] text-primary uppercase tracking-[0.4em] font-bold">
+            {product.category || "Artisanal Collection"}
+          </span>
+          <span className="w-1 h-1 rounded-full bg-primary font-bold"></span>
+          <span className="font-label text-[12px] md:text-[13px] text-on-surface uppercase tracking-widest font-bold">
+            Heritage Series
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <div className="relative group/badge">
+            <div className="w-9 h-9 rounded-full bg-primary-container/10 border border-primary-container/20 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-[16px] text-primary">
+                workspace_premium
+              </span>
+            </div>
+            <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl">
+              Bestseller
+            </span>
+          </div>
+          <div className="relative group/badge">
+            <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-[16px] text-on-surface">
+                draw
+              </span>
+            </div>
+            <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl">
+              Handmade
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Product Title & Metadata - Refined & Minimal */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1.5 md:space-y-2 flex-1">
+          <h1 className="text-[20px] sm:text-[24px] md:text-[32px] text-on-surface leading-tight tracking-tight font-bold">
+            {product.title}
+            {(product.teluguTitle || product.nameTE || product.teluguName) && (
+              <span className="ml-2 text-on-surface/40 font-display italic text-[18px] sm:text-[22px] md:text-[28px] font-normal">
+                ({product.teluguTitle || product.nameTE || product.teluguName})
+              </span>
+            )}
+          </h1>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-0.5 text-primary-container">
+              {[...Array(5)].map((_, i) => (
+                <span
+                  key={i}
+                  className="material-symbols-outlined text-[13px] sm:text-[14px]"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  star
+                </span>
+              ))}
+            </div>
+            <span className="font-body-sm text-on-surface/60 font-medium text-[12px] sm:text-[13px]">
+              {(product.reviewCount || product.reviews || 0) > 0 
+                ? `${product.reviewCount || product.reviews} Verified Reviews` 
+                : "Be the first to review"}
+            </span>
+            <span className="w-1 h-1 rounded-full bg-on-surface/20"></span>
+            {product.isFeatured && (
+              <span className="font-label-sm text-[11px] sm:text-[12px] text-green-700 font-bold flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                Trending this week
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing & Shipping - Minimalist & Integrated */}
+      <div className="py-2 border-b border-outline-variant/10">
+        <div className="flex flex-wrap items-baseline gap-3 mb-4">
+          <span className="font-body text-[24px] sm:text-[32px] text-on-surface font-bold">
+            Rs. {product.price?.toLocaleString()}
+          </span>
+          {oldPrice && (
+            <span className="font-body-sm text-on-surface/40 font-medium line-through text-[13px] sm:text-[15px]">
+              Rs. {oldPrice.toLocaleString()}
+            </span>
+          )}
+          <span className="text-primary font-label-sm text-[11px] sm:text-[12px] font-bold">
+            ({discount}% off)
+          </span>
+        </div>
+
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-3 text-on-surface/70">
+            <span className="material-symbols-outlined text-[18px] text-primary/60">
+              local_shipping
+            </span>
+            <span className="font-body-sm text-[13px] sm:text-[14px] font-medium italic">
+              Complimentary premium shipping included
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-on-surface/70">
+            <span className="material-symbols-outlined text-[18px] text-primary/60">
+              event_available
+            </span>
+            <span className="font-body-sm text-[13px] sm:text-[14px] font-medium italic">
+              Delivered in 3-5 artisanal crafting days
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Description Section - Lighter weight */}
+      <div className="space-y-2 mt-2">
+        <h3 className="font-label-sm text-[11px] text-on-surface/40 uppercase tracking-[0.2em] font-bold">
+          The Essence
+        </h3>
+        <p className="font-body-md text-on-surface/80 font-normal leading-relaxed text-[14px] sm:text-[15px]">
+          {product.description ||
+            "A masterfully handcrafted piece that seamlessly blends traditional Indian artistry with contemporary design."}
+        </p>
+      </div>
+
+      {/* Action CTA Stack */}
+      <div className="space-y-6 mt-4">
+        {product.stock != null && product.stock <= 5 && product.stock > 0 && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-full bg-[#fcfbf9] border border-primary/20 shadow-sm">
+            <span className="material-symbols-outlined text-primary text-[16px] animate-pulse font-bold">
+              bolt
+            </span>
+            <span className="font-label-sm text-[10px] text-primary uppercase tracking-[0.2em] font-bold">
+              {product.stock === 1 ? "LAST PIECE IN COLLECTION" : `ONLY ${product.stock} LEFT IN COLLECTION`}
+            </span>
+          </div>
+        )}
+        {/* Quantity Selector */}
+        <div className="flex flex-col gap-3">
+          <h3 className="font-label-sm text-[11px] text-on-surface/40 uppercase tracking-[0.2em] font-bold">
+            Quantity
+          </h3>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center bg-surface-container-low rounded-full border border-outline-variant/30 p-1">
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors disabled:opacity-30"
+                disabled={quantity <= 1}
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  remove
+                </span>
+              </button>
+              <span className="w-12 text-center font-body-lg font-bold">
+                {quantity}
+              </span>
+              <button
+                onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
+                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors disabled:opacity-30"
+                disabled={quantity >= maxQuantity}
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  add
+                </span>
+              </button>
+            </div>
+            {quantity >= maxQuantity && (
+              <span className="text-[10px] text-primary uppercase tracking-wider font-bold">
+                Max limit reached
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            ref={atcRef}
+            onClick={handleAddToCart}
+            className={`!py-4 rounded-full flex items-center justify-center gap-2 group cursor-pointer shadow-xl transition-all font-bold px-4 ${
+              added
+                ? "bg-[#e0d6b8] text-[#1a1c1a]"
+                : "bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a]"
+            }`}
+          >
+            {added ? (
+              <>
+                <span className="material-symbols-outlined text-[18px] shrink-0">
+                  check
+                </span>
+                <span className="text-[11px] uppercase tracking-widest">
+                  Added
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-[18px] group-hover:rotate-12 transition-transform shrink-0">
+                  shopping_bag
+                </span>
+                <span className="text-[11px] uppercase tracking-widest">
+                  Add to Bag
+                </span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={handleWishlist}
+            className="bg-white text-black border border-black/10 !py-4 rounded-full flex items-center justify-center gap-2 group cursor-pointer font-bold px-4 hover:border-black/30 transition-all shadow-sm"
+          >
+            <motion.span
+              animate={{
+                scale: wishlisted ? [1, 1.3, 1] : 1,
+                color: wishlisted ? "#ff2d55" : "var(--color-primary)",
+              }}
+              whileTap={{ scale: 0.8 }}
+              transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+              className="material-symbols-outlined text-[18px] group-hover:scale-110 transition-all duration-300 shrink-0"
+              style={{
+                fontVariationSettings: wishlisted ? "'FILL' 1" : "'FILL' 0",
+              }}
+            >
+              favorite
+            </motion.span>
+            <span className="text-[11px] uppercase tracking-widest">
+              {wishlisted ? "Saved" : "Save for Later"}
+            </span>
+          </button>
+        </div>
+
+        {/* Custom Design Consultation Card */}
+        <div className="p-6 rounded-3xl bg-on-surface-variant text-surface relative overflow-hidden group shadow-lg">
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+            <div>
+              <h4 className="font-headline-sm mb-1 text-gold font-bold">
+                Need a Custom Design?
+              </h4>
+              <p className="font-body-sm text-surface font-medium">
+                Personalize this design to perfectly match your wedding theme.
+              </p>
+            </div>
+            <a
+              href="/custom-orders"
+              className="bg-surface text-on-surface px-6 py-2.5 rounded-full font-label-sm text-[12px] uppercase tracking-[0.2em] hover:bg-primary-container transition-all whitespace-nowrap font-bold shadow-sm"
+            >
+              Talk to a Designer
+            </a>
+          </div>
+          <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:opacity-10 transition-opacity">
+            <span className="material-symbols-outlined text-[120px]">
+              architecture
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Trust Signifiers Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/10">
+        <FeatureItem icon="draw" label="Master Crafted" />
+        <FeatureItem icon="workspace_premium" label="Artisan Authenticity" />
+        <FeatureItem icon="all_inclusive" label="Lifetime Warranty" />
+        <FeatureItem icon="public" label="Ethical Sourcing" />
+      </div>
+    </div>
+  );
+}
+
+function FeatureItem({ icon, label }) {
+  return (
+    <div className="flex flex-col items-center text-center gap-2 group cursor-default">
+      <div className="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center group-hover:bg-primary-container/20 transition-colors shadow-2xs">
+        <span className="material-symbols-outlined text-[18px] text-primary">
+          {icon}
+        </span>
+      </div>
+      <span className="font-label-sm text-[12px] text-on-surface uppercase tracking-widest font-bold">
+        {label}
+      </span>
+    </div>
+  );
+}
