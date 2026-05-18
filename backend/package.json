@@ -35,9 +35,7 @@
     "nodemailer": "^8.0.7",
     "razorpay": "^2.9.6",
     "winston": "^3.19.0",
-    "xss-clean": "^0.1.4"
-  },
-  "devDependencies": {
+    "xss-clean": "^0.1.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
@@ -50,5 +48,6 @@
     "@types/nodemailer": "^8.0.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3"
-  }
+  },
+  "devDependencies": {}
 }

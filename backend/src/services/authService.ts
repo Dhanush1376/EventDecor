@@ -387,10 +387,10 @@ class AuthService {
       // Fire profile enrichment in the background using native fetch (Node 18+)
       (async () => {
         try {
-          if (typeof globalThis.fetch === 'function') {
+          if (typeof fetch === 'function') {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 1500);
-            const res = await globalThis.fetch(`https://www.gravatar.com/${hash}.json`, {
+            const res = await fetch(`https://www.gravatar.com/${hash}.json`, {
               headers: { 'User-Agent': 'SiriArtsApp/1.0' },
               signal: controller.signal,
             }).then((r: any) => {
