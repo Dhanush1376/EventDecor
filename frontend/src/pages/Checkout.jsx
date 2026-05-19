@@ -28,7 +28,7 @@ import { useApi } from "../hooks/useApi";
 import toast from "react-hot-toast";
 
 export function Checkout() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, clearCart, claimedCoupon, setClaimedCoupon } = useCart();
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const { processPayment } = useRazorpay();
   const navigate = useNavigate();
@@ -81,12 +81,15 @@ export function Checkout() {
 
   React.useEffect(() => {
     if (user) {
-      setNewAddress(prev => ({
-        ...prev,
-        name: user.name || prev.name,
-        phone: user.phone || prev.phone,
-        email: user.email || prev.email,
-      }));
+      const timer = setTimeout(() => {
+        setNewAddress(prev => ({
+          ...prev,
+          name: user.name || prev.name,
+          phone: user.phone || prev.phone,
+          email: user.email || prev.email,
+        }));
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [user]);
 
@@ -149,7 +152,9 @@ export function Checkout() {
       });
 
       // Load active coupons
-      setLoadingCoupons(true);
+      const timer = setTimeout(() => {
+        setLoadingCoupons(true);
+      }, 0);
       couponService.getAll().then((res) => {
         if (res.success && res.data) {
           const list = res.data.data || res.data.items || (Array.isArray(res.data) ? res.data : []);
@@ -160,10 +165,10 @@ export function Checkout() {
           setAvailableCoupons(activeList);
 
           // Check if a coupon was claimed from the storefront promo banner
-          const claimed = localStorage.getItem("claimedCouponCode");
+          const claimed = claimedCoupon;
           if (claimed) {
             setCouponInput(claimed);
-            localStorage.removeItem("claimedCouponCode");
+            setClaimedCoupon("");
             fetchBackendTotals(claimed);
             toast.success(`🎟️ Auto-applied claimed coupon "${claimed}"!`);
           }
@@ -173,11 +178,12 @@ export function Checkout() {
       }).finally(() => {
         setLoadingCoupons(false);
       });
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated]);
 
   // Securely calculate and validate order totals from backend
-  const fetchBackendTotals = async (couponToApply = "") => {
+  async function fetchBackendTotals(couponToApply = "") {
     if (!activeItems || activeItems.length === 0) return;
     
     try {
@@ -235,6 +241,22 @@ export function Checkout() {
     e.preventDefault();
     if (!newAddress.name || !newAddress.phone || !newAddress.email || !newAddress.address || !newAddress.landmark || !newAddress.pincode || !newAddress.city || !newAddress.state || !newAddress.country) {
       setAddressError("Please fill in all mandatory address parameters (Name, Phone, Email, Address, Pincode, Locality, Landmark, City, State, Country).");
+      return;
+    }
+    if (!/^\d{10}$/.test(newAddress.phone)) {
+      setAddressError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (newAddress.alternatePhone && !/^\d{10}$/.test(newAddress.alternatePhone)) {
+      setAddressError("Please enter a valid 10-digit alternate mobile number.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newAddress.email)) {
+      setAddressError("Please enter a valid email address.");
+      return;
+    }
+    if (!/^\d{6}$/.test(newAddress.pincode)) {
+      setAddressError("Please enter a valid 6-digit pincode.");
       return;
     }
     const payload = {
@@ -396,12 +418,14 @@ export function Checkout() {
       // Handle COD
       try {
         const response = await orderService.create(orderData);
-        if (response.success) {
+        if (response && response.success) {
+          const orderObj = response.data?.order || response.data || response;
           clearCart();
-          navigate("/order-success", { state: { orderDetails: response.data } });
+          navigate("/order-success", { state: { orderDetails: orderObj } });
         }
       } catch (err) {
-        toast.error("Failed to place COD order");
+        console.error("Failed to place COD order:", err);
+        toast.error(err.response?.data?.message || err.message || "Failed to place COD order");
       } finally {
         setIsProcessing(false);
       }
@@ -538,76 +562,89 @@ export function Checkout() {
 
                     {/* Render Saved Address Selection Radio stack */}
                     <div className="space-y-3">
-                      {savedAddresses.map((addr) => (
-                        <motion.label
-                          layout
-                          whileHover={{
-                            scale: selectedAddressId === addr.id ? 1 : 1.005,
-                          }}
-                          key={addr.id}
-                          className={`block p-4 rounded-lg border cursor-pointer transition-all relative ${
-                            selectedAddressId === addr.id
-                              ? "bg-surface-bright border-primary ring-1 ring-primary"
-                              : "bg-white border-outline-variant/50 hover:border-outline-variant"
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <input
-                              type="radio"
-                              name="delivery-address-radio"
-                              checked={selectedAddressId === addr.id}
-                              onChange={() => {
-                                setSelectedAddressId(addr.id);
-                                setIsAddingNewAddress(false);
-                              }}
-                              className="mt-1 text-primary focus:ring-0 cursor-pointer transition-all"
-                            />
-                            <div className="flex-1 min-w-0 text-xs">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-bold text-on-surface text-[10px] sm:text-xs">
-                                  {addr.name}
-                                </span>
-                                <span className="bg-surface-container-low text-secondary text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-                                  {addr.type}
-                                </span>
-                                <span className="font-bold text-on-surface ml-2 text-[10px] sm:text-xs">
-                                  {addr.phone}
-                                </span>
-                              </div>
-                              <p className="text-secondary leading-relaxed">
-                                {addr.address}, {addr.locality}, {addr.city},{" "}
-                                {addr.state} -{" "}
-                                <span className="font-bold text-on-surface">
-                                  {addr.pincode}
-                                </span>
-                              </p>
+                      {savedAddresses.map((addr) => {
+                        const addrId = addr._id || addr.id;
+                        return (
+                          <motion.label
+                            layout
+                            whileHover={{
+                              scale: selectedAddressId === addrId ? 1 : 1.005,
+                            }}
+                            key={addrId}
+                            className={`block p-4 rounded-lg border cursor-pointer transition-all relative ${
+                              selectedAddressId === addrId
+                                ? "bg-surface-bright border-primary ring-1 ring-primary"
+                                : "bg-white border-outline-variant/50 hover:border-outline-variant"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="radio"
+                                name="delivery-address-radio"
+                                checked={selectedAddressId === addrId}
+                                onChange={() => {
+                                  setSelectedAddressId(addrId);
+                                  setIsAddingNewAddress(false);
+                                }}
+                                className="mt-1 text-primary focus:ring-0 cursor-pointer transition-all"
+                              />
+                              <div className="flex-1 min-w-0 text-xs">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-bold text-on-surface text-[10px] sm:text-xs">
+                                    {addr.name}
+                                  </span>
+                                  <span className="bg-surface-container-low text-secondary text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                                    {addr.type}
+                                  </span>
+                                  <span className="font-bold text-on-surface ml-2 text-[10px] sm:text-xs">
+                                    {addr.phone}
+                                  </span>
+                                </div>
+                                <p className="text-secondary leading-relaxed">
+                                  {addr.address}, {addr.locality}, {addr.city},{" "}
+                                  {addr.state} -{" "}
+                                  <span className="font-bold text-on-surface">
+                                    {addr.pincode}
+                                  </span>
+                                </p>
 
-                              {/* Active CTA inside active radial item */}
-                              <AnimatePresence>
-                                {selectedAddressId === addr.id &&
-                                  !isAddingNewAddress && (
-                                    <motion.div
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: "auto" }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      className="mt-4 pt-3 border-t border-surface-container-low overflow-hidden"
-                                    >
-                                      <motion.button
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        type="button"
-                                        onClick={() => setActiveStep(2)}
-                                        className="bg-primary hover:bg-primary-hover text-surface font-bold text-xs uppercase tracking-wider px-6 py-2.5 rounded shadow-xs transition-colors cursor-pointer"
+                                {/* Active CTA inside active radial item */}
+                                <AnimatePresence>
+                                  {selectedAddressId === addrId &&
+                                    !isAddingNewAddress && (
+                                      <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="mt-4 pt-3 border-t border-surface-container-low overflow-hidden"
                                       >
-                                        Deliver Here
-                                      </motion.button>
-                                    </motion.div>
-                                  )}
-                              </AnimatePresence>
+                                        <motion.button
+                                          whileHover={{ scale: 1.02 }}
+                                          whileTap={{ scale: 0.98 }}
+                                          type="button"
+                                          onClick={() => {
+                                            if (!selectedAddressId) {
+                                              toast.error("Please select a delivery address first.");
+                                              return;
+                                            }
+                                            if (isAddingNewAddress) {
+                                              toast.error("Please save your new address or click cancel to proceed.");
+                                              return;
+                                            }
+                                            setActiveStep(2);
+                                          }}
+                                          className="bg-primary hover:bg-primary-hover text-surface font-bold text-xs uppercase tracking-wider px-6 py-2.5 rounded shadow-xs transition-colors cursor-pointer"
+                                        >
+                                          Deliver Here
+                                        </motion.button>
+                                      </motion.div>
+                                    )}
+                                </AnimatePresence>
+                              </div>
                             </div>
-                          </div>
-                        </motion.label>
-                      ))}
+                          </motion.label>
+                        );
+                      })}
                     </div>
 
                     {/* Add New Address Form Expansion toggle */}
@@ -660,6 +697,7 @@ export function Checkout() {
                                 id="checkout-name"
                                 type="text"
                                 required
+                                autoComplete="name"
                                 placeholder="Your full name"
                                 value={newAddress.name}
                                 onChange={(e) =>
@@ -682,6 +720,7 @@ export function Checkout() {
                                 id="checkout-phone"
                                 type="tel"
                                 required
+                                autoComplete="tel"
                                 placeholder="9876543210"
                                 pattern="[0-9]{10}"
                                 value={newAddress.phone}
@@ -707,6 +746,7 @@ export function Checkout() {
                               <input
                                 id="checkout-alternate-phone"
                                 type="tel"
+                                autoComplete="tel"
                                 placeholder="Alternate mobile"
                                 pattern="[0-9]{10}"
                                 value={newAddress.alternatePhone}
@@ -730,6 +770,7 @@ export function Checkout() {
                                 id="checkout-email"
                                 type="email"
                                 required
+                                autoComplete="email"
                                 placeholder="Email address"
                                 value={newAddress.email}
                                 onChange={(e) =>
@@ -757,6 +798,7 @@ export function Checkout() {
                                 inputMode="numeric"
                                 pattern="[0-9]*"
                                 required
+                                autoComplete="postal-code"
                                 placeholder="6-digit Pincode"
                                 value={newAddress.pincode}
                                 onChange={(e) => {
@@ -823,6 +865,7 @@ export function Checkout() {
                                 id="checkout-locality"
                                 type="text"
                                 required
+                                autoComplete="address-level3"
                                 placeholder="Locality"
                                 value={newAddress.locality}
                                 onChange={(e) =>
@@ -847,6 +890,7 @@ export function Checkout() {
                               id="checkout-address"
                               rows="2"
                               required
+                              autoComplete="street-address"
                               placeholder="House No, Building, Street, Area"
                               value={newAddress.address}
                               onChange={(e) =>
@@ -871,6 +915,7 @@ export function Checkout() {
                                 id="checkout-landmark"
                                 type="text"
                                 required
+                                autoComplete="address-line2"
                                 placeholder="E.g., near Appollo hospital"
                                 value={newAddress.landmark}
                                 onChange={(e) =>
@@ -893,6 +938,7 @@ export function Checkout() {
                                 id="checkout-country"
                                 type="text"
                                 required
+                                autoComplete="country-name"
                                 placeholder="Country name"
                                 value={newAddress.country}
                                 onChange={(e) =>
@@ -918,6 +964,7 @@ export function Checkout() {
                                 id="checkout-city"
                                 type="text"
                                 required
+                                autoComplete="address-level2"
                                 placeholder="City"
                                 value={newAddress.city}
                                 onChange={(e) =>
@@ -940,6 +987,7 @@ export function Checkout() {
                                 id="checkout-state"
                                 type="text"
                                 required
+                                autoComplete="address-level1"
                                 placeholder="State"
                                 value={newAddress.state}
                                 onChange={(e) =>
@@ -1083,7 +1131,17 @@ export function Checkout() {
                       : "var(--color-surface-container-low)",
                 }}
                 onClick={() => {
-                  if (activeStep > 1) setActiveStep(2);
+                  if (activeStep > 1) {
+                    if (!activeSelectedAddress) {
+                      toast.error("Please configure and select a delivery address first.");
+                      return;
+                    }
+                    if (isAddingNewAddress) {
+                      toast.error("Please save your new address or click cancel to proceed.");
+                      return;
+                    }
+                    setActiveStep(2);
+                  }
                 }}
                 aria-expanded={activeStep === 2}
                 className={`w-full p-4 flex items-center justify-between cursor-pointer transition-colors ${
@@ -1136,11 +1194,7 @@ export function Checkout() {
                     transition={{ duration: 0.3 }}
                     className="p-4 sm:p-6 space-y-4 border-t border-[#f4f3f1] overflow-hidden relative"
                   >
-                    <MandalaArtDecor
-                      variant={2}
-                      size={350}
-                      className="-bottom-20 -right-20 opacity-[0.02]"
-                    />
+
 
                     {/* Line Items List */}
                     <div className="space-y-4 divide-y divide-[#f4f3f1]">
@@ -1193,28 +1247,28 @@ export function Checkout() {
                     </div>
 
                     {/* Order Tracking notification trigger checkbox */}
-                    <div className="pt-4 border-t border-[#f4f3f1] flex items-center justify-between flex-wrap gap-2">
-                      <label className="flex items-center gap-2 text-xs select-none cursor-pointer">
+                    <div className="pt-4 border-t border-[#f4f3f1] flex flex-col gap-4">
+                      <label className="flex items-start gap-2.5 text-xs select-none cursor-pointer">
                         <input
                           type="checkbox"
                           checked={sendUpdatesToWhatsApp}
                           onChange={(e) =>
                             setSendUpdatesToWhatsApp(e.target.checked)
                           }
-                          className="rounded text-[#735c00] focus:ring-0 cursor-pointer transition-all"
+                          className="mt-0.5 rounded text-[#735c00] focus:ring-0 cursor-pointer transition-all"
                         />
-                        <span>
+                        <span className="text-secondary leading-normal">
                           Send dispatch alerts and scaper live credentials to
                           WhatsApp
                         </span>
                       </label>
 
                       <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
                         type="button"
                         onClick={() => setActiveStep(3)}
-                        className="w-full sm:w-auto bg-[#fb641b] hover:bg-[#f2550a] text-white font-bold text-xs uppercase tracking-wider px-8 py-3 rounded shadow-xs transition-colors cursor-pointer text-center block"
+                        className="w-full bg-[#fb641b] hover:bg-[#f2550a] text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded shadow-xs transition-colors cursor-pointer text-center block"
                       >
                         Continue
                       </motion.button>
@@ -1245,36 +1299,49 @@ export function Checkout() {
               <MandalaArtDecor
                 variant={1}
                 size={300}
-                className="absolute -top-10 -left-10 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity pointer-events-none"
+                className="absolute -bottom-10 -right-10 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity pointer-events-none"
               />
 
               {/* Header */}
               <motion.button
                 whileTap={{
-                  backgroundColor: activeStep === 3 ? "#735c00" : "#f4f3f1",
+                  backgroundColor:
+                    activeStep === 3
+                      ? "var(--color-primary)"
+                      : "var(--color-surface-container-low)",
                 }}
                 onClick={() => {
-                  if (activeStep > 2) setActiveStep(3);
+                  if (activeStep > 2) {
+                    if (!activeSelectedAddress) {
+                      toast.error("Please configure and select a delivery address first.");
+                      return;
+                    }
+                    if (isAddingNewAddress) {
+                      toast.error("Please save your new address or click cancel to proceed.");
+                      return;
+                    }
+                    setActiveStep(3);
+                  }
                 }}
                 aria-expanded={activeStep === 3}
                 className={`w-full p-4 flex items-center justify-between cursor-pointer transition-colors ${
                   activeStep === 3
-                    ? "bg-[#735c00] text-white"
-                    : "bg-[#faf9f6] text-[#1a1c1a] hover:bg-[#f4f3f1]"
+                    ? "bg-primary text-surface"
+                    : "bg-surface-bright text-on-surface hover:bg-surface-container-low"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span
                     className={`w-5 h-5 font-bold text-xs rounded flex items-center justify-center transition-colors ${
                       activeStep === 3
-                        ? "bg-white text-[#735c00]"
-                        : "bg-[#f4f3f1] text-[#685c57]"
+                        ? "bg-surface text-primary"
+                        : "bg-surface-container-low text-secondary"
                     }`}
                   >
                     4
                   </span>
                   <span
-                    className={`text-xs font-bold uppercase tracking-wider transition-colors ${activeStep === 3 ? "text-white" : "text-[#685c57]"}`}
+                    className={`text-xs font-bold uppercase tracking-wider transition-colors ${activeStep === 3 ? "text-surface" : "text-secondary"}`}
                   >
                     Payment Options
                   </span>
@@ -1381,7 +1448,13 @@ export function Checkout() {
                                     <input
                                       type="checkbox"
                                       checked={codConfirmed}
-                                      onChange={(e) => setCodConfirmed(e.target.checked)}
+                                      onChange={(e) => {
+                                        const isChecked = e.target.checked;
+                                        setCodConfirmed(isChecked);
+                                        if (isChecked && !codOtpSent && !codVerified) {
+                                          handleSendCodOtp();
+                                        }
+                                      }}
                                       className="rounded text-primary focus:ring-0 cursor-pointer"
                                     />
                                     <span className="text-[11px] text-on-surface-variant font-medium">
@@ -1430,26 +1503,26 @@ export function Checkout() {
                                             <p className="text-[10px] text-secondary leading-normal">
                                               We sent a 4-digit code to <strong className="text-on-surface">{activeSelectedAddress?.email || user?.email}</strong>. Enter it below:
                                             </p>
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 items-stretch">
                                               <input
                                                 type="text"
                                                 maxLength={4}
                                                 placeholder="Enter OTP"
                                                 value={codOtpInput}
                                                 onChange={(e) => setCodOtpInput(e.target.value.replace(/\D/g, ""))}
-                                                className="flex-1 bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors text-center font-mono font-bold tracking-widest"
+                                                className="flex-1 h-9 bg-white border border-outline-variant rounded px-3 text-xs outline-none focus:border-primary transition-colors text-center font-mono font-bold tracking-widest"
                                               />
                                               <button
                                                 type="button"
                                                 onClick={handleVerifyCodOtp}
-                                                className="bg-primary text-white font-bold text-[9px] uppercase tracking-widest px-4 py-2 rounded-lg cursor-pointer hover:brightness-110 shadow-xs"
+                                                className="h-9 bg-primary text-white font-bold text-[9px] uppercase tracking-widest px-4 rounded cursor-pointer hover:brightness-110 shadow-xs flex items-center justify-center transition-all"
                                               >
                                                 Verify
                                               </button>
                                               <button
                                                 type="button"
                                                 onClick={handleSendCodOtp}
-                                                className="bg-gray-100 text-gray-600 font-bold text-[9px] uppercase tracking-widest px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200"
+                                                className="h-9 bg-gray-100 text-gray-600 font-bold text-[9px] uppercase tracking-widest px-3 rounded cursor-pointer hover:bg-gray-200 flex items-center justify-center transition-all"
                                               >
                                                 Resend
                                               </button>
@@ -1501,37 +1574,6 @@ export function Checkout() {
                         onChange={(e) => setNeedByDate(e.target.value)}
                         className="w-full bg-white border border-outline-variant rounded p-2.5 text-xs outline-none focus:border-primary transition-colors font-sans text-on-surface"
                       />
-                    </div>
-
-                    {/* Submit layout-integrated bottom button */}
-                    <div className="pt-4 border-t border-outline-variant/30 flex items-center justify-between">
-                      <span className="text-xs text-secondary">
-                        Final total payable:{" "}
-                        <strong className="text-sm text-on-surface">
-                          ₹{backendTotals.total.toLocaleString()}
-                        </strong>
-                      </span>
-
-                      <motion.button
-                        whileHover={!isProcessing ? { scale: 1.02 } : {}}
-                        whileTap={!isProcessing ? { scale: 0.98 } : {}}
-                        type="button"
-                        disabled={isProcessing}
-                        onClick={handleConfirmOrder}
-                        className="bg-primary hover:bg-primary-dark text-white font-bold text-[13px] uppercase tracking-[0.2em] px-10 py-4 rounded-full shadow-2xl transition-all flex items-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group relative overflow-hidden"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                            <span>Processing...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>{paymentOption === "razorpay" ? "Pay & Place Order" : "Place Order"}</span>
-                            <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                          </>
-                        )}
-                      </motion.button>
                     </div>
                   </motion.div>
                 )}
@@ -1791,6 +1833,32 @@ export function Checkout() {
                   Easy 7-day money back arrival check
                 </p>
               </div>
+
+              {/* Integrated Payment Button at the bottom of the Price Details Card */}
+              {activeStep === 3 && (
+                <div className="mt-4 pt-4 border-t border-outline-variant/30">
+                  <motion.button
+                    whileHover={!isProcessing ? { scale: 1.01 } : {}}
+                    whileTap={!isProcessing ? { scale: 0.99 } : {}}
+                    type="button"
+                    disabled={isProcessing}
+                    onClick={handleConfirmOrder}
+                    className="w-full bg-[#fb641b] hover:bg-[#f2550a] text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group relative overflow-hidden"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{paymentOption === "razorpay" ? "Pay & Place Order" : "Place Order"}</span>
+                        <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
