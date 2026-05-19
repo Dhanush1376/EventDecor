@@ -29,6 +29,7 @@ const initialWebsiteContent = {
     ctaPrimary: { text: "Explore Collections", link: "/collections" },
     ctaSecondary: { text: "Book Consultation", link: "/custom-orders" },
     backgroundImage: IMAGES.luxuryRoyalWedding,
+    mobileBackgroundImage: "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779181764/event_decor_ecommerce/assets/event_decor_mobile%20hero%20background.png",
     badgeText: "Artisan Excellence Since 2015",
     isVisible: true,
   },
@@ -233,19 +234,7 @@ const initialWebsiteContent = {
   }
 };
 
-const allProducts = [
-  { title: "Traditional Wedding Decor", teluguTitle: "సాంప్రదాయ తెలుగు పెళ్లి అలంకరణలు", slug: "traditional-wedding-decor", category: "Traditional Wedding Decor", material: "Brass", price: 45000, oldPrice: 58000, rating: 5, reviews: 42, imageSrc: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop"], description: "A majestic handcrafted mandap arch featuring intricate zardozi embroidery and gold leaf details.", badges: ["Limited Edition"], stock: 10, featured: true },
-  { title: "Floral Decoration Sets", teluguTitle: "పూల అలంకరణలు", slug: "floral-decoration-sets", category: "Floral Decoration Sets", material: "Organic Cotton", price: 18500, oldPrice: 22000, rating: 4.9, reviews: 88, imageSrc: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop"], description: "Vibrant handcrafted heritage arrangements that bring warmth and tradition to your celebrations.", badges: ["Best Seller"], stock: 25, featured: true },
-  { title: "Engagement Ring Trays", teluguTitle: "ఎంగేజ్మెంట్ రింగ్ ట్రేలు", slug: "engagement-ring-trays", category: "Engagement Ring Trays", material: "Brass", price: 6200, oldPrice: 8500, rating: 4.8, reviews: 156, imageSrc: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop"], description: "Elegant Kundan-embedded favor boxes designed for premium engagement gifting.", badges: ["Trending"], stock: 50 },
-  { title: "Pooja Decoration Sets", teluguTitle: "పూజా అలంకరణ సెట్లు", slug: "pooja-decoration-sets", category: "Pooja Decoration Sets", material: "Brass", price: 3500, oldPrice: 4200, rating: 5, reviews: 210, imageSrc: "https://images.unsplash.com/photo-1589156280159-27698a70f29e?q=80&w=1972&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1589156280159-27698a70f29e?q=80&w=1972&auto=format&fit=crop"], description: "Classic brass diya set with antique finishing, perfect for sacred ceremonies.", stock: 100 },
-  { title: "Festival Decorations", teluguTitle: "పండుగ అలంకరణలు", slug: "festival-decorations", category: "Festival Decorations", material: "Handmade Paper", price: 12000, oldPrice: 15000, rating: 4.7, reviews: 34, imageSrc: "https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=1974&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=1974&auto=format&fit=crop"], description: "Heavy zardozi embroidered table runner on premium velvet.", stock: 15 },
-  { title: "Harathi Plates", teluguTitle: "హారతి ప్లేట్లు", slug: "harathi-plates", category: "Harathi Plates", material: "Brass", price: 8500, oldPrice: 11000, rating: 4.9, reviews: 92, imageSrc: "https://images.unsplash.com/photo-1590073844006-33379778ae09?q=80&w=1974&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1590073844006-33379778ae09?q=80&w=1974&auto=format&fit=crop"], description: "Exquisite relief-patterned aarti plate with golden finishing.", badges: ["Limited Edition"], stock: 20 },
-  { title: "Coconut Decorations", teluguTitle: "కొబ్బరి బొండం అలంకరణ", slug: "coconut-decorations", category: "Coconut Decorations", material: "Organic Cotton", price: 2500, rating: 4.8, reviews: 56, imageSrc: "https://images.unsplash.com/photo-1561571994-3c61c554181a?q=80&w=1974&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1561571994-3c61c554181a?q=80&w=1974&auto=format&fit=crop"], description: "Artisanal coconut decorations featuring traditional motifs.", stock: 40 },
-  { title: "Bangle Trays", teluguTitle: "గాజుల ట్రేలు", slug: "bangle-trays", category: "Bangle Trays", material: "Pure Silk", price: 4200, rating: 4.7, reviews: 74, imageSrc: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop"], description: "Luxurious velvet-lined trays designed for elegant bangle presentation.", stock: 30 },
-  { title: "Decorative Baskets", teluguTitle: "బుట్ట అలంకరణలు", slug: "decorative-baskets", category: "Decorative Baskets", material: "Organic Cotton", price: 3800, rating: 4.9, reviews: 112, imageSrc: "https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=1974&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=1974&auto=format&fit=crop"], description: "Hand-woven decorative baskets adorned with heritage patterns.", stock: 35 },
-  { title: "Jewellery Trays", teluguTitle: "ఆభరణాల ట్రేలు", slug: "jewellery-trays", category: "Jewellery Trays", material: "Pure Silk", price: 5500, rating: 4.8, reviews: 45, imageSrc: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop"], description: "Sophisticated presentation trays for fine jewellery.", stock: 15 },
-  { title: "Photo Bouquets", teluguTitle: "ఫోటో బొకేలు", slug: "photo-bouquets", category: "Photo Bouquets", material: "Handmade Paper", price: 1800, rating: 4.6, reviews: 31, imageSrc: "https://images.unsplash.com/photo-1561571994-3c61c554181a?q=80&w=1974&auto=format&fit=crop", images: ["https://images.unsplash.com/photo-1561571994-3c61c554181a?q=80&w=1974&auto=format&fit=crop"], description: "Personalized artisanal bouquets.", stock: 60 },
-];
+const allProducts: any[] = [];
 
 const masterEventsData = [
   { title: "Wedding Ceremony", subtitle: "Sacred Gold & Crimson Sanctuary", category: "Wedding Ceremony", style: "Royal", image: IMAGES.luxuryRoyalWedding, decorCount: "120+ Decor Elements", venueType: "Indoor Banquet & Heritage Lawns", pricing: "Starting at Rs. 3,50,000", description: "An architectural masterpiece inspired by palace courtyards.", colorPalette: ["#f5f0eb", "#d4af37", "#8b0000"], features: ["24K Gold Plated Pavilion Archways", "Handwoven Pure Zardozi Backdrops"], venueSize: "Suitable for 300 - 1500 Guests", gallery: [IMAGES.luxuryRoyalWedding, IMAGES.templeStyleMandap] },
@@ -262,18 +251,22 @@ const galleryInspirations = [
 ];
 
 const seed = async () => {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ SEEDING SHIELD: Seeding operations are strictly disabled in production mode to prevent accidental data loss.');
+    process.exit(1);
+  }
+
   try {
     await connectDB();
 
-    // Clear existing data
-    await Product.deleteMany();
-    await Event.deleteMany();
-    await Gallery.deleteMany();
-    await ContentSection.deleteMany();
-    await User.deleteMany();
-    await Review.deleteMany();
-
-    console.log('🗑️ Data cleared (including reviews)');
+    // Clear existing data - DISABLED TO PREVENT ACCIDENTAL WIPES
+    // await Product.deleteMany();
+    // await Event.deleteMany();
+    // await Gallery.deleteMany();
+    // await ContentSection.deleteMany();
+    // await User.deleteMany();
+    // await Review.deleteMany();
+    // console.log('🗑️ Data cleared (including reviews)');
 
     // 1. Create Admin User
     await User.create({
@@ -344,6 +337,7 @@ const seed = async () => {
         helpfulCount: 34,
         category: 'showcase',
         verified: true,
+        isMock: true,
       },
       {
         product: createdProducts[1]._id,
@@ -361,6 +355,7 @@ const seed = async () => {
         helpfulCount: 28,
         category: 'event',
         verified: true,
+        isMock: true,
       },
       {
         product: createdProducts[2]._id,
@@ -378,6 +373,7 @@ const seed = async () => {
         helpfulCount: 52,
         category: 'product',
         verified: true,
+        isMock: true,
       },
       {
         product: createdProducts[3]._id,
@@ -392,6 +388,7 @@ const seed = async () => {
         helpfulCount: 0,
         category: 'product',
         verified: true,
+        isMock: true,
       }
     ];
 

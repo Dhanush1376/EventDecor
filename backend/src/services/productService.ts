@@ -104,17 +104,57 @@ class ProductService {
     return product;
   }
 
-  static async softDeleteProduct(id: string) {
-    const product = await Product.findByIdAndUpdate(id, { isActive: false }, { new: true });
-    if (product) {
-      if (product.showInGallery) {
-        await this.syncToGallery(product);
+  static async deleteProduct(id: string) {
+    const product = await Product.findById(id);
+    if (!product) return null;
+
+    // Hard delete
+    await Product.findByIdAndDelete(id);
+
+    // Clean up gallery
+    await this.removeFromGallery(product._id);
+
+    // Clean up User wishlist, cart, and recentlyViewed references to prevent orphan/dead links
+    const User = require('../models/User').default || require('../models/User');
+    User.updateMany(
+      {},
+      {
+        $pull: {
+          wishlist: product._id,
+          cart: { product: product._id },
+          recentlyViewed: { product: product._id }
+        }
+      }
+    ).catch((err: any) => logger.error(`Failed to clean up user references for deleted product ${id}: ${err}`));
+
+    // Clean up product reviews
+    const Review = require('../models/Review').default || require('../models/Review');
+    Review.deleteMany({ product: product._id })
+      .catch((err: any) => logger.error(`Failed to clean up reviews for deleted product ${id}: ${err}`));
+
+    // Clean up main product image from Cloudinary
+    if (product.imageSrc) {
+      const publicId = extractPublicId(product.imageSrc);
+      if (publicId) {
+        deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up deleted product image: ${err}`));
       }
     }
-    logger.info('[CATEGORY CACHE] Purging distinct categories cache due to soft deletion');
+
+    // Clean up auxiliary images from Cloudinary
+    if (product.images && Array.isArray(product.images)) {
+      for (const img of product.images) {
+        const publicId = extractPublicId(img);
+        if (publicId) {
+          deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up deleted product sub-image: ${err}`));
+        }
+      }
+    }
+
+    logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product deletion');
     categoryCache.delete('product:distinct_categories');
     return product;
   }
+
 
   static async syncToGallery(product: any) {
     try {
@@ -148,6 +188,15 @@ class ProductService {
 
   static async removeFromGallery(productId: any) {
     try {
+      const items = await Gallery.find({ linkedProducts: productId });
+      for (const item of items) {
+        if (item.image) {
+          const publicId = extractPublicId(item.image);
+          if (publicId) {
+            deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up gallery image: ${err}`));
+          }
+        }
+      }
       await Gallery.deleteMany({ linkedProducts: productId });
     } catch (err) {
       logger.error('Error removing product from gallery:', err);

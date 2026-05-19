@@ -26,8 +26,7 @@ export const createOrderValidator = [
     .notEmpty()
     .withMessage('Address is required'),
   body('shippingAddress.landmark')
-    .notEmpty()
-    .withMessage('Landmark is required'),
+    .optional({ checkFalsy: true }),
   body('shippingAddress.city')
     .notEmpty()
     .withMessage('City is required'),

@@ -25,20 +25,24 @@ export class LoyaltyService {
       if (!user) return;
 
       // 1. Generate unique referral code
-      if (!user.referralCode) {
-        user.referralCode = this.generateReferralCode(user.name);
-      }
-
-      // 2. Grant Welcome Onboarding Cash Bonus (₹100)
       const welcomeCash = 100;
-      user.walletBalance = (user.walletBalance || 0) + welcomeCash;
-      
-      // Auto-assign Bronze starting tier if not set
+      const refCode = user.referralCode || this.generateReferralCode(user.name);
+
+      const updateQuery: any = {
+        $inc: { walletBalance: welcomeCash }
+      };
+      const setFields: any = {};
+      if (!user.referralCode) {
+        setFields.referralCode = refCode;
+      }
       if (!user.loyaltyTier) {
-        user.loyaltyTier = 'Bronze';
+        setFields.loyaltyTier = 'Bronze';
+      }
+      if (Object.keys(setFields).length > 0) {
+        updateQuery.$set = setFields;
       }
 
-      await user.save();
+      await User.findByIdAndUpdate(userId, updateQuery);
 
       // Log the credit transaction in audit ledger
       await WalletTransaction.create({
@@ -82,7 +86,6 @@ export class LoyaltyService {
 
       // 1. Calculate Siri Coins points earned (1 Coin per ₹10 spent on the order subtotal)
       const coinsEarned = Math.round(order.subtotal / 10);
-      user.siriCoins = (user.siriCoins || 0) + coinsEarned;
 
       // 2. Calculate Cashback percentage based on loyalty tier
       let cashbackRate = 0.02; // Bronze: 2%
@@ -91,7 +94,14 @@ export class LoyaltyService {
       else if (user.loyaltyTier === 'Platinum') cashbackRate = 0.12; // 12%
 
       const cashbackEarned = Math.round((order.total || totalSpend) * cashbackRate);
-      user.walletBalance = (user.walletBalance || 0) + cashbackEarned;
+
+      // Atomically credit siriCoins and walletBalance without read-modify-write saves
+      await User.findByIdAndUpdate(userId, {
+        $inc: {
+          siriCoins: coinsEarned,
+          walletBalance: cashbackEarned
+        }
+      });
 
       // 3. Update Order Document for dynamic receipt rendering
       order.coinsEarned = coinsEarned;
@@ -133,11 +143,11 @@ export class LoyaltyService {
       const referee = await User.findById(refereeId);
       if (!referrer || !referee) return;
 
-      // Credit ₹150 to Referrer
+      // Credit ₹150 to Referrer atomically
       const referrerBonus = 150;
-      referrer.walletBalance = (referrer.walletBalance || 0) + referrerBonus;
-      referrer.referralsCount = (referrer.referralsCount || 0) + 1;
-      await referrer.save();
+      await User.findByIdAndUpdate(referrerId, {
+        $inc: { walletBalance: referrerBonus, referralsCount: 1 }
+      });
 
       await WalletTransaction.create({
         userId: referrerId,
@@ -148,10 +158,11 @@ export class LoyaltyService {
         status: 'active'
       });
 
-      // Credit ₹50 Extra to Referee as welcome wallet cash
+      // Credit ₹50 Extra to Referee as welcome wallet cash atomically
       const refereeBonus = 50;
-      referee.walletBalance = (referee.walletBalance || 0) + refereeBonus;
-      await referee.save();
+      await User.findByIdAndUpdate(refereeId, {
+        $inc: { walletBalance: refereeBonus }
+      });
 
       await WalletTransaction.create({
         userId: refereeId,
@@ -191,9 +202,7 @@ export class LoyaltyService {
 
       if (user.loyaltyTier !== newTier) {
         const oldTier = user.loyaltyTier;
-        user.loyaltyTier = newTier;
-        await user.save();
-
+        await User.findByIdAndUpdate(userId, { loyaltyTier: newTier });
         logger.info(`User ${userId} upgraded loyalty membership tier from ${oldTier} to ${newTier}!`);
       }
     } catch (err) {
@@ -220,10 +229,13 @@ export class LoyaltyService {
         description = 'Photo Review Silver Credit';
       }
 
-      user.walletBalance = (user.walletBalance || 0) + rewardAmount;
-      // Also reward 5 Siri Coins points
-      user.siriCoins = (user.siriCoins || 0) + 15;
-      await user.save();
+      // Atomically reward the user without read-modify-write saves
+      await User.findByIdAndUpdate(userId, {
+        $inc: {
+          walletBalance: rewardAmount,
+          siriCoins: 15
+        }
+      });
 
       await WalletTransaction.create({
         userId,
@@ -251,9 +263,11 @@ export class LoyaltyService {
       const user = await User.findById(order.user);
       if (!user) return;
 
+      const incFields: any = {};
+
       // 1. Re-credit spent wallet balance back to user's wallet
       if (order.walletDeduction && order.walletDeduction > 0) {
-        user.walletBalance = (user.walletBalance || 0) + order.walletDeduction;
+        incFields.walletBalance = (incFields.walletBalance || 0) + order.walletDeduction;
         
         await WalletTransaction.create({
           userId: user._id,
@@ -268,7 +282,7 @@ export class LoyaltyService {
 
       // 2. Revoke/Reverse any cashback earned on this order
       if (order.cashbackEarned && order.cashbackEarned > 0) {
-        user.walletBalance = Math.max(0, (user.walletBalance || 0) - order.cashbackEarned);
+        incFields.walletBalance = (incFields.walletBalance || 0) - order.cashbackEarned;
         
         await WalletTransaction.create({
           userId: user._id,
@@ -283,10 +297,24 @@ export class LoyaltyService {
 
       // 3. Revoke earned Siri Coins
       if (order.coinsEarned && order.coinsEarned > 0) {
-        user.siriCoins = Math.max(0, (user.siriCoins || 0) - order.coinsEarned);
+        incFields.siriCoins = -order.coinsEarned;
       }
 
-      await user.save();
+      if (Object.keys(incFields).length > 0) {
+        // Use an atomic pipeline update to deduct while clamping the lower bound to 0
+        const setFields: any = {};
+        if (incFields.walletBalance !== undefined) {
+          setFields.walletBalance = {
+            $max: [0, { $add: [{ $ifNull: ["$walletBalance", 0] }, incFields.walletBalance] }]
+          };
+        }
+        if (incFields.siriCoins !== undefined) {
+          setFields.siriCoins = {
+            $max: [0, { $add: [{ $ifNull: ["$siriCoins", 0] }, incFields.siriCoins] }]
+          };
+        }
+        await User.findByIdAndUpdate(user._id, [ { $set: setFields } ]);
+      }
       logger.info(`Successfully reversed purchase rewards and restored credits for order ${orderId}`);
     } catch (err) {
       logger.error(`Failed to reverse rewards for order ${orderId}:`, err);

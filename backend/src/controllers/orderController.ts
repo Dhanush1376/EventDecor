@@ -30,11 +30,6 @@ export const getOrderById = asyncHandler(async (req: Request, res: Response) => 
     throw new ApiError(403, 'You are not authorized to view this order');
   }
 
-  if (!order.publicTrackingToken) {
-    order.publicTrackingToken = crypto.randomBytes(24).toString('hex');
-    await order.save();
-  }
-
   res.status(200).json(new ApiResponse(true, 'Order fetched successfully', order));
 });
 
@@ -114,16 +109,57 @@ export const getOrderPublicTrack = asyncHandler(async (req: Request, res: Respon
 });
 
 export const updateOrderPublicStatus = asyncHandler(async (req: Request, res: Response) => {
+  // Dynamically extract and decode optional authorization header
+  let authUser: any = undefined;
+  let authToken: string | undefined = undefined;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    authToken = req.headers.authorization.split(' ')[1];
+  }
+  if (authToken) {
+    try {
+      const jwt = require('jsonwebtoken');
+      const User = require('../models/User').default || require('../models/User');
+      const secret = process.env.JWT_SECRET;
+      if (secret) {
+        const decoded = jwt.verify(authToken, secret) as any;
+        const userObj = await User.findById(decoded.id).select('role email isVerified');
+        if (userObj && userObj.isVerified) {
+          decoded.role = userObj.role;
+          decoded.email = userObj.email;
+          authUser = decoded;
+        }
+      }
+    } catch (err) {
+      // Ignored: auth is optional for tracking scans
+    }
+  }
+
   const { status, note, logisticsToken } = req.body;
+  const trackingToken = String(req.query.token || req.body.token || '').trim();
 
-  // Verify using HMAC-signed logistics token (NOT a hardcoded key)
+  const orderDoc = await Order.findById(req.params.id).select('+publicTrackingToken');
+  if (!orderDoc) throw new ApiError(404, 'Order not found');
+
   let isAuthorized = false;
+  let isLogisticsToken = false;
 
-  if (req.user && ['admin', 'manager', 'coordinator'].includes(req.user.role)) {
+  // 1. Check if the user is an authenticated privileged staff
+  if ((req.user && ['admin', 'manager', 'coordinator'].includes(req.user.role)) || 
+      (authUser && ['admin', 'manager', 'coordinator'].includes(authUser.role))) {
     isAuthorized = true;
-  } else if (logisticsToken) {
-    // Validate HMAC-signed token: HMAC-SHA256(orderId + ':' + date, JWT_SECRET)
-    const crypto = require('crypto');
+  }
+  // 2. Validate using the public tracking token
+  else if (trackingToken) {
+    const storedToken = orderDoc.publicTrackingToken || '';
+    const provided = Buffer.from(trackingToken, 'hex');
+    const expected = Buffer.from(storedToken, 'hex');
+    isAuthorized =
+      storedToken.length > 0 &&
+      provided.length === expected.length &&
+      crypto.timingSafeEqual(provided, expected);
+  }
+  // 3. Validate using the HMAC-signed logistics token
+  else if (logisticsToken) {
     const orderId = req.params.id;
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const secret = process.env.JWT_SECRET || '';
@@ -133,10 +169,23 @@ export const updateOrderPublicStatus = asyncHandler(async (req: Request, res: Re
     const provided = Buffer.from(logisticsToken, 'hex');
     const expected = Buffer.from(expectedToken, 'hex');
     isAuthorized = provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
+    if (isAuthorized) {
+      isLogisticsToken = true;
+    }
   }
 
   if (!isAuthorized) {
-    throw new ApiError(403, 'Unauthorized. Invalid or expired logistics token.');
+    throw new ApiError(403, 'Unauthorized. Invalid tracking credentials or logistics token.');
+  }
+
+  // Customers/Unauthenticated clients with publicTrackingToken are only allowed to self-cancel or return
+  const allowedPublicStatuses = ['Cancelled', 'Returned'];
+  const isPrivileged = (req.user && ['admin', 'manager', 'coordinator'].includes(req.user.role)) || 
+                       (authUser && ['admin', 'manager', 'coordinator'].includes(authUser.role)) || 
+                       isLogisticsToken;
+
+  if (!isPrivileged && !allowedPublicStatuses.includes(status)) {
+    throw new ApiError(400, `Logistics tracking only permits self-cancellation or returns. Target status '${status}' is disallowed.`);
   }
 
   const order = await OrderService.updateOrderStatus(req.params.id as string, status, note);
@@ -325,5 +374,16 @@ export const verifyCodOtp = asyncHandler(async (req: Request, res: Response) => 
   await AuthService.verifyCodOTP(email, otp);
 
   res.status(200).json(new ApiResponse(true, 'Email verified successfully'));
+});
+
+export const updateOrderNotes = asyncHandler(async (req: Request, res: Response) => {
+  const { notes } = req.body;
+  const order = await Order.findByIdAndUpdate(
+    req.params.id,
+    { $set: { notes: notes || '' } },
+    { new: true }
+  );
+  if (!order) throw new ApiError(404, 'Order not found');
+  res.status(200).json(new ApiResponse(true, 'Order notes updated', order));
 });
 
