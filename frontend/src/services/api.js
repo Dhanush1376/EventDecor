@@ -81,6 +81,7 @@ api.interceptors.response.use(
         const refreshResponse = await refreshPromise;
         const token = refreshResponse.data?.data?.accessToken || refreshResponse.data?.data?.token;
         setAccessToken(token);
+
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch {
@@ -98,6 +99,10 @@ api.interceptors.response.use(
 // High-performance GET request de-duplication wrapper to block parallel duplicate fetches
 const originalGet = api.get;
 const pendingGetRequests = new Map();
+
+const clearPendingGets = () => {
+  pendingGetRequests.clear();
+};
 
 api.get = function (url, config) {
   const requestKey = `${url}?${JSON.stringify(config || {})}`;
@@ -122,6 +127,7 @@ api.get = function (url, config) {
 // High-performance POST request de-duplication wrapper for token refresh to avoid concurrent replay race conditions
 const originalPost = api.post;
 api.post = function (url, data, config) {
+  clearPendingGets();
   if (url === '/auth/refresh' || url?.includes('/auth/refresh')) {
     if (!refreshPromise) {
       refreshPromise = originalPost.call(this, url, data, config).finally(() => {
@@ -131,6 +137,24 @@ api.post = function (url, data, config) {
     return refreshPromise;
   }
   return originalPost.call(this, url, data, config);
+};
+
+const originalPut = api.put;
+api.put = function (url, data, config) {
+  clearPendingGets();
+  return originalPut.call(this, url, data, config);
+};
+
+const originalPatch = api.patch;
+api.patch = function (url, data, config) {
+  clearPendingGets();
+  return originalPatch.call(this, url, data, config);
+};
+
+const originalDelete = api.delete;
+api.delete = function (url, config) {
+  clearPendingGets();
+  return originalDelete.call(this, url, config);
 };
 
 export default api;
