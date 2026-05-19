@@ -91,9 +91,22 @@ const allowedOrigins = (process.env.FRONTEND_URLS?.split(',') || ['http://localh
   .filter(Boolean)
   .flatMap((origin) => {
     if (!origin.startsWith('http://') && !origin.startsWith('https://')) {
-      return [`https://${origin}`, `http://${origin}`];
+      const hosts = [origin, `www.${origin}`];
+      return hosts.flatMap(host => [`https://${host}`, `http://${host}`]);
     }
-    return [origin];
+    try {
+      const url = new URL(origin);
+      const isWww = url.hostname.startsWith('www.');
+      const apexHostname = isWww ? url.hostname.substring(4) : url.hostname;
+      const wwwHostname = isWww ? url.hostname : `www.${url.hostname}`;
+      const portStr = url.port ? `:${url.port}` : '';
+      return [
+        `${url.protocol}//${apexHostname}${portStr}`,
+        `${url.protocol}//${wwwHostname}${portStr}`
+      ];
+    } catch {
+      return [origin];
+    }
   });
 app.use(cors({
   origin: (origin, callback) => {
