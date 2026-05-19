@@ -97,6 +97,19 @@ export const requireAdmin = asyncHandler(async (req: Request, res: Response, nex
   const userEmail = req.user.email?.trim()?.toLowerCase();
   
   if (ADMIN_ROLES.includes(req.user.role as any) || (userEmail && adminEmails.some(addr => isSameEmail(userEmail, addr)))) {
+    // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
+    const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+    if (mutatingMethod) {
+      const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
+      if (!isSafetyLockToggle) {
+        const ContentSection = require('../models/ContentSection').default;
+        const safetyLockDoc = await ContentSection.findOne({ sectionKey: 'admin_safety_lock' });
+        if (safetyLockDoc && safetyLockDoc.data?.safetyLock === true) {
+          throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
+        }
+      }
+    }
+
     logAdminAudit(req, res);
     next();
   } else {
@@ -113,6 +126,19 @@ export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response
   const userEmail = req.user.email?.trim()?.toLowerCase();
 
   if (req.user.role === 'admin' || (userEmail && adminEmails.some(addr => isSameEmail(userEmail, addr)))) {
+    // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
+    const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+    if (mutatingMethod) {
+      const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
+      if (!isSafetyLockToggle) {
+        const ContentSection = require('../models/ContentSection').default;
+        const safetyLockDoc = await ContentSection.findOne({ sectionKey: 'admin_safety_lock' });
+        if (safetyLockDoc && safetyLockDoc.data?.safetyLock === true) {
+          throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
+        }
+      }
+    }
+
     logAdminAudit(req, res);
     next();
   } else {

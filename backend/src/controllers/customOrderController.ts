@@ -366,12 +366,14 @@ export const getCustomOrderConfig = asyncHandler(async (req: Request, res: Respo
   let config = await WebsiteContent.findOne({ key: 'customOrderConfig' });
   
   if (!config) {
-    // Lazy seeding with beautiful presets
-    config = await WebsiteContent.create({
-      key: 'customOrderConfig',
-      content: DEFAULT_CONFIG,
-      status: 'published'
-    });
+    res.status(200).json(new ApiResponse(true, 'No custom order configuration found', {
+      occasions: [],
+      productTypes: [],
+      themes: [],
+      budgetRanges: [],
+      bookingTypes: []
+    }));
+    return;
   }
 
   res.status(200).json(new ApiResponse(true, 'Dynamic custom order configuration fetched', config.content));

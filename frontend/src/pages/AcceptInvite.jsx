@@ -19,9 +19,11 @@ export function AcceptInvite() {
 
   useEffect(() => {
     if (!token) {
-      setError("Invitation token is missing. Please verify your email link.");
-      setLoading(false);
-      return;
+      const timer = setTimeout(() => {
+        setError("Invitation token is missing. Please verify your email link.");
+        setLoading(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     const fetchInviteDetails = async () => {

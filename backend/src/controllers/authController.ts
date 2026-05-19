@@ -81,25 +81,29 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
     user: result.user,
     token: result.accessToken,
     accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
   }));
 });
-
+ 
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = getCookie(req, refreshCookieName);
+  const refreshToken = String(req.body.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
   const result = await AuthService.refreshSession(refreshToken);
   setRefreshCookie(res, result.refreshToken);
   res.status(200).json(new ApiResponse(true, 'Session refreshed', {
     user: result.user,
     token: result.accessToken,
     accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
   }));
 });
-
+ 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = getCookie(req, refreshCookieName);
+  const refreshToken = String(req.body.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
   
   logger.info('[AUTH] Revoking user session on manual logout request');
-  await AuthService.revokeSession(refreshToken);
+  if (refreshToken) {
+    await AuthService.revokeSession(refreshToken);
+  }
   clearRefreshCookie(res);
   
   logger.info('[AUTH] Logout complete. Session cookies cleared.');

@@ -10,6 +10,7 @@ export function SearchBar({
 
   // Sync internal state with external prop (for clear/reset)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalValue(value);
   }, [value]);
 
@@ -43,7 +44,7 @@ export function SearchBar({
         value={localValue}
         onChange={handleInputChange}
         placeholder={placeholder}
-        className="w-full pl-12 pr-12 py-3 bg-transparent border-none outline-none ring-0 focus:ring-0 font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50"
+        className="w-full pl-12 pr-12 py-3 bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50"
         aria-label="Search"
       />
       {localValue && (

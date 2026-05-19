@@ -22,12 +22,17 @@ export function Dashboard() {
   const fileInputRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("profile");
+  const [mobileShowContent, setMobileShowContent] = useState(false);
 
   // Sync tab from URL query params
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     if (tabParam && ["profile", "orders", "addresses", "wishlist", "preferences", "loyalty"].includes(tabParam)) {
-      setActiveTab(tabParam);
+      const timer = setTimeout(() => {
+        setActiveTab(tabParam);
+        setMobileShowContent(true);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [searchParams]);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -66,34 +71,6 @@ export function Dashboard() {
   const [isAddressSaving, setIsAddressSaving] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
-  // Sync profile data on mount and user change
-  useEffect(() => {
-    if (user) {
-      setProfileForm({
-        name: user.name || "",
-        phone: user.phone || "",
-        gender: user.gender || "",
-        dateOfBirth: user.dateOfBirth || "",
-      });
-
-      setPrefsForm({
-        email: user.notificationPreferences?.email !== false,
-        marketing: user.notificationPreferences?.marketing !== false,
-        theme: user.accountPreferences?.theme || "light",
-        language: user.accountPreferences?.language || "en",
-      });
-    }
-  }, [user]);
-
-  // Fetch orders, addresses, and recently viewed only when user identity changes (on login/mount)
-  useEffect(() => {
-    if (user?._id || user?.id) {
-      fetchOrdersList();
-      fetchAddressesList();
-      fetchRecentlyViewedList();
-    }
-  }, [user?._id || user?.id]);
-
   // Orders and Address Fetchers
   const fetchOrdersList = async () => {
     setIsOrdersLoading(true);
@@ -130,6 +107,42 @@ export function Dashboard() {
       setIsLoadingRecentlyViewed(false);
     }
   };
+
+  // Sync profile data on mount and user change
+  useEffect(() => {
+    if (user) {
+      const timer = setTimeout(() => {
+        setProfileForm({
+          name: user.name || "",
+          phone: user.phone || "",
+          gender: user.gender || "",
+          dateOfBirth: user.dateOfBirth || "",
+        });
+
+        setPrefsForm({
+          email: user.notificationPreferences?.email !== false,
+          marketing: user.notificationPreferences?.marketing !== false,
+          theme: user.accountPreferences?.theme || "light",
+          language: user.accountPreferences?.language || "en",
+        });
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const userId = user?._id || user?.id;
+
+  // Fetch orders, addresses, and recently viewed only when user identity changes (on login/mount)
+  useEffect(() => {
+    if (userId) {
+      const timer = setTimeout(() => {
+        fetchOrdersList();
+        fetchAddressesList();
+        fetchRecentlyViewedList();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [userId]);
 
   const [orderFilter, setOrderFilter] = useState("ALL");
 
@@ -432,7 +445,7 @@ export function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6">
           
           {/* LEFT SIDEBAR NAVIGATION PANEL */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-3 space-y-4">
+          <div className={`col-span-1 md:col-span-2 lg:col-span-3 space-y-4 ${mobileShowContent ? "hidden md:block" : "block"}`}>
             
             {/* Dynamic Avatar & Basic Info Card */}
             <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 flex flex-col items-center text-center shadow-xs relative group overflow-hidden">
@@ -539,6 +552,7 @@ export function Dashboard() {
                   onClick={() => {
                     setActiveTab("orders");
                     setOrderFilter("ALL");
+                    setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
                     activeTab === "orders"
@@ -565,7 +579,10 @@ export function Dashboard() {
                   role="tab"
                   aria-selected={activeTab === "profile"}
                   whileHover={{ x: 3 }}
-                  onClick={() => setActiveTab("profile")}
+                  onClick={() => {
+                    setActiveTab("profile");
+                    setMobileShowContent(true);
+                  }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
                     activeTab === "profile"
                       ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
@@ -582,7 +599,10 @@ export function Dashboard() {
                   role="tab"
                   aria-selected={activeTab === "addresses"}
                   whileHover={{ x: 3 }}
-                  onClick={() => setActiveTab("addresses")}
+                  onClick={() => {
+                    setActiveTab("addresses");
+                    setMobileShowContent(true);
+                  }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
                     activeTab === "addresses"
                       ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
@@ -599,7 +619,10 @@ export function Dashboard() {
                   role="tab"
                   aria-selected={activeTab === "preferences"}
                   whileHover={{ x: 3 }}
-                  onClick={() => setActiveTab("preferences")}
+                  onClick={() => {
+                    setActiveTab("preferences");
+                    setMobileShowContent(true);
+                  }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
                     activeTab === "preferences"
                       ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
@@ -625,7 +648,10 @@ export function Dashboard() {
                   role="tab"
                   aria-selected={activeTab === "wishlist"}
                   whileHover={{ x: 3 }}
-                  onClick={() => setActiveTab("wishlist")}
+                  onClick={() => {
+                    setActiveTab("wishlist");
+                    setMobileShowContent(true);
+                  }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
                     activeTab === "wishlist"
                       ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
@@ -642,7 +668,10 @@ export function Dashboard() {
                   role="tab"
                   aria-selected={activeTab === "cart"}
                   whileHover={{ x: 3 }}
-                  onClick={() => setActiveTab("cart")}
+                  onClick={() => {
+                    setActiveTab("cart");
+                    setMobileShowContent(true);
+                  }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
                     activeTab === "cart"
                       ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
@@ -662,6 +691,7 @@ export function Dashboard() {
                   onClick={() => {
                     setActiveTab("recently-viewed");
                     fetchRecentlyViewedList();
+                    setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
                     activeTab === "recently-viewed"
@@ -681,6 +711,7 @@ export function Dashboard() {
                   whileHover={{ x: 3 }}
                   onClick={() => {
                     setActiveTab("loyalty");
+                    setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
                     activeTab === "loyalty"
@@ -723,7 +754,18 @@ export function Dashboard() {
           </div>
 
           {/* MAIN DYNAMIC CONTENT PORTAL PANELS */}
-          <div className="col-span-1 md:col-span-4 lg:col-span-9 space-y-4">
+          <div className={`col-span-1 md:col-span-4 lg:col-span-9 space-y-4 ${mobileShowContent ? "block" : "hidden md:block"}`}>
+            {mobileShowContent && (
+              <div className="md:hidden">
+                <button
+                  onClick={() => setMobileShowContent(false)}
+                  className="flex items-center gap-2 px-4 py-2 border border-outline-variant/30 rounded-full text-[11px] font-bold text-primary bg-surface-bright uppercase tracking-wider hover:bg-surface-container-low transition-colors cursor-pointer shadow-xs mb-2"
+                >
+                  <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+                  Back to Account Menu
+                </button>
+              </div>
+            )}
             <AnimatePresence mode="wait">
               
               {/* TAB 1: PROFILE EDITING & PARAMETERS */}
@@ -750,12 +792,14 @@ export function Dashboard() {
                   <form onSubmit={handleProfileSave} className="space-y-5 max-w-2xl text-[11px]">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
-                        <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
+                        <label htmlFor="dashboard-profile-name" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
                           Full Account Name
                         </label>
                         <input
+                          id="dashboard-profile-name"
                           type="text"
                           required
+                          autoComplete="name"
                           value={profileForm.name}
                           onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                           className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
@@ -781,11 +825,13 @@ export function Dashboard() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                       <div>
-                        <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
+                        <label htmlFor="dashboard-profile-phone" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
                           Mobile Number
                         </label>
                         <input
+                          id="dashboard-profile-phone"
                           type="tel"
+                          autoComplete="tel"
                           value={profileForm.phone}
                           onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                           className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
@@ -811,11 +857,13 @@ export function Dashboard() {
                       </div>
 
                       <div>
-                        <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
+                        <label htmlFor="dashboard-profile-dob" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
                           Date Of Birth (DOB)
                         </label>
                         <input
+                          id="dashboard-profile-dob"
                           type="date"
+                          autoComplete="bday"
                           value={profileForm.dateOfBirth}
                           onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
                           className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
@@ -1711,12 +1759,14 @@ export function Dashboard() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label htmlFor="dashboard-address-name" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
                         Receiver Full Name
                       </label>
                       <input
+                        id="dashboard-address-name"
                         type="text"
                         required
+                        autoComplete="name"
                         placeholder="John Doe"
                         className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
                         value={addressFormData.name}
@@ -1729,12 +1779,14 @@ export function Dashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label htmlFor="dashboard-address-phone" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
                         Contact Phone Number
                       </label>
                       <input
+                        id="dashboard-address-phone"
                         type="tel"
                         required
+                        autoComplete="tel"
                         placeholder="10-digit number"
                         className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
                         value={addressFormData.phone}
@@ -1750,12 +1802,14 @@ export function Dashboard() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label htmlFor="dashboard-address-pincode" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
                         6-Digit Pincode
                       </label>
                       <input
+                        id="dashboard-address-pincode"
                         type="text"
                         required
+                        autoComplete="postal-code"
                         placeholder="e.g. 560041"
                         className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
                         value={addressFormData.pincode}
@@ -1768,12 +1822,14 @@ export function Dashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label htmlFor="dashboard-address-locality" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
                         Locality / Sector
                       </label>
                       <input
+                        id="dashboard-address-locality"
                         type="text"
                         required
+                        autoComplete="address-level3"
                         placeholder="e.g. Sector 4 / Jayanagar"
                         className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
                         value={addressFormData.locality}
@@ -1788,11 +1844,13 @@ export function Dashboard() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                    <label htmlFor="dashboard-address-street" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
                       Street Address & Building Details
                     </label>
                     <textarea
+                      id="dashboard-address-street"
                       required
+                      autoComplete="street-address"
                       placeholder="Flat, House no., Building, Apartment details"
                       className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all min-h-[70px] font-semibold"
                       value={addressFormData.addressString}
@@ -1807,12 +1865,14 @@ export function Dashboard() {
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1">
-                      <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label htmlFor="dashboard-address-city" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
                         City / District
                       </label>
                       <input
+                        id="dashboard-address-city"
                         type="text"
                         required
+                        autoComplete="address-level2"
                         placeholder="City"
                         className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
                         value={addressFormData.city}
@@ -1825,12 +1885,14 @@ export function Dashboard() {
                       />
                     </div>
                     <div className="col-span-1">
-                      <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label htmlFor="dashboard-address-state" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
                         State
                       </label>
                       <input
+                        id="dashboard-address-state"
                         type="text"
                         required
+                        autoComplete="address-level1"
                         placeholder="State"
                         className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
                         value={addressFormData.state}

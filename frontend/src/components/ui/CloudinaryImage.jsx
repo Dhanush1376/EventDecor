@@ -22,8 +22,13 @@ export function CloudinaryImage({
   const srcSet = isCloudinary ? getSrcSet(src) : null;
   const placeholderUrl = isCloudinary ? getBlurredPlaceholder(src) : null;
 
+  const hasPositioning = containerClassName.includes('absolute') || 
+                         containerClassName.includes('fixed') || 
+                         containerClassName.includes('relative') ||
+                         containerClassName.includes('sticky');
+
   return (
-    <div className={`relative overflow-hidden ${containerClassName}`}>
+    <div className={`${hasPositioning ? '' : 'relative'} overflow-hidden ${containerClassName}`}>
       {/* Blurred Placeholder */}
       {isCloudinary && !isLoaded && (
         <div 

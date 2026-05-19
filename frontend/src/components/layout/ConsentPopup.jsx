@@ -26,7 +26,7 @@ export function ConsentPopup() {
       // Sync loaded choices from localStorage
       try {
         const saved = JSON.parse(consentLogged);
-        setPreferences(saved);
+        setTimeout(() => setPreferences(saved), 0);
       } catch (err) {
         console.error("Failed to parse local consent logs", err);
       }

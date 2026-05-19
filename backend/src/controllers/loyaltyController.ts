@@ -9,6 +9,7 @@ import Review from '../models/Review';
 import Order from '../models/Order';
 import { LoyaltyService } from '../services/loyaltyService';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
+import { updateProductRating } from './reviewController';
 
 export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
@@ -98,12 +99,11 @@ export const applyReferralCode = asyncHandler(async (req: Request, res: Response
     throw new ApiError(404, 'Invalid referral code. Please check and try again.');
   }
 
-  user.referredBy = referrer._id;
-  await user.save();
-
-  // Instantly reward the referee with ₹50 signup credits for joining with referral code
-  user.walletBalance = (user.walletBalance || 0) + 50;
-  await user.save();
+  // Instantly register referrer and reward the referee with ₹50 signup credits atomically without read-modify-write saves
+  await User.findByIdAndUpdate(userId, {
+    $set: { referredBy: referrer._id },
+    $inc: { walletBalance: 50 }
+  });
 
   await WalletTransaction.create({
     userId,
@@ -165,6 +165,11 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
     review.status = 'approved';
     await review.save();
 
+    // Recalculate product rating atomically using MongoDB aggregation pipeline directly in database
+    if (review.product) {
+      await updateProductRating(review.product);
+    }
+
     // Reward Reviewer instantly based on review quality (Text: ₹10, Photo: ₹25, Video: ₹50)
     const hasPhoto = review.images && review.images.length > 0;
     const hasVideo = false; // Video features simulated
@@ -181,6 +186,12 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
   } else {
     review.status = 'rejected';
     await review.save();
+
+    // Recalculate product rating atomically using MongoDB aggregation pipeline directly in database
+    if (review.product) {
+      await updateProductRating(review.product);
+    }
+
     res.status(200).json(new ApiResponse(true, 'Review has been rejected. No rewards were credited.', review));
   }
 });

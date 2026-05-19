@@ -53,9 +53,9 @@ export function GallerySection() {
     offset: ["start end", "end start"],
   });
 
-  if (!galleryPreview?.isVisible) return null;
-
   const headerY = useTransform(scrollYProgress, [0, 0.5], [50, 0]);
+
+  if (!galleryPreview?.isVisible) return null;
 
   return (
     <SectionWrapper
@@ -114,15 +114,26 @@ export function GallerySection() {
           galleryItems.map((item, idx) => (
             <motion.div
               key={item._id}
-              initial={{ opacity: 0, y: 27 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true, margin: "-50px" }}
               transition={{
-                delay: idx * 0.15,
-                duration: 0.8,
-                ease: [0.16, 1, 0.3, 1],
+                type: "spring",
+                stiffness: 75,
+                damping: 16,
+                delay: idx * 0.08,
               }}
-              className={`break-inside-avoid relative rounded-[22px] md:rounded-[28px] overflow-hidden shadow-ambient border border-black/5 group cursor-pointer ${item.height || 'aspect-square'}`}
+              className={`break-inside-avoid relative rounded-[22px] md:rounded-[28px] overflow-hidden shadow-ambient border border-black/5 group cursor-pointer hover-lift-glow ${
+                (!item.height || item.height === "aspect-square")
+                  ? (idx % 4 === 0
+                    ? "aspect-[2/3]"
+                    : idx % 4 === 1
+                      ? "aspect-square"
+                      : idx % 4 === 2
+                        ? "aspect-[4/5]"
+                        : "aspect-[3/4]")
+                  : item.height
+              }`}
             >
               <Link to={`/gallery/${item._id}`}>
                 <CloudinaryImage
@@ -156,11 +167,16 @@ export function GallerySection() {
 
         {/* Cinematic View All CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 27 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="break-inside-avoid rounded-[22px] md:rounded-[28px] overflow-hidden shadow-ambient border border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-7 aspect-[4/5] w-full group cursor-pointer hover:bg-primary hover:border-primary transition-all duration-700"
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{
+            type: "spring",
+            stiffness: 75,
+            damping: 16,
+            delay: galleryItems.length * 0.08,
+          }}
+          className="break-inside-avoid rounded-[22px] md:rounded-[28px] overflow-hidden shadow-ambient border border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-7 aspect-[4/5] w-full group cursor-pointer hover-lift-glow hover:bg-primary hover:border-primary transition-all duration-700"
         >
           <Link
             className="flex flex-col items-center w-full h-full justify-center text-primary group-hover:text-white transition-colors duration-700"

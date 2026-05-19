@@ -16,7 +16,7 @@ const router = Router();
 // Public Routes
 router.get('/public', getPublicReviews);
 router.get('/product/:productId', getProductReviews);
-router.post('/:id/helpful', incrementHelpful);
+router.post('/:id/helpful', requireAuth, incrementHelpful);
 
 // Authenticated User Routes
 router.post('/', requireAuth, createReview);

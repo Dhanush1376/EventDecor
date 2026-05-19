@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/domainServices';
 import { setAccessToken } from '../services/api';
 import toast from 'react-hot-toast';
@@ -14,28 +14,27 @@ export function AuthProvider({ children }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [intendedAction, setIntendedAction] = useState(null);
 
-  useEffect(() => {
-    checkAuth();
-
-    const handleUnauthorized = () => {
-      logout(true);
-    };
-
-    window.addEventListener('auth-unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('auth-unauthorized', handleUnauthorized);
+  const logout = useCallback(async (silent = false) => {
+    setAccessToken(null);
+    authService.logout().catch(() => {});
+    setUser(null);
+    setIsAuthenticated(false);
+    setIntendedAction(null);
+    
+    // Clear session context-specific keys from in-memory window context
+    delete window.__siri_splash_shown;
+    
+    if (!silent) {
+      toast.success('Logged out successfully');
+    }
   }, []);
 
-  useEffect(() => {
-    import('../utils/observability').then(({ setUserContext }) => {
-      setUserContext(user);
-    }).catch(err => console.error('Failed to load observability context:', err));
-  }, [user]);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const refreshed = await authService.refresh();
       const token = refreshed?.data?.accessToken || refreshed?.data?.token;
       if (token) setAccessToken(token);
+
       const response = await authService.getProfile();
       if (response.success) {
         setUser(response.data);
@@ -49,13 +48,14 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [logout]);
 
   const login = async (email, password) => {
     try {
       const response = await authService.login(email, password);
       if (response.success) {
-        setAccessToken(response.data.accessToken || response.data.token);
+        const token = response.data.accessToken || response.data.token;
+        setAccessToken(token);
         setUser(response.data.user);
         setIsAuthenticated(true);
         toast.success('Welcome back!');
@@ -67,20 +67,27 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = async (silent = false) => {
-    setAccessToken(null);
-    authService.logout().catch(() => {});
-    setUser(null);
-    setIsAuthenticated(false);
-    setIntendedAction(null);
-    
-    // Clear session context-specific keys from local storage
-    localStorage.removeItem('siri_last_splash_timestamp');
-    
-    if (!silent) {
-      toast.success('Logged out successfully');
-    }
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkAuth();
+    }, 0);
+
+    const handleUnauthorized = () => {
+      logout(true);
+    };
+
+    window.addEventListener('auth-unauthorized', handleUnauthorized);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('auth-unauthorized', handleUnauthorized);
+    };
+  }, [checkAuth, logout]);
+
+  useEffect(() => {
+    import('../utils/observability').then(({ setUserContext }) => {
+      setUserContext(user);
+    }).catch(err => console.error('Failed to load observability context:', err));
+  }, [user]);
 
   // Open and close actions for global Auth Modal
   const openAuthModal = () => setIsAuthModalOpen(true);

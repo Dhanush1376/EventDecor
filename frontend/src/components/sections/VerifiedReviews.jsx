@@ -81,8 +81,8 @@ const METRICS = {
 };
 
 export const VerifiedReviews = () => {
-  const { reels } = useWebsiteContent();
-  const [reviewsList, setReviewsList] = useState([]);
+  const { reels, testimonials } = useWebsiteContent();
+  const [reviewsList, setReviewsList] = useState(INITIAL_PREMIUM_REVIEWS);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("all");
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -199,28 +199,33 @@ export const VerifiedReviews = () => {
         const response = await reviewService.getPublicReviews({ limit: 50 });
         if (response.success && response.data) {
           const liveData = response.data.data || response.data;
-          const liveReviews = (Array.isArray(liveData) ? liveData : []).map(r => ({
-            id: r._id || r.id,
-            user: r.customerName || "Patron Customer",
-            location: r.location || "Hyderabad",
-            eventType: r.eventType || "Traditional Event",
-            favoriteElement: r.favoriteElement || "Artisanal Curation",
-            rating: r.rating || 5,
-            subRatings: { quality: r.rating, design: r.rating, delivery: 5, setup: 5, communication: 5 },
-            date: new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-            comment: r.comment,
-            images: r.images || [],
-            video: null,
-            verified: r.verified !== undefined ? r.verified : true,
-            helpfulCount: r.helpfulCount || 0,
-            category: r.category || "product",
-            aiPolished: false,
-          }));
+          const liveReviews = (Array.isArray(liveData) ? liveData : [])
+            .filter(r => r.isMock !== true)
+            .map(r => ({
+              id: r._id || r.id,
+              user: r.customerName || "Patron Customer",
+              location: r.location || "Hyderabad",
+              eventType: r.eventType || "Traditional Event",
+              favoriteElement: r.favoriteElement || "Artisanal Curation",
+              rating: r.rating || 5,
+              subRatings: { quality: r.rating, design: r.rating, delivery: 5, setup: 5, communication: 5 },
+              date: new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+              comment: r.comment,
+              images: r.images || [],
+              video: null,
+              verified: r.verified !== undefined ? r.verified : true,
+              helpfulCount: r.helpfulCount || 0,
+              category: r.category || "product",
+              aiPolished: false,
+            }));
 
           setReviewsList(liveReviews);
+        } else {
+          setReviewsList([]);
         }
       } catch (err) {
         console.error("Failed to fetch live reviews:", err);
+        setReviewsList(INITIAL_PREMIUM_REVIEWS);
       } finally {
         setLoading(false);
       }
@@ -300,20 +305,20 @@ export const VerifiedReviews = () => {
   // Extract all media for the Pinterest Gallery rack
   const allGalleryMedia = (reels?.items && reels.items.length > 0)
     ? reels.items.filter(itm => itm.isVisible).map(itm => ({
-        url: itm.url,
-        type: itm.type || "image",
-        caption: itm.caption,
-        author: itm.author || "Patron"
-      }))
+      url: itm.url,
+      type: itm.type || "image",
+      caption: itm.caption,
+      author: itm.author || "Patron"
+    }))
     : reviewsList.reduce((acc, rev) => {
-        if (rev.images) {
-          rev.images.forEach((img) => acc.push({ url: img, type: "image", caption: `${rev.eventType} · ${rev.user}`, author: rev.user }));
-        }
-        if (rev.video) {
-          acc.push({ url: rev.video, type: "video", caption: `${rev.eventType} Highlights`, author: rev.user });
-        }
-        return acc;
-      }, []);
+      if (rev.images) {
+        rev.images.forEach((img) => acc.push({ url: img, type: "image", caption: `${rev.eventType} · ${rev.user}`, author: rev.user }));
+      }
+      if (rev.video) {
+        acc.push({ url: rev.video, type: "video", caption: `${rev.eventType} Highlights`, author: rev.user });
+      }
+      return acc;
+    }, []);
 
   if (loading) {
     return null;
@@ -327,19 +332,25 @@ export const VerifiedReviews = () => {
     <section className="relative py-16 md:py-20 bg-[#FCFBF9] overflow-hidden border-t border-[#E8E2D5]/30">
       {/* Background Subtle Elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-[#D4AF37]/5 rounded-full blur-[120px] pointer-events-none" />
-      
-      <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-16 space-y-12 relative z-10">
-        
+
+      <div className="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop space-y-12 relative z-10">
+
         {/* Elegant Section Title */}
-        <div className="text-center max-w-xl mx-auto mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ type: "spring", stiffness: 70, damping: 15 }}
+          className="text-center max-w-xl mx-auto mb-6"
+        >
           <span className="font-label text-[10px] md:text-xs text-[#8C7000] uppercase tracking-[0.4em] font-bold block mb-2">
             MEMORIES
           </span>
           <h2 className="text-2xl md:text-3xl font-display text-[#2D2B29] font-light tracking-tight">
-            Client Testimonial
+            {testimonials?.sectionTitle || "Client Testimonial"}
           </h2>
           <div className="w-8 h-[1px] bg-[#D4AF37]/40 mx-auto mt-3" />
-        </div>
+        </motion.div>
 
         {/* Continuous Looping Horizontal Scroll Marquee */}
         {filteredReviews.length === 0 ? (
@@ -363,100 +374,105 @@ export const VerifiedReviews = () => {
             </motion.div>
           </div>
         ) : (
-          <div
-            ref={scrollRef}
-            onMouseDown={handleMouseDown}
-            onMouseLeave={handleMouseLeave}
-            onMouseUp={handleMouseUp}
-            onMouseMove={handleMouseMove}
-            onMouseEnter={() => setIsHovered(true)}
-            className="flex gap-8 overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing select-none py-6 px-4"
-          >
-            {marqueeReviews.map((rev, index) => (
-              <div
-                key={`${rev.id}-${index}`}
-                className="flex-shrink-0 w-[290px] xs:w-[320px] sm:w-[400px] md:w-[450px] bg-white p-8 md:p-10 rounded-[32px] border border-[#EBE6DD] shadow-[0_4px_24px_rgba(0,0,0,0.01)] flex flex-col justify-between hover:border-[#D4AF37]/40 hover:shadow-[0_16px_40px_rgba(212,175,55,0.06)] hover:-translate-y-1 transition-all duration-500 group relative overflow-hidden"
-              >
-                <div className="space-y-6">
-                  {/* Stars */}
-                  <div className="flex gap-1 text-[#D4AF37] text-sm">
-                    {[...Array(rev.rating || 5)].map((_, i) => (
-                      <span key={i} className="tracking-widest">★</span>
-                    ))}
+          <div className="relative w-full">
+            {/* Fade Overlays on left & right sides */}
+            <div className="absolute top-0 bottom-0 left-0 w-8 md:w-20 bg-gradient-to-r from-[#FCFBF9] to-transparent z-20 pointer-events-none" />
+            <div className="absolute top-0 bottom-0 right-0 w-8 md:w-20 bg-gradient-to-l from-[#FCFBF9] to-transparent z-20 pointer-events-none" />
+
+            <div
+              ref={scrollRef}
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+              onMouseEnter={() => setIsHovered(true)}
+              className="flex gap-8 overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing select-none py-6 px-4 relative z-10"
+            >
+              {marqueeReviews.map((rev, index) => (
+                <div
+                  key={`${rev.id}-${index}`}
+                  className="flex-shrink-0 w-[290px] xs:w-[320px] sm:w-[400px] md:w-[450px] bg-white p-8 md:p-10 rounded-[32px] border border-[#EBE6DD] flex flex-col justify-between hover-lift-glow group relative overflow-hidden"
+                >
+                  <div className="space-y-6">
+                    {/* Stars */}
+                    <div className="flex gap-1 text-[#D4AF37] text-sm">
+                      {[...Array(rev.rating || 5)].map((_, i) => (
+                        <span key={i} className="tracking-widest">★</span>
+                      ))}
+                    </div>
+
+                    {/* Quote */}
+                    <p className="font-serif text-[#4A453F] text-base md:text-[17px] font-light leading-relaxed italic mb-6">
+                      "{rev.comment || rev.text}"
+                    </p>
                   </div>
 
-                  {/* Quote */}
-                  <p className="font-serif text-[#4A453F] text-base md:text-[17px] font-light leading-relaxed italic mb-6">
-                    "{rev.comment || rev.text}"
-                  </p>
-                </div>
+                  <div className="mt-8 space-y-5">
+                    {/* Optional Attached Media inside Card */}
+                    {((rev.images && rev.images.length > 0) || rev.video) && (
+                      <div className="flex gap-2 pb-2 border-b border-[#F3EFE7]">
+                        {rev.images?.slice(0, 3).map((img, i) => (
+                          <div
+                            key={i}
+                            onClick={() => !isDragging && openMediaLightbox(rev.images.map(url => ({ url, type: "image", caption: rev.eventType, author: rev.user })), i)}
+                            className="w-10 h-10 rounded-xl overflow-hidden border border-[#E2DACB] hover:scale-105 transition-transform duration-300 cursor-pointer shadow-2xs shrink-0"
+                          >
+                            <img onError={handleImageError} src={img} className="w-full h-full object-cover" alt="Customer Memory" />
+                          </div>
+                        ))}
+                        {rev.video && (
+                          <div
+                            onClick={() => !isDragging && openMediaLightbox([{ url: rev.video, type: "video", caption: rev.eventType, author: rev.user }], 0)}
+                            className="w-10 h-10 rounded-xl bg-[#735C00] text-white flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 shadow-2xs shrink-0"
+                            title="Watch Reel"
+                          >
+                            <span className="material-symbols-outlined text-sm">play_circle</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                <div className="mt-8 space-y-5">
-                  {/* Optional Attached Media inside Card */}
-                  {((rev.images && rev.images.length > 0) || rev.video) && (
-                    <div className="flex gap-2 pb-2 border-b border-[#F3EFE7]">
-                      {rev.images?.slice(0, 3).map((img, i) => (
-                        <div
-                          key={i}
-                          onClick={() => !isDragging && openMediaLightbox(rev.images.map(url => ({ url, type: "image", caption: rev.eventType, author: rev.user })), i)}
-                          className="w-10 h-10 rounded-xl overflow-hidden border border-[#E2DACB] hover:scale-105 transition-transform duration-300 cursor-pointer shadow-2xs shrink-0"
-                        >
-                          <img onError={handleImageError} src={img} className="w-full h-full object-cover" alt="Customer Memory" />
+                    {/* Profile */}
+                    <div className="flex items-center justify-between gap-4 mt-auto">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-full overflow-hidden border border-[#E2DACB] bg-[#FAF9F6] flex items-center justify-center shrink-0 shadow-2xs">
+                          <span className="font-serif text-[#735C00] text-sm font-bold">
+                            {(rev.user || rev.name || "C")[0].toUpperCase()}
+                          </span>
                         </div>
-                      ))}
-                      {rev.video && (
-                        <div
-                          onClick={() => !isDragging && openMediaLightbox([{ url: rev.video, type: "video", caption: rev.eventType, author: rev.user }], 0)}
-                          className="w-10 h-10 rounded-xl bg-[#735C00] text-white flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 shadow-2xs shrink-0"
-                          title="Watch Reel"
-                        >
-                          <span className="material-symbols-outlined text-sm">play_circle</span>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="font-display font-semibold uppercase tracking-[0.15em] text-[#2D2B29] text-[10px]">
+                              {rev.user || rev.name}
+                            </h4>
+                            {rev.verified && (
+                              <span className="material-symbols-outlined text-xs text-emerald-600 font-bold" title="Verified Event">verified</span>
+                            )}
+                          </div>
+                          <p className="font-label text-[#8C7000] uppercase tracking-[0.2em] text-[8px] font-bold mt-0.5">
+                            {rev.eventType || "Event"} · {rev.location || "Client"}
+                          </p>
                         </div>
+                      </div>
+
+                      {/* Helpful Button */}
+                      {rev.helpfulCount != null && (
+                        <button
+                          onClick={() => !isDragging && handleHelpfulClick(rev.id)}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all cursor-pointer font-bold text-[8px] uppercase tracking-wider shrink-0 ${helpfulLiked[rev.id]
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : "bg-[#FAF9F6] text-[#685C57] border-[#E2DACB] hover:border-[#735C00] hover:text-[#2D2B29]"
+                            }`}
+                        >
+                          <span className="material-symbols-outlined text-[10px]">{helpfulLiked[rev.id] ? "thumb_up" : "thumb_up_off"}</span>
+                          {rev.helpfulCount + (helpfulLiked[rev.id] ? 1 : 0)}
+                        </button>
                       )}
                     </div>
-                  )}
-
-                  {/* Profile */}
-                  <div className="flex items-center justify-between gap-4 mt-auto">
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-full overflow-hidden border border-[#E2DACB] bg-[#FAF9F6] flex items-center justify-center shrink-0 shadow-2xs">
-                        <span className="font-serif text-[#735C00] text-sm font-bold">
-                          {(rev.user || rev.name || "C")[0].toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h4 className="font-display font-semibold uppercase tracking-[0.15em] text-[#2D2B29] text-[10px]">
-                            {rev.user || rev.name}
-                          </h4>
-                          {rev.verified && (
-                            <span className="material-symbols-outlined text-xs text-emerald-600 font-bold" title="Verified Event">verified</span>
-                          )}
-                        </div>
-                        <p className="font-label text-[#8C7000] uppercase tracking-[0.2em] text-[8px] font-bold mt-0.5">
-                          {rev.eventType || "Event"} · {rev.location || "Client"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Helpful Button */}
-                    {rev.helpfulCount != null && (
-                      <button
-                        onClick={() => !isDragging && handleHelpfulClick(rev.id)}
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all cursor-pointer font-bold text-[8px] uppercase tracking-wider shrink-0 ${
-                          helpfulLiked[rev.id]
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : "bg-[#FAF9F6] text-[#685C57] border-[#E2DACB] hover:border-[#735C00] hover:text-[#2D2B29]"
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[10px]">{helpfulLiked[rev.id] ? "thumb_up" : "thumb_up_off"}</span>
-                        {rev.helpfulCount + (helpfulLiked[rev.id] ? 1 : 0)}
-                      </button>
-                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 

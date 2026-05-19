@@ -4,18 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
 import { handleImageError } from "../../utils/imageUtils";
 
-export function GalleryCard({ item, onImageClick }) {
-  const navigate = useNavigate();
-  const itemId = item._id || item.id;
-  const linkTo = `/gallery/${itemId}`;
-  const displayImage = item.image || item.imageSrc;
-
-  const CardContent = () => (
+function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
+  return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`break-inside-avoid mb-4 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm hover:shadow-luxury transition-all duration-700 ${item.height || "aspect-square"}`}
+      className={`break-inside-avoid mb-4 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 ${item.height || "aspect-square"}`}
     >
       {/* Background Image with Cinematic Zoom */}
       <CloudinaryImage
@@ -104,7 +99,7 @@ export function GalleryCard({ item, onImageClick }) {
                   if (itemId) navigate(linkTo);
                 }
               }}
-              className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:bg-primary hover:text-white transition-all duration-300 flex-shrink-0"
+              className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:bg-primary hover:text-white focus:outline-none focus:ring-0 transition-all duration-300 flex-shrink-0"
               aria-label={`View ${item.title}`}
             >
               <span className="material-symbols-outlined text-[18px] font-bold">
@@ -121,12 +116,19 @@ export function GalleryCard({ item, onImageClick }) {
       <div className="absolute inset-0 bg-marble opacity-0 group-hover:opacity-[0.05] transition-opacity pointer-events-none mix-blend-overlay" />
     </motion.div>
   );
+}
+
+export function GalleryCard({ item, onImageClick }) {
+  const navigate = useNavigate();
+  const itemId = item._id || item.id;
+  const linkTo = `/gallery/${itemId}`;
+  const displayImage = item.image || item.imageSrc;
 
   // Don't render a link if there's no valid ID
   if (!itemId) {
     return (
       <div className="block">
-        <CardContent />
+        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} />
       </div>
     );
   }
@@ -134,14 +136,14 @@ export function GalleryCard({ item, onImageClick }) {
   if (onImageClick) {
     return (
       <div onClick={onImageClick} className="block">
-        <CardContent />
+        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} />
       </div>
     );
   }
 
   return (
     <Link to={linkTo} className="block">
-      <CardContent />
+      <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} />
     </Link>
   );
 }

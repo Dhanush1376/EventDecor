@@ -87,15 +87,7 @@ export function RecommendationSystem({ category, currentProductId }) {
           console.warn("Failed to fetch recently viewed list from API", err);
         }
       } else {
-        // Guest mode: Read recently viewed from localStorage if available
-        try {
-          const guestSaved = localStorage.getItem("siri_recently_viewed");
-          if (guestSaved) {
-            const list = JSON.parse(guestSaved) || [];
-            const filtered = list.filter((p) => (p._id || p.id) !== currentProductId);
-            setRecentlyViewedList(filtered.slice(0, 3));
-          }
-        } catch {}
+        setRecentlyViewedList([]);
       }
     };
 
@@ -113,13 +105,13 @@ export function RecommendationSystem({ category, currentProductId }) {
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
         <div className="flex flex-col items-center text-center mb-10 md:mb-14">
           <span className="font-label-sm text-primary tracking-[0.4em] uppercase mb-3 block text-[9px] sm:text-[10px] font-bold">
-            Refined Selections
+            More Options
           </span>
           <h2 className="font-headline text-[24px] sm:text-[32px] md:text-[45px] text-[#2D2B29] mb-4 font-light tracking-tight">
-            You May Also Adore
+            You May Also Like
           </h2>
           <p className="font-body-sm sm:font-body-lg text-on-surface-variant/60 font-light max-w-lg mb-8 text-[13px] md:text-[15px]">
-            Visually harmonious pieces dynamically curated by our studio to complement your current search.
+            Beautiful handmade items selected by our designers to match what you are looking for.
           </p>
 
           {/* Toggle Tab Actions */}
@@ -156,7 +148,7 @@ export function RecommendationSystem({ category, currentProductId }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             >
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="flex flex-col gap-4 animate-pulse">
@@ -173,7 +165,7 @@ export function RecommendationSystem({ category, currentProductId }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.4 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             >
               {activeList.map((product, idx) => (
                 <motion.div

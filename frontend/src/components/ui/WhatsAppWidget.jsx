@@ -13,24 +13,34 @@ export function WhatsAppWidget() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          onDragEnd={(_, info) => {
-            // Swipe right to dismiss
-            if (info.offset.x > 60) setIsVisible(false);
-          }}
+          drag
+          dragMomentum={false}
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0, x: 100 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
           className="fixed bottom-28 right-6 md:bottom-10 md:right-10 z-[40]"
         >
+          {/* Symmetrical Close Button */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsVisible(false);
+            }}
+            aria-label="Dismiss chat widget"
+            className="absolute -top-1.5 -right-1.5 w-5.5 h-5.5 min-h-0 aspect-square p-0 bg-black text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-md cursor-pointer hover:bg-red-500 transition-all z-50 border-2 border-white select-none shrink-0"
+          >
+            ✕
+          </button>
+
           <a
             href="https://wa.me/919866006648"
             target="_blank"
             rel="noopener noreferrer"
             className="w-14 h-14 bg-white/95 backdrop-blur-md rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.15)] border border-black/5 hover:border-primary/30 flex items-center justify-center cursor-grab active:cursor-grabbing transition-all duration-500 ease-out group"
             aria-label="Chat with us on WhatsApp"
+            onDragStart={(e) => e.preventDefault()} // prevent browser image drag
           >
             <div className="w-10 h-10 rounded-full bg-[#25D366]/10 shrink-0 flex items-center justify-center group-hover:bg-[#25D366] transition-colors duration-300">
               <svg

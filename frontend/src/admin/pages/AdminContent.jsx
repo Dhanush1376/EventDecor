@@ -204,7 +204,7 @@ function HeroSectionEditor({ content, onUpdate }) {
           </div>
         </AdminField>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <AdminField label="Gold Badge Tagline">
             <AdminInput
               value={hero.badgeText || ""}
@@ -217,6 +217,13 @@ function HeroSectionEditor({ content, onUpdate }) {
             label="Lossless Background Image"
             value={hero.backgroundImage || ""}
             onChange={(val) => onUpdate("hero", { backgroundImage: val })}
+            folder="cms"
+          />
+
+          <ImageUpload
+            label="Mobile Background Image"
+            value={hero.mobileBackgroundImage || ""}
+            onChange={(val) => onUpdate("hero", { mobileBackgroundImage: val })}
             folder="cms"
           />
         </div>
@@ -370,13 +377,22 @@ function StoryTeaserEditor({ content, onUpdate }) {
             onChange={(val) => onUpdate("storyTeaser", { image: val })}
             folder="cms"
           />
-          <AdminField label="Call to Action Button Label">
-            <AdminInput
-              value={story.ctaText || ""}
-              onChange={(e) => onUpdate("storyTeaser", { ctaText: e.target.value })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
-            />
-          </AdminField>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <AdminField label="Call to Action Button Label">
+              <AdminInput
+                value={story.ctaText || ""}
+                onChange={(e) => onUpdate("storyTeaser", { ctaText: e.target.value })}
+                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              />
+            </AdminField>
+            <AdminField label="Heritage Year Badge Text">
+              <AdminInput
+                value={story.establishedYear || "Est. in 2003"}
+                onChange={(e) => onUpdate("storyTeaser", { establishedYear: e.target.value })}
+                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              />
+            </AdminField>
+          </div>
         </div>
       </div>
     </div>
@@ -1418,6 +1434,8 @@ export function AdminContent() {
     hasUnsavedContent,
     reorderHomepageSections,
     toggleHomepageSection,
+    autoPublish,
+    toggleAutoPublish,
   } = useAdmin();
 
   const [activeSection, setActiveSection] = useState("hero");
@@ -1435,28 +1453,6 @@ export function AdminContent() {
 
   const handleUpdate = (section, data) => {
     updateContent(section, data);
-    
-    // Smooth real-time preview local storage sync
-    try {
-      const current = JSON.parse(localStorage.getItem("siri_admin_website_content") || "{}");
-      const updated = {
-        ...current,
-        [section]: {
-          ...current[section],
-          ...data,
-          status: "modified"
-        }
-      };
-      localStorage.setItem("siri_admin_website_content", JSON.stringify(updated));
-      
-      window.dispatchEvent(new StorageEvent("storage", {
-        key: "siri_admin_website_content",
-        newValue: JSON.stringify(updated),
-        storageArea: localStorage
-      }));
-    } catch (e) {
-      console.warn("Storage preview sync failed:", e);
-    }
   };
 
   return (
@@ -1484,14 +1480,36 @@ export function AdminContent() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
             Live Sync Mode
           </div>
+
+          {/* Quick Auto-Publish Toggle Switch */}
+          <div className="flex items-center gap-2 bg-stone-50 border border-stone-200/80 px-3 py-1.5 rounded-full shadow-2xs">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-600">Auto-Publish</span>
+            <button
+              onClick={toggleAutoPublish}
+              className={`w-8 h-4.5 rounded-full transition-colors duration-250 relative focus:outline-none cursor-pointer min-h-0 p-0 ${
+                autoPublish ? "bg-[#0F172A]" : "bg-stone-300"
+              }`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full transition-transform duration-250 shadow-sm ${
+                autoPublish ? "translate-x-3.5" : ""
+              }`} />
+            </button>
+          </div>
           
-          <button 
-            onClick={publishAllContent} 
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#0F172A] text-[#F8F9FB] hover:bg-[#0F172A] rounded-full transition-all duration-300 text-[10px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[#000000]/40"
-          >
-            <span className="material-symbols-outlined text-[14px] font-bold">publish</span>
-            <span>Publish</span>
-          </button>
+          {autoPublish ? (
+            <div className="flex items-center gap-2 px-5 py-2.5 bg-emerald-950 text-emerald-300 border border-emerald-800/80 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] shadow-2xs">
+              <span className="material-symbols-outlined text-[14px] font-bold animate-spin-slow">sync</span>
+              <span>Auto-Publishing</span>
+            </div>
+          ) : (
+            <button 
+              onClick={publishAllContent} 
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#0F172A] text-[#F8F9FB] hover:bg-[#0F172A] rounded-full transition-all duration-300 text-[10px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[#000000]/40"
+            >
+              <span className="material-symbols-outlined text-[14px] font-bold">publish</span>
+              <span>Publish</span>
+            </button>
+          )}
         </div>
       </motion.div>
 
@@ -1695,7 +1713,7 @@ export function AdminContent() {
       </div>
 
       <PublishBar
-        hasChanges={hasUnsavedContent}
+        hasChanges={hasUnsavedContent && !autoPublish}
         onPublish={publishAllContent}
         onReset={() => {}}
       />

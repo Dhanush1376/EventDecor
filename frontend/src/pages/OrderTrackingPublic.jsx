@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { orderService } from "../services/domainServices";
@@ -58,7 +58,7 @@ export function OrderTrackingPublic() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [operatorNote, setOperatorNote] = useState("");
 
-  const fetchTrackingDetails = async () => {
+  const fetchTrackingDetails = useCallback(async () => {
     if (!trackingToken) {
       setError("A valid tracking link with security token is required. Check your order confirmation email.");
       setLoading(false);
@@ -74,21 +74,55 @@ export function OrderTrackingPublic() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (orderId) {
-      fetchTrackingDetails();
-    }
   }, [orderId, trackingToken]);
 
-  const getNextStatus = (current) => {
+  const getNextStatus = useCallback((current) => {
     const idx = trackingSteps.indexOf(current);
     if (idx !== -1 && idx < trackingSteps.length - 1) {
       return trackingSteps[idx + 1];
     }
     return null;
+  }, []);
+
+  const verifyCourierPin = (e) => {
+    e.preventDefault();
+    if (operatorPin.trim() === "SIRI2026") {
+      setIsPinVerified(true);
+      toast.success("Logistics Operator Session Initialized!");
+    } else {
+      toast.error("Invalid Logistics Security Pin");
+      setOperatorPin("");
+    }
   };
+
+  const handleStatusUpdate = useCallback(async (newStatus) => {
+    setUpdatingStatus(true);
+    try {
+      await orderService.updatePublicStatus(
+        orderId, 
+        newStatus, 
+        operatorNote || `Dispatch transit scan: ${newStatus}`, 
+        "SIRI2026"
+      );
+      toast.success(`Logistics status updated to ${newStatus}`);
+      setOperatorNote("");
+      // Reload order details to refresh the timeline
+      await fetchTrackingDetails();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update logistics status.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  }, [orderId, operatorNote, fetchTrackingDetails]);
+
+  useEffect(() => {
+    if (orderId) {
+      const timer = setTimeout(() => {
+        fetchTrackingDetails();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [orderId, fetchTrackingDetails]);
 
   // Capture physical barcode scanner keyboard inputs
   useEffect(() => {
@@ -154,38 +188,7 @@ export function OrderTrackingPublic() {
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [order, isPinVerified]);
-
-  const verifyCourierPin = (e) => {
-    e.preventDefault();
-    if (operatorPin.trim() === "SIRI2026") {
-      setIsPinVerified(true);
-      toast.success("Logistics Operator Session Initialized!");
-    } else {
-      toast.error("Invalid Logistics Security Pin");
-      setOperatorPin("");
-    }
-  };
-
-  const handleStatusUpdate = async (newStatus) => {
-    setUpdatingStatus(true);
-    try {
-      await orderService.updatePublicStatus(
-        orderId, 
-        newStatus, 
-        operatorNote || `Dispatch transit scan: ${newStatus}`, 
-        "SIRI2026"
-      );
-      toast.success(`Logistics status updated to ${newStatus}`);
-      setOperatorNote("");
-      // Reload order details to refresh the timeline
-      await fetchTrackingDetails();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update logistics status.");
-    } finally {
-      setUpdatingStatus(false);
-    }
-  };
+  }, [order, isPinVerified, getNextStatus, handleStatusUpdate]);
 
   if (loading) {
     return (

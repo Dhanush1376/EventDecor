@@ -18,6 +18,8 @@ export function AdminTopBar() {
     toggleTheme,
     activeRole,
     changeActiveRole,
+    autoPublish,
+    toggleAutoPublish,
   } = useAdmin();
   const [showNotifs, setShowNotifs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -128,6 +130,29 @@ export function AdminTopBar() {
             </span>
             Add Product
           </button>
+
+          {/* Global Auto-Publish Switch */}
+          <div className="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200/60 rounded-full px-3 py-1.5 hover:bg-slate-100/60 hover:border-slate-300 transition-all select-none">
+            <span className="material-symbols-outlined text-[13px] text-slate-500 font-bold">
+              {autoPublish ? "bolt" : "sync_disabled"}
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+              Auto-Publish
+            </span>
+            <button
+              onClick={toggleAutoPublish}
+              className={`w-8 h-4.5 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${
+                autoPublish ? "bg-black" : "bg-slate-200"
+              }`}
+              aria-label="Toggle Auto-Publish"
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full transition-transform duration-200 shadow-xs ${
+                  autoPublish ? "translate-x-3.5" : ""
+                }`}
+              />
+            </button>
+          </div>
 
           {/* Active Role Indicator Badge */}
           <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/50 border border-amber-200/60 rounded-full select-none shrink-0" title="Simulating Portal Access Level">

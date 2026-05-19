@@ -17,7 +17,6 @@ export function HeroSection() {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
-
   const { hero } = useWebsiteContent();
 
   if (!hero?.isVisible) return null;
@@ -25,142 +24,143 @@ export function HeroSection() {
   /* ─────────── MOBILE — Immersive full-bleed static blurred hero ─────────── */
   if (isMobile) {
     return (
-      <section className="relative min-h-[100svh] flex flex-col justify-end overflow-hidden">
-        {/* Full-bleed background image - Optimized */}
-        <CloudinaryImage
-          src={hero.backgroundImage}
-          alt="Hero background"
-          className="w-full h-full object-cover"
-          containerClassName="absolute inset-0 z-0"
-          loading="eager"
-          fetchPriority="high"
-        />
+      <section className="relative w-full overflow-hidden bg-surface">
+        {/* 1. Dark Hero Section with V-shape bottom and Background Image */}
+        <div className="relative text-white pt-28 pb-24 px-6 flex flex-col z-10 min-h-[440px] justify-center overflow-hidden">
+          {/* Background image & gradient overlay */}
+          <div className="absolute inset-0 z-0">
+            <CloudinaryImage
+              src={hero.mobileBackgroundImage || hero.backgroundImage || "/images/luxury_royal_wedding.png"}
+              alt="Luxury Royal Wedding Background"
+              className="w-full h-full object-cover"
+              containerClassName="absolute inset-0 w-full h-full"
+              loading="eager"
+              fetchPriority="high"
+            />
+            {/* Soft dark radial & linear gradients to ensure premium contrast, fading on the right */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0F0E0C]/90 via-[#0F0E0C]/40 to-transparent mix-blend-multiply" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0F0E0C] via-black/30 to-transparent" />
+            {/* Subtle grain/texture overlay */}
+            <div
+              className="absolute inset-0 opacity-[0.02] pointer-events-none"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+              }}
+            />
+          </div>
 
-        {/* Cinematic gradient overlays */}
-        <div className="absolute inset-0 z-[1] bg-black/40" />
+          <div className="relative z-10 flex flex-col items-start max-w-[290px]">
+            {/* Eyebrow */}
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="material-symbols-outlined text-[13px] text-[#d4af37]">
+                filter_vintage
+              </span>
+              <span className="font-label text-[8px] tracking-[0.2em] text-[#d4af37]/80 uppercase font-semibold leading-none">
+                ARTISAN EXCELLENCE SINCE 2003
+              </span>
+            </div>
 
-        {/* Subtle grain texture */}
-        <div
-          className="absolute inset-0 z-[2] opacity-[0.03] pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-          }}
-        />
+            {/* Title */}
+            <h1 className="font-headline text-[26px] leading-[1.25] text-white mb-4">
+              Heritage
+              <br />
+              Crafted for
+              <br />
+              <span className="text-[#d4af37] italic font-normal inline-block relative">
+                Modern Celebrations
+                <span className="absolute left-0 -bottom-1.5 w-full h-[1px] bg-[#d4af37]/60" />
+              </span>
+            </h1>
 
-        {/* Floating mandala accents */}
-        <div className="absolute top-16 -right-12 opacity-[0.06] z-[2] pointer-events-none">
-          <MandalaElement size={240} duration={120} skipFade={true} />
-        </div>
-        <div className="absolute -bottom-20 -left-16 opacity-[0.04] z-[2] pointer-events-none">
-          <MandalaElement
-            size={320}
-            duration={180}
-            variant={2}
-            skipFade={true}
-          />
-        </div>
+            {/* Subtext */}
+            <p className="font-body text-white/75 text-[11.5px] leading-relaxed mb-6">
+              Handcrafted luxury event decorations rooted in South Indian tradition.
+            </p>
 
-        {/* Hero content — Entire area blurred with backdrop-blur */}
-        <div className="relative z-10 px-6 pb-[calc(var(--bottom-nav-height)+40px)] pt-32 flex flex-col justify-end min-h-[100svh] backdrop-blur-xl bg-black/30">
-          {/* Top-left mandala art image */}
-          <MandalaArtDecor
-            variant={1}
-            size={320}
-            className="-top-12 -left-12"
-            opacity={0.35}
-            dark
-            blendModeDark="soft-light"
-            spinDuration={150}
-          />
-          {/* Kicker / Eyebrow */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="flex items-center gap-2 mb-6"
-          >
-            <span className="h-px w-8 bg-primary-container/70" />
-            <span className="font-label-sm text-[10px] text-primary-container tracking-[0.4em] uppercase font-bold">
-              {hero.badgeText}
-            </span>
-          </motion.div>
+            {/* CTA Buttons */}
+            <div className="flex flex-col gap-3 items-start w-full">
+              <Link
+                to="/collections"
+                className="border border-[#d4af37]/60 text-[#d4af37] font-semibold text-[9.5px] uppercase tracking-widest px-5 py-2.5 rounded-full inline-flex items-center gap-1.5 bg-[#d4af37]/5 active:scale-95 transition-all hover:bg-[#d4af37]/10"
+              >
+                EXPLORE COLLECTIONS
+                <span className="material-symbols-outlined text-[12px]">trending_flat</span>
+              </Link>
 
-          {/* Editorial headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 1 }}
-            className="font-headline text-[42px] leading-[1.05] tracking-tight text-white mb-4"
-          >
-            {hero.title.split(" ").slice(0, -1).join(" ")}
-            <br />
-            <span className="italic font-light text-primary-container">
-              {hero.title.split(" ").slice(-1).join(" ")}
-            </span>
-          </motion.h1>
+              <Link
+                to="/about"
+                className="inline-flex items-center gap-1.5 text-white/80 font-semibold text-[9px] uppercase tracking-widest active:scale-95 transition-all py-1"
+              >
+                <span className="material-symbols-outlined text-[13px] text-[#d4af37]">
+                  play_arrow
+                </span>
+                <span className="underline decoration-[#d4af37]/40 underline-offset-4 font-semibold">
+                  WATCH OUR STORY
+                </span>
+              </Link>
+            </div>
+          </div>
 
-          {/* Subtext */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.8 }}
-            className="font-body text-white/70 text-[14px] leading-relaxed max-w-[320px] mb-8 font-light"
-          >
-            {hero.subtitle}
-          </motion.p>
-
-          {/* Heritage badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.85, duration: 0.6 }}
-            className="flex items-center gap-2 mb-10"
-          >
-            <span className="material-symbols-outlined text-primary-container text-[16px]">
-              verified
-            </span>
-            <span className="font-label text-[9px] uppercase tracking-[0.25em] text-white/50 font-bold">
-              {hero.badgeText}
-            </span>
-          </motion.div>
-
-          {/* CTA buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1, duration: 0.8 }}
-            className="flex flex-col gap-4"
-          >
-            <Link
-              to={hero.ctaPrimary.link}
-              className="w-full h-14 flex items-center justify-center gap-3 rounded-full bg-white text-black font-bold text-[11px] uppercase tracking-[0.3em] shadow-2xl active:scale-[0.98] transition-all group"
+          {/* V-Shape bottom mask */}
+          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-10 translate-y-[1px]">
+            <svg
+              viewBox="0 0 100 10"
+              preserveAspectRatio="none"
+              className="w-full h-6 text-surface fill-current"
             >
-              {hero.ctaPrimary.text}
-              <span className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">
+              <path d="M0 0 L50 10 L100 0 L100 10 L0 10 Z" />
+              <path d="M0 0 L50 10 L100 0" fill="none" stroke="#d4af37" strokeWidth="0.3" />
+            </svg>
+          </div>
+        </div>
+
+        {/* 2. Cream Content Area */}
+        <div className="relative bg-surface px-5 pt-8 pb-10 flex flex-col items-center">
+          {/* Watermark mandala in the background */}
+          <div className="absolute bottom-2 left-2 w-44 h-44 opacity-[0.03] pointer-events-none mix-blend-multiply">
+            <img src="/mandala_hero_art.png" alt="" className="w-full h-full object-contain animate-slow-spin" style={{ animationDuration: "120s" }} />
+          </div>
+          {/* Booking Consultation Banner */}
+          <div className="w-full max-w-[420px] bg-[#0F0E0C] rounded-full py-2.5 px-4 flex items-center justify-between border border-[#d4af37]/35 shadow-lg mb-8 relative overflow-hidden">
+            {/* Left side */}
+            <div className="flex items-center gap-2 relative z-10 min-w-0">
+              <span className="material-symbols-outlined text-[12px] text-[#d4af37] shrink-0">
+                calendar_month
+              </span>
+              <span className="text-white text-[9.5px] font-medium tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
+                Let's Design Your Dream Celebration
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div className="h-3 w-px bg-[#d4af37]/25 mx-2.5 shrink-0" />
+
+            {/* Right side */}
+            <Link
+              to="/custom-orders"
+              className="text-[#d4af37] text-[8.5px] font-bold uppercase tracking-widest shrink-0 flex items-center gap-1 active:scale-95 transition-all"
+            >
+              BOOK NOW
+              <span className="material-symbols-outlined text-[10px] text-[#d4af37]">
                 trending_flat
               </span>
             </Link>
-            <Link
-              to={hero.ctaSecondary.link}
-              className="w-full h-14 flex items-center justify-center rounded-full border border-white/30 text-white font-bold text-[11px] uppercase tracking-[0.3em] backdrop-blur-md active:scale-[0.98] transition-all"
-            >
-              {hero.ctaSecondary.text}
-            </Link>
-          </motion.div>
-        </div>
+          </div>
 
-        {/* Scroll hint */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3, y: [0, 8, 0] }}
-          transition={{
-            opacity: { delay: 1.5, duration: 0.5 },
-            y: { duration: 2.5, repeat: Infinity, ease: "easeInOut" },
-          }}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
-        >
-          <div className="w-[1px] h-8 bg-gradient-to-b from-white/50 to-transparent mx-auto" />
-        </motion.div>
+          {/* Scroll Indicator */}
+          <div className="flex flex-col items-center gap-1.5 opacity-60">
+            <span className="text-[8px] uppercase tracking-[0.25em] font-bold text-[#d4af37]">
+              SCROLL
+            </span>
+            <div className="w-4 h-7 rounded-full border border-[#d4af37]/40 p-[3px] flex justify-center">
+              <motion.div
+                animate={{ y: [0, 6, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                className="w-1 h-1 rounded-full bg-[#d4af37]"
+              />
+            </div>
+          </div>
+        </div>
       </section>
     );
   }

@@ -4,10 +4,16 @@ import { MandalaElement } from "../ui/MandalaElement";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 
 export function Footer() {
-  const { contact } = useWebsiteContent();
+  const { contact, footer, navigation } = useWebsiteContent();
+  const logoText = navigation?.logo?.text || "SIRI ARTS & CRAFTS";
+  const logoWords = logoText.split(" ");
+  const firstWord = logoWords[0] || "SIRI";
+  const restWords = logoWords.slice(1).join(" ") || "ARTS & CRAFTS";
   const currentYear = new Date().getFullYear();
   const phone = contact?.phone || "9866006648";
   const email = contact?.email || "Sirisha.atmakuri@gmail.com";
+  const instagramLink = footer?.socialLinks?.instagram || "https://instagram.com/siriarts";
+  const pinterestLink = footer?.socialLinks?.pinterest || "https://pinterest.com/siriarts";
 
   return (
     <footer className="w-full relative bg-gradient-to-b from-surface to-secondary-container/10 border-t border-black/5 overflow-hidden">
@@ -23,21 +29,21 @@ export function Footer() {
           <Link to="/" className="group flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-full bg-on-surface flex items-center justify-center shadow-lg border border-white/5 transition-transform group-hover:scale-105 duration-300">
               <span className="font-display font-bold text-[12px] text-white">
-                S
+                {firstWord[0]}
               </span>
             </div>
             <div className="flex items-center gap-1">
               <span className="font-display text-[18px] md:text-[20px] text-on-surface font-bold tracking-[0.05em]">
-                SIRI
+                {firstWord}
               </span>
               <span className="font-display text-[18px] md:text-[20px] text-primary font-bold tracking-[0.05em]">
-                ARTS & CRAFTS
+                {restWords ? ` ${restWords}` : ""}
               </span>
               <div className="w-1 h-1 rounded-full bg-primary-container animate-pulse" />
             </div>
           </Link>
           <p className="font-body text-black/40 max-w-sm leading-relaxed font-light text-[11px] md:px-0">
-            Ancient craftsmanship meets modern elegance.
+            {footer?.description || "Ancient craftsmanship meets modern elegance."}
           </p>
         </div>
 
@@ -123,7 +129,7 @@ export function Footer() {
               <a
                 aria-label="Instagram"
                 className="text-black/30 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
-                href="https://instagram.com"
+                href={instagramLink}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -137,7 +143,7 @@ export function Footer() {
               <a
                 aria-label="Pinterest"
                 className="text-black/30 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
-                href="https://pinterest.com"
+                href={pinterestLink}
                 target="_blank"
                 rel="noreferrer"
               >

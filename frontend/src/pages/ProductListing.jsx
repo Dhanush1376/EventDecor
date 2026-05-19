@@ -24,6 +24,7 @@ import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { SEO } from "../components/seo/SEO";
 
 export function ProductListing() {
+  const { setClaimedCoupon } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("Popularity");
@@ -95,7 +96,7 @@ export function ProductListing() {
   const handleClaimOffer = () => {
     const code = promoCoupon ? promoCoupon.code : "SIRI40";
     navigator.clipboard.writeText(code);
-    localStorage.setItem("claimedCouponCode", code);
+    setClaimedCoupon(code);
     toast.success((t) => (
       <div className="flex flex-col gap-1 p-1">
         <span className="font-bold text-xs text-on-surface flex items-center gap-1.5">
@@ -108,7 +109,7 @@ export function ProductListing() {
     ), { duration: 5000, position: "bottom-right" });
   };
 
-  const { content: websiteContent } = useWebsiteContent();
+  const websiteContent = useWebsiteContent();
   const shopContent = websiteContent?.shopPage || {
     hero: {
       title: "Heritage Collection",
@@ -305,7 +306,7 @@ export function ProductListing() {
       </section>
 
       <nav
-        className={`z-40 transition-all duration-500 ${isSticky ? "fixed top-[46px] md:top-[62px] left-0 w-full glass py-2 shadow-xl" : "relative -mt-8 md:-mt-12 mb-10 md:mb-12"}`}
+        className={`z-40 transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full glass py-2 shadow-xl" : "relative -mt-8 md:-mt-12 mb-10 md:mb-12"}`}
       >
         <div
           className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex flex-col lg:flex-row lg:items-center gap-4 md:gap-4 lg:gap-6 ${isSticky ? "" : "transition-all duration-500"}`}
@@ -317,14 +318,14 @@ export function ProductListing() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search masterworks..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30"
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
               />
             </div>
             {/* Mobile/Tablet Filter Toggle */}
             <button
               onClick={() => setIsFilterOpen(true)}
               aria-label="Open filters"
-              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0"
+              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
             >
               <span className="material-symbols-outlined text-[20px]">
                 tune
@@ -393,7 +394,7 @@ export function ProductListing() {
       {/* Main Grid Section */}
       <main
         id="artisan-collection"
-        className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-24 md:pb-40"
+        className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-8 md:pb-24"
       >
         <MandalaElement
           className="absolute top-[20%] -right-[10%] opacity-[0.03]"

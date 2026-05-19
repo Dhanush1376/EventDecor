@@ -5,6 +5,7 @@ import Order, { IOrder } from '../models/Order';
 import Product from '../models/Product';
 import User from '../models/User';
 import Coupon from '../models/Coupon';
+import Counter from '../models/Counter';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { formatPaginationResponse } from '../utils/pagination';
@@ -225,6 +226,11 @@ class OrderService {
           throw new ApiError(400, `Insufficient stock or inactive product: ${product.title}`);
         }
 
+        // Post-check: ensure product remains active at reservation time
+        if (!updatedProduct.isActive) {
+          throw new ApiError(400, `Product is no longer active: ${product.title}`);
+        }
+
         reservedItems.push({ productId: String(item.productId), quantity: item.quantity });
         
         const itemTotal = product.price * item.quantity;
@@ -249,278 +255,343 @@ class OrderService {
     }
 
     // 2. Validate and apply Coupon discounts securely on the backend
-    let discount = 0;
-    let couponValid = false;
+    let walletDeducted = false;
+    let walletDeduction = 0;
+    let user: any = null;
+    let order: any = null;
 
-    if (couponCode) {
-      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
-      if (coupon && new Date() <= coupon.expiryDate && (!coupon.usageLimit || coupon.usedCount < coupon.usageLimit) && subtotal >= coupon.minOrderAmount) {
-        couponValid = true;
-        if (coupon.discountType === 'percentage') {
-          discount = (subtotal * coupon.discountValue) / 100;
-          if (coupon.maxDiscount && discount > coupon.maxDiscount) {
-            discount = coupon.maxDiscount;
+    try {
+      let discount = 0;
+      let couponValid = false;
+
+      if (couponCode) {
+        const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+        if (coupon && new Date() <= coupon.expiryDate && (!coupon.usageLimit || coupon.usedCount < coupon.usageLimit) && subtotal >= coupon.minOrderAmount) {
+          couponValid = true;
+          if (coupon.discountType === 'percentage') {
+            discount = (subtotal * coupon.discountValue) / 100;
+            if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+              discount = coupon.maxDiscount;
+            }
+          } else {
+            discount = coupon.discountValue;
           }
-        } else {
-          discount = coupon.discountValue;
+          discount = Math.round(discount);
         }
-        discount = Math.round(discount);
       }
-    }
 
-    let codFee = 0;
-    if (isCod) {
-      try {
-        const settingsSection = await cmsCache.getOrSet('studio_settings', async () => {
-          const ContentSection = require('../models/ContentSection').default;
-          return await ContentSection.findOne({ sectionKey: 'studio_settings' });
-        });
-        if (settingsSection && settingsSection.data && settingsSection.data.codFee) {
-          codFee = Number(settingsSection.data.codFee) || 0;
-        } else {
+      let codFee = 0;
+      if (isCod) {
+        try {
+          const settingsSection = await cmsCache.getOrSet('studio_settings', async () => {
+            const ContentSection = require('../models/ContentSection').default;
+            return await ContentSection.findOne({ sectionKey: 'studio_settings' });
+          });
+          if (settingsSection && settingsSection.data && settingsSection.data.codFee) {
+            codFee = Number(settingsSection.data.codFee) || 0;
+          } else {
+            codFee = 90;
+          }
+        } catch (err) {
           codFee = 90;
         }
-      } catch (err) {
-        codFee = 90;
-      }
-    }
-
-    const shippingFee = subtotal > 2000 ? 0 : 100;
-    const user = await User.findById(userId);
-    let walletDeduction = 0;
-    const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
-
-    if (useWallet && user) {
-      walletDeduction = Math.min(preliminaryTotal, user.walletBalance || 0);
-    }
-
-    const total = preliminaryTotal - walletDeduction;
-
-    // Apply wallet deduction atomically
-    if (walletDeduction > 0 && user) {
-      user.walletBalance = Math.max(0, (user.walletBalance || 0) - walletDeduction);
-      await user.save();
-
-      // Log wallet debit transaction
-      const WalletTransaction = require('../models/WalletTransaction').default;
-      await WalletTransaction.create({
-        userId: user._id,
-        type: 'debit',
-        amount: walletDeduction,
-        source: 'checkout_redeem',
-        description: `Redeemed Siri Cash at checkout`,
-        status: 'active'
-      });
-    }
-
-    // Auto-generate enterprise logistics fields
-    const count = await Order.countDocuments();
-    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(5, '0')}`;
-    const trackingNumber = `TRK${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-    const publicTrackingToken = crypto.randomBytes(24).toString('hex');
-    const courierPartner = 'Delhivery';
-    const barcodeData = invoiceNumber;
-    const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'http://localhost:5173';
-    const qrCodeData = `${frontendUrl}/track/${encodeURIComponent('pending')}`;
-
-    let order;
-
-    if (isCod) {
-      // Pre-assign tracking URL synchronously (order._id is generated on instantiation)
-      const pendingOrderId = new mongoose.Types.ObjectId();
-      const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
-
-      order = new Order({
-        _id: pendingOrderId,
-        user: userId,
-        items: orderItems,
-        shippingAddress,
-        subtotal,
-        shippingFee,
-        discount,
-        codFee,
-        walletDeduction,
-        total,
-        couponCode: couponValid ? couponCode.toUpperCase() : undefined,
-        paymentMethod: 'cod',
-        paymentStatus: 'Pending COD',
-        orderStatus: 'Confirmed',
-        statusHistory: [{ status: 'Confirmed', note: 'Cash on Delivery order successfully placed' }],
-        invoiceNumber,
-        trackingNumber,
-        courierPartner,
-        weight: 1.8,
-        dimensions: { length: 30, width: 20, height: 15 },
-        packageType: 'Standard Box',
-        barcodeData,
-        qrCodeData: finalQrCodeData,
-        publicTrackingToken,
-        notes,
-        needByDate,
-        codCollected: false,
-        settlementStatus: 'Pending',
-        settledAmount: 0,
-        courierCharges: Math.round((shippingFee || 120) + codFee), // Shipping fee + COD handling fee
-        earnings: 0,
-      });
-
-      await order.save();
-      AnalyticsService.clearCache();
-
-      // Clear the user's cart in database immediately
-      await User.findByIdAndUpdate(userId, { $set: { cart: [] } });
-
-      // Increment Coupon used count if applicable
-      if (couponValid) {
-        await Coupon.findOneAndUpdate({ code: couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
       }
 
-      // Trigger Dispatch alert Confirmation Email in background
-      try {
-        const user = await User.findById(userId);
-        if (user) {
-          const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
-          await sendDirectEmail({
-            email: user.email,
-            subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
-            templateName: 'Order Confirmation',
-            templateData: {
-              name: user.name,
-              orderId: order._id.toString(),
-              totalAmount: order.total.toLocaleString('en-IN'),
-              shippingAddress: order.shippingAddress,
-              frontend_url: frontendUrl,
-            },
-            type: 'order',
-            action: 'order_placed',
-            userId: user._id.toString(),
-          });
-        }
-      } catch (emailErr) {
-        logger.error('Failed to dispatch COD confirmation email:', emailErr);
-      }
+      const shippingFee = subtotal > 2000 ? 0 : 100;
+      user = await User.findById(userId);
+      const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
 
-      return { order };
-    } else {
-      // 3b. Handle online Razorpay payment
-      const options = {
-        amount: Math.round(total * 100),
-        currency: "INR",
-        receipt: `rcpt_${Date.now()}`,
-      };
-
-      if (!razorpay) {
-        if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
-          logger.info(`[PAYMENT SIMULATION] Creating simulated Razorpay order for total: ₹${total}`);
-          const simulatedRazorpayOrderId = `order_sim_${crypto.randomBytes(8).toString('hex')}`;
-          
-          const pendingOrderId = new mongoose.Types.ObjectId();
-          const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
-
-          order = new Order({
-            _id: pendingOrderId,
-            user: userId,
-            items: orderItems,
-            shippingAddress,
-            subtotal,
-            shippingFee,
-            discount,
-            walletDeduction,
-            total,
-            couponCode: couponValid ? couponCode.toUpperCase() : undefined,
-            paymentMethod: 'razorpay',
-            razorpayOrderId: simulatedRazorpayOrderId,
-            paymentStatus: 'pending',
-            orderStatus: 'Pending',
-            statusHistory: [{ status: 'Pending', note: 'Simulated payment initiated' }],
-            invoiceNumber,
-            trackingNumber,
-            courierPartner,
-            weight: 1.8,
-            dimensions: { length: 30, width: 20, height: 15 },
-            packageType: 'Standard Box',
-            barcodeData,
-            qrCodeData: finalQrCodeData,
-            publicTrackingToken,
-            notes,
-            needByDate,
-          });
-
-          await order.save();
-
-          return {
-            order,
-            razorpayOrder: {
-              id: simulatedRazorpayOrderId,
-              amount: Math.round(total * 100),
-              currency: "INR",
-              isSimulated: true
+      if (useWallet && user) {
+        const potentialWalletDeduction = Math.min(preliminaryTotal, user.walletBalance || 0);
+        if (potentialWalletDeduction > 0) {
+          // Attempt lock-free atomic balance decrement
+          const updatedUser = await User.findOneAndUpdate(
+            { _id: userId, walletBalance: { $gte: potentialWalletDeduction } },
+            { $inc: { walletBalance: -potentialWalletDeduction } },
+            { new: true }
+          );
+          if (updatedUser) {
+            walletDeduction = potentialWalletDeduction;
+            walletDeducted = true;
+            user = updatedUser;
+          } else {
+            // Concurrent modification fallback: reload user and attempt safe deduction on latest state
+            const reloadedUser = await User.findById(userId);
+            if (reloadedUser) {
+              const retryDeduction = Math.min(preliminaryTotal, reloadedUser.walletBalance || 0);
+              if (retryDeduction > 0) {
+                const finalUser = await User.findOneAndUpdate(
+                  { _id: userId, walletBalance: { $gte: retryDeduction } },
+                  { $inc: { walletBalance: -retryDeduction } },
+                  { new: true }
+                );
+                if (finalUser) {
+                  walletDeduction = retryDeduction;
+                  walletDeducted = true;
+                  user = finalUser;
+                }
+              }
             }
-          };
+          }
         }
-
-        // Return stock if Razorpay isn't configured
-        for (const item of orderItems) {
-          await Product.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } });
-        }
-        throw new ApiError(500, 'Razorpay payments are not configured on this server');
       }
 
-      let razorpayOrder;
-      try {
-        razorpayOrder = await razorpay.orders.create(options);
-      } catch (err: any) {
-        // Return stock if Razorpay API fails
-        for (const item of orderItems) {
-          await Product.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } });
-        }
-        logger.error('Razorpay order creation failed:', err);
-        throw new ApiError(500, 'Payment initialization failed');
+      const total = preliminaryTotal - walletDeduction;
+
+      // Log wallet debit transaction if atomic deduction succeeded
+      if (walletDeducted && walletDeduction > 0 && user) {
+        const WalletTransaction = require('../models/WalletTransaction').default;
+        await WalletTransaction.create({
+          userId: user._id,
+          type: 'debit',
+          amount: walletDeduction,
+          source: 'checkout_redeem',
+          description: `Redeemed Siri Cash at checkout`,
+          status: 'active'
+        });
       }
 
-      const pendingOrderId = new mongoose.Types.ObjectId();
-      const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
+      // Auto-generate enterprise logistics fields using atomic sequence counter
+      const counter = await Counter.findOneAndUpdate(
+        { id: 'invoice' },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(counter!.seq).padStart(5, '0')}`;
+      const trackingNumber = `TRK${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+      const publicTrackingToken = crypto.randomBytes(24).toString('hex');
+      const courierPartner = 'Delhivery';
+      const barcodeData = invoiceNumber;
+      const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'http://localhost:5173';
+      const qrCodeData = `${frontendUrl}/track/${encodeURIComponent('pending')}`;
 
-      // 4. Save pending order with Razorpay details
-      order = new Order({
-        _id: pendingOrderId,
-        user: userId,
-        items: orderItems,
-        shippingAddress,
-        subtotal,
-        shippingFee,
-        discount,
-        walletDeduction,
-        total,
-        couponCode: couponValid ? couponCode.toUpperCase() : undefined,
-        paymentMethod: 'razorpay',
-        razorpayOrderId: razorpayOrder.id,
-        paymentStatus: 'pending',
-        orderStatus: 'Pending',
-        statusHistory: [{ status: 'Pending', note: 'Order initiated and stock reserved' }],
-        invoiceNumber,
-        trackingNumber,
-        courierPartner,
-        weight: 1.8,
-        dimensions: { length: 30, width: 20, height: 15 },
-        packageType: 'Standard Box',
-        barcodeData,
-        qrCodeData: finalQrCodeData,
-        publicTrackingToken,
-        notes,
-        needByDate,
-      });
+      if (isCod) {
+        // Pre-assign tracking URL synchronously (order._id is generated on instantiation)
+        const pendingOrderId = new mongoose.Types.ObjectId();
+        const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
 
-      await order.save();
+        order = new Order({
+          _id: pendingOrderId,
+          user: userId,
+          items: orderItems,
+          shippingAddress,
+          subtotal,
+          shippingFee,
+          discount,
+          codFee,
+          walletDeduction,
+          total,
+          couponCode: couponValid ? couponCode.toUpperCase() : undefined,
+          paymentMethod: 'cod',
+          paymentStatus: 'Pending COD',
+          orderStatus: 'Confirmed',
+          statusHistory: [{ status: 'Confirmed', note: 'Cash on Delivery order successfully placed' }],
+          invoiceNumber,
+          trackingNumber,
+          courierPartner,
+          weight: 1.8,
+          dimensions: { length: 30, width: 20, height: 15 },
+          packageType: 'Standard Box',
+          barcodeData,
+          qrCodeData: finalQrCodeData,
+          publicTrackingToken,
+          notes,
+          needByDate,
+          codCollected: false,
+          settlementStatus: 'Pending',
+          settledAmount: 0,
+          courierCharges: Math.round((shippingFee || 120) + codFee), // Shipping fee + COD handling fee
+          earnings: 0,
+        });
 
-      return {
-        order,
-        razorpayOrder: {
-          id: razorpayOrder.id,
-          amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
+        await order.save();
+        await User.findByIdAndUpdate(userId, { $push: { orders: order._id } });
+        AnalyticsService.clearCache();
+
+        // Clear the user's cart in database immediately
+        await User.findByIdAndUpdate(userId, { $set: { cart: [] } });
+
+        // Increment Coupon used count if applicable
+        if (couponValid) {
+          await Coupon.findOneAndUpdate({ code: couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
         }
-      };
+
+        // Trigger Dispatch alert Confirmation Email in background
+        try {
+          const user = await User.findById(userId);
+          if (user) {
+            const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+            await sendDirectEmail({
+              email: user.email,
+              subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
+              templateName: 'Order Confirmation',
+              templateData: {
+                name: user.name,
+                orderId: order._id.toString(),
+                totalAmount: order.total.toLocaleString('en-IN'),
+                shippingAddress: order.shippingAddress,
+                frontend_url: frontendUrl,
+              },
+              type: 'order',
+              action: 'order_placed',
+              userId: user._id.toString(),
+            });
+          }
+        } catch (emailErr) {
+          logger.error('Failed to dispatch COD confirmation email:', emailErr);
+        }
+
+        return { order };
+      } else {
+        // 3b. Handle online Razorpay payment
+        const options = {
+          amount: Math.round(total * 100),
+          currency: "INR",
+          receipt: `rcpt_${Date.now()}`,
+        };
+
+        if (!razorpay) {
+          if (process.env.NODE_ENV !== 'production') {
+            logger.info(`[PAYMENT SIMULATION] Creating simulated Razorpay order for total: ₹${total}`);
+            const simulatedRazorpayOrderId = `order_sim_${crypto.randomBytes(8).toString('hex')}`;
+            
+            const pendingOrderId = new mongoose.Types.ObjectId();
+            const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
+
+            order = new Order({
+              _id: pendingOrderId,
+              user: userId,
+              items: orderItems,
+              shippingAddress,
+              subtotal,
+              shippingFee,
+              discount,
+              walletDeduction,
+              total,
+              couponCode: couponValid ? couponCode.toUpperCase() : undefined,
+              paymentMethod: 'razorpay',
+              razorpayOrderId: simulatedRazorpayOrderId,
+              paymentStatus: 'pending',
+              orderStatus: 'Pending',
+              statusHistory: [{ status: 'Pending', note: 'Simulated payment initiated' }],
+              invoiceNumber,
+              trackingNumber,
+              courierPartner,
+              weight: 1.8,
+              dimensions: { length: 30, width: 20, height: 15 },
+              packageType: 'Standard Box',
+              barcodeData,
+              qrCodeData: finalQrCodeData,
+              publicTrackingToken,
+              notes,
+              needByDate,
+            });
+
+            await order.save();
+            await User.findByIdAndUpdate(userId, { $push: { orders: order._id } });
+
+            return {
+              order,
+              razorpayOrder: {
+                id: simulatedRazorpayOrderId,
+                amount: Math.round(total * 100),
+                currency: "INR",
+                isSimulated: true
+              }
+            };
+          }
+
+          throw new ApiError(500, 'Razorpay payments are not configured on this server');
+        }
+
+        let razorpayOrder;
+        try {
+          razorpayOrder = await razorpay.orders.create(options);
+        } catch (err: any) {
+          logger.error('Razorpay order creation failed:', err);
+          throw new ApiError(500, 'Payment initialization failed');
+        }
+
+        const pendingOrderId = new mongoose.Types.ObjectId();
+        const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
+
+        // 4. Save pending order with Razorpay details
+        order = new Order({
+          _id: pendingOrderId,
+          user: userId,
+          items: orderItems,
+          shippingAddress,
+          subtotal,
+          shippingFee,
+          discount,
+          walletDeduction,
+          total,
+          couponCode: couponValid ? couponCode.toUpperCase() : undefined,
+          paymentMethod: 'razorpay',
+          razorpayOrderId: razorpayOrder.id,
+          paymentStatus: 'pending',
+          orderStatus: 'Pending',
+          statusHistory: [{ status: 'Pending', note: 'Order initiated and stock reserved' }],
+          invoiceNumber,
+          trackingNumber,
+          courierPartner,
+          weight: 1.8,
+          dimensions: { length: 30, width: 20, height: 15 },
+          packageType: 'Standard Box',
+          barcodeData,
+          qrCodeData: finalQrCodeData,
+          publicTrackingToken,
+          notes,
+          needByDate,
+        });
+
+        await order.save();
+        await User.findByIdAndUpdate(userId, { $push: { orders: order._id } });
+
+        return {
+          order,
+          razorpayOrder: {
+            id: razorpayOrder.id,
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+          }
+        };
+      }
+    } catch (err) {
+      // 1. Rollback reserved stock
+      for (const reserved of reservedItems) {
+        await Product.findByIdAndUpdate(reserved.productId, { $inc: { stock: reserved.quantity } });
+      }
+
+      // 2. Rollback wallet deduction
+      if (walletDeducted && user) {
+        await User.findByIdAndUpdate(userId, { $inc: { walletBalance: walletDeduction } });
+        try {
+          const WalletTransaction = require('../models/WalletTransaction').default;
+          await WalletTransaction.create({
+            userId: user._id,
+            type: 'credit',
+            amount: walletDeduction,
+            source: 'refund',
+            description: `Reversed Siri Cash redemption due to checkout failure`,
+            status: 'active'
+          });
+        } catch (txErr) {
+          logger.error('Failed to log wallet refund transaction:', txErr);
+        }
+      }
+
+      // 3. Rollback User orders push and remove aborted order from DB
+      if (order && order._id) {
+        try {
+          await User.findByIdAndUpdate(userId, { $pull: { orders: order._id } });
+          await Order.findByIdAndDelete(order._id);
+        } catch (cleanupErr) {
+          logger.error('Failed to roll back saved order document:', cleanupErr);
+        }
+      }
+
+      throw err;
     }
   }
 
@@ -559,8 +630,8 @@ class OrderService {
 
     // Handle payment simulation in development mode
     if (razorpay_order_id.startsWith('order_sim_')) {
-      if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV) {
-        throw new ApiError(400, 'Simulated payment verification only allowed in development mode');
+      if (process.env.NODE_ENV === 'production') {
+        throw new ApiError(400, 'Simulated payment verification is strictly disabled in production mode');
       }
 
       logger.info(`[PAYMENT SIMULATION SUCCESS] Verifying simulated payment for order: ${order._id}`);
