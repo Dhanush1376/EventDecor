@@ -72,12 +72,32 @@ const appendTrackingPixel = (html: string, token: string): string => {
   return html + pixel;
 };
 
+const formatShippingAddress = (addr: any): string => {
+  if (!addr) return '';
+  if (typeof addr === 'string') return addr;
+  
+  const parts = [
+    addr.name,
+    addr.address,
+    addr.locality,
+    addr.landmark ? `(Landmark: ${addr.landmark})` : '',
+    `${addr.city}, ${addr.state} - ${addr.pincode}`,
+    addr.phone ? `Phone: ${addr.phone}` : ''
+  ].filter(Boolean);
+  
+  return parts.join(', ');
+};
+
 // Replace template placeholders (e.g. {{name}}, {{otp}}, {{orderId}}, etc.)
 const replacePlaceholders = (templateHtml: string, data: Record<string, any>): string => {
   let result = templateHtml;
   for (const key in data) {
     const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-    result = result.replace(regex, data[key]);
+    let value = data[key];
+    if (key === 'shippingAddress' && value && typeof value === 'object') {
+      value = formatShippingAddress(value);
+    }
+    result = result.replace(regex, value);
   }
   
   // Clean remaining placeholders if any

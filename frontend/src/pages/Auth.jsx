@@ -526,26 +526,7 @@ export function Auth() {
                           ))}
                         </motion.div>
 
-                        {(devOtp || import.meta.env.DEV) && (
-                          <div className="flex justify-center -mt-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (devOtp) {
-                                  handleAutofillDevOtp();
-                                } else {
-                                  setOtp(["7", "7", "7", "7", "7", "7"]);
-                                  toast.success("Test OTP Autofilled successfully!");
-                                  submitOTP("777777");
-                                }
-                              }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 text-primary text-[10px] uppercase font-bold tracking-wider transition-all cursor-pointer animate-pulse"
-                            >
-                              <span className="material-symbols-outlined text-[13px]">auto_fix_high</span>
-                              Autofill {devOtp ? `Dev OTP: ${devOtp}` : "Test Code (777777)"}
-                            </button>
-                          </div>
-                        )}
+
 
                         <div className="space-y-6 pt-2">
                           <button
