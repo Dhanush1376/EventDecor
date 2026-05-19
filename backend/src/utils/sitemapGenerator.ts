@@ -122,12 +122,21 @@ export async function generateSitemap(): Promise<string> {
     xml += `</urlset>\n`;
 
     // 5. Autowrite to static public folder for static host serving
-    const frontendPublicPath = path.join(__dirname, '../../../frontend/public/sitemap.xml');
-    try {
-      fs.writeFileSync(frontendPublicPath, xml, 'utf8');
-      logger.info(`[SITEMAP] Static sitemap successfully written to ${frontendPublicPath}`);
-    } catch (fsErr: any) {
-      logger.warn(`[SITEMAP] Could not write sitemap file to frontend public folder: ${fsErr.message}`);
+    // Determine the path to the workspace root dynamically based on whether we are running from dist or src
+    const isCompiled = __dirname.replace(/\\/g, '/').includes('/dist/');
+    const relativePathToRoot = isCompiled ? '../../../../' : '../../../';
+    const frontendPublicDir = path.resolve(__dirname, relativePathToRoot, 'frontend/public');
+    const frontendPublicPath = path.join(frontendPublicDir, 'sitemap.xml');
+
+    if (fs.existsSync(frontendPublicDir)) {
+      try {
+        fs.writeFileSync(frontendPublicPath, xml, 'utf8');
+        logger.info(`[SITEMAP] Static sitemap successfully written to ${frontendPublicPath}`);
+      } catch (fsErr: any) {
+        logger.warn(`[SITEMAP] Could not write sitemap file to frontend public folder: ${fsErr.message}`);
+      }
+    } else {
+      logger.info(`[SITEMAP] Frontend public folder not found at ${frontendPublicDir}. Skipping static sitemap write.`);
     }
 
     return xml;
