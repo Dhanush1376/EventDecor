@@ -100,7 +100,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error(`Not allowed by CORS: Origin "${origin}" is not in the allowed list: [${allowedOrigins.join(', ')}]`));
     }
   },
   credentials: true,
@@ -119,7 +119,7 @@ app.use((req, res, next) => {
 
   return res.status(403).json({
     success: false,
-    message: 'Request origin is not allowed',
+    message: `Request origin "${origin || 'unknown'}" is not allowed. Allowed: [${allowedOrigins.join(', ')}]`,
   });
 });
 
