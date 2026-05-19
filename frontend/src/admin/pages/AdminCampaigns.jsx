@@ -35,10 +35,6 @@ export function AdminCampaigns() {
     type: "marketing",
   });
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
-
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -58,6 +54,13 @@ export function AdminCampaigns() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [activeTab]);
 
   const handleLaunchCampaign = async (e) => {
     e.preventDefault();

@@ -52,9 +52,9 @@ export function StickyMobileATC({ product, triggerRef }) {
         >
           <div className="flex flex-col truncate">
             <span className="font-label text-[9px] uppercase tracking-[0.3em] text-on-surface-variant/50 font-bold leading-none">
-              Studio Investment
+              Price
             </span>
-            <p className="font-display text-[20px] text-primary font-bold leading-none mt-2 italic">
+            <p className="font-sans text-[20px] text-black font-bold leading-none mt-2">
               ₹ {product?.price?.toLocaleString("en-IN")}
             </p>
           </div>

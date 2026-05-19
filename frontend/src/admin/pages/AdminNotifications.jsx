@@ -34,19 +34,12 @@ export function AdminNotifications() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
   
-  // Persistent read tracking in localStorage
-  const [readIds, setReadIds] = useState(() => {
-    try {
-      const saved = localStorage.getItem("siri_read_notifications");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // In-memory read tracking (React state)
+  const [readIds, setReadIds] = useState([]);
+  const [referenceTime] = useState(() => Date.now());
 
   const saveReadIds = (ids) => {
     setReadIds(ids);
-    localStorage.setItem("siri_read_notifications", JSON.stringify(ids));
   };
 
   // Compile real-time alerts from collections dynamically
@@ -64,7 +57,7 @@ export function AdminNotifications() {
           actionLabel: "Restock Item",
           actionPath: "/admin/inventory",
           time: "Action Required",
-          rawDate: new Date(Date.now() - 3600000) // 1 hr ago
+          rawDate: new Date(referenceTime - 3600000) // 1 hr ago
         });
       }
     });
@@ -80,7 +73,7 @@ export function AdminNotifications() {
           actionLabel: "Process Order",
           actionPath: `/admin/orders/${o.id}`,
           time: o.date || "Just now",
-          rawDate: o.rawOrder?.createdAt ? new Date(o.rawOrder.createdAt) : new Date(Date.now() - 7200000)
+          rawDate: o.rawOrder?.createdAt ? new Date(o.rawOrder.createdAt) : new Date(referenceTime - 7200000)
         });
       }
     });
@@ -96,7 +89,7 @@ export function AdminNotifications() {
           actionLabel: "Review Receipt",
           actionPath: "/admin/payments",
           time: o.date || "Just now",
-          rawDate: o.rawOrder?.updatedAt ? new Date(o.rawOrder.updatedAt) : new Date(Date.now() - 14400000)
+          rawDate: o.rawOrder?.updatedAt ? new Date(o.rawOrder.updatedAt) : new Date(referenceTime - 14400000)
         });
       }
     });
@@ -112,7 +105,7 @@ export function AdminNotifications() {
           actionLabel: "Confirm Booking",
           actionPath: `/admin/events/${b.id}`,
           time: "Pending Review",
-          rawDate: b.rawEvent?.createdAt ? new Date(b.rawEvent.createdAt) : new Date(Date.now() - 86400000)
+          rawDate: b.rawEvent?.createdAt ? new Date(b.rawEvent.createdAt) : new Date(referenceTime - 86400000)
         });
       }
     });
@@ -128,7 +121,7 @@ export function AdminNotifications() {
           actionLabel: "Moderate Review",
           actionPath: "/admin/reviews",
           time: "Needs Review",
-          rawDate: r.createdAt ? new Date(r.createdAt) : new Date(Date.now() - 172800000)
+          rawDate: r.createdAt ? new Date(r.createdAt) : new Date(referenceTime - 172800000)
         });
       }
     });
@@ -138,7 +131,7 @@ export function AdminNotifications() {
       ...item,
       read: readIds.includes(item.id)
     })).sort((a, b) => b.rawDate - a.rawDate);
-  }, [products, orders, eventBookings, reviews, readIds]);
+  }, [products, orders, eventBookings, reviews, readIds, referenceTime]);
 
   const unreadCount = useMemo(() => {
     return compiledNotifications.filter(n => !n.read).length;

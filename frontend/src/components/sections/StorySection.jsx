@@ -17,15 +17,17 @@ export function StorySection() {
     offset: ["start end", "end start"],
   });
 
-  if (!storyTeaser?.isVisible) return null;
+  // Subtle parallax only on larger screens (width >= 1024px)
+  const isLargeScreen = typeof window !== "undefined" && window.innerWidth >= 1024;
+  const imageY = useTransform(scrollYProgress, [0, 1], isLargeScreen ? [-40, 40] : [0, 0]);
+  const contentY = useTransform(scrollYProgress, [0, 1], isLargeScreen ? [40, -40] : [0, 0]);
 
-  const imageY = useTransform(scrollYProgress, [0, 1], [-50, 50]);
-  const contentY = useTransform(scrollYProgress, [0, 1], [50, -50]);
+  if (!storyTeaser?.isVisible) return null;
 
   return (
     <section
       ref={containerRef}
-      className="relative py-16 md:py-43 overflow-hidden bg-surface"
+      className="relative pt-16 pb-28 lg:py-28 overflow-hidden bg-surface"
     >
       <div className="absolute inset-0 pointer-events-none mix-blend-multiply">
         <img
@@ -66,10 +68,10 @@ export function StorySection() {
         spinDuration={160}
       />
 
-      <div className="max-w-max-width mx-auto md:px-margin-desktop relative z-10">
+      <div className="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-22 items-center">
           {/* Cinematic Artisan Image Frame */}
-          <div className="lg:col-span-5 relative h-full flex items-center px-4 md:px-0">
+          <div className="lg:col-span-5 relative h-full flex items-center px-4 lg:px-0">
             <motion.div
               style={{ y: imageY }}
               initial={{ opacity: 0, scale: 0.95 }}
@@ -93,30 +95,42 @@ export function StorySection() {
 
             {/* Premium Heritage Badge */}
             <motion.div
-              initial={{ opacity: 0, x: -18, rotate: -10 }}
-              whileInView={{ opacity: 1, x: 0, rotate: 0 }}
+              initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+              whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
               viewport={{ once: true, margin: "-100px" }}
-              transition={{ delay: 0.8, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute top-6 md:top-auto md:-bottom-11 right-1 md:right-auto md:-left-11 bg-surface/90 backdrop-blur-md md:bg-surface p-4 md:p-9 rounded-[20px] md:rounded-[36px] z-20 flex flex-col items-center min-w-[100px] md:min-w-[162px] shadow-2xl border border-black/5"
+              transition={{ type: "spring", stiffness: 60, damping: 12, delay: 0.6 }}
+              className="absolute top-6 lg:top-auto lg:-bottom-11 right-1 lg:right-auto lg:-left-11 z-20 pointer-events-none"
             >
-              <span className="font-label-sm text-[7px] md:text-[9px] uppercase tracking-[0.3em] text-primary mb-1.5 md:mb-2.5 font-bold">
-                Heritage
-              </span>
-              <span className="font-display text-on-surface text-[20px] md:text-[36px] leading-none italic">
-                Est. in 2003
-              </span>
+              <motion.div
+                animate={{
+                  y: [0, -6, 0],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="bg-surface/90 backdrop-blur-md lg:bg-surface p-4 lg:p-9 rounded-[20px] lg:rounded-[36px] flex flex-col items-center min-w-[100px] lg:min-w-[162px] shadow-2xl border border-black/5"
+              >
+                <span className="font-label-sm text-[7px] lg:text-[9px] uppercase tracking-[0.3em] text-primary mb-1.5 lg:mb-2.5 font-bold">
+                  Heritage
+                </span>
+                <span className="font-display text-on-surface text-[20px] lg:text-[36px] leading-none italic">
+                  {storyTeaser.establishedYear || "Est. in 2003"}
+                </span>
+              </motion.div>
             </motion.div>
           </div>
 
           {/* Premium Story Content */}
-          <div className="lg:col-span-7 relative z-20 -mt-16 md:mt-0 px-6 md:px-0">
+          <div className="lg:col-span-7 relative z-20 -mt-16 lg:mt-0 px-1.5 sm:px-6 lg:px-0">
             <motion.div
               style={{ y: contentY }}
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-xl mx-auto lg:mx-0 bg-surface/95 backdrop-blur-2xl md:bg-transparent p-7 md:p-0 rounded-[28px] md:rounded-none shadow-2xl md:shadow-none border border-outline-variant/20 md:border-none"
+              className="max-w-2xl mx-auto lg:mx-0 bg-surface/95 backdrop-blur-2xl lg:bg-transparent px-4.5 py-8 pb-12 sm:px-8 lg:p-0 rounded-[28px] lg:rounded-none shadow-2xl lg:shadow-none border border-outline-variant/20 lg:border-none"
             >
               <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-7">
                 <span className="w-8 md:w-11 h-[1px] bg-primary"></span>
@@ -126,7 +140,7 @@ export function StorySection() {
               </div>
 
               <h2
-                className="font-headline text-[32px] sm:text-[46px] md:text-[65px] text-on-surface mb-5 md:mb-7 leading-[1.1] md:leading-[1.05] tracking-tight"
+                className="font-headline text-[26px] sm:text-[38px] md:text-[65px] text-on-surface mb-5 md:mb-7 leading-[1.1] md:leading-[1.05] tracking-tight"
                 dangerouslySetInnerHTML={{
                   __html: storyTeaser.title.replace(/\n/g, "<br/>"),
                 }}
@@ -136,7 +150,7 @@ export function StorySection() {
                 {storyTeaser.description.split("\n\n").map((paragraph, idx) => (
                   <p
                     key={idx}
-                    className={`font-body leading-relaxed font-light ${idx === 0 ? "text-on-surface-variant/80 text-lg md:text-xl" : "text-on-surface-variant/60 text-base md:text-lg"}`}
+                    className={`font-body leading-relaxed font-light ${idx === 0 ? "text-on-surface-variant/80 text-[14px] sm:text-[16px] md:text-xl" : "text-on-surface-variant/60 text-[13px] sm:text-[14px] md:text-lg"}`}
                   >
                     {paragraph}
                   </p>
@@ -148,7 +162,7 @@ export function StorySection() {
                 {storyTeaser.stats?.map((stat) => (
                   <div key={stat.id} className="space-y-2 relative group cursor-default">
                     <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-0 bg-primary group-hover:h-full transition-all duration-300"></div>
-                    <span className="block font-headline text-on-surface text-[36px] md:text-[43px] leading-none transition-colors group-hover:text-primary">
+                    <span className="block font-headline text-on-surface text-[28px] md:text-[43px] leading-none transition-colors group-hover:text-primary">
                       {stat.value}
                     </span>
                     <span className="font-label-sm text-[9px] md:text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold block">

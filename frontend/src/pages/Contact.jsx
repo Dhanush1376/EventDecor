@@ -5,6 +5,7 @@ import { SEO } from "../components/seo/SEO";
 import { Link } from "react-router-dom";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { inquiryService } from "../services/domainServices";
+import toast from "react-hot-toast";
 
 export function Contact() {
   const { contact } = useWebsiteContent();
@@ -25,6 +26,7 @@ export function Contact() {
       const response = await inquiryService.create(formData);
       if (response.success) {
         setFormState("success");
+        toast.success("Inquiry sent successfully!");
         setFormData({
           name: "",
           email: "",
@@ -34,12 +36,12 @@ export function Contact() {
         });
       } else {
         setFormState("idle");
-        alert("Failed to send inquiry. Please try again.");
+        toast.error("Failed to send inquiry. Please try again.");
       }
     } catch (err) {
       console.error(err);
       setFormState("idle");
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -195,12 +197,14 @@ export function Contact() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
+                  <label htmlFor="contact-name" className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
                     Your Name
                   </label>
                   <input
+                    id="contact-name"
                     required
                     type="text"
+                    autoComplete="name"
                     placeholder="Full Name"
                     className="w-full bg-[#f8f7f4] border-none rounded-2xl px-6 py-4 font-body text-[15px] focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.name}
@@ -210,12 +214,14 @@ export function Contact() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
+                  <label htmlFor="contact-email" className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
                     Digital Mail
                   </label>
                   <input
+                    id="contact-email"
                     required
                     type="email"
+                    autoComplete="email"
                     placeholder="email@example.com"
                     className="w-full bg-[#f8f7f4] border-none rounded-2xl px-6 py-4 font-body text-[15px] focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.email}
@@ -228,11 +234,13 @@ export function Contact() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
+                  <label htmlFor="contact-phone" className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
                     Phone (Optional)
                   </label>
                   <input
+                    id="contact-phone"
                     type="tel"
+                    autoComplete="tel"
                     placeholder="+91"
                     className="w-full bg-[#f8f7f4] border-none rounded-2xl px-6 py-4 font-body text-[15px] focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.phone}

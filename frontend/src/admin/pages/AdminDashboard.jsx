@@ -16,12 +16,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useAdmin } from "../context/AdminContext";
-import { revenueData } from "../data/adminData";
 import { handleImageError } from "../../utils/imageUtils";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const stagger = { show: { transition: { staggerChildren: 0.05 } } };
+
+const FALLBACK_DATE = new Date("2026-05-20T00:00:00Z");
+const FALLBACK_PRODUCT_DATE = new Date("2026-05-17T00:00:00Z");
 
 function formatCurrency(val) {
   if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
@@ -196,7 +198,7 @@ export function AdminDashboard() {
       });
     }
 
-    return revenueData;
+    return [];
   }, [dashboardStats, orders]);
 
   // Cool neutral charts color palette
@@ -247,7 +249,7 @@ export function AdminDashboard() {
       activity.push({
         icon: "shopping_bag",
         text: `Order ${o.id || "New"} placed by ${o.customer || "Guest"}`,
-        timestamp: ts || new Date()
+        timestamp: ts || FALLBACK_DATE
       });
     });
     
@@ -256,7 +258,7 @@ export function AdminDashboard() {
       activity.push({
         icon: "inventory_2",
         text: `Product '${p.name}' added to catalog`,
-        timestamp: ts || new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+        timestamp: ts || FALLBACK_PRODUCT_DATE
       });
     });
 
@@ -265,7 +267,7 @@ export function AdminDashboard() {
       activity.push({
         icon: "celebration",
         text: `Consultation request for ${b.eventType || "Event"}`,
-        timestamp: ts || new Date()
+        timestamp: ts || FALLBACK_DATE
       });
     });
 
@@ -306,12 +308,9 @@ export function AdminDashboard() {
         const dayName = days[date.getDay()];
         dailyMap[dayName].ordersCount += 1;
         
-        let itemsSold = 0;
-        if (Array.isArray(o.rawOrder.items)) {
-          itemsSold = o.rawOrder.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-        } else {
-          itemsSold = 1;
-        }
+        const itemsSold = Array.isArray(o.rawOrder.items)
+          ? o.rawOrder.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+          : 1;
         dailyMap[dayName].itemsCount += itemsSold;
       }
     });

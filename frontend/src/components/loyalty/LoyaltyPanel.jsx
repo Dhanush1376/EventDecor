@@ -9,10 +9,6 @@ export function LoyaltyPanel() {
   const [referralInput, setReferralInput] = useState('');
   const [submittingReferral, setSubmittingReferral] = useState(false);
 
-  useEffect(() => {
-    fetchLoyaltyData();
-  }, []);
-
   const fetchLoyaltyData = async () => {
     setLoading(true);
     try {
@@ -27,6 +23,13 @@ export function LoyaltyPanel() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchLoyaltyData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleApplyReferral = async (e) => {
     e.preventDefault();

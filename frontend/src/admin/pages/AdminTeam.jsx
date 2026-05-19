@@ -32,7 +32,10 @@ export function AdminTeam() {
   };
 
   useEffect(() => {
-    fetchTeamData();
+    const timer = setTimeout(() => {
+      fetchTeamData();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSendInvite = async (e) => {

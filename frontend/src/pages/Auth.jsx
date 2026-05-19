@@ -7,6 +7,7 @@ import { MandalaElement } from "../components/ui/MandalaElement";
 import { useAuth } from "../context/AuthContext";
 import { authService } from "../services/domainServices";
 import toast from "react-hot-toast";
+import { useWebsiteContent } from "../hooks/useWebsiteContent";
 
 const containerVariants = {
   initial: { opacity: 0, scale: 0.95 },
@@ -25,6 +26,10 @@ const itemVariants = {
 };
 
 export function Auth() {
+  const { contact } = useWebsiteContent();
+  const whatsappNumber = contact?.whatsapp || "9866006648";
+  const cleanWhatsapp = whatsappNumber.replace(/^\+?91/, "").trim();
+
   const [step, setStep] = useState("identifier"); // identifier, otp, success
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -69,7 +74,7 @@ export function Auth() {
     }
   }, [otp]);
 
-  const handleCheckEmailOrSend = async (e) => {
+  async function handleCheckEmailOrSend(e) {
     e?.preventDefault();
     if (!email || !email.includes("@")) {
       toast.error("Please enter a valid email address");
@@ -114,7 +119,7 @@ export function Auth() {
       setStep("otp");
       setTimer(60);
       setOtp(["", "", "", "", "", ""]);
-      if (response.success && response.data && response.data.otp) {
+      if (import.meta.env.DEV && response.success && response.data && response.data.otp) {
         setDevOtp(response.data.otp);
       } else {
         setDevOtp("");
@@ -128,9 +133,9 @@ export function Auth() {
       isSubmittingRef.current = false;
       setIsLoading(false);
     }
-  };
+  }
 
-  const submitOTP = async (otpString) => {
+  async function submitOTP(otpString) {
     if (isSubmittingRef.current || isLoading) {
       console.warn("[Auth] Duplicate verify-otp request blocked on client");
       return;
@@ -144,7 +149,7 @@ export function Auth() {
         setUserRole(response.data.user.role);
         setStep("success");
         setTimeout(async () => {
-          await loginSuccess(response.data.user, response.data.token);
+          await loginSuccess(response.data.user, response.data.token, response.data.refreshToken);
         }, 1800);
       }
     } catch (err) {
@@ -159,7 +164,7 @@ export function Auth() {
       isSubmittingRef.current = false;
       setIsLoading(false);
     }
-  };
+  }
 
   const handleAutofillDevOtp = () => {
     if (devOtp) {
@@ -362,7 +367,7 @@ export function Auth() {
                 </div>
 
                 {/* Form Card */}
-                <div className="bg-white/70 backdrop-blur-2xl rounded-[32px] p-8 md:p-10 border border-outline-variant/30 shadow-[0_24px_50px_rgba(115,92,0,0.04)] relative overflow-hidden">
+                <div className="bg-white/70 backdrop-blur-2xl rounded-[32px] p-5 xs:p-8 md:p-10 border border-outline-variant/30 shadow-[0_24px_50px_rgba(115,92,0,0.04)] relative overflow-hidden">
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
                   <AnimatePresence mode="wait">
@@ -500,7 +505,7 @@ export function Auth() {
                         <motion.div
                           animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}
                           transition={{ duration: 0.4 }}
-                          className="flex justify-between gap-2 sm:gap-3"
+                          className="flex justify-between gap-1 xs:gap-1.5 sm:gap-2 md:gap-3"
                           onPaste={handlePaste}
                         >
                            {otp.map((digit, idx) => (
@@ -515,7 +520,8 @@ export function Auth() {
                               value={digit}
                               onChange={(e) => handleOtpChange(e.target.value, idx)}
                               onKeyDown={(e) => handleKeyDown(e, idx)}
-                              className={`w-11 h-14 sm:w-13 sm:h-15 text-center font-display text-[22px] sm:text-[26px] bg-surface-container-low/50 border rounded-2xl outline-none transition-all shadow-inner focus:shadow-xl focus:ring-4 focus:ring-primary/5 ${
+                              onPaste={handlePaste}
+                              className={`w-8 h-11 xs:w-10 xs:h-13 sm:w-11 sm:h-14 md:w-13 md:h-15 text-center font-display text-[16px] xs:text-[18px] sm:text-[22px] md:text-[26px] bg-surface-container-low/50 border rounded-2xl outline-none transition-all shadow-inner focus:shadow-xl focus:ring-4 focus:ring-primary/5 ${
                                 error
                                   ? "border-error text-error ring-1 ring-error"
                                   : digit
@@ -525,6 +531,18 @@ export function Auth() {
                             />
                           ))}
                         </motion.div>
+
+                        {import.meta.env.DEV && devOtp && (
+                          <div className="text-center mt-4">
+                            <button
+                              type="button"
+                              onClick={handleAutofillDevOtp}
+                              className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-full text-[10.5px] font-bold uppercase tracking-wider hover:bg-primary/20 transition-all cursor-pointer"
+                            >
+                              [DEV ONLY] Autofill OTP: {devOtp}
+                            </button>
+                          </div>
+                        )}
 
 
 
@@ -572,7 +590,7 @@ export function Auth() {
                     </Link>
                     <span className="w-1 h-1 rounded-full bg-outline-variant/40" />
                     <button
-                      onClick={() => window.open("https://wa.me/91XXXXXXXXXX", "_blank")}
+                      onClick={() => window.open(`https://wa.me/91${cleanWhatsapp}`, "_blank")}
                       className="font-label-sm text-[9px] text-on-surface-variant/50 uppercase tracking-[0.2em] font-semibold hover:text-primary transition-colors cursor-pointer"
                     >
                       Need Assistance?

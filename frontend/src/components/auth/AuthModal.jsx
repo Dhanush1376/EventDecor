@@ -23,57 +23,6 @@ export function AuthModal() {
   const otpRefs = useRef([]);
   const isSubmittingRef = useRef(false);
 
-  // Countdown timer for resending OTP
-  useEffect(() => {
-    let interval = null;
-    if (timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-    } else {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [timer]);
-
-  // Reset modal state when it closes or opens
-  useEffect(() => {
-    if (!isAuthModalOpen) {
-      // Small delay to prevent visual jump during exit animation
-      const t = setTimeout(() => {
-        setStep("identifier");
-        setEmail("");
-        setPassword("");
-        setRequiresPassword(false);
-        setShowPassword(false);
-        setPasswordFocused(false);
-        setOtp(["", "", "", "", "", ""]);
-        setTimer(0);
-        setError(false);
-      }, 400);
-      return () => clearTimeout(t);
-    }
-  }, [isAuthModalOpen]);
-
-  // Auto-submit OTP when all 6 digits are typed
-  useEffect(() => {
-    const otpString = otp.join("");
-    if (otpString.length === 6 && step === "otp" && isAuthModalOpen) {
-      submitOTP(otpString);
-    }
-  }, [otp]);
-
-  // Listen to Escape key to close the auth modal
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      if (e.key === "Escape" && isAuthModalOpen) {
-        closeAuthModal();
-      }
-    };
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [isAuthModalOpen, closeAuthModal]);
-
   const handleCheckEmailOrSend = async (e) => {
     e?.preventDefault();
     if (!email || !email.includes("@")) {
@@ -135,7 +84,7 @@ export function AuthModal() {
       if (response.success) {
         setStep("success");
         setTimeout(async () => {
-          await loginSuccess(response.data.user, response.data.token);
+          await loginSuccess(response.data.user, response.data.token, response.data.refreshToken);
         }, 1800);
       }
     } catch (err) {
@@ -151,6 +100,60 @@ export function AuthModal() {
       setIsLoading(false);
     }
   };
+
+  // Countdown timer for resending OTP
+  useEffect(() => {
+    let interval = null;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  // Reset modal state when it closes or opens
+  useEffect(() => {
+    if (!isAuthModalOpen) {
+      // Small delay to prevent visual jump during exit animation
+      const t = setTimeout(() => {
+        setStep("identifier");
+        setEmail("");
+        setPassword("");
+        setRequiresPassword(false);
+        setShowPassword(false);
+        setPasswordFocused(false);
+        setOtp(["", "", "", "", "", ""]);
+        setTimer(0);
+        setError(false);
+      }, 400);
+      return () => clearTimeout(t);
+    }
+  }, [isAuthModalOpen]);
+
+  // Auto-submit OTP when all 6 digits are typed
+  useEffect(() => {
+    const otpString = otp.join("");
+    if (otpString.length === 6 && step === "otp" && isAuthModalOpen) {
+      const timer = setTimeout(() => {
+        submitOTP(otpString);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [otp]);
+
+  // Listen to Escape key to close the auth modal
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (e.key === "Escape" && isAuthModalOpen) {
+        closeAuthModal();
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isAuthModalOpen, closeAuthModal]);
 
   const handleVerifyOTP = async (e) => {
     e?.preventDefault();
@@ -217,7 +220,7 @@ export function AuthModal() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="relative bg-[#faf9f6] w-full max-w-[440px] rounded-[32px] p-8 sm:p-10 border border-outline-variant/30 shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-hidden"
+          className="relative bg-[#faf9f6] w-full max-w-[440px] rounded-[32px] p-5 xs:p-8 sm:p-10 border border-outline-variant/30 shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-hidden"
         >
           {/* Concentric rotating gold mandalas for luxury styling */}
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.06] z-0">
@@ -330,7 +333,7 @@ export function AuthModal() {
                   </div>
 
                   {/* Form fields */}
-                  <div className="bg-white/80 rounded-2xl p-6 border border-outline-variant/20 shadow-Luxury">
+                  <div className="bg-white/80 rounded-2xl p-4 xs:p-5 sm:p-6 border border-outline-variant/20 shadow-Luxury">
                     <AnimatePresence mode="wait">
                       {step === "identifier" ? (
                         <motion.form
@@ -464,7 +467,7 @@ export function AuthModal() {
                           <motion.div
                             animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}
                             transition={{ duration: 0.4 }}
-                            className="flex justify-between gap-2"
+                            className="flex justify-between gap-1 xs:gap-1.5 sm:gap-2"
                             onPaste={handlePaste}
                           >
                             {otp.map((digit, idx) => (
@@ -479,8 +482,9 @@ export function AuthModal() {
                                 value={digit}
                                 onChange={(e) => handleOtpChange(e.target.value, idx)}
                                 onKeyDown={(e) => handleKeyDown(e, idx)}
+                                onPaste={handlePaste}
                                 aria-label={`Digit ${idx + 1} of verification code`}
-                                className={`w-9 h-12 text-center font-display text-[18px] bg-surface-container-low/50 border rounded-xl outline-none transition-all shadow-inner focus:shadow-md focus:ring-4 focus:ring-primary/5 ${
+                                className={`w-8 h-11 xs:w-9 xs:h-12 text-center font-display text-[16px] xs:text-[18px] bg-surface-container-low/50 border rounded-xl outline-none transition-all shadow-inner focus:shadow-md focus:ring-4 focus:ring-primary/5 ${
                                   error
                                     ? "border-error text-error ring-1 ring-error"
                                     : digit

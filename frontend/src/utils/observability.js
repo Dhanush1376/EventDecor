@@ -17,7 +17,6 @@ export const initObservability = () => {
     LogRocket.init(logRocketId, {
       shouldCaptureIP: false, // Privacy first
     });
-    console.log('📡 LogRocket observability layer loaded.');
   }
 
   // 2. Initialize Sentry error reporting
@@ -43,8 +42,6 @@ export const initObservability = () => {
         Sentry.setExtra('logrocketSessionURL', sessionURL);
       });
     }
-
-    console.log('🛡️ Sentry error monitoring layer loaded.');
   }
 };
 

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { GalleryCard } from "../components/gallery/GalleryCard";
 import { galleryService, productService } from "../services/domainServices";
-import { ProductCard, QuickViewModal } from "../components/ui";
+import { ProductCard, QuickViewModal, SearchBar, CategoryTabs, CustomDropdown } from "../components/ui";
 import { SEO } from "../components/seo/SEO";
 import { MandalaElement } from "../components/ui/MandalaElement";
 import { GallerySlideshow } from "../components/gallery/GallerySlideshow";
@@ -20,11 +20,31 @@ export function Gallery() {
   const [isGalleryMode, setIsGalleryMode] = useState(false);
   const [slideshowIndex, setSlideshowIndex] = useState(-1);
   const [showFloatingExit, setShowFloatingExit] = useState(false);
+  const [isSticky, setIsSticky] = useState(false);
 
   const [galleryItems, setGalleryItems] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(["All"]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleCategorySelect = (cat) => {
+    setActiveCategory(cat);
+    setTimeout(() => {
+      const element = document.getElementById("gallery-collection");
+      if (element) {
+        const yOffset = -80;
+        const y =
+          element.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }, 50);
+  };
+
+  useEffect(() => {
+    const handleScroll = () => setIsSticky(window.scrollY > 300);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Fetch initial data
   useEffect(() => {
@@ -72,6 +92,7 @@ export function Gallery() {
       };
     } else {
       document.body.classList.remove("gallery-mode-active");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowFloatingExit(false);
     }
   }, [isGalleryMode]);
@@ -102,14 +123,15 @@ export function Gallery() {
         ...item,
         id: item._id || item.id,
         height:
-          item.height ||
-          (idx % 4 === 0
-            ? "aspect-[2/3]"
-            : idx % 4 === 1
-              ? "aspect-square"
-              : idx % 4 === 2
-                ? "aspect-[4/5]"
-                : "aspect-[3/4]"),
+          (!item.height || item.height === "aspect-square")
+            ? (idx % 4 === 0
+              ? "aspect-[2/3]"
+              : idx % 4 === 1
+                ? "aspect-square"
+                : idx % 4 === 2
+                  ? "aspect-[4/5]"
+                  : "aspect-[3/4]")
+            : item.height,
       }));
   }, [galleryItems, activeCategory, activeEvent, activeStyle, searchQuery, filterType]);
 
@@ -132,156 +154,138 @@ export function Gallery() {
         variant={2}
       />
 
-      <main className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-4 md:py-6 relative z-10">
-        {/* Editorial Header */}
-        <div className="mb-12">
-          <nav className="hidden md:flex items-center gap-2 font-label-sm text-[11px] uppercase tracking-[0.3em] mb-6 text-black/30">
-            <Link to="/" className="hover:text-primary transition-colors">
-              Home
-            </Link>
-            <span className="opacity-30">/</span>
-            <span className="text-black font-bold">Inspiration Gallery</span>
-          </nav>
+      {/* Editorial Header Hero */}
+      <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-4 md:pt-6 relative z-10">
+        <nav className="hidden md:flex items-center gap-2 font-label-sm text-[11px] uppercase tracking-[0.3em] mb-6 text-black/30">
+          <Link to="/" className="hover:text-primary transition-colors">
+            Home
+          </Link>
+          <span className="opacity-30">/</span>
+          <span className="text-black font-bold">Inspiration Gallery</span>
+        </nav>
 
-          <div className="flex flex-col lg:flex-row items-start justify-between gap-8 lg:gap-16">
-            <div className="max-w-2xl">
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="font-label-sm text-[12px] text-primary uppercase tracking-[0.4em] mb-4 block font-bold"
-              >
-                Inspiration Sanctuary
-              </motion.span>
-              <motion.h1
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="font-headline-md text-black mb-6 leading-tight"
-              >
-                Curated Moments of Beauty.
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="font-body-md text-black/60 font-light leading-relaxed max-w-xl"
-              >
-                Explore our gallery of artisanal transformations, where heritage
-                pieces meet contemporary celebrations.
-              </motion.p>
+        <div className="max-w-2xl mb-12">
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="font-label-sm text-[12px] text-primary uppercase tracking-[0.4em] mb-4 block font-bold"
+          >
+            Design Ideas
+          </motion.span>
+          <motion.h1
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="font-headline-md text-black mb-6 leading-tight"
+          >
+            Beautiful Designs & Themes.
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="font-body-md text-black/60 font-light leading-relaxed max-w-xl"
+          >
+            Explore our gallery of beautiful decorations, where traditional items
+            meet modern celebrations.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* Sticky Discovery Bar */}
+      <nav
+        className={`z-40 transition-all duration-500 ${
+          isSticky
+            ? "fixed top-[53px] md:top-[57px] left-0 w-full glass py-2 shadow-xl"
+            : "relative mb-10 md:mb-12"
+        }`}
+      >
+        <div
+          className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 ${
+            isSticky ? "" : "transition-all duration-500"
+          }`}
+        >
+          {/* Search Bar & Mobile / Tablet Actions */}
+          <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
+            <div className="flex-1 h-11">
+              <SearchBar
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                }}
+                placeholder="Search themes, colors..."
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+              />
+            </div>
+            
+            {/* Mobile Filter Toggle */}
+            <button
+              onClick={() => setIsFilterDrawerOpen(true)}
+              aria-label="Open filters"
+              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
+            >
+              <span className="material-symbols-outlined text-[20px]">tune</span>
+            </button>
+
+            {/* Mobile Gallery Mode Toggle */}
+            <button
+              onClick={() => setIsGalleryMode(!isGalleryMode)}
+              aria-label="Toggle gallery mode"
+              className={`lg:hidden flex items-center justify-center w-11 h-11 rounded-full shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none ${
+                isGalleryMode ? "bg-primary text-white text-surface" : "bg-white text-black/50 border border-black/10"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {isGalleryMode ? "grid_view" : "photo_library"}
+              </span>
+            </button>
+          </div>
+
+          {/* Desktop Category Tabs & Sort/Format Dropdown */}
+          <div className="hidden lg:flex items-center justify-between gap-6 flex-1 min-w-0">
+            <div className="flex-1 overflow-hidden flex justify-start lg:justify-center">
+              <CategoryTabs
+                categories={categories}
+                activeCategory={activeCategory}
+                onCategoryChange={handleCategorySelect}
+              />
             </div>
 
-            <div className="w-full lg:flex-1 max-w-3xl space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-end gap-3 w-full">
-                {/* Type Switcher Tabs */}
-                <div className="flex h-11 p-1 bg-surface-container-low rounded-full border border-black/5 shrink-0 overflow-x-auto no-scrollbar max-w-full">
-                  {[
-                    { id: "all", label: "All Works" },
-                    { id: "inspiration", label: "Design Inspirations" },
-                    { id: "real-event", label: "Real Celebrations" },
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => setFilterType(t.id)}
-                      className={`px-4 h-full rounded-full text-[10px] uppercase tracking-widest font-bold transition-all duration-300 whitespace-nowrap flex items-center justify-center ${
-                        filterType === t.id
-                          ? "bg-white text-primary shadow-sm"
-                          : "text-black/40 hover:text-black/60"
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Search Bar */}
-                <div className="flex-1 relative group hidden md:block min-w-[180px] max-w-sm shrink-0">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-black/30 text-[18px] group-focus-within:text-primary transition-colors">
-                    search
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search themes, colors..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-11 bg-white pl-11 pr-4 rounded-full border border-black/10 font-body text-[13px] text-black placeholder:text-black/30 focus:outline-none focus:ring-0 focus:border-primary transition-all shadow-sm"
-                  />
-                </div>
-
-                {/* Slideshow Mode Toggle */}
-                <button
-                  onClick={() => setIsGalleryMode(!isGalleryMode)}
-                  className={`hidden md:flex shrink-0 items-center gap-2 h-11 px-6 rounded-full border transition-all duration-300 font-bold text-[10px] uppercase tracking-widest ${
-                    isGalleryMode
-                      ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
-                      : "bg-white text-black/60 border-black/10 hover:border-black/30 shadow-sm"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {isGalleryMode ? "grid_view" : "photo_library"}
-                  </span>
-                  {isGalleryMode ? "Exit Gallery Mode" : "Gallery Mode"}
-                </button>
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Type Switcher Dropdown */}
+              <div className="w-48 xl:w-52 h-11">
+                <CustomDropdown
+                  options={[
+                    { value: "all", label: "All Formats" },
+                    { value: "inspiration", label: "Design Inspirations" },
+                    { value: "real-event", label: "Real Celebrations" },
+                  ]}
+                  value={filterType}
+                  onChange={setFilterType}
+                  className="w-full h-full"
+                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
+                />
               </div>
 
-              <div className="flex flex-col items-end gap-3">
-                {/* Mobile Filter Button - only visible on mobile */}
-                <div className="flex items-center gap-2 w-full md:hidden">
-                  <div className="relative flex-1 group">
-                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-black/30 text-[16px] group-focus-within:text-primary transition-colors">
-                      search
-                    </span>
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white pl-10 pr-4 py-3 rounded-xl border border-black/10 font-body text-[13px] placeholder:text-black/30 focus:outline-none focus:ring-0 focus:border-primary transition-all shadow-sm"
-                    />
-                  </div>
-                  <button
-                    onClick={() => setIsFilterDrawerOpen(true)}
-                    className="h-[46px] px-4 bg-white border border-black/10 rounded-xl flex items-center gap-2 font-bold text-[10px] uppercase tracking-widest"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      tune
-                    </span>
-                    Filter
-                  </button>
-
-                  <button
-                    onClick={() => setIsGalleryMode(!isGalleryMode)}
-                    className={`h-[46px] px-4 rounded-xl border flex items-center gap-2 font-bold text-[10px] uppercase tracking-widest transition-all ${
-                      isGalleryMode
-                        ? "bg-primary text-white border-primary shadow-lg"
-                        : "bg-white text-black/40 border-black/10"
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      {isGalleryMode ? "grid_view" : "photo_library"}
-                    </span>
-                  </button>
-                </div>
-
-                <div className="w-full hidden md:flex flex-wrap items-center justify-end gap-2">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveCategory(cat)}
-                      className={`px-5 py-2 rounded-full border font-label-sm text-[10px] uppercase tracking-[0.2em] transition-all duration-300 font-bold flex-shrink-0 ${
-                        activeCategory === cat
-                          ? "bg-black text-white border-black shadow-md"
-                          : "bg-white text-black/40 border-black/5 hover:border-black/20"
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Gallery Mode Toggle */}
+              <button
+                onClick={() => setIsGalleryMode(!isGalleryMode)}
+                className={`flex shrink-0 items-center gap-2 h-11 px-5 rounded-full border transition-all duration-300 font-bold text-[10px] uppercase tracking-widest outline-none focus:outline-none focus-visible:outline-none ${
+                  isGalleryMode
+                    ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
+                    : "bg-white text-black/60 border-black/10 hover:border-black/30 shadow-sm"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {isGalleryMode ? "grid_view" : "photo_library"}
+                </span>
+                {isGalleryMode ? "Exit Gallery" : "Gallery Mode"}
+              </button>
             </div>
           </div>
         </div>
+      </nav>
 
+      <main id="gallery-collection" className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-4 md:py-6 relative z-10">
         {/* Pinterest Masonry Grid */}
         <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-6">
           <AnimatePresence mode="popLayout">

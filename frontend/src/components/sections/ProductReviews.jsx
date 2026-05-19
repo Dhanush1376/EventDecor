@@ -241,6 +241,7 @@ export function ProductReviews({ productId, productTitle }) {
 
   useEffect(() => {
     if (productId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchReviews(1);
       fetchEligibility();
     }
@@ -292,6 +293,14 @@ export function ProductReviews({ productId, productTitle }) {
       </div>
     );
   };
+
+  if (loading && reviews.length === 0) {
+    return null;
+  }
+
+  if (reviews.length === 0 && !eligibility?.canReview) {
+    return null;
+  }
 
   return (
     <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16">

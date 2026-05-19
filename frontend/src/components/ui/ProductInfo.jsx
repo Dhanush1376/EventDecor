@@ -88,7 +88,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
       {/* Product Title & Metadata - Refined & Minimal */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1.5 md:space-y-2 flex-1">
-          <h1 className="text-[20px] sm:text-[24px] md:text-[32px] text-on-surface leading-tight tracking-tight font-bold">
+          <h1 className="font-sans text-[20px] sm:text-[24px] md:text-[32px] text-on-surface leading-tight tracking-tight font-bold">
             {product.title}
             {(product.teluguTitle || product.nameTE || product.teluguName) && (
               <span className="ml-2 text-on-surface/40 font-display italic text-[18px] sm:text-[22px] md:text-[28px] font-normal">
@@ -146,7 +146,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
               local_shipping
             </span>
             <span className="font-body-sm text-[13px] sm:text-[14px] font-medium italic">
-              Complimentary premium shipping included
+              Free premium shipping included
             </span>
           </div>
           <div className="flex items-center gap-3 text-on-surface/70">
@@ -154,7 +154,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
               event_available
             </span>
             <span className="font-body-sm text-[13px] sm:text-[14px] font-medium italic">
-              Delivered in 3-5 artisanal crafting days
+              Delivered in 3-5 working days
             </span>
           </div>
         </div>
@@ -163,11 +163,11 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
       {/* Description Section - Lighter weight */}
       <div className="space-y-2 mt-2">
         <h3 className="font-label-sm text-[11px] text-on-surface/40 uppercase tracking-[0.2em] font-bold">
-          The Essence
+          About this Item
         </h3>
         <p className="font-body-md text-on-surface/80 font-normal leading-relaxed text-[14px] sm:text-[15px]">
           {product.description ||
-            "A masterfully handcrafted piece that seamlessly blends traditional Indian artistry with contemporary design."}
+            "A beautiful handmade item that mixes traditional Indian design with modern style."}
         </p>
       </div>
 
@@ -302,10 +302,10 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
 
       {/* Trust Signifiers Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/10">
-        <FeatureItem icon="draw" label="Master Crafted" />
-        <FeatureItem icon="workspace_premium" label="Artisan Authenticity" />
+        <FeatureItem icon="draw" label="Handmade Work" />
+        <FeatureItem icon="workspace_premium" label="100% Original" />
         <FeatureItem icon="all_inclusive" label="Lifetime Warranty" />
-        <FeatureItem icon="public" label="Ethical Sourcing" />
+        <FeatureItem icon="public" label="Fairly Sourced" />
       </div>
     </div>
   );

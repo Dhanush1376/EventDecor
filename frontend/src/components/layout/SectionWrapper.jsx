@@ -10,6 +10,7 @@ export function SectionWrapper({
   container = true,
   narrow = false,
   noAnimation = false,
+  ref,
 }) {
   const bgClasses = {
     default: "bg-surface",
@@ -19,17 +20,18 @@ export function SectionWrapper({
 
   return (
     <section
+      ref={ref}
       id={id}
       className={`relative w-full py-8 md:py-16 lg:py-20 overflow-hidden ${bgClasses[variant]} ${className}`}
     >
       <motion.div
         variants={noAnimation ? {} : fadeUp}
-        initial="initial"
-        whileInView="whileInView"
+        initial="hidden"
+        whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
         className={`relative z-10 mx-auto ${
           container
-            ? "px-container-margin-mobile md:px-container-margin-desktop max-w-[1440px]"
+            ? "px-margin-mobile md:px-margin-desktop max-w-[1440px]"
             : ""
         } ${narrow ? "max-w-4xl" : ""}`}
       >

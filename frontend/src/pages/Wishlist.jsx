@@ -189,45 +189,32 @@ export function Wishlist() {
               transition={{ duration: 0.5 }}
               className="text-center max-w-2xl mx-auto py-16 md:py-24"
             >
-              <div className="relative inline-block mb-8">
-                <div className="w-24 h-24 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-2 border border-outline-variant/10">
-                  <span className="material-symbols-outlined text-4xl text-secondary">
-                    favorite_border
-                  </span>
-                </div>
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  className="absolute -inset-4 bg-primary/5 rounded-full blur-2xl -z-10"
-                />
+              {/* Minimalist Premium Icon Container */}
+              <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 mx-auto relative">
+                <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
+                <span className="material-symbols-outlined text-primary text-[30px] relative z-10">
+                  favorite
+                </span>
               </div>
 
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-on-surface mb-4">
+              <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
                 You haven't saved anything yet.
               </h2>
-              <p className="text-[15px] md:text-base text-secondary max-w-md mx-auto mb-10 leading-relaxed font-light">
-                Explore what our artisans have crafted for your special
-                occasions and save your favorites here.
+              <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-8">
+                Explore what our artisans have crafted for your special occasions and save your favorites here.
               </p>
 
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
+              <div className="flex justify-center">
                 <Link
                   to="/collections"
-                  className="btn-primary px-10 py-4 inline-flex items-center gap-3 text-[12px] uppercase tracking-[0.2em] font-bold"
+                  className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
                 >
-                  Explore Collections
-                  <span className="material-symbols-outlined text-sm">
+                  <span>Explore Collections</span>
+                  <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
                     arrow_forward
                   </span>
                 </Link>
-              </motion.div>
+              </div>
             </motion.div>
 
             {/* Recommendations */}

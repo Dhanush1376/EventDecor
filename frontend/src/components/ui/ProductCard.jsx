@@ -112,15 +112,16 @@ export function ProductCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ type: "spring", stiffness: 70, damping: 15 }}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="link"
       aria-label={`View details of ${title}`}
-      className="group relative flex flex-col transition-all duration-700 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl md:rounded-[32px]"
+      className="group relative flex flex-col hover-lift-glow cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl md:rounded-[32px]"
     >
       {/* 1. VISUAL CANVAS */}
       <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5">
@@ -141,7 +142,7 @@ export function ProductCard({
         <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className="w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-95"
+            className="w-8 h-8 md:w-10 md:h-10 min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-95"
             aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <motion.span
@@ -236,7 +237,7 @@ export function ProductCard({
         <div className="xl:hidden absolute bottom-2 right-2 z-20">
           <button
             onClick={handleAddToCart}
-            className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer ${
+            className={`w-8 h-8 md:w-10 md:h-10 min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer ${
               added
                 ? "bg-[#e0d6b8] text-[#1a1c1a]"
                 : "bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a]"

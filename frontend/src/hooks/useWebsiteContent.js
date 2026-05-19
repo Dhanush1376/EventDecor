@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { cmsService } from "../services/domainServices";
 import { initialWebsiteContent } from "../admin/data/websiteContentData";
 
-const STORAGE_KEY = "siri_admin_website_content";
 const CACHE_TTL = 30 * 1000; // 30 seconds cache TTL
 
 // Global shared state for singleton caching and request de-duplication
@@ -13,30 +12,34 @@ const listeners = new Set();
 
 const updateGlobalCache = (newContent) => {
   globalCache = newContent;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(newContent));
   listeners.forEach(listener => listener(newContent));
+};
+
+export const refreshWebsiteContent = async () => {
+  lastFetchedTime = 0;
+  globalCache = null;
+  globalPromise = null;
+  
+  try {
+    const response = await cmsService.getPublished();
+    lastFetchedTime = Date.now();
+    if (response.success && response.data && Object.keys(response.data).length > 0) {
+      const mergedContent = { ...initialWebsiteContent, ...response.data };
+      if (response.data.hero) {
+        mergedContent.hero = { ...initialWebsiteContent.hero, ...response.data.hero };
+      }
+      updateGlobalCache(mergedContent);
+      return mergedContent;
+    }
+  } catch (err) {
+    console.warn("Force CMS API refresh failed, keeping current/stale cache", err);
+  }
+  return null;
 };
 
 export function useWebsiteContent() {
   const [content, setContent] = useState(() => {
     if (globalCache) return globalCache;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Self-healing: discard old cached configuration containing the broken hero image or relative local paths
-        if (
-          parsed?.hero?.backgroundImage?.includes("hero_bg_luxury.jpg") ||
-          parsed?.hero?.backgroundImage?.startsWith("/") ||
-          parsed?.hero?.backgroundImage?.includes("luxury_royal_wedding.png")
-        ) {
-          localStorage.removeItem(STORAGE_KEY);
-          return initialWebsiteContent;
-        }
-        globalCache = parsed;
-        return parsed;
-      }
-    } catch {}
     return initialWebsiteContent;
   });
 
@@ -51,8 +54,8 @@ export function useWebsiteContent() {
     listeners.add(handleUpdate);
 
     const fetchContent = async () => {
-      // Check cache freshness
-      if (globalCache && (Date.now() - lastFetchedTime < CACHE_TTL)) {
+      // Check cache freshness: BYPASS if lastFetchedTime is 0 (first load in page session)
+      if (globalCache && lastFetchedTime > 0 && (Date.now() - lastFetchedTime < CACHE_TTL)) {
         setLoading(false);
         return;
       }
@@ -62,16 +65,21 @@ export function useWebsiteContent() {
         try {
           const res = await globalPromise;
           if (res) handleUpdate(res);
-        } catch {}
+        } catch (err) {
+          console.warn("Concurrent website content fetch error:", err);
+        }
         return;
       }
 
       globalPromise = (async () => {
         try {
           const response = await cmsService.getPublished();
-          lastFetchedTime = Date.now(); // Throttles subsequent checks within the 30s CACHE_TTL window
+          lastFetchedTime = Date.now();
           if (response.success && response.data && Object.keys(response.data).length > 0) {
             const mergedContent = { ...initialWebsiteContent, ...response.data };
+            if (response.data.hero) {
+              mergedContent.hero = { ...initialWebsiteContent.hero, ...response.data.hero };
+            }
             updateGlobalCache(mergedContent);
             return mergedContent;
           }
@@ -88,25 +96,9 @@ export function useWebsiteContent() {
     };
 
     fetchContent();
-
-    const handleStorageChange = (e) => {
-      if (e.key === STORAGE_KEY) {
-        try {
-          const newContent = e.newValue
-            ? JSON.parse(e.newValue)
-            : initialWebsiteContent;
-          updateGlobalCache(newContent);
-        } catch (err) {
-          console.error("Error parsing website content from local storage", err);
-        }
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
     
     return () => {
       listeners.delete(handleUpdate);
-      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 

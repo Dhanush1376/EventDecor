@@ -1,11 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function ReviewLightbox({ media, activeIndex = 0, isOpen, onClose }) {
-  if (!isOpen || !media || media.length === 0) return null;
-
+export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(activeIndex);
   const [isMuted, setIsMuted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentIndex(activeIndex);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [activeIndex]);
+
+  if (!isOpen || !media || media.length === 0) return null;
 
   const currentItem = media[currentIndex] || media[0];
 

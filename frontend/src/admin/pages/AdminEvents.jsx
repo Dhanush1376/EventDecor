@@ -342,29 +342,39 @@ export function AdminEvents() {
   };
 
   useEffect(() => {
-    fetchEvents();
-    fetchBookings();
-    fetchShowcases();
-    fetchOperationsData();
+    const timer = setTimeout(() => {
+      fetchEvents();
+      fetchBookings();
+      fetchShowcases();
+      fetchOperationsData();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (selectedBooking) {
-      setDrawerStatus(selectedBooking.status);
-      setDrawerNotes(selectedBooking.adminNotes || "");
-      setLogisticsSetup(selectedBooking.setupTiming ? selectedBooking.setupTiming.substring(0, 16) : "");
-      setLogisticsPickup(selectedBooking.pickupTiming ? selectedBooking.pickupTiming.substring(0, 16) : "");
-      setAllocatedTeam(selectedBooking.assignedTeam || []);
-      setAllocatedProps(selectedBooking.rentedInventory || []);
-      setQuoteRental(selectedBooking.pricing?.rentalFee || 0);
-      setQuoteSetup(selectedBooking.pricing?.setupCharges || 0);
-      setQuoteTransport(selectedBooking.pricing?.transportationCost || 0);
-      setQuoteAddons(selectedBooking.pricing?.addOnCharges || 0);
+      const timer = setTimeout(() => {
+        setDrawerStatus(selectedBooking.status);
+        setDrawerNotes(selectedBooking.adminNotes || "");
+        setLogisticsSetup(selectedBooking.setupTiming ? selectedBooking.setupTiming.substring(0, 16) : "");
+        setLogisticsPickup(selectedBooking.pickupTiming ? selectedBooking.pickupTiming.substring(0, 16) : "");
+        setAllocatedTeam(selectedBooking.assignedTeam || []);
+        setAllocatedProps(selectedBooking.rentedInventory || []);
+        setQuoteRental(selectedBooking.pricing?.rentalFee || 0);
+        setQuoteSetup(selectedBooking.pricing?.setupCharges || 0);
+        setQuoteTransport(selectedBooking.pricing?.transportationCost || 0);
+        setQuoteAddons(selectedBooking.pricing?.addOnCharges || 0);
+      }, 0);
 
       // Scroll to bottom of chat
-      setTimeout(() => {
+      const chatTimer = setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(chatTimer);
+      };
     }
   }, [selectedBooking]);
 

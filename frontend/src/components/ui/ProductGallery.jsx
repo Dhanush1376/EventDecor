@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { CloudinaryImage } from "./CloudinaryImage";
 import { handleImageError } from "../../utils/imageUtils";
 import { useWishlist } from "../../context/WishlistContext";
@@ -9,6 +10,15 @@ export function ProductGallery({ images = [], product }) {
   const { toggleItem, isWishlisted } = useWishlist();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const scrollRef = useRef(null);
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate("/collections");
+    }
+  };
 
   const handleThumbnailClick = (idx) => {
     setSelectedIdx(idx);
@@ -90,6 +100,17 @@ export function ProductGallery({ images = [], product }) {
 
         {/* Gallery Interaction Overlays */}
         
+        {/* Mobile Back Arrow Overlay */}
+        <button
+          onClick={handleBack}
+          className="flex md:hidden absolute top-4 left-4 z-20 items-center justify-center w-10 h-10 rounded-full bg-[#fbfbf8]/90 backdrop-blur-xs shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white outline-none focus:outline-none"
+          aria-label="Go back"
+        >
+          <span className="material-symbols-outlined text-[20px] text-black">
+            arrow_back
+          </span>
+        </button>
+
         {/* Floating Action Buttons (Wishlist & Share) */}
         {product && (
           <div className="absolute top-4 right-4 z-20 flex items-center gap-2 pointer-events-auto">

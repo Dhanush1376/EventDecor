@@ -5,9 +5,10 @@ import { useLocation } from 'react-router-dom';
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://siriartsandcrafts.com';
 const SITE_NAME = import.meta.env.VITE_SITE_NAME || 'Siri Arts & Crafts';
 const DEFAULT_OG_IMAGE = import.meta.env.VITE_OG_IMAGE_URL || `${SITE_URL}/og-image.jpg`;
-const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91-9876543210';
+const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91-9866006648';
 const DEFAULT_DESCRIPTION = 'Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor.';
 const DEFAULT_TITLE = 'Siri Arts & Crafts | Luxury Event Decor & Artisanal Heritage';
+const priceValidUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
 /**
  * Enterprise-grade SEO component with full Open Graph, Twitter Cards,
@@ -68,6 +69,8 @@ export function SEO({
       }
     : null;
 
+  const priceValidUntil = priceValidUntilDate;
+
   // Product Schema (for product pages)
   const productSchema = product
     ? {
@@ -86,7 +89,7 @@ export function SEO({
           url: currentUrl,
           priceCurrency: 'INR',
           price: product.price,
-          priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          priceValidUntil: priceValidUntil,
           availability: product.inStock
             ? 'https://schema.org/InStock'
             : 'https://schema.org/OutOfStock',

@@ -53,7 +53,7 @@ const allStatuses = [
 
 export function AdminOrders() {
   const navigate = useNavigate();
-  const { orders, updateOrderStatus, searchQuery } = useAdmin();
+  const { orders, updateOrderStatus, updateOrderNotes, searchQuery } = useAdmin();
   
   const [viewMode, setViewMode] = useState("table"); // 'table' or 'kanban'
   const [filterStatus, setFilterStatus] = useState("All");
@@ -142,26 +142,11 @@ export function AdminOrders() {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [orders, navigate]);
 
-  // Local state for staff notes per order
-  const [notes, setNotes] = useState({});
+  // Derive selected order data from orders list dynamically
+  const selectedOrderData = selectedOrder ? orders.find((o) => o.id === selectedOrder.id) : null;
 
-  useEffect(() => {
-    // Load staff notes from localStorage
-    const savedNotes = localStorage.getItem("siri_arts_order_notes");
-    if (savedNotes) {
-      try {
-        setNotes(JSON.parse(savedNotes));
-      } catch (e) {
-        console.error("Failed to load staff notes", e);
-      }
-    }
-  }, []);
-
-  const handleSaveNote = (orderId, noteText) => {
-    const updatedNotes = { ...notes, [orderId]: noteText };
-    setNotes(updatedNotes);
-    localStorage.setItem("siri_arts_order_notes", JSON.stringify(updatedNotes));
-    toast.success("Internal note saved");
+  const handleSaveNote = async (orderId, noteText) => {
+    await updateOrderNotes(orderId, noteText);
   };
 
   const filteredOrders = useMemo(() => {
@@ -491,7 +476,7 @@ export function AdminOrders() {
                     {/* Cards Pool */}
                     <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[500px] custom-scrollbar pr-0.5">
                       {statusOrders.map((o) => {
-                        const hasNote = Boolean(notes[o.id]);
+                        const hasNote = Boolean(o.notes);
 
                         return (
                           <div
@@ -717,7 +702,7 @@ export function AdminOrders() {
                   <textarea
                     rows={3}
                     placeholder="Type logistics references, customer specifications, or event notes..."
-                    defaultValue={notes[selectedOrder.id] || ""}
+                    defaultValue={selectedOrderData?.notes || ""}
                     onBlur={(e) => handleSaveNote(selectedOrder.id, e.target.value)}
                     className="w-full bg-white rounded-lg border border-slate-200 p-3 text-[12px] text-slate-700 outline-none focus:border-black resize-none font-sans"
                   />
@@ -734,10 +719,9 @@ export function AdminOrders() {
                     Direct Status Override
                   </label>
                   <select
-                    value={selectedOrder.status}
+                    value={selectedOrderData?.status || selectedOrder.status}
                     onChange={(e) => {
                       updateOrderStatus(selectedOrder.id, e.target.value);
-                      setSelectedOrder({ ...selectedOrder, status: e.target.value });
                       toast.success(`Updated order status to ${e.target.value}`);
                     }}
                     className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11.5px] font-bold text-slate-800 cursor-pointer outline-none shadow-xs"

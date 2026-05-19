@@ -62,7 +62,23 @@ export function EventShowcases() {
   const [bookingDate, setBookingDate] = useState("");
   const [aiSuggestions, setAiSuggestions] = useState([]);
 
+  const fetchShowcases = async () => {
+    setLoading(true);
+    try {
+      const res = await showcaseService.getAll();
+      if (res.success) {
+        setShowcases(res.data || []);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load event design packages.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchShowcases();
   }, []);
 
@@ -82,21 +98,6 @@ export function EventShowcases() {
     else document.body.classList.remove("filters-open");
     return () => document.body.classList.remove("filters-open");
   }, [isFilterOpen]);
-
-  const fetchShowcases = async () => {
-    setLoading(true);
-    try {
-      const res = await showcaseService.getAll();
-      if (res.success) {
-        setShowcases(res.data || []);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load event design packages.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Filter & Sort Logic
   const filteredAndSortedShowcases = useMemo(() => {
@@ -401,7 +402,7 @@ export function EventShowcases() {
       </section>
 
       {/* Floating / Sticky Navigation Bar */}
-      <nav className={`z-50 transition-all duration-500 ${isSticky ? "fixed top-[46px] md:top-[62px] left-0 w-full glass py-2 shadow-xl" : "relative -mt-8 md:-mt-12 mb-10 md:mb-12"}`}>
+      <nav className={`z-50 transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full glass py-2 shadow-xl" : "relative -mt-8 md:-mt-12 mb-10 md:mb-12"}`}>
         <div className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 ${isSticky ? "" : "transition-all duration-500"}`}>
           
           {/* Search Bar & Mobile Filter Toggle */}
@@ -411,12 +412,12 @@ export function EventShowcases() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search event design packages..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none"
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
               />
             </div>
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 cursor-pointer"
+              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 cursor-pointer outline-none focus:outline-none focus-visible:outline-none"
             >
               <span className="material-symbols-outlined text-[20px]">tune</span>
             </button>

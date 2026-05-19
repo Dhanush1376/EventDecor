@@ -16,12 +16,14 @@ export function AdminSettings() {
     maintenanceMode,
     toggleMaintenanceMode,
     idleTimeoutMinutes,
-    setIdleTimeoutMinutes,
+    changeIdleTimeout,
     auditLogs,
     clearAuditLogs,
     products,
     websiteContent,
     logAdminAction,
+    autoPublish,
+    toggleAutoPublish,
   } = useAdmin();
 
   // Reset Lockout Controls Local State
@@ -50,7 +52,7 @@ export function AdminSettings() {
   // Dynamic Business & Portal Settings State
   const [settings, setSettings] = useState({
     businessName: "Siri Arts & Crafts",
-    tagline: "& HERITAGE CRAFTS",
+    tagline: "",
     businessEmail: "Sirisha.atmakuri@gmail.com",
     phoneNumber: "+91 98660 06648",
     gstNumber: "GSTIN123456789",
@@ -185,7 +187,10 @@ export function AdminSettings() {
   };
 
   useEffect(() => {
-    syncSettingsData();
+    const timer = setTimeout(() => {
+      syncSettingsData();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleProfileSave = async (e) => {
@@ -851,7 +856,7 @@ export function AdminSettings() {
                     </div>
                     <button
                       onClick={toggleSafetyLock}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer ${safetyLock ? "bg-slate-900" : "bg-slate-200"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${safetyLock ? "bg-slate-900" : "bg-slate-200"}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${safetyLock ? "translate-x-5" : ""}`} />
                     </button>
@@ -864,9 +869,22 @@ export function AdminSettings() {
                     </div>
                     <button
                       onClick={toggleMaintenanceMode}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer ${maintenanceMode ? "bg-slate-900" : "bg-slate-200"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${maintenanceMode ? "bg-slate-900" : "bg-slate-200"}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${maintenanceMode ? "translate-x-5" : ""}`} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl">
+                    <div>
+                      <h4 className="text-[12.5px] font-bold text-slate-800">Auto-Publish CMS Changes</h4>
+                      <p className="text-[10px] text-slate-400">Instantly saves and publishes layout changes to the live database without manual staging.</p>
+                    </div>
+                    <button
+                      onClick={toggleAutoPublish}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${autoPublish ? "bg-slate-900" : "bg-slate-200"}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${autoPublish ? "translate-x-5" : ""}`} />
                     </button>
                   </div>
 
@@ -879,10 +897,7 @@ export function AdminSettings() {
                       value={idleTimeoutMinutes}
                       onChange={(e) => {
                         const val = parseInt(e.target.value);
-                        setIdleTimeoutMinutes(val);
-                        localStorage.setItem("siri_admin_idle_timeout", val);
-                        logAdminAction("TIMEOUT_UPDATE", `Idle inactivity threshold updated to ${val} minutes`);
-                        toast.success(`Inactivity limit set to ${val} minutes`);
+                        changeIdleTimeout(val);
                       }}
                       className="bg-[#F8F9FB] border border-slate-200 rounded-xl px-3 py-2 text-[12px] font-semibold text-slate-800 outline-none focus:border-black cursor-pointer"
                     >

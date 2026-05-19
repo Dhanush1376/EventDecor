@@ -24,6 +24,7 @@ export const initialWebsiteContent = {
     ctaPrimary: { text: "Browse Events & Setups", link: "/events" },
     ctaSecondary: { text: "Design Custom Showcase", link: "/custom-orders" },
     backgroundImage: IMAGES.luxuryRoyalWedding,
+    mobileBackgroundImage: "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779181764/event_decor_ecommerce/assets/event_decor_mobile%20hero%20background.png",
     badgeText: "Artisan Excellence Since 2015",
     isVisible: true,
     status: "published", // published | draft | modified
@@ -131,6 +132,7 @@ export const initialWebsiteContent = {
     ctaText: "Our Story",
     ctaLink: "/about",
     image: IMAGES.templeStyleMandap,
+    establishedYear: "Est. in 2003",
     isVisible: true,
     status: "published",
     stats: [
@@ -216,7 +218,7 @@ export const initialWebsiteContent = {
       },
     ],
     stats: [
-      { label: "Tagline", value: "& HERITAGE CRAFTS", type: "text" },
+      { label: "Tagline", value: "", type: "text" },
       { label: "Showcases Delivered", value: "2,500+" },
       { label: "Master Artisans", value: "15+" },
       { label: "Happy Families", value: "5,000+" },
@@ -299,8 +301,9 @@ export const initialWebsiteContent = {
   // NAVIGATION & FOOTER
   // ═══════════════════════════════════════════════════════
   navigation: {
-    logo: { text: "SIRI ARTS & CRAFTS", tagline: "& HERITAGE CRAFTS" },
+    logo: { text: "SIRI ARTS & CRAFTS", tagline: "" },
     mainLinks: [
+      { label: "Our Story", href: "/about", isVisible: true },
       { label: "Shop", href: "/collections", isVisible: true },
       { label: "Events", href: "/events", isVisible: true },
       { label: "Gallery", href: "/gallery", isVisible: true },
@@ -323,8 +326,8 @@ export const initialWebsiteContent = {
     phone: "+91 98660 06648",
     email: "Sirisha.atmakuri@gmail.com",
     socialLinks: {
-      instagram: "https://instagram.com",
-      pinterest: "https://pinterest.com",
+      instagram: "https://instagram.com/siriarts",
+      pinterest: "https://pinterest.com/siriarts",
     },
     copyright: "© {year} Siri Arts & Crafts.",
     status: "published",

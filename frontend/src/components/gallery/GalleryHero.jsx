@@ -2,11 +2,22 @@ import React from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { handleImageError } from "../../utils/imageUtils";
 
+const PARTICLES_DATA = Array.from({ length: 20 }, (_, i) => ({
+  id: i,
+  initialX: ((i * 7) % 100) + "%",
+  initialY: ((i * 13) % 100) + "%",
+  initialOpacity: 0.2 + ((i * 3) % 5) * 0.1,
+  animateY: -50 - ((i * 17) % 100) + "%",
+  duration: 10 + ((i * 11) % 10),
+}));
+
 export function GalleryHero() {
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 500], [0, 200]);
   const y2 = useTransform(scrollY, [0, 500], [0, -150]);
   const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+
+  const particles = PARTICLES_DATA;
 
   return (
     <section className="relative h-[80vh] md:h-[95vh] flex items-center overflow-hidden bg-[#1a1817]">
@@ -23,20 +34,20 @@ export function GalleryHero() {
 
       {/* Floating Gold Particles Effect */}
       <div className="absolute inset-0 pointer-events-none z-10">
-        {[...Array(20)].map((_, i) => (
+        {particles.map((p) => (
           <motion.div
-            key={i}
+            key={p.id}
             initial={{
-              x: Math.random() * 100 + "%",
-              y: Math.random() * 100 + "%",
-              opacity: Math.random() * 0.5 + 0.2,
+              x: p.initialX,
+              y: p.initialY,
+              opacity: p.initialOpacity,
             }}
             animate={{
-              y: [null, Math.random() * -100 - 50 + "%"],
+              y: [null, p.animateY],
               opacity: [null, 0],
             }}
             transition={{
-              duration: Math.random() * 10 + 10,
+              duration: p.duration,
               repeat: Infinity,
               ease: "linear",
             }}

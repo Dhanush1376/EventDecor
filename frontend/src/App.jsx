@@ -95,15 +95,12 @@ const AdminLoader = () => (
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
-    const lastShown = localStorage.getItem("siri_last_splash_timestamp");
-    if (!lastShown) return true;
-    const oneDay = 24 * 60 * 60 * 1000;
-    return Date.now() - parseInt(lastShown) > oneDay;
+    return !window.__siri_splash_shown;
   });
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-    localStorage.setItem("siri_last_splash_timestamp", Date.now().toString());
+    window.__siri_splash_shown = true;
   };
 
   return (

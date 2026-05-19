@@ -11,10 +11,6 @@ export function AdminReviews() {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    fetchReviews();
-  }, []);
-
   const fetchReviews = async () => {
     setLoading(true);
     try {
@@ -30,6 +26,13 @@ export function AdminReviews() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchReviews();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleModerate = async (reviewId, action) => {
     const toastId = toast.loading(action === 'approve' ? "Disbursing review rewards..." : "Rejecting review...");

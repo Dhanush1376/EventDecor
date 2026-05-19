@@ -56,7 +56,7 @@ export function ShowcaseCard({
         <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-95"
+            className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 min-h-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-95"
             aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <motion.span
@@ -124,7 +124,7 @@ export function ShowcaseCard({
               e.stopPropagation();
               onOpenShowcase?.();
             }}
-            className="w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all cursor-pointer"
+            className="w-7 h-7 sm:w-9 sm:h-9 min-h-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all cursor-pointer"
             aria-label="Reserve Crate"
           >
             <span className="material-symbols-outlined text-[14px] sm:text-[18px]">add_shopping_cart</span>

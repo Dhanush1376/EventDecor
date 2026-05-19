@@ -12,8 +12,8 @@ export function LazySection({ children, placeholderHeight = '250px', fallback })
   useEffect(() => {
     // Proactive exit check if IntersectionObserver is unsupported (older browsers fallback)
     if (!('IntersectionObserver' in window)) {
-      setInView(true);
-      return;
+      const timer = setTimeout(() => setInView(true), 0);
+      return () => clearTimeout(timer);
     }
 
     const observer = new IntersectionObserver(

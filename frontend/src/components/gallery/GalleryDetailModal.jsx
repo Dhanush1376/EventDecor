@@ -76,9 +76,9 @@ const allProducts = [
 ];
 
 export function GalleryDetailModal({ isOpen, onClose, item }) {
-  if (!item) return null;
-
   const { toggleItem, isWishlisted } = useWishlist();
+
+  if (!item) return null;
 
   const linkedProducts =
     item.linkedProducts
