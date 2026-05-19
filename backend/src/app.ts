@@ -87,8 +87,14 @@ app.use((req, res, next) => {
 
 // 2. CORS Configuration
 const allowedOrigins = (process.env.FRONTEND_URLS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'])
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+  .map((origin) => origin.trim().replace(/\/$/, ''))
+  .filter(Boolean)
+  .flatMap((origin) => {
+    if (!origin.startsWith('http://') && !origin.startsWith('https://')) {
+      return [`https://${origin}`, `http://${origin}`];
+    }
+    return [origin];
+  });
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
