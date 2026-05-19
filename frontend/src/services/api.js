@@ -8,7 +8,7 @@ const getApiUrl = () => {
     const hostname = window.location.hostname;
     // If running in production (e.g. Vercel), fallback to the live Render backend URL
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return 'https://siri-arts-backend.onrender.com/api';
+      return 'https://siri-arts-n-crafts.onrender.com/api';
     }
   }
   return 'http://localhost:5000/api';
