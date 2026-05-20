@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { galleryService, productService } from "../../services/domainServices";
 import { ImageUpload } from "../components/ImageUpload";
+import { VideoUpload } from "../components/VideoUpload";
 import { handleImageError } from "../../utils/imageUtils";
 import toast from "react-hot-toast";
 import { useAdmin } from "../context/AdminContext";
@@ -22,6 +23,7 @@ export function AdminGallery() {
     event: "",
     style: "",
     image: "",
+    video: "",
     tags: "",
     description: "",
     story: "",
@@ -66,6 +68,7 @@ export function AdminGallery() {
       event: "",
       style: "",
       image: "",
+      video: "",
       tags: "",
       description: "",
       story: "",
@@ -83,6 +86,7 @@ export function AdminGallery() {
       event: item.event || "",
       style: item.style || "",
       image: item.image || "",
+      video: item.video || "",
       type: item.type || "inspiration",
       tags: Array.isArray(item.tags) ? item.tags.join(", ") : (item.tags || ""),
       description: item.description || "",
@@ -262,6 +266,24 @@ export function AdminGallery() {
                     onChange={(val) => {
                       setNewItem({...newItem, image: val});
                       toast.success("Photo uploaded! Click '✨ AI Autofill' to populate details.");
+                    }}
+                    folder="gallery"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <label className="text-[10px] font-extrabold text-[#000000] uppercase tracking-widest block font-sans">
+                      Video Asset Curation (Optional)
+                    </label>
+                    {newItem.video && (
+                      <span className="bg-amber-100 text-amber-800 text-[8.5px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-2xs">✓ Video Active</span>
+                    )}
+                  </div>
+                  <VideoUpload
+                    value={newItem.video}
+                    onChange={(val) => {
+                      setNewItem({...newItem, video: val});
                     }}
                     folder="gallery"
                   />
@@ -548,7 +570,7 @@ export function AdminGallery() {
             className="group bg-white rounded-[1.75rem] overflow-hidden border border-neutral-200/60 hover:border-[#000000]/30 shadow-[0_4px_15px_rgba(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.025)] transition-all duration-300 flex flex-col relative"
           >
             {/* Classification Type Ribbon Badge */}
-            <div className="absolute top-4 left-4 z-10">
+            <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
               <span className={`text-[8.5px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm block ${
                 item.type === "real-event" 
                   ? "bg-[#000000] text-white" 
@@ -556,6 +578,12 @@ export function AdminGallery() {
               }`}>
                 {item.type === "real-event" ? "Real Event" : "Inspiration"}
               </span>
+              {item.video && (
+                <span className="bg-amber-600 text-white text-[8.5px] font-extrabold px-2 py-1 rounded-full uppercase tracking-widest shadow-sm flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[10px]">play_circle</span>
+                  Video
+                </span>
+              )}
             </div>
 
             {/* Image Canvas with Premium Zoom Transition */}
