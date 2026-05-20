@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import toast from "react-hot-toast";
 
+import { safeLocalStorage } from "../utils/storage";
+
 const NetworkContext = createContext(null);
 
 export const useNetwork = () => {
@@ -19,13 +21,8 @@ export function NetworkProvider({ children }) {
   
   // Initialize queue from localStorage
   const [pendingQueue, setPendingQueue] = useState(() => {
-    try {
-      const stored = localStorage.getItem("siri_offline_sync_queue");
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      console.error("Failed to parse offline queue", e);
-      return [];
-    }
+    const stored = safeLocalStorage.getItem("siri_offline_sync_queue");
+    return stored ? JSON.parse(stored) : [];
   });
 
   const syncQueueRef = useRef(pendingQueue);
@@ -174,7 +171,7 @@ export function NetworkProvider({ children }) {
 
     setPendingQueue((prev) => {
       const updated = [...prev, newQueueItem];
-      localStorage.setItem("siri_offline_sync_queue", JSON.stringify(updated));
+      safeLocalStorage.setItem("siri_offline_sync_queue", JSON.stringify(updated));
       return updated;
     });
 
@@ -190,7 +187,7 @@ export function NetworkProvider({ children }) {
   const dequeueRequest = useCallback((id) => {
     setPendingQueue((prev) => {
       const updated = prev.filter((item) => item.id !== id);
-      localStorage.setItem("siri_offline_sync_queue", JSON.stringify(updated));
+      safeLocalStorage.setItem("siri_offline_sync_queue", JSON.stringify(updated));
       return updated;
     });
   }, []);

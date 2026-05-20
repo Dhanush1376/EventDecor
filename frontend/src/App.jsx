@@ -13,6 +13,7 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { NetworkProvider } from "./context/NetworkContext";
 import { NoInternetOverlay } from "./components/ui/NoInternetOverlay";
+import { safeSessionStorage } from "./utils/storage";
 
 // Lazy load heavy auth modal to remove it from initial load bundle
 const AuthModal = lazy(() => import("./components/auth/AuthModal").then((m) => ({ default: m.AuthModal })));
@@ -97,20 +98,12 @@ const AdminLoader = () => (
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
-    try {
-      return !sessionStorage.getItem("siri_splash_shown");
-    } catch (e) {
-      return true; // Fallback in case storage is blocked
-    }
+    return !safeSessionStorage.getItem("siri_splash_shown");
   });
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-    try {
-      sessionStorage.setItem("siri_splash_shown", "true");
-    } catch (e) {
-      // Ignore storage errors in private browsing
-    }
+    safeSessionStorage.setItem("siri_splash_shown", "true");
   };
 
   return (

@@ -25,17 +25,17 @@ const api = axios.create({
   },
 });
 
-let accessToken = typeof window !== 'undefined' ? localStorage.getItem('siri_access_token') : null;
+import { safeLocalStorage } from '../utils/storage';
+
+let accessToken = safeLocalStorage.getItem('siri_access_token');
 let refreshPromise = null;
 
 export const setAccessToken = (token) => {
   accessToken = token || null;
-  if (typeof window !== 'undefined') {
-    if (token) {
-      localStorage.setItem('siri_access_token', token);
-    } else {
-      localStorage.removeItem('siri_access_token');
-    }
+  if (token) {
+    safeLocalStorage.setItem('siri_access_token', token);
+  } else {
+    safeLocalStorage.removeItem('siri_access_token');
   }
 };
 
@@ -169,7 +169,7 @@ api.interceptors.response.use(
         if (!refreshPromise) {
           // RESOLVED: Send stored refreshToken in body (feature/core-architecture)
           // so non-cookie auth flows work correctly alongside httpOnly cookie setups.
-          const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('siri_refresh_token') : null;
+          const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
           console.log('[API] Initiating refresh token request...');
           refreshPromise = api.post('/auth/refresh', { refreshToken: storedRefreshToken }).finally(() => {
             refreshPromise = null;
@@ -183,8 +183,8 @@ api.interceptors.response.use(
         if (token) {
           setAccessToken(token);
         }
-        if (nextRefreshToken && typeof window !== 'undefined') {
-          localStorage.setItem('siri_refresh_token', nextRefreshToken);
+        if (nextRefreshToken) {
+          safeLocalStorage.setItem('siri_refresh_token', nextRefreshToken);
         }
 
         console.log('[API] Token refresh successful. Retrying original request.');
@@ -193,20 +193,16 @@ api.interceptors.response.use(
       } catch (refreshErr) {
         // RESOLVED: Clean up both tokens on failure (feature/core-architecture)
         console.error('[API] Token refresh failed. Triggering logout.');
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('siri_access_token');
-          localStorage.removeItem('siri_refresh_token');
-        }
+        safeLocalStorage.removeItem('siri_access_token');
+        safeLocalStorage.removeItem('siri_refresh_token');
         setAccessToken(null);
         window.dispatchEvent(new Event('auth-unauthorized'));
       }
     } else if (error.response?.status === 401 && isAuthRefresh) {
       // RESOLVED: Clean up both tokens when refresh endpoint itself returns 401 (feature/core-architecture)
       console.error('[API] Refresh endpoint returned 401. Session expired.');
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('siri_access_token');
-        localStorage.removeItem('siri_refresh_token');
-      }
+      safeLocalStorage.removeItem('siri_access_token');
+      safeLocalStorage.removeItem('siri_refresh_token');
       setAccessToken(null);
       window.dispatchEvent(new Event('auth-unauthorized'));
     }

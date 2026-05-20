@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { notificationService } from "../../services/domainServices";
 import toast from "react-hot-toast";
 
+import { safeLocalStorage } from "../../utils/storage";
+
 export function ConsentPopup() {
   const [isVisible, setIsVisible] = useState(false);
   const [view, setView] = useState("banner"); // 'banner' | 'details'
@@ -17,7 +19,7 @@ export function ConsentPopup() {
 
   useEffect(() => {
     // Check if user has already made a preference selection
-    const consentLogged = localStorage.getItem("siri_arts_consent_logged");
+    const consentLogged = safeLocalStorage.getItem("siri_arts_consent_logged");
     if (!consentLogged) {
       // Small delay before showing banner for ultra-smooth presentation
       const timer = setTimeout(() => setIsVisible(true), 2500);
@@ -35,7 +37,7 @@ export function ConsentPopup() {
 
   const handleSaveConsent = async (finalPrefs, actionType) => {
     try {
-      const consentToken = localStorage.getItem("siri_arts_consent_token") || "";
+      const consentToken = safeLocalStorage.getItem("siri_arts_consent_token") || "";
       
       const payload = {
         consentToken,
@@ -55,8 +57,8 @@ export function ConsentPopup() {
         };
         
         // Persist token & selections locally
-        localStorage.setItem("siri_arts_consent_token", response.data.consentToken);
-        localStorage.setItem("siri_arts_consent_logged", JSON.stringify(savedPrefs));
+        safeLocalStorage.setItem("siri_arts_consent_token", response.data.consentToken);
+        safeLocalStorage.setItem("siri_arts_consent_logged", JSON.stringify(savedPrefs));
         setPreferences(savedPrefs);
         
         if (actionType === "accept") {
@@ -76,7 +78,7 @@ export function ConsentPopup() {
     } catch (err) {
       console.error("Failed to persist GDPR consent selection:", err);
       // Fallback local-only save on offline or network failure
-      localStorage.setItem("siri_arts_consent_logged", JSON.stringify(finalPrefs));
+      safeLocalStorage.setItem("siri_arts_consent_logged", JSON.stringify(finalPrefs));
     } finally {
       setIsVisible(false);
     }

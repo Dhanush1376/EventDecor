@@ -12,10 +12,12 @@
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || '';
 const META_PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || '';
 
+import { safeLocalStorage } from './storage';
+
 // ─── Consent Check ───
 function hasAnalyticsConsent() {
   try {
-    const consent = localStorage.getItem('siri_cookie_consent');
+    const consent = safeLocalStorage.getItem('siri_cookie_consent');
     if (!consent) return false;
     const parsed = JSON.parse(consent);
     return parsed.analytics === true;

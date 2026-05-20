@@ -3,6 +3,8 @@ import { authService } from '../services/domainServices';
 import { setAccessToken } from '../services/api';
 import toast from 'react-hot-toast';
 
+import { safeLocalStorage } from '../utils/storage';
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -15,12 +17,10 @@ export function AuthProvider({ children }) {
   const [intendedAction, setIntendedAction] = useState(null);
 
   const logout = useCallback(async (silent = false) => {
-    const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('siri_refresh_token') : null;
+    const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
     setAccessToken(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('siri_access_token');
-      localStorage.removeItem('siri_refresh_token');
-    }
+    safeLocalStorage.removeItem('siri_access_token');
+    safeLocalStorage.removeItem('siri_refresh_token');
     if (!silent) {
       authService.logout(storedRefreshToken).catch(() => {});
     }
@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const checkAuth = useCallback(async () => {
-    const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('siri_refresh_token') : null;
+    const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
 
     if (!storedRefreshToken) {
       setUser(null);
@@ -54,8 +54,8 @@ export function AuthProvider({ children }) {
       if (token) setAccessToken(token);
 
       const newRefreshToken = refreshed?.data?.refreshToken;
-      if (newRefreshToken && typeof window !== 'undefined') {
-        localStorage.setItem('siri_refresh_token', newRefreshToken);
+      if (newRefreshToken) {
+        safeLocalStorage.setItem('siri_refresh_token', newRefreshToken);
       }
 
       const response = await authService.getProfile();
@@ -80,8 +80,8 @@ export function AuthProvider({ children }) {
         const token = response.data.accessToken || response.data.token;
         setAccessToken(token);
         const refreshToken = response.data.refreshToken;
-        if (refreshToken && typeof window !== 'undefined') {
-          localStorage.setItem('siri_refresh_token', refreshToken);
+        if (refreshToken) {
+          safeLocalStorage.setItem('siri_refresh_token', refreshToken);
         }
         setUser(response.data.user);
         setIsAuthenticated(true);
@@ -140,10 +140,8 @@ export function AuthProvider({ children }) {
   // Triggers after successful OTP verification to restore queued action and finalize login
   const loginSuccess = async (userData, token, refreshToken) => {
     setAccessToken(token);
-    if (typeof window !== 'undefined') {
-      if (token) localStorage.setItem('siri_access_token', token);
-      if (refreshToken) localStorage.setItem('siri_refresh_token', refreshToken);
-    }
+    if (token) safeLocalStorage.setItem('siri_access_token', token);
+    if (refreshToken) safeLocalStorage.setItem('siri_refresh_token', refreshToken);
     setUser(userData);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
