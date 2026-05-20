@@ -25,11 +25,18 @@ const api = axios.create({
   },
 });
 
-let accessToken = null;
+let accessToken = typeof window !== 'undefined' ? localStorage.getItem('siri_access_token') : null;
 let refreshPromise = null;
 
 export const setAccessToken = (token) => {
   accessToken = token || null;
+  if (typeof window !== 'undefined') {
+    if (token) {
+      localStorage.setItem('siri_access_token', token);
+    } else {
+      localStorage.removeItem('siri_access_token');
+    }
+  }
 };
 
 // Helper to identify queueable mutating requests
@@ -159,21 +166,37 @@ api.interceptors.response.use(
 
       try {
         if (!refreshPromise) {
-          refreshPromise = api.post('/auth/refresh').finally(() => {
+          const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('siri_refresh_token') : null;
+          refreshPromise = api.post('/auth/refresh', { refreshToken: storedRefreshToken }).finally(() => {
             refreshPromise = null;
           });
         }
         const refreshResponse = await refreshPromise;
         const token = refreshResponse.data?.data?.accessToken || refreshResponse.data?.data?.token;
-        setAccessToken(token);
+        const nextRefreshToken = refreshResponse.data?.data?.refreshToken;
+
+        if (token) {
+          setAccessToken(token);
+        }
+        if (nextRefreshToken && typeof window !== 'undefined') {
+          localStorage.setItem('siri_refresh_token', nextRefreshToken);
+        }
 
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('siri_access_token');
+          localStorage.removeItem('siri_refresh_token');
+        }
         setAccessToken(null);
         window.dispatchEvent(new Event('auth-unauthorized'));
       }
     } else if (error.response?.status === 401 && isAuthRefresh) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('siri_access_token');
+        localStorage.removeItem('siri_refresh_token');
+      }
       setAccessToken(null);
       window.dispatchEvent(new Event('auth-unauthorized'));
     }
