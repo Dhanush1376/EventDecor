@@ -82,24 +82,18 @@ api.interceptors.request.use(
     }
 
     // ─── OFFLINE INTEGRATION ───
-    const isOffline = window.__isOffline || !navigator.onLine;
+    const isOffline = window.__networkState === 'offline';
     const isBypass = config._bypassOfflineQueue === true;
 
     if (isOffline && !isBypass) {
       const method = config.method ? config.method.toLowerCase() : 'get';
       
-      // 1. GET requests: Fail instantly to prevent browser spam/hanging timeouts
-      if (method === 'get') {
-        const error = new axios.AxiosError(
-          "No internet connection. Fetch aborted.",
-          "ERR_OFFLINE",
-          config
-        );
-        return Promise.reject(error);
-      }
+      // We no longer aggressively block GET requests here.
+      // We let the browser's fetch attempt it, as network conditions might have recovered
+      // without navigator.onLine updating yet.
 
-      // 2. Mutating requests: Check if queueable
-      if (isQueueable(config.url, config.method)) {
+      // Mutating requests: Check if queueable
+      if (method !== 'get' && isQueueable(config.url, config.method)) {
         if (typeof window.__queueRequest === 'function') {
           const queueItem = window.__queueRequest({
             url: config.url,
@@ -120,13 +114,15 @@ api.interceptors.request.use(
         }
       }
 
-      // 3. Non-queueable mutations (e.g. login, payment checkout)
-      const error = new axios.AxiosError(
-        "No internet connection. Action unavailable offline.",
-        "ERR_OFFLINE",
-        config
-      );
-      return Promise.reject(error);
+      // Non-queueable mutations (e.g. login, payment checkout) while explicitly offline
+      if (method !== 'get') {
+        const error = new axios.AxiosError(
+          "Action unavailable while offline.",
+          "ERR_OFFLINE",
+          config
+        );
+        return Promise.reject(error);
+      }
     }
 
     return config;
@@ -167,8 +163,6 @@ api.interceptors.response.use(
 
       try {
         if (!refreshPromise) {
-          // RESOLVED: Send stored refreshToken in body (feature/core-architecture)
-          // so non-cookie auth flows work correctly alongside httpOnly cookie setups.
           const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
           console.log('[API] Initiating refresh token request...');
           refreshPromise = api.post('/auth/refresh', { refreshToken: storedRefreshToken }).finally(() => {
@@ -177,7 +171,6 @@ api.interceptors.response.use(
         }
         const refreshResponse = await refreshPromise;
         const token = refreshResponse.data?.data?.accessToken || refreshResponse.data?.data?.token;
-        // RESOLVED: Also rotate and persist the new refreshToken (feature/core-architecture)
         const nextRefreshToken = refreshResponse.data?.data?.refreshToken;
 
         if (token) {
@@ -191,15 +184,19 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch (refreshErr) {
-        // RESOLVED: Clean up both tokens on failure (feature/core-architecture)
-        console.error('[API] Token refresh failed. Triggering logout.');
-        safeLocalStorage.removeItem('siri_access_token');
-        safeLocalStorage.removeItem('siri_refresh_token');
-        setAccessToken(null);
-        window.dispatchEvent(new Event('auth-unauthorized'));
+        // Only trigger logout if it's a true 4xx/5xx rejection from the server
+        if (refreshErr.response) {
+          console.error('[API] Token refresh rejected by server. Triggering logout.');
+          safeLocalStorage.removeItem('siri_access_token');
+          safeLocalStorage.removeItem('siri_refresh_token');
+          setAccessToken(null);
+          window.dispatchEvent(new Event('auth-unauthorized'));
+        } else {
+          console.error('[API] Token refresh failed due to network error. Preserving session.');
+          // Don't wipe session on timeout/network drop!
+        }
       }
     } else if (error.response?.status === 401 && isAuthRefresh) {
-      // RESOLVED: Clean up both tokens when refresh endpoint itself returns 401 (feature/core-architecture)
       console.error('[API] Refresh endpoint returned 401. Session expired.');
       safeLocalStorage.removeItem('siri_access_token');
       safeLocalStorage.removeItem('siri_refresh_token');

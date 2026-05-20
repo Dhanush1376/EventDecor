@@ -27,144 +27,47 @@ const typeColors = {
   stock: "bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100/50",
   review: "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100/50",
   payment: "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100/50",
+  custom_request: "bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100/50",
+  inquiry: "bg-sky-50 text-sky-600 border-sky-100 hover:bg-sky-100/50",
 };
 
 export function AdminNotifications() {
-  const { products, orders, eventBookings, reviews } = useAdmin();
+  const { 
+    notifications, 
+    unreadNotifications: unreadCount, 
+    markNotificationRead, 
+    markAllNotificationsRead 
+  } = useAdmin();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
-  
-  // In-memory read tracking (React state)
-  const [readIds, setReadIds] = useState([]);
-  const [referenceTime] = useState(() => Date.now());
-
-  const saveReadIds = (ids) => {
-    setReadIds(ids);
-  };
-
-  // Compile real-time alerts from collections dynamically
-  const compiledNotifications = useMemo(() => {
-    const list = [];
-
-    // 1. Low Stock Alerts (Stock <= 5)
-    products.forEach(p => {
-      if (p.stock <= 5) {
-        list.push({
-          id: `stock-${p.id}`,
-          type: "stock",
-          title: "Low Stock Alert",
-          message: `${p.name} has only ${p.stock} items remaining in inventory.`,
-          actionLabel: "Restock Item",
-          actionPath: "/admin/inventory",
-          time: "Action Required",
-          rawDate: new Date(referenceTime - 3600000) // 1 hr ago
-        });
-      }
-    });
-
-    // 2. Pending Orders
-    orders.forEach(o => {
-      if (o.status === "Pending") {
-        list.push({
-          id: `order-${o.id}`,
-          type: "order",
-          title: "New Customer Order",
-          message: `Order #${o.id.substring(0, 8).toUpperCase()} placed by ${o.customer} for a total of ₹${o.total.toLocaleString("en-IN")}.`,
-          actionLabel: "Process Order",
-          actionPath: `/admin/orders/${o.id}`,
-          time: o.date || "Just now",
-          rawDate: o.rawOrder?.createdAt ? new Date(o.rawOrder.createdAt) : new Date(referenceTime - 7200000)
-        });
-      }
-    });
-
-    // 3. Paid Settlements
-    orders.forEach(o => {
-      if (o.payment === "Paid") {
-        list.push({
-          id: `payment-${o.id}`,
-          type: "payment",
-          title: "Payment Captured",
-          message: `Payment of ₹${o.total.toLocaleString("en-IN")} settled securely for Order #${o.id.substring(0, 8).toUpperCase()}.`,
-          actionLabel: "Review Receipt",
-          actionPath: "/admin/payments",
-          time: o.date || "Just now",
-          rawDate: o.rawOrder?.updatedAt ? new Date(o.rawOrder.updatedAt) : new Date(referenceTime - 14400000)
-        });
-      }
-    });
-
-    // 4. Pending Booking Consultations
-    eventBookings.forEach(b => {
-      if (b.status === "Pending") {
-        list.push({
-          id: `booking-${b.id}`,
-          type: "booking",
-          title: "Pending Booking Consultation",
-          message: `Artisan setup for ${b.eventType} requested on ${b.date} at ${b.venue}.`,
-          actionLabel: "Confirm Booking",
-          actionPath: `/admin/events/${b.id}`,
-          time: "Pending Review",
-          rawDate: b.rawEvent?.createdAt ? new Date(b.rawEvent.createdAt) : new Date(referenceTime - 86400000)
-        });
-      }
-    });
-
-    // 5. Unapproved Reviews
-    reviews.forEach(r => {
-      if (r.status === "pending") {
-        list.push({
-          id: `review-${r._id || r.id}`,
-          type: "review",
-          title: "Moderation Pending",
-          message: `Customer left a ${r.rating}-Star review: "${r.comment || "No comment provided"}"`,
-          actionLabel: "Moderate Review",
-          actionPath: "/admin/reviews",
-          time: "Needs Review",
-          rawDate: r.createdAt ? new Date(r.createdAt) : new Date(referenceTime - 172800000)
-        });
-      }
-    });
-
-    // Sort by date descending
-    return list.map(item => ({
-      ...item,
-      read: readIds.includes(item.id)
-    })).sort((a, b) => b.rawDate - a.rawDate);
-  }, [products, orders, eventBookings, reviews, readIds, referenceTime]);
-
-  const unreadCount = useMemo(() => {
-    return compiledNotifications.filter(n => !n.read).length;
-  }, [compiledNotifications]);
 
   const handleMarkRead = (id) => {
-    if (!readIds.includes(id)) {
-      saveReadIds([...readIds, id]);
-      toast.success("Notification marked as read", { id: "notif-read" });
-    }
+    markNotificationRead(id);
   };
 
   const handleMarkAllRead = () => {
-    const allIds = compiledNotifications.map(n => n.id);
-    saveReadIds(allIds);
-    toast.success("All notifications caught up!");
+    markAllNotificationsRead();
   };
 
   const handleClearRead = () => {
-    saveReadIds([]);
     toast.success("Read logs cleared for fresh intake sync!");
   };
 
   // Filter list by tab
   const filteredNotifications = useMemo(() => {
+    let list = notifications;
     if (activeTab === "unread") {
-      return compiledNotifications.filter(n => !n.read);
+      return list.filter(n => !n.read);
     }
     if (activeTab === "all") {
-      return compiledNotifications;
+      return list;
     }
-    return compiledNotifications.filter(n => n.type === activeTab);
-  }, [compiledNotifications, activeTab]);
+    // Map booking tab to include custom requests and inquiries
+    if (activeTab === "booking") {
+      return list.filter(n => n.type === "booking" || n.type === "custom_request" || n.type === "inquiry");
+    }
+    return list.filter(n => n.type === activeTab);
+  }, [notifications, activeTab]);
 
   return (
     <motion.div
@@ -197,28 +100,19 @@ export function AdminNotifications() {
               Mark All Read
             </button>
           )}
-          {readIds.length > 0 && (
-            <button
-              onClick={handleClearRead}
-              className="px-4 py-2 border border-outline-variant/40 rounded-xl text-[12px] font-bold uppercase tracking-wider text-outline hover:bg-surface hover:text-on-surface cursor-pointer transition-all flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
-              Clear Read Logs
-            </button>
-          )}
         </div>
       </motion.div>
 
       {/* Tabs Filter Bar */}
       <motion.div variants={fadeUp} className="flex border-b border-surface-container-highest/60 overflow-x-auto gap-4 scrollbar-none">
         {[
-          { id: "all", label: "All Alerts", count: compiledNotifications.length },
+          { id: "all", label: "All Alerts", count: notifications.length },
           { id: "unread", label: "Unread", count: unreadCount },
-          { id: "stock", label: "Low Stock Alerts", count: compiledNotifications.filter(n => n.type === "stock").length },
-          { id: "order", label: "Orders", count: compiledNotifications.filter(n => n.type === "order").length },
-          { id: "booking", label: "Consults", count: compiledNotifications.filter(n => n.type === "booking").length },
-          { id: "payment", label: "Payments", count: compiledNotifications.filter(n => n.type === "payment").length },
-          { id: "review", label: "Reviews", count: compiledNotifications.filter(n => n.type === "review").length },
+          { id: "order", label: "Orders", count: notifications.filter(n => n.type === "order").length },
+          { id: "booking", label: "Consults", count: notifications.filter(n => n.type === "booking" || n.type === "custom_request" || n.type === "inquiry").length },
+          { id: "payment", label: "Payments", count: notifications.filter(n => n.type === "payment").length },
+          { id: "review", label: "Reviews", count: notifications.filter(n => n.type === "review" || n.type === "user").length },
+          { id: "system", label: "System", count: notifications.filter(n => n.type === "system").length },
         ].map(tab => (
           <button
             key={tab.id}
@@ -260,12 +154,25 @@ export function AdminNotifications() {
             </motion.div>
           ) : (
             filteredNotifications.map(n => {
-              const formattedDate = n.rawDate.toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                hour: "numeric",
-                minute: "2-digit"
-              });
+              const formattedDate = n.rawNotification?.createdAt 
+                ? new Date(n.rawNotification.createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "numeric",
+                    minute: "2-digit"
+                  })
+                : "Just now";
+
+              const actionLabel = n.type === 'order' ? 'Process Order' : 
+                                  n.type === 'payment' ? 'Review Payment' : 
+                                  (n.type === 'booking' || n.type === 'custom_request') ? 'Confirm Request' : 
+                                  n.type === 'inquiry' ? 'View Inquiry' : 
+                                  n.type === 'user' ? 'View Users' : 'Open Details';
+
+              // Map backend type cleanly to available icons
+              const uiType = n.type === 'custom_request' ? 'booking' : 
+                             n.type === 'inquiry' ? 'booking' : 
+                             n.type === 'user' ? 'review' : n.type;
 
               return (
                 <motion.div
@@ -281,8 +188,8 @@ export function AdminNotifications() {
                 >
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     {/* Circle Icon Indicator */}
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border transition-transform hover:scale-105 duration-300 ${typeColors[n.type]}`}>
-                      <span className="material-symbols-outlined text-[20px]">{typeIcons[n.type]}</span>
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border transition-transform hover:scale-105 duration-300 ${typeColors[uiType] || typeColors.order}`}>
+                      <span className="material-symbols-outlined text-[20px]">{typeIcons[uiType] || typeIcons.order}</span>
                     </div>
 
                     {/* Details Column */}
@@ -307,13 +214,15 @@ export function AdminNotifications() {
 
                   {/* Actions Column */}
                   <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    <button
-                      onClick={() => navigate(n.actionPath)}
-                      className="px-3.5 py-1.5 bg-surface hover:bg-surface-container-high border border-outline-variant/65 rounded-xl text-[11px] font-bold uppercase tracking-wider text-on-surface cursor-pointer transition-all flex items-center gap-1 shadow-sm"
-                    >
-                      {n.actionLabel}
-                      <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-                    </button>
+                    {n.actionLink && (
+                      <button
+                        onClick={() => navigate(n.actionLink)}
+                        className="px-3.5 py-1.5 bg-surface hover:bg-surface-container-high border border-outline-variant/65 rounded-xl text-[11px] font-bold uppercase tracking-wider text-on-surface cursor-pointer transition-all flex items-center gap-1 shadow-sm"
+                      >
+                        {actionLabel}
+                        <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+                      </button>
+                    )}
 
                     {!n.read && (
                       <button

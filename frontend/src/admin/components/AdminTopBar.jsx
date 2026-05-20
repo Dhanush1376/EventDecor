@@ -222,6 +222,9 @@ export function AdminTopBar() {
                             onClick={() => {
                               markNotificationRead(n.id);
                               setShowNotifs(false);
+                              if (n.actionLink) {
+                                navigate(n.actionLink);
+                              }
                             }}
                             className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors cursor-pointer text-left ${!n.read ? "bg-slate-100/20" : ""}`}
                           >

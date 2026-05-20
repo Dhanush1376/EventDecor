@@ -16,10 +16,24 @@ import {
   userService,
   galleryService,
   eventService,
+  notificationService,
 } from "../../services/domainServices";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { refreshWebsiteContent } from "../../hooks/useWebsiteContent";
+import { io as socketIO } from "socket.io-client";
+import { safeLocalStorage } from "../../utils/storage";
+
+const mapDbNotificationToFrontend = (n) => ({
+  id: n._id || n.id,
+  title: n.title,
+  message: n.message,
+  type: n.type === 'custom_request' ? 'booking' : (n.type === 'inquiry' ? 'booking' : (n.type === 'user' ? 'review' : n.type)),
+  read: n.isRead,
+  time: n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date(n.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Just now',
+  actionLink: n.actionLink,
+  rawNotification: n
+});
 
 const AdminContext = createContext(null);
 
@@ -444,7 +458,7 @@ export function AdminProvider({ children }) {
     const fetchAdminData = async () => {
       setDataLoading(true);
       try {
-        const [productsRes, ordersRes, customersRes, reviewsRes, statsRes, eventsRes, auditLogsRes] =
+        const [productsRes, ordersRes, customersRes, reviewsRes, statsRes, eventsRes, auditLogsRes, alertsRes] =
           await Promise.allSettled([
             productService.getAll({ limit: 100 }),
             orderService.getAll({ limit: 50 }),
@@ -453,6 +467,7 @@ export function AdminProvider({ children }) {
             analyticsService.getDashboardStats(),
             eventService.getAll({ limit: 50 }),
             analyticsService.getAuditLogs(),
+            notificationService.getAdminAlerts(),
           ]);
 
         if (productsRes.status === "fulfilled" && productsRes.value?.success) {
@@ -490,6 +505,10 @@ export function AdminProvider({ children }) {
             timestamp: log.createdAt || new Date().toISOString(),
             status: log.statusCode < 400 ? 'Success' : 'Failure'
           })));
+        }
+        if (alertsRes.status === "fulfilled" && alertsRes.value?.success) {
+          const list = alertsRes.value.data || [];
+          setNotifications(list.map(mapDbNotificationToFrontend));
         }
       } catch (err) {
         console.error("Failed to load admin data:", err);
@@ -725,14 +744,93 @@ export function AdminProvider({ children }) {
     }
   }, [activeRole, safetyLock, logAdminAction]);
 
-  const markNotificationRead = useCallback((notifId) => {
+  const markNotificationRead = useCallback(async (notifId) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === notifId ? { ...n, read: true } : n)),
     );
+    try {
+      await notificationService.markAdminAlertRead(notifId);
+    } catch (err) {
+      console.warn("Failed to mark notification read on backend:", err);
+    }
   }, []);
 
-  const markAllNotificationsRead = useCallback(() => {
+  const markAllNotificationsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      await notificationService.markAdminAlertAllRead();
+      toast.success("All notifications marked as read");
+    } catch (err) {
+      console.warn("Failed to mark all notifications read on backend:", err);
+    }
+  }, []);
+
+  // Real-time WebSocket alerts
+  useEffect(() => {
+    const token = safeLocalStorage.getItem('siri_access_token');
+    if (!token) return;
+
+    // Construct backend WS URL from API URL
+    const rawApiUrl = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? 'https://siri-arts-n-crafts.onrender.com/api' : 'http://localhost:5000/api');
+    const socketServerUrl = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
+
+    console.log('[WEBSOCKET] Initiating admin alert subscription at:', socketServerUrl);
+    const socket = socketIO(socketServerUrl, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 15,
+      reconnectionDelay: 5000,
+    });
+
+    socket.on('connect', () => {
+      console.log('[WEBSOCKET] Successfully established socket connection');
+    });
+
+    socket.on('new_notification', (data) => {
+      console.log('[WEBSOCKET] Received real-time admin alert:', data);
+      
+      const mapped = mapDbNotificationToFrontend(data);
+      
+      // Luxury real-time alert toast
+      toast((t) => (
+        <div 
+          onClick={() => {
+            toast.dismiss(t.id);
+            if (mapped.actionLink) {
+              window.location.href = mapped.actionLink;
+            }
+          }} 
+          className="cursor-pointer flex flex-col font-sans max-w-[280px]"
+        >
+          <strong className="text-[12px] text-slate-900 font-bold flex items-center gap-1.5 leading-tight">
+            <span className="material-symbols-outlined text-[15px] text-slate-800 shrink-0">notifications_active</span>
+            {mapped.title}
+          </strong>
+          <span className="text-[11px] text-slate-500 mt-1 leading-normal font-normal">{mapped.message}</span>
+        </div>
+      ), {
+        duration: 8000,
+        position: 'top-right',
+        style: {
+          border: '1px solid #efeeeb',
+          padding: '12px 16px',
+          color: '#2d2b29',
+          background: '#ffffff',
+          borderRadius: '12px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.08)'
+        }
+      });
+
+      setNotifications((prev) => [mapped, ...prev]);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.warn('[WEBSOCKET] Handshake failed or role unauthorized:', err.message);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   // Publish to BACKEND API

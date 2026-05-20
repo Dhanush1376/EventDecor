@@ -475,6 +475,23 @@ export const notificationService = {
     });
     return response.data;
   },
+  // ADMIN Real-time Alert Operations
+  getAdminAlerts: async () => {
+    const response = await api.get('/notifications/admin/alerts');
+    return response.data;
+  },
+  markAdminAlertAllRead: async () => {
+    const response = await api.patch('/notifications/admin/alerts/mark-all-read');
+    return response.data;
+  },
+  markAdminAlertRead: async (id) => {
+    const response = await api.patch(`/notifications/admin/alerts/${id}/read`);
+    return response.data;
+  },
+  deleteAdminAlert: async (id) => {
+    const response = await api.delete(`/notifications/admin/alerts/${id}`);
+    return response.data;
+  },
 };
 
 export const customOrderService = {
