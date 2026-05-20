@@ -11,6 +11,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { MainLayout, MinimalLayout } from "./layouts/MainLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
+import { NetworkProvider } from "./context/NetworkContext";
+import { NoInternetOverlay } from "./components/ui/NoInternetOverlay";
 
 // Lazy load heavy auth modal to remove it from initial load bundle
 const AuthModal = lazy(() => import("./components/auth/AuthModal").then((m) => ({ default: m.AuthModal })));
@@ -95,97 +97,108 @@ const AdminLoader = () => (
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
-    return !window.__siri_splash_shown;
+    try {
+      return !sessionStorage.getItem("siri_splash_shown");
+    } catch (e) {
+      return true; // Fallback in case storage is blocked
+    }
   });
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-    window.__siri_splash_shown = true;
+    try {
+      sessionStorage.setItem("siri_splash_shown", "true");
+    } catch (e) {
+      // Ignore storage errors in private browsing
+    }
   };
 
   return (
-    <HelmetProvider>
-      <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff', fontSize: '14px' } }} />
-            <AnimatePresence>
-              {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
-            </AnimatePresence>
-            <Suspense fallback={null}>
-              <AuthModal />
-            </Suspense>
-            <Router>
-              <ErrorBoundary>
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route element={<MainLayout />}>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/collections" element={<ProductListing />} />
-                      <Route path="/product/:id" element={<ProductDetails />} />
-                      <Route path="/cart" element={<Cart />} />
-                      <Route path="/order-success" element={<OrderSuccess />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/custom-orders" element={<CustomOrders />} />
-                      <Route path="/gallery" element={<Gallery />} />
-                      <Route path="/gallery/:id" element={<GalleryDetail />} />
-                      <Route path="/contact" element={<Contact />} />
-                      <Route path="/wishlist" element={<Wishlist />} />
-                      <Route path="/collection/:id" element={<CollectionDetail />} />
-                      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                      <Route path="/track/:orderId" element={<OrderTrackingPublic />} />
-                      <Route path="/events" element={<EventShowcases />} />
-                      <Route path="/events/collections" element={<EventCollections />} />
-                      <Route path="/events/:id" element={<EventDetail />} />
-                      <Route path="/events/book" element={<EventBookingWizard />} />
-                      <Route path="/events/dashboard" element={<ProtectedRoute><EventCustomerDashboard /></ProtectedRoute>} />
-                      <Route path="/showcases" element={<EventShowcases />} />
-                       <Route path="/shipping" element={<Shipping />} />
-                      <Route path="/returns" element={<Returns />} />
-                      <Route path="/privacy" element={<Privacy />} />
-                      <Route path="/terms" element={<Terms />} />
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/accept-invite" element={<AcceptInvite />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Route>
-                    <Route element={<MinimalLayout />}>
-                      <Route path="/checkout" element={<Checkout />} />
-                    </Route>
-                    <Route path="/admin" element={<ProtectedRoute adminOnly><Suspense fallback={<AdminLoader />}><AdminLayout /></Suspense></ProtectedRoute>}>
-                      <Route index element={<AdminDashboard />} />
-                      <Route path="homepage" element={<AdminContent />} />
-                      <Route path="products" element={<AdminProducts />} />
-                      <Route path="products/add" element={<AdminAddProduct />} />
-                      <Route path="products/edit/:id" element={<AdminAddProduct />} />
-                      <Route path="orders" element={<AdminOrders />} />
-                      <Route path="orders/:orderId" element={<AdminOrderDetail />} />
-                      <Route path="custom-orders" element={<AdminInquiries />} />
-                      <Route path="customers" element={<AdminCustomers />} />
-                      <Route path="customers/:customerId" element={<AdminCustomerProfile />} />
-                      <Route path="gallery" element={<AdminGallery />} />
-                      <Route path="events" element={<AdminEvents />} />
-                      <Route path="events/:bookingId" element={<AdminBookingDetail />} />
-                      <Route path="reviews" element={<AdminReviews />} />
-                      <Route path="analytics" element={<AdminAnalytics />} />
-                      <Route path="inventory" element={<AdminInventory />} />
-                      <Route path="coupons" element={<AdminCoupons />} />
-                      <Route path="coupons/create" element={<AdminCreateCoupon />} />
-                      <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
-                      <Route path="payments" element={<AdminPayments />} />
-                      <Route path="notifications" element={<AdminNotifications />} />
-                      <Route path="campaigns" element={<AdminCampaigns />} />
-                      <Route path="content" element={<AdminContent />} />
-                      <Route path="team" element={<AdminTeam />} />
-                      <Route path="settings" element={<AdminSettings />} />
-                    </Route>
-                  </Routes>
-                </Suspense>
-              </ErrorBoundary>
-            </Router>
-          </WishlistProvider>
-        </CartProvider>
-      </AuthProvider>
-    </HelmetProvider>
+    <NetworkProvider>
+      <HelmetProvider>
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff', fontSize: '14px' } }} />
+              <NoInternetOverlay />
+              <AnimatePresence>
+                {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+              </AnimatePresence>
+              <Suspense fallback={null}>
+                <AuthModal />
+              </Suspense>
+              <Router>
+                <ErrorBoundary>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route element={<MainLayout />}>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/collections" element={<ProductListing />} />
+                        <Route path="/product/:id" element={<ProductDetails />} />
+                        <Route path="/cart" element={<Cart />} />
+                        <Route path="/order-success" element={<OrderSuccess />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/custom-orders" element={<CustomOrders />} />
+                        <Route path="/gallery" element={<Gallery />} />
+                        <Route path="/gallery/:id" element={<GalleryDetail />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/wishlist" element={<Wishlist />} />
+                        <Route path="/collection/:id" element={<CollectionDetail />} />
+                        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                        <Route path="/track/:orderId" element={<OrderTrackingPublic />} />
+                        <Route path="/events" element={<EventShowcases />} />
+                        <Route path="/events/collections" element={<EventCollections />} />
+                        <Route path="/events/:id" element={<EventDetail />} />
+                        <Route path="/events/book" element={<EventBookingWizard />} />
+                        <Route path="/events/dashboard" element={<ProtectedRoute><EventCustomerDashboard /></ProtectedRoute>} />
+                        <Route path="/showcases" element={<EventShowcases />} />
+                         <Route path="/shipping" element={<Shipping />} />
+                        <Route path="/returns" element={<Returns />} />
+                        <Route path="/privacy" element={<Privacy />} />
+                        <Route path="/terms" element={<Terms />} />
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/accept-invite" element={<AcceptInvite />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Route>
+                      <Route element={<MinimalLayout />}>
+                        <Route path="/checkout" element={<Checkout />} />
+                      </Route>
+                      <Route path="/admin" element={<ProtectedRoute adminOnly><Suspense fallback={<AdminLoader />}><AdminLayout /></Suspense></ProtectedRoute>}>
+                        <Route index element={<AdminDashboard />} />
+                        <Route path="homepage" element={<AdminContent />} />
+                        <Route path="products" element={<AdminProducts />} />
+                        <Route path="products/add" element={<AdminAddProduct />} />
+                        <Route path="products/edit/:id" element={<AdminAddProduct />} />
+                        <Route path="orders" element={<AdminOrders />} />
+                        <Route path="orders/:orderId" element={<AdminOrderDetail />} />
+                        <Route path="custom-orders" element={<AdminInquiries />} />
+                        <Route path="customers" element={<AdminCustomers />} />
+                        <Route path="customers/:customerId" element={<AdminCustomerProfile />} />
+                        <Route path="gallery" element={<AdminGallery />} />
+                        <Route path="events" element={<AdminEvents />} />
+                        <Route path="events/:bookingId" element={<AdminBookingDetail />} />
+                        <Route path="reviews" element={<AdminReviews />} />
+                        <Route path="analytics" element={<AdminAnalytics />} />
+                        <Route path="inventory" element={<AdminInventory />} />
+                        <Route path="coupons" element={<AdminCoupons />} />
+                        <Route path="coupons/create" element={<AdminCreateCoupon />} />
+                        <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
+                        <Route path="payments" element={<AdminPayments />} />
+                        <Route path="notifications" element={<AdminNotifications />} />
+                        <Route path="campaigns" element={<AdminCampaigns />} />
+                        <Route path="content" element={<AdminContent />} />
+                        <Route path="team" element={<AdminTeam />} />
+                        <Route path="settings" element={<AdminSettings />} />
+                      </Route>
+                    </Routes>
+                  </Suspense>
+                </ErrorBoundary>
+              </Router>
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
+      </HelmetProvider>
+    </NetworkProvider>
   );
 }
 
