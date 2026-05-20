@@ -20,20 +20,22 @@ const getCookie = (req: Request, name: string) => {
 
 const setRefreshCookie = (res: Response, refreshToken: string) => {
   const maxAge = AuthService.getRefreshTokenTtlMs();
+  const isProd = process.env.NODE_ENV === 'production';
   res.cookie(refreshCookieName, refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     path: '/api/auth',
     maxAge,
   });
 };
 
 const clearRefreshCookie = (res: Response) => {
+  const isProd = process.env.NODE_ENV === 'production';
   res.clearCookie(refreshCookieName, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     path: '/api/auth',
   });
 };
@@ -86,7 +88,7 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 });
  
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = String(req.body.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
+  const refreshToken = String(req.body?.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
   const result = await AuthService.refreshSession(refreshToken);
   setRefreshCookie(res, result.refreshToken);
   res.status(200).json(new ApiResponse(true, 'Session refreshed', {
@@ -98,7 +100,7 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
 });
  
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = String(req.body.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
+  const refreshToken = String(req.body?.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
   
   logger.info('[AUTH] Revoking user session on manual logout request');
   if (refreshToken) {

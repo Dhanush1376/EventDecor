@@ -39,3 +39,9 @@ services:
         fromConfig: true
       - key: SMTP_PASS
         fromConfig: true
+      - key: BREVO_API_KEY
+        fromConfig: true
+      - key: SMTP_FROM_EMAIL
+        fromConfig: true
+      - key: SMTP_FROM_NAME
+        value: "Siri Arts Studio"

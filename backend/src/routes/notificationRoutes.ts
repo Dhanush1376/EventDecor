@@ -41,80 +41,63 @@ router.get('/unsubscribe', unsubscribeRecipient);
 router.get('/track/open/:token', trackEmailOpen);
 router.get('/track/click/:token', trackEmailClick);
 
-// Diagnostic SMTP Test Endpoint (Secured behind admin privileges)
+// Diagnostic Email Test Endpoint (Secured behind admin privileges)
+// Tests the active email provider (Brevo HTTP API or SMTP fallback)
 router.get('/test-smtp-live', requireAuth, requireAdmin, async (req, res) => {
-  const nodemailer = require('nodemailer');
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
+  const brevoKey = process.env.BREVO_API_KEY;
+  const fromEmail = process.env.SMTP_FROM_EMAIL || smtpUser || 'no-reply@siriartsandcrafts.com';
 
-  if (!smtpUser || !smtpPass) {
+  const envStatus = {
+    BREVO_API_KEY: brevoKey ? '✓ Present' : '✗ Missing',
+    SMTP_USER: smtpUser ? '✓ Present' : '✗ Missing',
+    SMTP_PASS: smtpPass ? '✓ Present' : '✗ Missing',
+    SMTP_HOST: smtpHost,
+    SMTP_PORT: smtpPort,
+    SMTP_FROM_EMAIL: fromEmail,
+    activeProvider: brevoKey ? 'Brevo HTTP API (HTTPS port 443)' : (smtpUser && smtpPass) ? 'SMTP' : 'None configured!',
+    renderNote: 'Render free tier blocks SMTP ports 25/465/587. Only Brevo HTTP API works on free tier.'
+  };
+
+  if (!brevoKey && (!smtpUser || !smtpPass)) {
     return res.status(400).json({
       success: false,
-      message: 'SMTP credentials missing from environment variables on this server!',
-      details: {
-        SMTP_USER: smtpUser ? 'Present' : 'Missing',
-        SMTP_PASS: smtpPass ? 'Present' : 'Missing',
-        SMTP_HOST: smtpHost,
-        SMTP_PORT: smtpPort
-      }
+      message: 'No email provider configured! Set BREVO_API_KEY (recommended) or SMTP_USER + SMTP_PASS.',
+      envStatus
     });
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-      tls: {
-        // High compatibility fallback for container hosts rejecting self-signed/untrusted certs
-        rejectUnauthorized: false,
-      },
-      connectionTimeout: 10000,
-    });
-
-    // 1. Verify connection
-    await transporter.verify();
-
-    // 2. Try sending a quick test email
-    const recipient = req.query.to as string || smtpUser;
+    const recipient = req.query.to as string || smtpUser || fromEmail;
     const { getDiagnosticTestEmailTemplate } = require('../utils/emailTemplates');
-    
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || `"Siri Arts Diagnostic" <${smtpUser}>`,
+    const { sendEmail } = require('../services/emailProvider');
+
+    const info = await sendEmail({
       to: recipient,
-      subject: '✦ Siri Arts Studio SMTP Diagnostic Test ✦',
-      html: getDiagnosticTestEmailTemplate(smtpHost, smtpUser, new Date().toLocaleString())
+      subject: '✦ Siri Arts Studio Email Diagnostic Test ✦',
+      html: getDiagnosticTestEmailTemplate(
+        brevoKey ? 'Brevo HTTP API' : smtpHost,
+        fromEmail,
+        new Date().toLocaleString()
+      )
     });
 
     return res.status(200).json({
       success: true,
-      message: 'SMTP connection verified and test email sent successfully!',
+      message: `Test email sent successfully via ${envStatus.activeProvider}!`,
       messageId: info.messageId,
-      envelope: info.envelope,
-      details: {
-        host: smtpHost,
-        port: smtpPort,
-        user: smtpUser,
-        recipient: recipient
-      }
+      envStatus,
+      details: { recipient }
     });
   } catch (err: any) {
     return res.status(500).json({
       success: false,
-      message: 'SMTP Verification Failed!',
+      message: 'Email delivery failed!',
       errorMessage: err.message,
-      errorStack: err.stack,
-      details: {
-        host: smtpHost,
-        port: smtpPort,
-        user: smtpUser,
-      }
+      envStatus
     });
   }
 });

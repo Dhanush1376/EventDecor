@@ -7,50 +7,7 @@ import NotificationLog from '../models/NotificationLog';
 import ConsentPreference from '../models/ConsentPreference';
 import User from '../models/User';
 import logger from '../config/logger';
-
-// Reusable Transporter Setup
-let transporter: any;
-const getTransporter = async () => {
-  if (transporter) return transporter;
-
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (smtpUser && smtpPass) {
-    transporter = nodemailer.createTransport({
-      pool: true, // Use SMTP Connection Pooling for fast transactional sends
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: Number(process.env.SMTP_PORT) === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-      tls: {
-        // High compatibility fallback for container hosts rejecting self-signed/untrusted certs
-        rejectUnauthorized: false,
-      },
-      maxConnections: 5,
-      maxMessages: 100,
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-    });
-  } else {
-    const testAccount = await nodemailer.createTestAccount();
-    transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-    logger.warn('SMTP credentials not found. Notification service using Ethereal Mail fallback.');
-  }
-  return transporter;
-};
+import { sendEmail as smartSendEmail } from './emailProvider';
 
 // Rewrite links in HTML to include click tracking
 const rewriteLinks = (html: string, token: string): string => {
@@ -208,25 +165,17 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     bodyHtml = appendTrackingPixel(bodyHtml, trackingToken);
     bodyHtml = rewriteLinks(bodyHtml, trackingToken);
 
-    // 5. Send using Transporter
-    const mailer = await getTransporter();
-    const smtpUser = process.env.SMTP_USER;
-    const smtpFrom = process.env.SMTP_FROM || `"Siri Arts Studio" <${smtpUser || 'no-reply@siriartsandcrafts.com'}>`;
-    const mailOptions = {
-      from: smtpFrom,
-      to: email,
-      subject: finalSubject,
-      html: bodyHtml,
-    };
-
-    const maxRetries = 2;
-    let success = false;
+    // 5. Send via smart email provider (Brevo HTTP API → SMTP fallback → Ethereal dev)
     let info: any;
+    const maxRetries = 2;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        info = await mailer.sendMail(mailOptions);
-        success = true;
+        info = await smartSendEmail({
+          to: email,
+          subject: finalSubject,
+          html: bodyHtml,
+        });
         break;
       } catch (err: any) {
         if (attempt === maxRetries) {
@@ -235,6 +184,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
           await log.save();
           throw err;
         }
+        logger.warn(`[EMAIL RETRY] Attempt ${attempt} failed for ${email}: ${err.message}. Retrying in ${attempt}s...`);
         await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
       }
     }
@@ -243,11 +193,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     log.status = 'delivered';
     await log.save();
 
-    if (!smtpUser && info) {
-      logger.info(`Test Email delivered! View: ${nodemailer.getTestMessageUrl(info)}`);
-    } else {
-      logger.info(`Email sent to ${email} (Type: ${type}, Action: ${action})`);
-    }
+    logger.info(`[EMAIL DELIVERED] ${email} (Type: ${type}, Action: ${action}, MessageId: ${info?.messageId || 'n/a'})`);
 
     return log;
   } catch (err: any) {
