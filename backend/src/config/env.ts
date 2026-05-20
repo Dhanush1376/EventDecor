@@ -34,6 +34,26 @@ const validateEnv = () => {
     }
     if (!process.env.RAZORPAY_KEY_ID) missingVars.push('RAZORPAY_KEY_ID');
     if (!process.env.RAZORPAY_KEY_SECRET) missingVars.push('RAZORPAY_KEY_SECRET');
+
+    // Email provider check — warn clearly but don't crash (allows diagnostic debugging)
+    const hasBrevo = !!process.env.BREVO_API_KEY;
+    const hasSmtp = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+    if (!hasBrevo && !hasSmtp) {
+      logger.error(
+        '[EMAIL CONFIG WARNING] Neither BREVO_API_KEY nor SMTP_USER/SMTP_PASS is configured! ' +
+        'OTP and transactional emails will FAIL in production. ' +
+        'RECOMMENDED: Set BREVO_API_KEY (free at https://www.brevo.com) — works on all hosting including Render free tier. ' +
+        'NOTE: Render free tier BLOCKS SMTP ports (25, 465, 587). Only Brevo HTTP API will work.'
+      );
+    } else if (!hasBrevo && hasSmtp) {
+      logger.warn(
+        '[EMAIL CONFIG] Only SMTP credentials are configured. ' +
+        'WARNING: Render free tier blocks SMTP ports — emails will fail on Render free tier. ' +
+        'To fix, add BREVO_API_KEY (free at https://www.brevo.com) which uses HTTPS port 443.'
+      );
+    } else if (hasBrevo) {
+      logger.info('[EMAIL CONFIG] Brevo HTTP API configured ✓ (works on all hosting providers)');
+    }
   }
 
   if (missingVars.length > 0) {
