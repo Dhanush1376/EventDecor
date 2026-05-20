@@ -28,19 +28,77 @@ export interface EmailPayload {
   html: string;
   from?: string;
   fromName?: string;
+  attachments?: {
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }[];
 }
 
 /**
- * Send email via Brevo HTTP API (works on ALL hosting tiers - no SMTP ports needed)
- * Brevo free tier: 300 emails/day, unlimited contacts
+ * Send email via Resend
+ */
+export const sendViaResend = async (payload: EmailPayload): Promise<{ messageId: string }> => {
+  const { Resend } = require('resend');
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
+  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts Studio';
+
+  const { data, error } = await resend.emails.send({
+    from: `${senderName} <${senderEmail}>`,
+    to: payload.to,
+    subject: payload.subject,
+    html: payload.html,
+    attachments: payload.attachments?.map(a => ({
+      filename: a.filename,
+      content: a.content
+    }))
+  });
+
+  if (error) {
+    throw new Error(`Resend API error: ${error.message}`);
+  }
+
+  logger.info(`[RESEND SUCCESS] Email delivered to ${payload.to}. MessageId: ${data?.id}`);
+  return { messageId: data?.id || 'resend-sent' };
+};
+
+/**
+ * Send email via SendGrid
+ */
+export const sendViaSendGrid = async (payload: EmailPayload): Promise<{ messageId: string }> => {
+  const sgMail = require('@sendgrid/mail');
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
+  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts Studio';
+
+  const msg = {
+    to: payload.to,
+    from: { email: senderEmail, name: senderName },
+    subject: payload.subject,
+    html: payload.html,
+    attachments: payload.attachments?.map(a => ({
+      filename: a.filename,
+      content: typeof a.content === 'string' ? Buffer.from(a.content).toString('base64') : a.content.toString('base64'),
+      type: a.contentType || 'application/pdf',
+      disposition: 'attachment',
+    }))
+  };
+
+  const [response] = await sgMail.send(msg);
+  const messageId = response.headers['x-message-id'] || 'sendgrid-sent';
+  logger.info(`[SENDGRID SUCCESS] Email delivered to ${payload.to}. MessageId: ${messageId}`);
+  return { messageId };
+};
+
+/**
+ * Send email via Brevo HTTP API
  */
 export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: string }> => {
   const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
-    throw new Error('BREVO_API_KEY is not configured. Please set it in your environment variables. Get a free key at https://www.brevo.com');
-  }
+  if (!apiKey) throw new Error('BREVO_API_KEY missing');
 
-  const senderEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'no-reply@siriartsandcrafts.com';
+  const senderEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
   const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts Studio';
 
   const body = {
@@ -48,23 +106,20 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
     to: [{ email: payload.to }],
     subject: payload.subject,
     htmlContent: payload.html,
+    attachment: payload.attachments?.map(a => ({
+      name: a.filename,
+      content: typeof a.content === 'string' ? Buffer.from(a.content).toString('base64') : a.content.toString('base64')
+    }))
   };
-
-  logger.info(`[BREVO] Sending email to ${payload.to} | Subject: ${payload.subject}`);
 
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'api-key': apiKey,
-    },
+    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'api-key': apiKey },
     body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    logger.error(`[BREVO ERROR] HTTP ${response.status}: ${errorText}`);
     throw new Error(`Brevo API error (${response.status}): ${errorText}`);
   }
 
@@ -75,7 +130,6 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
 
 /**
  * Send email via Nodemailer SMTP (works locally, may be blocked on some cloud providers)
- * Kept as a secondary/dev option
  */
 export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: string }> => {
   const nodemailer = require('nodemailer');
@@ -84,31 +138,21 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
 
-  if (!smtpUser || !smtpPass) {
-    throw new Error('SMTP_USER or SMTP_PASS not configured');
-  }
-
   const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
+    host: smtpHost, port: smtpPort, secure: smtpPort === 465,
     auth: { user: smtpUser, pass: smtpPass },
     tls: { rejectUnauthorized: false },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
   });
 
-  const senderEmail = process.env.SMTP_FROM_EMAIL || smtpUser;
-  const senderName = process.env.SMTP_FROM_NAME || 'Siri Arts Studio';
-
-  logger.info(`[SMTP] Sending email to ${payload.to} via ${smtpHost}:${smtpPort}`);
+  const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || smtpUser;
+  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts Studio';
 
   const info = await transporter.sendMail({
     from: `"${senderName}" <${senderEmail}>`,
     to: payload.to,
     subject: payload.subject,
     html: payload.html,
+    attachments: payload.attachments
   });
 
   logger.info(`[SMTP SUCCESS] Email sent to ${payload.to}. MessageId: ${info.messageId}`);
@@ -116,42 +160,31 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
 };
 
 /**
- * Smart Email Sender: tries Brevo HTTP API first, falls back to SMTP if Brevo key not set.
- * This guarantees delivery in ALL environments.
+ * Smart Email Sender: Tries Resend -> SendGrid -> Brevo -> SMTP fallback
  */
 export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: string }> => {
-  const hasBrevo = !!process.env.BREVO_API_KEY;
-  const hasSmtp = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
-
-  // Primary: Brevo HTTP API (works on all cloud platforms including Render free tier)
-  if (hasBrevo) {
-    try {
-      return await sendViaBrevo(payload);
-    } catch (err: any) {
-      logger.error(`[EMAIL] Brevo HTTP API failed: ${err.message}. ${hasSmtp ? 'Falling back to SMTP...' : 'No SMTP fallback configured.'}`);
-      if (!hasSmtp) throw err;
-    }
+  if (process.env.RESEND_API_KEY) {
+    try { return await sendViaResend(payload); } catch(err: any) { logger.warn(`Resend failed: ${err.message}`); }
+  }
+  
+  if (process.env.SENDGRID_API_KEY) {
+    try { return await sendViaSendGrid(payload); } catch(err: any) { logger.warn(`SendGrid failed: ${err.message}`); }
+  }
+  
+  if (process.env.BREVO_API_KEY) {
+    try { return await sendViaBrevo(payload); } catch (err: any) { logger.warn(`Brevo failed: ${err.message}`); }
   }
 
-  // Fallback: SMTP (works locally, may fail on Render free tier)
-  if (hasSmtp) {
-    try {
-      return await sendViaSMTP(payload);
-    } catch (err: any) {
-      logger.error(`[EMAIL] SMTP also failed: ${err.message}`);
-      throw err;
-    }
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    try { return await sendViaSMTP(payload); } catch (err: any) { logger.warn(`SMTP failed: ${err.message}`); }
   }
 
-  // Ethereal fallback for development testing
   if (process.env.NODE_ENV !== 'production') {
     logger.warn('[EMAIL] No real email provider configured. Using Ethereal test mail...');
     const nodemailer = require('nodemailer');
     const testAccount = await nodemailer.createTestAccount();
     const transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      secure: false,
+      host: 'smtp.ethereal.email', port: 587, secure: false,
       auth: { user: testAccount.user, pass: testAccount.pass },
     });
     const info = await transporter.sendMail({
@@ -159,13 +192,11 @@ export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: str
       to: payload.to,
       subject: payload.subject,
       html: payload.html,
+      attachments: payload.attachments
     });
     logger.info(`[ETHEREAL] Test email preview URL: ${nodemailer.getTestMessageUrl(info)}`);
     return { messageId: info.messageId };
   }
 
-  throw new Error(
-    'No email provider configured! In production, set BREVO_API_KEY (recommended, free at brevo.com) or SMTP_USER + SMTP_PASS. ' +
-    'Note: Render free tier blocks SMTP ports — Brevo HTTP API is required.'
-  );
+  throw new Error('No email provider configured! Set RESEND_API_KEY, SENDGRID_API_KEY, BREVO_API_KEY, or SMTP_USER/PASS.');
 };

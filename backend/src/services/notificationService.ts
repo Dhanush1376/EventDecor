@@ -76,6 +76,11 @@ export interface EmailOptions {
   action: string;
   userId?: string;
   campaignId?: string;
+  attachments?: {
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }[];
 }
 
 /**

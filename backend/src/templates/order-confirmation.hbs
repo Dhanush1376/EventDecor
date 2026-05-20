@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #faf9f6;
+    margin: 0;
+    padding: 0;
+    color: #2d2b29;
+  }
+  .container {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  }
+  .header {
+    background-color: #1a1a1a;
+    padding: 40px 20px;
+    text-align: center;
+    color: #d4af37;
+  }
+  .header h1 {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-weight: 400;
+    letter-spacing: 2px;
+    font-size: 24px;
+    text-transform: uppercase;
+  }
+  .content {
+    padding: 40px;
+  }
+  .greeting {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+  .order-details {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 30px;
+  }
+  .order-details h3 {
+    margin-top: 0;
+    color: #d4af37;
+    font-family: 'Playfair Display', serif;
+  }
+  .product-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  .product-table th, .product-table td {
+    padding: 12px 0;
+    border-bottom: 1px solid #eeeeee;
+    text-align: left;
+  }
+  .product-table th {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #888888;
+  }
+  .product-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+  .total-row {
+    font-weight: bold;
+    font-size: 16px;
+  }
+  .footer {
+    text-align: center;
+    padding: 30px;
+    background-color: #f5f5f5;
+    font-size: 12px;
+    color: #888888;
+  }
+  .button {
+    display: inline-block;
+    background-color: #d4af37;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-top: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Siri Arts & Crafts</h1>
+    </div>
+    <div class="content">
+      <div class="greeting">
+        Hello {{customerName}},<br><br>
+        Thank you for your exquisite purchase. Your order has been successfully placed.
+      </div>
+
+      <div class="order-details">
+        <h3>Order #{{orderId}}</h3>
+        <p><strong>Date:</strong> {{formatDate orderDate}}</p>
+        <p><strong>Payment Method:</strong> {{paymentMethod}}</p>
+      </div>
+
+      <table class="product-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th style="text-align: right">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each items}}
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 15px;">
+                {{#if this.image}}
+                <img src="{{this.image}}" class="product-image" alt="{{this.name}}">
+                {{/if}}
+                <div>
+                  <strong style="display: block;">{{this.name}}</strong>
+                  {{#if this.variant}}
+                  <span style="font-size: 12px; color: #888;">{{this.variant}}</span>
+                  {{/if}}
+                </div>
+              </div>
+            </td>
+            <td>{{this.quantity}}</td>
+            <td style="text-align: right">{{formatCurrency this.price}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="text-align: right; padding-top: 20px;">Subtotal:</td>
+            <td style="text-align: right; padding-top: 20px;">{{formatCurrency subtotal}}</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="text-align: right;">Shipping:</td>
+            <td style="text-align: right;">{{formatCurrency shipping}}</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="2" style="text-align: right;">Total:</td>
+            <td style="text-align: right; color: #d4af37;">{{formatCurrency total}}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="order-details">
+        <h3>Shipping Details</h3>
+        <p>{{shippingAddress}}</p>
+      </div>
+
+      <center>
+        <a href="{{dashboardUrl}}" class="button">View Order Status</a>
+      </center>
+    </div>
+    <div class="footer">
+      &copy; {{currentYear}} Siri Arts & Crafts. All rights reserved.<br>
+      Authentic Indian Artistry & Elegance.
+    </div>
+  </div>
+</body>
+</html>

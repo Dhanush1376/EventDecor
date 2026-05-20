@@ -64,19 +64,26 @@ const startServer = async () => {
 
     // 2. Initialize Background Jobs
     initJobs();
+    
+    // Initialize BullMQ Workers
+    require('./src/workers/emailWorker');
 
-    // 3. Start Express Server
-    server = app.listen(PORT, () => {
-      logger.info(`
-        🚀 Server is running in ${process.env.NODE_ENV || 'development'} mode
-        📡 Port: ${PORT}
-        🏠 URL: http://localhost:${PORT}
-        🏥 Health Check: http://localhost:${PORT}/api/health
-      `);
+      // 3. Start Express Server
+      server = app.listen(PORT, () => {
+        logger.info(`
+          🚀 Server is running in ${process.env.NODE_ENV || 'development'} mode
+          📡 Port: ${PORT}
+          🏠 URL: http://localhost:${PORT}
+          🏥 Health Check: http://localhost:${PORT}/api/health
+        `);
 
-      // Auto-generate sitemap on boot in the background
-      generateSitemap().catch((err: any) => logger.error(`[BOOT SITEMAP] Initial generation failed: ${err.message}`));
-    });
+        // Initialize Socket.io
+        const { initSocket } = require('./src/socket');
+        initSocket(server);
+
+        // Auto-generate sitemap on boot in the background
+        generateSitemap().catch((err: any) => logger.error(`[BOOT SITEMAP] Initial generation failed: ${err.message}`));
+      });
 
     // 4. Graceful Shutdown Handling
     const shutdown = async (signal: string) => {

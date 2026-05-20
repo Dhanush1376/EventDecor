@@ -115,4 +115,19 @@ router.patch('/admin/templates/:id', requireAuth, requireAdmin, updateTemplate);
 
 router.get('/admin/analytics', requireAuth, requireAdmin, getNotificationAnalytics);
 
+// ==========================================
+// REAL-TIME ADMIN IN-APP NOTIFICATIONS
+// ==========================================
+import {
+  getAdminNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  deleteNotification,
+} from '../controllers/adminNotificationController';
+
+router.get('/admin/alerts', requireAuth, requireAdmin, getAdminNotifications);
+router.patch('/admin/alerts/mark-all-read', requireAuth, requireAdmin, markAllNotificationsRead);
+router.patch('/admin/alerts/:id/read', requireAuth, requireAdmin, markNotificationRead);
+router.delete('/admin/alerts/:id', requireAuth, requireAdmin, deleteNotification);
+
 export default router;
