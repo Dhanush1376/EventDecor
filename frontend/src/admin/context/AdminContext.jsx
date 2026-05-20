@@ -522,6 +522,9 @@ export function AdminProvider({ children }) {
             if (response.data.hero) {
               merged.hero = { ...initialWebsiteContent.hero, ...response.data.hero };
             }
+            if (response.data.heroNavigationCards) {
+              merged.heroNavigationCards = { ...initialWebsiteContent.heroNavigationCards, ...response.data.heroNavigationCards };
+            }
             // Preserve local unsaved draft sections (marked as 'modified')
             Object.keys(prev).forEach((key) => {
               if (prev[key]?.status === "modified") {

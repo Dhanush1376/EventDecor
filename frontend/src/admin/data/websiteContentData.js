@@ -31,6 +31,40 @@ export const initialWebsiteContent = {
   },
 
   // ═══════════════════════════════════════════════════════
+  // HOMEPAGE — Hero Navigation Cards (Mobile Carousel)
+  // ═══════════════════════════════════════════════════════
+  heroNavigationCards: {
+    items: [
+      {
+        id: 1,
+        title: "Wedding Essentials",
+        image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2074&auto=format&fit=crop",
+        link: "/collections",
+        icon: "storefront",
+        isVisible: true,
+      },
+      {
+        id: 2,
+        title: "Premium Events",
+        image: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop",
+        link: "/events",
+        icon: "celebration",
+        isVisible: true,
+      },
+      {
+        id: 3,
+        title: "Our Gallery",
+        image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop",
+        link: "/gallery",
+        icon: "photo_library",
+        isVisible: true,
+      },
+    ],
+    isVisible: true,
+    status: "published",
+  },
+
+  // ═══════════════════════════════════════════════════════
   // HOMEPAGE — Featured Collections Strip
   // ═══════════════════════════════════════════════════════
   featuredCollections: {
