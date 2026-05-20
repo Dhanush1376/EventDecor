@@ -163,16 +163,21 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRefresh && !isAuthLogout) {
       originalRequest._retry = true;
+      console.log('[API] 401 Unauthorized - Attempting token refresh for:', originalRequest.url);
 
       try {
         if (!refreshPromise) {
+          // RESOLVED: Send stored refreshToken in body (feature/core-architecture)
+          // so non-cookie auth flows work correctly alongside httpOnly cookie setups.
           const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('siri_refresh_token') : null;
+          console.log('[API] Initiating refresh token request...');
           refreshPromise = api.post('/auth/refresh', { refreshToken: storedRefreshToken }).finally(() => {
             refreshPromise = null;
           });
         }
         const refreshResponse = await refreshPromise;
         const token = refreshResponse.data?.data?.accessToken || refreshResponse.data?.data?.token;
+        // RESOLVED: Also rotate and persist the new refreshToken (feature/core-architecture)
         const nextRefreshToken = refreshResponse.data?.data?.refreshToken;
 
         if (token) {
@@ -182,9 +187,12 @@ api.interceptors.response.use(
           localStorage.setItem('siri_refresh_token', nextRefreshToken);
         }
 
+        console.log('[API] Token refresh successful. Retrying original request.');
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
-      } catch {
+      } catch (refreshErr) {
+        // RESOLVED: Clean up both tokens on failure (feature/core-architecture)
+        console.error('[API] Token refresh failed. Triggering logout.');
         if (typeof window !== 'undefined') {
           localStorage.removeItem('siri_access_token');
           localStorage.removeItem('siri_refresh_token');
@@ -193,6 +201,8 @@ api.interceptors.response.use(
         window.dispatchEvent(new Event('auth-unauthorized'));
       }
     } else if (error.response?.status === 401 && isAuthRefresh) {
+      // RESOLVED: Clean up both tokens when refresh endpoint itself returns 401 (feature/core-architecture)
+      console.error('[API] Refresh endpoint returned 401. Session expired.');
       if (typeof window !== 'undefined') {
         localStorage.removeItem('siri_access_token');
         localStorage.removeItem('siri_refresh_token');
@@ -266,4 +276,3 @@ api.delete = function (url, config) {
 };
 
 export default api;
-
