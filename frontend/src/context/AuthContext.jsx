@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { authService } from '../services/domainServices';
 import { setAccessToken } from '../services/api';
 import toast from 'react-hot-toast';
@@ -15,6 +15,9 @@ export function AuthProvider({ children }) {
   // Intended Action Queue & Modal States for seamless Protected Action Interception
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [intendedAction, setIntendedAction] = useState(null);
+
+  // Guard to prevent concurrent checkAuth calls
+  const checkAuthInProgress = useRef(false);
 
   const logout = useCallback(async (silent = false) => {
     const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
@@ -39,15 +42,40 @@ export function AuthProvider({ children }) {
   }, []);
 
   const checkAuth = useCallback(async () => {
+    // Prevent concurrent checkAuth calls (e.g. from storage events)
+    if (checkAuthInProgress.current) return;
+    checkAuthInProgress.current = true;
+
     const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
 
     if (!storedRefreshToken) {
       setUser(null);
       setIsAuthenticated(false);
       setLoading(false);
+      checkAuthInProgress.current = false;
       return;
     }
 
+    // If we already have an access token in memory, try to use it directly
+    // (the 401 interceptor will handle refresh if it's expired)
+    const storedAccessToken = safeLocalStorage.getItem('siri_access_token');
+    if (storedAccessToken) {
+      setAccessToken(storedAccessToken);
+      try {
+        const response = await authService.getProfile();
+        if (response.success) {
+          setUser(response.data);
+          setIsAuthenticated(true);
+          setLoading(false);
+          checkAuthInProgress.current = false;
+          return;
+        }
+      } catch {
+        // Access token is invalid/expired — fall through to refresh flow
+      }
+    }
+
+    // No valid access token — try refreshing via the refresh token
     try {
       const refreshed = await authService.refresh(storedRefreshToken);
       const token = refreshed?.data?.accessToken || refreshed?.data?.token;
@@ -70,6 +98,7 @@ export function AuthProvider({ children }) {
       logout(true);
     } finally {
       setLoading(false);
+      checkAuthInProgress.current = false;
     }
   }, [logout]);
 
@@ -104,9 +133,35 @@ export function AuthProvider({ children }) {
     };
 
     window.addEventListener('auth-unauthorized', handleUnauthorized);
+
+    // Cross-tab token synchronization:
+    // When another tab refreshes the token, update our in-memory token
+    const handleStorageChange = (e) => {
+      if (e.key === 'siri_access_token') {
+        if (e.newValue) {
+          // Another tab got a new access token — sync it
+          setAccessToken(e.newValue);
+        }
+      }
+      if (e.key === 'siri_refresh_token') {
+        if (!e.newValue && e.oldValue) {
+          // Another tab logged out — sync the logout
+          setUser(null);
+          setIsAuthenticated(false);
+          setAccessToken(null);
+        } else if (e.newValue && !e.oldValue) {
+          // Another tab logged in — sync the login
+          checkAuth();
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener('auth-unauthorized', handleUnauthorized);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [checkAuth, logout]);
 

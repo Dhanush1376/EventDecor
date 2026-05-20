@@ -43,15 +43,19 @@ export function Auth() {
   const [error, setError] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [isFocused, setIsFocused] = useState(false);
-  const { checkAuth, logout, loginSuccess } = useAuth();
+  const { loading, isAuthenticated, loginSuccess } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const otpRefs = useRef([]);
   const isSubmittingRef = useRef(false);
 
-  // Reset any cached or stale authentication states when entering the login portal to block auto-login/stale token restoration
+  // If user is already authenticated, redirect them away from /auth (DO NOT clear their session)
   useEffect(() => {
-    logout(true);
-  }, []);
+    if (!loading && isAuthenticated) {
+      const redirect = searchParams.get('redirect');
+      navigate(redirect || '/', { replace: true });
+    }
+  }, [loading, isAuthenticated, navigate, searchParams]);
 
   // Countdown effect for the timer
   useEffect(() => {

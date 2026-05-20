@@ -49,8 +49,6 @@ export interface IUser extends Document {
   };
   isVerified: boolean;
   lastLogin?: Date;
-  refreshTokenHash?: string;
-  refreshTokenExpiresAt?: Date;
   walletBalance: number;
   siriCoins: number;
   loyaltyTier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
@@ -119,8 +117,6 @@ const UserSchema: Schema = new Schema(
     },
     isVerified: { type: Boolean, default: false },
     lastLogin: { type: Date },
-    refreshTokenHash: { type: String, select: false },
-    refreshTokenExpiresAt: { type: Date, select: false },
     walletBalance: { type: Number, default: 0 },
     siriCoins: { type: Number, default: 0 },
     loyaltyTier: { type: String, enum: ['Bronze', 'Silver', 'Gold', 'Platinum'], default: 'Bronze' },
@@ -135,7 +131,6 @@ UserSchema.index({ role: 1 });
 UserSchema.index({ isVerified: 1 });
 UserSchema.index({ "recentlyViewed.product": 1 });
 UserSchema.index({ loyaltyTier: 1 });
-UserSchema.index({ refreshTokenHash: 1 }, { sparse: true });
 
 // High-Performance Production Compound Index for Paginated Staff and Admin Lists
 UserSchema.index({ role: 1, createdAt: -1 });

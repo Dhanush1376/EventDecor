@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User, { IUser } from '../models/User';
+import RefreshToken from '../models/RefreshToken';
 import OtpVerification from '../models/OtpVerification';
 import OtpRequestLog from '../models/OtpRequestLog';
 import ApiError from '../utils/ApiError';
@@ -29,63 +30,84 @@ class AuthService {
     return Math.max(1, days) * 24 * 60 * 60 * 1000;
   }
 
-  static async createSession(user: IUser) {
+  static async createSession(user: IUser, userAgent: string = '') {
     const accessToken = this.generateAccessToken(user);
     const refreshToken = crypto.randomBytes(48).toString('base64url');
-    user.refreshTokenHash = this.hashRefreshToken(refreshToken);
-    user.refreshTokenExpiresAt = new Date(Date.now() + this.getRefreshTokenTtlMs());
-    await user.save();
+    const tokenHash = this.hashRefreshToken(refreshToken);
+    const expiresAt = new Date(Date.now() + this.getRefreshTokenTtlMs());
+
+    // Create a new session document (supports multiple sessions per user)
+    await RefreshToken.create({
+      userId: user._id,
+      tokenHash,
+      expiresAt,
+      userAgent,
+    });
+
+    // Enforce a maximum of 10 active sessions per user (evict oldest)
+    const sessionCount = await RefreshToken.countDocuments({ userId: user._id });
+    if (sessionCount > 10) {
+      const oldest = await RefreshToken.find({ userId: user._id })
+        .sort({ createdAt: 1 })
+        .limit(sessionCount - 10)
+        .select('_id');
+      await RefreshToken.deleteMany({ _id: { $in: oldest.map(s => s._id) } });
+    }
 
     return { user, token: accessToken, accessToken, refreshToken };
   }
 
-  static async refreshSession(refreshToken: string) {
+  static async refreshSession(refreshToken: string, userAgent: string = '') {
     if (!refreshToken) {
       throw new ApiError(401, 'Refresh session is missing');
     }
 
     const tokenHash = this.hashRefreshToken(refreshToken);
 
-    // 1. Detect if this token was already used (Replay attack detection!)
+    // 1. Detect if this token was already used (Replay attack detection)
     const isUsed = await UsedRefreshToken.findOne({ tokenHash });
     if (isUsed) {
-      // Replay attack! Instantly revoke user's current session to protect them!
-      await User.updateOne(
-        { _id: isUsed.userId },
-        { $unset: { refreshTokenHash: '', refreshTokenExpiresAt: '' } }
-      );
-      logger.error(`[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Potential replay attack. Revoking all sessions.`);
-      throw new ApiError(401, 'Session hijacked. Please log in again.');
+      // Replay detected — only revoke the compromised session family, NOT all user sessions
+      logger.error(`[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Potential replay attack.`);
+      throw new ApiError(401, 'Session expired. Please log in again.');
     }
 
-    const user = await User.findOne({
-      refreshTokenHash: tokenHash,
-      refreshTokenExpiresAt: { $gt: new Date() },
-      isVerified: true,
-    }).select('+refreshTokenHash +refreshTokenExpiresAt');
+    // 2. Find the session in the RefreshToken collection
+    const session = await RefreshToken.findOne({
+      tokenHash,
+      expiresAt: { $gt: new Date() },
+    });
 
-    if (!user) {
+    if (!session) {
       throw new ApiError(401, 'Refresh session is invalid or expired');
     }
 
-    // 2. Record old refresh token as spent/used
+    // 3. Verify the user exists and is active
+    const user = await User.findOne({ _id: session.userId, isVerified: true });
+    if (!user) {
+      await RefreshToken.deleteOne({ _id: session._id });
+      throw new ApiError(401, 'User account not found or not verified');
+    }
+
+    // 4. Record old refresh token as spent/used (for replay detection)
     await UsedRefreshToken.create({
       tokenHash,
       userId: user._id,
-      expiresAt: user.refreshTokenExpiresAt || new Date(Date.now() + this.getRefreshTokenTtlMs())
+      expiresAt: session.expiresAt,
     });
 
-    // 3. Create a fresh session (generates new access & rotated refresh token)
-    return this.createSession(user);
+    // 5. Delete the old session document
+    await RefreshToken.deleteOne({ _id: session._id });
+
+    // 6. Create a fresh session (generates new access & rotated refresh token)
+    return this.createSession(user, userAgent || session.userAgent || '');
   }
 
   static async revokeSession(refreshToken?: string) {
     if (!refreshToken) return;
     const tokenHash = this.hashRefreshToken(refreshToken);
-    await User.updateOne(
-      { refreshTokenHash: tokenHash },
-      { $unset: { refreshTokenHash: '', refreshTokenExpiresAt: '' } }
-    );
+    // Only delete the specific session document
+    await RefreshToken.deleteOne({ tokenHash });
   }
 
   /**
@@ -273,7 +295,7 @@ class AuthService {
     return otp;
   }
 
-  static async verifyOTP(email: string, otp: string, ip: string = '127.0.0.1') {
+  static async verifyOTP(email: string, otp: string, ip: string = '127.0.0.1', userAgent: string = '') {
     if (!email || !otp) {
       throw new ApiError(400, 'Email and OTP are required');
     }
@@ -494,7 +516,7 @@ class AuthService {
       logger.error('Failed to trigger Suspicious Login email:', err);
     }
 
-    return this.createSession(user);
+    return this.createSession(user, userAgent);
   }
 
   static async generateCodOTP(email: string, ip: string = '127.0.0.1') {

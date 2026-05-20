@@ -74,7 +74,8 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   }
   
   logger.info(`[AUTH] Verifying authentication credentials for user: ${email.trim().toLowerCase()}`);
-  const result = await AuthService.verifyOTP(email, otp, req.ip);
+  const userAgent = req.headers['user-agent'] || '';
+  const result = await AuthService.verifyOTP(email, otp, req.ip, userAgent);
   
   logger.info(`[AUTH] Authentication successful. User session created. ID: ${result.user._id}`);
   
@@ -89,7 +90,8 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
  
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(req.body?.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
-  const result = await AuthService.refreshSession(refreshToken);
+  const userAgent = req.headers['user-agent'] || '';
+  const result = await AuthService.refreshSession(refreshToken, userAgent);
   setRefreshCookie(res, result.refreshToken);
   res.status(200).json(new ApiResponse(true, 'Session refreshed', {
     user: result.user,
