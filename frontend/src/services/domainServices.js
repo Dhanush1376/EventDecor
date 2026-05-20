@@ -469,6 +469,12 @@ export const notificationService = {
     const response = await api.get('/notifications/admin/analytics');
     return response.data;
   },
+  testSmtp: async (toEmail) => {
+    const response = await api.get('/notifications/test-smtp-live', {
+      params: { to: toEmail },
+    });
+    return response.data;
+  },
 };
 
 export const customOrderService = {
