@@ -37,6 +37,24 @@ self.addEventListener('fetch', (event) => {
   // API calls: network only (don't cache dynamic data)
   if (url.pathname.startsWith('/api/')) return;
 
+  // HTML / Navigation requests: Network-First (ensures online users get the latest index.html pointing to new chunk hashes)
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html') || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match('/') || caches.match('/index.html') || caches.match(request);
+        })
+    );
+    return;
+  }
+
   // Static assets: stale-while-revalidate
   event.respondWith(
     caches.match(request).then((cached) => {
