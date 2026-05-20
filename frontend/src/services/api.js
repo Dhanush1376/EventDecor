@@ -32,12 +32,96 @@ export const setAccessToken = (token) => {
   accessToken = token || null;
 };
 
-// Add a request interceptor to include auth token
+// Helper to identify queueable mutating requests
+const isQueueable = (url, method) => {
+  if (!url) return false;
+  const path = url.toLowerCase();
+  const m = method.toLowerCase();
+  
+  // Only queue mutating actions
+  if (m !== 'post' && m !== 'put' && m !== 'delete' && m !== 'patch') {
+    return false;
+  }
+
+  // Exclude auth-related requests (login, register, logout, token refresh)
+  if (path.includes('/auth/')) return false;
+
+  // Exclude payment-related requests and security lock operations
+  if (path.includes('/payment') || path.includes('/verify-payment')) return false;
+  if (path.includes('/safety-lock') || path.includes('/cms/publish')) return false;
+
+  return true;
+};
+
+// Helper to construct descriptive queue summaries
+const getRequestDescription = (config) => {
+  const url = config.url || '';
+  const method = (config.method || 'POST').toUpperCase();
+  if (url.includes('/users/cart')) return "Update Shopping Cart";
+  if (url.includes('/users/wishlist')) return "Update Wishlist";
+  if (url.includes('/inquiries')) return "Submit Custom Inquiry";
+  if (url.includes('/custom-orders')) return "Submit Custom Order Inquiry";
+  if (url.includes('/event-bookings')) return "Book Event Consultation";
+  if (url.includes('/reviews')) return "Submit Product Review";
+  return `${method} request to ${url.split('/').pop()}`;
+};
+
+// Add a request interceptor to include auth token and manage offline states
 api.interceptors.request.use(
   (config) => {
+    // ─── AUTH TOKEN INTEGRATION ───
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+
+    // ─── OFFLINE INTEGRATION ───
+    const isOffline = window.__isOffline || !navigator.onLine;
+    const isBypass = config._bypassOfflineQueue === true;
+
+    if (isOffline && !isBypass) {
+      const method = config.method ? config.method.toLowerCase() : 'get';
+      
+      // 1. GET requests: Fail instantly to prevent browser spam/hanging timeouts
+      if (method === 'get') {
+        const error = new axios.AxiosError(
+          "No internet connection. Fetch aborted.",
+          "ERR_OFFLINE",
+          config
+        );
+        return Promise.reject(error);
+      }
+
+      // 2. Mutating requests: Check if queueable
+      if (isQueueable(config.url, config.method)) {
+        if (typeof window.__queueRequest === 'function') {
+          const queueItem = window.__queueRequest({
+            url: config.url,
+            method: config.method,
+            data: config.data,
+            headers: config.headers,
+            description: getRequestDescription(config),
+          });
+          
+          const error = new axios.AxiosError(
+            `Request queued offline: ${queueItem.description}`,
+            "ERR_OFFLINE_QUEUED",
+            config
+          );
+          error.offlineQueued = true;
+          error.queueItem = queueItem;
+          return Promise.reject(error);
+        }
+      }
+
+      // 3. Non-queueable mutations (e.g. login, payment checkout)
+      const error = new axios.AxiosError(
+        "No internet connection. Action unavailable offline.",
+        "ERR_OFFLINE",
+        config
+      );
+      return Promise.reject(error);
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -56,7 +140,8 @@ api.interceptors.response.use(
     const isTransientError = !error.response || [500, 502, 503, 504].includes(error.response.status);
     const hasRetryAttemptsLeft = originalRequest && (!originalRequest._retryCount || originalRequest._retryCount < 3);
 
-    if (isGet && isTransientError && hasRetryAttemptsLeft && !originalRequest?._retry) {
+    // Skip retries entirely if we are currently offline to keep network cleaner
+    if (isGet && isTransientError && hasRetryAttemptsLeft && !originalRequest?._retry && !window.__isOffline) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
       // Exponential backoff: 2^attempt * 1000ms + randomized jitter
       const backoffDelay = Math.pow(2, originalRequest._retryCount) * 1000 + Math.random() * 100;
