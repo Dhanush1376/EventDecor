@@ -278,29 +278,29 @@ export function AdminToggle({ label, description, checked, onChange, disabled = 
       aria-label={label || "Toggle"}
       onClick={disabled ? undefined : onChange}
       disabled={disabled}
-      className={`relative shrink-0 p-0 border-none outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/50 select-none ${
+      className={`relative shrink-0 p-0 border-none outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 select-none ${
         disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
       }`}
       style={{
-        width: "40px",
-        height: "22px",
+        width: "44px",
+        height: "24px",
         minHeight: "0px",
         minWidth: "0px",
         borderRadius: "9999px",
         display: "flex",
         alignItems: "center",
         padding: "2px",
-        backgroundColor: checked ? "#000000" : "#E2E8F0",
+        backgroundColor: checked ? "#0f172a" : "#cbd5e1",
         transition: "background-color 0.2s ease"
       }}
     >
       <motion.div
-        animate={{ x: checked ? 18 : 0 }}
+        animate={{ x: checked ? 20 : 0 }}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        className="bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)]"
+        className="bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
         style={{
-          width: "18px",
-          height: "18px",
+          width: "20px",
+          height: "20px",
           borderRadius: "50%",
         }}
       />

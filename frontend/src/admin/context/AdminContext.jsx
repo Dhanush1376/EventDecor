@@ -346,18 +346,8 @@ export function AdminProvider({ children }) {
     };
   }, [idleTimeoutMinutes, showIdleWarning, logout, logAdminAction]);
 
-  // ─── Premium Dark Theme State ───
-  const [themeMode, setThemeMode] = useState("dark");
-
-  const toggleTheme = useCallback(async () => {
-    const next = themeMode === "dark" ? "light" : "dark";
-    setThemeMode(next);
-    try {
-      await cmsService.updateSection('admin_theme_mode', { themeMode: next });
-    } catch (err) {
-      console.error("Failed to update theme mode in database:", err);
-    }
-  }, [themeMode]);
+  // ─── Theme Mode (Light only — dark mode removed) ───
+  const themeMode = "light";
 
   // ─── Backend-Connected State ───
   const [products, setProducts] = useState([]);
@@ -556,12 +546,7 @@ export function AdminProvider({ children }) {
           if (val) setIdleTimeoutMinutes(parseInt(val));
         }
 
-        // Fetch backend-backed admin theme mode state
-        const themeRes = await cmsService.getSection('admin_theme_mode');
-        if (themeRes && themeRes.success && themeRes.data) {
-          const val = themeRes.data.data?.themeMode;
-          if (val) setThemeMode(val);
-        }
+
 
         // Fetch backend-backed admin auto publish state
         const autoPublishRes = await cmsService.getSection('admin_auto_publish');
@@ -1013,9 +998,8 @@ export function AdminProvider({ children }) {
         // Homepage sections
         reorderHomepageSections,
         toggleHomepageSection,
-        // Premium Dark Theme
+        // Theme (light only)
         themeMode,
-        toggleTheme,
         // SaaS Simulation & Security
         activeRole,
         changeActiveRole,

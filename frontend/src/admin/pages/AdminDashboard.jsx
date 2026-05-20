@@ -42,9 +42,7 @@ function StatCard({
   sparklinePath,
   progress,
 }) {
-  const { themeMode } = useAdmin();
-  const isDark = themeMode === "dark";
-  const displayColor = (color === "#000000" && isDark) ? "#FFFFFF" : color;
+  const displayColor = color;
 
   return (
     <motion.button
@@ -441,9 +439,9 @@ export function AdminDashboard() {
           </div>
           <button
             onClick={toggleSafetyLock}
-            className={`w-10 h-5.5 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer ${safetyLock ? "bg-slate-900" : "bg-slate-200"}`}
+            className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${safetyLock ? "bg-slate-900" : "bg-slate-300"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-4.5 h-4.5 bg-white rounded-full transition-transform duration-200 shadow-xs ${safetyLock ? "translate-x-4.5" : ""}`} />
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-sm ${safetyLock ? "translate-x-5" : ""}`} />
           </button>
         </div>
 
@@ -464,9 +462,9 @@ export function AdminDashboard() {
           </div>
           <button
             onClick={toggleMaintenanceMode}
-            className={`w-10 h-5.5 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer ${maintenanceMode ? "bg-slate-900" : "bg-slate-200"}`}
+            className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${maintenanceMode ? "bg-slate-900" : "bg-slate-300"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-4.5 h-4.5 bg-white rounded-full transition-transform duration-200 shadow-xs ${maintenanceMode ? "translate-x-4.5" : ""}`} />
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-sm ${maintenanceMode ? "translate-x-5" : ""}`} />
           </button>
         </div>
       </motion.div>

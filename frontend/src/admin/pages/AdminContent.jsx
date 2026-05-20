@@ -1590,12 +1590,12 @@ export function AdminContent() {
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-600">Auto-Publish</span>
             <button
               onClick={toggleAutoPublish}
-              className={`w-8 h-4.5 rounded-full transition-colors duration-250 relative focus:outline-none cursor-pointer min-h-0 p-0 ${
-                autoPublish ? "bg-[#0F172A]" : "bg-stone-300"
+              className={`w-11 h-6 rounded-full transition-colors duration-250 relative focus:outline-none cursor-pointer min-h-0 p-0 ${
+                autoPublish ? "bg-slate-900" : "bg-slate-300"
               }`}
             >
-              <span className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full transition-transform duration-250 shadow-sm ${
-                autoPublish ? "translate-x-3.5" : ""
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-250 shadow-sm ${
+                autoPublish ? "translate-x-5" : ""
               }`} />
             </button>
           </div>

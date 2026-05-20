@@ -900,7 +900,7 @@ export function AdminSettings() {
                     </div>
                     <button
                       onClick={toggleSafetyLock}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${safetyLock ? "bg-slate-900" : "bg-slate-200"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${safetyLock ? "bg-slate-900" : "bg-slate-300"}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${safetyLock ? "translate-x-5" : ""}`} />
                     </button>
@@ -913,7 +913,7 @@ export function AdminSettings() {
                     </div>
                     <button
                       onClick={toggleMaintenanceMode}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${maintenanceMode ? "bg-slate-900" : "bg-slate-200"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${maintenanceMode ? "bg-slate-900" : "bg-slate-300"}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${maintenanceMode ? "translate-x-5" : ""}`} />
                     </button>
@@ -926,7 +926,7 @@ export function AdminSettings() {
                     </div>
                     <button
                       onClick={toggleAutoPublish}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${autoPublish ? "bg-slate-900" : "bg-slate-200"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${autoPublish ? "bg-slate-900" : "bg-slate-300"}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${autoPublish ? "translate-x-5" : ""}`} />
                     </button>

@@ -14,8 +14,7 @@ export function AdminTopBar() {
     markNotificationRead,
     markAllNotificationsRead,
     setSearchPaletteOpen,
-    themeMode,
-    toggleTheme,
+
     activeRole,
     changeActiveRole,
     autoPublish,
@@ -141,14 +140,14 @@ export function AdminTopBar() {
             </span>
             <button
               onClick={toggleAutoPublish}
-              className={`w-8 h-4.5 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${
-                autoPublish ? "bg-black" : "bg-slate-200"
+              className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${
+                autoPublish ? "bg-slate-900" : "bg-slate-300"
               }`}
               aria-label="Toggle Auto-Publish"
             >
               <span
-                className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full transition-transform duration-200 shadow-xs ${
-                  autoPublish ? "translate-x-3.5" : ""
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-sm ${
+                  autoPublish ? "translate-x-5" : ""
                 }`}
               />
             </button>
@@ -164,22 +163,7 @@ export function AdminTopBar() {
             </span>
           </div>
 
-          {/* Dynamic Theme Mode Selector */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 cursor-pointer transition-colors flex items-center justify-center"
-            title={themeMode === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            <motion.span
-              key={themeMode}
-              initial={{ rotate: -45, scale: 0.8, opacity: 0 }}
-              animate={{ rotate: 0, scale: 1, opacity: 1 }}
-              transition={{ duration: 0.2 }}
-              className="material-symbols-outlined text-[20px]"
-            >
-              {themeMode === "dark" ? "light_mode" : "dark_mode"}
-            </motion.span>
-          </button>
+
 
           {/* Notifications */}
           <div ref={notifRef} className="relative">

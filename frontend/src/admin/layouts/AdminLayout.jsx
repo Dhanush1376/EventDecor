@@ -16,7 +16,7 @@ function AdminLayoutInner() {
     publishToast,
     searchPaletteOpen,
     setSearchPaletteOpen,
-    themeMode,
+
     safetyLock,
     maintenanceMode,
     showIdleWarning,
@@ -42,7 +42,7 @@ function AdminLayoutInner() {
   }, [setSearchPaletteOpen]);
 
   return (
-    <div className={`min-h-screen font-[Inter] relative overflow-x-clip selection:bg-slate-900/20 admin-section-root ${themeMode === "dark" ? "dark" : ""}`}>
+    <div className="min-h-screen font-[Inter] relative overflow-x-clip selection:bg-slate-900/20 admin-section-root">
       {/* Visual Banners block */}
       <div className="relative z-[400] flex flex-col divide-y divide-white/10 text-white text-[10px] font-bold tracking-wider uppercase select-none">
         {safetyLock && (
