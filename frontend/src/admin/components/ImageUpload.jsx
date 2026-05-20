@@ -10,16 +10,17 @@ export function ImageUpload({ value, onChange, folder = 'products', label = "Upl
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    // Strict client-side validation
-    const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.avif'];
+    // Client-side validation
+    const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.avif', '.heic', '.heif', '.gif', '.bmp', '.tiff', '.tif', '.ico', '.svg'];
     const maxSizeBytes = folder === 'gallery' ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
 
     for (const file of files) {
       const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      const isHEIC = fileExt === '.heic' || fileExt === '.heif';
       
       // Extension and MIME Validation
-      if (!allowedExts.includes(fileExt) || !file.type.startsWith('image/')) {
-        toast.error(`Invalid image format: ${file.name}. Only JPG, JPEG, PNG, WEBP, and AVIF are permitted.`);
+      if (!allowedExts.includes(fileExt) || (!file.type.startsWith('image/') && !isHEIC)) {
+        toast.error(`Invalid image format: ${file.name}. Only JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF, GIF, BMP, TIFF, ICO, and SVG are permitted.`);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -77,7 +78,7 @@ export function ImageUpload({ value, onChange, folder = 'products', label = "Upl
         ref={fileInputRef}
         type="file" 
         className="hidden" 
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         onChange={handleUpload}
       />
 
