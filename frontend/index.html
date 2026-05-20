@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="color-scheme: only light; background-color: #faf9f6;">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -65,6 +65,16 @@
 
     <!-- Critical CSS: Prevent FOUC -->
     <style>
+      /* Force light-only rendering on all browsers — prevents auto dark inversion */
+      html {
+        color-scheme: only light !important;
+        background-color: #faf9f6 !important;
+      }
+      body {
+        background-color: #faf9f6;
+        color: #000000;
+      }
+
       /* Prevent FOUC for Material icons */
       .material-symbols-outlined {
         font-family: 'Material Symbols Outlined';
