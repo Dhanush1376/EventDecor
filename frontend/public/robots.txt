@@ -1,5 +1,6 @@
 # Siri Arts & Crafts - Production Robots.txt
-# Last updated: 2026-05-18
+# Last updated: 2026-05-20
+# Domain: https://siriartsandcrafts.com
 
 User-agent: *
 Allow: /
@@ -10,6 +11,8 @@ Disallow: /checkout
 Disallow: /api/
 Disallow: /auth
 Disallow: /accept-invite
+Disallow: /order-success
+Disallow: /track/
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1

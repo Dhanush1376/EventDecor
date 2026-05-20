@@ -1,5 +1,7 @@
 // Siri Arts & Crafts — Service Worker for offline support and caching
-const CACHE_NAME = 'siri-arts-v1';
+// Cache version: update this string on each deployment to bust stale caches
+const CACHE_VERSION = '2026-05-20';
+const CACHE_NAME = `siri-arts-${CACHE_VERSION}`;
 const STATIC_ASSETS = [
   '/',
   '/favicon.png',

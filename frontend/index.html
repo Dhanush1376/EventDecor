@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 
     <!-- Favicon & Touch Icons -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="/favicon.png" sizes="16x16" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
@@ -28,21 +29,26 @@
     <!-- Primary SEO Meta (overridden by react-helmet-async per page) -->
     <title>Siri Arts & Crafts | Premium Handcrafted Event Decor & Gifts</title>
     <meta name="description" content="Discover exquisite, handcrafted event decor, wedding trays, and pooja essentials. Woven with tradition and refined for the modern aesthetic. Worldwide shipping." />
-    <meta name="keywords" content="handcrafted decor, event decor, wedding decor, Indian wedding, artisanal crafts, pooja essentials, Siri Arts" />
+    <meta name="keywords" content="handcrafted decor, event decor, wedding decor, Indian wedding, artisanal crafts, pooja essentials, Siri Arts, wedding trays, mandap decor, Hyderabad decor" />
     <link rel="canonical" href="https://siriartsandcrafts.com" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="author" content="Siri Arts & Crafts" />
     <meta name="geo.region" content="IN-TS" />
     <meta name="geo.placename" content="Hyderabad" />
 
+    <!-- Google Search Console Verification (replace content with your code) -->
+    <meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_CODE" />
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Siri Arts & Crafts" />
     <meta property="og:title" content="Siri Arts & Crafts | Handcrafted Elegance" />
-    <meta property="og:description" content="Premium handcrafted decor for your most precious moments." />
-    <meta property="og:image" content="https://siriartsandcrafts.com/og-image.jpg" />
+    <meta property="og:description" content="Premium handcrafted decor for your most precious moments. Luxury wedding trays, mandap decor & heritage pooja essentials." />
+    <meta property="og:image" content="https://siriartsandcrafts.com/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Siri Arts & Crafts — Premium Handcrafted Event Decor" />
     <meta property="og:url" content="https://siriartsandcrafts.com" />
     <meta property="og:locale" content="en_IN" />
 
@@ -50,8 +56,9 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@siriarts" />
     <meta name="twitter:title" content="Siri Arts & Crafts | Handcrafted Elegance" />
-    <meta name="twitter:description" content="Premium handcrafted decor for your most precious moments." />
-    <meta name="twitter:image" content="https://siriartsandcrafts.com/og-image.jpg" />
+    <meta name="twitter:description" content="Premium handcrafted decor for your most precious moments. Luxury wedding trays, mandap decor & heritage pooja essentials." />
+    <meta name="twitter:image" content="https://siriartsandcrafts.com/og-image.png" />
+    <meta name="twitter:image:alt" content="Siri Arts & Crafts — Premium Handcrafted Event Decor" />
 
     <!-- Performance: Preconnect & DNS Prefetch -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -126,6 +133,53 @@
         min-height: 100vh;
       }
     </style>
+
+    <!-- Structured Data: LocalBusiness + WebSite (visible to crawlers without JS) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Siri Arts & Crafts",
+      "image": "https://siriartsandcrafts.com/og-image.png",
+      "url": "https://siriartsandcrafts.com",
+      "telephone": "+91-9866006648",
+      "description": "Premium handcrafted event decor, wedding trays, and heritage pooja essentials. Woven with tradition and refined for the modern aesthetic.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Hyderabad",
+        "addressRegion": "Telangana",
+        "addressCountry": "IN"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 17.385,
+        "longitude": 78.4867
+      },
+      "priceRange": "₹₹",
+      "openingHours": "Mo-Sa 10:00-19:00",
+      "sameAs": [
+        "https://instagram.com/siriarts",
+        "https://pinterest.com/siriarts",
+        "https://facebook.com/siriartsandcrafts"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Siri Arts & Crafts",
+      "url": "https://siriartsandcrafts.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://siriartsandcrafts.com/collections?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
     <a href="#main-content" class="skip-link">Skip to content</a>

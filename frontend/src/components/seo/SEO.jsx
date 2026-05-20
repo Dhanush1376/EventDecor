@@ -4,11 +4,19 @@ import { useLocation } from 'react-router-dom';
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://siriartsandcrafts.com';
 const SITE_NAME = import.meta.env.VITE_SITE_NAME || 'Siri Arts & Crafts';
-const DEFAULT_OG_IMAGE = import.meta.env.VITE_OG_IMAGE_URL || `${SITE_URL}/og-image.jpg`;
+const DEFAULT_OG_IMAGE = import.meta.env.VITE_OG_IMAGE_URL || `${SITE_URL}/og-image.png`;
 const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91-9866006648';
 const DEFAULT_DESCRIPTION = 'Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor.';
 const DEFAULT_TITLE = 'Siri Arts & Crafts | Luxury Event Decor & Artisanal Heritage';
 const priceValidUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+/**
+ * Normalize a URL path: strip trailing slashes (except root "/")
+ */
+function normalizeUrl(url) {
+  if (!url || url === '/') return url;
+  return url.replace(/\/+$/, '');
+}
 
 /**
  * Enterprise-grade SEO component with full Open Graph, Twitter Cards,
@@ -31,8 +39,10 @@ export function SEO({
   const location = useLocation();
   const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
   const metaDescription = description || DEFAULT_DESCRIPTION;
-  const currentUrl = canonicalUrl || `${SITE_URL}${location.pathname}`;
+  const normalizedPath = normalizeUrl(location.pathname);
+  const currentUrl = canonicalUrl || `${SITE_URL}${normalizedPath}`;
   const metaImage = ogImage || DEFAULT_OG_IMAGE;
+  const metaImageType = metaImage.endsWith('.png') ? 'image/png' : metaImage.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
 
   // Organization Schema (always present)
   const organizationSchema = {
@@ -48,6 +58,35 @@ export function SEO({
       contactType: 'customer service',
       availableLanguage: ['English', 'Telugu', 'Hindi'],
     },
+    sameAs: [
+      'https://instagram.com/siriarts',
+      'https://pinterest.com/siriarts',
+      'https://facebook.com/siriartsandcrafts',
+    ],
+  };
+
+  // LocalBusiness Schema (for local SEO / Google Maps)
+  const localBusinessSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: SITE_NAME,
+    image: DEFAULT_OG_IMAGE,
+    url: SITE_URL,
+    telephone: CONTACT_PHONE,
+    description: 'Premium handcrafted event decor, wedding trays, and heritage pooja essentials. Woven with tradition and refined for the modern aesthetic.',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Hyderabad',
+      addressRegion: 'Telangana',
+      addressCountry: 'IN',
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: 17.385,
+      longitude: 78.4867,
+    },
+    priceRange: '₹₹',
+    openingHours: 'Mo-Sa 10:00-19:00',
     sameAs: [
       'https://instagram.com/siriarts',
       'https://pinterest.com/siriarts',
@@ -142,6 +181,9 @@ export function SEO({
     },
   };
 
+  // Only include LocalBusiness on the homepage to avoid duplicate schema
+  const isHomePage = normalizedPath === '' || normalizedPath === '/';
+
   return (
     <Helmet>
       {/* Primary Meta Tags */}
@@ -149,6 +191,7 @@ export function SEO({
       <meta name="description" content={metaDescription} />
       {keywords && <meta name="keywords" content={keywords} />}
       <link rel="canonical" href={currentUrl} />
+      <meta name="author" content={SITE_NAME} />
 
       {/* Robots */}
       {noindex ? (
@@ -164,10 +207,10 @@ export function SEO({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={metaDescription} />
       <meta property="og:image" content={metaImage} />
+      <meta property="og:image:type" content={metaImageType} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={fullTitle} />
-      <meta property="og:url" content={currentUrl} />
+      <meta property="og:image:alt" content={title ? `${title} — ${SITE_NAME}` : `${SITE_NAME} — Premium Handcrafted Event Decor`} />
       <meta property="og:locale" content="en_IN" />
 
       {/* Twitter / X */}
@@ -177,7 +220,7 @@ export function SEO({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={metaDescription} />
       <meta name="twitter:image" content={metaImage} />
-      <meta name="twitter:image:alt" content={fullTitle} />
+      <meta name="twitter:image:alt" content={title ? `${title} — ${SITE_NAME}` : `${SITE_NAME} — Premium Handcrafted Event Decor`} />
 
       {/* Article Meta (for blog/content pages) */}
       {article && (
@@ -203,6 +246,11 @@ export function SEO({
       <script type="application/ld+json">
         {JSON.stringify(websiteSchema)}
       </script>
+      {isHomePage && (
+        <script type="application/ld+json">
+          {JSON.stringify(localBusinessSchema)}
+        </script>
+      )}
       {schema && (
         <script type="application/ld+json">
           {JSON.stringify(schema)}
