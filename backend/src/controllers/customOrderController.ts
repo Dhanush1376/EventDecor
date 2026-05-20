@@ -87,6 +87,19 @@ export const submitCustomOrder = asyncHandler(async (req: any, res: Response) =>
   // Trigger luxury emails asynchronously
   CustomOrderMailService.sendSubmissionEmails(order).catch(err => logger.error("Custom order submission email error:", err));
 
+  // Admin real-time notification
+  try {
+    const { createAdminNotification } = require('./adminNotificationController');
+    await createAdminNotification({
+      title: 'New Custom Order Request',
+      message: `${order.customerName || 'A customer'} submitted a custom ${order.occasion || 'event'} order request.`,
+      type: 'custom_request',
+      actionLink: `/admin/custom-orders/${order._id}`,
+    });
+  } catch (notifErr) {
+    logger.error('Failed to create admin notification for custom order:', notifErr);
+  }
+
   res.status(201).json(new ApiResponse(true, 'Custom order request lodged successfully', order));
 });
 

@@ -416,29 +416,91 @@ class OrderService {
           await Coupon.findOneAndUpdate({ code: couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
         }
 
-        // Trigger Dispatch alert Confirmation Email in background
+        // Trigger Admin Alert, Invoice PDF, and Dispatch Email
         try {
           const user = await User.findById(userId);
+          const adminEmails = require('../config/adminConfig').getAdminEmails();
+
+          // 1. Send Admin Real-time Notification
+          const { createAdminNotification } = require('../controllers/adminNotificationController');
+          await createAdminNotification({
+            title: 'New Order Received',
+            message: `${user?.name || 'A customer'} placed a new COD order (₹${order.total}).`,
+            type: 'order',
+            actionLink: `/admin/orders/${order._id}`,
+          });
+
+          // 2. Generate PDF Invoice
+          const { generateInvoicePDF } = require('../utils/pdfGenerator');
+          const pdfBuffer = await generateInvoicePDF({
+            orderId: order._id.toString(),
+            date: order.createdAt || new Date(),
+            customerName: user?.name || 'Customer',
+            shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+            items: order.items,
+            subtotal: order.subtotal,
+            shipping: order.shippingFee,
+            total: order.total
+          });
+
           if (user) {
             const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+            
+            // 3. Compile beautiful HTML Template
+            const { compileTemplate } = require('../utils/templateEngine');
+            const htmlContent = compileTemplate('order-confirmation', {
+              customerName: user.name,
+              orderId: order._id.toString(),
+              orderDate: new Date().toISOString(),
+              paymentMethod: 'Cash on Delivery',
+              items: order.items.map((i: any) => ({
+                name: i.title,
+                variant: i.variant,
+                quantity: i.quantity,
+                price: i.price,
+                image: i.imageSrc
+              })),
+              subtotal: order.subtotal,
+              shipping: order.shippingFee,
+              total: order.total,
+              shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+              dashboardUrl: `${frontendUrl}/dashboard?tab=orders`,
+              currentYear: new Date().getFullYear(),
+            });
+
+            // 4. Send Customer Email
             await sendDirectEmail({
               email: user.email,
               subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
-              templateName: 'Order Confirmation',
-              templateData: {
-                name: user.name,
-                orderId: order._id.toString(),
-                totalAmount: order.total.toLocaleString('en-IN'),
-                shippingAddress: order.shippingAddress,
-                frontend_url: frontendUrl,
-              },
+              customHtml: htmlContent,
               type: 'order',
               action: 'order_placed',
               userId: user._id.toString(),
+              attachments: [{
+                filename: `Invoice_${order.invoiceNumber}.pdf`,
+                content: pdfBuffer,
+                contentType: 'application/pdf'
+              }]
             });
+            
+            // 5. Send Admin Alert Email
+            if (adminEmails.length > 0) {
+              await sendDirectEmail({
+                email: adminEmails[0], // primary admin
+                subject: `New Order Received - ₹${order.total} [${order._id}]`,
+                customHtml: htmlContent, // Reuse same elegant template
+                type: 'system',
+                action: 'admin_order_alert',
+                attachments: [{
+                  filename: `Invoice_${order.invoiceNumber}.pdf`,
+                  content: pdfBuffer,
+                  contentType: 'application/pdf'
+                }]
+              });
+            }
           }
         } catch (emailErr) {
-          logger.error('Failed to dispatch COD confirmation email:', emailErr);
+          logger.error('Failed to dispatch COD confirmation email/PDF:', emailErr);
         }
 
         return { order };
@@ -720,29 +782,91 @@ class OrderService {
       await Coupon.findOneAndUpdate({ code: order.couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
     }
     
-    // Trigger Order Confirmation Email
+    // Trigger Admin Alert, Invoice PDF, and Order Confirmation Email
     try {
       const user = await User.findById(order.user);
+      const adminEmails = require('../config/adminConfig').getAdminEmails();
+
+      // 1. Send Admin Real-time Notification
+      const { createAdminNotification } = require('../controllers/adminNotificationController');
+      await createAdminNotification({
+        title: 'New Online Payment Order',
+        message: `${user?.name || 'A customer'} placed a new order (₹${order.total}) via Razorpay.`,
+        type: 'order',
+        actionLink: `/admin/orders/${order._id}`,
+      });
+
+      // 2. Generate PDF Invoice
+      const { generateInvoicePDF } = require('../utils/pdfGenerator');
+      const pdfBuffer = await generateInvoicePDF({
+        orderId: order._id.toString(),
+        date: order.createdAt || new Date(),
+        customerName: user?.name || 'Customer',
+        shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+        items: order.items,
+        subtotal: order.subtotal,
+        shipping: order.shippingFee,
+        total: order.total
+      });
+
       if (user) {
         const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+        
+        // 3. Compile HTML Template
+        const { compileTemplate } = require('../utils/templateEngine');
+        const htmlContent = compileTemplate('order-confirmation', {
+          customerName: user.name,
+          orderId: order._id.toString(),
+          orderDate: new Date().toISOString(),
+          paymentMethod: 'Online Payment (Razorpay)',
+          items: order.items.map((i: any) => ({
+            name: i.title,
+            variant: i.variant,
+            quantity: i.quantity,
+            price: i.price,
+            image: i.imageSrc
+          })),
+          subtotal: order.subtotal,
+          shipping: order.shippingFee,
+          total: order.total,
+          shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+          dashboardUrl: `${frontendUrl}/dashboard?tab=orders`,
+          currentYear: new Date().getFullYear(),
+        });
+
+        // 4. Send Customer Email
         await sendDirectEmail({
           email: user.email,
           subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
-          templateName: 'Order Confirmation',
-          templateData: {
-            name: user.name,
-            orderId: order._id.toString(),
-            totalAmount: order.total.toLocaleString('en-IN'),
-            shippingAddress: order.shippingAddress,
-            frontend_url: frontendUrl,
-          },
+          customHtml: htmlContent,
           type: 'order',
           action: 'order_placed',
           userId: user._id.toString(),
+          attachments: [{
+            filename: `Invoice_${order.invoiceNumber}.pdf`,
+            content: pdfBuffer,
+            contentType: 'application/pdf'
+          }]
         });
+
+        // 5. Send Admin Alert Email
+        if (adminEmails.length > 0) {
+          await sendDirectEmail({
+            email: adminEmails[0],
+            subject: `New Paid Order Received - ₹${order.total} [${order._id}]`,
+            customHtml: htmlContent,
+            type: 'system',
+            action: 'admin_order_alert',
+            attachments: [{
+              filename: `Invoice_${order.invoiceNumber}.pdf`,
+              content: pdfBuffer,
+              contentType: 'application/pdf'
+            }]
+          });
+        }
       }
     } catch (emailErr) {
-      logger.error('Failed to dispatch order confirmation email in background:', emailErr);
+      logger.error('Failed to dispatch order confirmation email/PDF in background:', emailErr);
     }
     
     logger.info(`Payment successful for order: ${order._id}`);
@@ -880,6 +1004,21 @@ class OrderService {
     }
 
     await order.save();
+
+    // Trigger Admin Real-time Notification
+    try {
+      const { createAdminNotification } = require('../controllers/adminNotificationController');
+      createAdminNotification({
+        title: `Order Status: ${finalStatus}`,
+        message: `Order #${order._id} has been updated to ${finalStatus}. ${note || ''}`,
+        type: 'order',
+        actionLink: `/admin/orders/${order._id}`,
+      }).catch((err: any) => {
+        logger.error('Failed to create admin notification for order status change (async):', err);
+      });
+    } catch (notifErr) {
+      logger.error('Failed to create admin notification for order status change:', notifErr);
+    }
 
     // Trigger Order Status Email
     try {

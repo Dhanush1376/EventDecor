@@ -38,6 +38,21 @@ export const submitInquiry = asyncHandler(async (req: Request, res: Response) =>
     action: 'admin_inquiry_alert'
   });
 
+  // 3. Real-time Admin Notification
+  try {
+    const { createAdminNotification } = require('./adminNotificationController');
+    createAdminNotification({
+      title: 'New Inquiry Received',
+      message: `${inquiry.name || 'Someone'} submitted a new inquiry: "${(inquiry.message || '').substring(0, 80)}..."`,
+      type: 'inquiry',
+      actionLink: '/admin/inquiries',
+    }).catch((err: any) => {
+      console.error('Failed to create admin notification for inquiry (async):', err);
+    });
+  } catch (notifErr) {
+    console.error('Failed to create admin notification for inquiry:', notifErr);
+  }
+
   res.status(201).json(new ApiResponse(true, 'Inquiry submitted successfully', inquiry));
 });
 

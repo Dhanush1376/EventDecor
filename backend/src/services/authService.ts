@@ -476,6 +476,21 @@ class AuthService {
         logger.error('Failed to setup loyalty onboarding rewards:', loyaltyErr);
       }
 
+      // Admin Real-time Notification
+      try {
+        const { createAdminNotification } = require('../controllers/adminNotificationController');
+        createAdminNotification({
+          title: 'New User Registration',
+          message: `${user.name || user.email} just registered on the platform.`,
+          type: 'user',
+          actionLink: '/admin/users',
+        }).catch((err: any) => {
+          logger.error('Failed to create admin notification for user registration (async):', err);
+        });
+      } catch (notifErr) {
+        logger.error('Failed to create admin notification for user registration:', notifErr);
+      }
+
       try {
         const { sendDirectEmail } = require('./notificationService');
         const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:3000';
