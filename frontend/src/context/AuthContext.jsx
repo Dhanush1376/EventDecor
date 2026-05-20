@@ -39,18 +39,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const checkAuth = useCallback(async () => {
-    try {
-      const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('siri_refresh_token') : null;
-      const refreshed = await authService.refresh(storedRefreshToken);
-      const token = refreshed?.data?.accessToken || refreshed?.data?.token;
-      const nextRefreshToken = refreshed?.data?.refreshToken;
-      if (token) {
-        setAccessToken(token);
-      }
-      if (nextRefreshToken && typeof window !== 'undefined') {
-        localStorage.setItem('siri_refresh_token', nextRefreshToken);
-      }
+    const storedAccessToken = typeof window !== 'undefined' ? localStorage.getItem('siri_access_token') : null;
+    const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('siri_refresh_token') : null;
 
+    if (!storedAccessToken && !storedRefreshToken) {
+      setUser(null);
+      setIsAuthenticated(false);
+      setLoading(false);
+      return;
+    }
+
+    try {
       const response = await authService.getProfile();
       if (response.success) {
         setUser(response.data);
