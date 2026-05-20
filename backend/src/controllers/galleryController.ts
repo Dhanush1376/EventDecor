@@ -56,6 +56,13 @@ export const updateGalleryItem = asyncHandler(async (req: Request, res: Response
     }
   }
 
+  if (oldItem && oldItem.video && oldItem.video !== req.body.video) {
+    const publicId = extractPublicId(oldItem.video);
+    if (publicId) {
+      deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up old gallery video: ${err}`));
+    }
+  }
+
   res.status(200).json(new ApiResponse(true, 'Gallery item updated', item));
 });
 
@@ -69,6 +76,13 @@ export const deleteGalleryItem = asyncHandler(async (req: Request, res: Response
     const publicId = extractPublicId(item.image);
     if (publicId) {
       deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up gallery image: ${err}`));
+    }
+  }
+
+  if (item.video) {
+    const publicId = extractPublicId(item.video);
+    if (publicId) {
+      deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up gallery video: ${err}`));
     }
   }
 

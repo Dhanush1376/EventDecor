@@ -20,6 +20,10 @@ const allowedMimeTypes = new Set([
   "image/tiff",
   "image/x-icon",
   "image/svg+xml",
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
+  "video/quicktime",
 ]);
 
 const allowedExtensions = new Set([
@@ -36,6 +40,10 @@ const allowedExtensions = new Set([
   ".tif",
   ".ico",
   ".svg",
+  ".mp4",
+  ".webm",
+  ".ogg",
+  ".mov",
 ]);
 
 // Memory storage keeps file buffers in transient memory to verify signatures
@@ -49,7 +57,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
   if (isAllowedExt && isAllowedMime) {
     cb(null, true);
   } else {
-    cb(new ApiError(400, "Invalid image format. Supported formats: JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF, GIF, BMP, TIFF, ICO, SVG."));
+    cb(new ApiError(400, "Invalid file format. Supported formats: JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF, GIF, BMP, TIFF, ICO, SVG for images; MP4, WEBM, OGG, MOV for videos."));
   }
 };
 
@@ -61,7 +69,7 @@ const multerProducts = multer({
 
 const multerGallery = multer({
   storage: memoryStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit to support videos
   fileFilter,
 });
 
@@ -105,6 +113,10 @@ export const verifyImageSignature = (buffer: Buffer): string | null => {
   if (hex === "00000100") {
     return "image/x-icon";
   }
+  // WebM: 1A 45 DF A3 (EBML)
+  if (hex === "1A45DFA3") {
+    return "video/webm";
+  }
   // WEBP: RIFF (first 4 bytes: 52 49 46 46) and WEBP (bytes 8-11: 57 45 42 50)
   if (hex === "52494646") {
     const webpHex = buffer.toString("hex", 8, 12).toUpperCase();
@@ -112,7 +124,7 @@ export const verifyImageSignature = (buffer: Buffer): string | null => {
       return "image/webp";
     }
   }
-  // AVIF / HEIC / HEIF: FTYP (bytes 4-7: 66 74 79 70)
+  // AVIF / HEIC / HEIF / MP4 / MOV: FTYP (bytes 4-7: 66 74 79 70)
   const ftyp = buffer.toString("hex", 4, 8).toUpperCase();
   if (ftyp === "66747970") {
     const brand = buffer.toString("hex", 8, 12).toUpperCase();
@@ -130,6 +142,18 @@ export const verifyImageSignature = (buffer: Buffer): string | null => {
     ]);
     if (heicBrands.has(brand)) {
       return "image/heic";
+    }
+    const videoBrands = new Set([
+      "6D703431", // mp41
+      "6D703432", // mp42
+      "69736F6D", // isom
+      "69736F32", // iso2
+      "6D703437", // mp47
+      "61766331", // avc1
+      "71742020", // qt (QuickTime MOV)
+    ]);
+    if (brand.startsWith("6D7034") || videoBrands.has(brand)) {
+      return "video/mp4";
     }
   }
   // SVG / XML: Starts with '<' (hex: 3C)
@@ -157,15 +181,22 @@ const uploadBufferToCloudinary = (
     hash.update(originalname + Date.now() + crypto.randomBytes(8).toString("hex"));
     const securePublicId = hash.digest("hex").substring(0, 16);
 
+    const isVideo = [".mp4", ".webm", ".mov", ".ogg"].some(ext => originalname.toLowerCase().endsWith(ext));
+
+    const uploadOptions: any = {
+      folder: `siri-arts-crafts/${folder}`,
+      public_id: securePublicId,
+      resource_type: isVideo ? "video" : "image",
+    };
+
+    if (!isVideo) {
+      uploadOptions.transformation = [
+        { fetch_format: "auto", quality: "auto" }
+      ];
+    }
+
     const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: `siri-arts-crafts/${folder}`,
-        public_id: securePublicId,
-        resource_type: "image",
-        transformation: [
-          { fetch_format: "auto", quality: "auto" }
-        ],
-      },
+      uploadOptions,
       (error, result) => {
         if (error) {
           reject(error);
@@ -223,11 +254,11 @@ const handleCloudinaryUploadMiddleware = (folder: string, isArray: boolean) => {
           throw new ApiError(400, `Too many files uploaded in a single request. Maximum allowed is ${maxFilesCount}`);
         }
 
-        // Safety Guard: Limit combined payload size of all files to 25MB
+        // Safety Guard: Limit combined payload size of all files to 100MB
         const totalSize = files.reduce((acc, file) => acc + file.size, 0);
-        const maxTotalSize = 25 * 1024 * 1024;
+        const maxTotalSize = 100 * 1024 * 1024;
         if (totalSize > maxTotalSize) {
-          throw new ApiError(400, `Combined upload payload size exceeds safety ceiling of 25MB`);
+          throw new ApiError(400, `Combined upload payload size exceeds safety ceiling of 100MB`);
         }
 
         const uploadedFiles: any[] = [];
