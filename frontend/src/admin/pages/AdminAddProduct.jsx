@@ -659,7 +659,7 @@ export function AdminAddProduct() {
                         <input 
                           type="file" 
                           multiple 
-                          accept="image/*"
+                          accept="image/*,.heic,.heif"
                           onChange={async (e) => {
                             const files = Array.from(e.target.files);
                             if(files.length === 0) return;

@@ -41,8 +41,8 @@ router.get('/unsubscribe', unsubscribeRecipient);
 router.get('/track/open/:token', trackEmailOpen);
 router.get('/track/click/:token', trackEmailClick);
 
-// Diagnostic SMTP Test Endpoint
-router.get('/test-smtp-live', async (req, res) => {
+// Diagnostic SMTP Test Endpoint (Secured behind admin privileges)
+router.get('/test-smtp-live', requireAuth, requireAdmin, async (req, res) => {
   const nodemailer = require('nodemailer');
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
@@ -71,6 +71,10 @@ router.get('/test-smtp-live', async (req, res) => {
         user: smtpUser,
         pass: smtpPass,
       },
+      tls: {
+        // High compatibility fallback for container hosts rejecting self-signed/untrusted certs
+        rejectUnauthorized: false,
+      },
       connectionTimeout: 10000,
     });
 
@@ -79,19 +83,13 @@ router.get('/test-smtp-live', async (req, res) => {
 
     // 2. Try sending a quick test email
     const recipient = req.query.to as string || smtpUser;
+    const { getDiagnosticTestEmailTemplate } = require('../utils/emailTemplates');
+    
     const info = await transporter.sendMail({
-      from: `"Siri Arts Diagnostic" <${smtpUser}>`,
+      from: process.env.SMTP_FROM || `"Siri Arts Diagnostic" <${smtpUser}>`,
       to: recipient,
       subject: '✦ Siri Arts Studio SMTP Diagnostic Test ✦',
-      html: `
-        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-          <h2>SMTP Connection Diagnostic: SUCCESS!</h2>
-          <p>Your SMTP configurations on Render are fully active and communicating correctly.</p>
-          <p><strong>Host:</strong> ${smtpHost}</p>
-          <p><strong>User:</strong> ${smtpUser}</p>
-          <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
-        </div>
-      `
+      html: getDiagnosticTestEmailTemplate(smtpHost, smtpUser, new Date().toLocaleString())
     });
 
     return res.status(200).json({

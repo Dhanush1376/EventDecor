@@ -415,40 +415,8 @@ export const inviteTeamMember = asyncHandler(async (req: any, res: Response) => 
   const frontendUrl = (process.env.FRONTEND_URLS?.split(',')[0] || process.env.FRONTEND_URL || 'http://localhost:5173').trim();
   const acceptUrl = `${frontendUrl}/accept-invite?token=${token}`;
   
-  const emailHtml = `
-    <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 50px 30px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29; box-shadow: 0 15px 40px rgba(115, 92, 0, 0.04); text-align: center; box-sizing: border-box;">
-      <!-- Logo Header -->
-      <div style="margin-bottom: 25px; text-align: center;">
-        <div style="font-size: 28px; color: #735c00; margin-bottom: 12px; font-weight: 300; text-align: center;">✦</div>
-        <h1 style="color: #735c00; font-size: 26px; font-weight: 300; letter-spacing: 5px; margin: 0; text-transform: uppercase; text-align: center;">Siri Arts</h1>
-        <div style="width: 60px; height: 1px; background-color: #735c00; margin: 12px auto 0 auto; opacity: 0.25;"></div>
-      </div>
-      
-      <span style="display: block; color: #7f7663; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 30px; font-family: 'Inter', 'Helvetica', 'Arial', sans-serif;">Team Invitation</span>
-      
-      <h2 style="color: #2d2b29; font-size: 20px; font-weight: 400; margin-bottom: 15px; font-family: 'Playfair Display', serif;">You're Invited to Join the Team</h2>
-      <p style="color: #7f7663; font-size: 14px; line-height: 1.6; font-family: 'Inter', sans-serif; margin-bottom: 30px;">
-        An administrator has invited you to join the Siri Arts & Crafts team as an <strong>${role.toUpperCase()}</strong> with permissions set to <strong>"${permissions || 'Full Access'}"</strong>.
-      </p>
-
-      <!-- Action Button -->
-      <div style="margin: 35px 0;">
-        <a href="${acceptUrl}" style="background-color: #735c00; color: #ffffff; padding: 15px 35px; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; border-radius: 50px; display: inline-block; box-shadow: 0 5px 15px rgba(115, 92, 0, 0.2); font-family: 'Inter', sans-serif; transition: background-color 0.3s;">
-          Respond to Invitation
-        </a>
-      </div>
-
-      <p style="color: #a39c8c; font-size: 12px; line-height: 1.6; font-family: 'Inter', sans-serif; margin-top: 25px;">
-        If you are willing to join, please click the button above to accept this invitation and activate your admin portal access. If not, you can decline the invitation.
-      </p>
-      
-      <div style="border-top: 1px solid #efeeeb; margin-top: 40px; padding-top: 25px;">
-        <p style="color: #a39c8c; font-size: 11px; line-height: 1.6; font-family: 'Inter', sans-serif; margin: 0;">
-          This link will remain active. If you did not expect this invitation, please ignore this email.
-        </p>
-      </div>
-    </div>
-  `;
+  const { getTeamInviteEmailTemplate } = require('../utils/emailTemplates');
+  const emailHtml = getTeamInviteEmailTemplate(acceptUrl, role, permissions || 'Full Access');
 
   await sendEmail({
     email: cleanEmail,

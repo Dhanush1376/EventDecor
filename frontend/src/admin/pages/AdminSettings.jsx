@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { userService, cmsService } from "../../services/domainServices";
+import { userService, cmsService, notificationService } from "../../services/domainServices";
 import { useAuth } from "../../context/AuthContext";
 import { useAdmin } from "../context/AdminContext";
 import toast from "react-hot-toast";
@@ -36,6 +36,49 @@ export function AdminSettings() {
   // Search and Filters for Audit Logs
   const [auditSearchQuery, setAuditSearchQuery] = useState("");
   const [auditActorFilter, setAuditActorFilter] = useState("all");
+
+  // SMTP Live Diagnostics State
+  const [testRecipientEmail, setTestRecipientEmail] = useState("");
+  const [testingSmtp, setTestingSmtp] = useState(false);
+  const [smtpTestResult, setSmtpTestResult] = useState(null);
+
+  const handleSmtpTest = async (e) => {
+    e.preventDefault();
+    setTestingSmtp(true);
+    setSmtpTestResult(null);
+    const testToast = toast.loading("Verifying SMTP connection and dispatching test email...");
+    try {
+      const res = await notificationService.testSmtp(testRecipientEmail);
+      if (res.success) {
+        toast.success("SMTP Diagnostic success! Test email dispatched.", { id: testToast });
+        setSmtpTestResult({
+          success: true,
+          message: res.message,
+          messageId: res.messageId,
+          details: res.details
+        });
+      } else {
+        toast.error("SMTP Diagnostic failed. Check stack trace.", { id: testToast });
+        setSmtpTestResult({
+          success: false,
+          message: res.message || "Connection refused.",
+          errorMessage: res.errorMessage || "Unknown transport error.",
+          details: res.details
+        });
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message || "Diagnostic request timed out.";
+      const errorStack = error.response?.data?.errorMessage || error.response?.data?.errorStack || error.stack || "";
+      toast.error(`SMTP Verification Failed: ${errorMsg}`, { id: testToast });
+      setSmtpTestResult({
+        success: false,
+        message: errorMsg,
+        errorMessage: errorStack
+      });
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -257,6 +300,7 @@ export function AdminSettings() {
     { id: "payments", title: "Payment Integrations", icon: "payments" },
     { id: "whatsapp", title: "WhatsApp Automations", icon: "chat" },
     { id: "security", title: "Security & Operations", icon: "shield" },
+    { id: "email", title: "Email & SMTP Diagnostics", icon: "mail" },
   ];
 
   return (
@@ -1104,6 +1148,121 @@ export function AdminSettings() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {sectionsList[activeSection].id === "email" && (
+            <div className="space-y-6">
+              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-6">
+                <h3 className="text-[14px] font-bold text-slate-800 font-display">SMTP Configurations Check</h3>
+                <p className="text-[11.5px] text-slate-500 mt-1 font-light">
+                  Inspect whether the mandatory environment variables for transactional mailing are correctly loaded on this platform.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
+                    <span className="text-[11.5px] font-medium text-slate-600">SMTP Host</span>
+                    <span className="text-[11.5px] font-semibold text-slate-900 font-mono">smtp.gmail.com</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
+                    <span className="text-[11.5px] font-medium text-slate-600">SMTP Port</span>
+                    <span className="text-[11.5px] font-semibold text-slate-900 font-mono">587</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
+                    <span className="text-[11.5px] font-medium text-slate-600">Transporter SSL/TLS Bypass</span>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">rejectUnauthorized: false</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
+                    <span className="text-[11.5px] font-medium text-slate-600">Encryption Layer</span>
+                    <span className="text-[11.5px] font-semibold text-slate-900 font-mono">STARTTLS</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-slate-200/60 rounded-2xl p-6 space-y-4">
+                <div>
+                  <h3 className="text-[14px] font-bold text-slate-800 font-display">Run Connection Verification</h3>
+                  <p className="text-[11.5px] text-slate-500 mt-1 font-light">
+                    Send a premium luxury test email to verify correct SMTP handshake, domain signing (SPF/DKIM/DMARC), and server socket connectivity.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSmtpTest} className="space-y-4 pt-1">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                      Recipient Test Email Address
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        required
+                        placeholder="e.g. admin@siriartsandcrafts.com"
+                        value={testRecipientEmail}
+                        onChange={(e) => setTestRecipientEmail(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-slate-850 focus:bg-white rounded-xl px-4 py-2.5 text-[12px] outline-none transition-all"
+                      />
+                      <button
+                        type="submit"
+                        disabled={testingSmtp}
+                        className="px-6 py-2.5 bg-slate-900 hover:bg-black disabled:bg-slate-350 disabled:text-slate-400 text-white rounded-xl text-[12px] font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        {testingSmtp ? (
+                          <>
+                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Verifying...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-[15px]">send</span>
+                            <span>Verify Transporter</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                {smtpTestResult && (
+                  <div className={`rounded-xl border p-4 transition-all ${
+                    smtpTestResult.success 
+                      ? "bg-emerald-50/50 border-emerald-200/60 text-emerald-800" 
+                      : "bg-rose-50/50 border-rose-200/60 text-rose-800"
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      <span className={`material-symbols-outlined text-[20px] mt-0.5 ${
+                        smtpTestResult.success ? "text-emerald-600" : "text-rose-600"
+                      }`}>
+                        {smtpTestResult.success ? "check_circle" : "error"}
+                      </span>
+                      <div className="space-y-2 w-full">
+                        <div>
+                          <h4 className="text-[12px] font-bold tracking-tight">
+                            {smtpTestResult.success ? "SMTP connection verified and test email sent successfully!" : "SMTP Connection Failed"}
+                          </h4>
+                          <p className="text-[11.5px] opacity-90 mt-0.5">
+                            {smtpTestResult.message}
+                          </p>
+                        </div>
+
+                        {!smtpTestResult.success && smtpTestResult.errorMessage && (
+                          <div className="bg-rose-100/50 border border-rose-200/40 rounded-lg p-3 font-mono text-[10.5px] leading-relaxed break-all text-rose-900">
+                            <strong>Diagnostic Stack:</strong> {smtpTestResult.errorMessage}
+                          </div>
+                        )}
+
+                        {smtpTestResult.success && smtpTestResult.details && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1.5 text-[11px] font-light">
+                            <div><strong>Message ID:</strong> <span className="font-mono text-[10px] break-all">{smtpTestResult.messageId}</span></div>
+                            <div><strong>SMTP Account:</strong> <span className="font-mono text-[10px]">{smtpTestResult.details.user}</span></div>
+                            <div><strong>Target Host:</strong> <span className="font-mono text-[10px]">{smtpTestResult.details.host}:{smtpTestResult.details.port}</span></div>
+                            <div><strong>Recipient:</strong> <span className="font-mono text-[10px]">{smtpTestResult.details.recipient}</span></div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
