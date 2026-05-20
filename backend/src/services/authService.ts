@@ -113,10 +113,13 @@ class AuthService {
       throw new ApiError(500, 'Admin password is not configured on server');
     }
 
+    const cleanAdminPassword = adminPassword.trim();
+    const cleanPassword = (password || '').trim();
+
     // 2. Validate password (bcrypt comparison supports both hashed and legacy plaintext env values)
-    const isPasswordValid = adminPassword.startsWith('$2') 
-      ? await bcrypt.compare(password || '', adminPassword)
-      : password === adminPassword;
+    const isPasswordValid = cleanAdminPassword.startsWith('$2') 
+      ? await bcrypt.compare(cleanPassword, cleanAdminPassword)
+      : cleanPassword === cleanAdminPassword;
 
     if (!password || !isPasswordValid) {
       let attempts = 1;

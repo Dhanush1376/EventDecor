@@ -16,7 +16,9 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async (silent = false) => {
     setAccessToken(null);
-    authService.logout().catch(() => {});
+    if (!silent) {
+      authService.logout().catch(() => {});
+    }
     setUser(null);
     setIsAuthenticated(false);
     setIntendedAction(null);
