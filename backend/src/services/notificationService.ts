@@ -26,6 +26,10 @@ const getTransporter = async () => {
         user: smtpUser,
         pass: smtpPass,
       },
+      tls: {
+        // High compatibility fallback for container hosts rejecting self-signed/untrusted certs
+        rejectUnauthorized: false,
+      },
       maxConnections: 5,
       maxMessages: 100,
       connectionTimeout: 10000,
@@ -207,8 +211,9 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     // 5. Send using Transporter
     const mailer = await getTransporter();
     const smtpUser = process.env.SMTP_USER;
+    const smtpFrom = process.env.SMTP_FROM || `"Siri Arts Studio" <${smtpUser || 'no-reply@siriartsandcrafts.com'}>`;
     const mailOptions = {
-      from: `"Siri Arts Studio" <${smtpUser || 'no-reply@siriartsandcrafts.com'}>`,
+      from: smtpFrom,
       to: email,
       subject: finalSubject,
       html: bodyHtml,
@@ -247,7 +252,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     return log;
   } catch (err: any) {
     logger.error(`Failed to deliver email notifications to ${email}:`, err);
-    return null;
+    throw err; // Propagate error so callers can handle or retry correctly
   }
 };
 
@@ -301,23 +306,27 @@ export const runCampaignDispatch = async (campaignId: string) => {
       
       await Promise.all(
         batch.map(async (recipient) => {
-          const log = await sendDirectEmailProcessor({
-            email: recipient.email,
-            subject: campaign.subject,
-            customHtml: campaign.customHtml,
-            templateName: campaign.templateId ? (campaign.templateId as any).name : undefined,
-            templateData: {
-              name: recipient.name,
-              title: campaign.title,
-            },
-            type: 'marketing',
-            action: 'campaign_broadcast',
-            userId: recipient.userId || undefined,
-            campaignId: campaign.id,
-          });
+          try {
+            const log = await sendDirectEmailProcessor({
+              email: recipient.email,
+              subject: campaign.subject,
+              customHtml: campaign.customHtml,
+              templateName: campaign.templateId ? (campaign.templateId as any).name : undefined,
+              templateData: {
+                name: recipient.name,
+                title: campaign.title,
+              },
+              type: 'marketing',
+              action: 'campaign_broadcast',
+              userId: recipient.userId || undefined,
+              campaignId: campaign.id,
+            });
 
-          if (log && log.status === 'delivered') {
-            sentSuccessfully++;
+            if (log && log.status === 'delivered') {
+              sentSuccessfully++;
+            }
+          } catch (err: any) {
+            logger.error(`[Campaign Dispatch Error] Failed to send email to ${recipient.email}:`, err);
           }
         })
       );

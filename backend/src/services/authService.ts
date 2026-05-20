@@ -242,15 +242,25 @@ class AuthService {
       action: 'request'
     });
 
-    // 8. Send beautifully designed OTP email asynchronously in the background to prevent blocking HTTP response
-    const { sendEmail } = require('../utils/sendEmail');
-    sendEmail({
-      email: cleanEmail,
-      subject: 'Your Siri Arts Security Code',
-      message: otp
-    }).catch((err: any) => {
-      logger.error(`Background OTP email delivery failed for ${cleanEmail}:`, err);
-    });
+    // 8. Send beautifully designed OTP email synchronously and wait for verification response
+    const { sendDirectEmailProcessor } = require('./notificationService');
+    const { getOtpEmailTemplate } = require('../utils/emailTemplates');
+    try {
+      await sendDirectEmailProcessor({
+        email: cleanEmail,
+        subject: 'Your Siri Arts Security Code',
+        customHtml: getOtpEmailTemplate(otp, expiryMinutes),
+        type: 'security',
+        action: 'otp_auth'
+      });
+    } catch (err: any) {
+      // Clean up the OTP verification record from MongoDB so it doesn't count against rate limits or leave dead records
+      await OtpVerification.deleteOne({ _id: otpRecord._id });
+      // Delete the request log as well so they can try again immediately
+      await OtpRequestLog.deleteOne({ email: cleanEmail, action: 'request', createdAt: { $gte: new Date(Date.now() - 10000) } });
+      logger.error(`[OTP EMAIL ERROR] Synchronous OTP email delivery failed for ${cleanEmail}:`, err);
+      throw new ApiError(500, `Email delivery failed: ${err.message || 'SMTP connection timeout'}. Please verify your email or try again.`);
+    }
 
     // Always log in development for easier testing and recovery
     if (process.env.NODE_ENV === 'development') {
@@ -511,33 +521,22 @@ class AuthService {
       expiresAt
     });
 
-    // 5. Send custom COD email
-    const { sendDirectEmail } = require('./notificationService');
-    sendDirectEmail({
-      email: cleanEmail,
-      subject: '✦ Cash on Delivery Verification Code ✦ Siri Arts Studio',
-      customHtml: `
-        <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 50px 30px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29; box-shadow: 0 15px 40px rgba(115, 92, 0, 0.04); text-align: center; box-sizing: border-box;">
-          <div style="margin-bottom: 25px; text-align: center;">
-            <div style="font-size: 28px; color: #735c00; margin-bottom: 12px; font-weight: 300; text-align: center;">✦</div>
-            <h1 style="color: #735c00; font-size: 26px; font-weight: 300; letter-spacing: 5px; margin: 0; text-transform: uppercase; text-align: center;">Siri Arts</h1>
-            <div style="width: 60px; height: 1px; background-color: #735c00; margin: 12px auto 0 auto; opacity: 0.25;"></div>
-          </div>
-          <span style="display: block; color: #7f7663; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 30px; font-family: 'Inter', sans-serif;">COD Order Verification</span>
-          
-          <div style="background-color: #fbfaf8; border: 1px solid #d0c5af; padding: 25px 20px; border-radius: 12px; margin: 25px 0;">
-            <span style="display: block; color: #7f7663; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; font-family: 'Inter', sans-serif;">Your Verification Code</span>
-            <h1 style="margin: 0; letter-spacing: 12px; color: #735c00; font-size: 42px; font-weight: 500; font-family: 'Courier New', monospace; padding-left: 12px;">${otp}</h1>
-          </div>
-          
-          <p style="color: #7f7663; font-size: 13px; font-weight: 300; font-family: 'Inter', sans-serif; margin-top: 20px; margin-bottom: 0;">
-            Please enter this verification code on the checkout page to confirm your Cash on Delivery request.
-          </p>
-        </div>
-      `,
-      type: 'security',
-      action: 'cod_otp'
-    });
+    // 5. Send custom COD email synchronously and wait for verification response
+    const { sendDirectEmailProcessor } = require('./notificationService');
+    const { getCodOtpEmailTemplate } = require('../utils/emailTemplates');
+    try {
+      await sendDirectEmailProcessor({
+        email: cleanEmail,
+        subject: '✦ Cash on Delivery Verification Code ✦ Siri Arts Studio',
+        customHtml: getCodOtpEmailTemplate(otp, 5),
+        type: 'security',
+        action: 'cod_otp'
+      });
+    } catch (err: any) {
+      await OtpVerification.deleteOne({ email: cleanEmail, type: 'cod' });
+      logger.error(`[COD OTP EMAIL ERROR] Synchronous COD OTP email delivery failed for ${cleanEmail}:`, err);
+      throw new ApiError(500, `COD verification email delivery failed: ${err.message || 'SMTP connection timeout'}. Please try again.`);
+    }
 
     return otp;
   }
