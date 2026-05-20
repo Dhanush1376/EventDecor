@@ -15,16 +15,23 @@ export function AuthProvider({ children }) {
   const [intendedAction, setIntendedAction] = useState(null);
 
   const logout = useCallback(async (silent = false) => {
+    const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('siri_refresh_token') : null;
     setAccessToken(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('siri_access_token');
+      localStorage.removeItem('siri_refresh_token');
+    }
     if (!silent) {
-      authService.logout().catch(() => {});
+      authService.logout(storedRefreshToken).catch(() => {});
     }
     setUser(null);
     setIsAuthenticated(false);
     setIntendedAction(null);
     
     // Clear session context-specific keys from in-memory window context
-    delete window.__siri_splash_shown;
+    if (typeof window !== 'undefined') {
+      delete window.__siri_splash_shown;
+    }
     
     if (!silent) {
       toast.success('Logged out successfully');
@@ -32,11 +39,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const checkAuth = useCallback(async () => {
-    try {
-      const refreshed = await authService.refresh();
-      const token = refreshed?.data?.accessToken || refreshed?.data?.token;
-      if (token) setAccessToken(token);
+    const storedAccessToken = typeof window !== 'undefined' ? localStorage.getItem('siri_access_token') : null;
+    const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('siri_refresh_token') : null;
 
+    if (!storedAccessToken && !storedRefreshToken) {
+      setUser(null);
+      setIsAuthenticated(false);
+      setLoading(false);
+      return;
+    }
+
+    try {
       const response = await authService.getProfile();
       if (response.success) {
         setUser(response.data);
@@ -113,8 +126,12 @@ export function AuthProvider({ children }) {
   };
 
   // Triggers after successful OTP verification to restore queued action and finalize login
-  const loginSuccess = async (userData, token) => {
+  const loginSuccess = async (userData, token, refreshToken) => {
     setAccessToken(token);
+    if (typeof window !== 'undefined') {
+      if (token) localStorage.setItem('siri_access_token', token);
+      if (refreshToken) localStorage.setItem('siri_refresh_token', refreshToken);
+    }
     setUser(userData);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
