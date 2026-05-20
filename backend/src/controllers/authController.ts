@@ -20,24 +20,24 @@ const getCookie = (req: Request, name: string) => {
 
 const setRefreshCookie = (res: Response, refreshToken: string) => {
   const maxAge = AuthService.getRefreshTokenTtlMs();
+  const isProd = process.env.NODE_ENV === 'production';
   res.cookie(refreshCookieName, refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    path: '/',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    path: '/api/auth',
     maxAge,
   });
-  logger.info(`[AUTH] Refresh token cookie set. Secure: ${process.env.NODE_ENV === 'production'}, SameSite: ${process.env.NODE_ENV === 'production' ? 'none' : 'lax'}, Path: /`);
 };
 
 const clearRefreshCookie = (res: Response) => {
+  const isProd = process.env.NODE_ENV === 'production';
   res.clearCookie(refreshCookieName, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    path: '/',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    path: '/api/auth',
   });
-  logger.info(`[AUTH] Refresh token cookie cleared.`);
 };
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
@@ -76,43 +76,39 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   logger.info(`[AUTH] Verifying authentication credentials for user: ${email.trim().toLowerCase()}`);
   const result = await AuthService.verifyOTP(email, otp, req.ip);
   
-  logger.info(`[AUTH] Authentication successful. User session created. ID: ${result.user._id}, Role: ${result.user.role}`);
-  logger.info(`[AUTH] Access token issued. Expiry: ${process.env.JWT_EXPIRES_IN || '15m'}`);
+  logger.info(`[AUTH] Authentication successful. User session created. ID: ${result.user._id}`);
   
   setRefreshCookie(res, result.refreshToken);
-  
-  logger.info(`[AUTH] OTP verification response sent with tokens and cookie.`);
   res.status(200).json(new ApiResponse(true, 'Authenticated successfully', {
     user: result.user,
     token: result.accessToken,
     accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
   }));
 });
-
+ 
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = getCookie(req, refreshCookieName);
-  logger.info(`[AUTH] Refresh session requested. Refresh token cookie present: ${!!refreshToken}`);
-  
+  const refreshToken = String(req.body?.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
   const result = await AuthService.refreshSession(refreshToken);
-  
-  logger.info(`[AUTH] Session refreshed successfully. New access token issued. User ID: ${result.user._id}`);
   setRefreshCookie(res, result.refreshToken);
-  
   res.status(200).json(new ApiResponse(true, 'Session refreshed', {
     user: result.user,
     token: result.accessToken,
     accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
   }));
 });
-
+ 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = getCookie(req, refreshCookieName);
+  const refreshToken = String(req.body?.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
   
-  logger.info(`[AUTH] Logout request received. Refresh token present: ${!!refreshToken}`);
-  await AuthService.revokeSession(refreshToken);
+  logger.info('[AUTH] Revoking user session on manual logout request');
+  if (refreshToken) {
+    await AuthService.revokeSession(refreshToken);
+  }
   clearRefreshCookie(res);
   
-  logger.info(`[AUTH] Logout complete. Session revoked and cookies cleared.`);
+  logger.info('[AUTH] Logout complete. Session cookies cleared.');
   res.status(200).json(new ApiResponse(true, 'Logged out successfully'));
 });
 

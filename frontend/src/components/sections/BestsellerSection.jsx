@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { SectionWrapper } from "../layout";
 import { ProductCard } from "../ui/ProductCard";
 import { fadeUp } from "../../animations/variants";
@@ -15,15 +15,6 @@ export function BestsellerSection() {
   const scrollRef = useRef(null);
   const containerRef = useRef(null);
   const { featuredProducts } = useWebsiteContent();
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
-  });
-
-  const titleY = useTransform(scrollYProgress, [0, 0.5], [50, 0]);
-
-  if (!featuredProducts?.isVisible) return null;
 
   useEffect(() => {
     const fetchBestsellers = async () => {
@@ -58,6 +49,8 @@ export function BestsellerSection() {
       fetchBestsellers();
     }
   }, [featuredProducts]);
+
+  if (!featuredProducts?.isVisible) return null;
 
   const allItems = [...bestsellers, { id: "view-all", isViewAll: true }];
 
@@ -136,7 +129,10 @@ export function BestsellerSection() {
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-7 mb-14 md:mb-22 relative z-10">
         <motion.div
-          style={{ y: titleY }}
+          initial={{ opacity: 0, y: 35 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ type: "spring", stiffness: 70, damping: 15 }}
           className="max-w-2xl flex flex-col items-center md:items-start text-center md:text-left w-full"
         >
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-primary/20 bg-surface/50 mb-5">
@@ -196,7 +192,7 @@ export function BestsellerSection() {
 
           return (
             <motion.div
-              key={item._id}
+              key={item._id || item.id}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.2}
@@ -248,13 +244,14 @@ export function BestsellerSection() {
         {bestsellers.map((product, idx) => (
           <motion.div
             key={product._id}
-            initial={{ opacity: 0, x: 45 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
             transition={{
-              delay: idx * 0.1,
-              duration: 0.8,
-              ease: [0.16, 1, 0.3, 1],
+              type: "spring",
+              stiffness: 70,
+              damping: 15,
+              delay: idx * 0.05,
             }}
             className="min-w-[360px] xl:min-w-[405px] snap-start"
           >
@@ -264,10 +261,16 @@ export function BestsellerSection() {
 
         {/* View All Card */}
         <motion.div
-          initial={{ opacity: 0, x: 45 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="min-w-[360px] xl:min-w-[405px] snap-start flex flex-col items-center justify-center bg-surface border border-outline-variant/30 rounded-[36px] p-11 group hover:border-primary/30 hover:bg-primary/5 transition-all duration-500 cursor-pointer"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{
+            type: "spring",
+            stiffness: 70,
+            damping: 15,
+            delay: bestsellers.length * 0.05,
+          }}
+          className="min-w-[360px] xl:min-w-[405px] snap-start flex flex-col items-center justify-center bg-surface border border-outline-variant/30 rounded-[36px] p-11 group hover-lift-glow hover:border-primary/30 hover:bg-primary/5 transition-all duration-500 cursor-pointer"
         >
           <Link
             to="/collections"

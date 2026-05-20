@@ -96,34 +96,32 @@ export function CartDrawer({ isOpen, onClose }) {
             {/* Items List */}
             <div className="flex-1 overflow-y-auto p-6">
               {items.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-surface-bright/50">
-                  <div className="w-full max-w-[200px] aspect-square relative mb-12">
-                    <div className="absolute inset-0 bg-primary/5 rounded-full blur-3xl" />
-                    <img
-                      src={EMPTY_CART_ILLU}
-                      alt="Your shopping bag is currently empty"
-                      className="relative z-10 w-full h-full object-contain opacity-90 transition-all duration-1000 ease-out animate-float"
-                    />
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                  {/* Minimalist Premium Icon Container */}
+                  <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 relative">
+                    <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
+                    <span className="material-symbols-outlined text-primary text-[30px] relative z-10">
+                      shopping_bag
+                    </span>
                   </div>
 
-                  <div className="space-y-4 mb-12">
-                    <h3 className="font-display text-[28px] text-on-surface tracking-tight leading-tight">
+                  <div className="space-y-2 mb-8">
+                    <h3 className="font-display text-[22px] text-on-surface tracking-tight">
                       Your bag is empty
                     </h3>
-                    <p className="font-body text-[15px] text-secondary/60 font-light max-w-[240px] mx-auto leading-relaxed">
-                      Discover our curated pieces and start building your dream
-                      event.
+                    <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed">
+                      Discover our curated pieces and start building your dream event.
                     </p>
                   </div>
 
                   <Link
                     to="/collections"
                     onClick={onClose}
-                    className="group flex items-center gap-4 bg-on-surface text-surface px-10 py-4 rounded-full font-label text-[12px] uppercase tracking-[0.25em] transition-all hover:bg-primary active:scale-95 font-bold shadow-lg shadow-on-surface/5"
+                    className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
                   >
                     <span>Explore Collections</span>
-                    <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
-                      east
+                    <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
+                      arrow_forward
                     </span>
                   </Link>
                 </div>

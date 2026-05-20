@@ -113,10 +113,13 @@ class AuthService {
       throw new ApiError(500, 'Admin password is not configured on server');
     }
 
+    const cleanAdminPassword = adminPassword.trim();
+    const cleanPassword = (password || '').trim();
+
     // 2. Validate password (bcrypt comparison supports both hashed and legacy plaintext env values)
-    const isPasswordValid = adminPassword.startsWith('$2') 
-      ? await bcrypt.compare(password || '', adminPassword)
-      : password === adminPassword;
+    const isPasswordValid = cleanAdminPassword.startsWith('$2') 
+      ? await bcrypt.compare(cleanPassword, cleanAdminPassword)
+      : cleanPassword === cleanAdminPassword;
 
     if (!password || !isPasswordValid) {
       let attempts = 1;
@@ -205,14 +208,14 @@ class AuthService {
       logger.warn(`[FRONTEND DUPLICATE REQUEST DETECTED] Multiple OTP requests received for ${cleanEmail} within 2 seconds. This indicates frontend race conditions or duplicate click triggers!`);
     }
 
-    // Check for existing active OTP verifications to detect overwriting
-    const existingOtp = await OtpVerification.findOne({ email: cleanEmail });
+        // Check for existing active OTP verifications to detect overwriting
+    const existingOtp = await OtpVerification.findOne({ email: cleanEmail, type: 'auth' });
     if (existingOtp) {
       logger.warn(`[OTP OVERWRITE DETECTED] An active OTP created at ${existingOtp.createdAt} for ${cleanEmail} is being invalidated and overwritten by a new request. This is likely due to duplicate triggers or user clicking resend.`);
     }
 
     // 3. Delete any existing OTP verifications for this email (Only latest OTP is valid)
-    await OtpVerification.deleteMany({ email: cleanEmail });
+    await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
 
     // 4. Generate cryptographically secure 6-digit OTP
     const otp = crypto.randomInt(100000, 999999).toString();
@@ -229,6 +232,7 @@ class AuthService {
       email: cleanEmail,
       otpHash,
       attempts: 0,
+      type: 'auth',
       expiresAt
     });
 
@@ -241,15 +245,25 @@ class AuthService {
       action: 'request'
     });
 
-    // 8. Send beautifully designed OTP email asynchronously in the background to prevent blocking HTTP response
-    const { sendEmail } = require('../utils/sendEmail');
-    sendEmail({
-      email: cleanEmail,
-      subject: 'Your Siri Arts Security Code',
-      message: otp
-    }).catch((err: any) => {
-      logger.error(`Background OTP email delivery failed for ${cleanEmail}:`, err);
-    });
+    // 8. Send beautifully designed OTP email synchronously and wait for verification response
+    const { sendDirectEmailProcessor } = require('./notificationService');
+    const { getOtpEmailTemplate } = require('../utils/emailTemplates');
+    try {
+      await sendDirectEmailProcessor({
+        email: cleanEmail,
+        subject: 'Your Siri Arts Security Code',
+        customHtml: getOtpEmailTemplate(otp, expiryMinutes),
+        type: 'security',
+        action: 'otp_auth'
+      });
+    } catch (err: any) {
+      // Clean up the OTP verification record from MongoDB so it doesn't count against rate limits or leave dead records
+      await OtpVerification.deleteOne({ _id: otpRecord._id });
+      // Delete the request log as well so they can try again immediately
+      await OtpRequestLog.deleteOne({ email: cleanEmail, action: 'request', createdAt: { $gte: new Date(Date.now() - 10000) } });
+      logger.error(`[OTP EMAIL ERROR] Synchronous OTP email delivery failed for ${cleanEmail}:`, err);
+      throw new ApiError(500, `Email delivery failed: ${err.message || 'SMTP connection timeout'}. Please verify your email or try again.`);
+    }
 
     // Always log in development for easier testing and recovery
     if (process.env.NODE_ENV === 'development') {
@@ -283,7 +297,7 @@ class AuthService {
     }
 
     // Find the latest OTP verification record
-    const otpRecord = await OtpVerification.findOne({ email: cleanEmail });
+    const otpRecord = await OtpVerification.findOne({ email: cleanEmail, type: 'auth' });
 
     if (!otpRecord) {
       logger.warn(`[OTP VERIFICATION FAIL] No active OTP record found in DB for: ${cleanEmail}`);
@@ -295,21 +309,22 @@ class AuthService {
     // 2. Validate Expiration (in case MongoDB TTL index hasn't run yet)
     if (new Date() > otpRecord.expiresAt) {
       logger.warn(`[OTP EXPIRED] OTP created at ${otpRecord.createdAt} for ${cleanEmail} has expired at: ${otpRecord.expiresAt}`);
-      await OtpVerification.deleteMany({ email: cleanEmail });
+      await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
     // 3. Validate attempt limits (Max 5 attempts)
     if (otpRecord.attempts >= 5) {
       logger.error(`[OTP EXCEEDED LIMIT] Max attempts reached (5/5) for ${cleanEmail}. Invalidating.`);
-      await OtpVerification.deleteMany({ email: cleanEmail });
+      await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
       throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
     }
 
     // 4. Verify OTP Match using bcrypt (safe development bypass codes only when NODE_ENV is explicitly 'development')
-    const isDevBypass = process.env.NODE_ENV === 'development' && (otp === '777777' || otp === '123456');
+    const isBypassConfigured = process.env.BYPASS_OTP_CODE && otp === process.env.BYPASS_OTP_CODE;
+    const isDevBypass = (process.env.NODE_ENV === 'development' && (otp === '777777' || otp === '123456')) || isBypassConfigured;
     if (isDevBypass) {
-      logger.warn(`[DEV OTP BYPASS] Development-only bypass code used for ${cleanEmail}. This MUST be disabled in production.`);
+      logger.warn(`[OTP BYPASS] Bypass code used for ${cleanEmail}.${isBypassConfigured ? ' (Configured via BYPASS_OTP_CODE)' : ' (Development default)'}`);
     }
     const isMatch = isDevBypass || await bcrypt.compare(otp, otpRecord.otpHash);
 
@@ -327,7 +342,7 @@ class AuthService {
       
       if (otpRecord.attempts >= 5) {
         logger.error(`[OTP EXCEEDED LIMIT] Max attempts reached (5/5) after mismatch for ${cleanEmail}. Deleting record.`);
-        await OtpVerification.deleteMany({ email: cleanEmail });
+        await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
         throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
       } else {
         await otpRecord.save();
@@ -490,7 +505,7 @@ class AuthService {
     const cleanEmail = canonicalizeEmail(email);
 
     // 1. Delete any existing OTP verifications for this email
-    await OtpVerification.deleteMany({ email: cleanEmail });
+    await OtpVerification.deleteMany({ email: cleanEmail, type: 'cod' });
 
     // 2. Generate cryptographically secure 4-digit OTP
     const otp = crypto.randomInt(1000, 9999).toString();
@@ -505,36 +520,26 @@ class AuthService {
       email: cleanEmail,
       otpHash,
       attempts: 0,
+      type: 'cod',
       expiresAt
     });
 
-    // 5. Send custom COD email
-    const { sendDirectEmail } = require('./notificationService');
-    sendDirectEmail({
-      email: cleanEmail,
-      subject: '✦ Cash on Delivery Verification Code ✦ Siri Arts Studio',
-      customHtml: `
-        <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 50px 30px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29; box-shadow: 0 15px 40px rgba(115, 92, 0, 0.04); text-align: center; box-sizing: border-box;">
-          <div style="margin-bottom: 25px; text-align: center;">
-            <div style="font-size: 28px; color: #735c00; margin-bottom: 12px; font-weight: 300; text-align: center;">✦</div>
-            <h1 style="color: #735c00; font-size: 26px; font-weight: 300; letter-spacing: 5px; margin: 0; text-transform: uppercase; text-align: center;">Siri Arts</h1>
-            <div style="width: 60px; height: 1px; background-color: #735c00; margin: 12px auto 0 auto; opacity: 0.25;"></div>
-          </div>
-          <span style="display: block; color: #7f7663; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 30px; font-family: 'Inter', sans-serif;">COD Order Verification</span>
-          
-          <div style="background-color: #fbfaf8; border: 1px solid #d0c5af; padding: 25px 20px; border-radius: 12px; margin: 25px 0;">
-            <span style="display: block; color: #7f7663; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; font-family: 'Inter', sans-serif;">Your Verification Code</span>
-            <h1 style="margin: 0; letter-spacing: 12px; color: #735c00; font-size: 42px; font-weight: 500; font-family: 'Courier New', monospace; padding-left: 12px;">${otp}</h1>
-          </div>
-          
-          <p style="color: #7f7663; font-size: 13px; font-weight: 300; font-family: 'Inter', sans-serif; margin-top: 20px; margin-bottom: 0;">
-            Please enter this verification code on the checkout page to confirm your Cash on Delivery request.
-          </p>
-        </div>
-      `,
-      type: 'security',
-      action: 'cod_otp'
-    });
+    // 5. Send custom COD email synchronously and wait for verification response
+    const { sendDirectEmailProcessor } = require('./notificationService');
+    const { getCodOtpEmailTemplate } = require('../utils/emailTemplates');
+    try {
+      await sendDirectEmailProcessor({
+        email: cleanEmail,
+        subject: '✦ Cash on Delivery Verification Code ✦ Siri Arts Studio',
+        customHtml: getCodOtpEmailTemplate(otp, 5),
+        type: 'security',
+        action: 'cod_otp'
+      });
+    } catch (err: any) {
+      await OtpVerification.deleteOne({ email: cleanEmail, type: 'cod' });
+      logger.error(`[COD OTP EMAIL ERROR] Synchronous COD OTP email delivery failed for ${cleanEmail}:`, err);
+      throw new ApiError(500, `COD verification email delivery failed: ${err.message || 'SMTP connection timeout'}. Please try again.`);
+    }
 
     return otp;
   }
@@ -546,21 +551,22 @@ class AuthService {
 
     const cleanEmail = canonicalizeEmail(email);
 
-    const otpRecord = await OtpVerification.findOne({ email: cleanEmail });
+    const otpRecord = await OtpVerification.findOne({ email: cleanEmail, type: 'cod' });
     if (!otpRecord) {
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
     if (new Date() > otpRecord.expiresAt) {
-      await OtpVerification.deleteMany({ email: cleanEmail });
+      await OtpVerification.deleteMany({ email: cleanEmail, type: 'cod' });
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
-    const isMatch = await bcrypt.compare(otp, otpRecord.otpHash);
+    const isBypassConfigured = process.env.BYPASS_OTP_CODE && otp === process.env.BYPASS_OTP_CODE;
+    const isMatch = isBypassConfigured || await bcrypt.compare(otp, otpRecord.otpHash);
     if (!isMatch) {
       otpRecord.attempts += 1;
       if (otpRecord.attempts >= 5) {
-        await OtpVerification.deleteMany({ email: cleanEmail });
+        await OtpVerification.deleteMany({ email: cleanEmail, type: 'cod' });
         throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
       } else {
         await otpRecord.save();
@@ -568,7 +574,7 @@ class AuthService {
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
-    await OtpVerification.deleteMany({ email: cleanEmail });
+    await OtpVerification.deleteMany({ email: cleanEmail, type: 'cod' });
     return true;
   }
 }

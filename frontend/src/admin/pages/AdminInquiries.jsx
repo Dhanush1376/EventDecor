@@ -57,7 +57,10 @@ export function AdminInquiries() {
   };
 
   useEffect(() => {
-    fetchAdminWorkspaceData();
+    const t = setTimeout(() => {
+      fetchAdminWorkspaceData();
+    }, 0);
+    return () => clearTimeout(t);
   }, []);
 
   // Scroll chat feed
@@ -70,15 +73,18 @@ export function AdminInquiries() {
   // Sync quotation items when order is selected
   useEffect(() => {
     if (selectedOrder) {
-      if (selectedOrder.quotation?.items && selectedOrder.quotation.items.length > 0) {
-        setQuoteItems(selectedOrder.quotation.items.map(it => ({ description: it.description, amount: it.amount })));
-      } else {
-        // Set standard base quote matching the client budget parameter or 25,000 as preset
-        setQuoteItems([{ description: "Custom Decor Setup & Designing", amount: selectedOrder.budget || 25000 }]);
-      }
-      setQuoteTax(selectedOrder.quotation?.tax || 0);
-      setQuoteShipping(selectedOrder.quotation?.shipping || 0);
-      setQuoteNotes(selectedOrder.quotation?.notes || "");
+      const t = setTimeout(() => {
+        if (selectedOrder.quotation?.items && selectedOrder.quotation.items.length > 0) {
+          setQuoteItems(selectedOrder.quotation.items.map(it => ({ description: it.description, amount: it.amount })));
+        } else {
+          // Set standard base quote matching the client budget parameter or 25,000 as preset
+          setQuoteItems([{ description: "Custom Decor Setup & Designing", amount: selectedOrder.budget || 25000 }]);
+        }
+        setQuoteTax(selectedOrder.quotation?.tax || 0);
+        setQuoteShipping(selectedOrder.quotation?.shipping || 0);
+        setQuoteNotes(selectedOrder.quotation?.notes || "");
+      }, 0);
+      return () => clearTimeout(t);
     }
   }, [selectedOrder]);
 

@@ -24,9 +24,44 @@ export const initialWebsiteContent = {
     ctaPrimary: { text: "Browse Events & Setups", link: "/events" },
     ctaSecondary: { text: "Design Custom Showcase", link: "/custom-orders" },
     backgroundImage: IMAGES.luxuryRoyalWedding,
+    mobileBackgroundImage: "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779181764/event_decor_ecommerce/assets/event_decor_mobile%20hero%20background.png",
     badgeText: "Artisan Excellence Since 2015",
     isVisible: true,
     status: "published", // published | draft | modified
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // HOMEPAGE — Hero Navigation Cards (Mobile Carousel)
+  // ═══════════════════════════════════════════════════════
+  heroNavigationCards: {
+    items: [
+      {
+        id: 1,
+        title: "Wedding Essentials",
+        image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2074&auto=format&fit=crop",
+        link: "/collections",
+        icon: "storefront",
+        isVisible: true,
+      },
+      {
+        id: 2,
+        title: "Premium Events",
+        image: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop",
+        link: "/events",
+        icon: "celebration",
+        isVisible: true,
+      },
+      {
+        id: 3,
+        title: "Our Gallery",
+        image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop",
+        link: "/gallery",
+        icon: "photo_library",
+        isVisible: true,
+      },
+    ],
+    isVisible: true,
+    status: "published",
   },
 
   // ═══════════════════════════════════════════════════════
@@ -131,6 +166,7 @@ export const initialWebsiteContent = {
     ctaText: "Our Story",
     ctaLink: "/about",
     image: IMAGES.templeStyleMandap,
+    establishedYear: "Est. in 2003",
     isVisible: true,
     status: "published",
     stats: [
@@ -216,7 +252,7 @@ export const initialWebsiteContent = {
       },
     ],
     stats: [
-      { label: "Tagline", value: "& HERITAGE CRAFTS", type: "text" },
+      { label: "Tagline", value: "", type: "text" },
       { label: "Showcases Delivered", value: "2,500+" },
       { label: "Master Artisans", value: "15+" },
       { label: "Happy Families", value: "5,000+" },
@@ -299,8 +335,9 @@ export const initialWebsiteContent = {
   // NAVIGATION & FOOTER
   // ═══════════════════════════════════════════════════════
   navigation: {
-    logo: { text: "SIRI ARTS & CRAFTS", tagline: "& HERITAGE CRAFTS" },
+    logo: { text: "SIRI ARTS & CRAFTS", tagline: "" },
     mainLinks: [
+      { label: "Our Story", href: "/about", isVisible: true },
       { label: "Shop", href: "/collections", isVisible: true },
       { label: "Events", href: "/events", isVisible: true },
       { label: "Gallery", href: "/gallery", isVisible: true },
@@ -323,8 +360,8 @@ export const initialWebsiteContent = {
     phone: "+91 98660 06648",
     email: "Sirisha.atmakuri@gmail.com",
     socialLinks: {
-      instagram: "https://instagram.com",
-      pinterest: "https://pinterest.com",
+      instagram: "https://instagram.com/siriarts",
+      pinterest: "https://pinterest.com/siriarts",
     },
     copyright: "© {year} Siri Arts & Crafts.",
     status: "published",

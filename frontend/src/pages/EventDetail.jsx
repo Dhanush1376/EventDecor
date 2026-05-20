@@ -59,6 +59,7 @@ export function EventDetail() {
         try {
           res = await showcaseService.getById(id);
         } catch (err) {
+          console.warn("Not found in showcases, trying events service", err);
         }
 
         if (!res || !res.success || !res.data) {
@@ -402,8 +403,8 @@ export function EventDetail() {
                   <span className="font-label-sm text-primary uppercase tracking-[0.4em] font-bold text-[10px] md:text-[12px] block">
                     {event.subtitle || "The Digital Studio Mastery"}
                   </span>
-                  <h1 className="font-display text-black text-[32px] md:text-[44px] leading-tight tracking-tight">
-                    {event.title}.
+                  <h1 className="font-display text-black text-[32px] md:text-[44px] font-normal leading-tight tracking-tight">
+                    {event.title}
                   </h1>
                 </div>
                 <ShareButton 
@@ -607,76 +608,6 @@ export function EventDetail() {
         </div>
       </section>
 
-      {/* 3. THE ANATOMY OF DESIGN — PRESERVED BUT REFINED */}
-      <section className="pt-20 pb-12 md:py-32 bg-white relative overflow-hidden">
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
-          <div className="text-center mb-12 md:mb-20 px-2">
-            <span className="font-label-sm text-primary uppercase tracking-[0.4em] font-bold block mb-3 text-[10px] md:text-[12px]">
-              INVENTORY HARMONY
-            </span>
-            <h2 className="font-display text-[28px] md:text-[64px] text-black font-normal leading-tight">
-              Anatomy of the Setup.
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-10">
-            {[
-              {
-                icon: "layers",
-                title: "Structural Integrity",
-                desc: "Modular heritage frameworks engineered for architectural stability.",
-                assets: ["Teak Foundations", "Hidden Truss", "Anchor Weights"],
-              },
-              {
-                icon: "architecture",
-                title: "Material Mastery",
-                desc: "Hand-picked premium materials selected for visual depth.",
-                assets: [
-                  "Hand-Carved Panels",
-                  "Heritage Silks",
-                  "Linen Accents",
-                ],
-              },
-              {
-                icon: "flare",
-                title: "Atmospheric Glow",
-                desc: "Bespoke amber lighting designed for a twilight sanctuary.",
-                assets: ["LED Arrays", "Brass Diyas", "Uplighting"],
-              },
-            ].map((part, i) => (
-              <motion.div
-                key={i}
-                className={`group p-4 md:p-6 space-y-4 md:space-y-8 transition-all bg-surface/30 rounded-3xl border border-black/5 ${i === 2 ? "col-span-2 md:col-span-1" : "col-span-1"}`}
-              >
-                <div className="w-10 h-10 md:w-16 md:h-16 rounded-[14px] md:rounded-[20px] bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-all">
-                  <span className="material-symbols-outlined text-[20px] md:text-[28px] text-primary group-hover:text-white">
-                    {part.icon}
-                  </span>
-                </div>
-                <div className="space-y-2 md:space-y-4">
-                  <h4 className="font-display text-[15px] md:text-xl text-black font-bold leading-tight">
-                    {part.title}.
-                  </h4>
-                  <p className="font-body text-black/50 font-light leading-relaxed text-[11px] md:text-sm line-clamp-2 md:line-clamp-none">
-                    {part.desc}
-                  </p>
-                  <ul className="space-y-1.5 pt-3 md:pt-4 border-t border-black/5 hidden xs:block">
-                    {part.assets.map((asset, ii) => (
-                      <li
-                        key={ii}
-                        className="flex items-center gap-1.5 font-label-sm text-[8px] md:text-[9px] uppercase tracking-widest text-black/40 font-bold italic"
-                      >
-                        <span className="w-1 h-1 rounded-full bg-primary/60" />
-                        {asset}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* 4. FURTHER DISCOVERY JOURNEYS */}
       <section className="pt-12 pb-12 md:py-32">
@@ -710,7 +641,7 @@ export function EventDetail() {
                   <span className="font-label-sm text-primary text-[8px] md:text-[9px] uppercase tracking-widest font-bold block">
                     {rel.category}
                   </span>
-                  <h4 className="font-display text-lg text-black font-normal italic leading-none">
+                  <h4 className="font-display text-lg text-black font-normal leading-none">
                     {rel.title}
                   </h4>
                 </div>

@@ -167,7 +167,11 @@ const OrderSchema: Schema = new Schema(
     settledAmount: { type: Number, default: 0 },
     courierCharges: { type: Number, default: 0 },
     earnings: { type: Number, default: 0 },
-    publicTrackingToken: { type: String, select: false },
+    publicTrackingToken: {
+      type: String,
+      select: false,
+      default: () => require('crypto').randomBytes(24).toString('hex'),
+    },
   },
   { timestamps: true }
 );

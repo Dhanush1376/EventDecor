@@ -57,9 +57,11 @@ export function OrderSuccess() {
 
   useEffect(() => {
     if (!orderId) {
-      setError("No valid Order ID has been associated with this payment transaction.");
-      setLoading(false);
-      return;
+      const timer = setTimeout(() => {
+        setError("No valid Order ID has been associated with this payment transaction.");
+        setLoading(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     const fetchOrder = async () => {
@@ -113,7 +115,6 @@ export function OrderSuccess() {
             })),
           };
           setOrder(mapped);
-          sessionStorage.setItem("lastOrderDetails", JSON.stringify(mapped));
         } else {
           setError("Order not found or authorization failed.");
         }
@@ -125,7 +126,10 @@ export function OrderSuccess() {
       }
     };
 
-    fetchOrder();
+    const timer = setTimeout(() => {
+      fetchOrder();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [orderId]);
 
   if (loading) {

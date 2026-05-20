@@ -17,8 +17,10 @@ import { MandalaElement } from "../components/ui/MandalaElement";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { handleImageError } from "../utils/imageUtils";
 import toast from "react-hot-toast";
+import { useCart } from "../context/CartContext";
 
 export function EventCollections() {
+  const { setClaimedCoupon } = useCart();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Occasions");
@@ -104,7 +106,7 @@ export function EventCollections() {
   const handleClaimOffer = () => {
     const code = promoCoupon ? promoCoupon.code : "SIRI40";
     navigator.clipboard.writeText(code);
-    localStorage.setItem("claimedCouponCode", code);
+    setClaimedCoupon(code);
     toast.success((t) => (
       <div className="flex flex-col gap-1 p-1">
         <span className="font-bold text-xs text-on-surface flex items-center gap-1.5">
@@ -168,10 +170,6 @@ export function EventCollections() {
     return () => document.body.classList.remove("filters-open");
   }, [isFilterOpen]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeCategory, searchQuery, filters, masterEvents]);
-
   const toggleFilter = (type, value) => {
     setFilters((prev) => {
       const current = prev[type];
@@ -180,11 +178,13 @@ export function EventCollections() {
         : [...current, value];
       return { ...prev, [type]: next };
     });
+    setCurrentPage(1);
   };
 
   const clearAllFilters = () => {
     setFilters({ price: [], occasion: [], style: [] });
     setActiveCategory("All Occasions");
+    setCurrentPage(1);
   };
 
   const filteredEvents = useMemo(() => {
@@ -268,6 +268,7 @@ export function EventCollections() {
 
   const handleCategorySelect = (cat) => {
     setActiveCategory(cat);
+    setCurrentPage(1);
     setTimeout(() => {
       const element = document.getElementById("event-collection");
       if (element) {
@@ -354,7 +355,7 @@ export function EventCollections() {
 
       {/* Sticky Discovery Bar */}
       <nav
-        className={`z-50 transition-all duration-500 ${isSticky ? "fixed top-[46px] md:top-[62px] left-0 w-full glass py-2 shadow-xl" : "relative -mt-8 md:-mt-12 mb-10 md:mb-12"}`}
+        className={`z-50 transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full glass py-2 shadow-xl" : "relative -mt-8 md:-mt-12 mb-10 md:mb-12"}`}
       >
         <div
           className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex flex-col lg:flex-row lg:items-center gap-4 md:gap-4 lg:gap-6 ${isSticky ? "" : "transition-all duration-500"}`}
@@ -364,15 +365,18 @@ export function EventCollections() {
             <div className="flex-1 h-11">
               <SearchBar
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 placeholder="Search masteries..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30"
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
               />
             </div>
             {/* Mobile/Tablet Filter Toggle */}
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0"
+              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
             >
               <span className="material-symbols-outlined text-[20px]">
                 tune

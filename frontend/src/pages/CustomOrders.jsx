@@ -25,6 +25,7 @@ export function CustomOrders() {
   
   // Workspace tabs: 'wizard' (Submit Custom Request) vs 'tracker' (Track My Custom Orders)
   const [activeTab, setActiveTab] = useState("wizard");
+  const [mobileSubTab, setMobileSubTab] = useState("chat");
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState(null);
 
@@ -247,7 +248,7 @@ export function CustomOrders() {
     setAiUserQuery("");
     
     setTimeout(() => {
-      let reply = "";
+      let reply;
       const q = aiUserQuery.toLowerCase();
       if (q.includes("haldi") || q.includes("yellow") || q.includes("marigold")) {
         reply = "For an auspicious morning Haldi, we highly recommend our 'Botanical Marigold Haldi' theme. It blends handwoven mango leaves and fresh turmeric-yellow marigolds with suspended brass urlis filled with floating lotus petals. This setup symbolises purity and joy, and pairs beautifully with white/ivory outfits!";
@@ -272,7 +273,7 @@ export function CustomOrders() {
     setAiMessages(nextMsgs);
     
     setTimeout(() => {
-      let reply = "";
+      let reply;
       const q = question.toLowerCase();
       if (q.includes("haldi") || q.includes("flower")) {
         reply = "For an auspicious morning Haldi, we highly recommend our 'Botanical Marigold Haldi' theme. It blends handwoven mango leaves and fresh turmeric-yellow marigolds with suspended brass urlis filled with floating lotus petals. This setup symbolises purity and joy, and pairs beautifully with white/ivory outfits!";
@@ -316,26 +317,16 @@ export function CustomOrders() {
   };
 
   useEffect(() => {
-    loadWorkspaceData();
+    const timer = setTimeout(() => {
+      loadWorkspaceData();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [user]);
 
-  // Sync draft from LocalStorage on mount
-  useEffect(() => {
-    const savedDraft = localStorage.getItem("siri_custom_order_draft");
-    if (savedDraft) {
-      try {
-        setWizardDraft(prev => ({ ...prev, ...JSON.parse(savedDraft) }));
-      } catch (e) {
-        console.error("Failed to parse local draft");
-      }
-    }
-  }, []);
-
-  // Autosave draft to LocalStorage
+  // Autosave draft (in-memory only)
   const updateDraft = (fields) => {
     const nextDraft = { ...wizardDraft, ...fields };
     setWizardDraft(nextDraft);
-    localStorage.setItem("siri_custom_order_draft", JSON.stringify(nextDraft));
   };
 
   // Preset options configurations
@@ -348,26 +339,32 @@ export function CustomOrders() {
   useEffect(() => {
     if (wizardDraft.occasion && occasionList.length > 0) {
       const isPreset = occasionList.some(o => o.label === wizardDraft.occasion);
-      if (!isPreset && wizardDraft.occasion !== "Other") {
-        setCustomOccasionText(wizardDraft.occasion);
-        setShowCustomOccasion(true);
-      } else if (wizardDraft.occasion === "Other") {
-        setShowCustomOccasion(true);
-      }
+      const timer = setTimeout(() => {
+        if (!isPreset && wizardDraft.occasion !== "Other") {
+          setCustomOccasionText(wizardDraft.occasion);
+          setShowCustomOccasion(true);
+        } else if (wizardDraft.occasion === "Other") {
+          setShowCustomOccasion(true);
+        }
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [wizardDraft.occasion, config]);
+  }, [wizardDraft.occasion, occasionList]);
 
   useEffect(() => {
     if (wizardDraft.productType && productTypeList.length > 0) {
       const isPreset = productTypeList.some(p => p.label === wizardDraft.productType);
-      if (!isPreset && wizardDraft.productType !== "Other") {
-        setCustomProductTypeText(wizardDraft.productType);
-        setShowCustomProductType(true);
-      } else if (wizardDraft.productType === "Other") {
-        setShowCustomProductType(true);
-      }
+      const timer = setTimeout(() => {
+        if (!isPreset && wizardDraft.productType !== "Other") {
+          setCustomProductTypeText(wizardDraft.productType);
+          setShowCustomProductType(true);
+        } else if (wizardDraft.productType === "Other") {
+          setShowCustomProductType(true);
+        }
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [wizardDraft.productType, config]);
+  }, [wizardDraft.productType, productTypeList]);
 
   // Filter direct images and external links
   const directImages = wizardDraft.inspirationImages.filter(isDirectImageUrl);
@@ -448,7 +445,6 @@ export function CustomOrders() {
         const res = await customOrderService.create(payload);
         if (res.success) {
           toast.success("Your custom order request has been submitted successfully!");
-          localStorage.removeItem("siri_custom_order_draft");
           setWizardDraft({
             occasion: "",
             productType: "",
@@ -578,7 +574,10 @@ export function CustomOrders() {
             </p>
           </div>
 
-          <div className="flex bg-[#f2efe9] p-1 rounded-full border border-black/5 self-start md:self-auto shadow-inner w-full sm:w-auto overflow-x-auto shrink-0">
+          <div 
+            className="flex bg-[#f2efe9] p-1 rounded-full border border-black/5 self-start md:self-auto shadow-inner w-full sm:w-auto overflow-x-auto shrink-0"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
             <button
               onClick={() => setActiveTab("wizard")}
               className={`flex-1 sm:flex-initial text-center px-4 md:px-5 py-2.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap ${
@@ -587,7 +586,8 @@ export function CustomOrders() {
                   : "text-[#685C57] hover:text-[#2D2B29]"
               }`}
             >
-              Start Custom Request
+              <span className="hidden sm:inline">Start Custom Request</span>
+              <span className="inline sm:hidden">New Request</span>
             </button>
             <button
               onClick={() => {
@@ -601,9 +601,10 @@ export function CustomOrders() {
                   : "text-[#685C57] hover:text-[#2D2B29]"
               }`}
             >
-              Track My Custom Orders
+              <span className="hidden sm:inline">Track My Custom Orders</span>
+              <span className="inline sm:hidden">Track Orders</span>
               {myOrders.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#D4AF37] text-white text-[8px] flex items-center justify-center font-bold font-mono">
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#D4AF37] text-white text-[8px] flex items-center justify-center font-bold font-mono">
                   {myOrders.length}
                 </span>
               )}
@@ -681,23 +682,21 @@ export function CustomOrders() {
               </div>
             </div>
 
-            {/* Mobile/Tablet Step Header (Visible only on mobile/tablet) */}
-            <div className="lg:hidden bg-white/70 backdrop-blur-md rounded-3xl border border-black/5 p-5 shadow-sm space-y-3">
-              <div className="flex justify-between items-center text-[10px] md:text-[11px]">
-                <span className="font-bold text-[#685C57] uppercase tracking-wider">Decor Design Form</span>
-                <span className="font-bold font-mono text-[#D4AF37]">Step {currentStep} of 8</span>
-              </div>
-              <div className="w-full bg-[#FAF9F6] h-1.5 rounded-full overflow-hidden bg-black/5">
-                <div className="bg-[#D4AF37] h-full transition-all duration-300" style={{ width: `${(currentStep / 8) * 100}%` }} />
-              </div>
-              <div className="text-[12px] font-bold uppercase tracking-wider text-[#2D2B29]">
-                {stepsList[currentStep - 1]}
-              </div>
-            </div>
-
             {/* Right Box: Dynamic forms active panel */}
             <div className="lg:col-span-8 bg-white rounded-3xl lg:rounded-[2.5rem] border border-black/5 p-5 md:p-10 shadow-sm relative overflow-hidden min-h-[460px]">
               
+              {/* Dynamic progress bar (highly integrated at the top of the card) */}
+              <div className="lg:hidden mb-6 space-y-2 border-b border-black/5 pb-4">
+                <div className="flex justify-between items-center text-[9px] md:text-[10px] font-bold text-[#685C57] uppercase tracking-wider">
+                  <span>Decor Design Form</span>
+                  <span className="font-mono text-[#D4AF37]">Step {currentStep} of 8</span>
+                </div>
+                <div className="w-full bg-black/5 h-1 rounded-full overflow-hidden">
+                  <div className="bg-[#D4AF37] h-full shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-all duration-300" style={{ width: `${(currentStep / 8) * 100}%` }} />
+                </div>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-[#2D2B29]">{stepsList[currentStep - 1]}</span>
+              </div>
+
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
@@ -716,29 +715,36 @@ export function CustomOrders() {
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">What event or celebration are we designing decor for?</p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+                      <div className="grid grid-cols-2 gap-2.5 pt-2">
                         {occasionList.length === 0 ? (
                           <div className="col-span-full text-center text-[12px] text-outline italic">No occasions found. Please wait or proceed.</div>
                         ) : (
-                          occasionList.map(o => (
-                            <button
-                              key={o.id}
-                              type="button"
-                              onClick={() => {
-                                updateDraft({ occasion: o.label });
-                                setCustomOccasionText("");
-                                setShowCustomOccasion(false);
-                              }}
-                              className={`p-3.5 md:p-4 rounded-xl md:rounded-2xl border text-left text-[11.5px] md:text-[12px] font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-between cursor-pointer ${
-                                wizardDraft.occasion === o.label
-                                  ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
-                                  : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
-                              }`}
-                            >
-                              <span>{o.label}</span>
-                              {wizardDraft.occasion === o.label && <span className="material-symbols-outlined text-[16px] text-[#D4AF37]">check_circle</span>}
-                            </button>
-                          ))
+                          occasionList.map(o => {
+                            const isSelected = wizardDraft.occasion === o.label;
+                            return (
+                              <button
+                                key={o.id}
+                                type="button"
+                                onClick={() => {
+                                  updateDraft({ occasion: o.label });
+                                  setCustomOccasionText("");
+                                  setShowCustomOccasion(false);
+                                }}
+                                className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
+                                  isSelected
+                                    ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
+                                    : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
+                                }`}
+                              >
+                                <div className="flex justify-between items-start w-full">
+                                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? "border-[#D4AF37] bg-[#D4AF37]" : "border-black/15"}`}>
+                                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                  </span>
+                                </div>
+                                <span className="mt-2 text-[10px] md:text-[11px] leading-tight line-clamp-2">{o.label}</span>
+                              </button>
+                            );
+                          })
                         )}
 
                         {/* Custom 'Other' Option card */}
@@ -749,16 +755,18 @@ export function CustomOrders() {
                             setCustomOccasionText("");
                             setShowCustomOccasion(true);
                           }}
-                          className={`p-3.5 md:p-4 rounded-xl md:rounded-2xl border text-left text-[11.5px] md:text-[12px] font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-between cursor-pointer ${
+                          className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
                             showCustomOccasion
                               ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
                               : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
                           }`}
                         >
-                          <span>Other (Please Specify)</span>
-                          {showCustomOccasion && (
-                            <span className="material-symbols-outlined text-[16px] text-[#D4AF37]">check_circle</span>
-                          )}
+                          <div className="flex justify-between items-start w-full">
+                            <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${showCustomOccasion ? "border-[#D4AF37] bg-[#D4AF37]" : "border-black/15"}`}>
+                              {showCustomOccasion && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </span>
+                          </div>
+                          <span className="mt-2 text-[10px] md:text-[11px] leading-tight line-clamp-2">Other (Specify)</span>
                         </button>
                       </div>
 
@@ -795,29 +803,36 @@ export function CustomOrders() {
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">Which items or setups do you want to custom order?</p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+                      <div className="grid grid-cols-2 gap-2.5 pt-2">
                         {productTypeList.length === 0 ? (
                           <div className="col-span-full text-center text-[12px] text-outline italic">No categories found. Please wait or proceed.</div>
                         ) : (
-                          productTypeList.map(p => (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => {
-                                updateDraft({ productType: p.label });
-                                setCustomProductTypeText("");
-                                setShowCustomProductType(false);
-                              }}
-                              className={`p-3.5 md:p-4 rounded-xl md:rounded-2xl border text-left text-[11.5px] md:text-[12px] font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-between cursor-pointer ${
-                                wizardDraft.productType === p.label
-                                  ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
-                                  : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
-                              }`}
-                            >
-                              <span>{p.label}</span>
-                              {wizardDraft.productType === p.label && <span className="material-symbols-outlined text-[16px] text-[#D4AF37]">check_circle</span>}
-                            </button>
-                          ))
+                          productTypeList.map(p => {
+                            const isSelected = wizardDraft.productType === p.label;
+                            return (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  updateDraft({ productType: p.label });
+                                  setCustomProductTypeText("");
+                                  setShowCustomProductType(false);
+                                }}
+                                className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
+                                  isSelected
+                                    ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
+                                    : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
+                                }`}
+                              >
+                                <div className="flex justify-between items-start w-full">
+                                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? "border-[#D4AF37] bg-[#D4AF37]" : "border-black/15"}`}>
+                                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                  </span>
+                                </div>
+                                <span className="mt-2 text-[10px] md:text-[11px] leading-tight line-clamp-2">{p.label}</span>
+                              </button>
+                            );
+                          })
                         )}
 
                         {/* Custom 'Other' Option card */}
@@ -828,16 +843,18 @@ export function CustomOrders() {
                             setCustomProductTypeText("");
                             setShowCustomProductType(true);
                           }}
-                          className={`p-3.5 md:p-4 rounded-xl md:rounded-2xl border text-left text-[11.5px] md:text-[12px] font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-between cursor-pointer ${
+                          className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
                             showCustomProductType
                               ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
                               : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
                           }`}
                         >
-                          <span>Other (Please Specify)</span>
-                          {showCustomProductType && (
-                            <span className="material-symbols-outlined text-[16px] text-[#D4AF37]">check_circle</span>
-                          )}
+                          <div className="flex justify-between items-start w-full">
+                            <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${showCustomProductType ? "border-[#D4AF37] bg-[#D4AF37]" : "border-black/15"}`}>
+                              {showCustomProductType && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </span>
+                          </div>
+                          <span className="mt-2 text-[10px] md:text-[11px] leading-tight line-clamp-2">Other (Specify)</span>
                         </button>
                       </div>
 
@@ -881,9 +898,9 @@ export function CustomOrders() {
                           <h3 className="text-[13.5px] font-bold text-[#2D2B29]">Siri Signature Curated Presets</h3>
                         </div>
                         <p className="text-[11px] text-[#685C57] font-light">Don't have a picture? Instant-apply one of our award-winning boutique designs:</p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                        <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-x-visible gap-4 pb-4 md:pb-0 pt-1 snap-x" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                           {signaturePresets.map(preset => (
-                            <div key={preset.id} className="bg-[#FAF9F6] border border-black/5 rounded-2xl overflow-hidden hover:border-[#D4AF37] transition-all flex flex-col justify-between group shadow-sm">
+                            <div key={preset.id} className="bg-[#FAF9F6] border border-black/5 rounded-2xl overflow-hidden hover:border-[#D4AF37] transition-all flex flex-col justify-between group shadow-sm min-w-[245px] md:min-w-0 snap-start shrink-0">
                               <div>
                                 <div className="aspect-[4/3] w-full overflow-hidden relative">
                                   <img src={preset.image} alt={preset.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -1438,7 +1455,7 @@ export function CustomOrders() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             
             {/* Left Box: Active customer order request brief list */}
-            <div className="lg:col-span-4 space-y-4">
+            <div className={`lg:col-span-4 space-y-4 ${selectedOrder ? "hidden lg:block" : "block"}`}>
               <h3 className="text-[14px] font-bold uppercase tracking-wider text-[#685C57] mb-2 px-1">My Custom Orders</h3>
               {myOrders.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-black/5 p-8 text-center text-[#685C57] flex flex-col items-center justify-center">
@@ -1490,7 +1507,7 @@ export function CustomOrders() {
             </div>
 
             {/* Right Box: Master Curation Workspace & chat portal */}
-            <div className="lg:col-span-8 bg-white rounded-3xl lg:rounded-[2.5rem] border border-black/5 p-5 md:p-8 min-h-[560px] shadow-sm flex flex-col">
+            <div className={`lg:col-span-8 bg-white rounded-3xl lg:rounded-[2.5rem] border border-black/5 p-5 md:p-8 min-h-[560px] shadow-sm flex flex-col ${selectedOrder ? "block" : "hidden lg:flex"}`}>
               {!selectedOrder ? (
                 <div className="flex flex-col items-center justify-center flex-1 py-12 md:py-20 text-center text-[#685C57]">
                   <span className="material-symbols-outlined text-[40px] md:text-[48px] text-black/10 mb-2">forum</span>
@@ -1499,6 +1516,16 @@ export function CustomOrders() {
                 </div>
               ) : (
                 <div className="flex flex-col flex-1 gap-5 md:gap-6">
+                  
+                  {/* Back button on mobile */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOrder(null)}
+                    className="lg:hidden flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#D4AF37] hover:text-[#2D2B29] transition-colors pb-1.5 self-start cursor-pointer bg-transparent border-none p-0"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                    Back to All Orders
+                  </button>
                   
                   {/* Workspace top profile header */}
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between border-b border-black/5 pb-4 gap-3">
@@ -1516,11 +1543,37 @@ export function CustomOrders() {
                     </div>
                   </div>
 
+                  {/* Mobile-only Workspace Sub-tabs */}
+                  <div className="flex lg:hidden bg-[#FAF9F6] p-1 rounded-xl border border-black/5 mb-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setMobileSubTab("chat")}
+                      className={`flex-1 text-center py-2 rounded-lg text-[10.5px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                        mobileSubTab === "chat"
+                          ? "bg-[#2D2B29] text-white shadow-sm"
+                          : "text-[#685C57] hover:text-[#2D2B29]"
+                      }`}
+                    >
+                      Chat & Updates
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMobileSubTab("summary")}
+                      className={`flex-1 text-center py-2 rounded-lg text-[10.5px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                        mobileSubTab === "summary"
+                          ? "bg-[#2D2B29] text-white shadow-sm"
+                          : "text-[#685C57] hover:text-[#2D2B29]"
+                      }`}
+                    >
+                      Summary & Pricing
+                    </button>
+                  </div>
+
                   {/* Split Curation dashboard info */}
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 flex-1">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
                     
                     {/* Left Grid: Timeline and Quotation Estimate */}
-                    <div className="md:col-span-5 space-y-4 pr-0 md:pr-4 border-r-0 md:border-r border-black/5">
+                    <div className={`lg:col-span-5 space-y-4 pr-0 lg:pr-4 lg:border-r border-black/5 ${mobileSubTab === "summary" ? "block" : "hidden lg:block"}`}>
                       
                       {/* Timeline status track */}
                       <div className="bg-[#FAF9F6] p-4 rounded-2xl border border-black/5 space-y-2">
@@ -1651,7 +1704,7 @@ export function CustomOrders() {
                     </div>
 
                     {/* Right Grid: Chat feed sanctuary */}
-                    <div className="md:col-span-7 flex flex-col min-h-[300px]">
+                    <div className={`lg:col-span-7 flex flex-col min-h-[300px] ${mobileSubTab === "chat" ? "flex" : "hidden lg:flex"}`}>
                       
                       {/* Chat messages viewport */}
                       <div className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[260px] pb-4 bg-[#FAF9F6]/30 p-2.5 rounded-2xl border border-black/5 shadow-inner">
@@ -1713,104 +1766,6 @@ export function CustomOrders() {
 
       </main>
 
-      {/* ─── FLOATING BOUTIQUE AI FAQ ASSISTANT ─── */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-        <AnimatePresence>
-          {isAiPanelOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 30, scale: 0.95 }}
-              className="bg-white/95 backdrop-blur-md w-[320px] md:w-[360px] h-[480px] rounded-[2.5rem] shadow-2xl border border-[#D4AF37]/30 flex flex-col overflow-hidden mb-4 mr-2"
-            >
-              {/* Header */}
-              <div className="bg-[#2D2B29] text-white p-4.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#D4AF37] text-[20px]">insights</span>
-                  <div>
-                    <h4 className="text-[12.5px] font-bold tracking-wide">Siri AI Design Assistant</h4>
-                    <p className="text-[9.5px] text-white/60 font-light">Heritage & Custom Decor Curations</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsAiPanelOpen(false)}
-                  className="text-white/60 hover:text-white text-[12px] font-mono cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Message History */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-[#FAF9F6]/40">
-                {aiMessages.map((msg, i) => (
-                  <div key={i} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
-                    <span className="text-[8px] font-mono text-[#685C57] mb-0.5">{msg.sender === "user" ? "You" : "Siri AI"}</span>
-                    <div className={`p-3 rounded-2xl text-[11.5px] leading-relaxed shadow-sm ${
-                      msg.sender === "user"
-                        ? "bg-[#2D2B29] text-white rounded-tr-none"
-                        : "bg-white text-[#2D2B29] border border-black/5 rounded-tl-none"
-                    }`}>
-                      <p>{msg.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Smart Quick Suggestion Tags */}
-              <div className="px-4 py-2 bg-[#FAF9F6] border-t border-black/5 flex gap-1.5 overflow-x-auto shrink-0 scrollbar-none">
-                {[
-                  "Haldi Decor Flowers?",
-                  "Stage Backdrop timelines?",
-                  "Custom Pooja cost?",
-                  "WhatsApp Line?"
-                ].map((tag, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleQuickQuestion(tag)}
-                    className="px-2.5 py-1 bg-white hover:border-[#D4AF37] border border-black/5 text-[#2D2B29] text-[9.5px] rounded-full whitespace-nowrap cursor-pointer transition-all shrink-0 font-medium"
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-
-              {/* Chat Input Field */}
-              <form onSubmit={handleAiChatSubmit} className="p-3 border-t border-black/5 bg-white flex gap-2">
-                <input
-                  type="text"
-                  value={aiUserQuery}
-                  onChange={(e) => setAiUserQuery(e.target.value)}
-                  placeholder="Ask about design motifs, materials, costs..."
-                  className="flex-1 bg-[#FAF9F6] border border-black/10 rounded-full px-4 py-2 text-[11.5px] outline-none focus:border-[#D4AF37] transition-all text-[#2D2B29]"
-                />
-                <button
-                  type="submit"
-                  disabled={!aiUserQuery.trim()}
-                  className="w-8.5 h-8.5 rounded-full bg-[#2D2B29] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white flex items-center justify-center cursor-pointer transition-all shrink-0 active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
-                >
-                  <span className="material-symbols-outlined text-[15px]">send</span>
-                </button>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Floating Bubble Trigger */}
-        <button
-          onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
-          className="w-13 h-13 rounded-full bg-[#2D2B29] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white shadow-2xl flex items-center justify-center cursor-pointer transition-all duration-300 transform hover:scale-105 active:scale-95 border border-[#D4AF37]/50 relative group"
-        >
-          <span className="material-symbols-outlined text-[24px]">insights</span>
-          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4AF37] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-[#D4AF37]"></span>
-          </span>
-          <div className="absolute right-15 bg-[#2D2B29] text-[#FAF9F6] text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg whitespace-nowrap pointer-events-none border border-[#D4AF37]/20">
-            ✨ Ask Siri AI Design Helper
-          </div>
-        </button>
-      </div>
     </div>
   );
 }

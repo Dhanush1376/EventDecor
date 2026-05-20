@@ -7,7 +7,7 @@ import logger from '../config/logger';
 
 export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const result = await ProductService.getAllProducts(req.query);
-  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Products fetched successfully', result));
 });
 
@@ -16,7 +16,7 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
-  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Product fetched successfully', product));
 });
 
@@ -34,11 +34,11 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
-  const product = await ProductService.softDeleteProduct(req.params.id as string);
+  const product = await ProductService.deleteProduct(req.params.id as string);
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
-  res.status(200).json(new ApiResponse(true, 'Product deactivated successfully', product));
+  res.status(200).json(new ApiResponse(true, 'Product completely deleted successfully', product));
 });
 
 export const toggleFeatured = asyncHandler(async (req: Request, res: Response) => {

@@ -25,12 +25,12 @@ export const authService = {
     const response = await api.post('/auth/verify-otp', { email, otp });
     return response.data;
   },
-  refresh: async () => {
-    const response = await api.post('/auth/refresh');
+  refresh: async (refreshToken) => {
+    const response = await api.post('/auth/refresh', { refreshToken });
     return response.data;
   },
-  logout: async () => {
-    const response = await api.post('/auth/logout');
+  logout: async (refreshToken) => {
+    const response = await api.post('/auth/logout', { refreshToken });
     return response.data;
   },
 };
@@ -115,6 +115,10 @@ export const orderService = {
   },
   verifyCodOtp: async (email, otp) => {
     const response = await api.post('/orders/verify-cod-otp', { email, otp });
+    return response.data;
+  },
+  updateNotes: async (id, notes) => {
+    const response = await api.patch(`/orders/${id}/notes`, { notes });
     return response.data;
   },
 };
@@ -370,6 +374,18 @@ export const analyticsService = {
     const response = await api.get('/analytics/dashboard');
     return response.data;
   },
+  getAuditLogs: async () => {
+    const response = await api.get('/analytics/audit-logs');
+    return response.data;
+  },
+  createAuditLog: async (action, details, status) => {
+    const response = await api.post('/analytics/audit-logs', { action, details, status });
+    return response.data;
+  },
+  clearAuditLogs: async () => {
+    const response = await api.delete('/analytics/audit-logs');
+    return response.data;
+  },
 };
 
 export const uploadService = {
@@ -451,6 +467,12 @@ export const notificationService = {
   },
   getAnalytics: async () => {
     const response = await api.get('/notifications/admin/analytics');
+    return response.data;
+  },
+  testSmtp: async (toEmail) => {
+    const response = await api.get('/notifications/test-smtp-live', {
+      params: { to: toEmail },
+    });
     return response.data;
   },
 };

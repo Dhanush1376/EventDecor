@@ -11,6 +11,15 @@ const allowedMimeTypes = new Set([
   "image/png",
   "image/webp",
   "image/avif",
+  "image/heic",
+  "image/heif",
+  "image/heic-sequence",
+  "image/heif-sequence",
+  "image/gif",
+  "image/bmp",
+  "image/tiff",
+  "image/x-icon",
+  "image/svg+xml",
 ]);
 
 const allowedExtensions = new Set([
@@ -19,6 +28,14 @@ const allowedExtensions = new Set([
   ".png",
   ".webp",
   ".avif",
+  ".heic",
+  ".heif",
+  ".gif",
+  ".bmp",
+  ".tiff",
+  ".tif",
+  ".ico",
+  ".svg",
 ]);
 
 // Memory storage keeps file buffers in transient memory to verify signatures
@@ -27,12 +44,12 @@ const memoryStorage = multer.memoryStorage();
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const ext = file.originalname.substring(file.originalname.lastIndexOf(".")).toLowerCase();
   const isAllowedExt = allowedExtensions.has(ext);
-  const isAllowedMime = allowedMimeTypes.has(file.mimetype);
+  const isAllowedMime = allowedMimeTypes.has(file.mimetype) || file.mimetype === "application/octet-stream"; // iOS/Safari sometimes sends HEIC/HEIF as octet-stream
 
   if (isAllowedExt && isAllowedMime) {
     cb(null, true);
   } else {
-    cb(new ApiError(400, "Only JPG, JPEG, PNG, WEBP, and AVIF image formats are allowed"));
+    cb(new ApiError(400, "Invalid image format. Supported formats: JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF, GIF, BMP, TIFF, ICO, SVG."));
   }
 };
 
@@ -60,9 +77,6 @@ const multerAvatar = multer({
   fileFilter,
 });
 
-/**
- * Verify Magic Numbers byte-signature of file buffer
- */
 export const verifyImageSignature = (buffer: Buffer): string | null => {
   if (buffer.length < 4) return null;
   const hex = buffer.toString("hex", 0, 4).toUpperCase();
@@ -75,6 +89,22 @@ export const verifyImageSignature = (buffer: Buffer): string | null => {
   if (hex.startsWith("FFD8FF")) {
     return "image/jpeg";
   }
+  // GIF: 47 49 46 38 (GIF8)
+  if (hex === "47494638") {
+    return "image/gif";
+  }
+  // BMP: 42 4D (BM)
+  if (hex.startsWith("424D")) {
+    return "image/bmp";
+  }
+  // TIFF: 49 49 2A 00 or 4D 4D 00 2A
+  if (hex === "49492A00" || hex === "4D4D002A") {
+    return "image/tiff";
+  }
+  // ICO: 00 00 01 00
+  if (hex === "00000100") {
+    return "image/x-icon";
+  }
   // WEBP: RIFF (first 4 bytes: 52 49 46 46) and WEBP (bytes 8-11: 57 45 42 50)
   if (hex === "52494646") {
     const webpHex = buffer.toString("hex", 8, 12).toUpperCase();
@@ -82,12 +112,31 @@ export const verifyImageSignature = (buffer: Buffer): string | null => {
       return "image/webp";
     }
   }
-  // AVIF: FTYP (bytes 4-7: 66 74 79 70) and brand (bytes 8-11: 61 76 69 66)
+  // AVIF / HEIC / HEIF: FTYP (bytes 4-7: 66 74 79 70)
   const ftyp = buffer.toString("hex", 4, 8).toUpperCase();
   if (ftyp === "66747970") {
     const brand = buffer.toString("hex", 8, 12).toUpperCase();
     if (brand === "61766966" || brand === "6D736631") {
       return "image/avif";
+    }
+    const heicBrands = new Set([
+      "68656963", // heic
+      "68656978", // heix
+      "68657663", // hevc
+      "68657678", // hevx
+      "6D696631", // mif1
+      "6D736631", // msf1
+      "68656966", // heif
+    ]);
+    if (heicBrands.has(brand)) {
+      return "image/heic";
+    }
+  }
+  // SVG / XML: Starts with '<' (hex: 3C)
+  if (hex.startsWith("3C")) {
+    const content = buffer.toString("utf8", 0, Math.min(buffer.length, 120)).toLowerCase();
+    if (content.includes("<svg") || content.includes("<?xml")) {
+      return "image/svg+xml";
     }
   }
 

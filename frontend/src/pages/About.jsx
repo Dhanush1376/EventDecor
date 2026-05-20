@@ -6,6 +6,7 @@ import { MandalaElement } from "../components/ui/MandalaElement";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { galleryService, cmsService } from "../services/domainServices";
 import { CloudinaryImage } from "../components/ui/CloudinaryImage";
+import { useWebsiteContent } from "../hooks/useWebsiteContent";
 const cleanSignatureImg = (imgUrl, founderName) => {
   if (!imgUrl || imgUrl.includes("unsplash.com") || imgUrl === "" || imgUrl.includes("images.unsplash.com")) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="250" height="80" viewBox="0 0 250 80"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&amp;display=swap');.sig { font-family: 'Alex Brush', cursive; font-size: 42px; fill: %231a1a1a; }</style></defs><text x="25" y="52" class="sig">${founderName}</text></svg>`;
@@ -15,6 +16,12 @@ const cleanSignatureImg = (imgUrl, founderName) => {
 };
 
 export function About() {
+  const { navigation } = useWebsiteContent();
+  const logoText = navigation?.logo?.text || "SIRI ARTS & CRAFTS";
+  const logoWords = logoText.split(" ");
+  const firstWord = logoWords[0] || "SIRI";
+  const restWords = logoWords.slice(1).join(" ") || "ARTS & CRAFTS";
+
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -65,6 +72,7 @@ export function About() {
           setCmsContent(cmsRes.data.data || cmsRes.data);
         }
       } catch (err) {
+        console.error("About page CMS content fetch failed:", err);
       }
 
       // Fetch Gallery data with individual catch block
@@ -150,8 +158,8 @@ const DEFAULT_FOUNDERS = [
       className="bg-surface relative overflow-hidden text-on-surface"
     >
       <SEO
-        title="Our Story | Siri Arts & Crafts"
-        description="Discover the cinematic luxury of Siri Arts & Crafts. Handcrafted Telugu cultural decor."
+        title={`Our Story | ${logoText}`}
+        description={`Discover the cinematic luxury of ${logoText}. Handcrafted Telugu cultural decor.`}
       />
 
       {/* 1. HERO SECTION - Cinematic Immersive Entrance */}
@@ -218,7 +226,7 @@ const DEFAULT_FOUNDERS = [
           >
             <span className="w-12 h-[1px] bg-primary"></span>
             <span className="font-label-sm text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-primary font-bold">
-              The Siri Arts Heritage
+              The {firstWord} {restWords} Heritage
             </span>
             <span className="w-12 h-[1px] bg-primary"></span>
           </motion.div>

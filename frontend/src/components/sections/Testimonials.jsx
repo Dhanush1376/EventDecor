@@ -49,7 +49,14 @@ export function Testimonials() {
 
   if (!testimonials?.isVisible) return null;
 
-  const activeReviews = testimonials.items.filter((item) => item.isVisible);
+  let activeReviews = (testimonials?.items && testimonials.items.length > 0)
+    ? testimonials.items.filter((item) => item.isVisible)
+    : [];
+
+  if (activeReviews.length === 0) {
+    activeReviews = reviews;
+  }
+
   // Duplicate reviews to create a seamless infinite scroll
   const duplicatedReviews = [...activeReviews, ...activeReviews];
 

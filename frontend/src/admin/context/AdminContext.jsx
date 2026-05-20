@@ -19,32 +19,12 @@ import {
 } from "../../services/domainServices";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
+import { refreshWebsiteContent } from "../../hooks/useWebsiteContent";
 
 const AdminContext = createContext(null);
 
-const STORAGE_KEY = "siri_admin_website_content";
-const loadContent = () => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (
-        parsed?.hero?.backgroundImage?.includes("hero_bg_luxury.jpg") ||
-        parsed?.hero?.backgroundImage?.startsWith("/") ||
-        parsed?.hero?.backgroundImage?.includes("luxury_royal_wedding.png")
-      ) {
-        localStorage.removeItem(STORAGE_KEY);
-        return initialWebsiteContent;
-      }
-      return parsed;
-    }
-    return initialWebsiteContent;
-  } catch {
-    return initialWebsiteContent;
-  }
-};
+const loadContent = () => initialWebsiteContent;
 
-const STORAGE_KEY_CATEGORIES = "siri_admin_custom_categories";
 const initialCustomCategories = {
   products: [
     { id: "p1", name: "Traditional Return Gifts", count: 24, image: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=600&auto=format&fit=crop", active: true, description: "Bespoke brass tambulam bowls and handcrafted shagun packaging." },
@@ -60,15 +40,7 @@ const initialCustomCategories = {
   ]
 };
 
-const loadCustomCategories = () => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY_CATEGORIES);
-    if (saved) return JSON.parse(saved);
-    return initialCustomCategories;
-  } catch {
-    return initialCustomCategories;
-  }
-};
+const loadCustomCategories = () => initialCustomCategories;
 
 const mapDbProductToFrontend = (p) => {
   if (!p) return null;
@@ -206,95 +178,132 @@ export function AdminProvider({ children }) {
   const { logout } = useAuth();
 
   // ─── SaaS Simulation & Security States ───
-  const [activeRole, setActiveRole] = useState(() => {
-    return localStorage.getItem("siri_admin_active_role") || "owner";
-  });
+  const [activeRole, setActiveRole] = useState("owner");
+  const [safetyLock, setSafetyLock] = useState(false);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState(15);
+  const [autoPublish, setAutoPublish] = useState(false);
 
-  const [safetyLock, setSafetyLock] = useState(() => {
-    return localStorage.getItem("siri_admin_safety_lock") === "true";
-  });
-
-  const [maintenanceMode, setMaintenanceMode] = useState(() => {
-    return localStorage.getItem("siri_admin_maintenance_mode") === "true";
-  });
-
-  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState(() => {
-    const saved = localStorage.getItem("siri_admin_idle_timeout");
-    return saved ? parseInt(saved) : 15;
-  });
-
-  const [auditLogs, setAuditLogs] = useState(() => {
-    const saved = localStorage.getItem("siri_admin_audit_logs");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [
-      { id: "log-1", actor: "SYSTEM", action: "INITIALIZE", details: "Enterprise Admin Workspace initiated", timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), status: "Success" },
-      { id: "log-2", actor: "OWNER", action: "SECURITY_HEARTBEAT", details: "Inactivity daemon started successfully", timestamp: new Date(Date.now() - 3600000).toISOString(), status: "Success" }
-    ];
-  });
+  const [auditLogs, setAuditLogs] = useState([]);
 
   const [showIdleWarning, setShowIdleWarning] = useState(false);
   const [idleSecondsLeft, setIdleSecondsLeft] = useState(30);
 
-  const logAdminAction = useCallback((action, details, status = "Success") => {
-    const actorName = localStorage.getItem("siri_admin_active_role") || "owner";
-    const newLog = {
-      id: `log-${Date.now()}`,
-      actor: actorName.toUpperCase(),
-      action,
-      details,
-      timestamp: new Date().toISOString(),
-      status
-    };
-    setAuditLogs((prev) => {
-      const updated = [newLog, ...prev].slice(0, 100);
-      localStorage.setItem("siri_admin_audit_logs", JSON.stringify(updated));
-      return updated;
-    });
+  const logAdminAction = useCallback(async (action, details, status = "Success") => {
+    const actorName = activeRole;
+    try {
+      const res = await analyticsService.createAuditLog(action, details, status);
+      if (res.success && res.data) {
+        const log = res.data;
+        const newLog = {
+          id: log._id || log.id,
+          actor: (log.actorRole || actorName).toUpperCase(),
+          action: log.path || action,
+          details: `Client Action on ${log.path || ''}: ${details}`,
+          timestamp: log.createdAt || new Date().toISOString(),
+          status: log.statusCode < 400 ? 'Success' : 'Failure'
+        };
+        setAuditLogs((prev) => [newLog, ...prev].slice(0, 100));
+      }
+    } catch (err) {
+      console.error("Failed to log admin action to backend:", err);
+      // Fallback local state update to ensure UI interactivity
+      const newLog = {
+        id: `log-${Date.now()}`,
+        actor: actorName.toUpperCase(),
+        action,
+        details,
+        timestamp: new Date().toISOString(),
+        status
+      };
+      setAuditLogs((prev) => [newLog, ...prev].slice(0, 100));
+    }
   }, []);
 
-  const clearAuditLogs = useCallback(() => {
-    setAuditLogs([]);
-    localStorage.removeItem("siri_admin_audit_logs");
-    toast.success("Audit trail log history cleared successfully.");
+  const clearAuditLogs = useCallback(async () => {
+    try {
+      const res = await analyticsService.clearAuditLogs();
+      if (res.success) {
+        setAuditLogs([]);
+        toast.success("Audit trail log history cleared successfully.");
+      }
+    } catch (err) {
+      console.error("Failed to clear audit logs:", err);
+      toast.error("Failed to clear cloud audit logs");
+    }
   }, []);
 
-  const toggleSafetyLock = useCallback(() => {
-    setSafetyLock((prev) => {
-      const next = !prev;
-      localStorage.setItem("siri_admin_safety_lock", next ? "true" : "false");
+  const toggleSafetyLock = useCallback(async () => {
+    const next = !safetyLock;
+    
+    // Optimistic UI update
+    setSafetyLock(next);
+    
+    try {
+      await cmsService.updateSection('admin_safety_lock', { safetyLock: next });
       logAdminAction("TOGGLE_SAFETY_LOCK", `Global safety write override lock set to ${next}`);
       toast.success(`Safety lock is now ${next ? "ACTIVE (Write Operations Blocked)" : "DISABLED"}`);
-      return next;
-    });
-  }, [logAdminAction]);
+    } catch (err) {
+      console.error("Failed to update backend safety lock:", err);
+      // Revert on failure
+      setSafetyLock(!next);
+      toast.error("Failed to update safety lock on the backend database.");
+    }
+  }, [safetyLock, logAdminAction]);
 
-  const toggleMaintenanceMode = useCallback(() => {
-    setMaintenanceMode((prev) => {
-      const next = !prev;
-      localStorage.setItem("siri_admin_maintenance_mode", next ? "true" : "false");
+  const toggleMaintenanceMode = useCallback(async () => {
+    const next = !maintenanceMode;
+    setMaintenanceMode(next);
+    
+    try {
+      await cmsService.updateSection('admin_maintenance_mode', { maintenanceMode: next });
       logAdminAction("TOGGLE_MAINTENANCE", `Global storefront maintenance mode set to ${next}`);
       toast.success(`Maintenance mode is now ${next ? "ENABLED" : "DISABLED"}`);
-      return next;
-    });
-  }, [logAdminAction]);
+    } catch (err) {
+      console.error("Failed to update backend maintenance mode:", err);
+      // Revert on failure
+      setMaintenanceMode(!next);
+      toast.error("Failed to update maintenance mode on the backend database.");
+    }
+  }, [maintenanceMode, logAdminAction]);
+
+  const toggleAutoPublish = useCallback(async () => {
+    const next = !autoPublish;
+    setAutoPublish(next);
+    try {
+      await cmsService.updateSection('admin_auto_publish', { autoPublish: next });
+      logAdminAction("TOGGLE_AUTO_PUBLISH", `Global auto publish CMS setting set to ${next}`);
+      toast.success(`Auto-Publish mode is now ${next ? "ENABLED" : "DISABLED"}`);
+    } catch (err) {
+      console.error("Failed to update backend auto publish setting:", err);
+      setAutoPublish(!next);
+      toast.error("Failed to update auto publish in database");
+    }
+  }, [autoPublish, logAdminAction]);
 
   const changeActiveRole = useCallback((role) => {
     setActiveRole(role);
-    localStorage.setItem("siri_admin_active_role", role);
     logAdminAction("ROLE_SWITCH", `Switched active preview role to ${role.toUpperCase()}`);
     toast.success(`Simulating '${role.toUpperCase()}' mode permissions`);
   }, [logAdminAction]);
 
+  const changeIdleTimeout = useCallback(async (val) => {
+    setIdleTimeoutMinutes(val);
+    try {
+      await cmsService.updateSection('admin_idle_timeout', { idleTimeout: val });
+      logAdminAction("TIMEOUT_UPDATE", `Idle inactivity threshold updated to ${val} minutes`);
+      toast.success(`Inactivity limit set to ${val} minutes`);
+    } catch (err) {
+      console.error("Failed to save idle timeout to backend:", err);
+      toast.error("Failed to save timeout in database");
+    }
+  }, [logAdminAction]);
+
   // ─── Idle Inactivity Heartbeat Daemon ───
-  const lastActivityRef = useRef(Date.now());
+  const lastActivityRef = useRef(null);
   
   useEffect(() => {
+    lastActivityRef.current = Date.now();
     const handleActivity = () => {
       lastActivityRef.current = Date.now();
       if (showIdleWarning) {
@@ -338,18 +347,17 @@ export function AdminProvider({ children }) {
   }, [idleTimeoutMinutes, showIdleWarning, logout, logAdminAction]);
 
   // ─── Premium Dark Theme State ───
-  const [themeMode, setThemeMode] = useState(() => {
-    const saved = localStorage.getItem("siri_admin_theme_mode");
-    return saved || "dark"; // Default to dark mode!
-  });
+  const [themeMode, setThemeMode] = useState("dark");
 
-  const toggleTheme = useCallback(() => {
-    setThemeMode((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("siri_admin_theme_mode", next);
-      return next;
-    });
-  }, []);
+  const toggleTheme = useCallback(async () => {
+    const next = themeMode === "dark" ? "light" : "dark";
+    setThemeMode(next);
+    try {
+      await cmsService.updateSection('admin_theme_mode', { themeMode: next });
+    } catch (err) {
+      console.error("Failed to update theme mode in database:", err);
+    }
+  }, [themeMode]);
 
   // ─── Backend-Connected State ───
   const [products, setProducts] = useState([]);
@@ -365,10 +373,6 @@ export function AdminProvider({ children }) {
 
   // ─── Custom Categories & Themes State ───
   const [customCategories, setCustomCategories] = useState(loadCustomCategories);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(customCategories));
-  }, [customCategories]);
 
   const addCustomCategory = useCallback((type, data) => {
     if (activeRole === "viewer") {
@@ -391,6 +395,7 @@ export function AdminProvider({ children }) {
         description: data.description || ""
       };
       next[type] = [newCat, ...list];
+      cmsService.updateSection('custom_categories', next).catch(e => console.error("Failed to save category:", e));
       logAdminAction("ADD_CATEGORY", `Added new category/theme '${data.name}' to ${type}`);
       toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} added successfully!`);
       return next;
@@ -410,6 +415,7 @@ export function AdminProvider({ children }) {
       const next = { ...prev };
       const list = next[type] || [];
       next[type] = list.map(item => item.id === id ? { ...item, ...data } : item);
+      cmsService.updateSection('custom_categories', next).catch(e => console.error("Failed to save categories:", e));
       logAdminAction("UPDATE_CATEGORY", `Updated category/theme ID ${id}`);
       toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} updated!`);
       return next;
@@ -429,6 +435,7 @@ export function AdminProvider({ children }) {
       const next = { ...prev };
       const list = next[type] || [];
       next[type] = list.filter(item => item.id !== id);
+      cmsService.updateSection('custom_categories', next).catch(e => console.error("Failed to save categories:", e));
       logAdminAction("DELETE_CATEGORY", `Removed category/theme ID ${id}`);
       toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} removed.`);
       return next;
@@ -447,7 +454,7 @@ export function AdminProvider({ children }) {
     const fetchAdminData = async () => {
       setDataLoading(true);
       try {
-        const [productsRes, ordersRes, customersRes, reviewsRes, statsRes, eventsRes] =
+        const [productsRes, ordersRes, customersRes, reviewsRes, statsRes, eventsRes, auditLogsRes] =
           await Promise.allSettled([
             productService.getAll({ limit: 100 }),
             orderService.getAll({ limit: 50 }),
@@ -455,6 +462,7 @@ export function AdminProvider({ children }) {
             reviewService.getAll({ limit: 50 }),
             analyticsService.getDashboardStats(),
             eventService.getAll({ limit: 50 }),
+            analyticsService.getAuditLogs(),
           ]);
 
         if (productsRes.status === "fulfilled" && productsRes.value?.success) {
@@ -480,6 +488,19 @@ export function AdminProvider({ children }) {
           const list = evData?.data || evData?.items || (Array.isArray(evData) ? evData : []);
           setEventBookings(list.map(mapDbEventToFrontend));
         }
+        if (auditLogsRes.status === "fulfilled" && auditLogsRes.value?.success) {
+          const rawLogs = auditLogsRes.value.data || [];
+          setAuditLogs(rawLogs.map(log => ({
+            id: log._id || log.id,
+            actor: (log.actorRole || 'OWNER').toUpperCase(),
+            action: log.path || log.method,
+            details: log.method === 'CLIENT_ACTION' 
+              ? `Admin Triggered Action: ${log.path}` 
+              : `HTTP ${log.method || 'ACTION'} on ${log.path || ''} with status ${log.statusCode || 200}`,
+            timestamp: log.createdAt || new Date().toISOString(),
+            status: log.statusCode < 400 ? 'Success' : 'Failure'
+          })));
+        }
       } catch (err) {
         console.error("Failed to load admin data:", err);
       } finally {
@@ -496,28 +517,83 @@ export function AdminProvider({ children }) {
       try {
         const response = await cmsService.getPublished();
         if (response.success && response.data && Object.keys(response.data).length > 0) {
-          const merged = { ...initialWebsiteContent, ...response.data };
-          setWebsiteContent(merged);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          setWebsiteContent((prev) => {
+            const merged = { ...initialWebsiteContent, ...response.data };
+            if (response.data.hero) {
+              merged.hero = { ...initialWebsiteContent.hero, ...response.data.hero };
+            }
+            if (response.data.heroNavigationCards) {
+              merged.heroNavigationCards = { ...initialWebsiteContent.heroNavigationCards, ...response.data.heroNavigationCards };
+            }
+            // Preserve local unsaved draft sections (marked as 'modified')
+            Object.keys(prev).forEach((key) => {
+              if (prev[key]?.status === "modified") {
+                merged[key] = prev[key];
+              }
+            });
+            return merged;
+          });
+        }
+
+        // Fetch backend-backed admin safety lock state
+        const safetyLockRes = await cmsService.getSection('admin_safety_lock');
+        if (safetyLockRes && safetyLockRes.success && safetyLockRes.data) {
+          const isLocked = safetyLockRes.data.data?.safetyLock === true;
+          setSafetyLock(isLocked);
+        }
+
+        // Fetch backend-backed admin maintenance mode state
+        const maintenanceRes = await cmsService.getSection('admin_maintenance_mode');
+        if (maintenanceRes && maintenanceRes.success && maintenanceRes.data) {
+          const isMaintenance = maintenanceRes.data.data?.maintenanceMode === true;
+          setMaintenanceMode(isMaintenance);
+        }
+
+        // Fetch backend-backed admin idle timeout state
+        const idleRes = await cmsService.getSection('admin_idle_timeout');
+        if (idleRes && idleRes.success && idleRes.data) {
+          const val = idleRes.data.data?.idleTimeout;
+          if (val) setIdleTimeoutMinutes(parseInt(val));
+        }
+
+        // Fetch backend-backed admin theme mode state
+        const themeRes = await cmsService.getSection('admin_theme_mode');
+        if (themeRes && themeRes.success && themeRes.data) {
+          const val = themeRes.data.data?.themeMode;
+          if (val) setThemeMode(val);
+        }
+
+        // Fetch backend-backed admin auto publish state
+        const autoPublishRes = await cmsService.getSection('admin_auto_publish');
+        if (autoPublishRes && autoPublishRes.success && autoPublishRes.data) {
+          const isAutoPublish = autoPublishRes.data.data?.autoPublish === true;
+          setAutoPublish(isAutoPublish);
+        }
+
+        // Fetch custom categories state
+        const categoriesRes = await cmsService.getSection('custom_categories');
+        if (categoriesRes && categoriesRes.success && categoriesRes.data) {
+          const val = categoriesRes.data.data;
+          if (val && (val.products || val.events)) {
+            setCustomCategories(val);
+          }
         }
       } catch (err) {
-        console.warn("CMS API unavailable, using local data", err);
+        console.warn("CMS API unavailable", err);
       }
     };
     fetchCMS();
   }, []);
 
-  // Auto-save content to localStorage as draft
+  // Set last saved timestamp when content changes
   useEffect(() => {
     if (hasUnsavedContent) {
       const timer = setTimeout(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(websiteContent));
         setLastSaved(new Date());
-        setHasUnsavedContent(false);
-      }, 2000);
+      }, 0);
       return () => clearTimeout(timer);
     }
-  }, [websiteContent, hasUnsavedContent]);
+  }, [hasUnsavedContent]);
 
   const unreadNotifications = notifications.filter((n) => !n.read).length;
 
@@ -608,6 +684,34 @@ export function AdminProvider({ children }) {
     }
   }, [activeRole, safetyLock, logAdminAction]);
 
+  const updateOrderNotes = useCallback(async (orderId, notes) => {
+    if (activeRole === "viewer") {
+      toast.error("Viewer Role: Write operations are restricted!");
+      return;
+    }
+    if (safetyLock) {
+      toast.error("Safety Lock Active: Write operations are globally blocked!");
+      return;
+    }
+    try {
+      const res = await orderService.updateNotes(orderId, notes);
+      if (res.success) {
+        setOrders((prev) =>
+          prev.map((o) => {
+            if ((o.id || o._id) === orderId) {
+              return { ...o, notes };
+            }
+            return o;
+          })
+        );
+        logAdminAction("UPDATE_ORDER_NOTES", `Updated Order ID ${orderId} notes`);
+        toast.success("Order notes updated successfully");
+      }
+    } catch (err) {
+      toast.error("Failed to update order notes");
+    }
+  }, [activeRole, safetyLock, logAdminAction]);
+
   // ─── Review Actions (Backend-Connected) ───
   const approveReview = useCallback(async (reviewId) => {
     if (activeRole === "viewer") {
@@ -646,6 +750,32 @@ export function AdminProvider({ children }) {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }, []);
 
+  // Publish to BACKEND API
+  const publishContent = useCallback(async (section, customData = null) => {
+    try {
+      const sectionData = customData || websiteContent[section];
+      await cmsService.updateSection(section, sectionData);
+      
+      setWebsiteContent((prev) => {
+        const next = {
+          ...prev,
+          [section]: { ...prev[section], ...(customData || {}), status: "published" },
+        };
+        return next;
+      });
+      setLastSaved(new Date());
+      
+      // Clear/Refresh the hook global cache immediately!
+      await refreshWebsiteContent();
+      
+      setPublishToast(`${section} published successfully!`);
+      toast.success(`${section} published successfully!`);
+      setTimeout(() => setPublishToast(null), 3000);
+    } catch (err) {
+      toast.error(`Failed to publish ${section}`);
+    }
+  }, [websiteContent]);
+
   // ─── Website Content Actions (Backend-Connected) ───
   const updateContent = useCallback((section, data) => {
     setWebsiteContent((prev) => {
@@ -658,9 +788,18 @@ export function AdminProvider({ children }) {
         { timestamp: new Date(), section, change: data },
       ]);
       setHasUnsavedContent(true);
+
+      // Auto-publish support
+      if (autoPublish) {
+        const publishData = { ...prev[section], ...data, status: "published" };
+        Promise.resolve().then(() => {
+          publishContent(section, publishData);
+        });
+      }
+
       return newContent;
     });
-  }, []);
+  }, [autoPublish, publishContent]);
 
   const updateNestedContent = useCallback((section, path, value) => {
     setWebsiteContent((prev) => {
@@ -673,32 +812,19 @@ export function AdminProvider({ children }) {
       obj[keys[keys.length - 1]] = value;
       newContent[section].status = "modified";
       setHasUnsavedContent(true);
+
+      // Auto-publish support
+      if (autoPublish) {
+        const publishData = structuredClone(newContent[section]);
+        publishData.status = "published";
+        Promise.resolve().then(() => {
+          publishContent(section, publishData);
+        });
+      }
+
       return newContent;
     });
-  }, []);
-
-  // Publish to BACKEND API
-  const publishContent = useCallback(async (section) => {
-    try {
-      const sectionData = websiteContent[section];
-      await cmsService.updateSection(section, sectionData);
-      
-      setWebsiteContent((prev) => {
-        const next = {
-          ...prev,
-          [section]: { ...prev[section], status: "published" },
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        return next;
-      });
-      setLastSaved(new Date());
-      setPublishToast(`${section} published successfully!`);
-      toast.success(`${section} published successfully!`);
-      setTimeout(() => setPublishToast(null), 3000);
-    } catch (err) {
-      toast.error(`Failed to publish ${section}`);
-    }
-  }, [websiteContent]);
+  }, [autoPublish, publishContent]);
 
   // Publish ALL to BACKEND API (parallel with error reporting)
   const publishAllContent = useCallback(async () => {
@@ -729,11 +855,13 @@ export function AdminProvider({ children }) {
             updated[key].status = "published";
           }
         });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         return updated;
       });
       setLastSaved(new Date());
       
+      // Clear/Refresh the hook global cache immediately!
+      await refreshWebsiteContent();
+
       if (failedSections.length > 0) {
         toast.error(`Failed to publish: ${failedSections.join(", ")}`);
       } else {
@@ -756,7 +884,6 @@ export function AdminProvider({ children }) {
 
   const resetAllContent = useCallback(() => {
     setWebsiteContent(initialWebsiteContent);
-    localStorage.removeItem(STORAGE_KEY);
     setLastSaved(null);
     setHasUnsavedContent(false);
   }, []);
@@ -847,6 +974,7 @@ export function AdminProvider({ children }) {
         // Orders
         orders,
         updateOrderStatus,
+        updateOrderNotes,
         refreshOrders,
         // Customers
         customers,
@@ -897,12 +1025,16 @@ export function AdminProvider({ children }) {
         toggleMaintenanceMode,
         idleTimeoutMinutes,
         setIdleTimeoutMinutes,
+        changeIdleTimeout,
         auditLogs,
         logAdminAction,
         clearAuditLogs,
         showIdleWarning,
         setShowIdleWarning,
         idleSecondsLeft,
+        // Auto-Publish
+        autoPublish,
+        toggleAutoPublish,
       }}
     >
       {children}

@@ -20,6 +20,7 @@ export function ProductDetails() {
   const atcRef = useRef(null);
   const { user } = useAuth();
 
+
   const { data: product, loading, error, request: fetchProduct } = useApi(productService.getById);
 
   useEffect(() => {
@@ -68,17 +69,19 @@ export function ProductDetails() {
 
   if (loading) {
     return (
-      <div className="bg-surface min-h-screen pt-24 pb-20 md:pt-32">
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
-          {/* Breadcrumbs Skeleton */}
-          <div className="flex gap-2 items-center mb-10">
+      <div className="bg-surface min-h-screen pb-20 md:pt-32">
+        {/* Desktop Breadcrumbs Skeleton */}
+        <div className="hidden md:block pt-32 pb-10 max-w-max-width mx-auto px-margin-desktop">
+          <div className="flex gap-2 items-center">
             <Skeleton className="h-3 w-16" />
             <span className="text-on-surface-variant/20 text-xs">/</span>
             <Skeleton className="h-3 w-28" />
             <span className="text-on-surface-variant/20 text-xs">/</span>
             <Skeleton className="h-3 w-24" />
           </div>
+        </div>
 
+        <div className="pt-[68px] md:pt-0 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
             {/* Gallery Skeleton */}
             <div className="flex flex-col gap-4">
@@ -162,8 +165,9 @@ export function ProductDetails() {
         />
       </div>
 
-      <div className="pt-24 pb-6 md:pt-32 md:pb-10 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
-        <nav className="flex items-center gap-3 font-label text-[10px] md:text-[12px] uppercase tracking-[0.3em] text-on-surface-variant/40 font-bold overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
+      {/* Desktop Breadcrumbs */}
+      <div className="hidden md:block pt-32 pb-10 max-w-max-width mx-auto px-margin-desktop relative z-10">
+        <nav className="flex items-center gap-3 font-label text-[12px] uppercase tracking-[0.3em] text-on-surface-variant/40 font-bold overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
           <Link to="/" className="hover:text-primary transition-colors">
             Studio
           </Link>
@@ -175,13 +179,13 @@ export function ProductDetails() {
             Heritage Collections
           </Link>
           <span className="opacity-30">/</span>
-          <span className="text-on-surface font-bold truncate max-w-[120px] sm:max-w-none">
+          <span className="text-on-surface font-bold truncate">
             {product.title}
           </span>
         </nav>
       </div>
 
-      <section className="pb-12 md:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
+      <section className="pt-[68px] md:pt-0 pb-12 md:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
           <ProductGallery
             images={product.images || [product.imageSrc].filter(Boolean)}

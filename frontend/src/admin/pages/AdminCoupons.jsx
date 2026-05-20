@@ -37,7 +37,10 @@ export function AdminCoupons() {
   };
 
   useEffect(() => {
-    fetchCoupons();
+    const timer = setTimeout(() => {
+      fetchCoupons();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleToggleActive = async (id, currentStatus) => {

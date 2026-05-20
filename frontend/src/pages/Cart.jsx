@@ -157,18 +157,7 @@ export function Cart() {
     triggerNotification(`Moved "${item.title}" to Wishlist`);
   };
 
-  // Persist Saved for Later items
-  React.useEffect(() => {
-    const saved = localStorage.getItem("siri_arts_saved_later");
-    if (saved) setSavedForLater(JSON.parse(saved));
-  }, []);
-
-  React.useEffect(() => {
-    localStorage.setItem(
-      "siri_arts_saved_later",
-      JSON.stringify(savedForLater),
-    );
-  }, [savedForLater]);
+  // Saved for Later items are kept in-memory only to comply with database-only source of truth
 
   return (
     <motion.div
@@ -249,29 +238,31 @@ export function Cart() {
               className="-top-20 -left-20 opacity-[0.02]"
             />
 
-            <span className="material-symbols-outlined text-6xl text-outline-variant mb-4 block animate-pulse">
-              shopping_bag
-            </span>
-            <h2 className="font-display text-xl font-bold text-on-surface mb-2">
+            {/* Minimalist Premium Icon Container */}
+            <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 mx-auto relative">
+              <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
+              <span className="material-symbols-outlined text-primary text-[30px] relative z-10">
+                shopping_bag
+              </span>
+            </div>
+
+            <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
               Hey, it feels too light!
             </h2>
-            <p className="text-xs text-secondary mb-8">
+            <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-8">
               There is nothing in your bag. Let's add some custom crafted items.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full sm:w-auto"
+            <div className="flex justify-center">
+              <Link
+                to="/collections"
+                className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
               >
-                <Link
-                  to="/collections"
-                  className="w-full bg-on-surface-variant text-surface px-8 py-3 rounded text-xs uppercase tracking-widest font-semibold hover:bg-primary transition-colors block text-center"
-                >
-                  Continue Shopping
-                </Link>
-              </motion.div>
+                <span>Continue Shopping</span>
+                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
+                  arrow_forward
+                </span>
+              </Link>
             </div>
           </motion.div>
         ) : (

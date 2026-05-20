@@ -63,7 +63,10 @@ export function AdminOrderDetail() {
   
   React.useEffect(() => {
     if (order && order.rawOrder) {
-      setSettlementCharges(order.rawOrder.courierCharges || 150);
+      const timer = setTimeout(() => {
+        setSettlementCharges(order.rawOrder.courierCharges || 150);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [order]);
 

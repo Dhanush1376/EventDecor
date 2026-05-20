@@ -54,7 +54,6 @@ process.on('unhandledRejection', (reason: any) => {
   handleFatalError(error, 'unhandledRejection');
 });
 import { initJobs } from './src/jobs/cronJobs';
-import { seedDefaultTemplates } from './src/services/notificationService';
 
 const PORT = process.env.PORT || 5000;
 
@@ -62,9 +61,6 @@ const startServer = async () => {
   try {
     // 1. Connect to Database
     await connectDB();
-
-    // Seed default email templates
-    await seedDefaultTemplates();
 
     // 2. Initialize Background Jobs
     initJobs();

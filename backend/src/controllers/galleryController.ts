@@ -60,9 +60,19 @@ export const updateGalleryItem = asyncHandler(async (req: Request, res: Response
 });
 
 export const deleteGalleryItem = asyncHandler(async (req: Request, res: Response) => {
-  const item = await Gallery.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+  const item = await Gallery.findById(req.params.id);
   if (!item) throw new ApiError(404, 'Gallery item not found');
-  res.status(200).json(new ApiResponse(true, 'Gallery item deactivated', item));
+
+  await Gallery.findByIdAndDelete(req.params.id);
+
+  if (item.image) {
+    const publicId = extractPublicId(item.image);
+    if (publicId) {
+      deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up gallery image: ${err}`));
+    }
+  }
+
+  res.status(200).json(new ApiResponse(true, 'Gallery item completely deleted successfully', item));
 });
 
 export const likeGalleryItem = asyncHandler(async (req: Request, res: Response) => {

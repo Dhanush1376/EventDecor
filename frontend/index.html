@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="color-scheme: only light; background-color: #faf9f6;">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -15,6 +15,7 @@
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
+    <meta name="color-scheme" content="only light" />
     <meta name="theme-color" content="#fbf9f6" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -64,6 +65,16 @@
 
     <!-- Critical CSS: Prevent FOUC -->
     <style>
+      /* Force light-only rendering on all browsers — prevents auto dark inversion */
+      html {
+        color-scheme: only light !important;
+        background-color: #faf9f6 !important;
+      }
+      body {
+        background-color: #faf9f6;
+        color: #000000;
+      }
+
       /* Prevent FOUC for Material icons */
       .material-symbols-outlined {
         font-family: 'Material Symbols Outlined';

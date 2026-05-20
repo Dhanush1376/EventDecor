@@ -33,11 +33,7 @@ export function EventCustomerDashboard() {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentNote, setPaymentNote] = useState("Milestone Deposit");
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
-  const fetchBookings = async () => {
+  async function fetchBookings() {
     setLoading(true);
     try {
       const res = await bookingService.getMyBookings();
@@ -55,7 +51,14 @@ export function EventCustomerDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchBookings();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Scroll chat to bottom when workspace changes or chat updates

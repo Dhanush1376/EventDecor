@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { productCategories } from "../data/adminData";
 import { productService, uploadService } from "../../services/domainServices";
+import { useAdmin } from "../context/AdminContext";
 import { ImageUpload } from "../components/ImageUpload";
 import toast from "react-hot-toast";
 import { AdminToggle } from "../components/AdminUIKit";
@@ -26,6 +27,7 @@ const WIZARD_STEPS = [
 export function AdminAddProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { refreshProducts } = useAdmin();
   const isEditMode = Boolean(id);
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -244,61 +246,21 @@ export function AdminAddProduct() {
         }
       };
       fetchProduct();
-    } else {
-      // Restore draft in create mode
-      const savedDraft = localStorage.getItem("siri_arts_add_product_draft");
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft);
-          setFormData((prev) => ({ ...prev, ...parsed }));
-          toast.success("Restored unsaved draft!");
-        } catch (e) {
-          console.error("Failed to restore draft", e);
-        }
-      }
     }
   }, [id, isEditMode]);
 
-  // Auto-save status tracking
+  // Auto-save status tracking (in-memory only)
   const [lastDraftSaved, setLastDraftSaved] = useState(null);
 
-  // Local Autosave (only in create mode)
+  // Local Autosave (in-memory only)
   useEffect(() => {
     if (!isEditMode && formData.title) {
       const timeoutId = setTimeout(() => {
-        localStorage.setItem("siri_arts_add_product_draft", JSON.stringify(formData));
         setLastDraftSaved(new Date());
       }, 1500);
       return () => clearTimeout(timeoutId);
     }
   }, [formData, isEditMode]);
-
-  // Keyboard Navigation: Alt + ArrowRight/Left, Ctrl+S to save, Escape to go back
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.altKey && e.key === "ArrowRight") {
-        e.preventDefault();
-        handleNext();
-      }
-      if (e.altKey && e.key === "ArrowLeft") {
-        e.preventDefault();
-        handlePrev();
-      }
-      // Ctrl+S / Cmd+S to save draft
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-        e.preventDefault();
-        localStorage.setItem("siri_arts_add_product_draft", JSON.stringify(formData));
-        setLastDraftSaved(new Date());
-        toast.success("Draft saved!", { duration: 1500 });
-      }
-      // Escape to go back
-      if (e.key === "Escape" && !showAIHUD) {
-        navigate("/admin/products");
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentStep, formData, showAIHUD]);
 
   // Form Validation per step
   const getStepErrors = () => {
@@ -338,6 +300,32 @@ export function AdminAddProduct() {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  // Keyboard Navigation: Alt + ArrowRight/Left, Ctrl+S to save, Escape to go back
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.altKey && e.key === "ArrowRight") {
+        e.preventDefault();
+        handleNext();
+      }
+      if (e.altKey && e.key === "ArrowLeft") {
+        e.preventDefault();
+        handlePrev();
+      }
+      // Ctrl+S / Cmd+S to save draft
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        setLastDraftSaved(new Date());
+        toast.success("Draft saved (in-memory)!", { duration: 1500 });
+      }
+      // Escape to go back
+      if (e.key === "Escape" && !showAIHUD) {
+        navigate("/admin/products");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentStep, formData, showAIHUD]);
 
   // Image Helper Actions
   const swapPrimaryImage = (index) => {
@@ -415,7 +403,13 @@ export function AdminAddProduct() {
 
       if (res.success) {
         toast.success(isEditMode ? "Product updated successfully" : "Product published successfully");
-        localStorage.removeItem("siri_arts_add_product_draft");
+        if (refreshProducts) {
+          try {
+            await refreshProducts();
+          } catch (err) {
+            console.error("Failed to refresh products state", err);
+          }
+        }
         navigate("/admin/products");
       }
     } catch (err) {
@@ -665,7 +659,7 @@ export function AdminAddProduct() {
                         <input 
                           type="file" 
                           multiple 
-                          accept="image/*"
+                          accept="image/*,.heic,.heif"
                           onChange={async (e) => {
                             const files = Array.from(e.target.files);
                             if(files.length === 0) return;

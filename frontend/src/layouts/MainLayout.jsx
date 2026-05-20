@@ -77,7 +77,7 @@ export function MainLayout() {
 
       <TopNavbar />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-      <main id="main-content" className="flex-1 relative pb-28 lg:pb-0" tabIndex={-1}>
+      <main id="main-content" className="flex-1 relative pb-0" tabIndex={-1}>
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>
@@ -117,6 +117,7 @@ export function MinimalLayout() {
       <main id="main-content" className="flex-1" tabIndex={-1}>
         <Outlet />
       </main>
+      <Footer />
     </div>
   );
 }

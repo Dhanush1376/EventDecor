@@ -38,9 +38,12 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
   // Focus input when opened
   useEffect(() => {
     if (isOpen) {
-      setQuery("");
-      setActiveIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      const timer = setTimeout(() => {
+        setQuery("");
+        setActiveIndex(0);
+        inputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -57,113 +60,122 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
 
   // Perform search across all available domains in the admin provider
   useEffect(() => {
-    if (!query.trim()) {
-      // Default / empty state: suggest navigations
-      setResults(NAV_ITEMS.slice(0, 7));
-      setActiveIndex(0);
-      return;
-    }
-
-    const q = query.toLowerCase().trim();
-    const matches = [];
-
-    // 1. Navigation Paths Match
-    NAV_ITEMS.forEach(nav => {
-      if (
-        nav.label.toLowerCase().includes(q) ||
-        nav.keywords.toLowerCase().includes(q)
-      ) {
-        matches.push({ ...nav, id: `nav-${nav.path}` });
+    let active = true;
+    const timer = setTimeout(() => {
+      if (!active) return;
+      if (!query.trim()) {
+        // Default / empty state: suggest navigations
+        setResults(NAV_ITEMS.slice(0, 7));
+        setActiveIndex(0);
+        return;
       }
-    });
 
-    // 2. Product Search Match
-    if (products) {
-      products.forEach(p => {
+      const q = query.toLowerCase().trim();
+      const matches = [];
+
+      // 1. Navigation Paths Match
+      NAV_ITEMS.forEach(nav => {
         if (
-          p.name.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          p.id.toLowerCase().includes(q)
+          nav.label.toLowerCase().includes(q) ||
+          nav.keywords.toLowerCase().includes(q)
         ) {
-          matches.push({
-            id: `prod-${p.id}`,
-            label: p.name,
-            sub: `Product • Category: ${p.category} • Price: ₹${p.price.toLocaleString()} • Stock: ${p.stock}`,
-            category: "Products",
-            icon: "inventory_2",
-            path: `/admin/products`,
-            action: () => {
-              // Set context search query to highlight or filter
-              setSearchQuery(p.name);
-              navigate("/admin/products");
-            }
-          });
+          matches.push({ ...nav, id: `nav-${nav.path}` });
         }
       });
-    }
 
-    // 3. Sales Orders Match
-    if (orders) {
-      orders.forEach(o => {
-        if (
-          o.id.toLowerCase().includes(q) ||
-          o.customer.toLowerCase().includes(q) ||
-          (o.email && o.email.toLowerCase().includes(q))
-        ) {
-          matches.push({
-            id: `ord-${o.id}`,
-            label: `Order #${o.id.substring(o.id.length - 8).toUpperCase()}`,
-            sub: `Order • Customer: ${o.customer} • Total: ₹${o.total.toLocaleString()} • Status: ${o.status}`,
-            category: "Orders",
-            icon: "shopping_bag",
-            path: `/admin/orders/${o.id}`,
-          });
-        }
-      });
-    }
+      // 2. Product Search Match
+      if (products) {
+        products.forEach(p => {
+          if (
+            p.name.toLowerCase().includes(q) ||
+            p.category.toLowerCase().includes(q) ||
+            p.id.toLowerCase().includes(q)
+          ) {
+            matches.push({
+              id: `prod-${p.id}`,
+              label: p.name,
+              sub: `Product • Category: ${p.category} • Price: ₹${p.price.toLocaleString()} • Stock: ${p.stock}`,
+              category: "Products",
+              icon: "inventory_2",
+              path: `/admin/products`,
+              action: () => {
+                // Set context search query to highlight or filter
+                setSearchQuery(p.name);
+                navigate("/admin/products");
+              }
+            });
+          }
+        });
+      }
 
-    // 4. Clients / Customers Match
-    if (customers) {
-      customers.forEach(c => {
-        if (
-          c.name.toLowerCase().includes(q) ||
-          c.email.toLowerCase().includes(q) ||
-          c.phone.toLowerCase().includes(q)
-        ) {
-          matches.push({
-            id: `cus-${c.id}`,
-            label: c.name,
-            sub: `CRM Customer • ${c.email} • City: ${c.city} • Tier: ${c.segment}`,
-            category: "Customers",
-            icon: "group",
-            path: `/admin/customers/${c.id}`,
-          });
-        }
-      });
-    }
+      // 3. Sales Orders Match
+      if (orders) {
+        orders.forEach(o => {
+          if (
+            o.id.toLowerCase().includes(q) ||
+            o.customer.toLowerCase().includes(q) ||
+            (o.email && o.email.toLowerCase().includes(q))
+          ) {
+            matches.push({
+              id: `ord-${o.id}`,
+              label: `Order #${o.id.substring(o.id.length - 8).toUpperCase()}`,
+              sub: `Order • Customer: ${o.customer} • Total: ₹${o.total.toLocaleString()} • Status: ${o.status}`,
+              category: "Orders",
+              icon: "shopping_bag",
+              path: `/admin/orders/${o.id}`,
+            });
+          }
+        });
+      }
 
-    // 5. Event Bookings Match
-    if (eventBookings) {
-      eventBookings.forEach(e => {
-        if (
-          e.eventType.toLowerCase().includes(q) ||
-          e.customer.toLowerCase().includes(q) ||
-          (e.venue && e.venue.toLowerCase().includes(q))
-        ) {
-          matches.push({
-            id: `evt-${e.id}`,
-            label: e.eventType,
-            sub: `Event Setup • Client: ${e.customer} • Venue: ${e.venue} • Status: ${e.status}`,
-            category: "Events",
-            icon: "celebration",
-            path: `/admin/events`,
-          });
-        }
-      });
-    }
+      // 4. Clients / Customers Match
+      if (customers) {
+        customers.forEach(c => {
+          if (
+            c.name.toLowerCase().includes(q) ||
+            c.email.toLowerCase().includes(q) ||
+            c.phone.toLowerCase().includes(q)
+          ) {
+            matches.push({
+              id: `cus-${c.id}`,
+              label: c.name,
+              sub: `CRM Customer • ${c.email} • City: ${c.city} • Tier: ${c.segment}`,
+              category: "Customers",
+              icon: "group",
+              path: `/admin/customers/${c.id}`,
+            });
+          }
+        });
+      }
 
-    setResults(matches.slice(0, 15)); // Limit to top 15 results for performance
-    setActiveIndex(0);
+      // 5. Event Bookings Match
+      if (eventBookings) {
+        eventBookings.forEach(e => {
+          if (
+            e.eventType.toLowerCase().includes(q) ||
+            e.customer.toLowerCase().includes(q) ||
+            (e.venue && e.venue.toLowerCase().includes(q))
+          ) {
+            matches.push({
+              id: `evt-${e.id}`,
+              label: e.eventType,
+              sub: `Event Setup • Client: ${e.customer} • Venue: ${e.venue} • Status: ${e.status}`,
+              category: "Events",
+              icon: "celebration",
+              path: `/admin/events`,
+            });
+          }
+        });
+      }
+
+      setResults(matches.slice(0, 15)); // Limit to top 15 results for performance
+      setActiveIndex(0);
+    }, 0);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [query, products, orders, customers, eventBookings, navigate, setSearchQuery]);
 
   // Scroll active item into view inside the command list

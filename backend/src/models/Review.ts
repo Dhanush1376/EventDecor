@@ -12,9 +12,11 @@ export interface IReview extends Document {
   eventType?: string;
   favoriteElement?: string;
   helpfulCount: number;
+  helpfulBy?: mongoose.Types.ObjectId[];
   category: 'showcase' | 'event' | 'product';
   verified: boolean;
   createdAt: Date;
+  isMock?: boolean;
 }
 
 const ReviewSchema: Schema = new Schema(
@@ -34,12 +36,14 @@ const ReviewSchema: Schema = new Schema(
     eventType: { type: String, default: 'Traditional Celebration' },
     favoriteElement: { type: String },
     helpfulCount: { type: Number, default: 0 },
+    helpfulBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     category: {
       type: String,
       enum: ['showcase', 'event', 'product'],
       default: 'product',
     },
     verified: { type: Boolean, default: true },
+    isMock: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

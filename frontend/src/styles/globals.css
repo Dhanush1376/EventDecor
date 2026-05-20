@@ -1,6 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap");
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: only light;
+}
+
+.admin-section-root.dark {
+  color-scheme: dark;
+}
+
+
 
 
 @theme {
@@ -65,6 +76,7 @@
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
+    overflow-x: clip;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -119,8 +131,13 @@
   }
 
   /* Accessibility Focus Rings */
-  :focus {
-    outline: 2px solid transparent;
+  :focus,
+  [tabindex]:focus,
+  div:focus,
+  span:focus,
+  a:focus,
+  button:focus {
+    outline: none !important;
   }
 
   :focus-visible,
@@ -141,10 +158,10 @@
     touch-action: manipulation;
   }
 
-  button,
-  [role="button"],
-  input[type="button"],
-  input[type="submit"] {
+  button:not(.min-h-0),
+  [role="button"]:not(.min-h-0),
+  input[type="button"]:not(.min-h-0),
+  input[type="submit"]:not(.min-h-0) {
     min-height: 40px;
   }
 
@@ -172,6 +189,7 @@
   input.border-transparent:focus,
   input.bg-transparent:focus {
     border-color: transparent !important;
+    box-shadow: none !important;
   }
 
   /* Material Symbols Global Fix */
@@ -258,7 +276,7 @@
   }
 
   .card-hover {
-    @apply transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(115,92,0,0.08)];
+    @apply transition-all duration-500 ease-out hover:-translate-y-2;
   }
 
   .btn-primary {
@@ -309,6 +327,14 @@
     box-shadow:
       0 30px 60px -12px rgba(115, 92, 0, 0.08),
       0 18px 36px -18px rgba(115, 92, 0, 0.1);
+  }
+
+  .hover-lift-glow {
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+  .hover-lift-glow:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: none !important;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
