@@ -6,6 +6,7 @@ import { MandalaArtDecor } from "../ui/MandalaArtDecor";
 import { useWindowHeight } from "../../hooks/useWindowHeight";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
+import { HeroSkeleton } from "../ui/Skeleton";
 
 export function HeroSection() {
   const windowHeight = useWindowHeight();
@@ -18,16 +19,10 @@ export function HeroSection() {
     return () => window.removeEventListener("resize", check);
   }, []);
   
-  const { hero, heroNavigationCards } = useWebsiteContent();
-
-  const fallbackCards = [
-    { id: 1, title: "Wedding Essentials", image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2074&auto=format&fit=crop", link: "/collections", icon: "storefront", isVisible: true },
-    { id: 2, title: "Premium Events", image: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop", link: "/events", icon: "celebration", isVisible: true },
-    { id: 3, title: "Our Gallery", image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop", link: "/gallery", icon: "photo_library", isVisible: true }
-  ];
+  const { hero, heroNavigationCards, loading } = useWebsiteContent();
 
   const cmsCards = heroNavigationCards?.items?.filter(item => item.isVisible !== false) || [];
-  const displayCards = (cmsCards.length >= 3 ? cmsCards : fallbackCards).map((item, idx) => ({
+  const displayCards = cmsCards.map((item, idx) => ({
     id: String(idx + 1).padStart(2, "0"),
     title: item.title,
     image: item.image,
@@ -146,16 +141,11 @@ export function HeroSection() {
     }
   }, [isMobile]);
 
-  useEffect(() => {
-    if (!isMobile || displayCards.length <= 1) return;
-    const interval = setInterval(() => {
-      const nextDOM = activeDOMIndexRef.current + 1;
-      scrollToDOMIndex(nextDOM);
-    }, 3800);
-    return () => clearInterval(interval);
-  }, [isMobile, displayCards.length]);
+  // Removed automatic scrolling interval per user request to prevent auto-scrolling
+
 
   if (!hero?.isVisible) return null;
+  if (loading) return <HeroSkeleton />;
 
   /* ─────────── MOBILE — Immersive full-bleed static blurred hero ─────────── */
   if (isMobile) {
@@ -336,12 +326,6 @@ export function HeroSection() {
                 >
                   <Link
                     to={card.link}
-                    onClick={(e) => {
-                      if (!isActive) {
-                        e.preventDefault();
-                        scrollToDOMIndex(index);
-                      }
-                    }}
                     className={`relative w-20 h-20 rounded-full border-[3px] shadow-[0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-500 flex items-center justify-center overflow-hidden ${
                       isActive 
                         ? "border-[#d4af37] scale-110 shadow-[0_8px_24px_rgba(212,175,55,0.25)] ring-4 ring-[#d4af37]/15" 
@@ -499,7 +483,7 @@ export function HeroSection() {
             width={800}
             height={600}
           />
-          <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent rounded-[43px] pointer-events-none"></div>
 
 
           {/* Floating Glass Card */}

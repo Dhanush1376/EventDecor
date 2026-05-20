@@ -57,11 +57,11 @@ export function Experience({ handleImageError }) {
           <img
             onError={handleImageError}
             src={eventTypes[0].image}
-            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            className="w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-105"
             alt="Events"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-500" />
+          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-500 rounded-[inherit]" />
           <div className="absolute bottom-12 left-12 text-white">
             <span className="font-label text-[10px] uppercase tracking-widest text-white/90 font-bold mb-4 block">
               {eventTypes[0].subtitle}
@@ -74,11 +74,11 @@ export function Experience({ handleImageError }) {
             <img
               onError={handleImageError}
               src={eventTypes[1].image}
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              className="w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-105"
               alt="Events"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-500" />
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-500 rounded-[inherit]" />
             <div className="absolute bottom-10 left-10 text-white">
               <span className="font-label text-[10px] uppercase tracking-widest text-white/90 font-bold mb-2 block">
                 {eventTypes[1].subtitle}
@@ -92,11 +92,11 @@ export function Experience({ handleImageError }) {
             <img
               onError={handleImageError}
               src={eventTypes[2].image}
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              className="w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-105"
               alt="Events"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-500" />
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-500 rounded-[inherit]" />
             <div className="absolute bottom-10 left-10 text-white">
               <span className="font-label text-[10px] uppercase tracking-widest text-white/90 font-bold mb-2 block">
                 {eventTypes[2].subtitle}

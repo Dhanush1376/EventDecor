@@ -108,11 +108,11 @@ export function Specializations({ handleImageError }) {
             <img
               src={spec.image}
               onError={handleImageError}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+              className="absolute inset-0 w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-110"
               alt={spec.title}
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500 rounded-[inherit]" />
 
             <div className="absolute inset-0 p-10 flex flex-col justify-end text-white">
               <span className="material-symbols-outlined text-[32px] mb-4 text-primary opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500">

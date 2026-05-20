@@ -8,6 +8,7 @@ import { handleImageError } from "../utils/imageUtils";
 import { useAuth } from "../context/AuthContext";
 import { orderService, userService } from "../services/domainServices";
 import { MandalaElement } from "../components/ui/MandalaElement";
+import { WriteReviewModal } from "../components/sections/ProductReviews";
 import toast from "react-hot-toast";
 import Barcode from "react-barcode";
 import { QRCodeSVG } from "qrcode.react";
@@ -68,6 +69,7 @@ export function Dashboard() {
   const [addressFormData, setAddressFormData] = useState(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
+  const [reviewingProduct, setReviewingProduct] = useState(null);
   const [isAddressSaving, setIsAddressSaving] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
@@ -1277,6 +1279,18 @@ export function Dashboard() {
                                       <strong className="text-xs text-primary block mt-1">
                                         ₹{(prodPrice * (item.quantity || 1)).toLocaleString()}
                                       </strong>
+                                      {order.orderStatus === "Delivered" && (
+                                        <button
+                                          onClick={() => setReviewingProduct({
+                                            productId: item.productId?._id || item.productId,
+                                            productTitle: prodTitle
+                                          })}
+                                          className="mt-2 text-[10px] text-primary hover:text-primary-dark font-bold uppercase tracking-widest flex items-center gap-1 transition-colors"
+                                        >
+                                          <span className="material-symbols-outlined text-[13px]">rate_review</span>
+                                          Write a Review
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
                                 );
@@ -1961,6 +1975,16 @@ export function Dashboard() {
       </AnimatePresence>
 
       <AnimatePresence>
+        {reviewingProduct && (
+          <WriteReviewModal
+            productId={reviewingProduct.productId}
+            productTitle={reviewingProduct.productTitle}
+            onClose={() => setReviewingProduct(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {selectedInvoiceOrder && (
           <>
             {/* Backdrop */}
@@ -1977,32 +2001,50 @@ export function Dashboard() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-3xl w-full md:h-[90vh] bg-white rounded-2xl shadow-2xl z-[101] overflow-y-auto no-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
+              className="invoice-modal-container fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-3xl w-full md:h-[90vh] bg-white rounded-2xl shadow-2xl z-[101] overflow-y-auto no-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
             >
               {/* PRINT STYLE SHEET DETACHED AND ISOLATED */}
               <style type="text/css" media="print">
                 {`
-                  @page { size: A4 portrait; margin: 15mm; }
+                  @page { size: A4 portrait; margin: 10mm; }
+                  html, body { 
+                    height: 100vh !important; 
+                    overflow: hidden !important; 
+                    margin: 0 !important; 
+                    padding: 0 !important;
+                  }
                   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white !important; }
                   body * {
                     visibility: hidden !important;
+                  }
+                  .invoice-modal-container {
+                    position: fixed !important;
+                    left: 0 !important;
+                    top: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    transform: none !important;
+                    overflow: hidden !important;
+                    background: transparent !important;
+                    box-shadow: none !important;
                   }
                   .print-invoice-area, .print-invoice-area * {
                     visibility: visible !important;
                   }
                   .print-invoice-area {
-                    display: block !important;
                     position: absolute !important;
                     left: 0 !important;
                     top: 0 !important;
                     width: 100% !important;
+                    height: 100% !important;
                     padding: 0 !important;
                     margin: 0 !important;
                     box-shadow: none !important;
                     border: none !important;
                     background: white !important;
+                    overflow: hidden !important;
                   }
-                  .no-print {
+                  .no-print, .no-print * {
                     display: none !important;
                   }
                 `}

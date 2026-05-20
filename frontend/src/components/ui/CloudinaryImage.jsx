@@ -32,7 +32,7 @@ export function CloudinaryImage({
       {/* Blurred Placeholder */}
       {isCloudinary && !isLoaded && (
         <div 
-          className="absolute inset-0 bg-cover bg-center blur-2xl scale-110 transition-opacity duration-1000"
+          className="absolute inset-0 bg-cover bg-center blur-2xl scale-110 rounded-[inherit] transition-opacity duration-1000"
           style={{ backgroundImage: `url(${placeholderUrl})` }}
         />
       )}
@@ -47,7 +47,7 @@ export function CloudinaryImage({
         fetchPriority={fetchPriority}
         onLoad={() => setIsLoaded(true)}
         onError={handleImageError}
-        className={`w-full h-full object-cover transition-all duration-1000 ease-out ${className} ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
+        className={`w-full h-full object-cover rounded-[inherit] transition-all duration-1000 ease-out ${className} ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
         {...props}
       />
     </div>

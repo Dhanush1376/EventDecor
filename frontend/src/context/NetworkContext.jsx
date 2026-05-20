@@ -14,10 +14,11 @@ export const useNetwork = () => {
 };
 
 export function NetworkProvider({ children }) {
-  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [networkState, setNetworkState] = useState(() => navigator.onLine ? 'online' : 'reconnecting');
   const [latency, setLatency] = useState(0);
   const [connectionQuality, setConnectionQuality] = useState(() => (navigator.onLine ? "good" : "offline"));
   const [isSyncing, setIsSyncing] = useState(false);
+  const failedPingsRef = useRef(0);
   
   // Initialize queue from localStorage
   const [pendingQueue, setPendingQueue] = useState(() => {
@@ -34,8 +35,8 @@ export function NetworkProvider({ children }) {
 
   // Keep window online status synchronized for Axios interceptor
   useEffect(() => {
-    window.__isOffline = !isOnline;
-  }, [isOnline]);
+    window.__networkState = networkState;
+  }, [networkState]);
 
   // Network Information API tracking if available
   useEffect(() => {
@@ -62,100 +63,74 @@ export function NetworkProvider({ children }) {
     };
   }, []);
 
-  // Detailed reachability check (ping favicon or public URL to confirm true internet)
+  // Detailed reachability check via API health endpoint
   const checkConnection = useCallback(async () => {
-    if (!navigator.onLine) {
-      setIsOnline(false);
-      setConnectionQuality("offline");
-      return false;
-    }
-
-    const isLocalhost = 
-      window.location.hostname === "localhost" || 
-      window.location.hostname === "127.0.0.1" || 
-      window.location.hostname === "[::1]";
-
     const startTime = performance.now();
     try {
-      if (isLocalhost) {
-        // Local dev: Ping external reliable servers to test actual internet connectivity
-        try {
-          await fetch("https://www.gstatic.com/generate_204", {
-            method: "GET",
-            mode: "no-cors",
-            cache: "no-store",
-            signal: AbortSignal.timeout(3000),
-          });
-          const endTime = performance.now();
-          const rtt = Math.round(endTime - startTime);
-          setLatency(rtt);
-          setIsOnline(true);
-          if (rtt > 1500 || (navigator.connection && navigator.connection.rtt > 1500)) {
-            setConnectionQuality("poor");
-          } else {
-            setConnectionQuality("good");
-          }
-          return true;
-        } catch (err) {
-          // Fallback to Cloudflare trace if Google is blocked/unreachable
-          await fetch("https://www.cloudflare.com/cdn-cgi/trace", {
-            method: "GET",
-            mode: "no-cors",
-            cache: "no-store",
-            signal: AbortSignal.timeout(3000),
-          });
-          const endTime = performance.now();
-          const rtt = Math.round(endTime - startTime);
-          setLatency(rtt);
-          setIsOnline(true);
-          if (rtt > 1500 || (navigator.connection && navigator.connection.rtt > 1500)) {
-            setConnectionQuality("poor");
-          } else {
-            setConnectionQuality("good");
-          }
-          return true;
+      const getApiUrl = () => {
+        if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+        const hostname = window.location.hostname;
+        if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+          return 'https://siri-arts-n-crafts.onrender.com/api';
         }
-      } else {
-        // Production: Fetch a small item from our own origin to prevent CORS problems
-        const response = await fetch(`${window.location.origin}/favicon.ico?t=${Date.now()}`, {
-          method: "HEAD",
-          cache: "no-store",
-          // Abort after 4 seconds to treat it as offline/extremely poor latency
-          signal: AbortSignal.timeout(4000),
-        });
+        return 'http://localhost:5000/api';
+      };
 
-        if (response.ok) {
-          const endTime = performance.now();
-          const rtt = Math.round(endTime - startTime);
-          setLatency(rtt);
-          
-          setIsOnline(true);
-          if (rtt > 2000 || (navigator.connection && navigator.connection.rtt > 2000)) {
-            setConnectionQuality("poor");
-          } else {
-            setConnectionQuality("good");
-          }
-          return true;
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/health?t=${Date.now()}`, {
+        method: "GET",
+        headers: {
+          "Cache-Control": "no-cache",
+          "Accept": "application/json"
+        },
+        // Abort quickly to ensure we don't hang
+        signal: AbortSignal.timeout(4000),
+      });
+
+      if (response.ok) {
+        const endTime = performance.now();
+        const rtt = Math.round(endTime - startTime);
+        setLatency(rtt);
+        
+        failedPingsRef.current = 0;
+        setNetworkState('online');
+        
+        if (rtt > 2000 || (navigator.connection && navigator.connection.rtt > 2000)) {
+          setConnectionQuality("poor");
+        } else {
+          setConnectionQuality("good");
         }
+        return true;
       }
     } catch (error) {
-      console.warn("🌐 [Network Check] Real connectivity ping failed:", error.message);
+      console.warn("🌐 [Network Check] API Health check failed:", error.message);
     }
 
-    setIsOnline(false);
-    setConnectionQuality("offline");
+    // Ping failed. Debounce the offline state
+    failedPingsRef.current += 1;
+    
+    setNetworkState(prev => {
+      if (failedPingsRef.current === 1 && prev === 'online') {
+        return 'reconnecting';
+      } else if (failedPingsRef.current >= 2) {
+        setConnectionQuality("offline");
+        return 'offline';
+      }
+      return prev;
+    });
+
     return false;
   }, []);
 
   // Background ping daemon to verify status and detect captive portals/silent drops
   useEffect(() => {
-    const intervalTime = isOnline ? 20000 : 8000; // Check less frequently when online to save resources
+    const intervalTime = networkState === 'online' ? 20000 : 5000; // Check more frequently when disconnected
     const timer = setInterval(() => {
       checkConnection();
     }, intervalTime);
 
     return () => clearInterval(timer);
-  }, [isOnline, checkConnection]);
+  }, [networkState, checkConnection]);
 
   // Queue a request locally when offline
   const queueRequest = useCallback((requestData) => {
@@ -280,27 +255,22 @@ export function NetworkProvider({ children }) {
 
   // Synchronize when connection is restored
   const handleOnline = useCallback(async () => {
+    // navigator.onLine fires, we should trigger a fast health check immediately
     const isReallyOnline = await checkConnection();
-    if (isReallyOnline) {
+    if (isReallyOnline && syncQueueRef.current.length > 0) {
       toast.success("Back online! Reconnecting to services...", {
         id: "network-status",
         duration: 4000,
         icon: "⚡",
       });
-      // Fire synchronizer
       syncQueue();
     }
   }, [checkConnection, syncQueue]);
 
   const handleOffline = useCallback(() => {
-    setIsOnline(false);
-    setConnectionQuality("offline");
-    toast.error("You are offline. Interactive operations will be queued.", {
-      id: "network-status",
-      duration: 6000,
-      icon: "📡",
-    });
-  }, []);
+    // Start pinging to confirm it's actually offline
+    checkConnection();
+  }, [checkConnection]);
 
   // Listen to window connectivity events
   useEffect(() => {
@@ -324,7 +294,8 @@ export function NetworkProvider({ children }) {
   return (
     <NetworkContext.Provider
       value={{
-        isOnline,
+        networkState,
+        isOnline: networkState === 'online', // Keep for backward compatibility
         latency,
         connectionQuality,
         pendingQueue,

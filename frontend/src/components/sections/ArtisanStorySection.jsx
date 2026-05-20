@@ -24,9 +24,9 @@ export const ArtisanStorySection = () => {
                 onError={handleImageError}
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsQCa-kmW4cetaI5gJVRriIZNGZYHmU8E8am3cFeZUDKCilYWXQlzjOUcNC-7Y4X0QJ2pMwgKSpIYdQFq2_Ay_f7SiqSInMa0U5TCRu-S9oj-mVqYRw6hgjkSbDXB7oCY4ohJnWlNM9fs3HETumRdaSq9tc2uoOw5j3yAtroOIPxRui4ppd0CZwJFbmZQbtiTuQxdBtPqh581LUvCxkr2wfFHHmDS6rvY21b8hNpq25j6h71ID7Xq7g1y1_z9GbgcjSzZHaGgl54M"
                 alt="Artisan at work"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-[inherit]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-[inherit]" />
               <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10">
                 <p className="font-label text-[8px] sm:text-[10px] uppercase tracking-widest text-surface/80 font-bold">
                   Workshop: Rajasthan, India

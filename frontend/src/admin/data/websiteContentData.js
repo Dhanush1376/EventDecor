@@ -335,7 +335,7 @@ export const initialWebsiteContent = {
   // NAVIGATION & FOOTER
   // ═══════════════════════════════════════════════════════
   navigation: {
-    logo: { text: "SIRI ARTS & CRAFTS", tagline: "" },
+    logo: { text: "SIRI ARTS & CRAFTS", tagline: "", image: "/logo.jpg" },
     mainLinks: [
       { label: "Our Story", href: "/about", isVisible: true },
       { label: "Shop", href: "/collections", isVisible: true },

@@ -38,10 +38,7 @@ export const refreshWebsiteContent = async () => {
 };
 
 export function useWebsiteContent() {
-  const [content, setContent] = useState(() => {
-    if (globalCache) return globalCache;
-    return initialWebsiteContent;
-  });
+  const [content, setContent] = useState(() => globalCache || null);
 
   const [loading, setLoading] = useState(!globalCache);
 
@@ -86,6 +83,10 @@ export function useWebsiteContent() {
         } catch (err) {
           lastFetchedTime = Date.now(); // Throttles requests even on failure/network errors
           console.warn("CMS API unavailable, using cached/default content", err);
+          // Graceful degradation: use admin-defined defaults when API is unavailable
+          if (!globalCache) {
+            updateGlobalCache(initialWebsiteContent);
+          }
         } finally {
           globalPromise = null;
         }
@@ -102,5 +103,5 @@ export function useWebsiteContent() {
     };
   }, []);
 
-  return { ...content, loading };
+  return { ...(content || {}), loading, isReady: content !== null };
 }

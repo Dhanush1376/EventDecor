@@ -91,7 +91,7 @@ function ReviewCard({ review }) {
 }
 
 // ─── Write Review Modal ───────────────────────────────────────────────────────
-function WriteReviewModal({ productId, productTitle, onClose, onSuccess }) {
+export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);

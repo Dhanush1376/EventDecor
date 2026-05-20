@@ -5,7 +5,7 @@ import { useNetwork } from "../../context/NetworkContext";
 
 export function NoInternetOverlay() {
   const {
-    isOnline,
+    networkState,
     connectionQuality,
     latency,
     pendingQueue,
@@ -19,7 +19,7 @@ export function NoInternetOverlay() {
 
   // Focus lock and accessibility management
   useEffect(() => {
-    if (!isOnline) {
+    if (networkState === 'offline') {
       // Store currently active element to restore focus later
       const previousActiveElement = document.activeElement;
       
@@ -36,7 +36,7 @@ export function NoInternetOverlay() {
         previousActiveElement?.focus();
       };
     }
-  }, [isOnline]);
+  }, [networkState]);
 
   const handleManualRetry = async () => {
     if (isVerifying) return;
@@ -54,20 +54,20 @@ export function NoInternetOverlay() {
   // Keyboard navigation listener (close overlay on Escape or trigger retry on space/enter if focused)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (isOnline) return;
+      if (networkState !== 'offline') return;
       if (e.key === "Escape") {
         e.preventDefault();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOnline]);
+  }, [networkState]);
 
-  console.log("🖥️ [NoInternetOverlay] Render tick - isOnline:", isOnline, "quality:", connectionQuality);
+  console.log("🖥️ [NoInternetOverlay] Render tick - networkState:", networkState, "quality:", connectionQuality);
 
   return (
     <AnimatePresence>
-      {!isOnline && (
+      {networkState === 'offline' && (
         <motion.div
           role="alertdialog"
           aria-modal="true"

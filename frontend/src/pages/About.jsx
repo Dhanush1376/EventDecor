@@ -7,6 +7,8 @@ import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { galleryService, cmsService } from "../services/domainServices";
 import { CloudinaryImage } from "../components/ui/CloudinaryImage";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import { StackedSectionWrapper } from "../components/layout/StackedSectionWrapper";
+
 const cleanSignatureImg = (imgUrl, founderName) => {
   if (!imgUrl || imgUrl.includes("unsplash.com") || imgUrl === "" || imgUrl.includes("images.unsplash.com")) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="250" height="80" viewBox="0 0 250 80"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&amp;display=swap');.sig { font-family: 'Alex Brush', cursive; font-size: 42px; fill: %231a1a1a; }</style></defs><text x="25" y="52" class="sig">${founderName}</text></svg>`;
@@ -163,6 +165,7 @@ const DEFAULT_FOUNDERS = [
       />
 
       {/* 1. HERO SECTION - Cinematic Immersive Entrance */}
+      <StackedSectionWrapper index={0} isLast={false} bgClass="bg-black">
       <section className="relative h-[100dvh] min-h-[700px] w-full flex items-center justify-center overflow-hidden bg-black">
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
@@ -271,8 +274,10 @@ const DEFAULT_FOUNDERS = [
           </motion.div>
         </div>
       </section>
+      </StackedSectionWrapper>
 
       {/* 2. OUR STORY SECTION - Editorial Split */}
+      <StackedSectionWrapper index={1} isLast={false} bgClass="bg-surface">
       <section className="py-24 md:py-40 relative bg-surface z-10 overflow-hidden">
         <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
@@ -378,8 +383,10 @@ const DEFAULT_FOUNDERS = [
           </div>
         </div>
       </section>
+      </StackedSectionWrapper>
 
       {/* 3. CRAFTSMANSHIP & FEATURED SPECIALIZATIONS - Premium Grid */}
+      <StackedSectionWrapper index={2} isLast={false} bgClass="bg-surface-bright">
       <section className="py-24 md:py-32 relative bg-surface-bright border-y border-black/5">
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-secondary-container/20 blur-[150px] rounded-full pointer-events-none" />
 
@@ -458,8 +465,10 @@ const DEFAULT_FOUNDERS = [
           </div>
         </div>
       </section>
+      </StackedSectionWrapper>
 
       {/* 4. WHY CHOOSE US - Floating Luxury Cards */}
+      <StackedSectionWrapper index={3} isLast={false} bgClass="bg-surface">
       <section className="py-24 md:py-40 relative bg-surface overflow-hidden">
         <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
@@ -516,8 +525,10 @@ const DEFAULT_FOUNDERS = [
           ))}
         </div>
       </section>
+      </StackedSectionWrapper>
 
       {/* 5. TESTIMONIALS - Cinematic Emotion */}
+      <StackedSectionWrapper index={4} isLast={false} bgClass="bg-black">
       <section className="py-32 md:py-48 bg-black relative text-white overflow-hidden">
         <div className="absolute inset-0 opacity-50">
           <CloudinaryImage
@@ -571,8 +582,10 @@ const DEFAULT_FOUNDERS = [
           </motion.div>
         </div>
       </section>
+      </StackedSectionWrapper>
 
       {/* 6. THE VISIONARIES - Dual Leadership */}
+      <StackedSectionWrapper index={5} isLast={false} bgClass="bg-surface-bright">
       <section className="py-24 md:py-40 relative bg-surface-bright overflow-hidden">
         <div className="absolute top-1/2 -left-[20%] w-[600px] h-[600px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-secondary-container/10 blur-[150px] rounded-full pointer-events-none" />
@@ -655,8 +668,10 @@ const DEFAULT_FOUNDERS = [
           ))}
         </div>
       </section>
+      </StackedSectionWrapper>
 
       {/* 7. GALLERY PREVIEW - Pinterest Style Masonry Grid */}
+      <StackedSectionWrapper index={6} isLast={true} bgClass="bg-surface">
       <section className="py-24 md:py-40 bg-surface border-t border-black/5 relative">
         <MandalaElement
           size={600}
@@ -738,6 +753,7 @@ const DEFAULT_FOUNDERS = [
           </Link>
         </div>
       </section>
+      </StackedSectionWrapper>
     </div>
   );
 }

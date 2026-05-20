@@ -4,6 +4,10 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
  * LazySection
  * High-performance container that defers mounting and rendering of heavy off-screen
  * components until they are scrolled within proximity of the viewport.
+ * 
+ * @param {React.ReactNode} children - The section component to lazily render
+ * @param {string} placeholderHeight - Minimum height for CLS prevention
+ * @param {React.ReactNode} fallback - Custom skeleton component to show before section loads
  */
 export function LazySection({ children, placeholderHeight = '250px', fallback }) {
   const [inView, setInView] = useState(false);
@@ -41,6 +45,11 @@ export function LazySection({ children, placeholderHeight = '250px', fallback })
     };
   }, []);
 
+  // Determine the placeholder to show before intersection
+  const skeletonPlaceholder = fallback || (
+    <div style={{ height: placeholderHeight }} className="w-full" />
+  );
+
   return (
     <div 
       ref={containerRef} 
@@ -48,11 +57,11 @@ export function LazySection({ children, placeholderHeight = '250px', fallback })
       className="lazy-section-container"
     >
       {inView ? (
-        <Suspense fallback={fallback || <div style={{ height: placeholderHeight }} className="w-full bg-stone-50/50 animate-pulse" />}>
+        <Suspense fallback={skeletonPlaceholder}>
           {children}
         </Suspense>
       ) : (
-        fallback || <div style={{ height: placeholderHeight }} className="w-full bg-stone-50/50 animate-pulse" />
+        skeletonPlaceholder
       )}
     </div>
   );

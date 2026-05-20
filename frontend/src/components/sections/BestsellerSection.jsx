@@ -8,13 +8,15 @@ import { MandalaElement } from "../ui/MandalaElement";
 import { MandalaArtDecor } from "../ui/MandalaArtDecor";
 import { productService } from "../../services/domainServices";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
+import { BestsellerSkeleton } from "../ui/Skeleton";
 
 export function BestsellerSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [bestsellers, setBestsellers] = useState([]);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const scrollRef = useRef(null);
   const containerRef = useRef(null);
-  const { featuredProducts } = useWebsiteContent();
+  const { featuredProducts, loading: cmsLoading } = useWebsiteContent();
 
   useEffect(() => {
     const fetchBestsellers = async () => {
@@ -43,6 +45,8 @@ export function BestsellerSection() {
         }
       } catch (err) {
         console.error("Failed to fetch bestsellers", err);
+      } finally {
+        setFetchLoading(false);
       }
     };
     if (featuredProducts?.isVisible) {
@@ -51,6 +55,7 @@ export function BestsellerSection() {
   }, [featuredProducts]);
 
   if (!featuredProducts?.isVisible) return null;
+  if (cmsLoading || fetchLoading) return <BestsellerSkeleton />;
 
   const allItems = [...bestsellers, { id: "view-all", isViewAll: true }];
 

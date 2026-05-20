@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { MandalaElement } from "../ui/MandalaElement";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
+import { NavigationHubSkeleton } from "../ui/Skeleton";
 
 // Removed static fallback arrays
 
@@ -18,7 +19,7 @@ export function NavigationHub() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const { featuredCollections } = useWebsiteContent();
+  const { featuredCollections, loading } = useWebsiteContent();
   
   const rawItems = featuredCollections?.items || [];
   const activeCmsItems = rawItems.filter(item => item.isVisible !== false);
@@ -68,6 +69,7 @@ export function NavigationHub() {
   const parallaxY = useTransform(scrollYProgress, [0, 1], [50, -50]);
   const bgOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.3, 0.8, 0.3]);
 
+  if (loading) return <NavigationHubSkeleton />;
   if (activeCmsItems.length === 0) return null;
 
   const sectionTitle = featuredCollections?.sectionTitle || "Curated Collections";

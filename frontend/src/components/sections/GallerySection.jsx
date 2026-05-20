@@ -7,10 +7,11 @@ import { MandalaArtDecor } from "../ui/MandalaArtDecor";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { galleryService } from "../../services/domainServices";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
+import { GallerySkeleton } from "../ui/Skeleton";
 
 export function GallerySection() {
   const containerRef = useRef(null);
-  const { galleryPreview } = useWebsiteContent();
+  const { galleryPreview, loading: cmsLoading } = useWebsiteContent();
 
   const [galleryItems, setGalleryItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +57,7 @@ export function GallerySection() {
   const headerY = useTransform(scrollYProgress, [0, 0.5], [50, 0]);
 
   if (!galleryPreview?.isVisible) return null;
+  if (cmsLoading || loading) return <GallerySkeleton />;
 
   return (
     <SectionWrapper
@@ -105,13 +107,7 @@ export function GallerySection() {
 
       {/* Cinematic Pinterest-style Layout */}
       <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-5.5 space-y-3 md:space-y-5.5 relative z-10 px-0 md:px-4">
-        {loading ? (
-          // Simple loading skeleton placeholders
-          [...Array(4)].map((_, i) => (
-             <div key={i} className="break-inside-avoid w-full aspect-[3/4] bg-surface-container-high animate-pulse rounded-[28px]" />
-          ))
-        ) : (
-          galleryItems.map((item, idx) => (
+        {galleryItems.map((item, idx) => (
             <motion.div
               key={item._id}
               initial={{ opacity: 0, y: 30 }}
@@ -163,7 +159,7 @@ export function GallerySection() {
               </Link>
             </motion.div>
           ))
-        )}
+        }
 
         {/* Cinematic View All CTA */}
         <motion.div

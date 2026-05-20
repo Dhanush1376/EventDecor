@@ -78,18 +78,18 @@ export function FeaturedCategories() {
             >
               <Link
                 to={displayCategories[0].link}
-                className="absolute inset-0 z-10"
+                className="absolute inset-0 z-10 rounded-[inherit]"
               />
               <img
                 onError={handleImageError}
                 src={displayCategories[0].image}
                 alt={displayCategories[0].title}
-                className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                className="w-full h-full object-cover rounded-[inherit] transition-transform duration-[1.5s] group-hover:scale-110"
                 loading="lazy"
                 width={800}
                 height={600}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent rounded-[inherit]"></div>
               <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 flex flex-col items-start z-20 pointer-events-none">
                 <span className="bg-surface/90 backdrop-blur-md px-3 py-1 md:px-4 md:py-1.5 rounded text-primary font-label-sm text-label-sm uppercase tracking-wider mb-3 md:mb-4 border border-white/20">
                   Premium Collection
@@ -117,18 +117,18 @@ export function FeaturedCategories() {
               >
                 <Link
                   to={cat.link}
-                  className="absolute inset-0 z-10"
+                  className="absolute inset-0 z-10 rounded-[inherit]"
                 />
                 <img
                   onError={handleImageError}
                   src={cat.image}
                   alt={cat.title}
-                  className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                  className="w-full h-full object-cover rounded-[inherit] transition-transform duration-[1.5s] group-hover:scale-110"
                   loading="lazy"
                   width={400}
                   height={300}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-[inherit]"></div>
                 <div className="absolute bottom-4 left-4 md:bottom-6 md:left-4 z-20 pointer-events-none">
                   <h3 className="font-headline-sm text-[clamp(1.1rem,3vw,1.5rem)] leading-tight text-white mb-1">
                     {cat.title}

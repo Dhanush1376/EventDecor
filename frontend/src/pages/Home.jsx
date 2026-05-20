@@ -1,13 +1,12 @@
-import React, { lazy } from "react";
+import React from "react";
 import { HeroSection } from "../components/sections/HeroSection";
 import { NavigationHub } from "../components/sections/NavigationHub";
-import { LazySection } from "../components/ui";
+import { StackedSectionWrapper } from "../components/layout/StackedSectionWrapper";
 
-// Lazy load below-the-fold landing page components for major performance boosts
-const BestsellerSection = lazy(() => import("../components/sections/BestsellerSection").then((m) => ({ default: m.BestsellerSection })));
-const StorySection = lazy(() => import("../components/sections/StorySection").then((m) => ({ default: m.StorySection })));
-const VerifiedReviews = lazy(() => import("../components/sections/VerifiedReviews").then((m) => ({ default: m.VerifiedReviews })));
-const GallerySection = lazy(() => import("../components/sections/GallerySection").then((m) => ({ default: m.GallerySection })));
+import { BestsellerSection } from "../components/sections/BestsellerSection";
+import { StorySection } from "../components/sections/StorySection";
+import { VerifiedReviews } from "../components/sections/VerifiedReviews";
+import { GallerySection } from "../components/sections/GallerySection";
 
 import { SEO } from "../components/seo/SEO";
 
@@ -22,8 +21,10 @@ const sectionComponents = {
   testimonials: VerifiedReviews,
 };
 
+// Removed skeleton components since we are rendering immediately to maintain stable heights
+
 export function Home() {
-  const { homepageSections, seo, contact } = useWebsiteContent();
+  const { homepageSections, seo, contact, loading } = useWebsiteContent();
 
   const homeSchema = {
     "@context": "https://schema.org",
@@ -49,6 +50,8 @@ export function Home() {
     ],
   };
 
+  const visibleSections = homepageSections?.filter((section) => section.isVisible) || [];
+
   return (
     <>
       <SEO
@@ -61,24 +64,27 @@ export function Home() {
         }
         schema={homeSchema}
       />
-      {homepageSections
-        ?.filter((section) => section.isVisible)
-        .map((section) => {
-          const Component = sectionComponents[section.id];
-          if (!Component) return null;
+      {visibleSections.map((section, index) => {
+        const Component = sectionComponents[section.id];
+        if (!Component) return null;
 
-          const isEager = ["hero", "featuredCollections"].includes(section.id);
-          if (isEager) {
-            return <Component key={section.id} />;
-          }
+        const isEager = ["hero", "featuredCollections"].includes(section.id);
+        const isLast = index === visibleSections.length - 1;
 
-          // Use the IntersectionObserver progressive renderer for below-the-fold sections
+        if (isEager) {
           return (
-            <LazySection key={section.id} placeholderHeight="450px">
+            <StackedSectionWrapper key={section.id} index={index} isLast={isLast}>
               <Component />
-            </LazySection>
+            </StackedSectionWrapper>
           );
-        })}
+        }
+
+        return (
+          <StackedSectionWrapper key={section.id} index={index} isLast={isLast}>
+            <Component />
+          </StackedSectionWrapper>
+        );
+      })}
     </>
   );
 }

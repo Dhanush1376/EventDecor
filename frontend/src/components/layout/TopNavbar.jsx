@@ -302,7 +302,7 @@ export function TopNavbar() {
             ? "bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-2 shadow-md shadow-black/5"
             : isImmersive
               ? "bg-white/10 backdrop-blur-md py-3.5 border border-white/20 mt-3.5 mx-auto max-w-[95%] lg:max-w-[720px] rounded-full text-white shadow-2xl"
-              : "bg-surface/90 backdrop-blur-md py-2.5 border-b border-outline-variant/10 shadow-2xs"
+: "bg-surface/90 backdrop-blur-md py-2.5 border-b border-outline-variant/10 shadow-2xs"
         }`}
       >
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
@@ -310,24 +310,26 @@ export function TopNavbar() {
             {/* Exquisite Boutique Brand Logo */}
             <div className="flex-shrink-0 flex justify-start min-w-0">
               <Link to="/" className="group flex items-center gap-2.5 md:gap-4 shrink-0">
-                <div className="relative w-8 h-8 md:w-10 md:h-10 shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                  {/* Layered backgrounds for logo stamp */}
-                  <div className="absolute inset-0 rounded-full bg-[#d4af37]/10" />
-                  <div className="absolute inset-0.5 rounded-full border border-[#d4af37]/30" />
+                {navigation?.logo?.image ? (
+                  <img
+                    src={navigation.logo.image}
+                    alt={logoText}
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover shadow-sm transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="relative w-8 h-8 md:w-10 md:h-10 shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+                    {/* Layered backgrounds for logo stamp */}
+                    <div className="absolute inset-0 rounded-full bg-[#d4af37]/10" />
+                    <div className="absolute inset-0.5 rounded-full border border-[#d4af37]/30" />
 
-                  {/* Core Icon Container */}
-                  <div className="relative w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center bg-[#1c1a17] border border-[#d4af37] shadow-lg shadow-black/30">
-                    <span className="font-display font-medium text-[13px] md:text-[16px] text-[#d4af37] tracking-tight">
-                      {firstWord[0]}
-                    </span>
-
-                    {/* Emblem Core Dot */}
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#FAF9F6] rounded-full flex items-center justify-center shadow-sm">
-                      <div className="w-1.5 h-1.5 bg-[#d4af37] rounded-full" />
+                    {/* Core Icon Container */}
+                    <div className="relative w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center bg-[#1c1a17] border border-[#d4af37] shadow-lg shadow-black/30">
+                      <span className="font-display font-medium text-[13px] md:text-[16px] text-[#d4af37] tracking-tight">
+                        {firstWord[0]}
+                      </span>
                     </div>
                   </div>
-                </div>
-
+                )}
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1">
                     <span className="font-display text-[15px] md:text-[20px] font-bold tracking-[0.03em] text-on-surface uppercase">
@@ -648,11 +650,19 @@ export function TopNavbar() {
             >
               <div className="flex justify-between items-center mb-5 pb-3 border-b border-outline-variant/10">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-on-surface-variant flex items-center justify-center shadow-lg border border-white/5">
-                    <span className="font-display font-bold text-[14px] text-white">
-                      {firstWord[0]}
-                    </span>
-                  </div>
+                  {navigation?.logo?.image ? (
+                    <img
+                      src={navigation.logo.image}
+                      alt={logoText}
+                      className="w-10 h-10 rounded-full object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-on-surface-variant flex items-center justify-center shadow-lg border border-white/5">
+                      <span className="font-display font-bold text-[14px] text-white">
+                        {firstWord[0]}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex flex-col justify-center leading-none">
                     <span className="font-display text-[18px] md:text-[20px] text-on-surface font-bold tracking-[0.05em] uppercase">
                       {firstWord}

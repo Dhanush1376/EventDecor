@@ -7,10 +7,11 @@ import { MandalaElement } from "../ui/MandalaElement";
 import { MandalaArtDecor } from "../ui/MandalaArtDecor";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
+import { StorySkeleton } from "../ui/Skeleton";
 
 export function StorySection() {
   const containerRef = useRef(null);
-  const { storyTeaser } = useWebsiteContent();
+  const { storyTeaser, loading } = useWebsiteContent();
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -23,6 +24,7 @@ export function StorySection() {
   const contentY = useTransform(scrollYProgress, [0, 1], isLargeScreen ? [40, -40] : [0, 0]);
 
   if (!storyTeaser?.isVisible) return null;
+  if (loading) return <StorySkeleton />;
 
   return (
     <section
@@ -116,7 +118,7 @@ export function StorySection() {
                   Heritage
                 </span>
                 <span className="font-display text-on-surface text-[20px] lg:text-[36px] leading-none italic">
-                  {storyTeaser.establishedYear || "Est. in 2003"}
+                  {storyTeaser.establishedYear}
                 </span>
               </motion.div>
             </motion.div>

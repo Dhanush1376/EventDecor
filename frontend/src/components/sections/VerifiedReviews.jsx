@@ -4,85 +4,15 @@ import { handleImageError } from "../../utils/imageUtils";
 import toast from "react-hot-toast";
 import { reviewService } from "../../services/domainServices";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
+import { ReviewsSkeleton } from "../ui/Skeleton";
 
 // Lazy load heavy interaction overlays to trim the main package bundle size
 const PostReviewModal = lazy(() => import("../reviews/PostReviewModal").then((m) => ({ default: m.PostReviewModal })));
 const ReviewLightbox = lazy(() => import("../reviews/ReviewLightbox").then((m) => ({ default: m.ReviewLightbox })));
 
-const INITIAL_PREMIUM_REVIEWS = [
-  {
-    id: 101,
-    user: "Meera & Devraj Singhania",
-    location: "Jubilee Hills, Hyderabad",
-    eventType: "Royal Haldi & Engagement Arch",
-    favoriteElement: "Antique Brass Urli & Golden Lotus Archway",
-    rating: 5,
-    subRatings: { quality: 5, design: 5, delivery: 5, setup: 5, communication: 5 },
-    date: "May 14, 2026",
-    comment:
-      "The Royal Mandap Arch was the absolute soul of our celebration. The gold leaf detailing and brass lotus pillars felt incredibly authentic and royal. Our event planner was astounded by the pristine quality of these handcrafted rental masterpieces. Worth every single rupee for the premium aura it brought to our palace venue!",
-    images: [
-      "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=800&auto=format&fit=crop",
-    ],
-    video: null,
-    verified: true,
-    helpfulCount: 34,
-    category: "showcase",
-    aiPolished: true,
-  },
-  {
-    id: 102,
-    user: "Ananya Varma",
-    location: "Banjara Hills, Hyderabad",
-    eventType: "Traditional Bridal Shower Curation",
-    favoriteElement: "Artisanal Coconut Leaf Trays & Hand-carved Pedestals",
-    rating: 5,
-    subRatings: { quality: 5, design: 5, delivery: 5, setup: 5, communication: 5 },
-    date: "May 10, 2026",
-    comment:
-      "Siri Arts & Crafts redefined what traditional decor means to our family. The delivery concierge arrived perfectly on time, and the setup team transformed our garden marquee into an absolute sanctuary. The handcrafted coconut leaf arrangements and brass diyas were praised by all our elder relatives.",
-    images: [
-      "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=800&auto=format&fit=crop",
-    ],
-    video: null,
-    verified: true,
-    helpfulCount: 28,
-    category: "event",
-    aiPolished: false,
-  },
-  {
-    id: 103,
-    user: "Vikramaditya Rao",
-    location: "Gachibowli, Hyderabad",
-    eventType: "Corporate Heritage Banquet",
-    favoriteElement: "Handcrafted Brass Diya Stands & Silk Drapes",
-    rating: 5,
-    subRatings: { quality: 5, design: 5, delivery: 5, setup: 5, communication: 5 },
-    date: "April 28, 2026",
-    comment:
-      "We rented the premium stage backdrop and 12 antique brass stands for our annual corporate heritage gala. The entire booking experience was flawless. Seamless online quotation, lightning-fast delivery, and an immaculate setup that radiated prestige.",
-    images: [
-      "https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=800&auto=format&fit=crop",
-    ],
-    video: "https://assets.mixkit.co/videos/preview/mixkit-wedding-table-decorations-and-candles-43285-large.mp4",
-    verified: true,
-    helpfulCount: 52,
-    category: "product",
-    aiPolished: true,
-  },
-];
-
-const METRICS = {
-  overall: 4.9,
-  totalReviews: 1284,
-  satisfactionRate: "99.4%",
-  topLovedProp: "Golden Mandap Pillars",
-};
-
 export const VerifiedReviews = () => {
   const { reels, testimonials } = useWebsiteContent();
-  const [reviewsList, setReviewsList] = useState(INITIAL_PREMIUM_REVIEWS);
+  const [reviewsList, setReviewsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("all");
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -225,7 +155,7 @@ export const VerifiedReviews = () => {
         }
       } catch (err) {
         console.error("Failed to fetch live reviews:", err);
-        setReviewsList(INITIAL_PREMIUM_REVIEWS);
+        setReviewsList([]);
       } finally {
         setLoading(false);
       }
@@ -321,7 +251,7 @@ export const VerifiedReviews = () => {
     }, []);
 
   if (loading) {
-    return null;
+    return <ReviewsSkeleton />;
   }
 
   if (reviewsList.length === 0) {

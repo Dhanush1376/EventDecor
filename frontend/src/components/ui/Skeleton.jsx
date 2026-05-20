@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 export function Skeleton({ className = "", variant = "rect" }) {
   const variants = {
@@ -36,3 +36,318 @@ export function ProductCardSkeleton() {
   );
 }
 
+// ─── Hero Section Skeleton ───
+export function HeroSkeleton() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <section className="relative w-full overflow-hidden bg-[#faf9f6]">
+        {/* Dark hero banner skeleton */}
+        <div className="relative text-white pt-32 pb-28 px-7 flex flex-col z-10 min-h-[480px] justify-center overflow-hidden bg-[#0F0E0C]">
+          <div className="relative z-10 flex flex-col items-start max-w-[300px] space-y-4">
+            {/* Eyebrow badge */}
+            <Skeleton className="h-4 w-32 !bg-white/10 !border-white/5" />
+            {/* Title lines */}
+            <div className="space-y-2 w-full">
+              <Skeleton className="h-9 w-48 !bg-white/10 !border-white/5" />
+              <Skeleton className="h-9 w-40 !bg-white/10 !border-white/5" />
+              <Skeleton className="h-9 w-44 !bg-white/10 !border-white/5" />
+              <Skeleton className="h-9 w-52 !bg-white/10 !border-white/5" />
+            </div>
+            {/* Divider */}
+            <Skeleton className="h-[1px] w-12 !bg-[#d4af37]/30 !border-transparent" />
+            {/* Subtitle */}
+            <Skeleton className="h-3 w-[270px] !bg-white/10 !border-white/5" />
+            {/* CTA buttons */}
+            <div className="space-y-5 w-full pt-2">
+              <Skeleton className="h-11 w-52 rounded-full !bg-[#d4af37]/20 !border-[#d4af37]/10" />
+              <Skeleton className="h-9 w-44 rounded-full !bg-white/5 !border-white/5" />
+            </div>
+          </div>
+          {/* Wavy bottom mask placeholder */}
+          <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#faf9f6] to-transparent z-10" />
+        </div>
+        {/* Carousel circles skeleton */}
+        <div className="w-full bg-[#faf9f6] pt-10 pb-10 flex flex-col items-center">
+          <div className="flex gap-8 justify-center">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex flex-col items-center" style={{ width: "100px" }}>
+                <Skeleton variant="circle" className="w-20 h-20" />
+                <Skeleton className="h-2.5 w-14 mt-3.5 rounded-md" />
+              </div>
+            ))}
+          </div>
+          {/* Scroll indicator */}
+          <div className="mt-5">
+            <Skeleton variant="circle" className="w-12 h-12" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Desktop hero skeleton
+  return (
+    <section className="relative min-h-[720px] flex flex-col justify-center overflow-hidden bg-surface-bright py-0">
+      <div className="max-w-[1440px] mx-auto px-[clamp(22px,4.5vw,72px)] w-full grid grid-cols-12 gap-20 items-center relative z-10 flex-1">
+        {/* Left content */}
+        <div className="col-span-7 flex flex-col items-start text-left space-y-6 z-20">
+          {/* Badge */}
+          <Skeleton className="h-7 w-48 rounded-full" />
+          {/* Title */}
+          <div className="space-y-3 w-full">
+            <Skeleton className="h-16 w-[90%]" />
+            <Skeleton className="h-16 w-[75%]" />
+          </div>
+          {/* Subtitle */}
+          <div className="space-y-2 w-full max-w-lg">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-3/4" />
+          </div>
+          {/* CTA buttons */}
+          <div className="flex gap-3 pt-4">
+            <Skeleton className="h-13 w-48 rounded-full" />
+            <Skeleton className="h-13 w-44 rounded-full" />
+          </div>
+        </div>
+        {/* Right image */}
+        <div className="col-span-5 relative w-full h-[580px]">
+          <Skeleton className="absolute right-0 top-0 w-full h-full rounded-[43px]" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Navigation Hub / Featured Collections Skeleton ───
+export function NavigationHubSkeleton() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  return (
+    <section className="pt-2 pb-10 md:py-36 bg-[#FDFBF7] relative overflow-hidden">
+      <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-16">
+        {/* Header */}
+        <div className="text-center max-w-4xl mx-auto mb-8 md:mb-28">
+          <Skeleton className="h-8 w-48 rounded-full mx-auto mb-4 md:mb-8" />
+          <div className="space-y-3">
+            <Skeleton className="h-12 md:h-20 w-3/4 mx-auto" />
+            <Skeleton className="h-12 md:h-20 w-1/2 mx-auto" />
+          </div>
+          <Skeleton className="h-5 w-2/3 mx-auto mt-4 md:mt-8" />
+        </div>
+        {/* Cards */}
+        {isMobile ? (
+          <div className="flex justify-center min-h-[440px] mt-2">
+            <Skeleton className="w-[300px] h-[380px] rounded-[32px]" />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-8 xl:gap-10">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="aspect-[4/5] w-full rounded-[32px]" />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─── Bestseller / Featured Products Skeleton ───
+export function BestsellerSkeleton() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  return (
+    <div className="py-16 md:py-29 relative overflow-hidden bg-surface-bright">
+      <div className="max-w-[1440px] mx-auto px-[clamp(22px,4.5vw,72px)]">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-7 mb-14 md:mb-22">
+          <div className="max-w-2xl flex flex-col items-center md:items-start text-center md:text-left w-full">
+            <Skeleton className="h-7 w-40 rounded-full mb-5" />
+            <div className="space-y-3 w-full">
+              <Skeleton className="h-10 md:h-16 w-3/4" />
+              <Skeleton className="h-10 md:h-16 w-1/2" />
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-3.5">
+            <Skeleton variant="circle" className="w-13 h-13" />
+            <Skeleton variant="circle" className="w-13 h-13" />
+          </div>
+        </div>
+        {/* Product cards */}
+        {isMobile ? (
+          <div className="flex items-center justify-center h-[520px]">
+            <div className="w-[75vw] sm:w-[65vw]">
+              <ProductCardSkeleton />
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-9 overflow-hidden pb-11">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="min-w-[360px] xl:min-w-[405px]">
+                <ProductCardSkeleton />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Story / About Teaser Skeleton ───
+export function StorySkeleton() {
+  return (
+    <section className="relative pt-16 pb-28 lg:py-28 overflow-hidden bg-surface">
+      <div className="max-w-[1440px] mx-auto px-[18px] md:px-[clamp(22px,4.5vw,72px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-22 items-center">
+          {/* Image */}
+          <div className="lg:col-span-5 relative px-4 lg:px-0">
+            <Skeleton className="w-full aspect-[4/5] rounded-[28px] md:rounded-[43px]" />
+            {/* Floating badge */}
+            <div className="absolute top-6 lg:top-auto lg:-bottom-11 right-1 lg:right-auto lg:-left-11 z-20">
+              <Skeleton className="w-[100px] lg:w-[162px] h-[70px] lg:h-[120px] rounded-[20px] lg:rounded-[36px]" />
+            </div>
+          </div>
+          {/* Content */}
+          <div className="lg:col-span-7 relative z-20 -mt-16 lg:mt-0 px-1.5 sm:px-6 lg:px-0">
+            <div className="max-w-2xl mx-auto lg:mx-0 bg-surface/95 lg:bg-transparent px-4.5 py-8 pb-12 sm:px-8 lg:p-0 rounded-[28px] lg:rounded-none shadow-2xl lg:shadow-none border border-outline-variant/20 lg:border-none space-y-6">
+              {/* Kicker */}
+              <div className="flex items-center gap-3 md:gap-4">
+                <Skeleton className="w-8 md:w-11 h-[1px]" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+              {/* Title */}
+              <div className="space-y-3">
+                <Skeleton className="h-8 sm:h-10 md:h-16 w-full" />
+                <Skeleton className="h-8 sm:h-10 md:h-16 w-3/4" />
+              </div>
+              {/* Paragraphs */}
+              <div className="space-y-3">
+                <Skeleton className="h-4 md:h-5 w-full" />
+                <Skeleton className="h-4 md:h-5 w-full" />
+                <Skeleton className="h-4 md:h-5 w-2/3" />
+              </div>
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 gap-6 md:gap-11 pt-8 md:pt-11 border-t border-outline-variant/10">
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-10 md:h-12 w-24" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                ))}
+              </div>
+              {/* CTA */}
+              <Skeleton className="h-12 w-44 rounded-full mt-6" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Gallery Preview Skeleton ───
+export function GallerySkeleton() {
+  const aspectPatterns = [
+    "aspect-[2/3]",
+    "aspect-square",
+    "aspect-[4/5]",
+    "aspect-[3/4]",
+    "aspect-[2/3]",
+    "aspect-[4/5]",
+  ];
+
+  return (
+    <div className="py-16 md:py-29 relative overflow-hidden bg-surface">
+      <div className="max-w-[1440px] mx-auto px-[clamp(22px,4.5vw,72px)]">
+        {/* Header */}
+        <div className="text-center mb-14 md:mb-22">
+          <Skeleton className="h-7 w-56 rounded-full mx-auto mb-5.5" />
+          <Skeleton className="h-10 md:h-14 w-2/3 mx-auto" />
+        </div>
+        {/* Masonry grid */}
+        <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-5.5 space-y-3 md:space-y-5.5 px-0 md:px-4">
+          {aspectPatterns.map((aspect, i) => (
+            <Skeleton
+              key={i}
+              className={`break-inside-avoid w-full ${aspect} rounded-[22px] md:rounded-[28px]`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Verified Reviews Skeleton ───
+export function ReviewsSkeleton() {
+  return (
+    <section className="relative py-16 md:py-20 bg-[#FCFBF9] overflow-hidden border-t border-[#E8E2D5]/30">
+      <div className="max-w-[1440px] mx-auto px-[18px] md:px-[clamp(22px,4.5vw,72px)] space-y-12">
+        {/* Header */}
+        <div className="text-center max-w-xl mx-auto mb-6">
+          <Skeleton className="h-3 w-20 mx-auto mb-2" />
+          <Skeleton className="h-8 md:h-10 w-56 mx-auto" />
+          <Skeleton className="h-[1px] w-8 mx-auto mt-3 !bg-[#D4AF37]/40 !border-transparent" />
+        </div>
+        {/* Review cards marquee */}
+        <div className="relative w-full">
+          <div className="flex gap-8 overflow-hidden py-6 px-4">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="flex-shrink-0 w-[290px] xs:w-[320px] sm:w-[400px] md:w-[450px] bg-white p-8 md:p-10 rounded-[32px] border border-[#EBE6DD] flex flex-col justify-between"
+              >
+                <div className="space-y-6">
+                  {/* Stars */}
+                  <div className="flex gap-1.5">
+                    {[...Array(5)].map((_, j) => (
+                      <Skeleton key={j} className="w-4 h-4 rounded-sm" />
+                    ))}
+                  </div>
+                  {/* Quote text */}
+                  <div className="space-y-2.5">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </div>
+                {/* Profile */}
+                <div className="flex items-center gap-3.5 mt-8">
+                  <Skeleton variant="circle" className="w-11 h-11" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-2 w-36" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
