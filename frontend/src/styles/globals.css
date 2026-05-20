@@ -1,6 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap");
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: only light;
+}
+
+.admin-section-root.dark {
+  color-scheme: dark;
+}
+
+
 
 
 @theme {
