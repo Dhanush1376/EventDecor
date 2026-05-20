@@ -48,10 +48,14 @@ export function Checkout() {
 
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const orderCompleteRef = React.useRef(false);
+
   // Redirect to cart if empty - Bug Fix #4
   React.useEffect(() => {
     if (!items || items.length === 0) {
-      navigate("/cart");
+      if (!orderCompleteRef.current) {
+        navigate("/cart", { replace: true });
+      }
     }
   }, [items, navigate]);
 
@@ -352,6 +356,12 @@ export function Checkout() {
       return;
     }
 
+    if (!needByDate) {
+      toast.error("Please provide a Required Timeline Request date");
+      setActiveStep(2);
+      return;
+    }
+
     if (paymentOption === "cod") {
       if (backendTotals.total < 500) {
         toast.error("Cash on Delivery (COD) is only serviceable for order totals between ₹500 and ₹50,000.");
@@ -406,9 +416,10 @@ export function Checkout() {
       processPayment(
         orderData,
         (order) => {
+          orderCompleteRef.current = true;
           setIsProcessing(false);
           clearCart();
-          navigate("/order-success", { state: { orderDetails: order } });
+          navigate("/order-success", { state: { orderDetails: order }, replace: true });
         },
         (error) => {
           setIsProcessing(false);
@@ -419,9 +430,10 @@ export function Checkout() {
       try {
         const response = await orderService.create(orderData);
         if (response && response.success) {
+          orderCompleteRef.current = true;
           const orderObj = response.data?.order || response.data || response;
           clearCart();
-          navigate("/order-success", { state: { orderDetails: orderObj } });
+          navigate("/order-success", { state: { orderDetails: orderObj }, replace: true });
         }
       } catch (err) {
         console.error("Failed to place COD order:", err);
@@ -1194,7 +1206,27 @@ export function Checkout() {
                     transition={{ duration: 0.3 }}
                     className="p-4 sm:p-6 space-y-4 border-t border-[#f4f3f1] overflow-hidden relative"
                   >
-
+                    {/* Need By Date Selector (Moved to Top for High Visibility) */}
+                    <div className="bg-[#fff9e6] p-4 rounded-xl border border-[#ffe0b2] text-xs">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="material-symbols-outlined text-[#735c00] text-sm">calendar_today</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#735c00]">
+                          Required Timeline Request *
+                        </span>
+                      </div>
+                      <label htmlFor="need-by-date-input" className="block text-[11px] text-secondary leading-normal mb-2">
+                        By when do you need this product? We recommend setting a date at least 5-7 days from today to ensure handcrafted perfection and smooth shipping delivery.
+                      </label>
+                      <input
+                        id="need-by-date-input"
+                        type="date"
+                        min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // minimum tomorrow
+                        value={needByDate}
+                        onChange={(e) => setNeedByDate(e.target.value)}
+                        className="w-full bg-white border border-[#ffe0b2] rounded p-2.5 text-xs outline-none focus:border-primary transition-colors font-sans text-on-surface"
+                        required
+                      />
+                    </div>
 
                     {/* Line Items List */}
                     <div className="space-y-4 divide-y divide-[#f4f3f1]">
@@ -1267,7 +1299,13 @@ export function Checkout() {
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
                         type="button"
-                        onClick={() => setActiveStep(3)}
+                        onClick={() => {
+                          if (!needByDate) {
+                            toast.error("Please select a Required Timeline Request date");
+                            return;
+                          }
+                          setActiveStep(3);
+                        }}
                         className="w-full bg-[#fb641b] hover:bg-[#f2550a] text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded shadow-xs transition-colors cursor-pointer text-center block"
                       >
                         Continue
@@ -1555,26 +1593,6 @@ export function Checkout() {
                       </motion.div>
                     )}
 
-                    {/* Need By Date Selector */}
-                    <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant/20 mb-4 text-xs">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="material-symbols-outlined text-[#735c00] text-sm">calendar_today</span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#735c00]">
-                          Required Timeline Request
-                        </span>
-                      </div>
-                      <label htmlFor="need-by-date-input" className="block text-[11px] text-secondary leading-normal mb-2">
-                        By when do you need this product? We recommend setting a date at least 5-7 days from today to ensure handcrafted perfection and smooth shipping delivery.
-                      </label>
-                      <input
-                        id="need-by-date-input"
-                        type="date"
-                        min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // minimum tomorrow
-                        value={needByDate}
-                        onChange={(e) => setNeedByDate(e.target.value)}
-                        className="w-full bg-white border border-outline-variant rounded p-2.5 text-xs outline-none focus:border-primary transition-colors font-sans text-on-surface"
-                      />
-                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
