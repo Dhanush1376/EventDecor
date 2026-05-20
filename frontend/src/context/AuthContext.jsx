@@ -33,18 +33,51 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      const refreshed = await authService.refresh();
-      const token = refreshed?.data?.accessToken || refreshed?.data?.token;
-      if (token) setAccessToken(token);
-      const response = await authService.getProfile();
-      if (response.success) {
-        setUser(response.data);
-        setIsAuthenticated(true);
-      } else {
+      console.log('[AUTH CHECK] Starting authentication check...');
+      
+      // First try to get profile directly (if we have a valid token from recent login)
+      try {
+        console.log('[AUTH CHECK] Attempting to fetch profile...');
+        const response = await authService.getProfile();
+        if (response.success) {
+          console.log('[AUTH CHECK] Profile fetch successful. User:', response.data.email);
+          setUser(response.data);
+          setIsAuthenticated(true);
+          setLoading(false);
+          return;
+        }
+      } catch (profileErr) {
+        console.log('[AUTH CHECK] Profile fetch failed, attempting token refresh...');
+      }
+
+      // If profile fetch fails, try to refresh the session
+      try {
+        const refreshed = await authService.refresh();
+        const token = refreshed?.data?.accessToken || refreshed?.data?.token;
+        if (token) {
+          console.log('[AUTH CHECK] Token refresh successful. Setting access token.');
+          setAccessToken(token);
+          
+          // Now try to fetch profile with the new token
+          const response = await authService.getProfile();
+          if (response.success) {
+            console.log('[AUTH CHECK] Profile fetch successful after refresh. User:', response.data.email);
+            setUser(response.data);
+            setIsAuthenticated(true);
+          } else {
+            console.log('[AUTH CHECK] Profile fetch still failed after refresh.');
+            logout(true);
+          }
+        } else {
+          console.log('[AUTH CHECK] Token refresh returned no token.');
+          logout(true);
+        }
+      } catch (refreshErr) {
+        console.log('[AUTH CHECK] Token refresh failed. User not authenticated.');
         logout(true);
       }
     } catch (err) {
-      console.error('Auth check failed:', err);
+      console.error('[AUTH CHECK] Unexpected error:', err);
       logout(true);
     } finally {
       setLoading(false);
@@ -68,8 +101,11 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async (silent = false) => {
+    console.log('[LOGOUT] Logging out user. Silent:', silent);
     setAccessToken(null);
-    authService.logout().catch(() => {});
+    authService.logout().catch((err) => {
+      console.error('[LOGOUT] Logout API call failed:', err);
+    });
     setUser(null);
     setIsAuthenticated(false);
     setIntendedAction(null);
@@ -80,6 +116,7 @@ export function AuthProvider({ children }) {
     if (!silent) {
       toast.success('Logged out successfully');
     }
+    console.log('[LOGOUT] Logout complete.');
   };
 
   // Open and close actions for global Auth Modal
@@ -105,6 +142,13 @@ export function AuthProvider({ children }) {
 
   // Triggers after successful OTP verification to restore queued action and finalize login
   const loginSuccess = async (userData, token) => {
+    console.log('[LOGIN SUCCESS] OTP verification successful. Setting auth state:', {
+      userId: userData._id,
+      userEmail: userData.email,
+      userRole: userData.role,
+      hasToken: !!token
+    });
+    
     setAccessToken(token);
     setUser(userData);
     setIsAuthenticated(true);
@@ -113,15 +157,17 @@ export function AuthProvider({ children }) {
     toast.success('Welcome back to the Studio!');
 
     if (userData?.role === 'admin' || userData?.role === 'manager') {
+      console.log('[LOGIN SUCCESS] Admin/Manager detected. Redirecting to /admin');
       window.location.href = '/admin';
       return;
     }
 
     if (intendedAction) {
       try {
+        console.log('[LOGIN SUCCESS] Executing queued intended action...');
         await intendedAction();
       } catch (err) {
-        console.error('Failed to auto-execute intended action after login:', err);
+        console.error('[LOGIN SUCCESS] Failed to execute intended action:', err);
       }
       setIntendedAction(null);
     }

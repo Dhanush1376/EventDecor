@@ -71,23 +71,28 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRefresh && !isAuthLogout) {
       originalRequest._retry = true;
+      console.log('[API] 401 Unauthorized - Attempting token refresh for:', originalRequest.url);
 
       try {
         if (!refreshPromise) {
+          console.log('[API] Initiating refresh token request...');
           refreshPromise = api.post('/auth/refresh').finally(() => {
             refreshPromise = null;
           });
         }
         const refreshResponse = await refreshPromise;
         const token = refreshResponse.data?.data?.accessToken || refreshResponse.data?.data?.token;
+        console.log('[API] Token refresh successful. Retrying original request.');
         setAccessToken(token);
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
-      } catch {
+      } catch (refreshErr) {
+        console.error('[API] Token refresh failed. Triggering logout.');
         setAccessToken(null);
         window.dispatchEvent(new Event('auth-unauthorized'));
       }
     } else if (error.response?.status === 401 && isAuthRefresh) {
+      console.error('[API] Refresh endpoint returned 401. Session expired.');
       setAccessToken(null);
       window.dispatchEvent(new Event('auth-unauthorized'));
     }

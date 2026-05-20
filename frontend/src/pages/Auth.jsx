@@ -43,9 +43,15 @@ export function Auth() {
   const otpRefs = useRef([]);
   const isSubmittingRef = useRef(false);
 
-  // Reset any cached or stale authentication states when entering the login portal to block auto-login/stale token restoration
+  // Reset any cached or stale authentication states when entering the login portal
+  // This prevents users from being auto-logged in via stale tokens
   useEffect(() => {
-    logout(true);
+    // Only logout if we have a previous session to clear
+    // This prevents interfering with the current OTP flow
+    console.log('[AUTH PAGE] Auth page mounted. Current auth state:', { isAuthenticated: !!user });
+    if (user) {
+      logout(true);
+    }
   }, []);
 
   // Countdown effect for the timer
@@ -85,6 +91,8 @@ export function Auth() {
     isSubmittingRef.current = true;
     setIsLoading(true);
     
+    console.log('[Auth] Sending OTP for email:', email);
+    
     // Check if we require password first
     if (!requiresPassword) {
       try {
@@ -110,6 +118,7 @@ export function Auth() {
 
     try {
       const response = await authService.sendOTP(email, password);
+      console.log('[Auth] OTP sent successfully');
       toast.success("Verification code sent to your email!");
       setStep("otp");
       setTimer(60);
@@ -123,6 +132,7 @@ export function Auth() {
         if (otpRefs.current[0]) otpRefs.current[0].focus();
       }, 300);
     } catch (err) {
+      console.error('[Auth] OTP send failed:', err);
       toast.error(err.response?.data?.message || 'Failed to send verification credentials');
     } finally {
       isSubmittingRef.current = false;
@@ -138,16 +148,27 @@ export function Auth() {
 
     isSubmittingRef.current = true;
     setIsLoading(true);
+    
+    console.log('[Auth] Submitting OTP verification for email:', email);
+    
     try {
       const response = await authService.verifyOTP(email, otpString);
+      console.log('[Auth] OTP verification successful!', {
+        userId: response.data.user._id,
+        userEmail: response.data.user.email,
+        userRole: response.data.user.role
+      });
       if (response.success) {
         setUserRole(response.data.user.role);
         setStep("success");
+        console.log('[Auth] Showing success screen. Will finalize login in 1.8s');
         setTimeout(async () => {
+          console.log('[Auth] Finalizing login...');
           await loginSuccess(response.data.user, response.data.token);
         }, 1800);
       }
     } catch (err) {
+      console.error('[Auth] OTP verification failed:', err);
       setError(true);
       toast.error(err.response?.data?.message || 'Invalid or expired code');
       setOtp(["", "", "", "", "", ""]);
