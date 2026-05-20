@@ -84,17 +84,28 @@ export function GallerySlideshow({
             className="relative max-w-full max-h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
             onClick={(e) => e.stopPropagation()}
           >
-            <CloudinaryImage
-              src={displayImage}
-              alt={currentItem.title}
-              className="max-w-full max-h-[70vh] md:max-h-[80vh] object-contain shadow-2xl rounded-lg cursor-default pointer-events-none"
-              containerClassName="max-w-full max-h-full flex items-center justify-center"
-              loading="eager"
-              fetchPriority="high"
-              width={1600}
-              height={1200}
-              sizes="100vw"
-            />
+            {currentItem.video ? (
+              <video
+                src={currentItem.video}
+                controls
+                autoPlay
+                playsInline
+                className="max-w-full max-h-[70vh] md:max-h-[80vh] object-contain shadow-2xl rounded-lg cursor-default"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <CloudinaryImage
+                src={displayImage}
+                alt={currentItem.title}
+                className="max-w-full max-h-[70vh] md:max-h-[80vh] object-contain shadow-2xl rounded-lg cursor-default pointer-events-none"
+                containerClassName="max-w-full max-h-full flex items-center justify-center"
+                loading="eager"
+                fetchPriority="high"
+                width={1600}
+                height={1200}
+                sizes="100vw"
+              />
+            )}
           </motion.div>
         </AnimatePresence>
 

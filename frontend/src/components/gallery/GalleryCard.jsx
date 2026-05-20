@@ -5,24 +5,39 @@ import { CloudinaryImage } from "../ui/CloudinaryImage";
 import { handleImageError } from "../../utils/imageUtils";
 
 function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
+  const [isHovered, setIsHovered] = React.useState(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={`break-inside-avoid mb-4 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 ${item.height || "aspect-square"}`}
     >
-      {/* Background Image with Cinematic Zoom */}
-      <CloudinaryImage
-        src={displayImage}
-        alt={item.title}
-        className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110 ease-out"
-        containerClassName="w-full h-full"
-        loading="lazy"
-        width={600}
-        height={800}
-        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-      />
+      {/* Background Image/Video with Cinematic Zoom */}
+      {isHovered && item.video ? (
+        <video
+          src={item.video}
+          muted
+          loop
+          autoPlay
+          playsInline
+          className="w-full h-full object-cover transition-all duration-700"
+        />
+      ) : (
+        <CloudinaryImage
+          src={displayImage}
+          alt={item.title}
+          className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110 ease-out"
+          containerClassName="w-full h-full"
+          loading="lazy"
+          width={600}
+          height={800}
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        />
+      )}
 
       {/* Heritage Floating Circle Badges - Delicate Scale - Hidden on Mobile to declutter */}
       <div className="absolute top-3 left-3 right-3 hidden md:flex justify-between items-start z-10">
@@ -42,15 +57,23 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
           )}
         </div>
 
-        {/* Type Badge */}
-        <div
-          className={`px-2.5 py-1 rounded-full backdrop-blur-md border text-[8px] uppercase tracking-widest font-extrabold shadow-lg ${
-            item.type === "real-event"
-              ? "bg-[#C4A87C] text-white border-[#C4A87C]/30"
-              : "bg-stone-900/90 text-white border-white/20"
-          }`}
-        >
-          {item.type === "real-event" ? "Real Event" : "Inspiration"}
+        {/* Type Badge / Video Badge */}
+        <div className="flex flex-col items-end gap-1.5">
+          <div
+            className={`px-2.5 py-1 rounded-full backdrop-blur-md border text-[8px] uppercase tracking-widest font-extrabold shadow-lg ${
+              item.type === "real-event"
+                ? "bg-[#C4A87C] text-white border-[#C4A87C]/30"
+                : "bg-stone-900/90 text-white border-white/20"
+            }`}
+          >
+            {item.type === "real-event" ? "Real Event" : "Inspiration"}
+          </div>
+          {item.video && (
+            <div className="px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 bg-amber-600/90 text-white text-[8px] uppercase tracking-widest font-extrabold shadow-lg flex items-center gap-1">
+              <span className="material-symbols-outlined text-[10px]">play_circle</span>
+              Video
+            </div>
+          )}
         </div>
       </div>
 

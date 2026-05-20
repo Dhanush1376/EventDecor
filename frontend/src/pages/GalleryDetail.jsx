@@ -182,17 +182,30 @@ export function GalleryDetail() {
           {/* Main Focus Card (Standard Laptop Scale, No z-index overlapping) */}
           <div className="w-full lg:flex-[1.5] lg:sticky lg:top-24 z-0 md:z-auto">
             <div className="bg-white md:rounded-[32px] overflow-hidden md:shadow-xl flex flex-col border border-black/5">
-              {/* Image Section */}
+              {/* Image/Video Section */}
               <div className="w-full relative bg-[#f9f8f6]">
-                <img
-                  onError={handleImageError}
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-auto object-cover max-h-[85vh] md:max-h-[55vh] mx-auto block"
-                  loading="eager"
-                  width={1200}
-                  height={800}
-                />
+                {item.video ? (
+                  <video
+                    src={item.video}
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-auto object-cover max-h-[85vh] md:max-h-[55vh] mx-auto block"
+                    poster={item.image}
+                  />
+                ) : (
+                  <img
+                    onError={handleImageError}
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-auto object-cover max-h-[85vh] md:max-h-[55vh] mx-auto block"
+                    loading="eager"
+                    width={1200}
+                    height={800}
+                  />
+                )}
 
                 {/* Desktop Only Actions - Inlined to avoid navbar overlap */}
                 <div className="hidden md:flex absolute top-4 right-4 flex-col gap-2">
