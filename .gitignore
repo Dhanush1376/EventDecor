@@ -10,3 +10,4 @@ logs
 logs/
 temp_backup_dir/
 scratch/
+.vercel

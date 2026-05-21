@@ -1,7 +1,17 @@
 {
+  "trailingSlash": false,
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.siriartsandcrafts.com" }],
+      "destination": "https://siriartsandcrafts.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
-      "source": "/((?!assets/|.*\\..*).*).*",
+      "source": "/((?!assets/|.*\\..*).*)",
       "destination": "/index.html"
     }
   ],
@@ -31,9 +41,16 @@
       ]
     },
     {
-      "source": "/(favicon\\.png|manifest\\.json|robots\\.txt|sitemap\\.xml)",
+      "source": "/(favicon\\.png|favicon\\.ico|manifest\\.json|robots\\.txt|sitemap\\.xml)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    },
+    {
+      "source": "/og-image.(png|jpg)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
   ]
