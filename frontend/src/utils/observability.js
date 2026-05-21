@@ -39,13 +39,22 @@ export const initObservability = () => {
       environment: import.meta.env.MODE || 'development',
     });
 
-    // 3. Coordinate LogRocket session links within Sentry alerts
     if (logRocketId) {
-      LogRocket.getSessionURL((sessionURL) => {
-        Sentry.setExtra('logrocketSessionURL', sessionURL);
-      });
+      linkLogRocketToSentry();
     }
   }
+};
+
+/** Attach LogRocket replay URL to Sentry for error/session correlation. */
+export const linkLogRocketToSentry = () => {
+  if (!import.meta.env.VITE_LOGROCKET_ID || !import.meta.env.VITE_SENTRY_DSN) return;
+
+  LogRocket.getSessionURL((sessionURL) => {
+    if (!sessionURL) return;
+    Sentry.setExtra('sessionURL', sessionURL);
+    Sentry.setExtra('logrocketSessionURL', sessionURL);
+    Sentry.setContext('logrocket', { sessionURL });
+  });
 };
 
 /**
@@ -53,7 +62,23 @@ export const initObservability = () => {
  */
 export const captureException = (error, context = {}) => {
   console.error('[Observability Exception]:', error, context);
-  
+
+  if (import.meta.env.VITE_LOGROCKET_ID && import.meta.env.VITE_SENTRY_DSN) {
+    LogRocket.getSessionURL((sessionURL) => {
+      if (sessionURL) {
+        Sentry.withScope((scope) => {
+          scope.setExtra('sessionURL', sessionURL);
+          scope.setExtra('logrocketSessionURL', sessionURL);
+          scope.setContext('logrocket', { sessionURL });
+          Sentry.captureException(error, { extra: context });
+        });
+        return;
+      }
+      Sentry.captureException(error, { extra: context });
+    });
+    return;
+  }
+
   if (import.meta.env.VITE_SENTRY_DSN) {
     Sentry.captureException(error, { extra: context });
   }
@@ -62,6 +87,9 @@ export const captureException = (error, context = {}) => {
     LogRocket.captureException(error, { extra: context });
   }
 };
+
+// Alias for audit compatibility
+export { linkLogRocketToSentry as syncLogRocketSessionToSentry };
 
 /**
  * Pins current session identifiers to authenticated user parameters.

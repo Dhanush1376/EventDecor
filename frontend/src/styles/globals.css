@@ -345,7 +345,7 @@
 }
 
 @utility bg-marble {
-  background-image: url("/marble-texture.png");
+  background-image: var(--marble-texture-url, url("https://res.cloudinary.com/drxgnnzeb/image/upload/q_auto,f_webp,w_1920/v1/event_decor_ecommerce/assets/event_decor_marble-texture"));
   background-repeat: repeat;
 }
 

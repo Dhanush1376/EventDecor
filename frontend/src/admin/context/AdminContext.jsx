@@ -780,7 +780,7 @@ export function AdminProvider({ children }) {
     const socketServerUrl = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
     logger.dev('[WEBSOCKET] Initiating admin alert subscription at:', socketServerUrl);
-    const socket = socketIO(socketServerUrl, {
+    const socket = socketIO(`${socketServerUrl}/admin`, {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 15,

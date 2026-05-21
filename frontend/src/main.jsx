@@ -4,8 +4,14 @@ import "./styles/globals.css";
 import App from "./App.jsx";
 import { initAnalytics } from "./utils/analytics";
 import { initObservability } from "./utils/observability";
+import { MARBLE_TEXTURE_URL } from "./constants/assets";
 
 import logger from './utils/logger';
+
+document.documentElement.style.setProperty(
+  '--marble-texture-url',
+  `url("${MARBLE_TEXTURE_URL}")`
+);
 // Initialize observability monitoring layers (Sentry & LogRocket)
 initObservability();
 

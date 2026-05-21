@@ -16,6 +16,7 @@ import { LoyaltyPanel } from "../components/loyalty/LoyaltyPanel";
 import { EventCustomerDashboard } from "./EventCustomerDashboard";
 
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import { useDashboardData } from "../hooks/useDashboardData";
 
 import logger from '../utils/logger';
 export function Dashboard() {
@@ -47,14 +48,20 @@ export function Dashboard() {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isPreferencesSaving, setIsPreferencesSaving] = useState(false);
-  const [isLoadingRecentlyViewed, setIsLoadingRecentlyViewed] = useState(false);
-  const [recentlyViewed, setRecentlyViewed] = useState([]);
-  
-  // Active API states
-  const [orders, setOrders] = useState([]);
-  const [isOrdersLoading, setIsOrdersLoading] = useState(false);
-  const [addresses, setAddresses] = useState([]);
-  const [isAddressesLoading, setIsAddressesLoading] = useState(false);
+  const userId = user?._id || user?.id;
+
+  const {
+    orders,
+    setOrders,
+    addresses,
+    setAddresses,
+    recentlyViewed,
+    setRecentlyViewed,
+    isOrdersLoading,
+    isAddressesLoading,
+    isLoadingRecentlyViewed,
+    refetch: refetchDashboardData,
+  } = useDashboardData(userId);
 
   // Profile forms
   const [profileForm, setProfileForm] = useState({
@@ -81,42 +88,9 @@ export function Dashboard() {
   const [isAddressSaving, setIsAddressSaving] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
-  // Orders and Address Fetchers
-  const fetchOrdersList = async () => {
-    setIsOrdersLoading(true);
-    try {
-      const res = await orderService.getMyOrders();
-      setOrders(res.data || res || []);
-    } catch (err) {
-      logger.error("Failed to fetch orders:", err);
-    } finally {
-      setIsOrdersLoading(false);
-    }
-  };
-
-  const fetchAddressesList = async () => {
-    setIsAddressesLoading(true);
-    try {
-      const res = await userService.getAddresses();
-      setAddresses(res.data || res || []);
-    } catch (err) {
-      logger.error("Failed to fetch addresses:", err);
-    } finally {
-      setIsAddressesLoading(false);
-    }
-  };
-
-  const fetchRecentlyViewedList = async () => {
-    setIsLoadingRecentlyViewed(true);
-    try {
-      const res = await userService.getRecentlyViewed();
-      setRecentlyViewed(res.data || res || []);
-    } catch (err) {
-      logger.error("Failed to fetch recently viewed list:", err);
-    } finally {
-      setIsLoadingRecentlyViewed(false);
-    }
-  };
+  const fetchOrdersList = () => refetchDashboardData();
+  const fetchAddressesList = () => refetchDashboardData();
+  const fetchRecentlyViewedList = () => refetchDashboardData();
 
   // Sync profile data on mount and user change
   useEffect(() => {
@@ -139,20 +113,6 @@ export function Dashboard() {
       return () => clearTimeout(timer);
     }
   }, [user]);
-
-  const userId = user?._id || user?.id;
-
-  // Fetch orders, addresses, and recently viewed only when user identity changes (on login/mount)
-  useEffect(() => {
-    if (userId) {
-      const timer = setTimeout(() => {
-        fetchOrdersList();
-        fetchAddressesList();
-        fetchRecentlyViewedList();
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [userId]);
 
   const [orderFilter, setOrderFilter] = useState("ALL");
 
