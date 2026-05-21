@@ -11,6 +11,7 @@ import {
 } from "../components/AdminUIKit";
 import { ImageUpload } from "../components/ImageUpload";
 import toast from "react-hot-toast";
+import { cmsService } from "../../services/domainServices";
 
 const cleanSignatureImg = (imgUrl, founderName) => {
   if (!imgUrl || imgUrl.includes("unsplash.com") || imgUrl === "" || imgUrl.includes("images.unsplash.com")) {
@@ -95,7 +96,6 @@ function AISparkButton({ text, onApply }) {
     setShowDropdown(false);
     
     try {
-      const { cmsService } = await import("../../services/domainServices");
       const res = await cmsService.aiGenerateContent(text, style);
       
       if (res.success && res.data?.text) {
