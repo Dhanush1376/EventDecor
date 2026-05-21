@@ -274,7 +274,7 @@ const seed = async () => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(defaultPassword, salt);
 
-    await User.create([
+    const adminsToSeed = [
       {
         name: 'Siri Devi (Owner)',
         email: 'sirisha.atmakuri@gmail.com',
@@ -291,8 +291,24 @@ const seed = async () => {
         passwordHash,
         passwordChangedAt: new Date(),
       }
-    ]);
-    console.log('👤 Admin & Super Admin users created with default password: ' + defaultPassword);
+    ];
+
+    for (const admin of adminsToSeed) {
+      await User.findOneAndUpdate(
+        { email: admin.email.toLowerCase().trim() },
+        {
+          $set: {
+            name: admin.name,
+            role: admin.role,
+            isVerified: admin.isVerified,
+            passwordHash: admin.passwordHash,
+            passwordChangedAt: admin.passwordChangedAt
+          }
+        },
+        { upsert: true, new: true }
+      );
+    }
+    console.log('👤 Admin & Super Admin users seeded/updated with password: ' + defaultPassword);
 
     // 2. Create Products
     const createdProducts = await Product.insertMany(allProducts);
