@@ -270,7 +270,7 @@ const seed = async () => {
     // console.log('🗑️ Data cleared (including reviews)');
 
     // 1. Create Admin Users
-    const defaultPassword = 'SuperAdminPassword123!';
+    const defaultPassword = process.env.ADMIN_PASSWORD || 'SuperAdminPassword123!';
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(defaultPassword, salt);
 
