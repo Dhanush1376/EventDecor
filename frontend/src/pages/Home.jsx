@@ -11,6 +11,14 @@ import { GallerySection } from "../components/sections/GallerySection";
 import { SEO } from "../components/seo/SEO";
 
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import {
+  HeroSkeleton,
+  NavigationHubSkeleton,
+  BestsellerSkeleton,
+  StorySkeleton,
+  GallerySkeleton,
+  ReviewsSkeleton,
+} from "../components/ui";
 
 const sectionComponents = {
   hero: HeroSection,
@@ -20,8 +28,6 @@ const sectionComponents = {
   galleryPreview: GallerySection,
   testimonials: VerifiedReviews,
 };
-
-// Removed skeleton components since we are rendering immediately to maintain stable heights
 
 export function Home() {
   const { homepageSections, seo, contact, loading } = useWebsiteContent();
@@ -49,6 +55,29 @@ export function Home() {
       "https://pinterest.com/siriarts",
     ],
   };
+
+  if (loading) {
+    return (
+      <>
+        <SEO
+          title={
+            seo?.pages?.home?.title || "Home of Artisanal Heritage & Luxury Decor"
+          }
+          description={
+            seo?.pages?.home?.description ||
+            "Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor."
+          }
+          schema={homeSchema}
+        />
+        <HeroSkeleton />
+        <NavigationHubSkeleton />
+        <BestsellerSkeleton />
+        <StorySkeleton />
+        <GallerySkeleton />
+        <ReviewsSkeleton />
+      </>
+    );
+  }
 
   const visibleSections = homepageSections?.filter((section) => section.isVisible) || [];
 
