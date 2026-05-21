@@ -222,7 +222,8 @@ export function AuthProvider({ children }) {
 
     toast.success('Welcome back to the Studio!');
 
-    if (userData?.role === 'admin' || userData?.role === 'manager') {
+    const adminRoles = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
+    if (adminRoles.includes(userData?.role)) {
       window.location.href = '/admin';
       return;
     }

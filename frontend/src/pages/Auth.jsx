@@ -328,7 +328,11 @@ export function Auth() {
               <SuccessState
                 key="success"
                 onComplete={() => {
-                  if (userRole === "admin" || userRole === "manager") {
+                  const adminRoles = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
+                  const redirect = searchParams.get('redirect');
+                  if (redirect) {
+                    navigate(redirect);
+                  } else if (adminRoles.includes(userRole)) {
                     navigate("/admin");
                   } else {
                     navigate("/");

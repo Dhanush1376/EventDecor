@@ -72,7 +72,7 @@ const AdminContent = lazy(() => import("./admin/pages/AdminContent").then((m) =>
 const AdminTeam = lazy(() => import("./admin/pages/AdminTeam").then((m) => ({ default: m.AdminTeam })));
 const AdminSettings = lazy(() => import("./admin/pages/AdminSettings").then((m) => ({ default: m.AdminSettings })));
 const AdminSystemUsers = lazy(() => import("./admin/pages/AdminSystemUsers").then((m) => ({ default: m.AdminSystemUsers })));
-const AdminLogin = lazy(() => import("./admin/pages/AdminLogin").then((m) => ({ default: m.AdminLogin })));
+
 
 const PageLoader = () => (
   <div className="fixed inset-0 z-[9999] bg-white/10 backdrop-blur-xl flex flex-col items-center justify-center">
@@ -158,7 +158,7 @@ function App() {
                       <Route element={<MinimalLayout />}>
                         <Route path="/checkout" element={<Checkout />} />
                       </Route>
-                      <Route path="/admin/login" element={<AdminLogin />} />
+
                       <Route path="/admin" element={<ProtectedRoute adminOnly><Suspense fallback={<AdminLoader />}><AdminLayout /></Suspense></ProtectedRoute>}>
                         <Route index element={<AdminDashboard />} />
                         <Route path="homepage" element={<AdminContent />} />
