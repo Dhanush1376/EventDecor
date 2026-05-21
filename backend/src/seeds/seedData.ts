@@ -79,9 +79,9 @@ const initialWebsiteContent = {
       { id: "Crimson & Artisanal", name: "Crimson & Artisanal", hexes: ["#8b0000", "#ff4500", "#ffd700"] },
     ],
     venueSizes: [
-      { id: "Intimate", label: "Intimate Setup", capacity: "Under 100 Guests", desc: "Perfect for home functions.", previewImg: IMAGES.templeStyleMandap },
-      { id: "Banquet", label: "Standard Banquet", capacity: "200 - 500 Guests", desc: "Optimized for hotel ballrooms.", previewImg: IMAGES.modernReceptionLounge },
-      { id: "Grand", label: "Grand Lawn / Palace", capacity: "500+ Guests", desc: "Majestic layout for broad entrance.", previewImg: IMAGES.luxuryRoyalWedding },
+      { id: "Intimate", label: "Intimate Setup", capacity: "Compact Footprint", desc: "Perfect for home functions.", previewImg: IMAGES.templeStyleMandap },
+      { id: "Banquet", label: "Standard Banquet", capacity: "Medium Footprint", desc: "Optimized for hotel ballrooms.", previewImg: IMAGES.modernReceptionLounge },
+      { id: "Grand", label: "Grand Lawn / Palace", capacity: "Expanded Footprint", desc: "Majestic layout for broad entrance.", previewImg: IMAGES.luxuryRoyalWedding },
     ],
     packageModules: [
       { id: "mandap", label: "Mandap Setup", basePrice: 150000, desc: "Sacred core structure", isPopular: true },
@@ -103,7 +103,7 @@ const initialWebsiteContent = {
     phone: "9866006648",
     email: "Sirisha.atmakuri@gmail.com",
     whatsapp: "9866006648",
-    address: "#28-1-92, Beside Kailash PavBhaji Center, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
+    address: "#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
     businessHours: "Mon - Sat: 10 AM - 7 PM",
   },
   seo: {
@@ -144,9 +144,9 @@ const initialWebsiteContent = {
       { id: "Emerald Royal", name: "Emerald Royal", hexes: ["#043927", "#2e8b57", "#d4af37"] },
     ],
     venueSizes: [
-      { id: "Intimate", label: "Intimate Setup", capacity: "Under 100 Guests", desc: "Perfect for home functions, small garden ceremonies, or sacred temple halls.", previewImg: IMAGES.templeStyleMandap },
-      { id: "Banquet", label: "Standard Banquet", capacity: "200 - 500 Guests", desc: "Optimized multi-level framing suited for indoor premium hotel reception ballrooms.", previewImg: IMAGES.modernReceptionLounge },
-      { id: "Grand", label: "Grand Lawn / Palace", capacity: "500+ Guests", desc: "Absolute majestic layout with broad entrance deepam runs and overarching architectural arrays.", previewImg: IMAGES.luxuryRoyalWedding },
+      { id: "Intimate", label: "Intimate Setup", capacity: "Compact Footprint", desc: "Perfect for home functions, small garden ceremonies, or sacred temple halls.", previewImg: IMAGES.templeStyleMandap },
+      { id: "Banquet", label: "Standard Banquet", capacity: "Medium Footprint", desc: "Optimized multi-level framing suited for indoor premium hotel reception ballrooms.", previewImg: IMAGES.modernReceptionLounge },
+      { id: "Grand", label: "Grand Lawn / Palace", capacity: "Expanded Footprint", desc: "Absolute majestic layout with broad entrance deepam runs and overarching architectural arrays.", previewImg: IMAGES.luxuryRoyalWedding },
     ],
     packageModules: [
       { id: "mandap", label: "Mandap Setup", basePrice: 150000, desc: "Sacred core structure with customized silk backdrops", isPopular: true },
@@ -175,6 +175,18 @@ const initialWebsiteContent = {
       ctaText: "Claim Offer",
       ctaLink: "Festive Decor",
     }
+  },
+  eventsPage: {
+    hero: {
+      title: "Luxury Event Scapes",
+      subtitle: "Cinematic Environments",
+      description: "Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.",
+      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g",
+    },
+    promo: {
+      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w",
+    },
+    status: "published",
   },
   featuredProducts: {
     sectionTitle: "Bestselling Masterpieces",
@@ -238,11 +250,11 @@ const initialWebsiteContent = {
 const allProducts: any[] = [];
 
 const masterEventsData = [
-  { title: "Wedding Ceremony", subtitle: "Sacred Gold & Crimson Sanctuary", category: "Wedding Ceremony", style: "Royal", image: IMAGES.luxuryRoyalWedding, decorCount: "120+ Decor Elements", venueType: "Indoor Banquet & Heritage Lawns", pricing: "Starting at Rs. 3,50,000", description: "An architectural masterpiece inspired by palace courtyards.", colorPalette: ["#f5f0eb", "#d4af37", "#8b0000"], features: ["24K Gold Plated Pavilion Archways", "Handwoven Pure Zardozi Backdrops"], venueSize: "Suitable for 300 - 1500 Guests", gallery: [IMAGES.luxuryRoyalWedding, IMAGES.templeStyleMandap] },
-  { title: "Traditional Wedding Decor", subtitle: "Sacred South Indian Heritage", category: "Wedding Ceremony", style: "South Indian", image: IMAGES.templeStyleMandap, decorCount: "95+ Decor Elements", venueType: "Traditional Pavilion & Open Lawns", pricing: "Starting at Rs. 2,80,000", description: "Replicating the timeless stone aesthetics of ancient southern temples.", colorPalette: ["#e5d5c5", "#b8860b", "#228b22"], features: ["Teakwood Replica Sculpted Pillars", "Traditional Heritage Pavilion Setups"], venueSize: "Suitable for 200 - 1200 Guests", gallery: [IMAGES.templeStyleMandap, IMAGES.galleryBackdrop] },
-  { title: "Engagement Ceremony", subtitle: "Ivory Glow & Silk Accents", category: "Engagement Ceremony", style: "Elegant", image: IMAGES.galleryBackdrop, decorCount: "70+ Decor Elements", venueType: "Luxury Hotel Terraces & Boutiques", pricing: "Starting at Rs. 1,50,000", description: "A harmonious fusion of modern minimalist glass framing with traditional heavy silk ring tray setups.", colorPalette: ["#ffffff", "#eec900", "#dcdcdc"], features: ["Floating Crystal Illumination Halos", "Custom Engraved Antique Shagun Plinths"], venueSize: "Suitable for 50 - 300 Guests", gallery: [IMAGES.galleryBackdrop, IMAGES.galleryHampers] },
-  { title: "Reception Decoration", subtitle: "Modern Luxury & Floating Gold Accents", category: "Reception Decoration", style: "Modern", image: IMAGES.modernReceptionLounge, decorCount: "110+ Decor Elements", venueType: "Grand Ballroom & Glasshouse Pavilions", pricing: "Starting at Rs. 4,000,000", description: "An ultra-chic evening setup starring metallic brass arches.", colorPalette: ["#1a1a1a", "#d4af37", "#fdfbf7"], features: ["Illuminated Brass Monogram Stage Screens", "Suspended Filament Glow Canopies"], venueSize: "Suitable for 400 - 2000 Guests", gallery: [IMAGES.modernReceptionLounge, IMAGES.luxuryRoyalWedding] },
-  { title: "Traditional Pooja Setup", subtitle: "Vibrant Yellows & Traditional Urli Setups", category: "Traditional Pooja Setup", style: "Traditional", image: IMAGES.haldiVibrantSetup, decorCount: "60+ Decor Elements", venueType: "Courtyards & Heritage Open Terraces", pricing: "Starting at Rs. 95,000", description: "Drenched in auspicious yellows and warm saffron hues.", colorPalette: ["#ffcc00", "#ff6600", "#ffffff"], features: ["Solid Hammered Brass Shagun Urli Seat", "Silk Tassel Chandelier Frames"], venueSize: "Suitable for 30 - 150 Guests", gallery: [IMAGES.haldiVibrantSetup, IMAGES.galleryMetalPots] },
+  { title: "Wedding Ceremony", subtitle: "Sacred Gold & Crimson Sanctuary", category: "Wedding Ceremony", style: "Royal", image: IMAGES.luxuryRoyalWedding, decorCount: "120+ Decor Elements", venueType: "Indoor Banquet & Heritage Lawns", pricing: "Starting at Rs. 3,50,000", description: "An architectural masterpiece inspired by palace courtyards.", colorPalette: ["#f5f0eb", "#d4af37", "#8b0000"], features: ["24K Gold Plated Pavilion Archways", "Handwoven Pure Zardozi Backdrops"], venueSize: "Grand Ballroom & Heritage Lawns", gallery: [IMAGES.luxuryRoyalWedding, IMAGES.templeStyleMandap] },
+  { title: "Traditional Wedding Decor", subtitle: "Sacred South Indian Heritage", category: "Wedding Ceremony", style: "South Indian", image: IMAGES.templeStyleMandap, decorCount: "95+ Decor Elements", venueType: "Traditional Pavilion & Open Lawns", pricing: "Starting at Rs. 2,80,000", description: "Replicating the timeless stone aesthetics of ancient southern temples.", colorPalette: ["#e5d5c5", "#b8860b", "#228b22"], features: ["Teakwood Replica Sculpted Pillars", "Traditional Heritage Pavilion Setups"], venueSize: "Traditional Pavilion & Open Lawns", gallery: [IMAGES.templeStyleMandap, IMAGES.galleryBackdrop] },
+  { title: "Engagement Ceremony", subtitle: "Ivory Glow & Silk Accents", category: "Engagement Ceremony", style: "Elegant", image: IMAGES.galleryBackdrop, decorCount: "70+ Decor Elements", venueType: "Luxury Hotel Terraces & Boutiques", pricing: "Starting at Rs. 1,50,000", description: "A harmonious fusion of modern minimalist glass framing with traditional heavy silk ring tray setups.", colorPalette: ["#ffffff", "#eec900", "#dcdcdc"], features: ["Floating Crystal Illumination Halos", "Custom Engraved Antique Shagun Plinths"], venueSize: "Luxury Hotel Terraces & Boutiques", gallery: [IMAGES.galleryBackdrop, IMAGES.galleryHampers] },
+  { title: "Reception Decoration", subtitle: "Modern Luxury & Floating Gold Accents", category: "Reception Decoration", style: "Modern", image: IMAGES.modernReceptionLounge, decorCount: "110+ Decor Elements", venueType: "Grand Ballroom & Glasshouse Pavilions", pricing: "Starting at Rs. 4,000,000", description: "An ultra-chic evening setup starring metallic brass arches.", colorPalette: ["#1a1a1a", "#d4af37", "#fdfbf7"], features: ["Illuminated Brass Monogram Stage Screens", "Suspended Filament Glow Canopies"], venueSize: "Grand Ballroom & Glasshouse Pavilions", gallery: [IMAGES.modernReceptionLounge, IMAGES.luxuryRoyalWedding] },
+  { title: "Traditional Pooja Setup", subtitle: "Vibrant Yellows & Traditional Urli Setups", category: "Traditional Pooja Setup", style: "Traditional", image: IMAGES.haldiVibrantSetup, decorCount: "60+ Decor Elements", venueType: "Courtyards & Heritage Open Terraces", pricing: "Starting at Rs. 95,000", description: "Drenched in auspicious yellows and warm saffron hues.", colorPalette: ["#ffcc00", "#ff6600", "#ffffff"], features: ["Solid Hammered Brass Shagun Urli Seat", "Silk Tassel Chandelier Frames"], venueSize: "Courtyards & Heritage Open Terraces", gallery: [IMAGES.haldiVibrantSetup, IMAGES.galleryMetalPots] },
 ];
 
 const galleryInspirations = [
@@ -254,6 +266,11 @@ const galleryInspirations = [
 const seed = async () => {
   if (process.env.NODE_ENV === 'production') {
     console.error('❌ SEEDING SHIELD: Seeding operations are strictly disabled in production mode to prevent accidental data loss.');
+    process.exit(1);
+  }
+
+  if (process.env.SEED_CONFIRM !== 'true') {
+    console.error('❌ SAFETY GATE: Set SEED_CONFIRM=true to confirm seeding operation. Run: SEED_CONFIRM=true npm run seed');
     process.exit(1);
   }
 

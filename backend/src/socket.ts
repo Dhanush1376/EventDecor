@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import logger from './config/logger';
 import User from './models/User';
 import { isOriginAllowed } from './app';
+import { ADMIN_ROLES } from './config/adminConfig';
 
 let io: Server;
 
@@ -19,6 +20,12 @@ export const initSocket = (server: HttpServer) => {
       },
       methods: ['GET', 'POST'],
       credentials: true,
+    },
+    pingTimeout: 30000,
+    pingInterval: 15000,
+    maxHttpBufferSize: 1e6, // 1MB max payload
+    connectionStateRecovery: {
+      maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
     },
   });
 
@@ -36,7 +43,7 @@ export const initSocket = (server: HttpServer) => {
       }
 
       const user = await User.findById(decoded.id).select('role email');
-      if (!user || user.role !== 'admin') {
+      if (!user || !ADMIN_ROLES.includes(user.role as any)) {
         return next(new Error('Authentication error: Unauthorized user role'));
       }
 

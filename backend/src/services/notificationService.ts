@@ -172,7 +172,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
 
     // 5. Send via smart email provider (Brevo HTTP API → SMTP fallback → Ethereal dev)
     let info: any;
-    const maxRetries = 2;
+    const maxRetries = 3;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -186,12 +186,13 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
       } catch (err: any) {
         if (attempt === maxRetries) {
           log.status = 'failed';
-          log.errorDetails = err.message || 'Delivery attempt failed';
+          log.errorDetails = `Failed after ${maxRetries} attempts: ${err.message || 'Unknown error'}`;
           await log.save();
           throw err;
         }
-        logger.warn(`[EMAIL RETRY] Attempt ${attempt} failed for ${email}: ${err.message}. Retrying in ${attempt}s...`);
-        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+        const backoffMs = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+        logger.warn(`[EMAIL RETRY] Attempt ${attempt}/${maxRetries} failed for ${email}: ${err.message}. Retrying in ${backoffMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
       }
     }
 

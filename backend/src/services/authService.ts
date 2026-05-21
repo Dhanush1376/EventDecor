@@ -12,6 +12,9 @@ import { getAdminEmails } from '../config/adminConfig';
 import UsedRefreshToken from '../models/UsedRefreshToken';
 import FailedLoginAttempt from '../models/FailedLoginAttempt';
 
+// Cache to handle concurrent/duplicate OTP verification requests (grace period of 10 seconds)
+const recentlyVerifiedOtps = new Map<string, { email: string; verifiedAt: number; session: any }>();
+
 class AuthService {
   static generateAccessToken(user: IUser) {
     return jwt.sign(
@@ -67,6 +70,16 @@ class AuthService {
     // 1. Detect if this token was already used (Replay attack detection)
     const isUsed = await UsedRefreshToken.findOne({ tokenHash });
     if (isUsed) {
+      // Allow a 60-second grace period for concurrent/retry refresh requests (e.g. multiple tabs or network retries)
+      const isWithinGracePeriod = (Date.now() - new Date((isUsed as any).createdAt).getTime()) < 60000;
+      if (isWithinGracePeriod) {
+        logger.info(`[REFRESH CONCURRENCY GRACE] Allow reuse of recently rotated refresh token for userId: ${isUsed.userId}`);
+        const user = await User.findOne({ _id: isUsed.userId, isVerified: true });
+        if (user) {
+          return this.createSession(user, userAgent);
+        }
+      }
+
       // Replay detected — only revoke the compromised session family, NOT all user sessions
       logger.error(`[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Potential replay attack.`);
       throw new ApiError(401, 'Session expired. Please log in again.');
@@ -368,6 +381,14 @@ class AuthService {
 
     const cleanEmail = canonicalizeEmail(email);
 
+    // Concurrency & duplicate verification check
+    const cacheKey = `${cleanEmail}:${otp}`;
+    const recentVerification = recentlyVerifiedOtps.get(cacheKey);
+    if (recentVerification && (Date.now() - recentVerification.verifiedAt) < 10000) {
+      logger.info(`[OTP CONCURRENCY RESILIENCE] Duplicate concurrent OTP verification request allowed for ${cleanEmail}`);
+      return recentVerification.session;
+    }
+
     const isDev = process.env.NODE_ENV === 'development';
 
     // 1. Cooldown & IP Restriction Check: Max 5 failed OTP attempts in the last 15 minutes per IP (Bypassed in Dev)
@@ -597,7 +618,23 @@ class AuthService {
       logger.error('Failed to trigger Suspicious Login email:', err);
     }
 
-    return this.createSession(user, userAgent);
+    const session = await this.createSession(user, userAgent);
+
+    // Cache the successful verification to absorb duplicate concurrent hits
+    recentlyVerifiedOtps.set(cacheKey, {
+      email: cleanEmail,
+      verifiedAt: Date.now(),
+      session
+    });
+
+    // Clean up expired cache items to prevent memory leaks
+    for (const [key, val] of recentlyVerifiedOtps.entries()) {
+      if (Date.now() - val.verifiedAt > 30000) {
+        recentlyVerifiedOtps.delete(key);
+      }
+    }
+
+    return session;
   }
 
   static async generateCodOTP(email: string, ip: string = '127.0.0.1') {

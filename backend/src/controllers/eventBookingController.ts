@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import EventBooking from '../models/EventBooking';
 import Event from '../models/Event';
+import User from '../models/User';
+import Counter from '../models/Counter';
+import { EventBookingMailService } from '../services/eventBookingMailService';
+import { createAdminNotification } from './adminNotificationController';
+import logger from '../config/logger';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -21,7 +26,44 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
     inspirationImages,
   } = req.body;
 
-  let basePrice = 0;
+  const userId = req.user?.id;
+  if (!userId) {
+    throw new ApiError(401, 'Authentication credentials missing or invalid.');
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, 'Authorized customer account not found.');
+  }
+
+  // 1. Double Booking Check (same venue address, same date)
+  if (venue?.address && venue.address.trim() && venue.address.toUpperCase() !== 'TBD') {
+    const bookingDate = new Date(date);
+    const startOfDay = new Date(bookingDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bookingDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const duplicate = await EventBooking.findOne({
+      date: { $gte: startOfDay, $lte: endOfDay },
+      'venue.address': { $regex: new RegExp(`^${venue.address.trim()}$`, 'i') },
+      status: { $nin: ['completed'] }
+    });
+
+    if (duplicate) {
+      throw new ApiError(409, 'This venue is already booked for the selected date.');
+    }
+  }
+
+  // 2. Generate Booking ID atomically using Counter sequence
+  const counter = await Counter.findOneAndUpdate(
+    { id: 'event_booking' },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+  const seqNum = counter ? counter.seq : Math.floor(1000 + Math.random() * 9000);
+  const bookingId = `SR-BK-${new Date().getFullYear()}-${String(seqNum).padStart(5, '0')}`;
+
   let rentalFee = 0;
 
   // If client selected an existing package from our catalog, calculate base fee
@@ -40,7 +82,8 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
   const totalPrice = rentalFee + addOnCharges; // initial estimate, setup/transport added later by admin
 
   const booking = await EventBooking.create({
-    user: req.user?._id,
+    bookingId,
+    user: userId,
     eventPackage: eventPackageId || null,
     title: title || `${eventType || 'Special'} Celebration`,
     eventType: eventType || 'Wedding',
@@ -75,12 +118,32 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
     ],
   });
 
+  const eventDateStr = new Date(date).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  // 3. Dispatch persistent real-time admin notification
+  createAdminNotification({
+    title: 'New Luxury Event Booking Inquiry',
+    message: `${user.name || 'A customer'} submitted a new event booking inquiry ("${booking.title}") for ${eventDateStr}.`,
+    type: 'custom_request',
+    actionLink: `/admin/bookings`,
+    metadata: { bookingId: booking._id }
+  }).catch((err: any) => logger.error('Failed to create admin notification for booking:', err));
+
+  // 4. Send elegant emails in background
+  EventBookingMailService.sendSubmissionEmails(booking, user).catch((err: any) =>
+    logger.error('Failed to dispatch booking emails:', err)
+  );
+
   res.status(201).json(new ApiResponse(true, 'Your luxury event design has been submitted!', booking));
 });
 
 // 2. Get Customer Event Bookings
 export const getMyEventBookings = asyncHandler(async (req: any, res: Response) => {
-  const bookings = await EventBooking.find({ user: req.user?._id })
+  const bookings = await EventBooking.find({ user: req.user?.id })
     .populate('eventPackage')
     .sort({ createdAt: -1 });
   res.status(200).json(new ApiResponse(true, 'Your active event curation synced successfully', bookings));
@@ -97,7 +160,7 @@ export const getSingleEventBooking = asyncHandler(async (req: any, res: Response
   }
 
   // Security bounds checks
-  if (req.user.role !== 'admin' && String(booking.user._id || booking.user) !== String(req.user._id)) {
+  if (req.user.role !== 'admin' && String(booking.user._id || booking.user) !== String(req.user.id)) {
     throw new ApiError(403, 'Access denied to this secure design workspace.');
   }
 
@@ -113,7 +176,7 @@ export const customerApproveQuote = asyncHandler(async (req: any, res: Response)
     throw new ApiError(404, 'Booking not found');
   }
 
-  if (String(booking.user) !== String(req.user?._id)) {
+  if (String(booking.user) !== String(req.user?.id)) {
     throw new ApiError(403, 'Only the client can execute quote responses.');
   }
 
@@ -147,7 +210,7 @@ export const customerSubmitPayment = asyncHandler(async (req: any, res: Response
     throw new ApiError(404, 'Booking not found');
   }
 
-  if (String(booking.user) !== String(req.user?._id)) {
+  if (String(booking.user) !== String(req.user?.id)) {
     throw new ApiError(403, 'Unauthorized transaction action.');
   }
 
@@ -198,7 +261,7 @@ export const postChatMessage = asyncHandler(async (req: any, res: Response) => {
 
   const isAdmin = req.user?.role === 'admin';
 
-  if (!isAdmin && String(booking.user) !== String(req.user?._id)) {
+  if (!isAdmin && String(booking.user) !== String(req.user?.id)) {
     throw new ApiError(403, 'Restricted messaging permission.');
   }
 
@@ -249,7 +312,7 @@ export const adminGetAllBookings = asyncHandler(async (req: Request, res: Respon
 // 8. Admin Timeline Status Shifter
 export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) => {
   const { status } = req.body;
-  const booking = await EventBooking.findById(req.params.id);
+  const booking = await EventBooking.findById(req.params.id).populate('user');
 
   if (!booking) {
     throw new ApiError(404, 'Booking not found');
@@ -265,6 +328,12 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
   });
 
   await booking.save();
+
+  // Send status update email in background
+  EventBookingMailService.sendStatusUpdateEmail(booking, oldStatus, status).catch((err: any) =>
+    logger.error('Failed to dispatch status update email to customer:', err)
+  );
+
   res.status(200).json(new ApiResponse(true, 'Timeline status updated', booking));
 });
 
@@ -307,7 +376,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
 
 // 10. Admin Manages Logistics & Setup/Pickup Schedules
 export const adminUpdateLogistics = asyncHandler(async (req: any, res: Response) => {
-  const { setupTiming, pickupTiming, assignedTeam, rentedInventory, adminNotes } = req.body;
+  const { setupTiming, pickupTiming, assignedTeam, rentedInventory, adminNotes, venue } = req.body;
   const booking = await EventBooking.findById(req.params.id);
 
   if (!booking) {
@@ -319,9 +388,15 @@ export const adminUpdateLogistics = asyncHandler(async (req: any, res: Response)
   if (assignedTeam) booking.assignedTeam = assignedTeam;
   if (rentedInventory) booking.rentedInventory = rentedInventory;
   if (adminNotes !== undefined) booking.adminNotes = adminNotes;
+  if (venue) {
+    booking.venue = {
+      ...booking.venue,
+      ...venue
+    };
+  }
 
   await booking.save();
-  res.status(200).json(new ApiResponse(true, 'Logistics, inventory, and staff rosters allocated', booking));
+  res.status(200).json(new ApiResponse(true, 'Logistics, inventory, staff rosters, and venue details allocated', booking));
 });
 
 // 11. Admin Internal Notes Logger

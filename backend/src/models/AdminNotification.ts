@@ -38,4 +38,11 @@ const AdminNotificationSchema = new Schema<IAdminNotification>({
   },
 }, { timestamps: true });
 
+// High-Performance Production Indexes
+AdminNotificationSchema.index({ isRead: 1, createdAt: -1 });
+AdminNotificationSchema.index({ type: 1, createdAt: -1 });
+
+// TTL: Auto-cleanup notifications older than 60 days
+AdminNotificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 24 * 60 * 60 });
+
 export default mongoose.model<IAdminNotification>('AdminNotification', AdminNotificationSchema);

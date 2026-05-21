@@ -96,7 +96,7 @@ const allowedOrigins = [
 ];
 
 export const isOriginAllowed = (origin: string): boolean => {
-  return allowedOrigins.includes(origin) || origin.includes("vercel.app");
+  return allowedOrigins.includes(origin) || origin.endsWith(".vercel.app") && origin.includes("siriarts");
 };
 
 app.use(
@@ -105,7 +105,7 @@ app.use(
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
-        origin.includes("vercel.app")
+        (origin.endsWith(".vercel.app") && origin.includes("siriarts"))
       ) {
         callback(null, true);
       } else {

@@ -50,6 +50,10 @@ GallerySchema.index({ category: 1 });
 GallerySchema.index({ event: 1 });
 GallerySchema.index({ type: 1 });
 
+// High-Performance Production Compound Indexes
+GallerySchema.index({ isActive: 1, category: 1, createdAt: -1 });
+GallerySchema.index({ isActive: 1, type: 1, createdAt: -1 });
+
 // Sitemap Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
 GallerySchema.post('save', () => { triggerSitemapUpdate(); });

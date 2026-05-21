@@ -29,6 +29,39 @@ export const submitEventBookingValidator = [
     .trim()
     .isLength({ max: 500 })
     .withMessage('Venue address must be at most 500 characters'),
+  body('venue.name')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Venue name must be at most 200 characters'),
+  body('venue.city')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 100 }),
+  body('venue.state')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 100 }),
+  body('venue.country')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 100 }),
+  body('venue.pincode')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 20 }),
+  body('venue.latitude')
+    .optional({ values: 'falsy' })
+    .isNumeric()
+    .withMessage('Latitude must be a number'),
+  body('venue.longitude')
+    .optional({ values: 'falsy' })
+    .isNumeric()
+    .withMessage('Longitude must be a number'),
+  body('venue.googleMapsLink')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 1000 }),
   body('venue.isOutdoor')
     .optional()
     .isBoolean()

@@ -42,6 +42,7 @@ export interface IRentedInventory {
 }
 
 export interface IEventBooking extends Document {
+  bookingId?: string;
   user: mongoose.Types.ObjectId;
   eventPackage?: mongoose.Types.ObjectId;
   title: string;
@@ -56,6 +57,13 @@ export interface IEventBooking extends Document {
   guestCount: number;
   venue: {
     address: string;
+    name?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    pincode?: string;
+    latitude?: number;
+    longitude?: number;
     googleMapsLink?: string;
     isOutdoor: boolean;
   };
@@ -137,6 +145,7 @@ const RentedInventorySchema = new Schema({
 
 const EventBookingSchema: Schema = new Schema(
   {
+    bookingId: { type: String, unique: true, sparse: true },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     eventPackage: { type: Schema.Types.ObjectId, ref: 'Event' },
     title: { type: String, required: true },
@@ -151,6 +160,13 @@ const EventBookingSchema: Schema = new Schema(
     guestCount: { type: Number, required: true },
     venue: {
       address: { type: String, required: true },
+      name: { type: String },
+      city: { type: String },
+      state: { type: String },
+      country: { type: String },
+      pincode: { type: String },
+      latitude: { type: Number },
+      longitude: { type: Number },
       googleMapsLink: { type: String },
       isOutdoor: { type: Boolean, default: false },
     },

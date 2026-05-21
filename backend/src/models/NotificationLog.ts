@@ -52,6 +52,13 @@ NotificationLogSchema.index({ campaignId: 1 }, { sparse: true });
 NotificationLogSchema.index({ type: 1 });
 NotificationLogSchema.index({ createdAt: -1 });
 
+// High-Performance Production Compound Indexes
+NotificationLogSchema.index({ userId: 1, createdAt: -1 }, { sparse: true });
+NotificationLogSchema.index({ status: 1, type: 1, createdAt: -1 });
+
+// TTL: Auto-cleanup notification logs older than 90 days
+NotificationLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+
 const NotificationLog = mongoose.model<INotificationLog>('NotificationLog', NotificationLogSchema);
 
 export default NotificationLog;

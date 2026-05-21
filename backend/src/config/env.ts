@@ -5,10 +5,10 @@ const baseRequiredEnvVars = [
   'MONGO_URI',
   'JWT_SECRET',
   'JWT_EXPIRES_IN',
+  'ADMIN_EMAIL',
 ];
 
 const productionRequiredEnvVars = [
-  'ADMIN_EMAIL',
   'ADMIN_PASSWORD',
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY',
@@ -26,6 +26,12 @@ const validateEnv = () => {
 
   const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
+  // Validate JWT_EXPIRES_IN format (should be like '15m', '1h', '7d', etc.)
+  const jwtExpiry = process.env.JWT_EXPIRES_IN || '';
+  if (jwtExpiry && !/^\d+[smhd]$/.test(jwtExpiry)) {
+    logger.warn(`[ENV WARNING] JWT_EXPIRES_IN="${jwtExpiry}" may not be a valid time string. Expected format: 15m, 1h, 7d, etc.`);
+  }
+
   // Razorpay credentials are strictly mandatory for payment processing in production
   if (process.env.NODE_ENV === 'production') {
     if ((process.env.JWT_SECRET || '').length < 32) {
@@ -34,6 +40,11 @@ const validateEnv = () => {
     }
     if (!process.env.RAZORPAY_KEY_ID) missingVars.push('RAZORPAY_KEY_ID');
     if (!process.env.RAZORPAY_KEY_SECRET) missingVars.push('RAZORPAY_KEY_SECRET');
+
+    // Sentry DSN check
+    if (!process.env.SENTRY_DSN) {
+      logger.warn('[ENV WARNING] SENTRY_DSN is not configured. Production error monitoring will be disabled. Set up at https://sentry.io');
+    }
 
     // Email provider check — warn clearly but don't crash (allows diagnostic debugging)
     const hasBrevo = !!process.env.BREVO_API_KEY;
@@ -65,3 +76,4 @@ const validateEnv = () => {
 };
 
 export default validateEnv;
+

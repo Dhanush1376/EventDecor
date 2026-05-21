@@ -124,8 +124,10 @@ export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response
 
   const userEmail = req.user.email?.trim()?.toLowerCase();
   
-  // Super admin is defined as having the role 'super_admin' OR matching the hardcoded owner email
-  if (req.user.role === 'super_admin' || (userEmail === 'sirisha.atmakuri@gmail.com')) {
+  // Super admin is identified by role OR by matching any email in the admin config's super admin entries
+  const isSuperAdminRole = req.user.role === 'super_admin';
+  const isSuperAdminEmail = userEmail && getAdminEmails().some(addr => isSameEmail(userEmail, addr));
+  if (isSuperAdminRole || isSuperAdminEmail) {
     // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
     const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
     if (mutatingMethod) {
@@ -158,7 +160,8 @@ export const requireRole = (allowedRoles: string[]) => {
     const userEmail = req.user.email?.trim()?.toLowerCase();
 
     // Super Admin always gets access
-    if (req.user.role === 'super_admin' || userEmail === 'sirisha.atmakuri@gmail.com' || allowedRoles.includes(req.user.role)) {
+    const isSuperAdmin = req.user.role === 'super_admin' || (userEmail && getAdminEmails().some(addr => isSameEmail(userEmail, addr)));
+    if (isSuperAdmin || allowedRoles.includes(req.user.role)) {
       // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
       const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
       if (mutatingMethod) {
