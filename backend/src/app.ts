@@ -108,9 +108,17 @@ const allowedOrigins = (process.env.FRONTEND_URLS?.split(',') || ['http://localh
       return [origin];
     }
   });
+const isVercelPreview = (origin: string): boolean => {
+  return /^https:\/\/siriarts-n-crafts(-[a-z0-9-]+)?\.vercel\.app$/.test(origin);
+};
+
+export const isOriginAllowed = (origin: string): boolean => {
+  return allowedOrigins.includes(origin) || isVercelPreview(origin);
+};
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || isOriginAllowed(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`Not allowed by CORS: Origin "${origin}" is not in the allowed list: [${allowedOrigins.join(', ')}]`));
@@ -126,7 +134,7 @@ app.use((req, res, next) => {
   }
 
   const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
+  if (origin && isOriginAllowed(origin)) {
     return next();
   }
 
@@ -135,6 +143,7 @@ app.use((req, res, next) => {
     message: `Request origin "${origin || 'unknown'}" is not allowed. Allowed: [${allowedOrigins.join(', ')}]`,
   });
 });
+
 
 // ─── Razorpay Webhook (MUST be registered BEFORE body parsing middleware) ───
 // Razorpay HMAC signature verification requires the raw, unparsed request body.

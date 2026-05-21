@@ -3,13 +3,20 @@ import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import logger from './config/logger';
 import User from './models/User';
+import { isOriginAllowed } from './app';
 
 let io: Server;
 
 export const initSocket = (server: HttpServer) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: (origin, callback) => {
+        if (!origin || isOriginAllowed(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Not allowed by CORS: Origin "${origin}" is not allowed`));
+        }
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     },
