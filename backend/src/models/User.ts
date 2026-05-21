@@ -126,7 +126,7 @@ const UserSchema: Schema = new Schema(
     lastLogin: { type: Date },
     passwordHash: { type: String, select: false },
     passwordChangedAt: { type: Date },
-    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorEnabled: { type: Boolean, default: false, select: false },
     twoFactorSecret: { type: String, select: false },
     failedLoginAttempts: { type: Number, default: 0 },
     isLocked: { type: Boolean, default: false },
@@ -148,6 +148,28 @@ UserSchema.index({ loyaltyTier: 1 });
 
 // High-Performance Production Compound Index for Paginated Staff and Admin Lists
 UserSchema.index({ role: 1, createdAt: -1 });
+
+/** S-07: Revoke refresh sessions when a user document is deleted */
+async function purgeUserSessions(userId: mongoose.Types.ObjectId) {
+  try {
+    const RefreshToken = mongoose.model('RefreshToken');
+    const UsedRefreshToken = mongoose.model('UsedRefreshToken');
+    await Promise.all([
+      RefreshToken.deleteMany({ userId }),
+      UsedRefreshToken.deleteMany({ userId }),
+    ]);
+  } catch {
+    // Models may not be registered in script contexts
+  }
+}
+
+UserSchema.post('findOneAndDelete', async function (doc) {
+  if (doc) await purgeUserSessions(doc._id);
+});
+
+UserSchema.post('deleteOne', { document: true, query: false }, async function (doc: any) {
+  if (doc) await purgeUserSessions(doc._id);
+});
 
 const User = mongoose.model<IUser>('User', UserSchema);
 

@@ -29,8 +29,8 @@ const AdminAuditLogSchema = new Schema(
 AdminAuditLogSchema.index({ actorId: 1, createdAt: -1 });
 AdminAuditLogSchema.index({ path: 1, createdAt: -1 });
 
-// TTL: Auto-cleanup audit logs older than 180 days (6 months retention)
-AdminAuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 180 * 24 * 60 * 60 });
+// TTL: Auto-cleanup audit logs after 90 days
+AdminAuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
 const AdminAuditLog = mongoose.model<IAdminAuditLog>('AdminAuditLog', AdminAuditLogSchema);
 export default AdminAuditLog;

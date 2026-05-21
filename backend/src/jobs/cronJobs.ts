@@ -3,6 +3,8 @@ import logger from '../config/logger';
 import ContentSection from '../models/ContentSection';
 import Order from '../models/Order';
 import Product from '../models/Product';
+import { FailedEmailRetryService } from '../services/failedEmailRetryService';
+import { AdminRoleReconciliationService } from '../services/adminRoleReconciliationService';
 
 export const initJobs = () => {
   // 1. Cleanup Draft Revisions every Sunday at midnight
@@ -49,7 +51,33 @@ export const initJobs = () => {
     }
   });
 
-  // 3. Daily Health Heartbeat
+  // 3. Retry failed transactional emails (dead-letter queue)
+  cron.schedule('*/2 * * * *', async () => {
+    try {
+      const result = await FailedEmailRetryService.processDueRetries();
+      if (result.processed > 0) {
+        logger.info(
+          `[EMAIL DLQ] Processed ${result.processed} jobs — ${result.succeeded} succeeded, ${result.failed} failed/exhausted`
+        );
+      }
+    } catch (err) {
+      logger.error('[EMAIL DLQ] Retry cron failed:', err);
+    }
+  });
+
+  // 4. Reconcile admin roles with ADMIN_EMAIL config (daily at 03:00)
+  cron.schedule('0 3 * * *', async () => {
+    try {
+      const result = await AdminRoleReconciliationService.reconcile();
+      if (result.upgraded > 0 || result.downgraded > 0) {
+        logger.info(`[ADMIN RECONCILE] Upgraded: ${result.upgraded}, Downgraded: ${result.downgraded}`);
+      }
+    } catch (err) {
+      logger.error('[ADMIN RECONCILE] Job failed:', err);
+    }
+  });
+
+  // 5. Daily Health Heartbeat
   cron.schedule('0 9 * * *', () => {
     logger.info('☀️ Daily server heartbeat: System is healthy.');
   });
