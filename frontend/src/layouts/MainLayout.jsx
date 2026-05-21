@@ -40,9 +40,6 @@ export function MainLayout() {
 
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col relative">
-      <a href="#main-content" className="skip-link">
-        Skip to content
-      </a>
       <SEO />
       {/* Global Background Art - Performance Optimized Gradients & Mandalas */}
       {!isHighDensityPage && (
@@ -102,9 +99,6 @@ export function MinimalLayout() {
 
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col relative overflow-hidden">
-      <a href="#main-content" className="skip-link">
-        Skip to content
-      </a>
       {/* Global Background Art */}
       <div
         className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"

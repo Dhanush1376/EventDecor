@@ -238,14 +238,6 @@
     }
   }
 
-  .skip-link {
-    @apply fixed left-4 top-3 z-[9999] -translate-y-16 rounded-full bg-on-surface px-4 py-2 text-xs font-bold uppercase tracking-wider text-surface shadow-xl transition-transform;
-  }
-
-  .skip-link:focus {
-    transform: translateY(0);
-  }
-
   .ui-card {
     @apply rounded-2xl border border-outline-variant/20 bg-surface-bright shadow-sm;
   }

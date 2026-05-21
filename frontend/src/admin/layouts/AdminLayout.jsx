@@ -59,10 +59,6 @@ function AdminLayoutInner() {
         )}
       </div>
 
-      <a href="#admin-main-content" className="skip-link">
-        Skip to admin content
-      </a>
-
       {/* Decorative Brand Mandala Backgrounds */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0">
         <MandalaElement

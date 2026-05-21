@@ -108,17 +108,6 @@ function App() {
 
   return (
     <NetworkProvider>
-      <div style={{
-        position: "fixed",
-        top: 10,
-        left: 10,
-        zIndex: 999999,
-        background: "red",
-        color: "white",
-        padding: "10px"
-      }}>
-        VERSION 9
-      </div>
       <HelmetProvider>
         <AuthProvider>
           <CartProvider>
