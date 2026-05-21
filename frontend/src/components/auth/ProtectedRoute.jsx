@@ -15,6 +15,9 @@ export function ProtectedRoute({ children, adminOnly = false }) {
   }
 
   if (!isAuthenticated) {
+    if (adminOnly) {
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
     return (
       <Navigate
         to={`/auth?redirect=${encodeURIComponent(location.pathname)}`}
@@ -23,7 +26,9 @@ export function ProtectedRoute({ children, adminOnly = false }) {
     );
   }
 
-  if (adminOnly && user?.role !== 'admin' && user?.role !== 'manager' && user?.role !== 'coordinator') {
+  const allowedAdminRoles = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
+  
+  if (adminOnly && !allowedAdminRoles.includes(user?.role)) {
     return <Navigate to="/" replace />;
   }
 

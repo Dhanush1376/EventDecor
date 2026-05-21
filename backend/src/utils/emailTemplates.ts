@@ -302,3 +302,50 @@ export const getDiagnosticTestEmailTemplate = (host: string, user: string, times
   `;
   return getLuxuryEmailWrapper('SMTP Connectivity Test', body);
 };
+
+/**
+ * Generates the premium Order Confirmation Email (Admin & Customer)
+ */
+export const getOrderConfirmationTemplate = (orderDetails: any): string => {
+  const body = `
+    <h2 style="color: #735c00; font-size: 18px; font-weight: 400; margin: 0 0 15px 0; font-family: 'Playfair Display', Georgia, serif; text-align: center;">
+      Order Confirmed: #${orderDetails.orderId}
+    </h2>
+    <p style="margin: 0 0 20px 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      Thank you for choosing Siri Arts & Crafts. Your exquisite heritage decor order is now being processed.
+    </p>
+    <div style="background-color: #fbfaf8; border: 1px solid #e5dfd3; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: left; font-size: 13px; color: #5c5545;">
+      <strong>Order Total:</strong> ₹${orderDetails.totalAmount}<br/>
+      <strong>Payment Status:</strong> ${orderDetails.paymentStatus}<br/>
+      <strong>Delivery Expected:</strong> ${orderDetails.deliveryDate || 'Within 5-7 business days'}<br/>
+    </div>
+    <div class="button-wrapper">
+      <a href="${orderDetails.orderLink}" class="cta-button" target="_blank">View Order Status</a>
+    </div>
+    <p style="margin: 20px 0 0 0; color: #7f7663; font-size: 12.5px; font-weight: 300; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      An invoice PDF is attached to this email for your records.
+    </p>
+  `;
+  return getLuxuryEmailWrapper('Order Confirmation', body);
+};
+
+/**
+ * Generates the premium Admin Notification Email
+ */
+export const getAdminNotificationTemplate = (title: string, message: string, actionUrl?: string): string => {
+  const actionButton = actionUrl 
+    ? `<div class="button-wrapper"><a href="${actionUrl}" class="cta-button" target="_blank">View Details</a></div>` 
+    : '';
+
+  const body = `
+    <h2 style="color: #735c00; font-size: 18px; font-weight: 400; margin: 0 0 15px 0; font-family: 'Playfair Display', Georgia, serif; text-align: center;">
+      ${title}
+    </h2>
+    <p style="margin: 0 0 20px 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      ${message}
+    </p>
+    ${actionButton}
+  `;
+  return getLuxuryEmailWrapper('Admin System Alert', body);
+};
+

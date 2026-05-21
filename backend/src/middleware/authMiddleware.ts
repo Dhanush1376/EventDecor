@@ -122,10 +122,10 @@ export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response
     throw new ApiError(401, 'Authentication required');
   }
 
-  const adminEmails = getAdminEmails();
   const userEmail = req.user.email?.trim()?.toLowerCase();
-
-  if (req.user.role === 'admin' || (userEmail && adminEmails.some(addr => isSameEmail(userEmail, addr)))) {
+  
+  // Super admin is defined as having the role 'super_admin' OR matching the hardcoded owner email
+  if (req.user.role === 'super_admin' || (userEmail === 'sirisha.atmakuri@gmail.com')) {
     // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
     const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
     if (mutatingMethod) {
@@ -145,3 +145,37 @@ export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response
     throw new ApiError(403, 'Super Admin resource! Access denied');
   }
 });
+
+/**
+ * Flexible RBAC middleware to allow specific roles
+ */
+export const requireRole = (allowedRoles: string[]) => {
+  return asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      throw new ApiError(401, 'Authentication required');
+    }
+
+    const userEmail = req.user.email?.trim()?.toLowerCase();
+
+    // Super Admin always gets access
+    if (req.user.role === 'super_admin' || userEmail === 'sirisha.atmakuri@gmail.com' || allowedRoles.includes(req.user.role)) {
+      // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
+      const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+      if (mutatingMethod) {
+        const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
+        if (!isSafetyLockToggle) {
+          const ContentSection = require('../models/ContentSection').default;
+          const safetyLockDoc = await ContentSection.findOne({ sectionKey: 'admin_safety_lock' });
+          if (safetyLockDoc && safetyLockDoc.data?.safetyLock === true) {
+            throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
+          }
+        }
+      }
+
+      logAdminAudit(req, res);
+      next();
+    } else {
+      throw new ApiError(403, 'Access denied. You do not have the required role for this action.');
+    }
+  });
+};

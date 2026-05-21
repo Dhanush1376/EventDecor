@@ -45,6 +45,7 @@ const navSections = [
       { label: "Sales Reports", icon: "analytics", path: "/admin/analytics", keywords: "trends, metrics, profits" },
       { label: "Marketing Emails", icon: "campaign", path: "/admin/campaigns", keywords: "marketing, email, newsletters" },
       { label: "Manage Staff", icon: "groups", path: "/admin/team", keywords: "staff, employees, access, permissions" },
+      { label: "System Users", icon: "admin_panel_settings", path: "/admin/system-users", keywords: "admins, super, security, access" },
       { label: "Settings", icon: "settings", path: "/admin/settings", keywords: "profile, backups, config" },
     ],
   },

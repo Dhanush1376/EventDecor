@@ -5,7 +5,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   phone?: string;
-  role: 'user' | 'customer' | 'admin' | 'manager' | 'coordinator';
+  role: 'user' | 'customer' | 'super_admin' | 'main_admin' | 'moderator' | 'support_admin' | 'order_manager' | 'content_manager' | 'admin' | 'manager' | 'coordinator';
   avatar?: string;
   gender?: string;
   dateOfBirth?: string;
@@ -49,6 +49,13 @@ export interface IUser extends Document {
   };
   isVerified: boolean;
   lastLogin?: Date;
+  passwordHash?: string;
+  passwordChangedAt?: Date;
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
+  failedLoginAttempts?: number;
+  isLocked?: boolean;
+  lockUntil?: Date;
   walletBalance: number;
   siriCoins: number;
   loyaltyTier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
@@ -66,7 +73,7 @@ const UserSchema: Schema = new Schema(
     phone: { type: String, trim: true },
     role: { 
       type: String, 
-      enum: ['user', 'customer', 'admin', 'manager', 'coordinator'], 
+      enum: ['user', 'customer', 'super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'], 
       default: 'customer' 
     },
     avatar: { type: String, default: '' },
@@ -117,6 +124,13 @@ const UserSchema: Schema = new Schema(
     },
     isVerified: { type: Boolean, default: false },
     lastLogin: { type: Date },
+    passwordHash: { type: String, select: false },
+    passwordChangedAt: { type: Date },
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String, select: false },
+    failedLoginAttempts: { type: Number, default: 0 },
+    isLocked: { type: Boolean, default: false },
+    lockUntil: { type: Date },
     walletBalance: { type: Number, default: 0 },
     siriCoins: { type: Number, default: 0 },
     loyaltyTier: { type: String, enum: ['Bronze', 'Silver', 'Gold', 'Platinum'], default: 'Bronze' },

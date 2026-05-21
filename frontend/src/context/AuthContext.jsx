@@ -123,6 +123,25 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const adminLogin = async (email, password) => {
+    try {
+      const response = await authService.adminLogin(email, password);
+      if (response.success) {
+        const token = response.data.accessToken || response.data.token;
+        setAccessToken(token);
+        const refreshToken = response.data.refreshToken;
+        if (refreshToken) {
+          safeLocalStorage.setItem('siri_refresh_token', refreshToken);
+        }
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        return true;
+      }
+    } catch (err) {
+      throw err.response?.data || new Error('Login failed');
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       checkAuth();
@@ -224,6 +243,7 @@ export function AuthProvider({ children }) {
       loading, 
       isAuthenticated, 
       login, 
+      adminLogin,
       logout, 
       checkAuth,
       isAuthModalOpen,

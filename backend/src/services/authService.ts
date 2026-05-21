@@ -175,6 +175,72 @@ class AuthService {
     await FailedLoginAttempt.deleteOne({ email: cleanEmail });
   }
 
+  static async adminLogin(email: string, password: string, ip: string, userAgent: string) {
+    const cleanEmail = canonicalizeEmail(email);
+
+    // 1. Check Lockout
+    const lockoutRecord = await FailedLoginAttempt.findOne({ email: cleanEmail });
+    if (lockoutRecord && lockoutRecord.lockoutUntil && lockoutRecord.lockoutUntil > new Date()) {
+      const remainingTime = Math.ceil((lockoutRecord.lockoutUntil.getTime() - Date.now()) / 1000 / 60);
+      throw new ApiError(429, `Account temporarily locked due to excessive failed attempts. Try again in ${remainingTime} minutes.`);
+    }
+
+    // 2. Find Admin User
+    const user = await User.findOne({ email: cleanEmail }).select('+passwordHash');
+    if (!user) {
+      throw new ApiError(401, 'Invalid credentials');
+    }
+
+    const adminEmails = getAdminEmails();
+    const isAdminEmail = adminEmails.some(addr => isSameEmail(cleanEmail, addr));
+    const isAdminRole = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin'].includes(user.role);
+
+    if (!isAdminEmail && !isAdminRole) {
+      throw new ApiError(403, 'Access denied. You do not have administrative privileges.');
+    }
+
+    // 3. Verify Password
+    if (!user.passwordHash) {
+      throw new ApiError(401, 'Admin password is not set. Please contact the Super Admin.');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+
+    if (!isMatch) {
+      let attempts = 1;
+      let lockoutUntil: Date | null = null;
+      if (lockoutRecord) {
+        attempts = lockoutRecord.attempts + 1;
+        if (attempts >= 5) {
+          lockoutUntil = new Date(Date.now() + 15 * 60 * 1000);
+        }
+      }
+      await FailedLoginAttempt.findOneAndUpdate(
+        { email: cleanEmail },
+        {
+          attempts,
+          lockoutUntil: lockoutUntil || undefined,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        },
+        { upsert: true, new: true }
+      );
+      if (attempts >= 5) {
+        throw new ApiError(429, 'Too many failed login attempts. Account locked for 15 minutes.');
+      } else {
+        throw new ApiError(401, `Invalid credentials. ${5 - attempts} attempts remaining.`);
+      }
+    }
+
+    // Clear logs upon successful validation
+    await FailedLoginAttempt.deleteOne({ email: cleanEmail });
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate Session
+    return this.createSession(user, userAgent);
+  }
+
   static async generateOTP(email: string, ip: string = '127.0.0.1') {
     if (!email || !email.includes('@')) {
       throw new ApiError(400, 'A valid email address is required');

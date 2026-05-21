@@ -95,7 +95,7 @@ export const sendDirectEmail = (options: EmailOptions) => {
  * Direct Email Dispatch with full open/click logging (INTERNAL PROCESSOR)
  */
 export const sendDirectEmailProcessor = async (options: EmailOptions) => {
-  const { email, subject, templateName, customHtml, templateData = {}, type, action, userId, campaignId } = options;
+  const { email, subject, templateName, customHtml, templateData = {}, type, action, userId, campaignId, attachments } = options;
 
   try {
     // 0. Idempotency check: prevent sending duplicate emails to the same recipient for the same action within 5 seconds
@@ -180,6 +180,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
           to: email,
           subject: finalSubject,
           html: bodyHtml,
+          attachments: attachments,
         });
         break;
       } catch (err: any) {

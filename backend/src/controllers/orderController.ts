@@ -6,6 +6,8 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import Order from '../models/Order';
+import { generateInvoicePDF } from '../utils/pdfGenerator';
+import { getAdminEmails } from '../config/adminConfig';
 
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const result = await OrderService.createOrder(req.user!.id, req.body);
@@ -289,21 +291,62 @@ export const handleRazorpayWebhook = asyncHandler(async (req: Request, res: Resp
         if (user) {
           const { sendDirectEmail } = require('../services/notificationService');
           const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+          
+          // Generate Invoice PDF
+          const invoiceBuffer = await generateInvoicePDF({
+            orderId: order._id.toString().slice(-8).toUpperCase(),
+            date: order.createdAt,
+            customerName: user.name,
+            shippingAddress: order.shippingAddress?.addressString || '',
+            items: order.items.map((i: any) => ({ name: i.title || 'Decor Item', quantity: i.quantity, price: i.price })),
+            subtotal: order.subtotal,
+            shipping: order.shippingFee,
+            total: order.total
+          });
+
           await sendDirectEmail({
             email: user.email,
             subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
             templateName: 'Order Confirmation',
             templateData: {
               name: user.name,
-              orderId: order._id.toString(),
+              orderId: order._id.toString().slice(-8).toUpperCase(),
               totalAmount: order.total.toLocaleString('en-IN'),
+              paymentStatus: order.paymentStatus.toUpperCase(),
               shippingAddress: order.shippingAddress,
               frontend_url: frontendUrl,
             },
+            attachments: [{
+              filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
+              content: invoiceBuffer,
+              contentType: 'application/pdf'
+            }],
             type: 'order',
             action: 'order_placed',
             userId: user._id.toString(),
           });
+          
+          // Notify Admins
+          const adminEmails = getAdminEmails();
+          for (const adminEmail of adminEmails) {
+            await sendDirectEmail({
+              email: adminEmail,
+              subject: `New Order Received! ✦ [${order._id}]`,
+              templateName: 'Admin System Alert',
+              templateData: {
+                title: 'New Order Placed',
+                message: `Order #${order._id.toString().slice(-8).toUpperCase()} for ₹${order.total.toLocaleString('en-IN')} has been placed by ${user.name}.`,
+                actionUrl: `${frontendUrl}/admin/orders/${order._id}`
+              },
+              attachments: [{
+                filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
+                content: invoiceBuffer,
+                contentType: 'application/pdf'
+              }],
+              type: 'system',
+              action: 'admin_order_notification'
+            });
+          }
         }
       } catch (emailErr) {
         logger.error('[PAYMENT WEBHOOK EMAIL] Failed to dispatch webhook email:', emailErr);

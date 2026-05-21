@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 import connectDB from '../config/db';
 import Product from '../models/Product';
 import Event from '../models/Event';
@@ -268,14 +269,30 @@ const seed = async () => {
     // await Review.deleteMany();
     // console.log('🗑️ Data cleared (including reviews)');
 
-    // 1. Create Admin User
-    await User.create({
-      name: 'Admin User',
-      email: 'admin@siriartsandcrafts.com',
-      role: 'admin',
-      isVerified: true,
-    });
-    console.log('👤 Admin user created');
+    // 1. Create Admin Users
+    const defaultPassword = 'SuperAdminPassword123!';
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(defaultPassword, salt);
+
+    await User.create([
+      {
+        name: 'Siri Devi (Owner)',
+        email: 'sirisha.atmakuri@gmail.com',
+        role: 'super_admin',
+        isVerified: true,
+        passwordHash,
+        passwordChangedAt: new Date(),
+      },
+      {
+        name: 'Admin User',
+        email: 'admin@siriartsandcrafts.com',
+        role: 'main_admin',
+        isVerified: true,
+        passwordHash,
+        passwordChangedAt: new Date(),
+      }
+    ]);
+    console.log('👤 Admin & Super Admin users created with default password: ' + defaultPassword);
 
     // 2. Create Products
     const createdProducts = await Product.insertMany(allProducts);

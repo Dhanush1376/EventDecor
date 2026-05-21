@@ -28,6 +28,7 @@ import customOrderRoutes from './routes/customOrderRoutes';
 import loyaltyRoutes from './routes/loyaltyRoutes';
 import eventBookingRoutes from './routes/eventBookingRoutes';
 import showcaseRoutes from './routes/showcaseRoutes';
+import adminSystemRoutes from './routes/adminSystemRoutes';
 import logger from './config/logger';
 import { generateSitemap } from './utils/sitemapGenerator';
 import * as Sentry from "@sentry/node";
@@ -314,6 +315,7 @@ app.use('/api/custom-orders', customOrderRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/event-bookings', eventBookingRoutes);
 app.use('/api/showcases', showcaseRoutes);
+app.use('/api/admin', adminSystemRoutes);
 
 // 8. Sentry Error Handler (must be before any other error middleware)
 if (process.env.SENTRY_DSN) {
