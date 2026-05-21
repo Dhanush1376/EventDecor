@@ -17,19 +17,86 @@ const BarcodeSVG = ({ val }) => (
   </svg>
 );
 
+const safeFormatNumber = (val) => {
+  if (val === undefined || val === null) return "0";
+  const num = Number(val);
+  return isNaN(num) ? "0" : num.toLocaleString("en-IN");
+};
+
+const safeFormatDate = (val, options) => {
+  if (!val) return "";
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-IN", options || {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const mapOrderData = (rawOrder) => {
+  if (!rawOrder) return null;
+  const orderRef = rawOrder._id || rawOrder.id;
+  const trackingToken = rawOrder.publicTrackingToken;
+  const trackingPath = trackingToken
+    ? `/track/${orderRef}?token=${encodeURIComponent(trackingToken)}`
+    : `/track/${orderRef}`;
+
+  const est = rawOrder.createdAt ? new Date(rawOrder.createdAt) : new Date();
+  if (!isNaN(est.getTime())) {
+    est.setDate(est.getDate() + 7);
+  }
+  const deliveryEstimate = !isNaN(est.getTime()) 
+    ? est.toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+    : "";
+
+  return {
+    _id: orderRef,
+    orderId: orderRef,
+    trackingPath,
+    trackingToken,
+    date: safeFormatDate(rawOrder.createdAt),
+    totalAmount: rawOrder.total ?? rawOrder.totalAmount ?? 0,
+    subtotal: rawOrder.subtotal ?? 0,
+    shippingFee: rawOrder.shippingFee ?? 0,
+    discount: rawOrder.discount ?? 0,
+    paymentMode: rawOrder.paymentMethod === "cod" ? "Cash on Delivery (COD)" : "Razorpay Secure",
+    needByDate: rawOrder.needByDate ? safeFormatDate(rawOrder.needByDate) : undefined,
+    deliveryAddress: {
+      name: rawOrder.shippingAddress?.name || "Customer",
+      phone: rawOrder.shippingAddress?.phone || "",
+      addressString: rawOrder.shippingAddress?.address || "",
+      locality: rawOrder.shippingAddress?.locality || "",
+      city: rawOrder.shippingAddress?.city || "",
+      state: rawOrder.shippingAddress?.state || "",
+      pincode: rawOrder.shippingAddress?.pincode || "",
+    },
+    items: Array.isArray(rawOrder.items) ? rawOrder.items.map(item => ({
+      ...item,
+      id: item.productId || item.id,
+      deliveryEstimate,
+      price: item.price ?? 0,
+      quantity: item.quantity ?? 0,
+      title: item.title || "",
+      variant: item.variant || "Default",
+      imageSrc: item.imageSrc || "",
+    })) : [],
+  };
+};
+
 export function OrderSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [showStickerModal, setShowStickerModal] = useState(false);
 
   const searchParams = new URLSearchParams(location.search);
   const urlOrderId = searchParams.get("id");
   const stateOrder = location.state?.orderDetails?.order || location.state?.orderDetails;
   const orderId = stateOrder?._id || stateOrder?.id || urlOrderId;
+
+  const [order, setOrder] = useState(() => mapOrderData(stateOrder));
+  const [loading, setLoading] = useState(!stateOrder && !!orderId);
+  const [error, setError] = useState("");
+  const [showStickerModal, setShowStickerModal] = useState(false);
 
   useEffect(() => {
     // Premium Celebration Blast
@@ -57,70 +124,35 @@ export function OrderSuccess() {
 
   useEffect(() => {
     if (!orderId) {
-      const timer = setTimeout(() => {
-        setError("No valid Order ID has been associated with this payment transaction.");
-        setLoading(false);
-      }, 0);
-      return () => clearTimeout(timer);
+      if (!order) {
+        const timer = setTimeout(() => {
+          setError("No valid Order ID has been associated with this payment transaction.");
+          setLoading(false);
+        }, 0);
+        return () => clearTimeout(timer);
+      }
+      return;
     }
 
     const fetchOrder = async () => {
       try {
-        setLoading(true);
+        if (!order) {
+          setLoading(true);
+        }
         const res = await orderService.getById(orderId);
         if (res.success && res.data) {
-          const rawOrder = res.data;
-          const est = new Date(rawOrder.createdAt);
-          est.setDate(est.getDate() + 7);
-
-          const orderRef = rawOrder._id || rawOrder.id;
-          const trackingToken = rawOrder.publicTrackingToken;
-          const trackingPath = trackingToken
-            ? `/track/${orderRef}?token=${encodeURIComponent(trackingToken)}`
-            : `/track/${orderRef}`;
-
-          const mapped = {
-            _id: orderRef,
-            orderId: orderRef,
-            trackingPath,
-            trackingToken,
-            date: new Date(rawOrder.createdAt).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            }),
-            totalAmount: rawOrder.total,
-            subtotal: rawOrder.subtotal,
-            shippingFee: rawOrder.shippingFee,
-            discount: rawOrder.discount,
-            paymentMode: rawOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Razorpay Secure',
-            needByDate: rawOrder.needByDate ? new Date(rawOrder.needByDate).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            }) : undefined,
-            deliveryAddress: {
-              name: rawOrder.shippingAddress?.name || "Customer",
-              phone: rawOrder.shippingAddress?.phone || "",
-              addressString: rawOrder.shippingAddress?.address || "",
-              locality: rawOrder.shippingAddress?.locality || "",
-              city: rawOrder.shippingAddress?.city || "",
-              state: rawOrder.shippingAddress?.state || "",
-              pincode: rawOrder.shippingAddress?.pincode || "",
-            },
-            items: rawOrder.items.map(item => ({
-              ...item,
-              id: item.productId || item.id,
-              deliveryEstimate: est.toLocaleDateString("en-IN", { day: 'numeric', month: 'short' }),
-            })),
-          };
-          setOrder(mapped);
+          setOrder(mapOrderData(res.data));
+          setError("");
         } else {
-          setError("Order not found or authorization failed.");
+          if (!order) {
+            setError("Order not found or authorization failed.");
+          }
         }
       } catch (err) {
         console.error("Error fetching order details:", err);
-        setError(err.response?.data?.message || "Access denied. This order belongs to another user account.");
+        if (!order) {
+          setError(err.response?.data?.message || "Access denied. This order belongs to another user account.");
+        }
       } finally {
         setLoading(false);
       }
@@ -130,6 +162,7 @@ export function OrderSuccess() {
       fetchOrder();
     }, 0);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   if (loading) {
@@ -304,7 +337,7 @@ export function OrderSuccess() {
                           </span>
                         </div>
                         <span className="text-sm font-bold text-on-surface">
-                          ₹{item.price.toLocaleString()}
+                          ₹{safeFormatNumber(item.price)}
                         </span>
                       </div>
 
@@ -340,21 +373,21 @@ export function OrderSuccess() {
               <div className="space-y-3 text-xs text-on-surface">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>₹{order.subtotal.toLocaleString()}</span>
+                  <span>₹{safeFormatNumber(order.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Promo Discount</span>
-                  <span className="text-green-700 font-medium">- ₹{order.discount.toLocaleString()}</span>
+                  <span className="text-green-700 font-medium">- ₹{safeFormatNumber(order.discount)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping Fee</span>
-                  <span className="text-green-700 font-bold">{order.shippingFee === 0 ? "FREE" : `₹${order.shippingFee}`}</span>
+                  <span className="text-green-700 font-bold">{order.shippingFee === 0 ? "FREE" : `₹${safeFormatNumber(order.shippingFee)}`}</span>
                 </div>
                 <div className="h-[1px] bg-outline-variant/40 my-3" />
                 <div className="flex justify-between items-baseline font-bold">
                   <span className="text-sm">Total Paid</span>
                   <span className="text-base text-primary">
-                    ₹{order.totalAmount.toLocaleString()}
+                    ₹{safeFormatNumber(order.totalAmount)}
                   </span>
                 </div>
               </div>
@@ -491,7 +524,7 @@ export function OrderSuccess() {
                   {order.paymentMode.includes('COD') ? 'COD' : 'PREPAID'}
                 </span>
                 <span className="text-[8px] tracking-wider block mt-0.5">
-                  ₹{order.totalAmount.toLocaleString()}
+                  ₹{safeFormatNumber(order.totalAmount)}
                 </span>
               </div>
             </div>
@@ -537,7 +570,7 @@ export function OrderSuccess() {
                         {item.title} <span className="text-[7px] text-gray-500">({item.variant || 'Default'})</span>
                       </td>
                       <td className="py-1 text-center font-bold">{item.quantity}</td>
-                      <td className="py-1 text-right font-bold">₹{item.price.toLocaleString()}</td>
+                      <td className="py-1 text-right font-bold">₹{safeFormatNumber(item.price)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -599,7 +632,7 @@ export function OrderSuccess() {
                       {order.paymentMode.includes('COD') ? 'COD' : 'PREPAID'}
                     </span>
                     <span className="text-[8px] tracking-wider block mt-0.5">
-                      ₹{order.totalAmount.toLocaleString()}
+                      ₹{safeFormatNumber(order.totalAmount)}
                     </span>
                   </div>
                 </div>
@@ -645,7 +678,7 @@ export function OrderSuccess() {
                             {item.title} <span className="text-[7px] text-gray-500">({item.variant || 'Default'})</span>
                           </td>
                           <td className="py-1 text-center font-bold">{item.quantity}</td>
-                          <td className="py-1 text-right font-bold">₹{item.price.toLocaleString()}</td>
+                          <td className="py-1 text-right font-bold">₹{safeFormatNumber(item.price)}</td>
                         </tr>
                       ))}
                     </tbody>
