@@ -269,7 +269,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
     });
 
     // Trigger quotation email asynchronously
-    CustomOrderMailService.sendQuotationEmail(order).catch(err => console.error("Quotation email error:", err));
+    CustomOrderMailService.sendQuotationEmail(order).catch(err => logger.error('Quotation email error:', err));
   }
 
   await order.save();
@@ -314,7 +314,7 @@ export const customerRespondQuotation = asyncHandler(async (req: any, res: Respo
   await order.save();
 
   // Trigger response notification emails
-  CustomOrderMailService.sendQuotationResponseEmail(order, status).catch(err => console.error("Quotation response email error:", err));
+  CustomOrderMailService.sendQuotationResponseEmail(order, status).catch(err => logger.error('Quotation response email error:', err));
 
   res.status(200).json(new ApiResponse(true, 'Quotation response lodged', order));
 });
@@ -352,7 +352,7 @@ export const postMessage = asyncHandler(async (req: any, res: Response) => {
     isSenderAdmin ? 'Siri Design Team' : order.customerName,
     isSenderAdmin ? 'admin' : 'customer',
     text
-  ).catch(err => console.error("Chat message notification email error:", err));
+  ).catch(err => logger.error('Chat message notification email error:', err));
 
   res.status(200).json(new ApiResponse(true, 'Message dispatched', order));
 });

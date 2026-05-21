@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { MandalaElement } from "../ui/MandalaElement";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
+import { CONTACT_EMAIL, SOCIAL_INSTAGRAM, SOCIAL_PINTEREST } from "../../constants/brandEnv";
 
 export function Footer() {
   const { contact, footer, navigation } = useWebsiteContent();
@@ -10,10 +11,10 @@ export function Footer() {
   const firstWord = logoWords[0] || "SIRI";
   const restWords = logoWords.slice(1).join(" ") || "ARTS & CRAFTS";
   const currentYear = new Date().getFullYear();
-  const phone = contact?.phone || "9866006648";
-  const email = contact?.email || "Sirisha.atmakuri@gmail.com";
-  const instagramLink = footer?.socialLinks?.instagram || "https://instagram.com/siriarts";
-  const pinterestLink = footer?.socialLinks?.pinterest || "https://pinterest.com/siriarts";
+  const phone = contact?.phone || footer?.phone || "";
+  const email = contact?.email || footer?.email || CONTACT_EMAIL;
+  const instagramLink = footer?.socialLinks?.instagram || SOCIAL_INSTAGRAM;
+  const pinterestLink = footer?.socialLinks?.pinterest || SOCIAL_PINTEREST;
 
   return (
     <footer className="w-full relative bg-gradient-to-b from-surface to-secondary-container/10 border-t border-black/5 overflow-hidden">
@@ -32,6 +33,8 @@ export function Footer() {
                 src={navigation.logo.image}
                 alt={logoText}
                 className="w-8 h-8 rounded-full object-cover shadow-sm transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-on-surface flex items-center justify-center shadow-lg border border-white/5 transition-transform group-hover:scale-105 duration-300">
@@ -134,6 +137,7 @@ export function Footer() {
           {/* Social Presence */}
           <div className="col-span-1 md:col-span-6 lg:col-span-4 flex flex-col gap-3.5 md:items-start lg:items-end">
             <div className="flex items-center gap-2 md:gap-3.5">
+              {instagramLink && (
               <a
                 aria-label="Instagram"
                 className="text-black/30 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
@@ -148,6 +152,8 @@ export function Footer() {
                   Insta
                 </span>
               </a>
+              )}
+              {pinterestLink && (
               <a
                 aria-label="Pinterest"
                 className="text-black/30 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
@@ -162,6 +168,7 @@ export function Footer() {
                   Pin
                 </span>
               </a>
+              )}
               <a
                 aria-label="Email"
                 className="text-black/30 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"

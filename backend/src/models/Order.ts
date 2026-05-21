@@ -185,6 +185,8 @@ OrderSchema.index({ razorpayOrderId: 1 });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, orderStatus: 1, createdAt: 1 });
 OrderSchema.index({ user: 1, orderStatus: 1 });
+OrderSchema.index({ user: 1, paymentStatus: 1, createdAt: -1 });
+OrderSchema.index({ razorpayPaymentId: 1 }, { sparse: true });
 
 const Order = mongoose.model<IOrder>('Order', OrderSchema);
 export default Order;

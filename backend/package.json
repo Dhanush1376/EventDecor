@@ -9,6 +9,7 @@
     "build": "tsc",
     "create-indexes": "ts-node src/scripts/createIndexes.ts",
     "check-env": "ts-node --transpile-only src/scripts/checkEnv.ci.ts",
+    "lint": "eslint src",
     "test": "npm run build && ts-node --transpile-only src/scripts/smokeTest.ts && jest --runInBand --forceExit",
     "test:integration": "jest --runInBand --forceExit"
   },
@@ -62,7 +63,11 @@
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/cookie-parser": "^1.4.10",
+    "eslint": "^9.39.2",
+    "globals": "^16.5.0",
+    "typescript-eslint": "^8.50.0",
     "@types/jest": "^30.0.0",
     "@types/pdfkit": "^0.17.6",
     "@types/supertest": "^6.0.3",

@@ -8,6 +8,16 @@ export const sendOtpValidator = [
     .normalizeEmail()
 ];
 
+export const checkEmailValidator = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email address is required')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+];
+
 export const verifyOtpValidator = [
   body('email')
     .trim()

@@ -28,7 +28,7 @@ declare global {
 // Validate JWT_SECRET exists at module load time
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
-  console.error('FATAL: JWT_SECRET environment variable is not set. Authentication will fail.');
+  logger.error('FATAL: JWT_SECRET environment variable is not set. Authentication will fail.');
   process.exit(1);
 }
 

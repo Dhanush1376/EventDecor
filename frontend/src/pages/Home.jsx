@@ -11,6 +11,7 @@ import { GallerySection } from "../components/sections/GallerySection";
 import { SEO } from "../components/seo/SEO";
 
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import { SITE_URL, OG_IMAGE_URL, buildSameAsLinks } from "../constants/brandEnv";
 import {
   HeroSkeleton,
   NavigationHubSkeleton,
@@ -30,30 +31,29 @@ const sectionComponents = {
 };
 
 export function Home() {
-  const { homepageSections, seo, contact, loading } = useWebsiteContent();
+  const { homepageSections, seo, contact, footer, loading } = useWebsiteContent();
+  const siteUrl = SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+  const sameAs = buildSameAsLinks(footer?.socialLinks);
 
   const homeSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    name: "Siri Arts & Crafts",
-    image: "https://siriartsandcrafts.com/og-brand-card.jpg",
+    name: seo?.siteName || import.meta.env.VITE_SITE_NAME || "Siri Arts & Crafts",
+    image: OG_IMAGE_URL || (siteUrl ? `${siteUrl}/og-brand-card.jpg` : undefined),
     description:
       "Premium handcrafted event decor, wedding trays, and heritage pooja essentials.",
-    "@id": "https://siriartsandcrafts.com",
-    url: "https://siriartsandcrafts.com",
-    telephone: contact?.phone ? `+91-${contact.phone}` : "+91-9866006648",
+    "@id": siteUrl,
+    url: siteUrl,
+    telephone: contact?.phone ? `+91-${String(contact.phone).replace(/^\+91-?/, "")}` : import.meta.env.VITE_CONTACT_PHONE,
     address: {
       "@type": "PostalAddress",
-      streetAddress: contact?.address || "#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
+      streetAddress: contact?.address || "",
       addressLocality: "Ongole",
       addressRegion: "AP",
       postalCode: "523001",
       addressCountry: "IN",
     },
-    sameAs: [
-      "https://instagram.com/siriarts",
-      "https://pinterest.com/siriarts",
-    ],
+    ...(sameAs.length > 0 && { sameAs }),
   };
 
   if (loading) {

@@ -1,12 +1,69 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      includeAssets: ['favicon.png', 'favicon.ico', 'manifest.json', 'robots.txt'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp,avif}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/.*\.(js|css)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'shell-chunks',
+              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: /\/assets\/.*\.(png|jpg|jpeg|svg|webp|avif|woff2?)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'shell-static',
+              expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.includes('/api/') ||
+              url.hostname.includes('onrender.com') ||
+              url.hostname.includes('razorpay.com'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              networkTimeoutSeconds: 10,
+              expiration: { maxEntries: 32, maxAgeSeconds: 60 * 5 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+      devOptions: {
+        enabled: false,
+      },
+    }),
   ],
 
   // ─── Build Optimization ───
@@ -43,10 +100,7 @@ export default defineConfig({
             if (id.includes('@sentry')) return 'vendor-sentry';
             return 'vendor-others';
           }
-          // Split admin portal into sub-chunks
-          if (id.includes('src/admin/pages/')) return 'admin-pages';
-          if (id.includes('src/admin/components/')) return 'admin-components';
-          if (id.includes('src/admin/context/') || id.includes('src/admin/data/')) return 'admin-context';
+          // Admin routes use React.lazy() — do not merge into a single admin-pages chunk
         },
         // Asset file naming for long-term caching
         assetFileNames: (assetInfo) => {

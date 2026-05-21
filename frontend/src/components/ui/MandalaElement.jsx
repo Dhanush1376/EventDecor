@@ -1,5 +1,6 @@
 import React from "react";
 import { motion, useInView } from "framer-motion";
+import { MANDALA_VARIANT_URLS } from '../../constants/mandalaAssets';
 
 /**
  * MandalaElement — Renders a high-detail mandala art image overlay.
@@ -13,12 +14,7 @@ import { motion, useInView } from "framer-motion";
  *   4 → mandala_art_4.png     (peacock / kalamkari sunburst)
  */
 
-const VARIANT_MAP = {
-  1: "/mandala_hero_art.png",
-  2: "/mandala_art_2.png",
-  3: "/mandala_art_3.png",
-  4: "/mandala_art_4.png",
-};
+const VARIANT_MAP = MANDALA_VARIANT_URLS;
 
 export function MandalaElement({
   className = "",

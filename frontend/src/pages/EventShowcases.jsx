@@ -10,6 +10,7 @@ import { handleImageError } from "../utils/imageUtils";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import logger from "../utils/logger";
 
 const SHOWCASE_CATEGORIES = [
   "All",
@@ -84,7 +85,7 @@ export function EventShowcases() {
         setShowcases(res.data || []);
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error("Failed to load event design packages.");
     } finally {
       setLoading(false);

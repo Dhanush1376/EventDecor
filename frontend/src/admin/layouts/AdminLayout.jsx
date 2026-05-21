@@ -1,4 +1,5 @@
-import React, { useEffect, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
+import api from "../../services/api";
 import { Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AdminProvider, useAdmin } from "../context/AdminContext";
@@ -25,10 +26,22 @@ function AdminLayoutInner() {
     idleSecondsLeft
   } = useAdmin();
   const { pathname } = useLocation();
+  const [socketDegraded, setSocketDegraded] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname]);
+
+  useEffect(() => {
+    api
+      .get("/health")
+      .then((res) => {
+        if (res.data?.realtime?.degraded) {
+          setSocketDegraded(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Global search trigger (Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -56,6 +69,12 @@ function AdminLayoutInner() {
           <div className="bg-amber-500 text-black px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center">
             <span className="material-symbols-outlined text-[13px]">construction</span>
             STOREFRONT SHIELDED &mdash; MAINTENANCE MODE ACTIVE IN PUBLIC VIEW
+          </div>
+        )}
+        {socketDegraded && (
+          <div className="bg-orange-600 px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center">
+            <span className="material-symbols-outlined text-[13px]">wifi_off</span>
+            REAL-TIME ALERTS DEGRADED &mdash; REDIS NOT CONFIGURED; LIVE NOTIFICATIONS MAY NOT REACH ALL ADMIN SESSIONS UNTIL REDIS_URL IS SET
           </div>
         )}
       </div>

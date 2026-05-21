@@ -16,6 +16,7 @@ const FRONTEND_DIR = path.join(__dirname, '../../../frontend');
 const SRC_ASSETS_DIR = path.join(FRONTEND_DIR, 'src/assets');
 const PUBLIC_ASSETS_DIR = path.join(FRONTEND_DIR, 'public/assets');
 const PUBLIC_DIR = path.join(FRONTEND_DIR, 'public');
+const LEGACY_IMAGES_DIR = path.join(FRONTEND_DIR, 'images');
 
 const uploadMappings: Record<string, string> = {};
 
@@ -50,9 +51,10 @@ const uploadAssets = async () => {
         .map((f) => path.join(PUBLIC_DIR, f))
         .filter((f) => !fs.statSync(f).isDirectory())
     : [];
+  const legacyImagesFiles = getFilesRecursive(LEGACY_IMAGES_DIR);
 
-  const allFiles = [...srcAssetsFiles, ...publicAssetsFiles, ...publicFiles].filter((f) =>
-    isImageFile(f)
+  const allFiles = [...srcAssetsFiles, ...publicAssetsFiles, ...publicFiles, ...legacyImagesFiles].filter(
+    (f) => isImageFile(f)
   );
 
   logger.info(`Found ${allFiles.length} image files to upload.`);
@@ -71,6 +73,8 @@ const uploadAssets = async () => {
       const subpath = path.relative(PUBLIC_ASSETS_DIR, file).replace(/\\/g, '/');
       localPathReference = `/assets/${subpath}`;
     } else if (file.includes('public') && !file.includes('public/assets')) {
+      localPathReference = `/${filename}`;
+    } else if (file.includes('images')) {
       localPathReference = `/${filename}`;
     }
 
@@ -97,16 +101,10 @@ const uploadAssets = async () => {
   logger.info(`Saved mappings to: ${mappingsPath}`);
 
   let deletedCount = 0;
-  let skippedCount = 0;
 
   for (const file of allFiles) {
     const filename = path.basename(file);
     if (['favicon.png', 'og-image.jpg'].includes(filename)) continue;
-
-    if (filename.startsWith('mandala_')) {
-      skippedCount++;
-      continue;
-    }
 
     try {
       fs.unlinkSync(file);
@@ -116,7 +114,7 @@ const uploadAssets = async () => {
     }
   }
 
-  logger.info(`Cleanup finished. Deleted ${deletedCount} files, kept ${skippedCount} mandala files.`);
+  logger.info(`Cleanup finished. Deleted ${deletedCount} local image files after Cloudinary upload.`);
 };
 
 uploadAssets().catch((err) => {

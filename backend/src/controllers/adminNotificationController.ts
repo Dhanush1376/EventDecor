@@ -3,6 +3,7 @@ import AdminNotification from '../models/AdminNotification';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import { emitAdminNotification } from '../socket';
+import logger from '../config/logger';
 
 /**
  * Fetch all admin notifications
@@ -76,6 +77,6 @@ export const createAdminNotification = async (payload: {
     
     return notification;
   } catch (error) {
-    console.error('Failed to create admin notification:', error);
+    logger.error('Failed to create admin notification:', error);
   }
 };

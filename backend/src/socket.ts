@@ -5,12 +5,47 @@ import logger from './config/logger';
 import User from './models/User';
 import { isOriginAllowed } from './app';
 import { ADMIN_ROLES } from './config/adminConfig';
+import { setSocketAdapterMode } from './config/socketState';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { pubClient, subClient } from './utils/redis';
+import { checkSocketConnectionRateLimit } from './utils/socketConnectionRateLimit';
 
 let io: Server;
 
 type SocketUser = { _id: { toString(): string }; role: string; email: string };
+
+const resolveMultiInstance = (): boolean => {
+  const explicit = process.env.RENDER_INSTANCE_COUNT || process.env.WEB_CONCURRENCY;
+  if (explicit) {
+    return Number(explicit) > 1;
+  }
+  return false;
+};
+
+const assertRedisForSocket = (hasRedisAdapter: boolean): void => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const requireRedis = process.env.REQUIRE_REDIS === 'true';
+  const multiInstance = resolveMultiInstance();
+
+  if (hasRedisAdapter) return;
+
+  if (requireRedis || (isProduction && multiInstance)) {
+    logger.error(
+      '[SOCKET CRITICAL] REDIS_URL is required for Socket.io when REQUIRE_REDIS=true or when running multiple instances. ' +
+        'Aborting startup to prevent split-brain real-time delivery.'
+    );
+    process.exit(1);
+  }
+
+  if (isProduction) {
+    logger.warn(
+      '[SOCKET] REDIS_URL not set — using in-memory Socket.io adapter. ' +
+        'Real-time alerts only reach clients on the same instance. Set REDIS_URL before horizontal scaling.'
+    );
+  } else {
+    logger.warn('[SOCKET] REDIS_URL not set — in-memory adapter (OK for local single-instance dev).');
+  }
+};
 
 const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void) => {
   try {
@@ -73,21 +108,8 @@ const registerNamespace = (namespace: Namespace, options: { adminOnly?: boolean 
 
 export const initSocket = (server: HttpServer) => {
   const hasRedisAdapter = !!(pubClient && subClient);
-
-  if (process.env.NODE_ENV === 'production' && !hasRedisAdapter) {
-    logger.error(
-      '[SOCKET CRITICAL] REDIS_URL is not configured. Socket.io will use the in-memory adapter only — ' +
-        'events will NOT propagate across multiple server instances. Set REDIS_URL before scaling horizontally.'
-    );
-    if (process.env.REQUIRE_REDIS === 'true') {
-      logger.error('[SOCKET CRITICAL] REQUIRE_REDIS=true — aborting startup.');
-      process.exit(1);
-    }
-  } else if (!hasRedisAdapter) {
-    logger.warn(
-      '[SOCKET] REDIS_URL not set — using in-memory Socket.io adapter (fine for single-instance local dev).'
-    );
-  }
+  assertRedisForSocket(hasRedisAdapter);
+  setSocketAdapterMode(hasRedisAdapter ? 'redis' : 'memory');
 
   io = new Server(server, {
     cors: {
@@ -110,10 +132,21 @@ export const initSocket = (server: HttpServer) => {
     adapter: hasRedisAdapter ? createAdapter(pubClient!, subClient!) : undefined,
   });
 
+  io.use(async (socket, next) => {
+    const { allowed, ip } = await checkSocketConnectionRateLimit(socket);
+    if (!allowed) {
+      logger.warn(`[SOCKET] Connection rate limit exceeded for IP: ${ip}`);
+      return next(new Error('Too many connection attempts'));
+    }
+    next();
+  });
+
   registerNamespace(io.of('/admin'), { adminOnly: true });
   registerNamespace(io.of('/user'), { adminOnly: false });
 
-  logger.info('[SOCKET] Namespaces ready: /admin (staff alerts), /user (customer real-time)');
+  logger.info(
+    `[SOCKET] Namespaces ready (/admin, /user) — adapter: ${hasRedisAdapter ? 'redis' : 'memory'}`
+  );
   return io;
 };
 

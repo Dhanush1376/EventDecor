@@ -110,7 +110,6 @@ export function AdminSettings() {
     codFee: "90",
     deliveryEstimate: "5-7",
     razorpayKeyId: "",
-    razorpaySecret: "",
     upiId: "siriarts@upi",
     whatsappNumber: "+91 98660 06648",
     whatsappMessage: "Hello! Thank you for reaching Siri Arts & Crafts.",
@@ -214,10 +213,13 @@ export function AdminSettings() {
       // 2. Sync Mongoose CMS settings
       try {
         const cmsRes = await cmsService.getSection("studio_settings");
-        if (cmsRes) {
+        const rawSection = cmsRes?.data ?? cmsRes;
+        const sectionData = rawSection?.data ?? rawSection;
+        if (sectionData && typeof sectionData === "object" && !Array.isArray(sectionData)) {
+          const { razorpaySecret: _removed, razorpayKeySecret: _removedKey, ...safeSettings } = sectionData;
           setSettings((prev) => ({
             ...prev,
-            ...cmsRes,
+            ...safeSettings,
           }));
         }
       } catch {
@@ -268,7 +270,8 @@ export function AdminSettings() {
     setSaving(true);
     try {
       // Write configurations straight to WebsiteContent CMS collection
-      const res = await cmsService.updateSection("studio_settings", settings);
+      const { razorpaySecret: _s, razorpayKeySecret: _k, ...settingsToSave } = settings;
+      const res = await cmsService.updateSection("studio_settings", settingsToSave);
       if (res) {
         toast.success("Global configurations saved successfully in database!", {
           icon: "⚙️",
@@ -779,21 +782,13 @@ export function AdminSettings() {
                     className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
-                    Razorpay Secret Code
-                  </label>
-                  <input
-                    type="password"
-                    value={settings.razorpaySecret}
-                    onChange={(e) =>
-                      setSettings({ ...settings, razorpaySecret: e.target.value })
-                    }
-                    placeholder="••••••••••••••••"
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
-                  />
-                </div>
               </div>
+              <p className="text-[11px] text-outline/80 leading-relaxed">
+                Razorpay secret keys are configured only via server environment variables (
+                <code className="font-mono text-[10px]">RAZORPAY_KEY_SECRET</code>,{" "}
+                <code className="font-mono text-[10px]">RAZORPAY_WEBHOOK_SECRET</code>). Use{" "}
+                <code className="font-mono text-[10px]">VITE_RAZORPAY_KEY_ID</code> for the public checkout key.
+              </p>
 
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-outline">

@@ -138,6 +138,8 @@ export function CartDrawer({ isOpen, onClose }) {
                           src={item.imageSrc || item.image}
                           alt={item.title}
                           className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
                         />
                       </div>
                       <div className="flex-1 min-w-0">

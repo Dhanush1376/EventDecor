@@ -137,7 +137,9 @@ RAZORPAY_KEY_ID=your_razorpay_key_id
 RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 
 # Admin Configs
-ADMIN_EMAIL=sirisha.atmakuri@gmail.com
+ADMIN_EMAIL=admin@yourdomain.com
+SUPER_ADMIN_EMAIL=owner@yourdomain.com
+RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_secret
 ```
 
 ### Frontend Environment Variables (`/frontend/.env`)

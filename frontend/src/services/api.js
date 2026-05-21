@@ -146,7 +146,7 @@ api.interceptors.response.use(
       const backoffDelay = Math.pow(2, originalRequest._retryCount) * 1000 + Math.random() * 100;
       
       if (import.meta.env.DEV) {
-        console.warn(`⚠️ [API TRANSIENT RETRY] GET ${originalRequest.url} failed. Retrying attempt ${originalRequest._retryCount} in ${Math.round(backoffDelay)}ms...`);
+        logger.warn(`⚠️ [API TRANSIENT RETRY] GET ${originalRequest.url} failed. Retrying attempt ${originalRequest._retryCount} in ${Math.round(backoffDelay)}ms...`);
       }
       
       await new Promise((resolve) => setTimeout(resolve, backoffDelay));

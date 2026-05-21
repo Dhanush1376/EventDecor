@@ -14,7 +14,7 @@ services:
       - key: MONGO_URI
         fromConfig: true
       - key: JWT_SECRET
-        generateValue: true
+        fromConfig: true
       - key: JWT_EXPIRES_IN
         value: 15m
       - key: REFRESH_TOKEN_EXPIRES_DAYS
@@ -28,6 +28,10 @@ services:
       - key: RAZORPAY_KEY_ID
         fromConfig: true
       - key: RAZORPAY_KEY_SECRET
+        fromConfig: true
+      - key: RAZORPAY_WEBHOOK_SECRET
+        fromConfig: true
+      - key: SUPER_ADMIN_EMAIL
         fromConfig: true
       - key: CLOUDINARY_CLOUD_NAME
         fromConfig: true

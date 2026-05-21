@@ -18,6 +18,7 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     rules: {
+      'no-console': 'error',
       'no-unused-vars': ['warn', {
         vars: 'all',
         args: 'after-used',
@@ -26,5 +27,11 @@ export default defineConfig([
       }],
       'react-refresh/only-export-components': 'off'
     }
+  },
+  {
+    files: ['src/utils/logger.js', '**/*.{test,spec}.{js,jsx}', 'scripts/**'],
+    rules: {
+      'no-console': 'off',
+    },
   },
 ])

@@ -242,8 +242,9 @@ export const initialWebsiteContent = {
     phone: "+91 98660 06648",
     email: "Sirisha.atmakuri@gmail.com",
     socialLinks: {
-      instagram: "https://instagram.com/siriarts",
-      pinterest: "https://pinterest.com/siriarts",
+      instagram: "",
+      pinterest: "",
+      facebook: "",
     },
     copyright: "© {year} Siri Arts & Crafts.",
     status: "published",

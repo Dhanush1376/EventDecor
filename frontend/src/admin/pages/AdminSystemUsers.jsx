@@ -29,7 +29,7 @@ export const AdminSystemUsers = () => {
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    if (user?.role === 'super_admin' || user?.email === 'sirisha.atmakuri@gmail.com') {
+    if (user?.role === 'super_admin') {
       setIsSuperAdmin(true);
       fetchAdmins();
     } else {
@@ -170,7 +170,7 @@ export const AdminSystemUsers = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {admin.email !== 'sirisha.atmakuri@gmail.com' && admin.email !== user?.email && (
+                      {admin.role !== 'super_admin' && admin.email !== user?.email && (
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleOpenModal('edit', admin)}

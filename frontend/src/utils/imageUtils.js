@@ -1,3 +1,16 @@
+import cloudImageMappings from '../assets/cloud_image_mappings.json';
+
+/**
+ * Resolve a legacy local public path (e.g. /mandala_hero_art.png) to its Cloudinary URL.
+ * Falls back to the original path when no mapping exists (dev without CDN upload).
+ */
+export const resolveStaticAssetUrl = (localPath) => {
+  if (!localPath) return localPath;
+  if (localPath.includes('cloudinary.com')) return localPath;
+  const key = localPath.startsWith('/') ? localPath : `/${localPath}`;
+  return cloudImageMappings[key] || localPath;
+};
+
 /**
  * Generate an optimized Cloudinary URL with dynamic transformations
  * Supports AVIF/WebP, automatic quality, and responsive resizing

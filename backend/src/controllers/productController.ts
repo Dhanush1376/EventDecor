@@ -197,7 +197,7 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
 
   if (!groqResponse.ok) {
     const errorText = await groqResponse.text();
-    console.error('Groq API Error:', errorText);
+    logger.error('Groq API Error:', errorText);
     throw new ApiError(500, 'Failed to generate product details from Groq AI API.');
   }
 
@@ -212,7 +212,7 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
     const parsedData = JSON.parse(textResponse.trim());
     res.status(200).json(new ApiResponse(true, 'AI specifications generated successfully', parsedData));
   } catch (err) {
-    console.error('Failed to parse Groq JSON:', textResponse);
+    logger.error('Failed to parse Groq JSON:', textResponse);
     throw new ApiError(500, 'AI response could not be parsed as clean JSON.');
   }
 });

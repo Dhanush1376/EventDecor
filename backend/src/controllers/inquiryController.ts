@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Inquiry from '../models/Inquiry';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
+import logger from '../config/logger';
 
 import { sendDirectEmail } from '../services/notificationService';
 
@@ -47,10 +48,10 @@ export const submitInquiry = asyncHandler(async (req: Request, res: Response) =>
       type: 'inquiry',
       actionLink: '/admin/inquiries',
     }).catch((err: any) => {
-      console.error('Failed to create admin notification for inquiry (async):', err);
+      logger.error('Failed to create admin notification for inquiry (async):', err);
     });
   } catch (notifErr) {
-    console.error('Failed to create admin notification for inquiry:', notifErr);
+    logger.error('Failed to create admin notification for inquiry:', notifErr);
   }
 
   res.status(201).json(new ApiResponse(true, 'Inquiry submitted successfully', inquiry));

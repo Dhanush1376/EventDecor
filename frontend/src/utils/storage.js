@@ -1,3 +1,5 @@
+import logger from './logger';
+
 /**
  * Safe LocalStorage and SessionStorage wrappers.
  * Prevents application crashes in private browsing mode (Incognito)
@@ -26,7 +28,7 @@ export const safeLocalStorage = {
         return localStorage.getItem(key);
       }
     } catch (e) {
-      console.warn(`[STORAGE] localStorage.getItem failed for key "${key}":`, e);
+      logger.warn(`[STORAGE] localStorage.getItem failed for key "${key}":`, e);
     }
     return memoryStorage.get(key) || null;
   },
@@ -38,7 +40,7 @@ export const safeLocalStorage = {
         return;
       }
     } catch (e) {
-      console.warn(`[STORAGE] localStorage.setItem failed for key "${key}":`, e);
+      logger.warn(`[STORAGE] localStorage.setItem failed for key "${key}":`, e);
     }
     memoryStorage.set(key, String(value));
   },
@@ -50,7 +52,7 @@ export const safeLocalStorage = {
         return;
       }
     } catch (e) {
-      console.warn(`[STORAGE] localStorage.removeItem failed for key "${key}":`, e);
+      logger.warn(`[STORAGE] localStorage.removeItem failed for key "${key}":`, e);
     }
     memoryStorage.delete(key);
   },
@@ -62,7 +64,7 @@ export const safeLocalStorage = {
         return;
       }
     } catch (e) {
-      console.warn('[STORAGE] localStorage.clear failed:', e);
+      logger.warn('[STORAGE] localStorage.clear failed:', e);
     }
     memoryStorage.clear();
   }
@@ -75,7 +77,7 @@ export const safeSessionStorage = {
         return sessionStorage.getItem(key);
       }
     } catch (e) {
-      console.warn(`[STORAGE] sessionStorage.getItem failed for key "${key}":`, e);
+      logger.warn(`[STORAGE] sessionStorage.getItem failed for key "${key}":`, e);
     }
     return memorySessionStorage.get(key) || null;
   },
@@ -87,7 +89,7 @@ export const safeSessionStorage = {
         return;
       }
     } catch (e) {
-      console.warn(`[STORAGE] sessionStorage.setItem failed for key "${key}":`, e);
+      logger.warn(`[STORAGE] sessionStorage.setItem failed for key "${key}":`, e);
     }
     memorySessionStorage.set(key, String(value));
   },
@@ -99,7 +101,7 @@ export const safeSessionStorage = {
         return;
       }
     } catch (e) {
-      console.warn(`[STORAGE] sessionStorage.removeItem failed for key "${key}":`, e);
+      logger.warn(`[STORAGE] sessionStorage.removeItem failed for key "${key}":`, e);
     }
     memorySessionStorage.delete(key);
   },
@@ -111,7 +113,7 @@ export const safeSessionStorage = {
         return;
       }
     } catch (e) {
-      console.warn('[STORAGE] sessionStorage.clear failed:', e);
+      logger.warn('[STORAGE] sessionStorage.clear failed:', e);
     }
     memorySessionStorage.clear();
   }

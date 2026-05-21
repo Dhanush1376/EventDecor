@@ -3,12 +3,36 @@ import ApiError from '../utils/ApiError';
 import { cmsCache } from '../utils/MemoryCache';
 import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 
+const SENSITIVE_STUDIO_SETTINGS_KEYS = ['razorpaySecret', 'razorpayKeySecret'] as const;
+const ADMIN_ONLY_SECTION_KEYS = new Set(['studio_settings']);
+
+export const sanitizeStudioSettings = (data: Record<string, unknown> | null | undefined) => {
+  if (!data || typeof data !== 'object') return data;
+  const sanitized = { ...data };
+  for (const key of SENSITIVE_STUDIO_SETTINGS_KEYS) {
+    delete sanitized[key];
+  }
+  return sanitized;
+};
+
+const stripSensitiveFromSectionData = (key: string, data: any) => {
+  if (key === 'studio_settings') {
+    return sanitizeStudioSettings(data);
+  }
+  return data;
+};
+
 class ContentService {
+  static isAdminOnlySection(key: string): boolean {
+    return ADMIN_ONLY_SECTION_KEYS.has(key);
+  }
+
   static async getPublishedContent() {
     const sections = await ContentSection.find({ status: 'published' }).select('sectionKey data');
     const flatContent: any = {};
     sections.forEach(section => {
-      flatContent[section.sectionKey] = section.data;
+      if (ADMIN_ONLY_SECTION_KEYS.has(section.sectionKey)) return;
+      flatContent[section.sectionKey] = stripSensitiveFromSectionData(section.sectionKey, section.data);
     });
     return flatContent;
   }
@@ -48,10 +72,14 @@ class ContentService {
         throw new ApiError(404, `Section ${key} not found`);
       }
     }
+    if (section && key === 'studio_settings') {
+      section.data = stripSensitiveFromSectionData(key, section.data) as typeof section.data;
+    }
     return section;
   }
 
   static async updateSection(key: string, newData: any) {
+    const payload = key === 'studio_settings' ? sanitizeStudioSettings(newData) : newData;
     let section = await ContentSection.findOne({ sectionKey: key });
 
     if (section) {
@@ -66,14 +94,14 @@ class ContentService {
         section.revisionHistory.shift();
       }
 
-      section.data = newData;
+      section.data = payload;
       section.lastModified = new Date();
       section.status = 'published'; // Always publish on update/save from admin
       await section.save();
     } else {
       section = new ContentSection({
         sectionKey: key,
-        data: newData,
+        data: payload,
         status: 'published', // Always publish on update/save from admin
       });
       await section.save();

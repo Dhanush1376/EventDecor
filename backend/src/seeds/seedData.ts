@@ -2,11 +2,13 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line no-console -- runs before logger module is available
   console.error('❌ SEEDING SHIELD: Seeding operations are strictly disabled in production mode to prevent accidental data loss.');
   process.exit(1);
 }
 
 import bcrypt from 'bcryptjs';
+import logger from '../config/logger';
 import connectDB from '../config/db';
 import Product from '../models/Product';
 import Event from '../models/Event';
@@ -14,7 +16,6 @@ import Gallery from '../models/Gallery';
 import ContentSection from '../models/ContentSection';
 import User from '../models/User';
 import Review from '../models/Review';
-import logger from '../config/logger';
 
 dotenv.config();
 
@@ -274,7 +275,7 @@ const galleryInspirations = [
 const seed = async () => {
 
   if (process.env.SEED_CONFIRM !== 'true') {
-    console.error('❌ SAFETY GATE: Set SEED_CONFIRM=true to confirm seeding operation. Run: SEED_CONFIRM=true npm run seed');
+    logger.error('❌ SAFETY GATE: Set SEED_CONFIRM=true to confirm seeding operation. Run: SEED_CONFIRM=true npm run seed');
     process.exit(1);
   }
 
@@ -295,24 +296,43 @@ const seed = async () => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(defaultPassword, salt);
 
-    const adminsToSeed = [
-      {
-        name: 'Siri Devi (Owner)',
-        email: 'sirisha.atmakuri@gmail.com',
+    const adminsToSeed: Array<{
+      name: string;
+      email: string;
+      role: string;
+      isVerified: boolean;
+      passwordHash: string;
+      passwordChangedAt: Date;
+    }> = [];
+
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || '').trim().toLowerCase();
+    const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+
+    if (superAdminEmail) {
+      adminsToSeed.push({
+        name: 'Super Admin',
+        email: superAdminEmail,
         role: 'super_admin',
         isVerified: true,
         passwordHash,
         passwordChangedAt: new Date(),
-      },
-      {
+      });
+    }
+
+    if (adminEmail && adminEmail !== superAdminEmail) {
+      adminsToSeed.push({
         name: 'Admin User',
-        email: 'admin@siriartsandcrafts.com',
+        email: adminEmail,
         role: 'main_admin',
         isVerified: true,
         passwordHash,
         passwordChangedAt: new Date(),
-      }
-    ];
+      });
+    }
+
+    if (adminsToSeed.length === 0) {
+      logger.warn('⚠️ Skipping admin seed: set ADMIN_EMAIL and/or SUPER_ADMIN_EMAIL in .env');
+    }
 
     for (const admin of adminsToSeed) {
       await User.findOneAndUpdate(

@@ -1,6 +1,7 @@
 import './src/config/loadEnv'; // Load & validate environment variables before any other imports resolve!
 import app from './src/app';
 import connectDB from './src/config/db';
+import { ensureIndexes } from './src/config/ensureIndexes';
 import logger from './src/config/logger';
 import { generateSitemap } from './src/utils/sitemapGenerator';
 import { initSocket } from './src/socket';
@@ -61,6 +62,7 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
+    await ensureIndexes();
 
     // Prevent BYPASS_OTP_CODE in production
     if (process.env.NODE_ENV === 'production' && process.env.BYPASS_OTP_CODE) {

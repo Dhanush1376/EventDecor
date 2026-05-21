@@ -46,7 +46,6 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response) => {
     user: result.user,
     token: result.accessToken,
     accessToken: result.accessToken,
-    refreshToken: result.refreshToken,
   }));
 });
 

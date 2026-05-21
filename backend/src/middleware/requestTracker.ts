@@ -1,6 +1,9 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import logger from '../config/logger';
+
+let trustProxyIpLogged = false;
 
 export interface RequestContext {
   requestId: string;
@@ -27,6 +30,17 @@ export const requestTrackerMiddleware = (req: Request, res: Response, next: Next
     method: req.method,
     url: req.originalUrl || req.url,
   };
+
+  if (!trustProxyIpLogged) {
+    trustProxyIpLogged = true;
+    const forwardedFor = req.headers['x-forwarded-for'];
+    logger.info('[TRUST_PROXY] First request IP verification sample', {
+      trustProxyHops: process.env.TRUST_PROXY_HOPS ?? '1',
+      reqIp: req.ip,
+      socketRemoteAddress: req.socket.remoteAddress,
+      xForwardedFor: forwardedFor || '(none)',
+    });
+  }
 
   requestContextStorage.run(context, () => {
     next();

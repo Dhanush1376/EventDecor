@@ -1,13 +1,18 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
+import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import {
+  SITE_URL,
+  SITE_NAME,
+  OG_IMAGE_URL,
+  CONTACT_PHONE,
+  buildSameAsLinks,
+  TWITTER_HANDLE,
+} from '../../constants/brandEnv';
 
-const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://siriartsandcrafts.com';
-const SITE_NAME = import.meta.env.VITE_SITE_NAME || 'Siri Arts & Crafts';
-const DEFAULT_OG_IMAGE = import.meta.env.VITE_OG_IMAGE_URL || `${SITE_URL}/og-image.png`;
-const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91-9866006648';
 const DEFAULT_DESCRIPTION = 'Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor.';
-const DEFAULT_TITLE = 'Siri Arts & Crafts | Luxury Event Decor & Artisanal Heritage';
+const DEFAULT_TITLE = 'Luxury Event Decor & Artisanal Heritage';
 const priceValidUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
 /**
@@ -37,48 +42,51 @@ export function SEO({
   faq,
 }) {
   const location = useLocation();
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
+  const { footer, contact } = useWebsiteContent();
+  const sameAs = buildSameAsLinks(footer?.socialLinks);
+  const siteName = SITE_NAME || 'Siri Arts & Crafts';
+  const siteUrl = SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  const contactPhone = contact?.phone ? `+91-${String(contact.phone).replace(/^\+91-?/, '')}` : CONTACT_PHONE;
+
+  const fullTitle = title ? `${title} | ${siteName}` : (siteName ? `${siteName} | ${DEFAULT_TITLE}` : DEFAULT_TITLE);
   const metaDescription = description || DEFAULT_DESCRIPTION;
   const normalizedPath = normalizeUrl(location.pathname);
-  const currentUrl = canonicalUrl || `${SITE_URL}${normalizedPath}`;
-  const metaImage = ogImage || DEFAULT_OG_IMAGE;
+  const currentUrl = canonicalUrl || (siteUrl ? `${siteUrl}${normalizedPath}` : normalizedPath);
+  const metaImage = ogImage || OG_IMAGE_URL;
   const metaImageType = metaImage.endsWith('.png') ? 'image/png' : metaImage.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
 
-  // Organization Schema (always present)
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: SITE_NAME,
-    url: SITE_URL,
-    logo: `${SITE_URL}/favicon.png`,
+    name: siteName,
+    url: siteUrl,
+    logo: siteUrl ? `${siteUrl}/favicon.png` : undefined,
     description: 'Premium handcrafted event decor, wedding trays, and heritage pooja essentials.',
-    contactPoint: {
-      '@type': 'ContactPoint',
-      telephone: CONTACT_PHONE,
-      contactType: 'customer service',
-      availableLanguage: ['English', 'Telugu', 'Hindi'],
-    },
-    sameAs: [
-      'https://instagram.com/siriarts',
-      'https://pinterest.com/siriarts',
-      'https://facebook.com/siriartsandcrafts',
-    ],
+    ...(contactPhone && {
+      contactPoint: {
+        '@type': 'ContactPoint',
+        telephone: contactPhone,
+        contactType: 'customer service',
+        availableLanguage: ['English', 'Telugu', 'Hindi'],
+      },
+    }),
+    ...(sameAs.length > 0 && { sameAs }),
   };
 
-  // LocalBusiness Schema (for local SEO / Google Maps)
   const localBusinessSchema = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    name: SITE_NAME,
-    image: DEFAULT_OG_IMAGE,
-    url: SITE_URL,
-    telephone: CONTACT_PHONE,
+    name: siteName,
+    image: OG_IMAGE_URL || metaImage,
+    url: siteUrl,
+    telephone: contactPhone,
     description: 'Premium handcrafted event decor, wedding trays, and heritage pooja essentials. Woven with tradition and refined for the modern aesthetic.',
     address: {
       '@type': 'PostalAddress',
-      addressLocality: 'Hyderabad',
+      addressLocality: contact?.address ? undefined : 'Hyderabad',
       addressRegion: 'Telangana',
       addressCountry: 'IN',
+      ...(contact?.address && { streetAddress: contact.address }),
     },
     geo: {
       '@type': 'GeoCoordinates',
@@ -87,14 +95,9 @@ export function SEO({
     },
     priceRange: '₹₹',
     openingHours: 'Mo-Sa 10:00-19:00',
-    sameAs: [
-      'https://instagram.com/siriarts',
-      'https://pinterest.com/siriarts',
-      'https://facebook.com/siriartsandcrafts',
-    ],
+    ...(sameAs.length > 0 && { sameAs }),
   };
 
-  // Breadcrumb Schema
   const breadcrumbSchema = breadcrumbs
     ? {
         '@context': 'https://schema.org',
@@ -103,14 +106,13 @@ export function SEO({
           '@type': 'ListItem',
           position: index + 1,
           name: item.name,
-          item: item.url ? `${SITE_URL}${item.url}` : undefined,
+          item: item.url && siteUrl ? `${siteUrl}${item.url}` : undefined,
         })),
       }
     : null;
 
   const priceValidUntil = priceValidUntilDate;
 
-  // Product Schema (for product pages)
   const productSchema = product
     ? {
         '@context': 'https://schema.org/',
@@ -121,7 +123,7 @@ export function SEO({
         sku: product.sku,
         brand: {
           '@type': 'Brand',
-          name: SITE_NAME,
+          name: siteName,
         },
         offers: {
           '@type': 'Offer',
@@ -134,7 +136,7 @@ export function SEO({
             : 'https://schema.org/OutOfStock',
           seller: {
             '@type': 'Organization',
-            name: SITE_NAME,
+            name: siteName,
           },
         },
         ...(product.rating && {
@@ -149,7 +151,6 @@ export function SEO({
       }
     : null;
 
-  // FAQ Schema
   const faqSchema = faq
     ? {
         '@context': 'https://schema.org',
@@ -165,81 +166,73 @@ export function SEO({
       }
     : null;
 
-  // WebSite Schema with SearchAction
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: SITE_NAME,
-    url: SITE_URL,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${SITE_URL}/collections?search={search_term_string}`,
+    name: siteName,
+    url: siteUrl,
+    ...(siteUrl && {
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${siteUrl}/collections?search={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
       },
-      'query-input': 'required name=search_term_string',
-    },
+    }),
   };
 
-  // Only include LocalBusiness on the homepage to avoid duplicate schema
   const isHomePage = normalizedPath === '' || normalizedPath === '/';
 
   return (
     <Helmet>
-      {/* Primary Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="description" content={metaDescription} />
       {keywords && <meta name="keywords" content={keywords} />}
-      <link rel="canonical" href={currentUrl} />
-      <meta name="author" content={SITE_NAME} />
+      {currentUrl && <link rel="canonical" href={currentUrl} />}
+      <meta name="author" content={siteName} />
 
-      {/* Robots */}
       {noindex ? (
         <meta name="robots" content="noindex, nofollow" />
       ) : (
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
       )}
 
-      {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />
-      <meta property="og:url" content={currentUrl} />
-      <meta property="og:site_name" content={SITE_NAME} />
+      {currentUrl && <meta property="og:url" content={currentUrl} />}
+      <meta property="og:site_name" content={siteName} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={metaDescription} />
-      <meta property="og:image" content={metaImage} />
-      <meta property="og:image:type" content={metaImageType} />
+      {metaImage && <meta property="og:image" content={metaImage} />}
+      {metaImage && <meta property="og:image:type" content={metaImageType} />}
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={title ? `${title} — ${SITE_NAME}` : `${SITE_NAME} — Premium Handcrafted Event Decor`} />
+      <meta property="og:image:alt" content={title ? `${title} — ${siteName}` : `${siteName} — Premium Handcrafted Event Decor`} />
       <meta property="og:locale" content="en_IN" />
 
-      {/* Twitter / X */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@siriarts" />
-      <meta name="twitter:creator" content="@siriarts" />
+      {TWITTER_HANDLE && <meta name="twitter:site" content={TWITTER_HANDLE} />}
+      {TWITTER_HANDLE && <meta name="twitter:creator" content={TWITTER_HANDLE} />}
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={metaDescription} />
-      <meta name="twitter:image" content={metaImage} />
-      <meta name="twitter:image:alt" content={title ? `${title} — ${SITE_NAME}` : `${SITE_NAME} — Premium Handcrafted Event Decor`} />
+      {metaImage && <meta name="twitter:image" content={metaImage} />}
+      <meta name="twitter:image:alt" content={title ? `${title} — ${siteName}` : `${siteName} — Premium Handcrafted Event Decor`} />
 
-      {/* Article Meta (for blog/content pages) */}
       {article && (
         <>
           <meta property="article:published_time" content={article.publishedTime} />
           <meta property="article:modified_time" content={article.modifiedTime} />
-          <meta property="article:author" content={article.author || SITE_NAME} />
+          <meta property="article:author" content={article.author || siteName} />
         </>
       )}
 
-      {/* Theme Color */}
       <meta name="theme-color" content="#d4af37" />
       <meta name="msapplication-TileColor" content="#d4af37" />
 
-      {/* Alternate languages */}
-      <link rel="alternate" hrefLang="en-in" href={currentUrl} />
-      <link rel="alternate" hrefLang="x-default" href={currentUrl} />
+      {currentUrl && <link rel="alternate" hrefLang="en-in" href={currentUrl} />}
+      {currentUrl && <link rel="alternate" hrefLang="x-default" href={currentUrl} />}
 
-      {/* Structured Data (JSON-LD) */}
       <script type="application/ld+json">
         {JSON.stringify(organizationSchema)}
       </script>

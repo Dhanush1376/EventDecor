@@ -11,7 +11,11 @@ const createAdmin = async () => {
   try {
     await connectDB();
 
-    const email = (process.env.ADMIN_EMAIL || 'admin@siriartsandcrafts.com').trim().toLowerCase();
+    const email = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    if (!email) {
+      logger.error('ADMIN_EMAIL is required. Set it in .env before running createAdmin.');
+      process.exit(1);
+    }
     
     // Fetch all users to perform a robust canonical email match (handles Gmail dot variation)
     const users = await User.find({});

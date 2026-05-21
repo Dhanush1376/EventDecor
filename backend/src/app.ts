@@ -34,6 +34,7 @@ import eventBookingRoutes from './routes/eventBookingRoutes';
 import showcaseRoutes from './routes/showcaseRoutes';
 import adminSystemRoutes from './routes/adminSystemRoutes';
 import logger from './config/logger';
+import { getSocketAdapterMode } from './config/socketState';
 import { generateSitemap } from './utils/sitemapGenerator';
 import * as Sentry from "@sentry/node";
 import { requestTrackerMiddleware } from './middleware/requestTracker';
@@ -59,6 +60,10 @@ if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 
 }
 app.set('trust proxy', trustProxyHops);
 logger.info(`[STARTUP] Express trust proxy hops: ${trustProxyHops}`);
+logger.warn(
+  `[STARTUP] TRUST_PROXY_HOPS=${trustProxyHops}. Client IP accuracy depends on this matching your proxy chain ` +
+    '(Render=1, Cloudflare+Render=2, local dev=0). Wrong values allow IP spoofing on rate limits. See docs/DEPLOYMENT.md'
+);
 
 // Boot Request Tracker AsyncLocalStorage context as early as possible
 app.use(requestTrackerMiddleware);
@@ -217,7 +222,8 @@ app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.get('/sitemap.xml', async (req: Request, res: Response) => {
   try {
     const xml = await generateSitemap();
-    res.header('Content-Type', 'application/xml');
+    res.setHeader('Content-Type', 'application/xml');
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
     res.status(200).send(xml);
   } catch (err: any) {
     logger.error(`[APP SITEMAP ROUTE ERROR] ${err.message}`);
@@ -302,7 +308,12 @@ app.get('/api/health', (req: Request, res: Response) => {
         usage: `${Math.round((1 - os.freemem() / os.totalmem()) * 100)}%`
       },
       cpuLoad: os.loadavg()
-    }
+    },
+    realtime: {
+      adapter: getSocketAdapterMode(),
+      degraded:
+        process.env.NODE_ENV === 'production' && getSocketAdapterMode() === 'memory',
+    },
   };
 
   if (dbState !== 1) {

@@ -1,4 +1,19 @@
 import { body } from 'express-validator';
+import { mongoIdParam } from './commonValidator';
+
+const BOOKING_STATUSES = [
+  'inquiry',
+  'review',
+  'discussion',
+  'quotation_sent',
+  'awaiting_approval',
+  'confirmed',
+  'team_assigned',
+  'setup_in_progress',
+  'active',
+  'pickup_scheduled',
+  'completed',
+] as const;
 
 export const submitEventBookingValidator = [
   body('eventPackageId')
@@ -87,4 +102,51 @@ export const submitEventBookingValidator = [
     .optional()
     .isURL()
     .withMessage('Inspiration image must be a valid URL'),
+];
+
+export const eventBookingIdParam = mongoIdParam('id');
+
+export const adminUpdateBookingStatusValidator = [
+  ...eventBookingIdParam,
+  body('status')
+    .trim()
+    .notEmpty()
+    .isIn([...BOOKING_STATUSES])
+    .withMessage('Invalid booking status'),
+];
+
+export const adminUpdateQuotationValidator = [
+  ...eventBookingIdParam,
+  body('rentalFee').optional().isFloat({ min: 0 }).withMessage('rentalFee must be non-negative'),
+  body('setupCharges').optional().isFloat({ min: 0 }),
+  body('transportationCost').optional().isFloat({ min: 0 }),
+  body('addOnCharges').optional().isFloat({ min: 0 }),
+  body('depositAmount').optional().isFloat({ min: 0 }),
+];
+
+export const customerApproveQuoteValidator = [
+  ...eventBookingIdParam,
+  body('approved').isBoolean().withMessage('approved must be a boolean'),
+];
+
+export const customerBookingPaymentValidator = [
+  ...eventBookingIdParam,
+  body('amount').isFloat({ min: 0 }).withMessage('amount must be non-negative'),
+  body('transactionId')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 200 }),
+  body('note').optional({ values: 'falsy' }).trim().isLength({ max: 1000 }),
+];
+
+export const bookingChatValidator = [
+  ...eventBookingIdParam,
+  body('message').trim().notEmpty().isLength({ max: 5000 }).withMessage('Message is required'),
+  body('attachments').optional().isArray(),
+  body('attachments.*').optional().isURL(),
+];
+
+export const adminBookingNotesValidator = [
+  ...eventBookingIdParam,
+  body('adminNotes').optional({ values: 'falsy' }).trim().isLength({ max: 5000 }),
 ];

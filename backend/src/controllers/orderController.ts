@@ -194,11 +194,16 @@ export const updateOrderPublicStatus = asyncHandler(async (req: Request, res: Re
 
 export const handleRazorpayWebhook = asyncHandler(async (req: Request, res: Response) => {
   const signature = req.headers['x-razorpay-signature'] as string;
-  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET?.trim();
 
-  if (!signature || !webhookSecret) {
-    logger.warn('⚠️ Webhook verification aborted: Missing signature or secret.');
-    throw new ApiError(400, 'Webhook verification credentials missing');
+  if (!webhookSecret) {
+    logger.error('FATAL: RAZORPAY_WEBHOOK_SECRET is not set. Webhook verification disabled.');
+    throw new ApiError(503, 'Payment webhook verification is not configured');
+  }
+
+  if (!signature) {
+    logger.warn('⚠️ Webhook verification aborted: Missing x-razorpay-signature header.');
+    throw new ApiError(400, 'Webhook signature missing');
   }
 
   const rawBody = (req as any).rawBody as Buffer | undefined;

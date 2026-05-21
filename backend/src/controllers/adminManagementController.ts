@@ -5,6 +5,7 @@ import ApiError from '../utils/ApiError';
 import User from '../models/User';
 import bcrypt from 'bcryptjs';
 import { canonicalizeEmail } from '../utils/emailHelper';
+import { isProtectedSuperAdminEmail } from '../config/adminConfig';
 
 /**
  * Get all administrators (Staff)
@@ -78,7 +79,7 @@ export const updateAdminRole = asyncHandler(async (req: Request, res: Response) 
     throw new ApiError(404, 'Admin not found');
   }
 
-  if (admin.email === 'sirisha.atmakuri@gmail.com') {
+  if (isProtectedSuperAdminEmail(admin.email)) {
     throw new ApiError(403, 'The primary Super Admin role cannot be changed');
   }
 
@@ -100,7 +101,7 @@ export const removeAdmin = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(404, 'Admin not found');
   }
 
-  if (admin.email === 'sirisha.atmakuri@gmail.com') {
+  if (isProtectedSuperAdminEmail(admin.email)) {
     throw new ApiError(403, 'The primary Super Admin cannot be removed');
   }
 

@@ -1,27 +1,33 @@
 /**
  * Shared Admin Configuration Constants
- * Centralizes admin email resolution to eliminate hardcoded values scattered across middleware and services.
+ * Centralizes admin email resolution — production uses env vars only (no hardcoded addresses).
  */
 
-const HARDCODED_ADMIN_EMAIL = 'admin@siriartsandcrafts.com';
-const SUPER_ADMIN_EMAIL = 'sirisha.atmakuri@gmail.com';
+/**
+ * Primary super-admin account (role changes / removal blocked). Set SUPER_ADMIN_EMAIL in production.
+ */
+export const getSuperAdminEmail = (): string | undefined => {
+  const email = (process.env.SUPER_ADMIN_EMAIL || '').trim().toLowerCase();
+  return email || undefined;
+};
 
 /**
- * Returns the canonical list of admin email addresses from environment + hardcoded fallback.
+ * Returns the canonical list of admin email addresses from environment.
  * Used by authMiddleware, authService, and authController for admin identification.
  */
 export const getAdminEmails = (): string[] => {
-  const isProd = process.env.NODE_ENV === 'production';
   const emails = [
     (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
-    'dhanush1376@gmail.com', // Keep owner email
+    (process.env.SUPER_ADMIN_EMAIL || '').trim().toLowerCase(),
   ];
-  
-  if (!isProd) {
-    emails.push(HARDCODED_ADMIN_EMAIL, SUPER_ADMIN_EMAIL);
-  }
-  
   return emails.filter(Boolean);
+};
+
+/** True when the email is the configured protected super-admin account. */
+export const isProtectedSuperAdminEmail = (email: string): boolean => {
+  const protectedEmail = getSuperAdminEmail();
+  if (!protectedEmail) return false;
+  return email.trim().toLowerCase() === protectedEmail;
 };
 
 /**

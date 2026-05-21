@@ -12,6 +12,7 @@ import { sendDirectEmail } from './notificationService';
 import AnalyticsService from './analyticsService';
 import { cmsCache } from '../utils/MemoryCache';
 import { getAdminEmails } from '../config/adminConfig';
+import { bumpAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 
 class OrderService {
@@ -1088,6 +1089,19 @@ class OrderService {
       const razorpay_order_id = paymentEntity?.order_id;
       const razorpay_payment_id = paymentEntity?.id;
 
+      if (razorpay_payment_id) {
+        const alreadyPaidByPaymentId = await Order.findOne({
+          razorpayPaymentId: razorpay_payment_id,
+          paymentStatus: 'paid',
+        }).lean();
+        if (alreadyPaidByPaymentId) {
+          logger.info(
+            `[PAYMENT WEBHOOK IDEMPOTENCY] Payment ${razorpay_payment_id} already processed for order ${alreadyPaidByPaymentId._id}`
+          );
+          return { status: 200, message: 'Webhook idempotency: payment already processed' };
+        }
+      }
+
       if (!razorpay_order_id || !razorpay_payment_id) {
         logger.warn('[PAYMENT WEBHOOK] Webhook skipped: Missing order/payment details.');
         return { status: 200, message: 'Skipped: missing entity details' };
@@ -1141,6 +1155,7 @@ class OrderService {
       }
 
       AnalyticsService.clearCache();
+      await bumpAdminAnalyticsCacheVersion();
 
       try {
         const user = await User.findById(order.user);

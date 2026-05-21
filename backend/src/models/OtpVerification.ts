@@ -26,6 +26,7 @@ OtpVerificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Compound lookups by email and type
 OtpVerificationSchema.index({ email: 1, type: 1 });
+OtpVerificationSchema.index({ email: 1, expiresAt: 1 });
 
 const OtpVerification = mongoose.model<IOtpVerification>('OtpVerification', OtpVerificationSchema);
 

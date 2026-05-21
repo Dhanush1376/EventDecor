@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react';
 import LogRocket from 'logrocket';
+import logger from './logger';
 
 // Helper to determine active production state
 const isProduction = import.meta.env.PROD || import.meta.env.MODE === 'production';
@@ -61,7 +62,7 @@ export const linkLogRocketToSentry = () => {
  * Transmits caught errors safely to Sentry and LogRocket.
  */
 export const captureException = (error, context = {}) => {
-  console.error('[Observability Exception]:', error, context);
+  logger.error('[Observability Exception]:', error, context);
 
   if (import.meta.env.VITE_LOGROCKET_ID && import.meta.env.VITE_SENTRY_DSN) {
     LogRocket.getSessionURL((sessionURL) => {

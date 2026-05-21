@@ -12,6 +12,7 @@ import {
 import { ImageUpload } from "../components/ImageUpload";
 import toast from "react-hot-toast";
 import { cmsService } from "../../services/domainServices";
+import logger from "../../utils/logger";
 
 const cleanSignatureImg = (imgUrl, founderName) => {
   if (!imgUrl || imgUrl.includes("unsplash.com") || imgUrl === "" || imgUrl.includes("images.unsplash.com")) {
@@ -109,7 +110,7 @@ function AISparkButton({ text, onApply }) {
         toast.error("AI returned empty content. Try again.");
       }
     } catch (err) {
-      console.error("AI generation error:", err);
+      logger.error("AI generation error:", err);
       const errorMsg = err?.response?.data?.message || "AI service temporarily offline.";
       toast.error(errorMsg, { duration: 4000 });
     } finally {
