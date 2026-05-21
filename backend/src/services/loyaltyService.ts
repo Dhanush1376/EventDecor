@@ -3,6 +3,7 @@ import User from '../models/User';
 import WalletTransaction from '../models/WalletTransaction';
 import Order from '../models/Order';
 import Coupon from '../models/Coupon';
+import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 
 export class LoyaltyService {
@@ -20,58 +21,115 @@ export class LoyaltyService {
    * Welcomes a newly registered user with onboarding credits and generates their referral code
    */
   static async setupNewUserRewards(userId: string) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-      const user = await User.findById(userId);
-      if (!user) return;
+      const user = await User.findById(userId).session(session);
+      if (!user) {
+        await session.abortTransaction();
+        return;
+      }
 
-      // 1. Generate unique referral code
       const welcomeCash = 100;
       const refCode = user.referralCode || this.generateReferralCode(user.name);
 
-      const updateQuery: any = {
-        $inc: { walletBalance: welcomeCash }
+      const updateQuery: Record<string, unknown> = {
+        $inc: { walletBalance: welcomeCash },
       };
-      const setFields: any = {};
-      if (!user.referralCode) {
-        setFields.referralCode = refCode;
-      }
-      if (!user.loyaltyTier) {
-        setFields.loyaltyTier = 'Bronze';
-      }
+      const setFields: Record<string, string> = {};
+      if (!user.referralCode) setFields.referralCode = refCode;
+      if (!user.loyaltyTier) setFields.loyaltyTier = 'Bronze';
       if (Object.keys(setFields).length > 0) {
         updateQuery.$set = setFields;
       }
 
-      await User.findByIdAndUpdate(userId, updateQuery);
+      await User.findByIdAndUpdate(userId, updateQuery, { session });
 
-      // Log the credit transaction in audit ledger
-      await WalletTransaction.create({
-        userId,
-        type: 'credit',
-        amount: welcomeCash,
-        source: 'onboarding',
-        description: 'Welcome Bonus: ₹100 Siri Cash credited to your loyalty wallet!',
-        status: 'active'
-      });
+      await WalletTransaction.create(
+        [{
+          userId,
+          type: 'credit',
+          amount: welcomeCash,
+          source: 'onboarding',
+          description: 'Welcome Bonus: ₹100 Siri Cash credited to your loyalty wallet!',
+          status: 'active',
+        }],
+        { session }
+      );
 
-      // 3. Create Welcome Onboarding Coupon for the user
       const code = `WELCOME${Math.floor(10 + Math.random() * 90)}`;
-      await Coupon.create({
-        code,
-        discountType: 'percentage',
-        discountValue: 10,
-        minOrderAmount: 499,
-        maxDiscount: 200,
-        startDate: new Date(),
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 Days expiry
-        usageLimit: 1,
-        usedCount: 0,
-        isActive: true
-      });
+      await Coupon.create(
+        [{
+          code,
+          discountType: 'percentage',
+          discountValue: 10,
+          minOrderAmount: 499,
+          maxDiscount: 200,
+          startDate: new Date(),
+          expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          usageLimit: 1,
+          usedCount: 0,
+          isActive: true,
+        }],
+        { session }
+      );
 
+      await session.commitTransaction();
       logger.info(`Loyalty Welcome Setup successful for user: ${userId}`);
     } catch (err) {
+      await session.abortTransaction();
       logger.error('Failed to setup welcome onboarding rewards:', err);
+    } finally {
+      session.endSession();
+    }
+  }
+
+  /**
+   * Apply a referral code at signup — wallet credit and ledger row in one transaction.
+   */
+  static async applyReferralCode(userId: string, referralCode: string) {
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(404, 'User session not found');
+    if (user.referredBy) throw new ApiError(400, 'You have already applied a referral code');
+
+    const cleanCode = referralCode.trim().toUpperCase();
+    if (user.referralCode === cleanCode) {
+      throw new ApiError(400, 'Self-referral is forbidden. Please enter a friend\'s referral code.');
+    }
+
+    const referrer = await User.findOne({ referralCode: cleanCode });
+    if (!referrer) {
+      throw new ApiError(404, 'Invalid referral code. Please check and try again.');
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      await User.findByIdAndUpdate(
+        userId,
+        { $set: { referredBy: referrer._id }, $inc: { walletBalance: 50 } },
+        { session }
+      );
+
+      await WalletTransaction.create(
+        [{
+          userId,
+          type: 'credit',
+          amount: 50,
+          source: 'referral_bonus',
+          description: `Applied referral code of ${referrer.name || 'Friend'} - Welcomed with Siri Cash!`,
+          status: 'active',
+        }],
+        { session }
+      );
+
+      await session.commitTransaction();
+      return { referredBy: referrer.name };
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
     }
   }
 
@@ -79,10 +137,16 @@ export class LoyaltyService {
    * Process and apply purchase rewards (Cashback, Siri Coins, Tier upgrades) upon checkout completion
    */
   static async processPurchaseRewards(userId: string, orderId: string, totalSpend: number) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-      const user = await User.findById(userId);
-      const order = await Order.findById(orderId);
-      if (!user || !order) return;
+      const user = await User.findById(userId).session(session);
+      const order = await Order.findById(orderId).session(session);
+      if (!user || !order) {
+        await session.abortTransaction();
+        session.endSession();
+        return;
+      }
 
       // 1. Calculate Siri Coins points earned (1 Coin per ₹10 spent on the order subtotal)
       const coinsEarned = Math.round(order.subtotal / 10);
@@ -101,16 +165,16 @@ export class LoyaltyService {
           siriCoins: coinsEarned,
           walletBalance: cashbackEarned
         }
-      });
+      }, { session });
 
       // 3. Update Order Document for dynamic receipt rendering
       order.coinsEarned = coinsEarned;
       order.cashbackEarned = cashbackEarned;
-      await order.save();
+      await order.save({ session });
 
       // Log Cashback Credit in transaction audit ledger
       if (cashbackEarned > 0) {
-        await WalletTransaction.create({
+        await WalletTransaction.create([{
           userId,
           type: 'credit',
           amount: cashbackEarned,
@@ -118,8 +182,10 @@ export class LoyaltyService {
           description: `Earned ${Math.round(cashbackRate * 100)}% Siri Cashback on order #${order.invoiceNumber || orderId}`,
           orderId: order._id,
           status: 'active'
-        });
+        }], { session });
       }
+
+      await session.commitTransaction();
 
       // 4. Check for Referral Rewards on Referee's First Purchase
       const ordersCount = await Order.countDocuments({ user: userId, orderStatus: { $ne: 'Cancelled' } });
@@ -130,7 +196,10 @@ export class LoyaltyService {
       // 5. Evaluate Membership Tier Upgrades based on Lifetime Valid Purchases
       await this.evaluateTierUpgrades(userId);
     } catch (err) {
+      await session.abortTransaction();
       logger.error(`Failed to process purchase rewards for order ${orderId}:`, err);
+    } finally {
+      session.endSession();
     }
   }
 
@@ -138,44 +207,54 @@ export class LoyaltyService {
    * Applies referral bonus to both referrer and referee on referee's first purchase completion
    */
   static async applyReferralBonus(referrerId: string, refereeId: string) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-      const referrer = await User.findById(referrerId);
-      const referee = await User.findById(refereeId);
-      if (!referrer || !referee) return;
+      const referrer = await User.findById(referrerId).session(session);
+      const referee = await User.findById(refereeId).session(session);
+      if (!referrer || !referee) {
+        await session.abortTransaction();
+        session.endSession();
+        return;
+      }
 
       // Credit ₹150 to Referrer atomically
       const referrerBonus = 150;
       await User.findByIdAndUpdate(referrerId, {
         $inc: { walletBalance: referrerBonus, referralsCount: 1 }
-      });
+      }, { session });
 
-      await WalletTransaction.create({
+      await WalletTransaction.create([{
         userId: referrerId,
         type: 'credit',
         amount: referrerBonus,
         source: 'referral_bonus',
         description: `Referral Bonus: You referred ${referee.name || 'a friend'}!`,
         status: 'active'
-      });
+      }], { session });
 
       // Credit ₹50 Extra to Referee as welcome wallet cash atomically
       const refereeBonus = 50;
       await User.findByIdAndUpdate(refereeId, {
         $inc: { walletBalance: refereeBonus }
-      });
+      }, { session });
 
-      await WalletTransaction.create({
+      await WalletTransaction.create([{
         userId: refereeId,
         type: 'credit',
         amount: refereeBonus,
         source: 'referral_bonus',
         description: 'Referral Bonus: Welcome cash for joining via referral link!',
         status: 'active'
-      });
+      }], { session });
 
+      await session.commitTransaction();
       logger.info(`Referral bonus successfully applied between referrer: ${referrerId} and referee: ${refereeId}`);
     } catch (err) {
+      await session.abortTransaction();
       logger.error('Failed to execute referral rewards:', err);
+    } finally {
+      session.endSession();
     }
   }
 
@@ -214,9 +293,15 @@ export class LoyaltyService {
    * Process rating and review submission credits instantly
    */
   static async processReviewRewards(userId: string, rating: number, hasPhoto: boolean, hasVideo: boolean, reviewId: string) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-      const user = await User.findById(userId);
-      if (!user) return;
+      const user = await User.findById(userId).session(session);
+      if (!user) {
+        await session.abortTransaction();
+        session.endSession();
+        return;
+      }
 
       // Determine review credits reward (Text: ₹10, Photo: ₹25, Video: ₹50)
       let rewardAmount = 10;
@@ -235,20 +320,24 @@ export class LoyaltyService {
           walletBalance: rewardAmount,
           siriCoins: 15
         }
-      });
+      }, { session });
 
-      await WalletTransaction.create({
+      await WalletTransaction.create([{
         userId,
         type: 'credit',
         amount: rewardAmount,
         source: 'review_reward',
         description: `Review Bonus: Earned ₹${rewardAmount} siri cash for submitting ${description}`,
         status: 'active'
-      });
+      }], { session });
 
+      await session.commitTransaction();
       logger.info(`Instantly rewarded user ${userId} with ₹${rewardAmount} review cash.`);
     } catch (err) {
+      await session.abortTransaction();
       logger.error('Failed to reward review writing:', err);
+    } finally {
+      session.endSession();
     }
   }
 
@@ -256,12 +345,22 @@ export class LoyaltyService {
    * Reverse cashback and siri coins, and return used wallet amounts if order is cancelled or refunded
    */
   static async reversePurchaseRewards(orderId: string) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-      const order = await Order.findById(orderId);
-      if (!order) return;
+      const order = await Order.findById(orderId).session(session);
+      if (!order) {
+        await session.abortTransaction();
+        session.endSession();
+        return;
+      }
 
-      const user = await User.findById(order.user);
-      if (!user) return;
+      const user = await User.findById(order.user).session(session);
+      if (!user) {
+        await session.abortTransaction();
+        session.endSession();
+        return;
+      }
 
       const incFields: any = {};
 
@@ -269,7 +368,7 @@ export class LoyaltyService {
       if (order.walletDeduction && order.walletDeduction > 0) {
         incFields.walletBalance = (incFields.walletBalance || 0) + order.walletDeduction;
         
-        await WalletTransaction.create({
+        await WalletTransaction.create([{
           userId: user._id,
           type: 'credit',
           amount: order.walletDeduction,
@@ -277,14 +376,14 @@ export class LoyaltyService {
           description: `Restored spent wallet credits from cancelled order #${order.invoiceNumber || orderId}`,
           orderId: order._id,
           status: 'active'
-        });
+        }], { session });
       }
 
       // 2. Revoke/Reverse any cashback earned on this order
       if (order.cashbackEarned && order.cashbackEarned > 0) {
         incFields.walletBalance = (incFields.walletBalance || 0) - order.cashbackEarned;
         
-        await WalletTransaction.create({
+        await WalletTransaction.create([{
           userId: user._id,
           type: 'debit',
           amount: order.cashbackEarned,
@@ -292,7 +391,7 @@ export class LoyaltyService {
           description: `Revoked earned cashback from cancelled/refunded order #${order.invoiceNumber || orderId}`,
           orderId: order._id,
           status: 'active'
-        });
+        }], { session });
       }
 
       // 3. Revoke earned Siri Coins
@@ -313,11 +412,15 @@ export class LoyaltyService {
             $max: [0, { $add: [{ $ifNull: ["$siriCoins", 0] }, incFields.siriCoins] }]
           };
         }
-        await User.findByIdAndUpdate(user._id, [ { $set: setFields } ]);
+        await User.findByIdAndUpdate(user._id, [ { $set: setFields } ], { session });
       }
+      await session.commitTransaction();
       logger.info(`Successfully reversed purchase rewards and restored credits for order ${orderId}`);
     } catch (err) {
+      await session.abortTransaction();
       logger.error(`Failed to reverse rewards for order ${orderId}:`, err);
+    } finally {
+      session.endSession();
     }
   }
 }

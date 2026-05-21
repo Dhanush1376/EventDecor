@@ -7,6 +7,9 @@ const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
 if (!cloudName || !apiKey || !apiSecret) {
   logger.error("[CLOUDINARY CONFIG ERROR] Cloudinary credentials are missing or undefined! Uploads will fail.");
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
 } else {
   logger.info(`[CLOUDINARY INITIALIZATION] Cloudinary SDK configured successfully. Cloud: ${cloudName}, API Key: ${apiKey.substring(0, 4)}****`);
 }

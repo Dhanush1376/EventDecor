@@ -5,13 +5,14 @@ import Order, { IOrder } from '../models/Order';
 import Product from '../models/Product';
 import User from '../models/User';
 import Coupon from '../models/Coupon';
-import Counter from '../models/Counter';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { formatPaginationResponse } from '../utils/pagination';
 import { sendDirectEmail } from './notificationService';
 import AnalyticsService from './analyticsService';
 import { cmsCache } from '../utils/MemoryCache';
+import { getAdminEmails } from '../config/adminConfig';
+import { generateInvoicePDF } from '../utils/pdfGenerator';
 
 class OrderService {
   static async validateTotals(userId: string, data: any) {
@@ -351,13 +352,9 @@ class OrderService {
         });
       }
 
-      // Auto-generate enterprise logistics fields using atomic sequence counter
-      const counter = await Counter.findOneAndUpdate(
-        { id: 'invoice' },
-        { $inc: { seq: 1 } },
-        { new: true, upsert: true }
-      );
-      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(counter!.seq).padStart(5, '0')}`;
+      // Auto-generate enterprise logistics fields using cryptographically random ID
+      const randomSeq = crypto.randomBytes(3).toString('hex').toUpperCase();
+      const invoiceNumber = `INV-${new Date().getFullYear()}-${randomSeq}`;
       const trackingNumber = `TRK${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
       const publicTrackingToken = crypto.randomBytes(24).toString('hex');
       const courierPartner = 'Delhivery';
@@ -1005,6 +1002,18 @@ class OrderService {
 
     await order.save();
 
+    try {
+      const { emitUserEvent } = require('../socket');
+      emitUserEvent(order.user.toString(), 'order_status_updated', {
+        orderId: order._id,
+        orderStatus: order.orderStatus,
+        paymentStatus: order.paymentStatus,
+        note: note || null,
+      });
+    } catch (socketErr) {
+      logger.debug('Could not emit user order status socket event:', socketErr);
+    }
+
     // Trigger Admin Real-time Notification
     try {
       const { createAdminNotification } = require('../controllers/adminNotificationController');
@@ -1057,6 +1066,187 @@ class OrderService {
     }
 
     return order;
+  }
+
+  static verifyWebhookSignature(signature: string, rawBody: Buffer, webhookSecret: string): boolean {
+    const shasum = crypto.createHmac('sha256', webhookSecret);
+    shasum.update(rawBody);
+    const digest = shasum.digest('hex');
+    const sigBuffer = Buffer.from(signature, 'utf8');
+    const digestBuffer = Buffer.from(digest, 'utf8');
+    return sigBuffer.length === digestBuffer.length && crypto.timingSafeEqual(sigBuffer, digestBuffer);
+  }
+
+  /**
+   * Process a verified Razorpay webhook payload (payment capture / failure).
+   */
+  static async processRazorpayWebhook(event: string, body: any, signature: string) {
+    logger.info(`[PAYMENT WEBHOOK] Received verified Razorpay event: ${event}`);
+
+    if (event === 'order.paid' || event === 'payment.captured') {
+      const paymentEntity = body.payload?.payment?.entity;
+      const razorpay_order_id = paymentEntity?.order_id;
+      const razorpay_payment_id = paymentEntity?.id;
+
+      if (!razorpay_order_id || !razorpay_payment_id) {
+        logger.warn('[PAYMENT WEBHOOK] Webhook skipped: Missing order/payment details.');
+        return { status: 200, message: 'Skipped: missing entity details' };
+      }
+
+      let order: any = await Order.findOneAndUpdate(
+        { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
+        { $set: { paymentStatus: 'processing' } },
+        { new: true }
+      );
+
+      if (!order) {
+        const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+        if (existingOrder?.paymentStatus === 'paid') {
+          logger.info(`[PAYMENT WEBHOOK REDUNDANCY] Already paid for order: ${existingOrder._id}`);
+          return { status: 200, message: 'Webhook redundancy check: already paid' };
+        }
+        return { status: 200, message: 'Skipped: Order not found or closed' };
+      }
+
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        order.paymentStatus = 'paid';
+        order.orderStatus = 'Confirmed';
+        order.razorpayPaymentId = razorpay_payment_id;
+        order.razorpaySignature = signature;
+        order.statusHistory.push({
+          status: 'Confirmed' as any,
+          timestamp: new Date(),
+          note: `Payment captured successfully via Razorpay Webhook [Event: ${event}]`,
+        });
+
+        await order.save({ session });
+        await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
+
+        if (order.couponCode) {
+          await Coupon.findOneAndUpdate(
+            { code: order.couponCode.toUpperCase() },
+            { $inc: { usedCount: 1 } },
+            { session }
+          );
+        }
+
+        await session.commitTransaction();
+      } catch (dbErr) {
+        await session.abortTransaction();
+        throw dbErr;
+      } finally {
+        session.endSession();
+      }
+
+      AnalyticsService.clearCache();
+
+      try {
+        const user = await User.findById(order.user);
+        if (user) {
+          const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+          const invoiceBuffer = await generateInvoicePDF({
+            orderId: order._id.toString().slice(-8).toUpperCase(),
+            date: order.createdAt,
+            customerName: user.name,
+            shippingAddress: order.shippingAddress?.addressString || '',
+            items: order.items.map((i: any) => ({ name: i.title || 'Decor Item', quantity: i.quantity, price: i.price })),
+            subtotal: order.subtotal,
+            shipping: order.shippingFee,
+            total: order.total,
+          });
+
+          await sendDirectEmail({
+            email: user.email,
+            subject: `Order Successfully Placed! ✦ Siri Arts & Crafts [${order._id}]`,
+            templateName: 'Order Confirmation',
+            templateData: {
+              name: user.name,
+              orderId: order._id.toString().slice(-8).toUpperCase(),
+              totalAmount: order.total.toLocaleString('en-IN'),
+              paymentStatus: order.paymentStatus.toUpperCase(),
+              shippingAddress: order.shippingAddress,
+              frontend_url: frontendUrl,
+            },
+            attachments: [{
+              filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
+              content: invoiceBuffer,
+              contentType: 'application/pdf',
+            }],
+            type: 'order',
+            action: 'order_placed',
+            userId: user._id.toString(),
+          });
+
+          const adminEmails = getAdminEmails();
+          for (const adminEmail of adminEmails) {
+            await sendDirectEmail({
+              email: adminEmail,
+              subject: `New Order Received! ✦ [${order._id}]`,
+              templateName: 'Admin System Alert',
+              templateData: {
+                title: 'New Order Placed',
+                message: `Order #${order._id.toString().slice(-8).toUpperCase()} for ₹${order.total.toLocaleString('en-IN')} has been placed by ${user.name}.`,
+                actionUrl: `${frontendUrl}/admin/orders/${order._id}`,
+              },
+              attachments: [{
+                filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
+                content: invoiceBuffer,
+                contentType: 'application/pdf',
+              }],
+              type: 'system',
+              action: 'admin_order_notification',
+            });
+          }
+        }
+      } catch (emailErr) {
+        logger.error('[PAYMENT WEBHOOK EMAIL] Failed to dispatch webhook email:', emailErr);
+      }
+
+      logger.info(`[PAYMENT WEBHOOK SUCCESS] Webhook completed cleanly for order: ${order._id}`);
+      return { status: 200, message: 'Payment successfully captured via Webhook' };
+    }
+
+    if (event === 'payment.failed') {
+      const paymentEntity = body.payload?.payment?.entity;
+      const razorpay_order_id = paymentEntity?.order_id;
+      const errorDescription = paymentEntity?.error_description || 'Unknown transaction error';
+
+      if (razorpay_order_id) {
+        const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+        if (order && order.paymentStatus === 'pending') {
+          const session = await mongoose.startSession();
+          session.startTransaction();
+          try {
+            for (const item of order.items) {
+              await Product.findByIdAndUpdate(
+                item.productId,
+                { $inc: { stock: item.quantity } },
+                { session }
+              );
+            }
+
+            order.paymentStatus = 'failed';
+            order.statusHistory.push({
+              status: 'Pending' as any,
+              timestamp: new Date(),
+              note: `Razorpay Transaction Failed: ${errorDescription}. Reserved stock returned.`,
+            });
+            await order.save({ session });
+            await session.commitTransaction();
+            logger.warn(`[PAYMENT WEBHOOK FAILURE] Registered payment failure for order: ${order._id}`);
+          } catch (err) {
+            await session.abortTransaction();
+            throw err;
+          } finally {
+            session.endSession();
+          }
+        }
+      }
+    }
+
+    return { status: 200, message: 'Webhook event received but no action required' };
   }
 }
 

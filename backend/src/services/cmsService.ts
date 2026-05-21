@@ -2,6 +2,7 @@ import WebsiteContent from '../models/WebsiteContent';
 import ApiError from '../utils/ApiError';
 import { cmsCache } from '../utils/MemoryCache';
 import logger from '../config/logger';
+import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 import { deleteFromCloudinary, extractPublicId, extractAllCloudinaryUrls } from '../utils/cloudinary';
 
 class CMSService {
@@ -54,7 +55,8 @@ class CMSService {
     logger.info(`[CMS CACHE] Invalidation triggered. Purging cached keys due to update on: ${key}`);
     cmsCache.delete(`cms:content:${key}`);
     cmsCache.delete('cms:all_sections');
-    
+    await bumpPublicCacheVersion();
+
     return websiteContent;
   }
 

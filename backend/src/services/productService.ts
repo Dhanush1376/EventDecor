@@ -2,6 +2,7 @@ import Product, { IProduct } from '../models/Product';
 import Gallery from '../models/Gallery';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import logger from '../config/logger';
+import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 import { categoryCache } from '../utils/MemoryCache';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 
@@ -62,6 +63,7 @@ class ProductService {
     }
     logger.info('[CATEGORY CACHE] Purging distinct categories cache due to new product creation');
     categoryCache.delete('product:distinct_categories');
+    await bumpPublicCacheVersion();
     return saved;
   }
 
@@ -101,6 +103,7 @@ class ProductService {
     }
     logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product update');
     categoryCache.delete('product:distinct_categories');
+    await bumpPublicCacheVersion();
     return product;
   }
 
@@ -152,6 +155,7 @@ class ProductService {
 
     logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product deletion');
     categoryCache.delete('product:distinct_categories');
+    await bumpPublicCacheVersion();
     return product;
   }
 

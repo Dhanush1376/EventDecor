@@ -1,6 +1,7 @@
 import ContentSection, { IContentSection } from '../models/ContentSection';
 import ApiError from '../utils/ApiError';
 import { cmsCache } from '../utils/MemoryCache';
+import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 
 class ContentService {
   static async getPublishedContent() {
@@ -82,7 +83,8 @@ class ContentService {
     cmsCache.delete(`cms:content:${key}`);
     cmsCache.delete('cms:all_sections');
     cmsCache.delete(key); // Just in case cache key is set without prefix (like 'studio_settings')
-    
+    await bumpPublicCacheVersion();
+
     return section;
   }
 
@@ -92,9 +94,9 @@ class ContentService {
       { $set: { status: 'published' } }
     );
     
-    // Invalidate all MemoryCache entries on publish all
     cmsCache.clear();
-    
+    await bumpPublicCacheVersion();
+
     return result;
   }
 }

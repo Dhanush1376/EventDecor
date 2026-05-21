@@ -1,6 +1,7 @@
 import handlebars from 'handlebars';
 import fs from 'fs';
 import path from 'path';
+import logger from '../config/logger';
 
 // Helper to register partials and helpers if needed
 handlebars.registerHelper('formatCurrency', function(value) {
@@ -26,7 +27,7 @@ export const compileTemplate = (templateName: string, data: Record<string, any>)
     const template = handlebars.compile(source);
     return template(data);
   } catch (error) {
-    console.error(`Error compiling template ${templateName}:`, error);
+    logger.error(`Error compiling template ${templateName}:`, error);
     return '';
   }
 };

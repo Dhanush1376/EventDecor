@@ -1,21 +1,23 @@
 import { EmailOptions } from './notificationService';
+import { FailedEmailRetryService } from './failedEmailRetryService';
 import logger from '../config/logger';
 
 class EmailQueueManager {
   /**
-   * Directly processes the email in the background to return immediately.
+   * Processes email in the background; failed sends are persisted for cron retry.
    */
   public enqueue(options: EmailOptions) {
-    // Run direct email dispatch in the background (non-blocking)
     const { sendDirectEmailProcessor } = require('./notificationService');
     sendDirectEmailProcessor(options).catch((err: any) => {
-      logger.error(`[EmailQueue] Direct background email dispatch failed: ${err.message}`);
+      const message = err?.message || 'Unknown email error';
+      logger.error(`[EmailQueue] Dispatch failed for ${options.email} (${options.action}): ${message}`);
+      FailedEmailRetryService.schedule(options, message).catch((scheduleErr: any) => {
+        logger.error('[EmailQueue] Failed to persist email to dead-letter queue:', scheduleErr);
+      });
     });
-    logger.debug(`[EmailQueue] Enqueued email to ${options.email} (Type: ${options.type}) for direct background processing`);
+    logger.debug(`[EmailQueue] Enqueued email to ${options.email} (Type: ${options.type}, Action: ${options.action})`);
   }
 }
 
-// Export singleton instance
 export const legacyEmailQueueWrapper = new EmailQueueManager();
-// To prevent breaking changes, we export it with the old name
 export { legacyEmailQueueWrapper as emailQueue };

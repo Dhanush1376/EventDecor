@@ -25,8 +25,10 @@ const logFormat = winston.format.combine(
   winston.format.json()
 );
 
+const productionLogLevel = process.env.LOG_LEVEL || 'warn';
+
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
+  level: process.env.NODE_ENV === 'development' ? 'debug' : productionLogLevel,
   format: logFormat,
   defaultMeta: { service: 'siri-arts-crafts-backend' },
   transports: [
@@ -53,7 +55,7 @@ const logger = winston.createLogger({
   ],
 });
 
-// Always stream logs to the console for container aggregation
+// Production: stdout JSON for Render/log drains (file transports are best-effort on ephemeral disks)
 logger.add(new winston.transports.Console({
   format: process.env.NODE_ENV === 'production'
     ? winston.format.combine(
