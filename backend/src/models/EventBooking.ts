@@ -217,6 +217,7 @@ EventBookingSchema.index({ status: 1 });
 // High-Performance Production Compound Indexes for User and Admin Paginated Pipelines
 EventBookingSchema.index({ user: 1, createdAt: -1 });
 EventBookingSchema.index({ status: 1, createdAt: -1 });
+EventBookingSchema.index({ user: 1, status: 1 });
 
 const EventBooking = mongoose.model<IEventBooking>('EventBooking', EventBookingSchema);
 export default EventBooking;

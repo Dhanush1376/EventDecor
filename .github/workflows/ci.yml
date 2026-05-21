@@ -1,0 +1,41 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        cache-dependency-path: '**/package.json'
+        
+    - name: Install Backend Dependencies
+      run: |
+        cd backend
+        npm ci
+        
+    - name: Build Backend
+      run: |
+        cd backend
+        npm run build
+
+    - name: Install Frontend Dependencies
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm run build

@@ -10,14 +10,6 @@ import logger from '../config/logger';
 
 const refreshCookieName = 'siri_refresh_token';
 
-const getCookie = (req: Request, name: string) => {
-  const cookieHeader = req.headers.cookie;
-  if (!cookieHeader) return '';
-  const cookies = cookieHeader.split(';').map((cookie) => cookie.trim());
-  const target = cookies.find((cookie) => cookie.startsWith(`${name}=`));
-  return target ? decodeURIComponent(target.slice(name.length + 1)) : '';
-};
-
 const setRefreshCookie = (res: Response, refreshToken: string) => {
   const maxAge = AuthService.getRefreshTokenTtlMs();
   const isProd = process.env.NODE_ENV === 'production';
@@ -82,27 +74,23 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   setRefreshCookie(res, result.refreshToken);
   res.status(200).json(new ApiResponse(true, 'Authenticated successfully', {
     user: result.user,
-    token: result.accessToken,
     accessToken: result.accessToken,
-    refreshToken: result.refreshToken,
   }));
 });
  
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = String(req.body?.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
+  const refreshToken = String(req.body?.refreshToken || req.cookies?.[refreshCookieName] || req.headers['x-refresh-token'] || '').trim();
   const userAgent = req.headers['user-agent'] || '';
   const result = await AuthService.refreshSession(refreshToken, userAgent);
   setRefreshCookie(res, result.refreshToken);
   res.status(200).json(new ApiResponse(true, 'Session refreshed', {
     user: result.user,
-    token: result.accessToken,
     accessToken: result.accessToken,
-    refreshToken: result.refreshToken,
   }));
 });
  
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = String(req.body?.refreshToken || getCookie(req, refreshCookieName) || req.headers['x-refresh-token'] || '').trim();
+  const refreshToken = String(req.body?.refreshToken || req.cookies?.[refreshCookieName] || req.headers['x-refresh-token'] || '').trim();
   
   logger.info('[AUTH] Revoking user session on manual logout request');
   if (refreshToken) {

@@ -9,13 +9,14 @@ import {
   getGalleryCategories,
 } from '../controllers/galleryController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
+import { cacheResponse } from '../middleware/cacheMiddleware';
 
 const router = Router();
 
 // Public Routes
-router.get('/', getGalleryItems);
-router.get('/categories', getGalleryCategories);
-router.get('/:id', getGalleryById);
+router.get('/', cacheResponse(60), getGalleryItems);
+router.get('/categories', cacheResponse(60), getGalleryCategories);
+router.get('/:id', cacheResponse(60), getGalleryById);
 
 // Authenticated User Routes
 router.post('/:id/like', requireAuth, likeGalleryItem);

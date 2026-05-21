@@ -26,19 +26,14 @@ const api = axios.create({
   },
 });
 
-import { safeLocalStorage } from '../utils/storage';
-
-let accessToken = safeLocalStorage.getItem('siri_access_token');
+let accessToken = null;
 let refreshPromise = null;
 
 export const setAccessToken = (token) => {
   accessToken = token || null;
-  if (token) {
-    safeLocalStorage.setItem('siri_access_token', token);
-  } else {
-    safeLocalStorage.removeItem('siri_access_token');
-  }
 };
+
+export const getAccessToken = () => accessToken;
 
 // Helper to identify queueable mutating requests
 const isQueueable = (url, method) => {
@@ -164,22 +159,16 @@ api.interceptors.response.use(
 
       try {
         if (!refreshPromise) {
-          const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
           logger.dev('[API] Initiating refresh token request...');
-          refreshPromise = api.post('/auth/refresh', { refreshToken: storedRefreshToken }).finally(() => {
+          refreshPromise = api.post('/auth/refresh').finally(() => {
             refreshPromise = null;
           });
         }
         const refreshResponse = await refreshPromise;
         const token = refreshResponse.data?.data?.accessToken || refreshResponse.data?.data?.token;
-        const nextRefreshToken = refreshResponse.data?.data?.refreshToken;
 
         if (token) {
           setAccessToken(token);
-          safeLocalStorage.setItem('siri_access_token', token); // Sync access token across tabs!
-        }
-        if (nextRefreshToken) {
-          safeLocalStorage.setItem('siri_refresh_token', nextRefreshToken);
         }
 
         logger.dev('[API] Token refresh successful. Retrying original request.');
@@ -189,8 +178,6 @@ api.interceptors.response.use(
         // Only trigger logout if it's a true 4xx/5xx rejection from the server
         if (refreshErr.response) {
           logger.error('[API] Token refresh rejected by server. Triggering logout.');
-          safeLocalStorage.removeItem('siri_access_token');
-          safeLocalStorage.removeItem('siri_refresh_token');
           setAccessToken(null);
           window.dispatchEvent(new Event('auth-unauthorized'));
         } else {
@@ -200,8 +187,6 @@ api.interceptors.response.use(
       }
     } else if (error.response?.status === 401 && isAuthRefresh) {
       logger.error('[API] Refresh endpoint returned 401. Session expired.');
-      safeLocalStorage.removeItem('siri_access_token');
-      safeLocalStorage.removeItem('siri_refresh_token');
       setAccessToken(null);
       window.dispatchEvent(new Event('auth-unauthorized'));
     }

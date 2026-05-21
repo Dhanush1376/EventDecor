@@ -9,7 +9,11 @@ import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import { handleRazorpayWebhook } from './controllers/orderController';
+import cookieParser from 'cookie-parser';
+import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
+import redisClient from './utils/redis';
 import errorMiddleware from './middleware/errorMiddleware';
 import productRoutes from './routes/productRoutes';
 import uploadRoutes from './routes/uploadRoutes';
@@ -62,12 +66,18 @@ if (process.env.SENTRY_DSN) {
 }
 
 // 1. Security Middlewares
+// Generate a nonce for CSP
+app.use((req, res, next) => {
+  res.locals.nonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com", "https://www.googletagmanager.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", (req, res) => `'nonce-${(res as any).locals.nonce}'`, "https://checkout.razorpay.com", "https://www.googletagmanager.com"],
+      styleSrc: ["'self'", (req, res) => `'nonce-${(res as any).locals.nonce}'`, "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://www.gravatar.com", "https://*.cloudinary.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       connectSrc: ["'self'", "https://api.razorpay.com", "https://lux.razorpay.com", ...(process.env.SENTRY_DSN ? ["https://*.sentry.io"] : [])],
@@ -147,6 +157,7 @@ app.post('/api/orders/webhook', express.raw({ type: 'application/json' }), (req:
 // 3. Request Parsing (MUST be before sanitization)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 // Enable production-safe structured request logging and execution telemetry
 app.use(requestLogger);
@@ -210,7 +221,20 @@ app.get('/sitemap.xml', async (req: Request, res: Response) => {
 });
 
 // Rate Limiting
-const globalLimiter = rateLimit({
+const rateLimitConfig = (options: any) => {
+  if (redisClient) {
+    return rateLimit({
+      ...options,
+      store: new RedisStore({
+        // @ts-ignore - rate-limit-redis typescript issue with ioredis
+        sendCommand: (...args: string[]) => redisClient!.call(...args),
+      }),
+    });
+  }
+  return rateLimit(options);
+};
+
+const globalLimiter = rateLimitConfig({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200, // Limit each IP to 200 requests per windowMs
   message: 'Too many requests from this IP, please try again after 15 minutes',
@@ -218,7 +242,7 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const authLimiter = rateLimit({
+const authLimiter = rateLimitConfig({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // Strict limit for auth routes (login/register/otp)
   message: 'Too many login attempts, please try again after 15 minutes',
@@ -226,7 +250,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const otpSendLimiter = rateLimit({
+const otpSendLimiter = rateLimitConfig({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 5, // Limit each IP to 5 OTP requests per 10 minutes
   message: 'Too many OTP requests from this IP. Please try again after 10 minutes.',
@@ -240,7 +264,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use('/api/auth', authLimiter);
 } else {
   // Relaxed rate limiter for non-production to catch integration bugs early
-  const devLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000, standardHeaders: true, legacyHeaders: false });
+  const devLimiter = rateLimitConfig({ windowMs: 15 * 60 * 1000, max: 1000, standardHeaders: true, legacyHeaders: false });
   app.use('/api/', devLimiter);
 }
 

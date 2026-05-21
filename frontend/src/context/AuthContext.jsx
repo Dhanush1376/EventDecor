@@ -21,12 +21,9 @@ export function AuthProvider({ children }) {
   const checkAuthInProgress = useRef(false);
 
   const logout = useCallback(async (silent = false) => {
-    const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
     setAccessToken(null);
-    safeLocalStorage.removeItem('siri_access_token');
-    safeLocalStorage.removeItem('siri_refresh_token');
     if (!silent) {
-      authService.logout(storedRefreshToken).catch(() => {});
+      authService.logout().catch(() => {});
     }
     setUser(null);
     setIsAuthenticated(false);
@@ -43,59 +40,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   const checkAuth = useCallback(async () => {
-    // Prevent concurrent checkAuth calls (e.g. from storage events)
     if (checkAuthInProgress.current) return;
     checkAuthInProgress.current = true;
 
-    const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
-
-    if (!storedRefreshToken) {
-      setUser(null);
-      setIsAuthenticated(false);
-      setLoading(false);
-      checkAuthInProgress.current = false;
-      return;
-    }
-
-    // If we already have an access token in memory, try to use it directly
-    // (the 401 interceptor will handle refresh if it's expired)
-    const storedAccessToken = safeLocalStorage.getItem('siri_access_token');
-    if (storedAccessToken) {
-      setAccessToken(storedAccessToken);
-      try {
-        const response = await authService.getProfile();
-        if (response.success) {
-          setUser(response.data);
-          setIsAuthenticated(true);
-          setLoading(false);
-          checkAuthInProgress.current = false;
-          return;
-        }
-      } catch {
-        // Access token is invalid/expired — fall through to refresh flow
-      }
-    }
-
-    // No valid access token — try refreshing via the refresh token
     try {
-      const refreshed = await authService.refresh(storedRefreshToken);
-      const token = refreshed?.data?.accessToken || refreshed?.data?.token;
-      if (token) setAccessToken(token);
-
-      const newRefreshToken = refreshed?.data?.refreshToken;
-      if (newRefreshToken) {
-        safeLocalStorage.setItem('siri_refresh_token', newRefreshToken);
-      }
-
       const response = await authService.getProfile();
       if (response.success) {
         setUser(response.data);
         setIsAuthenticated(true);
-      } else {
-        logout(true);
       }
     } catch (err) {
-      logger.error('Auth check failed:', err);
+      // If profile fails, interceptor already tried to refresh the token and failed
+      // Or we simply don't have a valid session
       logout(true);
     } finally {
       setLoading(false);
@@ -109,10 +65,6 @@ export function AuthProvider({ children }) {
       if (response.success) {
         const token = response.data.accessToken || response.data.token;
         setAccessToken(token);
-        const refreshToken = response.data.refreshToken;
-        if (refreshToken) {
-          safeLocalStorage.setItem('siri_refresh_token', refreshToken);
-        }
         setUser(response.data.user);
         setIsAuthenticated(true);
         toast.success('Welcome back!');
@@ -130,10 +82,6 @@ export function AuthProvider({ children }) {
       if (response.success) {
         const token = response.data.accessToken || response.data.token;
         setAccessToken(token);
-        const refreshToken = response.data.refreshToken;
-        if (refreshToken) {
-          safeLocalStorage.setItem('siri_refresh_token', refreshToken);
-        }
         setUser(response.data.user);
         setIsAuthenticated(true);
         return true;
@@ -154,34 +102,9 @@ export function AuthProvider({ children }) {
 
     window.addEventListener('auth-unauthorized', handleUnauthorized);
 
-    // Cross-tab token synchronization:
-    // When another tab refreshes the token, update our in-memory token
-    const handleStorageChange = (e) => {
-      if (e.key === 'siri_access_token') {
-        if (e.newValue) {
-          // Another tab got a new access token — sync it
-          setAccessToken(e.newValue);
-        }
-      }
-      if (e.key === 'siri_refresh_token') {
-        if (!e.newValue && e.oldValue) {
-          // Another tab logged out — sync the logout
-          setUser(null);
-          setIsAuthenticated(false);
-          setAccessToken(null);
-        } else if (e.newValue && !e.oldValue) {
-          // Another tab logged in — sync the login
-          checkAuth();
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
     return () => {
       clearTimeout(timer);
       window.removeEventListener('auth-unauthorized', handleUnauthorized);
-      window.removeEventListener('storage', handleStorageChange);
     };
   }, [checkAuth, logout]);
 
@@ -213,10 +136,8 @@ export function AuthProvider({ children }) {
   };
 
   // Triggers after successful OTP verification to restore queued action and finalize login
-  const loginSuccess = async (userData, token, refreshToken) => {
+  const loginSuccess = async (userData, token) => {
     setAccessToken(token);
-    if (token) safeLocalStorage.setItem('siri_access_token', token);
-    if (refreshToken) safeLocalStorage.setItem('siri_refresh_token', refreshToken);
     setUser(userData);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);

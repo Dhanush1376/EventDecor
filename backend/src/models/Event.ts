@@ -55,6 +55,10 @@ EventSchema.index({ title: 'text', description: 'text' });
 EventSchema.index({ category: 1 });
 EventSchema.index({ style: 1 });
 
+// Compound Indexes for public queries
+EventSchema.index({ isActive: 1, category: 1 });
+EventSchema.index({ isActive: 1, style: 1 });
+
 // Sitemap Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
 EventSchema.post('save', () => { triggerSitemapUpdate(); });

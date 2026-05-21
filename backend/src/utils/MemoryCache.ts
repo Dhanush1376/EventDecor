@@ -91,3 +91,4 @@ export class MemoryCache {
 export const categoryCache = new MemoryCache({ defaultTtlMs: 15 * 60 * 1000 }); // 15 minutes
 export const cmsCache = new MemoryCache({ defaultTtlMs: 10 * 60 * 1000 }); // 10 minutes
 export const featuredProductCache = new MemoryCache({ defaultTtlMs: 3 * 60 * 1000 }); // 3 minutes
+export const safetyLockCache = new MemoryCache({ defaultTtlMs: 30 * 1000 }); // 30 seconds

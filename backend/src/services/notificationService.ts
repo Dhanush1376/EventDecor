@@ -174,12 +174,18 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     let info: any;
     const maxRetries = 3;
 
+    const headers: Record<string, string> = {};
+    if (type === 'marketing') {
+      headers['List-Unsubscribe'] = `<${unsubscribeLink}>`;
+    }
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         info = await smartSendEmail({
           to: email,
           subject: finalSubject,
           html: bodyHtml,
+          headers,
           attachments: attachments,
         });
         break;

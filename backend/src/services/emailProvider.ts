@@ -33,63 +33,9 @@ export interface EmailPayload {
     content: Buffer | string;
     contentType?: string;
   }[];
+  headers?: Record<string, string>;
 }
 
-/**
- * Send email via Resend
- */
-export const sendViaResend = async (payload: EmailPayload): Promise<{ messageId: string }> => {
-  const { Resend } = require('resend');
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
-  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
-
-  const { data, error } = await resend.emails.send({
-    from: `${senderName} <${senderEmail}>`,
-    to: payload.to,
-    subject: payload.subject,
-    html: payload.html,
-    attachments: payload.attachments?.map(a => ({
-      filename: a.filename,
-      content: a.content
-    }))
-  });
-
-  if (error) {
-    throw new Error(`Resend API error: ${error.message}`);
-  }
-
-  logger.info(`[RESEND SUCCESS] Email delivered to ${payload.to}. MessageId: ${data?.id}`);
-  return { messageId: data?.id || 'resend-sent' };
-};
-
-/**
- * Send email via SendGrid
- */
-export const sendViaSendGrid = async (payload: EmailPayload): Promise<{ messageId: string }> => {
-  const sgMail = require('@sendgrid/mail');
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
-  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
-
-  const msg = {
-    to: payload.to,
-    from: { email: senderEmail, name: senderName },
-    subject: payload.subject,
-    html: payload.html,
-    attachments: payload.attachments?.map(a => ({
-      filename: a.filename,
-      content: typeof a.content === 'string' ? Buffer.from(a.content).toString('base64') : a.content.toString('base64'),
-      type: a.contentType || 'application/pdf',
-      disposition: 'attachment',
-    }))
-  };
-
-  const [response] = await sgMail.send(msg);
-  const messageId = response.headers['x-message-id'] || 'sendgrid-sent';
-  logger.info(`[SENDGRID SUCCESS] Email delivered to ${payload.to}. MessageId: ${messageId}`);
-  return { messageId };
-};
 
 /**
  * Send email via Brevo HTTP API
@@ -106,6 +52,7 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
     to: [{ email: payload.to }],
     subject: payload.subject,
     htmlContent: payload.html,
+    headers: payload.headers,
     attachment: payload.attachments?.map(a => ({
       name: a.filename,
       content: typeof a.content === 'string' ? Buffer.from(a.content).toString('base64') : a.content.toString('base64')
@@ -152,6 +99,7 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
     to: payload.to,
     subject: payload.subject,
     html: payload.html,
+    headers: payload.headers,
     attachments: payload.attachments
   });
 
@@ -163,14 +111,6 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
  * Smart Email Sender: Tries Resend -> SendGrid -> Brevo -> SMTP fallback
  */
 export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: string }> => {
-  if (process.env.RESEND_API_KEY) {
-    try { return await sendViaResend(payload); } catch(err: any) { logger.warn(`Resend failed: ${err.message}`); }
-  }
-  
-  if (process.env.SENDGRID_API_KEY) {
-    try { return await sendViaSendGrid(payload); } catch(err: any) { logger.warn(`SendGrid failed: ${err.message}`); }
-  }
-  
   if (process.env.BREVO_API_KEY) {
     try { return await sendViaBrevo(payload); } catch (err: any) { logger.warn(`Brevo failed: ${err.message}`); }
   }

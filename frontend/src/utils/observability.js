@@ -16,6 +16,9 @@ export const initObservability = () => {
   if (logRocketId) {
     LogRocket.init(logRocketId, {
       shouldCaptureIP: false, // Privacy first
+      dom: {
+        inputSanitizer: true, // Scrub PII from form inputs
+      },
     });
   }
 

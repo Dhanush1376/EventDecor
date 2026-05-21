@@ -41,6 +41,11 @@ const validateEnv = () => {
     if (!process.env.RAZORPAY_KEY_ID) missingVars.push('RAZORPAY_KEY_ID');
     if (!process.env.RAZORPAY_KEY_SECRET) missingVars.push('RAZORPAY_KEY_SECRET');
 
+    if (process.env.BYPASS_OTP_CODE) {
+      logger.error('[CRITICAL STARTUP ERROR] BYPASS_OTP_CODE must not be set in production');
+      process.exit(1);
+    }
+
     // Sentry DSN check
     if (!process.env.SENTRY_DSN) {
       logger.warn('[ENV WARNING] SENTRY_DSN is not configured. Production error monitoring will be disabled. Set up at https://sentry.io');

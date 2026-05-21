@@ -22,7 +22,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { refreshWebsiteContent } from "../../hooks/useWebsiteContent";
 import { io as socketIO } from "socket.io-client";
-import { safeLocalStorage } from "../../utils/storage";
+import { getAccessToken } from "../../services/api";
 import logger from "../../utils/logger";
 
 const mapDbNotificationToFrontend = (n) => ({
@@ -772,7 +772,7 @@ export function AdminProvider({ children }) {
 
   // Real-time WebSocket alerts
   useEffect(() => {
-    const token = safeLocalStorage.getItem('siri_access_token');
+    const token = getAccessToken();
     if (!token) return;
 
     // Construct backend WS URL from API URL
@@ -787,14 +787,29 @@ export function AdminProvider({ children }) {
       reconnectionDelay: 5000,
     });
 
+    const seenNotificationIds = new Set();
+
     socket.on('connect', () => {
       logger.dev('[WEBSOCKET] Successfully established socket connection');
+      // Fired upon reconnect as well, trigger manual REST sync if needed
     });
 
     socket.on('new_notification', (data) => {
       logger.dev('[WEBSOCKET] Received real-time admin alert:', data);
       
       const mapped = mapDbNotificationToFrontend(data);
+
+      // Deduplication check
+      if (seenNotificationIds.has(mapped.id)) {
+        logger.dev('[WEBSOCKET] Duplicate notification suppressed:', mapped.id);
+        return;
+      }
+      seenNotificationIds.add(mapped.id);
+      // Keep set size manageable
+      if (seenNotificationIds.size > 100) {
+        const iter = seenNotificationIds.values();
+        seenNotificationIds.delete(iter.next().value);
+      }
       
       // Luxury real-time alert toast
       toast((t) => (

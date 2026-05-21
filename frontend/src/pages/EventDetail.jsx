@@ -19,7 +19,7 @@ export function EventDetail() {
   const { isAuthenticated, runProtectedAction } = useAuth();
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const { toggleItem, isWishlisted } = useWishlist();
-  
+
   const [event, setEvent] = useState(null);
   const [relatedEvents, setRelatedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +116,7 @@ export function EventDetail() {
 
         if (res && res.success) {
           setEvent(res.data);
-          
+
           // Pre-populate customizer defaults
           const sc = res.data;
           const defaultInclusions = [
@@ -125,7 +125,7 @@ export function EventDetail() {
             { name: "Fresh Marigold Garland Hangings", defaultQty: 4 }
           ];
           setCustomInclusions(
-            sc.inclusions?.map(inc => ({ ...inc, selected: true, qty: inc.defaultQty || 1 })) || 
+            sc.inclusions?.map(inc => ({ ...inc, selected: true, qty: inc.defaultQty || 1 })) ||
             defaultInclusions.map(inc => ({ ...inc, selected: true, qty: inc.defaultQty }))
           );
           setSelectedPaletteColor(sc.colorPalette?.[0] || "#8B0000");
@@ -149,20 +149,20 @@ export function EventDetail() {
   }, [id]);
 
   const toggleInclusion = (name) => {
-    setCustomInclusions(prev => prev.map(inc => 
+    setCustomInclusions(prev => prev.map(inc =>
       inc.name === name ? { ...inc, selected: !inc.selected } : inc
     ));
   };
 
   const updateInclusionQty = (name, delta) => {
-    setCustomInclusions(prev => prev.map(inc => 
+    setCustomInclusions(prev => prev.map(inc =>
       inc.name === name ? { ...inc, qty: Math.max(1, inc.qty + delta) } : inc
     ));
   };
 
   const calculateLivePrice = () => {
     if (!event) return 0;
-    
+
     let basePrice = 15000;
     if (event.rentalPrice) {
       basePrice = Number(event.rentalPrice);
@@ -292,7 +292,7 @@ export function EventDetail() {
       {/* 2. MAIN DETAILS PAGE SECTION */}
       <section className="pt-[72px] md:pt-4 pb-20 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
-          
+
           {/* Left Column: Event Gallery & Specs */}
           <div className="lg:col-span-7 space-y-8">
             <motion.div
@@ -327,14 +327,14 @@ export function EventDetail() {
                     favorite
                   </motion.span>
                 </button>
-                <ShareButton 
-                   url={window.location.href}
-                   title={`Siri Arts & Crafts: ${event.title}`}
-                   variant="custom"
-                   size="custom"
-                   className="flex items-center justify-center w-10 h-10 rounded-full bg-[#fbfbf8] shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white"
-                   iconOnly={true}
-                 />
+                <ShareButton
+                  url={window.location.href}
+                  title={`Siri Arts & Crafts: ${event.title}`}
+                  variant="custom"
+                  size="custom"
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-[#fbfbf8] shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white"
+                  iconOnly={true}
+                />
               </div>
 
               {/* Mobile Horizontal Scroll Gallery */}
@@ -483,7 +483,7 @@ export function EventDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Ceremony Date *</label>
-                  <input 
+                  <input
                     type="date"
                     value={bookingDate}
                     onChange={(e) => setBookingDate(e.target.value)}
@@ -625,7 +625,7 @@ export function EventDetail() {
                         className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
                       />
                     </div>
-                    
+
                     <div className="space-y-1">
                       <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Full Address *</label>
                       <input

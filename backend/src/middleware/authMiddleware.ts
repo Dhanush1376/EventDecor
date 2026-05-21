@@ -103,7 +103,11 @@ export const requireAdmin = asyncHandler(async (req: Request, res: Response, nex
       const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
       if (!isSafetyLockToggle) {
         const ContentSection = require('../models/ContentSection').default;
-        const safetyLockDoc = await ContentSection.findOne({ sectionKey: 'admin_safety_lock' });
+        const { safetyLockCache } = require('../utils/MemoryCache');
+        const safetyLockDoc = await safetyLockCache.getOrSet('admin_safety_lock', async () => {
+          return await ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean();
+        }, 30000);
+        
         if (safetyLockDoc && safetyLockDoc.data?.safetyLock === true) {
           throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
         }
@@ -134,7 +138,11 @@ export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response
       const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
       if (!isSafetyLockToggle) {
         const ContentSection = require('../models/ContentSection').default;
-        const safetyLockDoc = await ContentSection.findOne({ sectionKey: 'admin_safety_lock' });
+        const { safetyLockCache } = require('../utils/MemoryCache');
+        const safetyLockDoc = await safetyLockCache.getOrSet('admin_safety_lock', async () => {
+          return await ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean();
+        }, 30000);
+        
         if (safetyLockDoc && safetyLockDoc.data?.safetyLock === true) {
           throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
         }
@@ -168,7 +176,11 @@ export const requireRole = (allowedRoles: string[]) => {
         const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
         if (!isSafetyLockToggle) {
           const ContentSection = require('../models/ContentSection').default;
-          const safetyLockDoc = await ContentSection.findOne({ sectionKey: 'admin_safety_lock' });
+          const { safetyLockCache } = require('../utils/MemoryCache');
+          const safetyLockDoc = await safetyLockCache.getOrSet('admin_safety_lock', async () => {
+            return await ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean();
+          }, 30000);
+          
           if (safetyLockDoc && safetyLockDoc.data?.safetyLock === true) {
             throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
           }

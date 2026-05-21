@@ -11,12 +11,17 @@ const SUPER_ADMIN_EMAIL = 'sirisha.atmakuri@gmail.com';
  * Used by authMiddleware, authService, and authController for admin identification.
  */
 export const getAdminEmails = (): string[] => {
-  return [
-    HARDCODED_ADMIN_EMAIL,
-    SUPER_ADMIN_EMAIL,
+  const isProd = process.env.NODE_ENV === 'production';
+  const emails = [
     (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
-    'dhanush1376@gmail.com',
-  ].filter(Boolean);
+    'dhanush1376@gmail.com', // Keep owner email
+  ];
+  
+  if (!isProd) {
+    emails.push(HARDCODED_ADMIN_EMAIL, SUPER_ADMIN_EMAIL);
+  }
+  
+  return emails.filter(Boolean);
 };
 
 /**

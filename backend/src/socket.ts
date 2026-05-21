@@ -5,6 +5,8 @@ import logger from './config/logger';
 import User from './models/User';
 import { isOriginAllowed } from './app';
 import { ADMIN_ROLES } from './config/adminConfig';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { pubClient, subClient } from './utils/redis';
 
 let io: Server;
 
@@ -27,6 +29,7 @@ export const initSocket = (server: HttpServer) => {
     connectionStateRecovery: {
       maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
     },
+    adapter: (pubClient && subClient) ? createAdapter(pubClient, subClient) : undefined,
   });
 
   // Socket authentication middleware

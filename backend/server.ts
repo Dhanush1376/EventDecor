@@ -3,6 +3,7 @@ import app from './src/app';
 import connectDB from './src/config/db';
 import logger from './src/config/logger';
 import { generateSitemap } from './src/utils/sitemapGenerator';
+import { initSocket } from './src/socket';
 
 import mongoose from 'mongoose';
 
@@ -59,8 +60,13 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // 1. Connect to Database
     await connectDB();
+
+    // Prevent BYPASS_OTP_CODE in production
+    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_OTP_CODE) {
+      logger.error('CRITICAL: BYPASS_OTP_CODE must not be set in production');
+      process.exit(1);
+    }
 
     // 2. Initialize Background Jobs
     initJobs();
@@ -76,7 +82,6 @@ const startServer = async () => {
         `);
 
         // Initialize Socket.io
-        const { initSocket } = require('./src/socket');
         initSocket(server);
 
         // Auto-generate sitemap on boot in the background
