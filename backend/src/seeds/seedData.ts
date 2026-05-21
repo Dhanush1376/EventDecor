@@ -1,5 +1,11 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+
+if (process.env.NODE_ENV === 'production') {
+  console.error('❌ SEEDING SHIELD: Seeding operations are strictly disabled in production mode to prevent accidental data loss.');
+  process.exit(1);
+}
+
 import bcrypt from 'bcryptjs';
 import connectDB from '../config/db';
 import Product from '../models/Product';
@@ -8,10 +14,12 @@ import Gallery from '../models/Gallery';
 import ContentSection from '../models/ContentSection';
 import User from '../models/User';
 import Review from '../models/Review';
+import logger from '../config/logger';
 
 dotenv.config();
 
-// Premium High-Definition Luxury Event Curation Images
+// C-04: External Unsplash URLs below are for LOCAL DEV SEEDING ONLY.
+// Before any production seed, upload assets to your Cloudinary account and replace these URLs.
 const IMAGES = {
   luxuryRoyalWedding: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2074&auto=format&fit=crop",
   templeStyleMandap: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop",
@@ -264,10 +272,6 @@ const galleryInspirations = [
 ];
 
 const seed = async () => {
-  if (process.env.NODE_ENV === 'production') {
-    console.error('❌ SEEDING SHIELD: Seeding operations are strictly disabled in production mode to prevent accidental data loss.');
-    process.exit(1);
-  }
 
   if (process.env.SEED_CONFIRM !== 'true') {
     console.error('❌ SAFETY GATE: Set SEED_CONFIRM=true to confirm seeding operation. Run: SEED_CONFIRM=true npm run seed');
@@ -325,15 +329,15 @@ const seed = async () => {
         { upsert: true, new: true }
       );
     }
-    console.log('👤 Admin & Super Admin users seeded/updated with password: ' + defaultPassword);
+    logger.info(`Admin & Super Admin users seeded/updated with password: ${defaultPassword}`);
 
     // 2. Create Products
     const createdProducts = await Product.insertMany(allProducts);
-    console.log(`📦 ${createdProducts.length} Products created`);
+    logger.info(`${createdProducts.length} Products created`);
 
     // 3. Create Events
     const createdEvents = await Event.insertMany(masterEventsData);
-    console.log(`📅 ${createdEvents.length} Events created`);
+    logger.info(`${createdEvents.length} Events created`);
 
     // 4. Create Gallery Items
     const galleryItemsWithRefs = galleryInspirations.map((item, index) => {
@@ -345,7 +349,7 @@ const seed = async () => {
       };
     });
     const createdGallery = await Gallery.insertMany(galleryItemsWithRefs);
-    console.log(`🖼️ ${createdGallery.length} Gallery items created`);
+    logger.info(`${createdGallery.length} Gallery items created`);
 
     // 5. Update CMS Content with real IDs
     const finalContent: any = { ...initialWebsiteContent };
@@ -359,7 +363,7 @@ const seed = async () => {
     }));
 
     await ContentSection.insertMany(sectionEntries);
-    console.log('📝 CMS Content seeded with cross-references');
+    logger.info('CMS Content seeded with cross-references');
 
     // 6. Create Customer & Reviews
     const customerUser = await User.create({
@@ -443,12 +447,12 @@ const seed = async () => {
     ];
 
     await Review.insertMany(sampleReviews);
-    console.log('⭐ Sample reviews seeded successfully');
+    logger.info('Sample reviews seeded successfully');
 
-    console.log('✅ Seeding complete!');
+    logger.info('Seeding complete!');
     process.exit(0);
   } catch (error) {
-    console.error(`❌ Seeding failed: ${error}`);
+    logger.error(`Seeding failed: ${error}`);
     process.exit(1);
   }
 };

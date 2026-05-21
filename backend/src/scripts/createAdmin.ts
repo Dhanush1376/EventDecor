@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import connectDB from '../config/db';
 import User from '../models/User';
 import { isSameEmail } from '../utils/emailHelper';
+import logger from '../config/logger';
 
 dotenv.config();
 
@@ -17,25 +18,25 @@ const createAdmin = async () => {
     const existingUser = users.find(u => isSameEmail(u.email, email));
 
     if (existingUser) {
-      console.log(`User ${existingUser.email} matches configured admin email. Updating role to admin...`);
+      logger.info(`User ${existingUser.email} matches configured admin email. Updating role to admin...`);
       existingUser.role = 'admin';
       await existingUser.save();
-      console.log('✅ User updated to admin successfully!');
+      logger.info('✅ User updated to admin successfully!');
     } else {
-      console.log(`Creating new admin user: ${email}...`);
+      logger.info(`Creating new admin user: ${email}...`);
       await User.create({
         name: 'Admin User',
         email: email,
         role: 'admin',
         isVerified: true,
       });
-      console.log('✅ Admin user created successfully!');
-      console.log(`📧 Email: ${email}`);
+      logger.info('✅ Admin user created successfully!');
+      logger.info(`📧 Email: ${email}`);
     }
 
     process.exit(0);
   } catch (error) {
-    console.error(`❌ Operation failed: ${error}`);
+    logger.error(`❌ Operation failed: ${error}`);
     process.exit(1);
   }
 };
