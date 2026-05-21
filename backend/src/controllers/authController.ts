@@ -13,6 +13,7 @@ const refreshCookieName = 'siri_refresh_token';
 const setRefreshCookie = (res: Response, refreshToken: string) => {
   const maxAge = AuthService.getRefreshTokenTtlMs();
   const isProd = process.env.NODE_ENV === 'production';
+  // A-03: Cookie is scoped to /api/auth only — frontend refresh MUST call POST /api/auth/refresh
   res.cookie(refreshCookieName, refreshToken, {
     httpOnly: true,
     secure: isProd,
@@ -32,13 +33,7 @@ const clearRefreshCookie = (res: Response) => {
   });
 };
 
-export const register = asyncHandler(async (req: Request, res: Response) => {
-  throw new ApiError(400, 'Registration via password is deprecated. Please use passwordless email OTP.');
-});
-
-export const login = asyncHandler(async (req: Request, res: Response) => {
-  throw new ApiError(400, 'Login via password is deprecated. Please use passwordless email OTP.');
-});
+// Deprecated register and login removed
 
 export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -71,6 +66,18 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   
   logger.info(`[AUTH] Authentication successful. User session created. ID: ${result.user._id}`);
   
+  // A-02: One-time admin role alignment on first successful OTP (not on every getProfile fetch)
+  const adminEmails = getAdminEmails();
+  const staffRoles = ['admin', 'super_admin', 'main_admin', 'manager', 'coordinator'];
+  if (
+    adminEmails.some((addr) => isSameEmail(result.user.email, addr)) &&
+    !staffRoles.includes(result.user.role)
+  ) {
+    result.user.role = 'admin';
+    await result.user.save();
+    logger.info(`[AUTH] Auto-upgraded user ${result.user.email} to admin role based on config.`);
+  }
+
   setRefreshCookie(res, result.refreshToken);
   res.status(200).json(new ApiResponse(true, 'Authenticated successfully', {
     user: result.user,
@@ -106,13 +113,6 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   const user = await User.findById((req as any).user.id).select('-password');
   if (!user) {
     throw new ApiError(404, 'User session not found in database');
-  }
-
-  // Self-healing role upgrade for the master admin emails
-  const adminEmails = getAdminEmails();
-  if (adminEmails.some(addr => isSameEmail(user.email, addr)) && user.role !== 'admin') {
-    user.role = 'admin';
-    await user.save();
   }
 
   res.status(200).json(new ApiResponse(true, 'Profile fetched', user));

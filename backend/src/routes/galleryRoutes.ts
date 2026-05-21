@@ -10,12 +10,13 @@ import {
 } from '../controllers/galleryController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 import { cacheResponse } from '../middleware/cacheMiddleware';
+import { redisResponseCache } from '../middleware/redisResponseCache';
 
 const router = Router();
 
-// Public Routes
-router.get('/', cacheResponse(60), getGalleryItems);
-router.get('/categories', cacheResponse(60), getGalleryCategories);
+// Public Routes (list endpoints only — :id increments view counts)
+router.get('/', redisResponseCache(120), cacheResponse(120), getGalleryItems);
+router.get('/categories', redisResponseCache(300), cacheResponse(300), getGalleryCategories);
 router.get('/:id', cacheResponse(60), getGalleryById);
 
 // Authenticated User Routes

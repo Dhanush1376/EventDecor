@@ -79,45 +79,10 @@ export const applyReferralCode = asyncHandler(async (req: Request, res: Response
     throw new ApiError(400, 'Referral code is required');
   }
 
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ApiError(404, 'User session not found');
-  }
-
-  if (user.referredBy) {
-    throw new ApiError(400, 'You have already applied a referral code');
-  }
-
-  const cleanCode = referralCode.trim().toUpperCase();
-
-  if (user.referralCode === cleanCode) {
-    throw new ApiError(400, 'Self-referral is forbidden. Please enter a friend\'s referral code.');
-  }
-
-  const referrer = await User.findOne({ referralCode: cleanCode });
-  if (!referrer) {
-    throw new ApiError(404, 'Invalid referral code. Please check and try again.');
-  }
-
-  // Instantly register referrer and reward the referee with ₹50 signup credits atomically without read-modify-write saves
-  await User.findByIdAndUpdate(userId, {
-    $set: { referredBy: referrer._id },
-    $inc: { walletBalance: 50 }
-  });
-
-  await WalletTransaction.create({
-    userId,
-    type: 'credit',
-    amount: 50,
-    source: 'referral_bonus',
-    description: `Applied referral code of ${referrer.name || 'Friend'} - Welcomed with Siri Cash!`,
-    status: 'active'
-  });
+  const result = await LoyaltyService.applyReferralCode(userId, referralCode);
 
   res.status(200).json(
-    new ApiResponse(true, `Referral code successfully registered! Welcomed with ₹50 wallet cash. Referrer will receive ₹150 upon your first purchase.`, {
-      referredBy: referrer.name
-    })
+    new ApiResponse(true, `Referral code successfully registered! Welcomed with ₹50 wallet cash. Referrer will receive ₹150 upon your first purchase.`, result)
   );
 });
 

@@ -7,7 +7,6 @@ import logger from '../config/logger';
 
 export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const result = await ProductService.getAllProducts(req.query);
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Products fetched successfully', result));
 });
 
@@ -16,7 +15,6 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Product fetched successfully', product));
 });
 

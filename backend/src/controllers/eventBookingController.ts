@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import EventBooking from '../models/EventBooking';
 import Event from '../models/Event';
 import User from '../models/User';
-import Counter from '../models/Counter';
 import { EventBookingMailService } from '../services/eventBookingMailService';
 import { createAdminNotification } from './adminNotificationController';
 import logger from '../config/logger';
@@ -10,6 +9,7 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
+import { generateUniqueBookingId } from '../utils/bookingId';
 
 // 1. Submit Event Booking Inquiry (Customer)
 export const submitEventBooking = asyncHandler(async (req: any, res: Response) => {
@@ -55,14 +55,7 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
     }
   }
 
-  // 2. Generate Booking ID atomically using Counter sequence
-  const counter = await Counter.findOneAndUpdate(
-    { id: 'event_booking' },
-    { $inc: { seq: 1 } },
-    { new: true, upsert: true }
-  );
-  const seqNum = counter ? counter.seq : Math.floor(1000 + Math.random() * 9000);
-  const bookingId = `SR-BK-${new Date().getFullYear()}-${String(seqNum).padStart(5, '0')}`;
+  const bookingId = await generateUniqueBookingId();
 
   let rentalFee = 0;
 
@@ -328,6 +321,21 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
   });
 
   await booking.save();
+
+  try {
+    const userId = (booking.user as any)?._id?.toString() || booking.user?.toString();
+    if (userId) {
+      const { emitUserEvent } = require('../socket');
+      emitUserEvent(userId, 'booking_status_updated', {
+        bookingId: booking._id,
+        bookingRef: booking.bookingId,
+        status: booking.status,
+        previousStatus: oldStatus,
+      });
+    }
+  } catch (socketErr) {
+    logger.debug('Could not emit user booking status socket event:', socketErr);
+  }
 
   // Send status update email in background
   EventBookingMailService.sendStatusUpdateEmail(booking, oldStatus, status).catch((err: any) =>

@@ -3,6 +3,7 @@ import Event from '../models/Event';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
+import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 
 export const getEvents = asyncHandler(async (req: Request, res: Response) => {
   const { category, style } = req.query;
@@ -23,11 +24,13 @@ export const getEventById = asyncHandler(async (req: Request, res: Response) => 
 export const createEvent = asyncHandler(async (req: Request, res: Response) => {
   const event = new Event(req.body);
   await event.save();
+  await bumpPublicCacheVersion();
   res.status(201).json(new ApiResponse(true, 'Event created', event));
 });
 
 export const updateEvent = asyncHandler(async (req: Request, res: Response) => {
   const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!event) throw new ApiError(404, 'Event not found');
+  await bumpPublicCacheVersion();
   res.status(200).json(new ApiResponse(true, 'Event updated', event));
 });

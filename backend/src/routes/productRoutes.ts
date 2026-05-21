@@ -13,12 +13,13 @@ import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 import { productValidator } from '../validators/productValidator';
 import { validate } from '../middleware/validateMiddleware';
 import { cacheResponse } from '../middleware/cacheMiddleware';
+import { redisResponseCache } from '../middleware/redisResponseCache';
 
 const router = Router();
 
-router.get('/', cacheResponse(60), getProducts);
-router.get('/categories', cacheResponse(60), getCategories);
-router.get('/:id', cacheResponse(60), getProductById);
+router.get('/', redisResponseCache(120), cacheResponse(120), getProducts);
+router.get('/categories', redisResponseCache(300), cacheResponse(300), getCategories);
+router.get('/:id', redisResponseCache(120), cacheResponse(120), getProductById);
 
 // Protected Admin Routes
 router.post('/', requireAuth, requireAdmin, productValidator, validate, createProduct);

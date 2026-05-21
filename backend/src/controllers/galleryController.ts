@@ -6,6 +6,7 @@ import ApiError from '../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import logger from '../config/logger';
+import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 
 export const getGalleryItems = asyncHandler(async (req: Request, res: Response) => {
   const { category, event, search, type } = req.query;
@@ -40,6 +41,7 @@ export const getGalleryById = asyncHandler(async (req: Request, res: Response) =
 export const createGalleryItem = asyncHandler(async (req: Request, res: Response) => {
   const item = new Gallery(req.body);
   await item.save();
+  await bumpPublicCacheVersion();
   res.status(201).json(new ApiResponse(true, 'Gallery item created', item));
 });
 
@@ -63,6 +65,7 @@ export const updateGalleryItem = asyncHandler(async (req: Request, res: Response
     }
   }
 
+  await bumpPublicCacheVersion();
   res.status(200).json(new ApiResponse(true, 'Gallery item updated', item));
 });
 
@@ -86,6 +89,7 @@ export const deleteGalleryItem = asyncHandler(async (req: Request, res: Response
     }
   }
 
+  await bumpPublicCacheVersion();
   res.status(200).json(new ApiResponse(true, 'Gallery item completely deleted successfully', item));
 });
 

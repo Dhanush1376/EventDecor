@@ -6,8 +6,6 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import Order from '../models/Order';
-import { generateInvoicePDF } from '../utils/pdfGenerator';
-import { getAdminEmails } from '../config/adminConfig';
 
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const result = await OrderService.createOrder(req.user!.id, req.body);
@@ -203,194 +201,19 @@ export const handleRazorpayWebhook = asyncHandler(async (req: Request, res: Resp
     throw new ApiError(400, 'Webhook verification credentials missing');
   }
 
-  // 1. Verify Razorpay webhook signature using HMAC SHA256 on the RAW body
-  // IMPORTANT: We use (req as any).rawBody which is the unparsed Buffer, set by the
-  // raw body middleware in app.ts. Using JSON.stringify(req.body) would corrupt the
-  // payload since it may have been re-serialized with different whitespace/key ordering.
-  const rawBody = (req as any).rawBody;
+  const rawBody = (req as any).rawBody as Buffer | undefined;
   if (!rawBody) {
     logger.error('🏥 [SECURITY CRITICAL] Webhook received without raw body — middleware misconfiguration!');
     throw new ApiError(500, 'Webhook processing error');
   }
 
-  const shasum = crypto.createHmac('sha256', webhookSecret);
-  shasum.update(rawBody);
-  const digest = shasum.digest('hex');
-
-  // Timing-safe comparison to prevent timing attacks on the webhook signature
-  const sigBuffer = Buffer.from(signature, 'utf8');
-  const digestBuffer = Buffer.from(digest, 'utf8');
-  const isValid = sigBuffer.length === digestBuffer.length && crypto.timingSafeEqual(sigBuffer, digestBuffer);
-
-  if (!isValid) {
+  if (!OrderService.verifyWebhookSignature(signature, rawBody, webhookSecret)) {
     logger.error('🏥 [SECURITY CRITICAL] Invalid Razorpay webhook signature detected!');
     throw new ApiError(400, 'Invalid webhook signature');
   }
 
-  const event = req.body.event;
-  logger.info(`[PAYMENT WEBHOOK] Received verified Razorpay event: ${event}`);
-
-  // We are interested in payment.captured or order.paid events
-  if (event === 'order.paid' || event === 'payment.captured') {
-    const paymentEntity = req.body.payload?.payment?.entity;
-    const razorpay_order_id = paymentEntity?.order_id;
-    const razorpay_payment_id = paymentEntity?.id;
-
-    if (!razorpay_order_id || !razorpay_payment_id) {
-      logger.warn('[PAYMENT WEBHOOK] Webhook skipped: Missing order/payment details.');
-      return res.status(200).json(new ApiResponse(true, 'Skipped: missing entity details'));
-    }
-
-    try {
-      // 2. Lock the order atomically
-      let order: any = await Order.findOneAndUpdate(
-        { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
-        { $set: { paymentStatus: 'processing' } },
-        { new: true }
-      );
-
-      if (!order) {
-        const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
-        if (existingOrder && existingOrder.paymentStatus === 'paid') {
-          logger.info(`[PAYMENT WEBHOOK REDUNDANCY] Webhook event received but payment already paid for order: ${existingOrder._id}`);
-          return res.status(200).json(new ApiResponse(true, 'Webhook redundancy check: already paid'));
-        }
-        return res.status(200).json(new ApiResponse(true, 'Skipped: Order not found or closed'));
-      }
-
-      // Update order to paid
-      order.paymentStatus = 'paid';
-      order.orderStatus = 'Confirmed';
-      order.razorpayPaymentId = razorpay_payment_id;
-      order.razorpaySignature = signature;
-      order.statusHistory.push({
-        status: 'Confirmed' as any,
-        timestamp: new Date(),
-        note: `Payment captured successfully via Razorpay Webhook [Event: ${event}]`
-      });
-
-      await order.save();
-
-      // Clear the user's cart in database
-      const User = require('../models/User').default || require('../models/User');
-      await User.findByIdAndUpdate(order.user, { $set: { cart: [] } });
-
-      // Coupon increments
-      if (order.couponCode) {
-        const Coupon = require('../models/Coupon').default || require('../models/Coupon');
-        await Coupon.findOneAndUpdate({ code: order.couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
-      }
-
-      // Clear analytics caches
-      const { default: AnalyticsService } = require('../services/analyticsService');
-      AnalyticsService.clearCache();
-
-      // Dispatch confirmation email
-      try {
-        const user = await User.findById(order.user);
-        if (user) {
-          const { sendDirectEmail } = require('../services/notificationService');
-          const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
-          
-          // Generate Invoice PDF
-          const invoiceBuffer = await generateInvoicePDF({
-            orderId: order._id.toString().slice(-8).toUpperCase(),
-            date: order.createdAt,
-            customerName: user.name,
-            shippingAddress: order.shippingAddress?.addressString || '',
-            items: order.items.map((i: any) => ({ name: i.title || 'Decor Item', quantity: i.quantity, price: i.price })),
-            subtotal: order.subtotal,
-            shipping: order.shippingFee,
-            total: order.total
-          });
-
-          await sendDirectEmail({
-            email: user.email,
-            subject: `Order Successfully Placed! ✦ Siri Arts & Crafts [${order._id}]`,
-            templateName: 'Order Confirmation',
-            templateData: {
-              name: user.name,
-              orderId: order._id.toString().slice(-8).toUpperCase(),
-              totalAmount: order.total.toLocaleString('en-IN'),
-              paymentStatus: order.paymentStatus.toUpperCase(),
-              shippingAddress: order.shippingAddress,
-              frontend_url: frontendUrl,
-            },
-            attachments: [{
-              filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
-              content: invoiceBuffer,
-              contentType: 'application/pdf'
-            }],
-            type: 'order',
-            action: 'order_placed',
-            userId: user._id.toString(),
-          });
-          
-          // Notify Admins
-          const adminEmails = getAdminEmails();
-          for (const adminEmail of adminEmails) {
-            await sendDirectEmail({
-              email: adminEmail,
-              subject: `New Order Received! ✦ [${order._id}]`,
-              templateName: 'Admin System Alert',
-              templateData: {
-                title: 'New Order Placed',
-                message: `Order #${order._id.toString().slice(-8).toUpperCase()} for ₹${order.total.toLocaleString('en-IN')} has been placed by ${user.name}.`,
-                actionUrl: `${frontendUrl}/admin/orders/${order._id}`
-              },
-              attachments: [{
-                filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
-                content: invoiceBuffer,
-                contentType: 'application/pdf'
-              }],
-              type: 'system',
-              action: 'admin_order_notification'
-            });
-          }
-        }
-      } catch (emailErr) {
-        logger.error('[PAYMENT WEBHOOK EMAIL] Failed to dispatch webhook email:', emailErr);
-      }
-
-      logger.info(`[PAYMENT WEBHOOK SUCCESS] Webhook completed cleanly for order: ${order._id}`);
-      return res.status(200).json(new ApiResponse(true, 'Payment successfully captured via Webhook'));
-
-    } catch (dbErr) {
-      logger.error('[PAYMENT WEBHOOK ERROR] Error executing database updates inside webhook:', dbErr);
-      throw dbErr;
-    }
-  }
-
-  // Handle failed payment events: payment.failed
-  if (event === 'payment.failed') {
-    const paymentEntity = req.body.payload?.payment?.entity;
-    const razorpay_order_id = paymentEntity?.order_id;
-    const errorDescription = paymentEntity?.error_description || 'Unknown transaction error';
-
-    if (razorpay_order_id) {
-      const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
-      if (order && order.paymentStatus === 'pending') {
-        // Return reserved stock
-        const Product = require('../models/Product').default || require('../models/Product');
-        for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.productId, {
-            $inc: { stock: item.quantity }
-          });
-        }
-
-        order.paymentStatus = 'failed';
-        order.statusHistory.push({
-          status: 'Pending' as any,
-          timestamp: new Date(),
-          note: `Razorpay Transaction Failed: ${errorDescription}. Reserved stock returned.`
-        });
-        await order.save();
-        logger.warn(`[PAYMENT WEBHOOK FAILURE] Registered payment failure event for order: ${order._id}`);
-      }
-    }
-  }
-
-  return res.status(200).json(new ApiResponse(true, 'Webhook event received but no action required'));
+  const result = await OrderService.processRazorpayWebhook(req.body.event, req.body, signature);
+  return res.status(result.status).json(new ApiResponse(true, result.message));
 });
 
 export const sendCodOtp = asyncHandler(async (req: Request, res: Response) => {
