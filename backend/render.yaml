@@ -1,8 +1,10 @@
+# Render Blueprint — no seed/deploy hooks (never run seedData.ts in production)
 services:
   - type: web
     name: siri-arts-backend
     runtime: docker
     plan: starter
+    autoDeploy: true
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
@@ -18,6 +20,8 @@ services:
       - key: REFRESH_TOKEN_EXPIRES_DAYS
         value: 30
       - key: ADMIN_PASSWORD
+        fromConfig: true
+      - key: ADMIN_EMAIL
         fromConfig: true
       - key: OTP_EXPIRY_MINUTES
         value: 5
@@ -40,6 +44,8 @@ services:
       - key: SMTP_PASS
         fromConfig: true
       - key: BREVO_API_KEY
+        fromConfig: true
+      - key: REDIS_URL
         fromConfig: true
       - key: SMTP_FROM_EMAIL
         fromConfig: true

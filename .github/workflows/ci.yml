@@ -6,36 +6,67 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  # Backend CI placeholders (validated by check-env, not used for real connections)
+  PORT: "5000"
+  NODE_ENV: development
+  MONGO_URI: mongodb://127.0.0.1:27017/eventdecor_ci
+  JWT_SECRET: ci_jwt_secret_must_be_at_least_32_chars_long
+  JWT_EXPIRES_IN: 7d
+  ADMIN_EMAIL: admin@ci.example.com
+  BREVO_API_KEY: ci_brevo_placeholder_key
+  SMTP_FROM_EMAIL: no-reply@ci.example.com
+  # Frontend build-time variables
+  VITE_API_URL: https://api.ci.example.com/api
+  VITE_SITE_URL: https://siriartsandcrafts.com
+  VITE_RAZORPAY_KEY_ID: rzptest_ci_placeholder
+  VITE_SITE_NAME: Siri Arts & Crafts
+  VITE_CONTACT_PHONE: "+91-9866006648"
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Use Node.js 20.x
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20.x
-        cache: 'npm'
-        cache-dependency-path: '**/package.json'
-        
-    - name: Install Backend Dependencies
-      run: |
-        cd backend
-        npm ci
-        
-    - name: Build Backend
-      run: |
-        cd backend
-        npm run build
+      - uses: actions/checkout@v4
 
-    - name: Install Frontend Dependencies
-      run: |
-        cd frontend
-        npm ci
-        
-    - name: Build Frontend
-      run: |
-        cd frontend
-        npm run build
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Validate Backend Environment
+        working-directory: backend
+        run: npm run check-env
+
+      - name: Build Backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Test Backend
+        working-directory: backend
+        run: npm test
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Validate Frontend Environment
+        working-directory: frontend
+        run: npm run check-env
+
+      - name: Test Frontend
+        working-directory: frontend
+        run: npm test
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build

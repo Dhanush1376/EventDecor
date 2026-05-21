@@ -63,12 +63,56 @@ To eliminate delivery latency, OTP dispatches utilizenodemailer cached SMTP conn
 ### 4. Advanced Log Scrubbing & Security
 Removed all debug OTP leaks and bypassed mock variables. The system strictly utilizes cryptographically secure 6-digit random codes hashed with `bcryptjs` for validation. In production, mock payments are completely disabled.
 
+### 5. Manual Production Database Indexing
+Since `autoIndex` is disabled in production, compound indexes from Mongoose schemas are **not** created automatically on a new cluster. Run this **once** after the first production deploy (and again after any index schema change):
+
+```bash
+cd backend
+npm run create-indexes
+```
+
+**Production deploy checklist**
+1. Set `NODE_ENV=production` and all required env vars (see `.env.example`).
+2. Deploy the API and confirm `/api/health` returns `healthy`.
+3. Run `npm run create-indexes` against the production `MONGO_URI`.
+4. Do **not** run `seedData.ts` in production (it exits immediately when `NODE_ENV=production`).
+5. Never add seed scripts to CI/CD pipelines.
+
+### 6. Real-Time (Socket.io) & Redis
+- Admin alerts connect to the `/admin` namespace; customer updates use `/user`.
+- Set `REDIS_URL` in production when running more than one API instance (Render, Kubernetes, etc.). Without Redis, socket events only reach clients on the same instance.
+- Optional: `REQUIRE_REDIS=true` fails startup if `REDIS_URL` is missing (use when horizontally scaled).
+
+### 7. Email Templates
+Transactional HTML lives in the repository (not generated at runtime):
+| Location | Purpose |
+|----------|---------|
+| `backend/src/templates/*.hbs` | Handlebars files (e.g. `order-confirmation.hbs`) |
+| `backend/src/utils/emailTemplates.ts` | Inline OTP, COD OTP, team invite, diagnostic templates |
+| MongoDB `EmailTemplate` collection | Admin-managed marketing templates via the dashboard |
+
+Copy `backend/.env.example` to `backend/.env` and set **`BREVO_API_KEY`** (recommended) or SMTP credentials.
+
+### 8. Performance
+- Public GET APIs (`/products`, `/events`, `/gallery`) use **Redis response cache** (120–300s TTL) when `REDIS_URL` is set, plus HTTP `Cache-Control` / ETag versioning.
+- Marble texture is loaded from **Cloudinary CDN** (`VITE_MARBLE_TEXTURE_URL`), not the 520KB bundled PNG.
+- Run `cd frontend && npm run build:report` to audit JS chunk sizes after changes.
+
+### 9. Security
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for `TRUST_PROXY_HOPS`, refresh cookie path, and Socket.io namespaces.
+
+### 10. CI/CD
+GitHub Actions (`.github/workflows/ci.yml`) runs on every PR to `main`:
+- `npm run check-env` — validates required backend and `VITE_*` variables before build
+- `npm test` — Vitest (frontend) and backend smoke tests
+- `npm run build` — TypeScript + Vite production builds
+
 ---
 
 ## ⚙️ Environment Configuration
 
 ### Backend Environment Variables (`/backend/.env`)
-Create a `/backend/.env` file with reference to `/backend/.env.example`:
+Create a `/backend/.env` file from `/backend/.env.example` (includes `BREVO_API_KEY`, `REDIS_URL`, and other keys):
 ```env
 PORT=5000
 NODE_ENV=production
