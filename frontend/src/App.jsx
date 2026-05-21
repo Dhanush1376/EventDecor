@@ -12,7 +12,6 @@ import { MainLayout, MinimalLayout } from "./layouts/MainLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { NetworkProvider } from "./context/NetworkContext";
-import { NoInternetOverlay } from "./components/ui/NoInternetOverlay";
 import { safeSessionStorage } from "./utils/storage";
 
 // Lazy load heavy auth modal to remove it from initial load bundle
@@ -115,7 +114,7 @@ function App() {
           <CartProvider>
             <WishlistProvider>
               <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff', fontSize: '14px' } }} />
-              <NoInternetOverlay />
+
               <AnimatePresence>
                 {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
               </AnimatePresence>
