@@ -306,7 +306,7 @@ export const handleRazorpayWebhook = asyncHandler(async (req: Request, res: Resp
 
           await sendDirectEmail({
             email: user.email,
-            subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
+            subject: `Order Successfully Placed! ✦ Siri Arts & Crafts [${order._id}]`,
             templateName: 'Order Confirmation',
             templateData: {
               name: user.name,

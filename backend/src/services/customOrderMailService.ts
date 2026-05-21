@@ -18,7 +18,7 @@ export class CustomOrderMailService {
     try {
       await sendDirectEmail({
         email: order.customerEmail,
-        subject: `Your Bespoke Decor Request has been Lodged! ✦ Siri Arts Studio`,
+        subject: `Your Bespoke Decor Request has been Lodged! ✦ Siri Arts & Crafts`,
         customHtml: `
           <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 45px 30px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29; box-shadow: 0 15px 40px rgba(115, 92, 0, 0.04); box-sizing: border-box;">
             <div style="margin-bottom: 30px; text-align: center;">
@@ -31,7 +31,7 @@ export class CustomOrderMailService {
             
             <p style="color: #7f7663; font-size: 13.5px; line-height: 1.8; font-weight: 300; font-family: 'Inter', sans-serif; margin-bottom: 25px;">
               Dear ${order.customerName || 'Valued Guest'},<br/><br/>
-              Thank you for trusting Siri Arts Studio with your landmark occasion. We have received your creative blueprint and details. Our designers are currently curating custom recommendations tailored to your request.
+              Thank you for trusting Siri Arts & Crafts with your landmark occasion. We have received your creative blueprint and details. Our designers are currently curating custom recommendations tailored to your request.
             </p>
 
             <div style="background-color: #fbfaf8; border: 1px solid #d0c5af; border-radius: 12px; padding: 22px; margin-bottom: 30px; font-family: 'Inter', sans-serif;">
@@ -152,7 +152,7 @@ export class CustomOrderMailService {
 
       await sendDirectEmail({
         email: order.customerEmail,
-        subject: `Your Itemized Decor Estimate is Ready! ✦ Siri Arts Studio [₹${quote.total.toLocaleString('en-IN')}]`,
+        subject: `Your Itemized Decor Estimate is Ready! ✦ Siri Arts & Crafts [₹${quote.total.toLocaleString('en-IN')}]`,
         customHtml: `
           <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 45px 30px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29; box-shadow: 0 15px 40px rgba(115, 92, 0, 0.04); box-sizing: border-box;">
             <div style="margin-bottom: 30px; text-align: center;">
@@ -289,7 +289,7 @@ export class CustomOrderMailService {
     try {
       await sendDirectEmail({
         email: recipientEmail,
-        subject: `New Workspace Message from ${senderName}! ✦ Siri Arts Studio`,
+        subject: `New Workspace Message from ${senderName}! ✦ Siri Arts & Crafts`,
         customHtml: `
           <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 40px 25px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29; box-shadow: 0 15px 40px rgba(115, 92, 0, 0.04); box-sizing: border-box;">
             <div style="margin-bottom: 25px; text-align: center;">

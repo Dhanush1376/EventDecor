@@ -312,7 +312,7 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
               <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px]">ESC</kbd> Close
             </span>
           </div>
-          <div>Siri Arts Studio Admin</div>
+          <div>Siri Arts & Crafts Admin</div>
         </div>
       </motion.div>
     </div>

@@ -582,7 +582,7 @@ class AuthService {
       const { sendDirectEmail } = require('./notificationService');
       sendDirectEmail({
         email: user.email,
-        subject: 'Security Alert: New Login Detected ✦ Siri Arts Studio',
+        subject: 'Security Alert: New Login Detected ✦ Siri Arts & Crafts',
         templateName: 'Suspicious Login Alert',
         templateData: {
           name: user.name,
@@ -633,7 +633,7 @@ class AuthService {
     try {
       await sendDirectEmailProcessor({
         email: cleanEmail,
-        subject: '✦ Cash on Delivery Verification Code ✦ Siri Arts Studio',
+        subject: '✦ Cash on Delivery Verification Code ✦ Siri Arts & Crafts',
         customHtml: getCodOtpEmailTemplate(otp, 5),
         type: 'security',
         action: 'cod_otp'

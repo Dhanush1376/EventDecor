@@ -229,7 +229,7 @@ export function Auth() {
   return (
     <div className="min-h-screen bg-black flex overflow-hidden selection:bg-primary/20">
       <SEO
-        title="Secure Access | Siri Arts Studio"
+        title="Secure Access | Siri Arts & Crafts"
         description="Experience luxury e-commerce and passwordless entry. Verify your session securely via email."
       />
 

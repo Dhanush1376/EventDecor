@@ -560,7 +560,7 @@ export function EventCustomerDashboard() {
 
                 <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 space-y-1 text-[11px] leading-relaxed">
                   <span className="font-display font-bold text-primary block">💳 Gilded UPI gateway simulation:</span>
-                  <p className="text-stone-600">Clicking below will simulate a secure UPI transaction callback and log credit milestones directly into your Siri Arts studio workspace ledger.</p>
+                  <p className="text-stone-600">Clicking below will simulate a secure UPI transaction callback and log credit milestones directly into your Siri Arts & Crafts workspace ledger.</p>
                 </div>
 
                 <button

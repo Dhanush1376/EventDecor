@@ -12,7 +12,7 @@ export const submitInquiry = asyncHandler(async (req: Request, res: Response) =>
   if (inquiry.email) {
     sendDirectEmail({
       email: inquiry.email,
-      subject: 'We Received Your Vision ✦ Siri Arts Studio',
+      subject: 'We Received Your Vision ✦ Siri Arts & Crafts',
       templateName: 'Inquiry Submitted',
       templateData: {
         name: inquiry.name,

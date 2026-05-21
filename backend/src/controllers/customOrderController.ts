@@ -77,7 +77,7 @@ export const submitCustomOrder = asyncHandler(async (req: any, res: Response) =>
     messages: [
       {
         sender: 'admin',
-        senderName: 'Siri Arts Studio',
+        senderName: 'Siri Arts & Crafts',
         text: 'Welcome to your custom design workspace! Our design team is currently reviewing your blueprint and inspiration images.',
         createdAt: new Date()
       }

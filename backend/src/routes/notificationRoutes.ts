@@ -77,7 +77,7 @@ router.get('/test-smtp-live', requireAuth, requireAdmin, async (req, res) => {
 
     const info = await sendEmail({
       to: recipient,
-      subject: '✦ Siri Arts Studio Email Diagnostic Test ✦',
+      subject: '✦ Siri Arts & Crafts Email Diagnostic Test ✦',
       html: getDiagnosticTestEmailTemplate(
         brevoKey ? 'Brevo HTTP API' : smtpHost,
         fromEmail,

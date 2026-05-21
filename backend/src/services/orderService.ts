@@ -471,7 +471,7 @@ class OrderService {
             // 4. Send Customer Email
             await sendDirectEmail({
               email: user.email,
-              subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
+              subject: `Order Successfully Placed! ✦ Siri Arts & Crafts [${order._id}]`,
               customHtml: htmlContent,
               type: 'order',
               action: 'order_placed',
@@ -719,7 +719,7 @@ class OrderService {
           const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
           await sendDirectEmail({
             email: user.email,
-            subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
+            subject: `Order Successfully Placed! ✦ Siri Arts & Crafts [${order._id}]`,
             templateName: 'Order Confirmation',
             templateData: {
               name: user.name,
@@ -837,7 +837,7 @@ class OrderService {
         // 4. Send Customer Email
         await sendDirectEmail({
           email: user.email,
-          subject: `Order Successfully Placed! ✦ Siri Arts Studio [${order._id}]`,
+          subject: `Order Successfully Placed! ✦ Siri Arts & Crafts [${order._id}]`,
           customHtml: htmlContent,
           type: 'order',
           action: 'order_placed',
@@ -1027,7 +1027,7 @@ class OrderService {
         const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:3000';
         await sendDirectEmail({
           email: user.email,
-          subject: `Order Updated to ${finalStatus.toUpperCase()}! ✦ Siri Arts Studio [${order._id}]`,
+          subject: `Order Updated to ${finalStatus.toUpperCase()}! ✦ Siri Arts & Crafts [${order._id}]`,
           customHtml: `
             <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 50px 30px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29; box-shadow: 0 15px 40px rgba(115, 92, 0, 0.04); text-align: center;">
               <div style="margin-bottom: 25px; text-align: center;">

@@ -1043,7 +1043,7 @@ export function AdminAddProduct() {
                           type="text"
                           value={formData.seoTitle}
                           onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
-                          placeholder="e.g. Antique Brass Urli Bowl with Bells | Siri Arts Studio"
+                          placeholder="e.g. Antique Brass Urli Bowl with Bells | Siri Arts & Crafts"
                           className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body ${
                             focusedField === "seoTitle" 
                               ? "border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 

@@ -13,7 +13,7 @@
  * 2. Go to Account → SMTP & API → API Keys → Create new API Key
  * 3. Set environment variable: BREVO_API_KEY=your_key_here
  * 4. Go to Senders & IPs → Senders → Add your Gmail as a verified sender
- * 5. Set SMTP_FROM="Siri Arts Studio <your-gmail@gmail.com>"
+ * 5. Set SMTP_FROM="Siri Arts & Crafts <your-gmail@gmail.com>"
  *
  * OPTIONAL - Keep SMTP as fallback for local dev:
  * SMTP_USER=your-gmail@gmail.com
@@ -42,7 +42,7 @@ export const sendViaResend = async (payload: EmailPayload): Promise<{ messageId:
   const { Resend } = require('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
   const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
-  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts Studio';
+  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
 
   const { data, error } = await resend.emails.send({
     from: `${senderName} <${senderEmail}>`,
@@ -70,7 +70,7 @@ export const sendViaSendGrid = async (payload: EmailPayload): Promise<{ messageI
   const sgMail = require('@sendgrid/mail');
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
-  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts Studio';
+  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
 
   const msg = {
     to: payload.to,
@@ -99,7 +99,7 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
   if (!apiKey) throw new Error('BREVO_API_KEY missing');
 
   const senderEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
-  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts Studio';
+  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
 
   const body = {
     sender: { name: senderName, email: senderEmail },
@@ -145,7 +145,7 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
   });
 
   const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || smtpUser;
-  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts Studio';
+  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
 
   const info = await transporter.sendMail({
     from: `"${senderName}" <${senderEmail}>`,
@@ -188,7 +188,7 @@ export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: str
       auth: { user: testAccount.user, pass: testAccount.pass },
     });
     const info = await transporter.sendMail({
-      from: `"Siri Arts Studio" <${testAccount.user}>`,
+      from: `"Siri Arts & Crafts" <${testAccount.user}>`,
       to: payload.to,
       subject: payload.subject,
       html: payload.html,
