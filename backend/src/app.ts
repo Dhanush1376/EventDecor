@@ -50,8 +50,15 @@ const app: Application = express();
 // Disable x-powered-by to prevent tech stack signature disclosure
 app.disable('x-powered-by');
 
-// Trust proxy for accurate rate limiting (especially on Render/Vercel)
-app.set('trust proxy', 1);
+// Trust proxy hops — must match your deployment (see docs/DEPLOYMENT.md).
+// Render / Vercel: 1. Cloudflare → Render: 2. Override with TRUST_PROXY_HOPS.
+const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS ?? 1);
+if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 5) {
+  logger.error('[STARTUP] TRUST_PROXY_HOPS must be an integer between 0 and 5');
+  process.exit(1);
+}
+app.set('trust proxy', trustProxyHops);
+logger.info(`[STARTUP] Express trust proxy hops: ${trustProxyHops}`);
 
 // Boot Request Tracker AsyncLocalStorage context as early as possible
 app.use(requestTrackerMiddleware);
@@ -106,17 +113,15 @@ const allowedOrigins = [
 ];
 
 export const isOriginAllowed = (origin: string): boolean => {
-  return allowedOrigins.includes(origin) || origin.endsWith(".vercel.app") && origin.includes("siriarts");
+  // Require hyphen after "siriarts" so siriartsfake.vercel.app does NOT match
+  const vercelPreviewRegex = /^https:\/\/siriarts-[a-z0-9-]+\.vercel\.app$/i;
+  return allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
 };
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        (origin.endsWith(".vercel.app") && origin.includes("siriarts"))
-      ) {
+      if (!origin || isOriginAllowed(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`Not allowed by CORS: ${origin}`));
@@ -315,10 +320,10 @@ app.get('/api/readiness', (req: Request, res: Response) => {
   res.status(ready ? 200 : 503).json({ ready, timestamp: new Date().toISOString() });
 });
 
-// Version endpoint for deployment verification
+// Version endpoint — minimal public payload (no environment disclosure)
 app.get('/api/version', (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json({ version: process.env.npm_package_version || '1.0.0', environment: process.env.NODE_ENV || 'development' });
+  res.json({ version: process.env.npm_package_version || '1.0.0' });
 });
 
 // 7. API Routes

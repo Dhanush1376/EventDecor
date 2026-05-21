@@ -67,6 +67,7 @@ const multerProducts = multer({
   fileFilter,
 });
 
+// C-02: Gallery/video uploads use multipart (multer), not express.json — 50MB limit independent of JSON 10MB cap
 const multerGallery = multer({
   storage: memoryStorage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit to support videos

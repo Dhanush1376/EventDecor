@@ -20,6 +20,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: JwtPayload;
+      _safetyLockChecked?: boolean;
     }
   }
 }
@@ -49,6 +50,37 @@ const logAdminAudit = (req: Request, res: Response) => {
         userAgent: req.get('user-agent'),
       }).catch((err) => logger.error('Failed to persist admin audit log', err));
     });
+  }
+};
+
+/** Single safety-lock read per HTTP request (S-01 — shared by requireAdmin / requireSuperAdmin / requireRole). */
+const checkSafetyLock = async (req: Request) => {
+  if (req._safetyLockChecked) return;
+
+  const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+  if (!mutatingMethod) {
+    req._safetyLockChecked = true;
+    return;
+  }
+
+  const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
+  if (isSafetyLockToggle) {
+    req._safetyLockChecked = true;
+    return;
+  }
+
+  const ContentSection = require('../models/ContentSection').default;
+  const { safetyLockCache } = require('../utils/MemoryCache');
+  const safetyLockDoc = await safetyLockCache.getOrSet(
+    'admin_safety_lock',
+    async () => ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean(),
+    30000
+  );
+
+  req._safetyLockChecked = true;
+
+  if (safetyLockDoc?.data?.safetyLock === true) {
+    throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
   }
 };
 
@@ -98,21 +130,7 @@ export const requireAdmin = asyncHandler(async (req: Request, res: Response, nex
   
   if (ADMIN_ROLES.includes(req.user.role as any) || (userEmail && adminEmails.some(addr => isSameEmail(userEmail, addr)))) {
     // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
-    const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
-    if (mutatingMethod) {
-      const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
-      if (!isSafetyLockToggle) {
-        const ContentSection = require('../models/ContentSection').default;
-        const { safetyLockCache } = require('../utils/MemoryCache');
-        const safetyLockDoc = await safetyLockCache.getOrSet('admin_safety_lock', async () => {
-          return await ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean();
-        }, 30000);
-        
-        if (safetyLockDoc && safetyLockDoc.data?.safetyLock === true) {
-          throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
-        }
-      }
-    }
+    await checkSafetyLock(req);
 
     logAdminAudit(req, res);
     next();
@@ -133,21 +151,7 @@ export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response
   const isSuperAdminEmail = userEmail && getAdminEmails().some(addr => isSameEmail(userEmail, addr));
   if (isSuperAdminRole || isSuperAdminEmail) {
     // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
-    const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
-    if (mutatingMethod) {
-      const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
-      if (!isSafetyLockToggle) {
-        const ContentSection = require('../models/ContentSection').default;
-        const { safetyLockCache } = require('../utils/MemoryCache');
-        const safetyLockDoc = await safetyLockCache.getOrSet('admin_safety_lock', async () => {
-          return await ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean();
-        }, 30000);
-        
-        if (safetyLockDoc && safetyLockDoc.data?.safetyLock === true) {
-          throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
-        }
-      }
-    }
+    await checkSafetyLock(req);
 
     logAdminAudit(req, res);
     next();
@@ -171,21 +175,7 @@ export const requireRole = (allowedRoles: string[]) => {
     const isSuperAdmin = req.user.role === 'super_admin' || (userEmail && getAdminEmails().some(addr => isSameEmail(userEmail, addr)));
     if (isSuperAdmin || allowedRoles.includes(req.user.role)) {
       // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
-      const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
-      if (mutatingMethod) {
-        const isSafetyLockToggle = req.originalUrl.includes('/cms/admin_safety_lock');
-        if (!isSafetyLockToggle) {
-          const ContentSection = require('../models/ContentSection').default;
-          const { safetyLockCache } = require('../utils/MemoryCache');
-          const safetyLockDoc = await safetyLockCache.getOrSet('admin_safety_lock', async () => {
-            return await ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean();
-          }, 30000);
-          
-          if (safetyLockDoc && safetyLockDoc.data?.safetyLock === true) {
-            throw new ApiError(403, 'Global safety write override lock is active on the backend. Write operations are blocked.');
-          }
-        }
-      }
+      await checkSafetyLock(req);
 
       logAdminAudit(req, res);
       next();
