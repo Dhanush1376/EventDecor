@@ -3,14 +3,14 @@
 // The admin can edit these values and see exactly where they appear on the live site.
 
 const IMAGES = {
-  luxuryRoyalWedding: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2074&auto=format&fit=crop",
-  templeStyleMandap: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop",
-  galleryBackdrop: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop",
-  galleryHampers: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop",
-  modernReceptionLounge: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop",
-  haldiVibrantSetup: "https://images.unsplash.com/photo-1561571994-3c61c554181a?q=80&w=1974&auto=format&fit=crop",
-  galleryMetalPots: "https://images.unsplash.com/photo-1590073844006-33379778ae09?q=80&w=1974&auto=format&fit=crop",
-  galleryPlatePacking: "https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=1974&auto=format&fit=crop"
+  luxuryRoyalWedding: "",
+  templeStyleMandap: "",
+  galleryBackdrop: "",
+  galleryHampers: "",
+  modernReceptionLounge: "",
+  haldiVibrantSetup: "",
+  galleryMetalPots: "",
+  galleryPlatePacking: ""
 };
 
 export const initialWebsiteContent = {
@@ -34,32 +34,7 @@ export const initialWebsiteContent = {
   // HOMEPAGE — Hero Navigation Cards (Mobile Carousel)
   // ═══════════════════════════════════════════════════════
   heroNavigationCards: {
-    items: [
-      {
-        id: 1,
-        title: "Wedding Essentials",
-        image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2074&auto=format&fit=crop",
-        link: "/collections",
-        icon: "storefront",
-        isVisible: true,
-      },
-      {
-        id: 2,
-        title: "Premium Events",
-        image: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop",
-        link: "/events",
-        icon: "celebration",
-        isVisible: true,
-      },
-      {
-        id: 3,
-        title: "Our Gallery",
-        image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop",
-        link: "/gallery",
-        icon: "photo_library",
-        isVisible: true,
-      },
-    ],
+    items: [],
     isVisible: true,
     status: "published",
   },
@@ -70,36 +45,7 @@ export const initialWebsiteContent = {
   featuredCollections: {
     sectionTitle: "Curated Event Categories",
     sectionSubtitle: "Explore our most sought-after side-stage presentations and handcrafted tray collections",
-    items: [
-      {
-        id: 1,
-        name: "Engagement Gift Setups",
-        link: "/events",
-        image: IMAGES.luxuryRoyalWedding,
-        isVisible: true,
-      },
-      {
-        id: 2,
-        name: "Pellikuthuru Heritage",
-        link: "/events",
-        image: IMAGES.templeStyleMandap,
-        isVisible: true,
-      },
-      {
-        id: 3,
-        name: "Custom Ring & Jewelry Trays",
-        link: "/events",
-        image: IMAGES.galleryBackdrop,
-        isVisible: true,
-      },
-      {
-        id: 4,
-        name: "Lotus Tambulam Displays",
-        link: "/events",
-        image: IMAGES.galleryHampers,
-        isVisible: true,
-      },
-    ],
+    items: [],
     isVisible: true,
     status: "published",
   },
@@ -121,35 +67,7 @@ export const initialWebsiteContent = {
   // ═══════════════════════════════════════════════════════
   testimonials: {
     sectionTitle: "Voices of Heritage",
-    items: [
-      {
-        id: 1,
-        name: "Lakshmi Devi",
-        role: "Bride, Hyderabad",
-        text: "The wedding decorations were beyond anything I imagined. True artisanal mastery.",
-        rating: 5,
-        avatar: null,
-        isVisible: true,
-      },
-      {
-        id: 2,
-        name: "Priya Reddy",
-        role: "Event Planner",
-        text: "Every piece radiates heritage. Our clients are always in awe of the craftsmanship.",
-        rating: 5,
-        avatar: null,
-        isVisible: true,
-      },
-      {
-        id: 3,
-        name: "Ananya Sharma",
-        role: "Interior Designer",
-        text: "The attention to detail in their brass work is unmatched. Museum-quality pieces.",
-        rating: 5,
-        avatar: null,
-        isVisible: true,
-      },
-    ],
+    items: [],
     isVisible: true,
     status: "published",
   },
@@ -169,10 +87,7 @@ export const initialWebsiteContent = {
     establishedYear: "Est. in 2003",
     isVisible: true,
     status: "published",
-    stats: [
-      { id: 1, value: "50+", label: "Master Artisans", icon: "groups" },
-      { id: 2, value: "120h", label: "Avg. Craft Per Piece", icon: "schedule" }
-    ]
+    stats: []
   },
 
   // ═══════════════════════════════════════════════════════
@@ -251,60 +166,10 @@ export const initialWebsiteContent = {
         description: "Using natural materials and eco-conscious processes",
       },
     ],
-    stats: [
-      { label: "Tagline", value: "", type: "text" },
-      { label: "Showcases Delivered", value: "2,500+" },
-      { label: "Master Artisans", value: "15+" },
-      { label: "Happy Families", value: "5,000+" },
-    ],
-    specializations: [
-      { title: "Traditional Decor", img: IMAGES.templeStyleMandap },
-      { title: "Floral Mastery", img: IMAGES.luxuryRoyalWedding },
-      { title: "Engagement Trays", img: IMAGES.galleryBackdrop },
-      { title: "Pooja Artistry", img: IMAGES.galleryMetalPots },
-      { title: "Harathi Plates", img: IMAGES.galleryPlatePacking },
-      { title: "Bespoke Baskets", img: IMAGES.galleryHampers },
-    ],
-    features: [
-      {
-        icon: "handyman",
-        title: "Handmade Artistry",
-        desc: "Every petal, every bead, and every fold is meticulously placed by hand.",
-      },
-      {
-        icon: "diamond",
-        title: "Premium Quality",
-        desc: "Sourcing only the finest materials globally to ensure unparalleled luxury.",
-      },
-      {
-        icon: "volunteer_activism",
-        title: "Cultural Roots",
-        desc: "Deeply embedded in authentic Telugu traditions and timeless heritage.",
-      },
-      {
-        icon: "design_services",
-        title: "Bespoke Design",
-        desc: "Tailored to your specific event theme and personal storytelling.",
-      },
-    ],
-    founders: [
-      {
-        name: "Sirisha Atmakuri",
-        role: "Creative Head",
-        subtitle: "Crafted by Hands.",
-        quote: "\"Our mission was never just about creating beautiful objects. It was about preserving the deeply emotional essence of Telugu celebrations. When we craft a piece, we are weaving prayers and centuries of tradition into it.\"",
-        initials: "SD",
-        signatureImg: ""
-      },
-      {
-        name: "Balaji Atmakuri",
-        role: "Marketing Head",
-        subtitle: "Global Heritage.",
-        quote: "\"Bridging the gap between ancient heritage and modern global celebrations. My vision is to ensure that the soulful artistry of Siri Arts & Crafts reaches every corner of the world, honoring our roots while embracing the future.\"",
-        initials: "B",
-        signatureImg: ""
-      }
-    ],
+    stats: [],
+    specializations: [],
+    features: [],
+    founders: [],
     status: "published",
   },
 
@@ -330,6 +195,23 @@ export const initialWebsiteContent = {
     },
     status: "published",
   },
+
+  // ═══════════════════════════════════════════════════════
+  // EVENTS PAGE
+  // ═══════════════════════════════════════════════════════
+  eventsPage: {
+    hero: {
+      title: "Luxury Event Scapes",
+      subtitle: "Cinematic Environments",
+      description: "Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.",
+      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g",
+    },
+    promo: {
+      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w",
+    },
+    status: "published",
+  },
+
 
   // ═══════════════════════════════════════════════════════
   // NAVIGATION & FOOTER
@@ -374,7 +256,7 @@ export const initialWebsiteContent = {
     phone: "9866006648",
     email: "Sirisha.atmakuri@gmail.com",
     whatsapp: "9866006648",
-    address: "#28-1-92, Beside Kailash PavBhaji Center, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
+    address: "#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
     mapEmbed: "",
     businessHours: "Mon - Sat: 10 AM - 7 PM",
     contactMethods: [
@@ -508,9 +390,9 @@ export const initialWebsiteContent = {
       { id: "Emerald Royal", name: "Emerald Royal", hexes: ["#043927", "#2e8b57", "#d4af37"] },
     ],
     venueSizes: [
-      { id: "Intimate", label: "Intimate Setup", capacity: "Under 100 Guests", desc: "Perfect for home functions, small garden ceremonies, or sacred temple halls.", previewImg: IMAGES.templeStyleMandap },
-      { id: "Banquet", label: "Standard Banquet", capacity: "200 - 500 Guests", desc: "Optimized multi-level framing suited for indoor premium hotel reception ballrooms.", previewImg: IMAGES.modernReceptionLounge },
-      { id: "Grand", label: "Grand Lawn / Palace", capacity: "500+ Guests", desc: "Absolute majestic layout with broad entrance deepam runs and overarching architectural arrays.", previewImg: IMAGES.luxuryRoyalWedding },
+      { id: "Intimate", label: "Intimate Setup", capacity: "Compact Footprint", desc: "Perfect for home functions, small garden ceremonies, or sacred temple halls.", previewImg: IMAGES.templeStyleMandap },
+      { id: "Banquet", label: "Standard Banquet", capacity: "Medium Footprint", desc: "Optimized multi-level framing suited for indoor premium hotel reception ballrooms.", previewImg: IMAGES.modernReceptionLounge },
+      { id: "Grand", label: "Grand Lawn / Palace", capacity: "Expanded Footprint", desc: "Absolute majestic layout with broad entrance deepam runs and overarching architectural arrays.", previewImg: IMAGES.luxuryRoyalWedding },
     ],
     packageModules: [
       { id: "mandap", label: "Mandap Setup", basePrice: 150000, desc: "Sacred core structure with customized silk backdrops", isPopular: true },
@@ -521,53 +403,8 @@ export const initialWebsiteContent = {
       { id: "seating", label: "Couple Seating", basePrice: 40000, desc: "Handcrafted brass diwans, vintage sofas & side urlis", isPopular: false },
       { id: "lighting", label: "Lighting Setup", basePrice: 75000, desc: "Cinematic focal halos, uplighting & warm ambient stringers", isPopular: true },
     ],
-    completedEvents: [
-      {
-        id: 1,
-        title: "Malhotra Palace Wedding",
-        location: "Udaipur Grounds",
-        date: "Jan 2026",
-        img: IMAGES.luxuryRoyalWedding,
-      },
-      {
-        id: 2,
-        title: "Sangeeta & Dev Haldi Soiree",
-        location: "Bangalore Lawns",
-        date: "Feb 2026",
-        img: IMAGES.templeStyleMandap,
-      },
-      {
-        id: 3,
-        title: "Krishnan Reception Setup",
-        location: "Chennai Heritage Hall",
-        date: "Mar 2026",
-        img: IMAGES.galleryBackdrop,
-      },
-      {
-        id: 4,
-        title: "Kapoor Intimate Gala",
-        location: "Mumbai Terrace Sanctuary",
-        date: "April 2026",
-        img: IMAGES.galleryHampers,
-      },
-    ],
-    videos: [
-      {
-        title: "Royal Palace Grounds Mandap Reveal",
-        thumb: IMAGES.luxuryRoyalWedding,
-        duration: "1:45",
-      },
-      {
-        title: "Artisanal Ceiling Matrix Timelapse",
-        thumb: IMAGES.templeStyleMandap,
-        duration: "0:58",
-      },
-      {
-        title: "Bespoke Evening Stage Lighting Halo",
-        thumb: IMAGES.galleryBackdrop,
-        duration: "2:10",
-      },
-    ],
+    completedEvents: [],
+    videos: [],
     status: "published",
   },
 

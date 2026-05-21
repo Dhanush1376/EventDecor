@@ -9,6 +9,7 @@ import { SearchBar, CategoryTabs, CustomDropdown, Pagination, Skeleton, Showcase
 import { handleImageError } from "../utils/imageUtils";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
+import { useWebsiteContent } from "../hooks/useWebsiteContent";
 
 const SHOWCASE_CATEGORIES = [
   "All",
@@ -33,6 +34,19 @@ export function EventShowcases() {
   const navigate = useNavigate();
   const { isAuthenticated, runProtectedAction } = useAuth();
   const [showcases, setShowcases] = useState([]);
+
+  const websiteContent = useWebsiteContent();
+  const eventsPageContent = websiteContent?.eventsPage || {
+    hero: {
+      title: "Luxury Event Scapes",
+      subtitle: "Cinematic Environments",
+      description: "Stunning handcrafted designs to transform your milestone celebrations into living masterpieces.",
+      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g",
+    },
+    promo: {
+      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w",
+    }
+  };
   const [loading, setLoading] = useState(true);
   
   // Storefront Listing Filters & Controls (Matching Shop Design)
@@ -352,7 +366,7 @@ export function EventShowcases() {
 
   return (
     <div className="bg-surface min-h-screen font-body">
-      <SEO title="Event Decor & Setups | Siri Arts & Crafts" description="Visual planning gallery and luxury side-stage gift display rentals for traditional Pellikuthuru, Pellikoduku, and engagement setups." />
+      <SEO title={`${eventsPageContent.hero.title} | Siri Arts & Crafts`} description={eventsPageContent.hero.description} />
 
       {/* Editorial Hero (Unified with Shop Design) */}
       <section className="relative min-h-[320px] md:h-[70vh] flex items-center overflow-hidden bg-on-surface-variant">
@@ -364,7 +378,7 @@ export function EventShowcases() {
         >
           <img
             onError={handleImageError}
-            src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop"
+            src={eventsPageContent.hero.backgroundImage}
             className="w-full h-full object-cover"
             alt="Showcase Hero"
           />
@@ -380,7 +394,7 @@ export function EventShowcases() {
             animate={{ opacity: 1, y: 0 }}
             className="font-label-sm text-surface tracking-[0.4em] uppercase mb-6 block text-[#ffe088]"
           >
-            Cinematic Environments
+            {eventsPageContent.hero.subtitle}
           </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
@@ -388,7 +402,7 @@ export function EventShowcases() {
             transition={{ delay: 0.2 }}
             className="font-headline-xl text-[32px] sm:text-[42px] md:text-[56px] lg:text-[72px] text-surface mb-4 md:mb-8 text-gold leading-tight"
           >
-            Luxury Event Scapes
+            {eventsPageContent.hero.title}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -396,7 +410,7 @@ export function EventShowcases() {
             transition={{ delay: 0.4 }}
             className="font-body-lg text-[13px] md:text-[16px] lg:text-[18px] text-surface/80 max-w-xl mx-auto font-light leading-relaxed px-4"
           >
-            Stunning handcrafted designs to transform your milestone celebrations into living masterpieces.
+            {eventsPageContent.hero.description}
           </motion.p>
         </div>
       </section>

@@ -2,13 +2,29 @@ import { useState, useEffect } from "react";
 import { cmsService } from "../services/domainServices";
 import { initialWebsiteContent } from "../admin/data/websiteContentData";
 
+import logger from '../utils/logger';
 const CACHE_TTL = 30 * 1000; // 30 seconds cache TTL
+const LOCAL_STORAGE_KEY = "siri_arts_website_content";
 
 // Global shared state for singleton caching and request de-duplication
 let globalCache = null;
 let lastFetchedTime = 0;
 let globalPromise = null;
 const listeners = new Set();
+
+// Try to initialize globalCache synchronously from localStorage or fallback to initialWebsiteContent
+try {
+  const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (cached) {
+    globalCache = JSON.parse(cached);
+  }
+} catch (e) {
+  logger.warn("Failed to load cached website content from localStorage", e);
+}
+
+if (!globalCache) {
+  globalCache = initialWebsiteContent;
+}
 
 const updateGlobalCache = (newContent) => {
   globalCache = newContent;
@@ -17,7 +33,6 @@ const updateGlobalCache = (newContent) => {
 
 export const refreshWebsiteContent = async () => {
   lastFetchedTime = 0;
-  globalCache = null;
   globalPromise = null;
   
   try {
@@ -28,19 +43,35 @@ export const refreshWebsiteContent = async () => {
       if (response.data.hero) {
         mergedContent.hero = { ...initialWebsiteContent.hero, ...response.data.hero };
       }
+      if (response.data.eventsPage) {
+        mergedContent.eventsPage = {
+          ...initialWebsiteContent.eventsPage,
+          ...response.data.eventsPage,
+          hero: {
+            ...initialWebsiteContent.eventsPage.hero,
+            ...(response.data.eventsPage.hero || {})
+          },
+          promo: {
+            ...initialWebsiteContent.eventsPage.promo,
+            ...(response.data.eventsPage.promo || {})
+          }
+        };
+      }
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mergedContent));
+      } catch (e) {}
       updateGlobalCache(mergedContent);
       return mergedContent;
     }
   } catch (err) {
-    console.warn("Force CMS API refresh failed, keeping current/stale cache", err);
+    logger.warn("Force CMS API refresh failed, keeping current/stale cache", err);
   }
   return null;
 };
 
 export function useWebsiteContent() {
-  const [content, setContent] = useState(() => globalCache || null);
-
-  const [loading, setLoading] = useState(!globalCache);
+  const [content, setContent] = useState(() => globalCache);
+  const [loading, setLoading] = useState(false); // Instantly ready using local cache or default content!
 
   useEffect(() => {
     const handleUpdate = (newContent) => {
@@ -52,8 +83,7 @@ export function useWebsiteContent() {
 
     const fetchContent = async () => {
       // Check cache freshness: BYPASS if lastFetchedTime is 0 (first load in page session)
-      if (globalCache && lastFetchedTime > 0 && (Date.now() - lastFetchedTime < CACHE_TTL)) {
-        setLoading(false);
+      if (lastFetchedTime > 0 && (Date.now() - lastFetchedTime < CACHE_TTL)) {
         return;
       }
 
@@ -63,7 +93,7 @@ export function useWebsiteContent() {
           const res = await globalPromise;
           if (res) handleUpdate(res);
         } catch (err) {
-          console.warn("Concurrent website content fetch error:", err);
+          logger.warn("Concurrent website content fetch error:", err);
         }
         return;
       }
@@ -77,23 +107,39 @@ export function useWebsiteContent() {
             if (response.data.hero) {
               mergedContent.hero = { ...initialWebsiteContent.hero, ...response.data.hero };
             }
+            if (response.data.eventsPage) {
+              mergedContent.eventsPage = {
+                ...initialWebsiteContent.eventsPage,
+                ...response.data.eventsPage,
+                hero: {
+                  ...initialWebsiteContent.eventsPage.hero,
+                  ...(response.data.eventsPage.hero || {})
+                },
+                promo: {
+                  ...initialWebsiteContent.eventsPage.promo,
+                  ...(response.data.eventsPage.promo || {})
+                }
+              };
+            }
+            try {
+              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mergedContent));
+            } catch (e) {}
             updateGlobalCache(mergedContent);
             return mergedContent;
           }
         } catch (err) {
           lastFetchedTime = Date.now(); // Throttles requests even on failure/network errors
-          console.warn("CMS API unavailable, using cached/default content", err);
-          // Graceful degradation: use admin-defined defaults when API is unavailable
-          if (!globalCache) {
-            updateGlobalCache(initialWebsiteContent);
-          }
+          logger.warn("CMS API unavailable, using cached/default content", err);
         } finally {
           globalPromise = null;
         }
         return null;
       })();
 
-      await globalPromise;
+      const res = await globalPromise;
+      if (res) {
+        handleUpdate(res);
+      }
     };
 
     fetchContent();

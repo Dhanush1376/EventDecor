@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ProductCard,
   QuickViewModal,
@@ -18,16 +18,24 @@ import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { handleImageError } from "../utils/imageUtils";
 import toast from "react-hot-toast";
 import { useCart } from "../context/CartContext";
+import { useWebsiteContent } from "../hooks/useWebsiteContent";
 
+import logger from '../utils/logger';
 export function EventCollections() {
   const { setClaimedCoupon } = useCart();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All Occasions");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryParam = searchParams.get("category") || "All Occasions";
+  const searchParam = searchParams.get("search") || "";
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+
+  const [searchQuery, setSearchQuery] = useState(searchParam);
+  const [activeCategory, setActiveCategory] = useState(categoryParam);
   const [sortBy, setSortBy] = useState("Popularity");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(pageParam);
+
 
   // Advanced Filter State
   const [filters, setFilters] = useState({
@@ -45,6 +53,50 @@ export function EventCollections() {
   const [categories, setCategories] = useState(["All Occasions"]);
   const [styles, setStyles] = useState(["All Styles"]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setActiveCategory(searchParams.get("category") || "All Occasions");
+    setSearchQuery(searchParams.get("search") || "");
+    setCurrentPage(parseInt(searchParams.get("page") || "1", 10));
+  }, [searchParams]);
+
+  // Debounced search to prevent url param clutter on typing
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const currentSearchInUrl = searchParams.get("search") || "";
+    if (debouncedSearch !== currentSearchInUrl) {
+      setSearchParams(prev => {
+        const params = new URLSearchParams(prev);
+        if (debouncedSearch) {
+          params.set("search", debouncedSearch);
+        } else {
+          params.delete("search");
+        }
+        params.delete("page");
+        return params;
+      }, { replace: true });
+    }
+  }, [debouncedSearch, setSearchParams, searchParams]);
+
+  const websiteContent = useWebsiteContent();
+  const eventsPageContent = websiteContent?.eventsPage || {
+    hero: {
+      title: "Luxury Event Scapes",
+      subtitle: "Cinematic Environments",
+      description: "Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.",
+      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g",
+    },
+    promo: {
+      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w",
+    }
+  };
 
   const [promoCoupon, setPromoCoupon] = useState(null);
   const [countdown, setCountdown] = useState({ D: "02", H: "14", M: "42", S: "00" });
@@ -67,7 +119,7 @@ export function EventCollections() {
         }
       }
     }).catch(err => {
-      console.warn("Failed to fetch coupons for promo banner in EventCollections", err);
+      logger.warn("Failed to fetch coupons for promo banner in EventCollections", err);
     });
   }, []);
 
@@ -145,7 +197,7 @@ export function EventCollections() {
           setMatchingProducts(products);
         }
       } catch (err) {
-        console.error("Event fetch failed:", err);
+        logger.error("Event fetch failed:", err);
         toast.error("Failed to load events");
       } finally {
         setIsLoading(false);
@@ -184,6 +236,8 @@ export function EventCollections() {
   const clearAllFilters = () => {
     setFilters({ price: [], occasion: [], style: [] });
     setActiveCategory("All Occasions");
+    setSearchQuery("");
+    setSearchParams({});
     setCurrentPage(1);
   };
 
@@ -267,6 +321,16 @@ export function EventCollections() {
   };
 
   const handleCategorySelect = (cat) => {
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      if (cat === "All Occasions") {
+        params.delete("category");
+      } else {
+        params.set("category", cat);
+      }
+      params.delete("page");
+      return params;
+    });
     setActiveCategory(cat);
     setCurrentPage(1);
     setTimeout(() => {
@@ -288,8 +352,8 @@ export function EventCollections() {
   return (
     <div className="bg-surface min-h-screen text-on-surface">
       <SEO
-        title="Luxury Event Scapes"
-        description="Immersive architectural curations designed to transform your milestone celebrations."
+        title={`${eventsPageContent.hero.title} | Siri Arts & Crafts`}
+        description={eventsPageContent.hero.description}
       />
 
       {/* Editorial Hero */}
@@ -302,7 +366,7 @@ export function EventCollections() {
         >
           <img
             onError={handleImageError}
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g"
+            src={eventsPageContent.hero.backgroundImage}
             className="w-full h-full object-cover"
             alt="Cinematic Events Background"
           />
@@ -331,7 +395,7 @@ export function EventCollections() {
             animate={{ opacity: 1, y: 0 }}
             className="font-label-sm text-surface tracking-[0.4em] uppercase mb-6 block"
           >
-            Cinematic Environments
+            {eventsPageContent.hero.subtitle}
           </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
@@ -339,7 +403,7 @@ export function EventCollections() {
             transition={{ delay: 0.2 }}
             className="font-headline-xl text-[32px] sm:text-[42px] md:text-[56px] lg:text-[72px] text-surface mb-4 md:mb-8 text-gold leading-tight"
           >
-            Luxury Event Scapes
+            {eventsPageContent.hero.title}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -347,82 +411,84 @@ export function EventCollections() {
             transition={{ delay: 0.4 }}
             className="font-body-lg text-[13px] md:text-[16px] lg:text-[18px] text-surface/80 max-w-2xl mx-auto font-light leading-relaxed px-4"
           >
-            Immersive architectural curations designed to transform your
-            milestone celebrations into living masterpieces.
+            {eventsPageContent.hero.description}
           </motion.p>
         </div>
       </section>
 
       {/* Sticky Discovery Bar */}
-      <nav
-        className={`z-50 transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full glass py-2 shadow-xl" : "relative -mt-8 md:-mt-12 mb-10 md:mb-12"}`}
-      >
-        <div
-          className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex flex-col lg:flex-row lg:items-center gap-4 md:gap-4 lg:gap-6 ${isSticky ? "" : "transition-all duration-500"}`}
+      {/* Floating / Sticky Navigation Bar Wrapper to prevent layout shift and glitching */}
+      <div className={isSticky ? "h-[68px] lg:h-[76px] mb-8 md:mb-12" : ""}>
+        <nav
+          className={`z-50 border-b transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full bg-white/95 backdrop-blur-xl border-black/5 py-3 shadow-md" : "border-transparent relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"}`}
         >
-          {/* Search Bar & Mobile Filter Toggle */}
-          <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
-            <div className="flex-1 h-11">
-              <SearchBar
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Search masteries..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
-              />
-            </div>
-            {/* Mobile/Tablet Filter Toggle */}
-            <button
-              onClick={() => setIsFilterOpen(true)}
-              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                tune
-              </span>
-            </button>
-          </div>
-
-          {/* Desktop-Only Layout Integration (Tabs + Sort) */}
-          <div className="hidden lg:flex items-center justify-between gap-6 flex-1 min-w-0">
-            <div className="flex-1 overflow-hidden flex justify-start lg:justify-center">
-              <CategoryTabs
-                categories={categories}
-                activeCategory={activeCategory}
-                onCategoryChange={handleCategorySelect}
-              />
-            </div>
-
-            <div className="flex items-center shrink-0">
-              <div className="w-48 xl:w-52 h-11">
-                <CustomDropdown
-                  options={[
-                    { value: "Popularity", label: "Popularity" },
-                    {
-                      value: "Price: Low to High",
-                      label: "Price: Low to High",
-                    },
-                    {
-                      value: "Price: High to Low",
-                      label: "Price: High to Low",
-                    },
-                  ]}
-                  value={sortBy}
-                  onChange={setSortBy}
-                  className="w-full h-full"
-                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
+          <div
+            className={`transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 ${!isSticky ? "bg-white/80 backdrop-blur-lg border-black/5 shadow-luxury/5 rounded-[2rem] p-3 md:p-4" : "border-transparent max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop w-full"}`}
+          >
+            {/* Search Bar & Mobile Filter Toggle */}
+            <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
+              <div className="flex-1 h-11">
+                <SearchBar
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Search masteries..."
+                  className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
                 />
+              </div>
+              {/* Mobile/Tablet Filter Toggle */}
+              <button
+                onClick={() => setIsFilterOpen(true)}
+                className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  tune
+                </span>
+              </button>
+            </div>
+
+            {/* Desktop-Only Layout Integration (Tabs + Sort) */}
+            <div className="hidden lg:flex items-center justify-between gap-6 flex-1 min-w-0">
+              <div className="flex-1 overflow-hidden flex justify-start lg:justify-center">
+                <CategoryTabs
+                  categories={categories}
+                  activeCategory={activeCategory}
+                  onCategoryChange={handleCategorySelect}
+                />
+              </div>
+
+              <div className="flex items-center shrink-0">
+                <div className="w-48 xl:w-52 h-11">
+                  <CustomDropdown
+                    options={[
+                      { value: "Popularity", label: "Popularity" },
+                      {
+                        value: "Price: Low to High",
+                        label: "Price: Low to High",
+                      },
+                      {
+                        value: "Price: High to Low",
+                        label: "Price: High to Low",
+                      },
+                    ]}
+                    value={sortBy}
+                    onChange={setSortBy}
+                    className="w-full h-full"
+                    buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* Early Booking Banner - Cinematic Luxury Redesign */}
       {promoCoupon && (
         <PromoBanner
-          backgroundImage="https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w"
+          backgroundImage={eventsPageContent.promo.backgroundImage}
           badgeText={`Active Promo: ${promoCoupon.code}`}
           statusText="Ends Soon"
           title="Limited Offer — "
@@ -538,13 +604,10 @@ export function EventCollections() {
                             <div className="flex items-center gap-1.5 md:gap-3">
                               <div className="flex items-center gap-1 text-black/40 font-label-sm text-[8px] md:text-[9px] uppercase tracking-widest font-bold">
                                 <span className="material-symbols-outlined text-[10px] md:text-[14px]">
-                                  groups
+                                  palette
                                 </span>
                                 <span className="truncate max-w-[60px] md:max-w-none">
-                                  {evItem.venueSize?.replace(
-                                    "Suitable for ",
-                                    "",
-                                  )}
+                                  {evItem.style || "Traditional"}
                                 </span>
                               </div>
                             </div>
@@ -571,6 +634,15 @@ export function EventCollections() {
                         currentPage={currentPage}
                         totalPages={totalPages}
                         onPageChange={(page) => {
+                          setSearchParams(prev => {
+                            const params = new URLSearchParams(prev);
+                            if (page === 1) {
+                              params.delete("page");
+                            } else {
+                              params.set("page", String(page));
+                            }
+                            return params;
+                          });
                           setCurrentPage(page);
                           setTimeout(() => {
                             const el =

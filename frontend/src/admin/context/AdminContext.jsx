@@ -23,6 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import { refreshWebsiteContent } from "../../hooks/useWebsiteContent";
 import { io as socketIO } from "socket.io-client";
 import { safeLocalStorage } from "../../utils/storage";
+import logger from "../../utils/logger";
 
 const mapDbNotificationToFrontend = (n) => ({
   id: n._id || n.id,
@@ -40,18 +41,8 @@ const AdminContext = createContext(null);
 const loadContent = () => initialWebsiteContent;
 
 const initialCustomCategories = {
-  products: [
-    { id: "p1", name: "Traditional Return Gifts", count: 24, image: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=600&auto=format&fit=crop", active: true, description: "Bespoke brass tambulam bowls and handcrafted shagun packaging." },
-    { id: "p2", name: "Engagement Ring Trays", count: 18, image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=600&auto=format&fit=crop", active: true, description: "Pearl beaded trays and custom carved wooden initials." },
-    { id: "p3", name: "Carved Coconuts & Shagun", count: 12, image: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=600&auto=format&fit=crop", active: true, description: "Artisanal hand-painted coconuts for traditional ceremonies." },
-    { id: "p4", name: "Customized Gift Hampers", count: 30, image: "https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=600&auto=format&fit=crop", active: true, description: "Velvet presentation hampers with South Indian sweet boxes." }
-  ],
-  events: [
-    { id: "e1", name: "Telugu Heritage (Pellikuthuru)", count: 8, image: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=600&auto=format&fit=crop", active: true, description: "Royal Mysore brass urlis, marigold strings, and wooden carved seats." },
-    { id: "e2", name: "Engagement Gift Setup", count: 15, image: "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=600&auto=format&fit=crop", active: true, description: "Side-stage gift presentation pedestals and LED uplighting." },
-    { id: "e3", name: "Ring Ceremony Showcases", count: 10, image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=600&auto=format&fit=crop", active: true, description: "Gold-leaf backdrop rings and velvet pedestal arrangements." },
-    { id: "e4", name: "Tambulam & Shagun Counter", count: 20, image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=600&auto=format&fit=crop", active: true, description: "Royal wooden shelving with fresh jasmine runners." }
-  ]
+  products: [],
+  events: []
 };
 
 const loadCustomCategories = () => initialCustomCategories;
@@ -74,7 +65,7 @@ const mapDbProductToFrontend = (p) => {
     stock: p.stock !== undefined ? p.stock : 10,
     status: fStatus,
     featured: p.featured !== undefined ? p.featured : false,
-    image: p.imageSrc || p.image || "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=640&auto=format&fit=crop",
+    image: p.imageSrc || p.image || "",
     views: p.views !== undefined ? p.views : 120,
     sold: p.sold !== undefined ? p.sold : 5,
     rating: p.rating || 5.0,
@@ -109,7 +100,7 @@ const mapDbOrderToFrontend = (o) => {
     id: o._id || o.id || "ORD-UNKNOWN",
     customer: o.shippingAddress?.name || o.user?.name || "Store Customer",
     email: o.shippingAddress?.email || o.user?.email || "customer@email.com",
-    phone: o.shippingAddress?.phone || o.user?.phone || "+91 98765 43210",
+    phone: o.shippingAddress?.phone || o.user?.phone || "",
     items: mappedItems,
     total: o.total || o.subtotal || 0,
     status: fStatus,
@@ -152,7 +143,7 @@ const mapDbCustomerToFrontend = (c) => {
     id: c._id || c.id || "CUS-UNKNOWN",
     name: c.name || "Customer",
     email: c.email || "",
-    phone: c.phone || "+91 98765 43210",
+    phone: c.phone || "",
     orders: orderCount,
     totalSpent: totalSpent || 0,
     lastOrder: lastOrderDate,
@@ -220,7 +211,7 @@ export function AdminProvider({ children }) {
         setAuditLogs((prev) => [newLog, ...prev].slice(0, 100));
       }
     } catch (err) {
-      console.error("Failed to log admin action to backend:", err);
+      logger.error("Failed to log admin action to backend:", err);
       // Fallback local state update to ensure UI interactivity
       const newLog = {
         id: `log-${Date.now()}`,
@@ -242,7 +233,7 @@ export function AdminProvider({ children }) {
         toast.success("Audit trail log history cleared successfully.");
       }
     } catch (err) {
-      console.error("Failed to clear audit logs:", err);
+      logger.error("Failed to clear audit logs:", err);
       toast.error("Failed to clear cloud audit logs");
     }
   }, []);
@@ -258,7 +249,7 @@ export function AdminProvider({ children }) {
       logAdminAction("TOGGLE_SAFETY_LOCK", `Global safety write override lock set to ${next}`);
       toast.success(`Safety lock is now ${next ? "ACTIVE (Write Operations Blocked)" : "DISABLED"}`);
     } catch (err) {
-      console.error("Failed to update backend safety lock:", err);
+      logger.error("Failed to update backend safety lock:", err);
       // Revert on failure
       setSafetyLock(!next);
       toast.error("Failed to update safety lock on the backend database.");
@@ -274,7 +265,7 @@ export function AdminProvider({ children }) {
       logAdminAction("TOGGLE_MAINTENANCE", `Global storefront maintenance mode set to ${next}`);
       toast.success(`Maintenance mode is now ${next ? "ENABLED" : "DISABLED"}`);
     } catch (err) {
-      console.error("Failed to update backend maintenance mode:", err);
+      logger.error("Failed to update backend maintenance mode:", err);
       // Revert on failure
       setMaintenanceMode(!next);
       toast.error("Failed to update maintenance mode on the backend database.");
@@ -289,7 +280,7 @@ export function AdminProvider({ children }) {
       logAdminAction("TOGGLE_AUTO_PUBLISH", `Global auto publish CMS setting set to ${next}`);
       toast.success(`Auto-Publish mode is now ${next ? "ENABLED" : "DISABLED"}`);
     } catch (err) {
-      console.error("Failed to update backend auto publish setting:", err);
+      logger.error("Failed to update backend auto publish setting:", err);
       setAutoPublish(!next);
       toast.error("Failed to update auto publish in database");
     }
@@ -308,7 +299,7 @@ export function AdminProvider({ children }) {
       logAdminAction("TIMEOUT_UPDATE", `Idle inactivity threshold updated to ${val} minutes`);
       toast.success(`Inactivity limit set to ${val} minutes`);
     } catch (err) {
-      console.error("Failed to save idle timeout to backend:", err);
+      logger.error("Failed to save idle timeout to backend:", err);
       toast.error("Failed to save timeout in database");
     }
   }, [logAdminAction]);
@@ -394,12 +385,12 @@ export function AdminProvider({ children }) {
         id: `${type[0]}-${Date.now()}`,
         name: data.name,
         count: data.count || 0,
-        image: data.image || "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=600&auto=format&fit=crop",
+        image: data.image || "",
         active: data.active !== undefined ? data.active : true,
         description: data.description || ""
       };
       next[type] = [newCat, ...list];
-      cmsService.updateSection('custom_categories', next).catch(e => console.error("Failed to save category:", e));
+      cmsService.updateSection('custom_categories', next).catch(e => logger.error("Failed to save category:", e));
       logAdminAction("ADD_CATEGORY", `Added new category/theme '${data.name}' to ${type}`);
       toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} added successfully!`);
       return next;
@@ -419,7 +410,7 @@ export function AdminProvider({ children }) {
       const next = { ...prev };
       const list = next[type] || [];
       next[type] = list.map(item => item.id === id ? { ...item, ...data } : item);
-      cmsService.updateSection('custom_categories', next).catch(e => console.error("Failed to save categories:", e));
+      cmsService.updateSection('custom_categories', next).catch(e => logger.error("Failed to save categories:", e));
       logAdminAction("UPDATE_CATEGORY", `Updated category/theme ID ${id}`);
       toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} updated!`);
       return next;
@@ -439,7 +430,7 @@ export function AdminProvider({ children }) {
       const next = { ...prev };
       const list = next[type] || [];
       next[type] = list.filter(item => item.id !== id);
-      cmsService.updateSection('custom_categories', next).catch(e => console.error("Failed to save categories:", e));
+      cmsService.updateSection('custom_categories', next).catch(e => logger.error("Failed to save categories:", e));
       logAdminAction("DELETE_CATEGORY", `Removed category/theme ID ${id}`);
       toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} removed.`);
       return next;
@@ -511,7 +502,7 @@ export function AdminProvider({ children }) {
           setNotifications(list.map(mapDbNotificationToFrontend));
         }
       } catch (err) {
-        console.error("Failed to load admin data:", err);
+        logger.error("Failed to load admin data:", err);
       } finally {
         setDataLoading(false);
       }
@@ -533,6 +524,20 @@ export function AdminProvider({ children }) {
             }
             if (response.data.heroNavigationCards) {
               merged.heroNavigationCards = { ...initialWebsiteContent.heroNavigationCards, ...response.data.heroNavigationCards };
+            }
+            if (response.data.eventsPage) {
+              merged.eventsPage = {
+                ...initialWebsiteContent.eventsPage,
+                ...response.data.eventsPage,
+                hero: {
+                  ...initialWebsiteContent.eventsPage.hero,
+                  ...(response.data.eventsPage.hero || {})
+                },
+                promo: {
+                  ...initialWebsiteContent.eventsPage.promo,
+                  ...(response.data.eventsPage.promo || {})
+                }
+              };
             }
             // Preserve local unsaved draft sections (marked as 'modified')
             Object.keys(prev).forEach((key) => {
@@ -583,7 +588,7 @@ export function AdminProvider({ children }) {
           }
         }
       } catch (err) {
-        console.warn("CMS API unavailable", err);
+        logger.warn("CMS API unavailable", err);
       }
     };
     fetchCMS();
@@ -751,7 +756,7 @@ export function AdminProvider({ children }) {
     try {
       await notificationService.markAdminAlertRead(notifId);
     } catch (err) {
-      console.warn("Failed to mark notification read on backend:", err);
+      logger.warn("Failed to mark notification read on backend:", err);
     }
   }, []);
 
@@ -761,7 +766,7 @@ export function AdminProvider({ children }) {
       await notificationService.markAdminAlertAllRead();
       toast.success("All notifications marked as read");
     } catch (err) {
-      console.warn("Failed to mark all notifications read on backend:", err);
+      logger.warn("Failed to mark all notifications read on backend:", err);
     }
   }, []);
 
@@ -774,7 +779,7 @@ export function AdminProvider({ children }) {
     const rawApiUrl = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? 'https://siri-arts-n-crafts.onrender.com/api' : 'http://localhost:5000/api');
     const socketServerUrl = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
-    console.log('[WEBSOCKET] Initiating admin alert subscription at:', socketServerUrl);
+    logger.dev('[WEBSOCKET] Initiating admin alert subscription at:', socketServerUrl);
     const socket = socketIO(socketServerUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
@@ -783,11 +788,11 @@ export function AdminProvider({ children }) {
     });
 
     socket.on('connect', () => {
-      console.log('[WEBSOCKET] Successfully established socket connection');
+      logger.dev('[WEBSOCKET] Successfully established socket connection');
     });
 
     socket.on('new_notification', (data) => {
-      console.log('[WEBSOCKET] Received real-time admin alert:', data);
+      logger.dev('[WEBSOCKET] Received real-time admin alert:', data);
       
       const mapped = mapDbNotificationToFrontend(data);
       
@@ -825,7 +830,7 @@ export function AdminProvider({ children }) {
     });
 
     socket.on('connect_error', (err) => {
-      console.warn('[WEBSOCKET] Handshake failed or role unauthorized:', err.message);
+      logger.warn('[WEBSOCKET] Handshake failed or role unauthorized:', err.message);
     });
 
     return () => {
@@ -1011,7 +1016,7 @@ export function AdminProvider({ children }) {
         setOrders(list.map(mapDbOrderToFrontend));
       }
     } catch (err) {
-      console.warn('Orders refresh failed:', err);
+      logger.warn('Orders refresh failed:', err);
     }
   }, []);
 
