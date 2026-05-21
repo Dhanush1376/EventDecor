@@ -64,9 +64,7 @@ const startServer = async () => {
 
     // 2. Initialize Background Jobs
     initJobs();
-    
-    // Initialize BullMQ Workers
-    require('./src/workers/emailWorker');
+
 
       // 3. Start Express Server
       server = app.listen(PORT, () => {

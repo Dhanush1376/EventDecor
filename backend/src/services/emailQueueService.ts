@@ -1,21 +1,17 @@
-import { emailQueue } from '../queues/emailQueue';
 import { EmailOptions } from './notificationService';
 import logger from '../config/logger';
 
 class EmailQueueManager {
   /**
-   * Pushes an email to the background BullMQ queue and returns immediately.
+   * Directly processes the email in the background to return immediately.
    */
   public enqueue(options: EmailOptions) {
-    emailQueue.add('send-email', options).catch((err) => {
-      logger.error(`[EmailQueue] Failed to add email job to BullMQ queue: ${err.message}`);
-      // Fallback: If Redis is down, we attempt to process directly to avoid losing critical emails
-      const { sendDirectEmailProcessor } = require('./notificationService');
-      sendDirectEmailProcessor(options).catch((directErr: any) => {
-         logger.error(`[EmailQueue] Direct fallback also failed: ${directErr.message}`);
-      });
+    // Run direct email dispatch in the background (non-blocking)
+    const { sendDirectEmailProcessor } = require('./notificationService');
+    sendDirectEmailProcessor(options).catch((err: any) => {
+      logger.error(`[EmailQueue] Direct background email dispatch failed: ${err.message}`);
     });
-    logger.debug(`[EmailQueue] Enqueued email to ${options.email} (Type: ${options.type}) via BullMQ`);
+    logger.debug(`[EmailQueue] Enqueued email to ${options.email} (Type: ${options.type}) for direct background processing`);
   }
 }
 
