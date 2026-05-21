@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 
+import logger from '../../utils/logger';
 /**
  * Enterprise-grade Error Boundary with:
  * - Sentry error reporting
@@ -22,7 +23,7 @@ export class ErrorBoundary extends Component {
     this.setState({ errorInfo });
 
     // Log to console in development
-    console.error('ErrorBoundary caught:', error, errorInfo);
+    logger.error('ErrorBoundary caught:', error, errorInfo);
 
     // Report to Sentry if available
     if (typeof window !== 'undefined' && window.Sentry) {

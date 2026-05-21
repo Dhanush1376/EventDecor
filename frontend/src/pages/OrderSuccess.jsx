@@ -6,10 +6,12 @@ import { QRCodeSVG } from "qrcode.react";
 import { SEO } from "../components/seo/SEO";
 import { handleImageError } from "../utils/imageUtils";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
+import { InvoiceTemplate } from "../components/ui";
 import { orderService } from "../services/domainServices";
 import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
 
+import logger from '../utils/logger';
 const BarcodeSVG = ({ val }) => (
   <svg viewBox="0 0 200 40" className="w-full h-9" xmlns="http://www.w3.org/2000/svg">
     <rect width="200" height="40" fill="#fff" />
@@ -149,7 +151,7 @@ export function OrderSuccess() {
           }
         }
       } catch (err) {
-        console.error("Error fetching order details:", err);
+        logger.error("Error fetching order details:", err);
         if (!order) {
           setError(err.response?.data?.message || "Access denied. This order belongs to another user account.");
         }
@@ -510,89 +512,8 @@ export function OrderSuccess() {
       </div>
 
       {/* Styled Hidden HTML Print Layout for Invoices */}
-      <div id="invoice-print-area" className="hidden p-4 bg-white text-black text-xs leading-relaxed max-w-sm mx-auto">
-        {order && (
-          <div className="border-2 border-black p-3 font-mono uppercase text-[9px] tracking-tight">
-            {/* Top row with logo and payment type */}
-            <div className="flex justify-between items-center border-b-2 border-black pb-2 mb-2">
-              <div>
-                <span className="font-sans font-black tracking-tighter text-sm">SIRI ARTS</span>
-                <span className="block text-[8px] text-gray-600 font-sans tracking-wide">STUDIO & CRAFTS</span>
-              </div>
-              <div className="border-2 border-black bg-black text-white px-3 py-1 font-bold text-center leading-none">
-                <span className="text-[12px] block">
-                  {order.paymentMode.includes('COD') ? 'COD' : 'PREPAID'}
-                </span>
-                <span className="text-[8px] tracking-wider block mt-0.5">
-                  ₹{safeFormatNumber(order.totalAmount)}
-                </span>
-              </div>
-            </div>
-
-            {/* AWB & Barcode */}
-            <div className="text-center border-b-2 border-black pb-2 mb-2">
-              <BarcodeSVG val={`SR-${order.orderId.substring(order.orderId.length - 8).toUpperCase()}-IN`} />
-              <div className="flex justify-between items-center px-1 font-bold text-[8px] mt-1">
-                <span>AWB: SR-{order.orderId.substring(order.orderId.length - 8).toUpperCase()}-IN</span>
-                <span>ORD: #{order.orderId.substring(0, 8).toUpperCase()}</span>
-              </div>
-            </div>
-
-            {/* Deliver To Address */}
-            <div className="border-b-2 border-black pb-2 mb-2 text-left">
-              <span className="font-bold text-[9px] block mb-1">DELIVER TO:</span>
-              <strong className="text-[11px] block">{order.deliveryAddress.name}</strong>
-              <p className="text-[9px] leading-tight mt-1 whitespace-pre-line lowercase">
-                {order.deliveryAddress.addressString}, {order.deliveryAddress.locality},
-                <br />
-                {order.deliveryAddress.city}, {order.deliveryAddress.state}
-              </p>
-              <div className="flex justify-between items-center mt-2 pt-1 border-t border-dashed border-gray-300">
-                <span className="font-black text-[12px]">PIN: {order.deliveryAddress.pincode}</span>
-                <span className="font-bold">PH: {order.deliveryAddress.phone}</span>
-              </div>
-            </div>
-
-            {/* Seller & Product table */}
-            <div className="border-b-2 border-black pb-2 mb-2 text-left">
-              <table className="w-full text-[8px] border-collapse">
-                <thead>
-                  <tr className="border-b border-black font-bold">
-                    <th className="py-1 text-left">ITEM DETAIL</th>
-                    <th className="py-1 text-center">QTY</th>
-                    <th className="py-1 text-right">TOTAL</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {order.items.map((item, i) => (
-                    <tr key={i} className="border-b border-gray-200">
-                      <td className="py-1 text-left truncate max-w-[180px]">
-                        {item.title} <span className="text-[7px] text-gray-500">({item.variant || 'Default'})</span>
-                      </td>
-                      <td className="py-1 text-center font-bold">{item.quantity}</td>
-                      <td className="py-1 text-right font-bold">₹{safeFormatNumber(item.price)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Invoice Details & QR */}
-            <div className="flex justify-between items-start">
-              <div className="text-left text-[7px] text-gray-600 space-y-0.5">
-                <p><strong>SOLD BY:</strong> SIRI ARTS & CRAFTS, HYD, IN</p>
-                <p><strong>GSTIN:</strong> 36AAAES9284D1ZX</p>
-                <p><strong>INV NO:</strong> IN-{order.orderId.substring(order.orderId.length - 8).toUpperCase()}</p>
-                <p><strong>DATE:</strong> {order.date}</p>
-                <p className="mt-1 font-bold text-black text-[6px]">COMPUTER GENERATED LABEL. NO SIGNATURE REQ.</p>
-              </div>
-              <div className="shrink-0 flex flex-col items-center">
-                <QRCodeSVG value={`${window.location.origin}${order.trackingPath || `/track/${order._id}`}`} size={44} level="M" />
-                <span className="text-[6px] font-bold text-gray-500 mt-0.5">VERIFIED</span>
-              </div>
-            </div>
-          </div>
-        )}
+      <div id="invoice-print-area" className="hidden">
+        <InvoiceTemplate order={order} />
       </div>
 
       {/* shipping sticker preview modal */}

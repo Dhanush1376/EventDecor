@@ -15,6 +15,7 @@ import { productService, userService } from "../services/domainServices";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../context/AuthContext";
 
+import logger from '../utils/logger';
 export function ProductDetails() {
   const { id } = useParams();
   const atcRef = useRef(null);
@@ -32,7 +33,7 @@ export function ProductDetails() {
   useEffect(() => {
     if (product && user) {
       userService.trackRecentlyViewed(product._id || product.id).catch((err) => {
-        console.error("Failed to track recently viewed masterpiece:", err);
+        logger.error("Failed to track recently viewed masterpiece:", err);
       });
     }
   }, [product, user]);

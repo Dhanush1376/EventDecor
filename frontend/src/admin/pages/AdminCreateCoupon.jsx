@@ -5,6 +5,7 @@ import { couponService, productService } from "../../services/domainServices";
 import toast from "react-hot-toast";
 import { AdminToggle } from "../components/AdminUIKit";
 
+import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 const AVAILABLE_CATEGORIES = [
@@ -68,7 +69,7 @@ export function AdminCreateCoupon() {
         setProducts(list);
       }
     }).catch((err) => {
-      console.warn("Failed to load catalog products for targeting selection:", err);
+      logger.warn("Failed to load catalog products for targeting selection:", err);
     });
   }, []);
 

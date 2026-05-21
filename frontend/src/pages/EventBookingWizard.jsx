@@ -7,6 +7,7 @@ import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 
+import logger from '../utils/logger';
 const EVENT_TYPES = [
   { id: "wedding", label: "Wedding / Vivaham", icon: "church", desc: "Grand traditional structures, modular mandaps & royal backdrops" },
   { id: "engagement", label: "Engagement Ceremony", icon: "diamond", desc: "Modern floral panels, elegant backdrops & grand entrances" },
@@ -33,24 +34,38 @@ export function EventBookingWizard() {
   const [loading, setLoading] = useState(true);
 
   // Form State
-  const [formData, setFormData] = useState({
-    eventType: "wedding",
-    eventPackageId: "",
-    title: "",
-    date: "",
-    timing: { start: "08:00 AM", end: "10:00 PM" },
-    guestCount: 150,
-    venue: { address: "", googleMapsLink: "", isOutdoor: false },
-    customization: {
-      themeColor: "Gilded Gold & Crimson Red",
-      floralPreference: "Sacred Jasmine Garlands & Royal Lotuses",
-      lightingPreference: "Vintage Hanging Brass Diyas & Amber Spotlights",
-      stageSize: "Standard (20ft x 12ft)",
-      additionalRequests: "",
-    },
-    selectedAddons: [],
-    inspirationImages: [],
+  const [formData, setFormData] = useState(() => {
+    const saved = localStorage.getItem("siri_arts_wizard_form_data");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Ignore JSON parsing errors
+      }
+    }
+    return {
+      eventType: "wedding",
+      eventPackageId: "",
+      title: "",
+      date: "",
+      timing: { start: "08:00 AM", end: "10:00 PM" },
+      guestCount: 150,
+      venue: { address: "", googleMapsLink: "", isOutdoor: false },
+      customization: {
+        themeColor: "Gilded Gold & Crimson Red",
+        floralPreference: "Sacred Jasmine Garlands & Royal Lotuses",
+        lightingPreference: "Vintage Hanging Brass Diyas & Amber Spotlights",
+        stageSize: "Standard (20ft x 12ft)",
+        additionalRequests: "",
+      },
+      selectedAddons: [],
+      inspirationImages: [],
+    };
   });
+
+  useEffect(() => {
+    localStorage.setItem("siri_arts_wizard_form_data", JSON.stringify(formData));
+  }, [formData]);
 
   // AI Design Assistant State
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
@@ -83,7 +98,7 @@ export function EventBookingWizard() {
       }
       setLoading(false);
     }).catch(err => {
-      console.error(err);
+      logger.error(err);
       setLoading(false);
     });
   }, [location]);
@@ -150,7 +165,6 @@ export function EventBookingWizard() {
       // Add analyzed details to customization forms automatically
       setFormData((prev) => ({
         ...prev,
-        inspirationImages: ["https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80"],
         customization: {
           ...prev.customization,
           themeColor: "Royal Crimson Vermillion & Gilded Gold Hues",
@@ -214,7 +228,7 @@ export function EventBookingWizard() {
         throw new Error("No image URL returned");
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setIsAiAnalyzing(false);
       toast.error("Upload server offline. Simulating local AI Design Assistant fallback...");
       simulateAiAnalysis();
@@ -227,19 +241,34 @@ export function EventBookingWizard() {
       return;
     }
 
+    // Validate required fields
+    if (!formData.title?.trim()) {
+      toast.error("Please enter a booking title.");
+      return;
+    }
+    if (!formData.date) {
+      toast.error("Please select a date for your event.");
+      return;
+    }
+    if (!formData.venue?.address?.trim()) {
+      toast.error("Please specify a venue address.");
+      return;
+    }
+
     const loadId = toast.loading("Setting up your event workspace...");
     try {
       const res = await bookingService.create(formData);
       toast.dismiss(loadId);
       if (res.success) {
         toast.success("Congratulations! Your event design planner is ready.");
+        localStorage.removeItem("siri_arts_wizard_form_data");
         navigate("/dashboard"); // Redirects to Client Dashboard containing Events!
       } else {
         toast.error(res.message || "Failed to create booking.");
       }
     } catch (err) {
       toast.dismiss(loadId);
-      console.error(err);
+      logger.error(err);
       toast.error("An error occurred. Please verify required fields and login state.");
     }
   };
@@ -376,7 +405,7 @@ export function EventBookingWizard() {
                           <div className="space-y-1.5 flex-1 min-w-0">
                             <span className="font-label text-[8px] text-primary uppercase tracking-widest font-bold block">{pkg.style}</span>
                             <h4 className="font-display text-[15px] text-black font-bold truncate leading-tight">{pkg.title}</h4>
-                            <p className="font-body text-black/40 text-[10px] leading-tight truncate">{pkg.venueSize}</p>
+                            <p className="font-body text-black/40 text-[10px] leading-tight truncate">{pkg.decorCount || "Curated Inclusions"}</p>
                             <span className="font-display text-[13px] text-black italic block pt-1 font-semibold">{pkg.pricing}</span>
                           </div>
                         </div>
@@ -442,18 +471,6 @@ export function EventBookingWizard() {
                         className="w-full px-5 py-3 rounded-full border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors"
                       />
                     </div>
-                  </div>
-
-                  {/* Guest Count */}
-                  <div className="space-y-2">
-                    <label className="font-label text-[10px] uppercase tracking-wider text-black/50 font-bold block">Expected Guest Count</label>
-                    <input
-                      type="number"
-                      placeholder="150"
-                      value={formData.guestCount}
-                      onChange={(e) => handleInputChange("guestCount", e.target.value)}
-                      className="w-full px-5 py-3 rounded-full border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors"
-                    />
                   </div>
 
                   {/* Venue Address */}
@@ -710,7 +727,6 @@ export function EventBookingWizard() {
                       <div className="flex justify-between"><span className="text-black/45">Target Date:</span><span className="text-black font-semibold">{formData.date || "Not Selected"}</span></div>
                       <div className="flex justify-between"><span className="text-black/45">Target Timing:</span><span className="text-black font-semibold">{formData.timing.start} - {formData.timing.end}</span></div>
                       <div className="flex justify-between"><span className="text-black/45">Destination Address:</span><span className="text-black font-semibold text-right truncate max-w-[180px]">{formData.venue.address || "Not Entered"}</span></div>
-                      <div className="flex justify-between"><span className="text-black/45">Guests Count:</span><span className="text-black font-semibold">{formData.guestCount} Guests</span></div>
                     </div>
 
                     <h4 className="font-display text-base text-black font-bold border-b border-black/5 pt-4 pb-2">Customizations</h4>
@@ -772,7 +788,23 @@ export function EventBookingWizard() {
             {currentStep < 6 ? (
               <button
                 type="button"
-                onClick={() => setCurrentStep(prev => prev + 1)}
+                onClick={() => {
+                  if (currentStep === 3) {
+                    if (!formData.title?.trim()) {
+                      toast.error("Please enter a booking title.");
+                      return;
+                    }
+                    if (!formData.date) {
+                      toast.error("Please select an event date.");
+                      return;
+                    }
+                    if (!formData.venue?.address?.trim()) {
+                      toast.error("Please specify a venue address.");
+                      return;
+                    }
+                  }
+                  setCurrentStep(prev => prev + 1);
+                }}
                 className="bg-black text-white px-8 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors"
               >
                 Continue

@@ -50,7 +50,7 @@ export function Wishlist() {
       imageSrc:
         item.imageSrc ||
         item.image ||
-        "https://images.unsplash.com/photo-1519225336808-ebd752395a12?auto=format&fit=crop&w=600&q=80",
+        "",
     }));
   }, [items]);
 

@@ -9,6 +9,7 @@ import { authService } from "../services/domainServices";
 import toast from "react-hot-toast";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 
+import logger from '../utils/logger';
 const containerVariants = {
   initial: { opacity: 0, scale: 0.95 },
   animate: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
@@ -87,7 +88,7 @@ export function Auth() {
 
     // Synchronous submission lock to prevent parallel network dispatches
     if (isSubmittingRef.current || isLoading) {
-      console.warn("[Auth] Duplicate send-otp request blocked on client");
+      logger.warn("[Auth] Duplicate send-otp request blocked on client");
       return;
     }
 
@@ -106,7 +107,7 @@ export function Auth() {
           return;
         }
       } catch (err) {
-        console.error("Check email failed:", err);
+        logger.error("Check email failed:", err);
       }
     }
     
@@ -140,8 +141,8 @@ export function Auth() {
   }
 
   async function submitOTP(otpString) {
-    if (isSubmittingRef.current || isLoading) {
-      console.warn("[Auth] Duplicate verify-otp request blocked on client");
+    if (isSubmittingRef.current || isLoading || step === "success") {
+      logger.warn("[Auth] Duplicate verify-otp request blocked on client");
       return;
     }
 
@@ -152,6 +153,9 @@ export function Auth() {
       if (response.success) {
         setUserRole(response.data.user.role);
         setStep("success");
+        // Keep isSubmittingRef and isLoading locked to true during success state transition
+        isSubmittingRef.current = true;
+        setIsLoading(true);
         setTimeout(async () => {
           await loginSuccess(response.data.user, response.data.token, response.data.refreshToken);
         }, 1800);
@@ -164,7 +168,6 @@ export function Auth() {
         setError(false);
         if (otpRefs.current[0]) otpRefs.current[0].focus();
       }, 600);
-    } finally {
       isSubmittingRef.current = false;
       setIsLoading(false);
     }
@@ -243,7 +246,7 @@ export function Auth() {
         >
           <img
             onError={handleImageError}
-            src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop"
+            src=""
             alt="Luxury Event Decor"
             className="w-full h-full object-cover opacity-60 mix-blend-screen"
           />

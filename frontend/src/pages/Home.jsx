@@ -44,7 +44,7 @@ export function Home() {
     telephone: contact?.phone ? `+91-${contact.phone}` : "+91-9866006648",
     address: {
       "@type": "PostalAddress",
-      streetAddress: contact?.address || "#28-1-92, Beside Kailash PavBhaji Center, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
+      streetAddress: contact?.address || "#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
       addressLocality: "Ongole",
       addressRegion: "AP",
       postalCode: "523001",

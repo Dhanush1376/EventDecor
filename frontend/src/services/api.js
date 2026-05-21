@@ -1,4 +1,5 @@
 import axios from 'axios';
+import logger from '../utils/logger';
 
 const getApiUrl = () => {
   if (import.meta.env.VITE_API_URL) {
@@ -159,12 +160,12 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRefresh && !isAuthLogout) {
       originalRequest._retry = true;
-      console.log('[API] 401 Unauthorized - Attempting token refresh for:', originalRequest.url);
+      logger.dev('[API] 401 Unauthorized - Attempting token refresh for:', originalRequest.url);
 
       try {
         if (!refreshPromise) {
           const storedRefreshToken = safeLocalStorage.getItem('siri_refresh_token');
-          console.log('[API] Initiating refresh token request...');
+          logger.dev('[API] Initiating refresh token request...');
           refreshPromise = api.post('/auth/refresh', { refreshToken: storedRefreshToken }).finally(() => {
             refreshPromise = null;
           });
@@ -175,29 +176,30 @@ api.interceptors.response.use(
 
         if (token) {
           setAccessToken(token);
+          safeLocalStorage.setItem('siri_access_token', token); // Sync access token across tabs!
         }
         if (nextRefreshToken) {
           safeLocalStorage.setItem('siri_refresh_token', nextRefreshToken);
         }
 
-        console.log('[API] Token refresh successful. Retrying original request.');
+        logger.dev('[API] Token refresh successful. Retrying original request.');
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch (refreshErr) {
         // Only trigger logout if it's a true 4xx/5xx rejection from the server
         if (refreshErr.response) {
-          console.error('[API] Token refresh rejected by server. Triggering logout.');
+          logger.error('[API] Token refresh rejected by server. Triggering logout.');
           safeLocalStorage.removeItem('siri_access_token');
           safeLocalStorage.removeItem('siri_refresh_token');
           setAccessToken(null);
           window.dispatchEvent(new Event('auth-unauthorized'));
         } else {
-          console.error('[API] Token refresh failed due to network error. Preserving session.');
+          logger.warn('[API] Token refresh failed due to network error. Preserving session.');
           // Don't wipe session on timeout/network drop!
         }
       }
     } else if (error.response?.status === 401 && isAuthRefresh) {
-      console.error('[API] Refresh endpoint returned 401. Session expired.');
+      logger.error('[API] Refresh endpoint returned 401. Session expired.');
       safeLocalStorage.removeItem('siri_access_token');
       safeLocalStorage.removeItem('siri_refresh_token');
       setAccessToken(null);

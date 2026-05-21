@@ -9,6 +9,7 @@ import { CloudinaryImage } from "../components/ui/CloudinaryImage";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { StackedSectionWrapper } from "../components/layout/StackedSectionWrapper";
 
+import logger from '../utils/logger';
 const cleanSignatureImg = (imgUrl, founderName) => {
   if (!imgUrl || imgUrl.includes("unsplash.com") || imgUrl === "" || imgUrl.includes("images.unsplash.com")) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="250" height="80" viewBox="0 0 250 80"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&amp;display=swap');.sig { font-family: 'Alex Brush', cursive; font-size: 42px; fill: %231a1a1a; }</style></defs><text x="25" y="52" class="sig">${founderName}</text></svg>`;
@@ -74,7 +75,7 @@ export function About() {
           setCmsContent(cmsRes.data.data || cmsRes.data);
         }
       } catch (err) {
-        console.error("About page CMS content fetch failed:", err);
+        logger.error("About page CMS content fetch failed:", err);
       }
 
       // Fetch Gallery data with individual catch block
@@ -84,7 +85,7 @@ export function About() {
           setGalleryPreview(galleryRes.data?.items || galleryRes.data?.data || galleryRes.data || []);
         }
       } catch (err) {
-        console.error("About page gallery fetch failed:", err);
+        logger.error("About page gallery fetch failed:", err);
       } finally {
         setIsLoading(false);
       }
@@ -92,67 +93,10 @@ export function About() {
     fetchData();
   }, []);
 
-const DEFAULT_SPECIALIZATIONS = [
-  { title: "Traditional Decor", img: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop" },
-  { title: "Floral Mastery", img: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop" },
-  { title: "Engagement Trays", img: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop" },
-  { title: "Pooja Artistry", img: "https://images.unsplash.com/photo-1590073844006-33379778ae09?q=80&w=1974&auto=format&fit=crop" },
-  { title: "Harathi Plates", img: "https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=1974&auto=format&fit=crop" },
-  { title: "Bespoke Baskets", img: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop" },
-];
-
-const DEFAULT_FEATURES = [
-  {
-    icon: "handyman",
-    title: "Handmade Artistry",
-    desc: "Every petal, every bead, and every fold is meticulously placed by hand.",
-  },
-  {
-    icon: "diamond",
-    title: "Premium Quality",
-    desc: "Sourcing only the finest materials globally to ensure unparalleled luxury.",
-  },
-  {
-    icon: "volunteer_activism",
-    title: "Cultural Roots",
-    desc: "Deeply embedded in authentic Telugu traditions and timeless heritage.",
-  },
-  {
-    icon: "design_services",
-    title: "Bespoke Design",
-    desc: "Tailored to your specific event theme and personal storytelling.",
-  },
-];
-
-const DEFAULT_FOUNDERS = [
-  {
-    name: "Sirisha Atmakuri",
-    role: "Creative Head",
-    subtitle: "Crafted by Hands.",
-    quote: "\"Our mission was never just about creating beautiful objects. It was about preserving the deeply emotional essence of Telugu celebrations. When we craft a piece, we are weaving prayers and centuries of tradition into it.\"",
-    initials: "SD",
-    signatureImg: ""
-  },
-  {
-    name: "Balaji Atmakuri",
-    role: "Marketing Head",
-    subtitle: "Global Heritage.",
-    quote: "\"Bridging the gap between ancient heritage and modern global celebrations. My vision is to ensure that the soulful artistry of Siri Arts & Crafts reaches every corner of the world, honoring our roots while embracing the future.\"",
-    initials: "B",
-    signatureImg: ""
-  }
-];
-
-  // Premium Data Content
-  const specializations = (cmsContent?.specializations && cmsContent.specializations.length > 0)
-    ? cmsContent.specializations
-    : DEFAULT_SPECIALIZATIONS;
-  const features = (cmsContent?.features && cmsContent.features.length > 0)
-    ? cmsContent.features
-    : DEFAULT_FEATURES;
-  const founders = (cmsContent?.founders && cmsContent.founders.length > 0)
-    ? cmsContent.founders
-    : DEFAULT_FOUNDERS;
+  // Premium Data Content from CMS
+  const specializations = cmsContent?.specializations || [];
+  const features = cmsContent?.features || [];
+  const founders = cmsContent?.founders || [];
 
   return (
     <div
@@ -172,7 +116,7 @@ const DEFAULT_FOUNDERS = [
           className="absolute inset-0 w-full h-full"
         >
           <CloudinaryImage
-            src={cmsContent?.heroImage || "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop"}
+            src={cmsContent?.heroImage || ""}
             alt="Cinematic Wedding Decor"
             className="w-full h-full object-cover opacity-60 mix-blend-screen"
             containerClassName="w-full h-full"
@@ -252,7 +196,7 @@ const DEFAULT_FOUNDERS = [
             transition={{ delay: 0.8, duration: 1 }}
             className="font-body text-[16px] md:text-[20px] text-white/70 font-light leading-relaxed max-w-2xl mx-auto"
           >
-            {cmsContent?.missionStatement || "Where authentic Telugu craftsmanship meets modern luxury. Every piece is a handcrafted love letter to our vibrant culture."}
+            {cmsContent?.missionStatement || ""}
           </motion.p>
 
           <motion.div
@@ -309,7 +253,7 @@ const DEFAULT_FOUNDERS = [
           >
             <div className="w-full h-full rounded-[32px] md:rounded-t-full md:rounded-b-full overflow-hidden relative">
               <CloudinaryImage
-                src={cmsContent?.storyImage || "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2074&auto=format&fit=crop"}
+                src={cmsContent?.storyImage || ""}
                 alt="Handcrafted Details"
                 className="scale-[1.02] hover:scale-110 transition-transform duration-[3s] ease-out"
                 containerClassName="w-full h-full"
@@ -386,8 +330,9 @@ const DEFAULT_FOUNDERS = [
       </StackedSectionWrapper>
 
       {/* 3. CRAFTSMANSHIP & FEATURED SPECIALIZATIONS - Premium Grid */}
-      <StackedSectionWrapper index={2} isLast={false} bgClass="bg-surface-bright">
-      <section className="py-24 md:py-32 relative bg-surface-bright border-y border-black/5">
+      {specializations.length > 0 && (
+        <StackedSectionWrapper index={2} isLast={false} bgClass="bg-surface-bright">
+        <section className="py-24 md:py-32 relative bg-surface-bright border-y border-black/5">
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-secondary-container/20 blur-[150px] rounded-full pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-6 md:px-12 mb-16 md:mb-24 text-center relative z-10">
@@ -466,8 +411,10 @@ const DEFAULT_FOUNDERS = [
         </div>
       </section>
       </StackedSectionWrapper>
+      )}
 
       {/* 4. WHY CHOOSE US - Floating Luxury Cards */}
+      {features.length > 0 && (
       <StackedSectionWrapper index={3} isLast={false} bgClass="bg-surface">
       <section className="py-24 md:py-40 relative bg-surface overflow-hidden">
         <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
@@ -526,13 +473,15 @@ const DEFAULT_FOUNDERS = [
         </div>
       </section>
       </StackedSectionWrapper>
+      )}
 
       {/* 5. TESTIMONIALS - Cinematic Emotion */}
+      {cmsContent?.testimonialQuote && (
       <StackedSectionWrapper index={4} isLast={false} bgClass="bg-black">
       <section className="py-32 md:py-48 bg-black relative text-white overflow-hidden">
         <div className="absolute inset-0 opacity-50">
           <CloudinaryImage
-            src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=2000&q=80"
+            src={cmsContent?.testimonialImage || ""}
             alt="Wedding Background"
             className="mix-blend-overlay"
             containerClassName="w-full h-full"
@@ -562,9 +511,7 @@ const DEFAULT_FOUNDERS = [
             transition={{ delay: 0.2, duration: 1 }}
             className="font-headline text-[32px] md:text-[48px] lg:text-[56px] leading-[1.2] tracking-tight text-white mb-12 italic font-light max-w-4xl mx-auto"
           >
-            "They didn't just decorate our wedding; they brought our family's
-            heritage to life. Every detail on the Harathi plates was an absolute
-            masterpiece."
+            "{cmsContent.testimonialQuote}"
           </motion.p>
 
           <motion.div
@@ -574,17 +521,19 @@ const DEFAULT_FOUNDERS = [
             transition={{ delay: 0.6, duration: 1 }}
           >
             <h4 className="font-display text-[22px] text-primary mb-2">
-              Ananya & Rahul
+              {cmsContent.testimonialAuthor}
             </h4>
             <p className="font-label-sm text-[10px] uppercase tracking-[0.3em] text-white/50 font-bold">
-              Hyderabad Royal Wedding
+              {cmsContent.testimonialEvent}
             </p>
           </motion.div>
         </div>
       </section>
       </StackedSectionWrapper>
+      )}
 
       {/* 6. THE VISIONARIES - Dual Leadership */}
+      {founders.length > 0 && (
       <StackedSectionWrapper index={5} isLast={false} bgClass="bg-surface-bright">
       <section className="py-24 md:py-40 relative bg-surface-bright overflow-hidden">
         <div className="absolute top-1/2 -left-[20%] w-[600px] h-[600px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
@@ -669,8 +618,10 @@ const DEFAULT_FOUNDERS = [
         </div>
       </section>
       </StackedSectionWrapper>
+      )}
 
       {/* 7. GALLERY PREVIEW - Pinterest Style Masonry Grid */}
+      {galleryPreview.length > 0 && (
       <StackedSectionWrapper index={6} isLast={true} bgClass="bg-surface">
       <section className="py-24 md:py-40 bg-surface border-t border-black/5 relative">
         <MandalaElement
@@ -754,6 +705,7 @@ const DEFAULT_FOUNDERS = [
         </div>
       </section>
       </StackedSectionWrapper>
+      )}
     </div>
   );
 }

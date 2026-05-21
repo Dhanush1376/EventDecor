@@ -27,6 +27,7 @@ import { orderService, cmsService, userService, couponService } from "../service
 import { useApi } from "../hooks/useApi";
 import toast from "react-hot-toast";
 
+import logger from '../utils/logger';
 export function Checkout() {
   const { items, subtotal, clearCart, claimedCoupon, setClaimedCoupon } = useCart();
   const { user, isAuthenticated, openAuthModal } = useAuth();
@@ -65,6 +66,7 @@ export function Checkout() {
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(true);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
   // New Address Form State
   const [newAddress, setNewAddress] = useState({
@@ -152,7 +154,7 @@ export function Checkout() {
           }
         }
       }).catch(err => {
-        console.error("Failed to load addresses:", err);
+        logger.error("Failed to load addresses:", err);
       });
 
       // Load active coupons
@@ -178,7 +180,7 @@ export function Checkout() {
           }
         }
       }).catch(err => {
-        console.error("Failed to load active coupons:", err);
+        logger.error("Failed to load active coupons:", err);
       }).finally(() => {
         setLoadingCoupons(false);
       });
@@ -216,7 +218,7 @@ export function Checkout() {
         }
       }
     } catch (err) {
-      console.error("Failed to validate checkout totals:", err);
+      logger.error("Failed to validate checkout totals:", err);
       toast.error(err.response?.data?.message || "Failed to validate order pricing details");
     }
   };
@@ -240,6 +242,164 @@ export function Checkout() {
     setCouponValid(false);
     fetchBackendTotals("");
   };
+
+  const handleFetchCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    const toastId = toast.loading("Accessing device GPS location...");
+
+    const reverseGeocode = async (latitude, longitude) => {
+      toast.loading("Resolving coordinates to address...", { id: toastId });
+
+      // AbortController so the fetch doesn't hang forever
+      const controller = new AbortController();
+      const fetchTimeout = setTimeout(() => controller.abort(), 12000);
+
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&zoom=18`,
+          {
+            signal: controller.signal,
+            headers: {
+              "Accept": "application/json",
+              "Accept-Language": "en",
+              // Nominatim policy: must send a valid User-Agent and Referer
+              "User-Agent": "SiriArtsAndCrafts/1.0 (checkout address autofill)",
+            },
+          }
+        );
+        clearTimeout(fetchTimeout);
+
+        if (!res.ok) {
+          throw new Error(`Geocoding API returned ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (data && data.address) {
+          const addr = data.address;
+
+          // Robustly extract pincode (Indian 6-digit postcode)
+          const rawPincode = addr.postcode || "";
+          const pincode = rawPincode.replace(/\D/g, "").slice(0, 6);
+
+          // City: try multiple Indian address fields in order of specificity
+          const city =
+            addr.city ||
+            addr.town ||
+            addr.village ||
+            addr.municipality ||
+            addr.county ||
+            addr.state_district ||
+            "";
+
+          const state = addr.state || "";
+          const country = addr.country || "India";
+
+          // Build street address string from available parts
+          const streetParts = [];
+          if (addr.house_number) streetParts.push(addr.house_number);
+          if (addr.building) streetParts.push(addr.building);
+          if (addr.road || addr.street) streetParts.push(addr.road || addr.street);
+          if (addr.suburb) streetParts.push(addr.suburb);
+          if (addr.neighbourhood) streetParts.push(addr.neighbourhood);
+          // Fallback to display_name stripped of country/state suffix
+          const addressString =
+            streetParts.length > 0
+              ? streetParts.join(", ")
+              : data.display_name
+                  ?.split(",")
+                  .slice(0, 4)
+                  .join(",")
+                  .trim() || "";
+
+          // Locality: area/suburb level
+          const locality =
+            addr.suburb ||
+            addr.neighbourhood ||
+            addr.subdistrict ||
+            addr.locality ||
+            addr.city_district ||
+            city ||
+            "";
+
+          // Landmark: nearby notable place
+          const landmark =
+            addr.amenity ||
+            addr.shop ||
+            addr.office ||
+            addr.tourism ||
+            addr.leisure ||
+            "";
+
+          setNewAddress((prev) => ({
+            ...prev,
+            pincode,
+            address: addressString,
+            locality,
+            landmark: landmark || prev.landmark || locality || city,
+            city,
+            state,
+            country,
+          }));
+
+          toast.success("✓ Address auto-filled from your location!", { id: toastId });
+        } else {
+          throw new Error("Geocoding API returned no address data for this coordinate");
+        }
+      } catch (err) {
+        clearTimeout(fetchTimeout);
+        if (err.name === "AbortError") {
+          toast.error("Address lookup timed out. Please fill in manually.", { id: toastId });
+        } else {
+          logger.error("Reverse geocode failed:", err);
+          toast.error("Could not resolve address. Check your connection or fill manually.", { id: toastId });
+        }
+      } finally {
+        setIsDetectingLocation(false);
+      }
+    };
+
+    const getPosition = (highAccuracy = true) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          reverseGeocode(latitude, longitude);
+        },
+        (error) => {
+          if (highAccuracy && (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE)) {
+            logger.warn("High accuracy GPS timed out. Retrying with standard accuracy...");
+            toast.loading("Retrying with standard accuracy...", { id: toastId });
+            getPosition(false);
+          } else {
+            setIsDetectingLocation(false);
+            let errorMsg = "Failed to access your location. Please fill details manually.";
+            if (error.code === error.PERMISSION_DENIED) {
+              errorMsg = "Location permission denied. Please allow browser location access and try again.";
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+              errorMsg = "Location unavailable. Please check GPS/network and try again.";
+            } else if (error.code === error.TIMEOUT) {
+              errorMsg = "Location request timed out. Please try again or fill manually.";
+            }
+            logger.error("Geolocation error:", error.code, error.message);
+            toast.error(errorMsg, { id: toastId });
+          }
+        },
+        {
+          enableHighAccuracy: highAccuracy,
+          timeout: highAccuracy ? 10000 : 20000,
+          maximumAge: highAccuracy ? 0 : 60000,
+        }
+      );
+    };
+
+    getPosition(true);
+  };
+
 
   const handleSaveNewAddress = async (e) => {
     e.preventDefault();
@@ -314,7 +474,7 @@ export function Checkout() {
         toast.error(res.message || "Failed to send verification OTP");
       }
     } catch (err) {
-      console.error("Failed to send COD OTP:", err);
+      logger.error("Failed to send COD OTP:", err);
       toast.error(err.response?.data?.message || "Failed to send verification OTP. Please try again.");
     } finally {
       setIsSendingOtp(false);
@@ -342,7 +502,7 @@ export function Checkout() {
         toast.error(res.message || "Invalid verification code");
       }
     } catch (err) {
-      console.error("Failed to verify COD OTP:", err);
+      logger.error("Failed to verify COD OTP:", err);
       toast.error(err.response?.data?.message || "Invalid verification code. Please try again.");
     } finally {
       setIsProcessing(false);
@@ -436,7 +596,7 @@ export function Checkout() {
           navigate("/order-success", { state: { orderDetails: orderObj }, replace: true });
         }
       } catch (err) {
-        console.error("Failed to place COD order:", err);
+        logger.error("Failed to place COD order:", err);
         toast.error(err.response?.data?.message || err.message || "Failed to place COD order");
       } finally {
         setIsProcessing(false);
@@ -688,9 +848,24 @@ export function Checkout() {
                           onSubmit={handleSaveNewAddress}
                           className="mt-6 pt-4 border-t border-outline-variant/40 space-y-4 overflow-hidden block"
                         >
-                          <span className="text-xs font-bold uppercase tracking-wider text-primary block mb-3">
-                            Enter New Address Information
-                          </span>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                            <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                              Enter New Address Information
+                            </span>
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              type="button"
+                              onClick={handleFetchCurrentLocation}
+                              disabled={isDetectingLocation}
+                              className="inline-flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-lg border border-primary/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <span className={`material-symbols-outlined text-base ${isDetectingLocation ? 'animate-spin' : ''}`}>
+                                {isDetectingLocation ? 'sync' : 'my_location'}
+                              </span>
+                              {isDetectingLocation ? 'Detecting Location...' : 'Use Current Location'}
+                            </motion.button>
+                          </div>
                           {addressError && (
                             <div className="p-3 bg-red-50 text-red-600 rounded text-[11px] font-semibold mb-4">
                               ⚠️ {addressError}
@@ -854,7 +1029,7 @@ export function Checkout() {
                                         })
                                         .catch((err) => {
                                           clearTimeout(timeoutId);
-                                          console.warn(
+                                          logger.warn(
                                             "Pincode API Safeguard Triggered (Using manual entry fallback):",
                                             err
                                           );

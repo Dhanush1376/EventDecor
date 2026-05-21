@@ -1,5 +1,6 @@
 import api from './api';
 
+import logger from '../utils/logger';
 export const authService = {
   login: async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
@@ -364,7 +365,7 @@ const uploadWithRetry = async (uploadFn, formData, retries = 3, delayMs = 1500) 
       return await uploadFn(formData);
     } catch (error) {
       lastError = error;
-      console.warn(`[UPLOAD RETRY] Frontend upload attempt ${attempt}/${retries} failed. Retrying...`, error);
+      logger.warn(`[UPLOAD RETRY] Frontend upload attempt ${attempt}/${retries} failed. Retrying...`, error);
       if (attempt < retries) {
         await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
       }

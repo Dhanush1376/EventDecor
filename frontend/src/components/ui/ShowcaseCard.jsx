@@ -46,7 +46,7 @@ export function ShowcaseCard({
       <div className="relative h-44 sm:h-56 md:h-72 w-full overflow-hidden bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5 shadow-2xs">
         <img
           onError={handleImageError}
-          src={image || "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=600&auto=format&fit=crop"}
+          src={image || ""}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover:scale-110"
           loading="lazy"

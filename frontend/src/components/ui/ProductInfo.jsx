@@ -53,11 +53,11 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
       {/* Category & Badge Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 md:gap-3">
-          <span className="font-label text-[12px] md:text-[13px] text-primary uppercase tracking-[0.4em] font-bold">
+          <span className="font-label text-[11px] md:text-[12px] text-primary uppercase tracking-[0.4em] font-medium">
             {product.category || "Artisanal Collection"}
           </span>
-          <span className="w-1 h-1 rounded-full bg-primary font-bold"></span>
-          <span className="font-label text-[12px] md:text-[13px] text-on-surface uppercase tracking-widest font-bold">
+          <span className="w-1 h-1 rounded-full bg-primary/40"></span>
+          <span className="font-label text-[11px] md:text-[12px] text-on-surface/50 uppercase tracking-widest font-normal">
             Heritage Series
           </span>
         </div>
@@ -85,13 +85,13 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
         </div>
       </div>
 
-      {/* Product Title & Metadata - Refined & Minimal */}
+      {/* Product Title & Metadata - Luxury Editorial */}
       <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1.5 md:space-y-2 flex-1">
-          <h1 className="font-sans text-[20px] sm:text-[24px] md:text-[32px] text-on-surface leading-tight tracking-tight font-bold">
+        <div className="space-y-2 md:space-y-3 flex-1">
+          <h1 className="font-display text-[26px] sm:text-[30px] md:text-[38px] text-on-surface leading-[1.1] tracking-[-0.01em] font-light">
             {product.title}
             {(product.teluguTitle || product.nameTE || product.teluguName) && (
-              <span className="ml-2 text-on-surface/40 font-display italic text-[18px] sm:text-[22px] md:text-[28px] font-normal">
+              <span className="ml-2 text-on-surface/30 font-display italic text-[18px] sm:text-[22px] md:text-[26px] font-extralight">
                 ({product.teluguTitle || product.nameTE || product.teluguName})
               </span>
             )}
@@ -124,10 +124,10 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
         </div>
       </div>
 
-      {/* Pricing & Shipping - Minimalist & Integrated */}
+      {/* Pricing & Shipping */}
       <div className="py-2 border-b border-outline-variant/10">
         <div className="flex flex-wrap items-baseline gap-3 mb-4">
-          <span className="font-body text-[24px] sm:text-[32px] text-on-surface font-bold">
+          <span className="font-body text-[24px] sm:text-[32px] text-on-surface font-medium">
             Rs. {product.price?.toLocaleString()}
           </span>
           {oldPrice && (
@@ -160,9 +160,9 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
         </div>
       </div>
 
-      {/* Description Section - Lighter weight */}
+      {/* Description Section */}
       <div className="space-y-2 mt-2">
-        <h3 className="font-label-sm text-[11px] text-on-surface/40 uppercase tracking-[0.2em] font-bold">
+        <h3 className="font-label-sm text-[10px] text-on-surface/35 uppercase tracking-[0.25em] font-medium">
           About this Item
         </h3>
         <p className="font-body-md text-on-surface/80 font-normal leading-relaxed text-[14px] sm:text-[15px]">
@@ -185,7 +185,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
         )}
         {/* Quantity Selector */}
         <div className="flex flex-col gap-3">
-          <h3 className="font-label-sm text-[11px] text-on-surface/40 uppercase tracking-[0.2em] font-bold">
+          <h3 className="font-label-sm text-[10px] text-on-surface/35 uppercase tracking-[0.25em] font-medium">
             Quantity
           </h3>
           <div className="flex items-center gap-4">
@@ -278,7 +278,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
         <div className="p-6 rounded-3xl bg-on-surface-variant text-surface relative overflow-hidden group shadow-lg">
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
             <div>
-              <h4 className="font-headline-sm mb-1 text-gold font-bold">
+              <h4 className="font-headline-sm mb-1 text-gold font-normal tracking-wide">
                 Need a Custom Design?
               </h4>
               <p className="font-body-sm text-surface font-medium">
@@ -319,7 +319,7 @@ function FeatureItem({ icon, label }) {
           {icon}
         </span>
       </div>
-      <span className="font-label-sm text-[12px] text-on-surface uppercase tracking-widest font-bold">
+      <span className="font-label-sm text-[11px] text-on-surface/60 uppercase tracking-widest font-normal">
         {label}
       </span>
     </div>

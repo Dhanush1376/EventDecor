@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { loyaltyService } from "../../services/domainServices";
 import toast from "react-hot-toast";
 
+import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export function AdminReviews() {
@@ -20,7 +21,7 @@ export function AdminReviews() {
         setReviews(Array.isArray(payload) ? payload : payload?.data || []);
       }
     } catch (err) {
-      console.error("Failed to load reviews:", err);
+      logger.error("Failed to load reviews:", err);
       toast.error("Could not fetch customer reviews feed.");
     } finally {
       setLoading(false);
@@ -45,7 +46,7 @@ export function AdminReviews() {
         toast.error(res.message || "Failed to update review status", { id: toastId });
       }
     } catch (err) {
-      console.error("Error moderating review:", err);
+      logger.error("Error moderating review:", err);
       toast.error("Review moderation action failed.", { id: toastId });
     }
   };

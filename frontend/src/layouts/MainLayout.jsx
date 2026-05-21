@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { TopNavbar } from "../components/layout/TopNavbar";
 import { Footer } from "../components/layout/Footer";
@@ -11,6 +11,7 @@ import { SEO } from "../components/seo/SEO";
 import { MandalaElement } from "../components/ui/MandalaElement";
 import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { WhatsAppWidget } from "../components/ui/WhatsAppWidget";
+import { PageLoader } from "../components/ui/PageLoader";
 
 export function MainLayout() {
   const { pathname } = useLocation();
@@ -76,7 +77,9 @@ export function MainLayout() {
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <main id="main-content" className="flex-1 relative pb-0" tabIndex={-1}>
         <ErrorBoundary>
-          <Outlet />
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </ErrorBoundary>
       </main>
       <Footer />
@@ -109,7 +112,9 @@ export function MinimalLayout() {
 
       <CheckoutNavbar />
       <main id="main-content" className="flex-1" tabIndex={-1}>
-        <Outlet />
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
       </main>
       <Footer />
     </div>

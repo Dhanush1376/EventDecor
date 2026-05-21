@@ -9,6 +9,7 @@ import { galleryService } from "../../services/domainServices";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
 import { GallerySkeleton } from "../ui/Skeleton";
 
+import logger from '../../utils/logger';
 export function GallerySection() {
   const containerRef = useRef(null);
   const { galleryPreview, loading: cmsLoading } = useWebsiteContent();
@@ -38,7 +39,7 @@ export function GallerySection() {
           }
         }
       } catch (err) {
-        console.error("Failed to fetch gallery preview", err);
+        logger.error("Failed to fetch gallery preview", err);
       } finally {
         setLoading(false);
       }

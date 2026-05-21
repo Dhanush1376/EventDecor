@@ -6,6 +6,7 @@ import { eventService, bookingService, showcaseService, productService, userServ
 import { ImageUpload } from "../components/ImageUpload";
 import toast from "react-hot-toast";
 
+import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 const EVENT_CATEGORIES = [
@@ -81,6 +82,21 @@ export function AdminEvents() {
   const [allocatedTeam, setAllocatedTeam] = useState([]);
   const [allocatedProps, setAllocatedProps] = useState([]);
 
+  // Live Map refs & venue states for Admin Drawer Editor
+  const adminMapInstanceRef = useRef(null);
+  const adminMarkerInstanceRef = useRef(null);
+
+  const [venueName, setVenueName] = useState("");
+  const [venueAddress, setVenueAddress] = useState("");
+  const [venueCity, setVenueCity] = useState("");
+  const [venueState, setVenueState] = useState("");
+  const [venueCountry, setVenueCountry] = useState("");
+  const [venuePincode, setVenuePincode] = useState("");
+  const [venueLatitude, setVenueLatitude] = useState("");
+  const [venueLongitude, setVenueLongitude] = useState("");
+  const [venueGoogleMapsLink, setVenueGoogleMapsLink] = useState("");
+  const [venueIsOutdoor, setVenueIsOutdoor] = useState(false);
+
   // Quotation editor inputs
   const [quoteRental, setQuoteRental] = useState("");
   const [quoteSetup, setQuoteSetup] = useState("");
@@ -155,7 +171,7 @@ export function AdminEvents() {
         setBookings(Array.isArray(payload) ? payload : payload?.data || []);
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error("Failed to fetch customer event bookings catalog.");
     } finally {
       setLoadingBookings(false);
@@ -364,6 +380,18 @@ export function AdminEvents() {
         setQuoteSetup(selectedBooking.pricing?.setupCharges || 0);
         setQuoteTransport(selectedBooking.pricing?.transportationCost || 0);
         setQuoteAddons(selectedBooking.pricing?.addOnCharges || 0);
+
+        const v = selectedBooking.venue || {};
+        setVenueName(v.name || "");
+        setVenueAddress(v.address || "");
+        setVenueCity(v.city || "");
+        setVenueState(v.state || "");
+        setVenueCountry(v.country || "");
+        setVenuePincode(v.pincode || "");
+        setVenueLatitude(v.latitude || "");
+        setVenueLongitude(v.longitude || "");
+        setVenueGoogleMapsLink(v.googleMapsLink || "");
+        setVenueIsOutdoor(v.isOutdoor || false);
       }, 0);
 
       // Scroll to bottom of chat
@@ -521,7 +549,7 @@ export function AdminEvents() {
 
   const handleUpdateLogistics = async () => {
     if (!selectedBooking) return;
-    const loadId = toast.loading("Saving staff lists & times...");
+    const loadId = toast.loading("Saving staff lists, times, & venue logistics...");
     try {
       const res = await bookingService.adminUpdateLogistics(selectedBooking._id || selectedBooking.id, {
         setupTiming: logisticsSetup ? new Date(logisticsSetup) : undefined,
@@ -529,16 +557,187 @@ export function AdminEvents() {
         assignedTeam: allocatedTeam,
         rentedInventory: allocatedProps,
         adminNotes: drawerNotes,
+        venue: {
+          name: venueName,
+          address: venueAddress,
+          city: venueCity,
+          state: venueState,
+          country: venueCountry,
+          pincode: venuePincode,
+          latitude: venueLatitude ? Number(venueLatitude) : undefined,
+          longitude: venueLongitude ? Number(venueLongitude) : undefined,
+          googleMapsLink: venueGoogleMapsLink,
+          isOutdoor: venueIsOutdoor
+        }
       });
       toast.dismiss(loadId);
       if (res.success) {
-        toast.success("Rosters, checklists, and timelines saved!");
+        toast.success("Rosters, checklists, timelines, and venue saved!");
         fetchBookings();
         setSelectedBooking(res.data);
       }
     } catch (err) {
       toast.dismiss(loadId);
-      toast.error("Failed to save setup schedule.");
+      toast.error("Failed to save setup logistics.");
+    }
+  };
+
+  // Initialize and synchronize Live Map in Admin Drawer
+  useEffect(() => {
+    if (!isDrawerOpen || !selectedBooking) {
+      if (adminMapInstanceRef.current) {
+        try {
+          adminMapInstanceRef.current.remove();
+        } catch (e) {
+          logger.warn("Admin map cleanup error", e);
+        }
+        adminMapInstanceRef.current = null;
+        adminMarkerInstanceRef.current = null;
+      }
+      return;
+    }
+
+    const mapTimer = setTimeout(() => {
+      initDrawerMap();
+    }, 450);
+
+    return () => {
+      clearTimeout(mapTimer);
+    };
+  }, [isDrawerOpen, selectedBooking?._id]);
+
+  const initDrawerMap = () => {
+    const mapDom = document.getElementById("admin-leaflet-map");
+    if (!mapDom || adminMapInstanceRef.current) return;
+
+    if (!document.getElementById("leaflet-css-cdn")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css-cdn";
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+
+    if (window.L) {
+      setupLeafletDrawerMap();
+    } else {
+      if (!document.getElementById("leaflet-js-cdn")) {
+        const script = document.createElement("script");
+        script.id = "leaflet-js-cdn";
+        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        script.async = true;
+        script.onload = () => {
+          setupLeafletDrawerMap();
+        };
+        document.head.appendChild(script);
+      } else {
+        const interval = setInterval(() => {
+          if (window.L) {
+            clearInterval(interval);
+            setupLeafletDrawerMap();
+          }
+        }, 100);
+      }
+    }
+  };
+
+  const setupLeafletDrawerMap = () => {
+    const mapDom = document.getElementById("admin-leaflet-map");
+    if (!mapDom || adminMapInstanceRef.current) return;
+
+    const lat = Number(venueLatitude) || 15.506;
+    const lng = Number(venueLongitude) || 80.049;
+
+    try {
+      const map = window.L.map("admin-leaflet-map", {
+        zoomControl: false
+      }).setView([lat, lng], 13);
+
+      window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      window.L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+      const goldIcon = window.L.divIcon({
+        className: 'custom-leaflet-marker',
+        html: `<div class="relative w-8 h-8 flex items-center justify-center">
+                 <div class="absolute w-8 h-8 bg-[#C4A87C]/30 rounded-full animate-ping"></div>
+                 <span class="material-symbols-outlined text-[#C4A87C] text-[32px] drop-shadow-lg z-10 animate-bounce">location_on</span>
+               </div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32]
+      });
+
+      const marker = window.L.marker([lat, lng], { icon: goldIcon, draggable: true }).addTo(map);
+      adminMarkerInstanceRef.current = marker;
+      adminMapInstanceRef.current = map;
+
+      map.on("click", (e) => {
+        const { lat: clickLat, lng: clickLng } = e.latlng;
+        marker.setLatLng([clickLat, clickLng]);
+        updateAdminCoordinates(clickLat, clickLng);
+      });
+
+      marker.on("dragend", () => {
+        const position = marker.getLatLng();
+        updateAdminCoordinates(position.lat, position.longitude || position.lng);
+      });
+    } catch (e) {
+      logger.error("Failed to setup Leaflet map inside admin drawer", e);
+    }
+  };
+
+  const updateAdminCoordinates = async (lat, lng) => {
+    setVenueLatitude(lat);
+    setVenueLongitude(lng);
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const addr = data.address || {};
+        const street = addr.road || addr.suburb || addr.neighbourhood || "";
+        const city = addr.city || addr.town || addr.village || addr.county || "";
+        const state = addr.state || "";
+        const country = addr.country || "";
+        const pincode = addr.postcode || "";
+        const name = data.name || addr.amenity || addr.building || addr.shop || "";
+
+        const formattedAddress = data.display_name || `${name ? name + ", " : ""}${street}, ${city}, ${state}, ${pincode}`;
+        
+        setVenueName(name || street || "Selected Venue");
+        setVenueAddress(formattedAddress);
+        setVenueCity(city);
+        setVenueState(state);
+        setVenueCountry(country);
+        setVenuePincode(pincode);
+        setVenueGoogleMapsLink(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`);
+        
+        toast.success("Coordinates and address auto-geocoded!");
+      }
+    } catch (err) {
+      logger.warn("Admin geocode error", err);
+    }
+  };
+
+  const handleAdminCoordInputChange = (type, value) => {
+    if (type === "lat") {
+      setVenueLatitude(value);
+      const latNum = Number(value);
+      if (!isNaN(latNum) && adminMapInstanceRef.current && adminMarkerInstanceRef.current) {
+        adminMarkerInstanceRef.current.setLatLng([latNum, Number(venueLongitude) || 80.049]);
+        adminMapInstanceRef.current.setView([latNum, Number(venueLongitude) || 80.049]);
+      }
+    } else {
+      setVenueLongitude(value);
+      const lngNum = Number(value);
+      if (!isNaN(lngNum) && adminMapInstanceRef.current && adminMarkerInstanceRef.current) {
+        adminMarkerInstanceRef.current.setLatLng([Number(venueLatitude) || 15.506, lngNum]);
+        adminMapInstanceRef.current.setView([Number(venueLatitude) || 15.506, lngNum]);
+      }
     }
   };
 
@@ -807,7 +1006,7 @@ export function AdminEvents() {
                         <tr key={b._id || b.id} className="hover:bg-stone-50/50 transition-colors">
                           <td className="p-4">
                             <div className="space-y-0.5">
-                              <span className="font-body text-xs text-black font-bold block">{b.user?.name || "Anonymous Guest"}</span>
+                              <span className="font-body text-xs text-black font-bold block">{b.user?.name || "Anonymous Client"}</span>
                               <span className="font-mono text-[10px] text-black/40 block">{b.user?.phone || "No contact"}</span>
                             </div>
                           </td>
@@ -984,8 +1183,8 @@ export function AdminEvents() {
                         <input type="text" value={formData.pricing} onChange={(e) => setFormData({ ...formData, pricing: e.target.value })} placeholder="Starts at ₹75,000" className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs focus:border-slate-900 outline-none" />
                       </div>
                       <div className="space-y-1">
-                        <label className="font-label text-[9px] uppercase tracking-wider text-black/50 font-bold block">Venue capacity (Guests)</label>
-                        <input type="text" value={formData.venueSize} onChange={(e) => setFormData({ ...formData, venueSize: e.target.value })} placeholder="300 - 1200" className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs focus:border-slate-900 outline-none" />
+                        <label className="font-label text-[9px] uppercase tracking-wider text-black/50 font-bold block">Venue Footprint Cover</label>
+                        <input type="text" value={formData.venueSize} onChange={(e) => setFormData({ ...formData, venueSize: e.target.value })} placeholder="e.g. Heritage Lawns / Grand Ballroom" className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs focus:border-slate-900 outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="font-label text-[9px] uppercase tracking-wider text-black/50 font-bold block">completed count</label>
@@ -1602,6 +1801,141 @@ export function AdminEvents() {
                     <div className="space-y-1">
                       <label className="font-body text-[10px] text-black/40 block">Pickup Time</label>
                       <input type="datetime-local" value={logisticsPickup} onChange={(e) => setLogisticsPickup(e.target.value)} className="w-full bg-[#F8F9FB] px-4 py-2 rounded-full border border-black/5 text-xs outline-none focus:border-slate-900" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Geocoded Venue & Map Editor */}
+                <div className="space-y-4 pt-4 border-t border-black/5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label text-[9px] uppercase tracking-widest text-[#735c00] font-bold block">Celebration Venue & Map Coordinates</span>
+                    <span className="bg-[#FAF6F0] text-[#735c00] border border-[#C4A87C]/20 px-2.5 py-0.5 rounded-full font-label text-[7px] uppercase tracking-widest font-bold">
+                      Interactive Geocoding
+                    </span>
+                  </div>
+
+                  {/* Miniature Map preview element */}
+                  <div className="relative w-full h-[180px] rounded-[1.5rem] overflow-hidden border border-[#C4A87C]/25 bg-stone-100 shadow-inner">
+                    <div id="admin-leaflet-map" className="w-full h-full z-10" />
+                  </div>
+
+                  <p className="text-[10px] text-stone-500 font-light leading-snug">
+                    📍 Drag the marker or click on the map to automatically geocode address fields!
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="font-body text-[10px] text-black/45 block font-semibold">Venue / Landmark Name *</label>
+                      <input
+                        type="text"
+                        value={venueName}
+                        onChange={(e) => setVenueName(e.target.value)}
+                        placeholder="e.g. Siri Heritage Palace Hall"
+                        className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs outline-none focus:border-slate-900 font-medium"
+                      />
+                    </div>
+
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="font-body text-[10px] text-black/45 block font-semibold">Full Address *</label>
+                      <textarea
+                        rows={2}
+                        value={venueAddress}
+                        onChange={(e) => setVenueAddress(e.target.value)}
+                        placeholder="e.g. 12th Cross Road, Indira Nagar, Bengaluru..."
+                        className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-[1.25rem] border border-black/5 text-xs outline-none focus:border-slate-900 resize-none font-medium"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] text-black/45 block font-semibold">City</label>
+                      <input
+                        type="text"
+                        value={venueCity}
+                        onChange={(e) => setVenueCity(e.target.value)}
+                        placeholder="Bengaluru"
+                        className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs outline-none focus:border-slate-900 font-medium"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] text-black/45 block font-semibold">State</label>
+                      <input
+                        type="text"
+                        value={venueState}
+                        onChange={(e) => setVenueState(e.target.value)}
+                        placeholder="Karnataka"
+                        className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs outline-none focus:border-slate-900 font-medium"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] text-black/45 block font-semibold">Country</label>
+                      <input
+                        type="text"
+                        value={venueCountry}
+                        onChange={(e) => setVenueCountry(e.target.value)}
+                        placeholder="India"
+                        className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs outline-none focus:border-slate-900 font-medium"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] text-black/45 block font-semibold">Pincode/ZIP</label>
+                      <input
+                        type="text"
+                        value={venuePincode}
+                        onChange={(e) => setVenuePincode(e.target.value)}
+                        placeholder="560001"
+                        className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs outline-none focus:border-slate-900 font-medium"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] text-black/45 block font-semibold">Latitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={venueLatitude}
+                        onChange={(e) => handleAdminCoordInputChange("lat", e.target.value)}
+                        placeholder="15.506"
+                        className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs outline-none focus:border-slate-900 font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] text-black/45 block font-semibold">Longitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={venueLongitude}
+                        onChange={(e) => handleAdminCoordInputChange("lng", e.target.value)}
+                        placeholder="80.049"
+                        className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs outline-none focus:border-slate-900 font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="font-body text-[10px] text-black/45 block font-semibold">Google Maps Navigation Link</label>
+                      <input
+                        type="text"
+                        value={venueGoogleMapsLink}
+                        onChange={(e) => setVenueGoogleMapsLink(e.target.value)}
+                        placeholder="https://www.google.com/maps/search/..."
+                        className="w-full bg-[#F8F9FB] px-4 py-2.5 rounded-full border border-black/5 text-xs outline-none focus:border-slate-900 font-mono"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2 flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="venueIsOutdoor"
+                        checked={venueIsOutdoor}
+                        onChange={(e) => setVenueIsOutdoor(e.target.checked)}
+                        className="w-4 h-4 accent-black rounded cursor-pointer"
+                      />
+                      <label htmlFor="venueIsOutdoor" className="font-label text-[9px] uppercase tracking-wider text-black/50 font-bold block cursor-pointer select-none">
+                        Outdoor Ceremony Setup (Standard Garden/Ground)
+                      </label>
                     </div>
                   </div>
                 </div>

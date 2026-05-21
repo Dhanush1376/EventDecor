@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
+import logger from '../../utils/logger';
 export function ImageUpload({ value, onChange, folder = 'products', label = "Upload Image" }) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -51,7 +52,7 @@ export function ImageUpload({ value, onChange, folder = 'products', label = "Upl
       }
       toast.success('Asset uploaded successfully!', { id: toastId });
     } catch (err) {
-      console.error('Upload failed:', err);
+      logger.error('Upload failed:', err);
       toast.error(err.response?.data?.message || 'Failed to upload image. Please verify file signature and try again.', { id: toastId });
     } finally {
       setIsUploading(false);

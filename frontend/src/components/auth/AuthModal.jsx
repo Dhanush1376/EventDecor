@@ -5,6 +5,7 @@ import { authService } from "../../services/domainServices";
 import { MandalaElement } from "../ui/MandalaElement";
 import toast from "react-hot-toast";
 
+import logger from '../../utils/logger';
 export function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, loginSuccess } = useAuth();
   
@@ -46,7 +47,7 @@ export function AuthModal() {
           return;
         }
       } catch (err) {
-        console.error("Check email failed:", err);
+        logger.error("Check email failed:", err);
       }
     }
     

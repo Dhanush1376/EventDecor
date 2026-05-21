@@ -8,6 +8,7 @@ import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { ShareButton } from "../components/ui/ShareButton";
 import { galleryService, productService } from "../services/domainServices";
 
+import logger from '../utils/logger';
 export function GalleryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export function GalleryDetail() {
           setMoreLikeThis(recs.filter(gi => (gi._id || gi.id) !== id).slice(0, 6));
         }
       } catch (err) {
-        console.error("Failed to fetch discovery details", err);
+        logger.error("Failed to fetch discovery details", err);
         setError("Could not load discovery details.");
       } finally {
         setLoading(false);

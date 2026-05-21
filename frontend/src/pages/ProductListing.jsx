@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { handleImageError } from "../utils/imageUtils";
 import {
@@ -23,18 +23,30 @@ import { MandalaElement } from "../components/ui/MandalaElement";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { SEO } from "../components/seo/SEO";
 
+import logger from '../utils/logger';
 export function ProductListing() {
   const { setClaimedCoupon } = useCart();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryParam = searchParams.get("category") || "All";
+  const searchParam = searchParams.get("search") || "";
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+
+  const [searchQuery, setSearchQuery] = useState(searchParam);
+  const [activeCategory, setActiveCategory] = useState(categoryParam);
   const [sortBy, setSortBy] = useState("Popularity");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [activeProduct, setActiveProduct] = useState(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(pageParam);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    setActiveCategory(searchParams.get("category") || "All");
+    setSearchQuery(searchParams.get("search") || "");
+    setCurrentPage(parseInt(searchParams.get("page") || "1", 10));
+  }, [searchParams]);
 
   const [promoCoupon, setPromoCoupon] = useState(null);
   const [countdown, setCountdown] = useState({ D: "02", H: "14", M: "42", S: "00" });
@@ -57,7 +69,7 @@ export function ProductListing() {
         }
       }
     }).catch(err => {
-      console.warn("Failed to fetch coupons for promo banner", err);
+      logger.warn("Failed to fetch coupons for promo banner", err);
     });
   }, []);
 
@@ -147,7 +159,7 @@ export function ProductListing() {
           setCategories(res.data);
         }
       } catch (err) {
-        console.warn("Failed to fetch categories", err);
+        logger.warn("Failed to fetch categories", err);
       }
     };
     fetchCategories();
@@ -169,13 +181,29 @@ export function ProductListing() {
   }, [isFilterOpen]);
 
   // Debounced search to prevent API calls on every keystroke
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
     }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    const currentSearchInUrl = searchParams.get("search") || "";
+    if (debouncedSearch !== currentSearchInUrl) {
+      setSearchParams(prev => {
+        const params = new URLSearchParams(prev);
+        if (debouncedSearch) {
+          params.set("search", debouncedSearch);
+        } else {
+          params.delete("search");
+        }
+        params.delete("page");
+        return params;
+      }, { replace: true });
+    }
+  }, [debouncedSearch, setSearchParams, searchParams]);
 
   useEffect(() => {
     const sortMap = {
@@ -210,7 +238,18 @@ export function ProductListing() {
   };
 
   const handleCategorySelect = (cat) => {
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      if (cat === "All") {
+        params.delete("category");
+      } else {
+        params.set("category", cat);
+      }
+      params.delete("page");
+      return params;
+    });
     setActiveCategory(cat);
+    setCurrentPage(1);
     setTimeout(() => {
       const element = document.getElementById("artisan-collection");
       if (element) {
@@ -235,6 +274,7 @@ export function ProductListing() {
     setFilters({ price: [], material: [], collection: [] });
     setActiveCategory("All");
     setSearchQuery("");
+    setSearchParams({});
   };
 
   const { cartCount, setIsCartOpen } = useCart();
@@ -305,71 +345,74 @@ export function ProductListing() {
         </div>
       </section>
 
-      <nav
-        className={`z-40 transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full glass py-2 shadow-xl" : "relative -mt-8 md:-mt-12 mb-10 md:mb-12"}`}
-      >
-        <div
-          className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex flex-col lg:flex-row lg:items-center gap-4 md:gap-4 lg:gap-6 ${isSticky ? "" : "transition-all duration-500"}`}
+      {/* Floating / Sticky Navigation Bar Wrapper to prevent layout shift and glitching */}
+      <div className={isSticky ? "h-[68px] lg:h-[76px] mb-8 md:mb-12" : ""}>
+        <nav
+          className={`z-40 border-b transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full bg-white/95 backdrop-blur-xl border-black/5 py-3 shadow-md" : "border-transparent relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"}`}
         >
-          {/* Search Bar & Mobile Filter Toggle */}
-          <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
-            <div className="flex-1 h-11">
-              <SearchBar
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search masterworks..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
-              />
-            </div>
-            {/* Mobile/Tablet Filter Toggle */}
-            <button
-              onClick={() => setIsFilterOpen(true)}
-              aria-label="Open filters"
-              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                tune
-              </span>
-            </button>
-          </div>
-
-          {/* Desktop-Only Layout Integration (Tabs + Sort) */}
-          <div className="hidden lg:flex items-center justify-between gap-6 flex-1 min-w-0">
-            {/* Category Tabs Area - Fluid scrollable area */}
-            <div className="flex-1 overflow-hidden flex justify-start lg:justify-center">
-              <CategoryTabs
-                categories={categories}
-                activeCategory={activeCategory}
-                onCategoryChange={handleCategorySelect}
-              />
-            </div>
-
-            {/* Actions Group: Sort (Right-aligned) */}
-            <div className="flex items-center shrink-0">
-              <div className="w-48 xl:w-52 h-11">
-                <CustomDropdown
-                  options={[
-                    { value: "Popularity", label: "Popularity" },
-                    {
-                      value: "Price: Low to High",
-                      label: "Price: Low to High",
-                    },
-                    {
-                      value: "Price: High to Low",
-                      label: "Price: High to Low",
-                    },
-                    { value: "New Arrivals", label: "New Arrivals" },
-                  ]}
-                  value={sortBy}
-                  onChange={setSortBy}
-                  className="w-full h-full"
-                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
+          <div
+            className={`transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 ${!isSticky ? "bg-white/80 backdrop-blur-lg border-black/5 shadow-luxury/5 rounded-[2rem] p-3 md:p-4" : "border-transparent max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop w-full"}`}
+          >
+            {/* Search Bar & Mobile Filter Toggle */}
+            <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
+              <div className="flex-1 h-11">
+                <SearchBar
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search masterworks..."
+                  className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
                 />
+              </div>
+              {/* Mobile/Tablet Filter Toggle */}
+              <button
+                onClick={() => setIsFilterOpen(true)}
+                aria-label="Open filters"
+                className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  tune
+                </span>
+              </button>
+            </div>
+
+            {/* Desktop-Only Layout Integration (Tabs + Sort) */}
+            <div className="hidden lg:flex items-center justify-between gap-6 flex-1 min-w-0">
+              {/* Category Tabs Area - Fluid scrollable area */}
+              <div className="flex-1 overflow-hidden flex justify-start lg:justify-center">
+                <CategoryTabs
+                  categories={categories}
+                  activeCategory={activeCategory}
+                  onCategoryChange={handleCategorySelect}
+                />
+              </div>
+
+              {/* Actions Group: Sort (Right-aligned) */}
+              <div className="flex items-center shrink-0">
+                <div className="w-48 xl:w-52 h-11">
+                  <CustomDropdown
+                    options={[
+                      { value: "Popularity", label: "Popularity" },
+                      {
+                        value: "Price: Low to High",
+                        label: "Price: Low to High",
+                      },
+                      {
+                        value: "Price: High to Low",
+                        label: "Price: High to Low",
+                      },
+                      { value: "New Arrivals", label: "New Arrivals" },
+                    ]}
+                    value={sortBy}
+                    onChange={setSortBy}
+                    className="w-full h-full"
+                    buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* Flash Sale Banner - Cinematic Luxury Redesign */}
       {promoCoupon && (
@@ -465,6 +508,15 @@ export function ProductListing() {
                       totalPages={totalPages}
                       onPageChange={(page) => {
                         setCurrentPage(page);
+                        setSearchParams(prev => {
+                          const params = new URLSearchParams(prev);
+                          if (page === 1) {
+                            params.delete("page");
+                          } else {
+                            params.set("page", String(page));
+                          }
+                          return params;
+                        });
                         setTimeout(() => {
                           const el =
                             document.getElementById("artisan-collection");

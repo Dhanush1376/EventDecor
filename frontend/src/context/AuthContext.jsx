@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 import { safeLocalStorage } from '../utils/storage';
 
+import logger from '../utils/logger';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -94,7 +95,7 @@ export function AuthProvider({ children }) {
         logout(true);
       }
     } catch (err) {
-      console.error('Auth check failed:', err);
+      logger.error('Auth check failed:', err);
       logout(true);
     } finally {
       setLoading(false);
@@ -187,7 +188,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     import('../utils/observability').then(({ setUserContext }) => {
       setUserContext(user);
-    }).catch(err => console.error('Failed to load observability context:', err));
+    }).catch(err => logger.error('Failed to load observability context:', err));
   }, [user]);
 
   // Open and close actions for global Auth Modal
@@ -232,7 +233,7 @@ export function AuthProvider({ children }) {
       try {
         await intendedAction();
       } catch (err) {
-        console.error('Failed to auto-execute intended action after login:', err);
+        logger.error('Failed to auto-execute intended action after login:', err);
       }
       setIntendedAction(null);
     }

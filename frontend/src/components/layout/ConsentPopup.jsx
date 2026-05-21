@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import { safeLocalStorage } from "../../utils/storage";
 
+import logger from '../../utils/logger';
 export function ConsentPopup() {
   const [isVisible, setIsVisible] = useState(false);
   const [view, setView] = useState("banner"); // 'banner' | 'details'
@@ -30,7 +31,7 @@ export function ConsentPopup() {
         const saved = JSON.parse(consentLogged);
         setTimeout(() => setPreferences(saved), 0);
       } catch (err) {
-        console.error("Failed to parse local consent logs", err);
+        logger.error("Failed to parse local consent logs", err);
       }
     }
   }, []);
@@ -76,7 +77,7 @@ export function ConsentPopup() {
         }
       }
     } catch (err) {
-      console.error("Failed to persist GDPR consent selection:", err);
+      logger.error("Failed to persist GDPR consent selection:", err);
       // Fallback local-only save on offline or network failure
       safeLocalStorage.setItem("siri_arts_consent_logged", JSON.stringify(finalPrefs));
     } finally {

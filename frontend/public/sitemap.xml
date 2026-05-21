@@ -135,7 +135,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a0d5fc4c3d372d183e29589</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -144,18 +144,8 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/gallery/6a0c74fa9b8633afb920de7c</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://i1-c.pinimg.com/736x/91/27/80/912780ebea97cf7fd5cd2bce6f47124e.jpg</image:loc>
-      <image:title>Floral Jewelry Tray</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://siriartsandcrafts.com/gallery/6a0c75da9b8633afb920dea1</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
@@ -165,12 +155,22 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/gallery/6a0c764b9b8633afb920deb5</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
       <image:loc>https://i1-c.pinimg.com/1200x/b8/4b/6f/b84b6f6c2e78f1b55a79afe288748a32.jpg</image:loc>
       <image:title>Green Decorative Coconut</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a0d5c8fc725a13dd9a95619</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://i1-c.pinimg.com/1200x/ee/1f/2b/ee1f2b9fa25eac7e436036b4f8a1789b.jpg</image:loc>
+      <image:title>Floral Ring Tray</image:title>
     </image:image>
   </url>
   <url>
@@ -184,6 +184,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a0c74fa9b8633afb920de7c</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://i1-c.pinimg.com/736x/91/27/80/912780ebea97cf7fd5cd2bce6f47124e.jpg</image:loc>
+      <image:title>Floral Jewelry Tray</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://siriartsandcrafts.com/gallery/6a0c781bb048b5d5827cdf8a</loc>
     <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
@@ -191,16 +201,6 @@
     <image:image>
       <image:loc>https://i.pinimg.com/736x/35/6a/23/356a2307927067b644d13761ed953f77.jpg</image:loc>
       <image:title>Pearl Pooja Set</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/gallery/6a0d5c8fc725a13dd9a95619</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://i1-c.pinimg.com/1200x/ee/1f/2b/ee1f2b9fa25eac7e436036b4f8a1789b.jpg</image:loc>
-      <image:title>Floral Ring Tray</image:title>
     </image:image>
   </url>
   <url>
@@ -214,38 +214,8 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/events/6a0c217a9cb29468eccf9499</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop</image:loc>
-      <image:title>Reception Decoration</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/events/6a0c217a9cb29468eccf949a</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1561571994-3c61c554181a?q=80&w=1974&auto=format&fit=crop</image:loc>
-      <image:title>Traditional Pooja Setup</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/events/6a0c217a9cb29468eccf9498</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop</image:loc>
-      <image:title>Engagement Ceremony</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/events/6a0c217a9cb29468eccf9496</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://siriartsandcrafts.com/events/6a0f38de6ebe199f0c1b3f06</loc>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -254,13 +224,43 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/events/6a0c217a9cb29468eccf9497</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://siriartsandcrafts.com/events/6a0f38de6ebe199f0c1b3f07</loc>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
       <image:loc>https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop</image:loc>
       <image:title>Traditional Wedding Decor</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/events/6a0f38de6ebe199f0c1b3f08</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop</image:loc>
+      <image:title>Engagement Ceremony</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/events/6a0f38de6ebe199f0c1b3f09</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop</image:loc>
+      <image:title>Reception Decoration</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/events/6a0f38de6ebe199f0c1b3f0a</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1561571994-3c61c554181a?q=80&w=1974&auto=format&fit=crop</image:loc>
+      <image:title>Traditional Pooja Setup</image:title>
     </image:image>
   </url>
 </urlset>

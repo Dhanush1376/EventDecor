@@ -34,13 +34,19 @@ export default defineConfig({
             if (id.includes('react-router-dom')) return 'vendor-router';
             if (id.includes('react-dom') || id.includes('react/')) return 'vendor-react';
             if (id.includes('framer-motion')) return 'vendor-motion';
-            if (id.includes('recharts')) return 'vendor-charts';
+            if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
+            if (id.includes('leaflet')) return 'vendor-maps';
+            if (id.includes('qrcode') || id.includes('react-barcode')) return 'vendor-codes';
+            if (id.includes('socket.io-client')) return 'vendor-socket';
+            if (id.includes('axios')) return 'vendor-axios';
             if (id.includes('react-hot-toast') || id.includes('lucide-react')) return 'vendor-ui';
+            if (id.includes('@sentry')) return 'vendor-sentry';
             return 'vendor-others';
           }
-          if (id.includes('src/admin/')) {
-            return 'admin-portal';
-          }
+          // Split admin portal into sub-chunks
+          if (id.includes('src/admin/pages/')) return 'admin-pages';
+          if (id.includes('src/admin/components/')) return 'admin-components';
+          if (id.includes('src/admin/context/') || id.includes('src/admin/data/')) return 'admin-context';
         },
         // Asset file naming for long-term caching
         assetFileNames: (assetInfo) => {

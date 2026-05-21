@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { orderService } from '../services/domainServices';
 
+import logger from '../utils/logger';
 export const useRazorpay = () => {
   const loadScript = (src) => {
     return new Promise((resolve) => {
@@ -98,7 +99,7 @@ export const useRazorpay = () => {
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
     } catch (err) {
-      console.error('Payment error:', err);
+      logger.error('Payment error:', err);
       toast.error(err.response?.data?.message || 'Payment initiation failed');
       onError(err);
     }

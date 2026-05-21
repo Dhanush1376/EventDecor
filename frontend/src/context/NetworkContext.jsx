@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 
 import { safeLocalStorage } from "../utils/storage";
 
+import logger from '../utils/logger';
 const NetworkContext = createContext(null);
 
 export const useNetwork = () => {
@@ -103,7 +104,7 @@ export function NetworkProvider({ children }) {
         return true;
       }
     } catch (error) {
-      console.warn("🌐 [Network Check] API Health check failed:", error.message);
+      logger.warn("🌐 [Network Check] API Health check failed:", error.message);
     }
 
     // Ping failed. Debounce the offline state
@@ -218,14 +219,14 @@ export function NetworkProvider({ children }) {
           
           if (isClientError) {
             // Discard client/validation errors to prevent queue blockage but notify user
-            console.error(`⚠️ [Offline Sync] Permanent sync rejection for ${item.description}:`, error);
+            logger.error(`⚠️ [Offline Sync] Permanent sync rejection for ${item.description}:`, error);
             dequeueRequest(item.id);
             failedCount++;
             succeeded = true; // Break loop
           } else {
             // Server error or timeout: Wait with exponential backoff before retry
             const delay = Math.pow(2, attempts) * 1000;
-            console.warn(`🔄 [Offline Sync] Sync attempt ${attempts} failed for ${item.description}. Retrying in ${delay}ms...`);
+            logger.warn(`🔄 [Offline Sync] Sync attempt ${attempts} failed for ${item.description}. Retrying in ${delay}ms...`);
             await new Promise((res) => setTimeout(res, delay));
           }
         }

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
+import logger from '../../utils/logger';
 export function VideoUpload({ value, onChange, folder = 'gallery', label = "Upload Showcase Video" }) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -43,7 +44,7 @@ export function VideoUpload({ value, onChange, folder = 'gallery', label = "Uplo
       
       toast.success('Video uploaded successfully!', { id: toastId });
     } catch (err) {
-      console.error('Video upload failed:', err);
+      logger.error('Video upload failed:', err);
       toast.error(err.response?.data?.message || 'Failed to upload video. Please verify file signature and try again.', { id: toastId });
     } finally {
       setIsUploading(false);

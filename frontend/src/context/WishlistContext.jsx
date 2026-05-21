@@ -11,6 +11,7 @@ import { userService } from "../services/domainServices";
 import { useAuth } from "./AuthContext";
 import toast from "react-hot-toast";
 
+import logger from '../utils/logger';
 const WishlistContext = createContext(null);
 
 export function WishlistProvider({ children }) {
@@ -31,7 +32,7 @@ export function WishlistProvider({ children }) {
             setItems(res.data || []);
           }
         } catch (error) {
-          console.error("Failed to fetch wishlist:", error);
+          logger.error("Failed to fetch wishlist:", error);
           toast.error("Failed to load wishlist items");
         } finally {
           setLoading(false);
@@ -63,7 +64,7 @@ export function WishlistProvider({ children }) {
           throw new Error(res.message || "Failed to toggle wishlist");
         }
       } catch (error) {
-        console.error("Failed to sync wishlist:", error);
+        logger.error("Failed to sync wishlist:", error);
         setItems(previousItems); // Rollback to previous state on failure
         toast.error("Failed to update wishlist. Please try again.");
       }

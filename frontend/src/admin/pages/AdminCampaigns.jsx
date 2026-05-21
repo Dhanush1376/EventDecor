@@ -4,6 +4,7 @@ import { notificationService } from "../../services/domainServices";
 import toast from "react-hot-toast";
 import { AdminToggle } from "../components/AdminUIKit";
 
+import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export function AdminCampaigns() {
@@ -48,7 +49,7 @@ export function AdminCampaigns() {
       if (tempRes.success) setTemplates(tempRes.data || []);
       if (polyRes.success) setAnalytics(polyRes.data || null);
     } catch (err) {
-      console.error("Failed to load campaign dataset", err);
+      logger.error("Failed to load campaign dataset", err);
       toast.error("Failed to fetch notification system information");
     } finally {
       setIsLoading(false);
@@ -110,7 +111,7 @@ export function AdminCampaigns() {
         setActiveTab("broadcasts");
       }
     } catch (err) {
-      console.error("Failed to create campaign draft", err);
+      logger.error("Failed to create campaign draft", err);
       toast.error(err.response?.data?.message || "Failed to create campaign");
     } finally {
       setIsSubmitting(false);

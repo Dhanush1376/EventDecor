@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useAdmin } from "../context/AdminContext";
 import toast from "react-hot-toast";
 
+import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export function AdminSettings() {
@@ -99,7 +100,7 @@ export function AdminSettings() {
     businessEmail: "Sirisha.atmakuri@gmail.com",
     phoneNumber: "+91 98660 06648",
     gstNumber: "GSTIN123456789",
-    address: "#28-1-92, Beside Kailash PavBhaji Center, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
+    address: "#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
     primaryColor: "#735c00",
     secondaryColor: "#F8F9FB",
     fontFamily: "Playfair Display + Inter",
@@ -223,7 +224,7 @@ export function AdminSettings() {
         // silent fallback to default initial settings
       }
     } catch (err) {
-      console.warn("Could not sync remote settings, using local configuration.");
+      logger.warn("Could not sync remote settings, using local configuration.");
     } finally {
       setLoading(false);
     }

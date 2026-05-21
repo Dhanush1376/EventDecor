@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAdmin } from "../context/AdminContext";
 import Barcode from "react-barcode";
 import { QRCodeSVG } from "qrcode.react";
+import { InvoiceTemplate } from "../../components/ui";
 import { playSuccessBeep, playErrorBeep } from "../../utils/audioUtils";
 import toast from "react-hot-toast";
 
@@ -205,86 +206,8 @@ export function AdminOrderDetail() {
       </style>
 
       {/* PRINT-ONLY INVOICE LAYOUT */}
-      <div className="hidden print-only bg-white text-black text-sm p-4 w-full h-full">
-        <div className="print-header flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-bold font-display uppercase tracking-widest text-slate-700">Siri Arts</h1>
-            <p className="text-gray-500 mt-1">Premium Event Decor & Handicrafts</p>
-            <p className="text-gray-500 text-xs">Hyderabad, Telangana, India - 500001</p>
-          </div>
-          <div className="text-right">
-            <h2 className="text-2xl font-bold uppercase tracking-wider">Tax Invoice</h2>
-            <p className="mt-1 font-semibold">Invoice #: {order.invoiceNumber || order.id}</p>
-            <p>Date: {order.date}</p>
-          </div>
-        </div>
-
-        <div className="flex justify-between mb-8">
-          <div className="w-1/2 pr-4">
-            <h3 className="font-bold border-b border-gray-300 pb-1 mb-2">Billed To (Customer):</h3>
-            <p className="font-semibold">{order.customer}</p>
-            <p>{order.email}</p>
-            <p>{order.phone}</p>
-            {order.shippingAddress?.alternatePhone && <p>Alt: {order.shippingAddress.alternatePhone}</p>}
-          </div>
-          <div className="w-1/2 pl-4">
-            <h3 className="font-bold border-b border-gray-300 pb-1 mb-2">Shipped To:</h3>
-            <p>{order.address}</p>
-            {order.shippingAddress?.landmark && <p>Landmark: {order.shippingAddress.landmark}</p>}
-            <p>Delivery Instructions: {order.shippingAddress?.deliveryInstructions || "None"}</p>
-          </div>
-        </div>
-
-        <table className="w-full mb-8 border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 text-left p-2">Item Description</th>
-              <th className="border border-gray-300 text-center p-2 w-20">Qty</th>
-              <th className="border border-gray-300 text-right p-2 w-32">Unit Price</th>
-              <th className="border border-gray-300 text-right p-2 w-32">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order.items.map((item, idx) => (
-              <tr key={idx}>
-                <td className="border border-gray-300 p-2">{item.name}</td>
-                <td className="border border-gray-300 text-center p-2">{item.qty}</td>
-                <td className="border border-gray-300 text-right p-2">₹{item.price.toLocaleString()}</td>
-                <td className="border border-gray-300 text-right p-2">₹{(item.qty * item.price).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan="3" className="border border-gray-300 text-right p-2 font-bold">Subtotal:</td>
-              <td className="border border-gray-300 text-right p-2 font-bold">₹{order.total.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td colSpan="3" className="border border-gray-300 text-right p-2 font-bold bg-gray-100">Grand Total:</td>
-              <td className="border border-gray-300 text-right p-2 font-bold bg-gray-100 text-lg">₹{order.total.toLocaleString()}</td>
-            </tr>
-          </tfoot>
-        </table>
-
-        <div className="flex justify-between items-start border-t border-gray-300 pt-6 mt-8">
-          <div className="w-1/2">
-            <h3 className="font-bold mb-2">Logistics Information</h3>
-            <p>Courier Partner: <strong>{order.courierPartner || "Delhivery"}</strong></p>
-            <p>Tracking AWB: <strong>{order.trackingNumber || "N/A"}</strong></p>
-            <p>Payment Mode: <strong>{order.payment}</strong></p>
-            <div className="mt-4">
-              <Barcode value={order.barcodeData || order.id} height={40} width={1.5} displayValue={true} fontSize={12} />
-            </div>
-          </div>
-          <div className="flex flex-col items-center">
-            <h3 className="font-bold mb-2">Scan to Track</h3>
-            <QRCodeSVG value={trackingQR} size={100} level="M" />
-          </div>
-        </div>
-        
-        <div className="mt-12 text-center text-gray-500 text-xs">
-          This is a computer generated invoice and does not require a physical signature.
-        </div>
+      <div className="hidden print-only bg-white text-black text-sm p-0 w-full h-full relative">
+        <InvoiceTemplate order={order} />
       </div>
 
       {/* PRINT-ONLY STICKER LAYOUT */}

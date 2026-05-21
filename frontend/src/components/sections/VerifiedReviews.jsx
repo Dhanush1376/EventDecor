@@ -6,6 +6,7 @@ import { reviewService } from "../../services/domainServices";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { ReviewsSkeleton } from "../ui/Skeleton";
 
+import logger from '../../utils/logger';
 // Lazy load heavy interaction overlays to trim the main package bundle size
 const PostReviewModal = lazy(() => import("../reviews/PostReviewModal").then((m) => ({ default: m.PostReviewModal })));
 const ReviewLightbox = lazy(() => import("../reviews/ReviewLightbox").then((m) => ({ default: m.ReviewLightbox })));
@@ -154,7 +155,7 @@ export const VerifiedReviews = () => {
           setReviewsList([]);
         }
       } catch (err) {
-        console.error("Failed to fetch live reviews:", err);
+        logger.error("Failed to fetch live reviews:", err);
         setReviewsList([]);
       } finally {
         setLoading(false);
@@ -177,7 +178,7 @@ export const VerifiedReviews = () => {
       try {
         await reviewService.incrementHelpful(id);
       } catch (err) {
-        console.error("Failed to increment helpful count in database:", err);
+        logger.error("Failed to increment helpful count in database:", err);
       }
     }
   };
@@ -221,7 +222,7 @@ export const VerifiedReviews = () => {
         setReviewsList((prev) => [newRevData, ...prev]);
       }
     } catch (err) {
-      console.error("Failed to save review to database:", err);
+      logger.error("Failed to save review to database:", err);
       setReviewsList((prev) => [newRevData, ...prev]);
     }
   };

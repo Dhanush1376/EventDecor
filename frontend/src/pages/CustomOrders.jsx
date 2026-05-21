@@ -6,6 +6,7 @@ import { customOrderService, uploadService } from "../services/domainServices";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
+import logger from '../utils/logger';
 // Framer motion presets
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
 const slideIn = { hidden: { opacity: 0, x: 20 }, show: { opacity: 1, x: 0 } };
@@ -63,59 +64,6 @@ export function CustomOrders() {
   ]);
   const [aiUserQuery, setAiUserQuery] = useState("");
 
-  const signaturePresets = [
-    {
-      id: "preset_1",
-      title: "Royal Temple Mandapam",
-      description: "Grand traditional temple setup featuring solid hand-carved pillars, sacred flower swags, and antique brass deepams.",
-      image: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=600&auto=format&fit=crop",
-      occasion: "Wedding",
-      productType: "Traditional Wedding Decor",
-      requirements: "Traditional grand temple stage with premium red and gold drapery, hanging brass bells, marigold swags, and jasmines.",
-      budget: "₹1,50,000 - ₹2,50,000"
-    },
-    {
-      id: "preset_2",
-      title: "Botanical Marigold Haldi Swing",
-      description: "Vibrant yellow marigold garlands, coconut leaf backdrops, and hanging brass urlis surrounding a central custom wooden swing.",
-      image: "https://i.pinimg.com/736x/5b/1a/21/5b1a2179b3074b3036e5c05763f0f135.jpg",
-      occasion: "Haldi",
-      productType: "Pooja Decoration Sets",
-      requirements: "Fresh yellow and orange marigold canopy, coconut leaf weave backdrop, traditional wooden swing, hanging jasmine strands, and low brass bowls (urlis) with floating lotus.",
-      budget: "₹45,000 - ₹85,000"
-    },
-    {
-      id: "preset_3",
-      title: "Kundan Gilded Floral Ring Tray",
-      description: "Exquisite ring ceremony presentation trays with customized velvet backdrops, delicate pearl stringing, and fresh roses.",
-      image: "https://i1-c.pinimg.com/1200x/53/8f/14/538f14a88e22b9c41ab48ea61f50467c.jpg",
-      occasion: "Engagement",
-      productType: "Engagement Ring Trays",
-      requirements: "Premium circular kundan-bordered tray, velvet base with custom-molded ring slots, surrounding fresh pink roses, baby's breath flowers, and ambient LED highlights.",
-      budget: "₹5,000 - ₹12,000"
-    }
-  ];
-
-  const handleApplyPreset = (preset) => {
-    updateDraft({
-      occasion: preset.occasion,
-      productType: preset.productType,
-      customRequirements: preset.requirements,
-      budget: preset.budget
-    });
-    // Add preset image to inspiration list
-    if (!wizardDraft.inspirationImages.includes(preset.image)) {
-      updateDraft({
-        occasion: preset.occasion,
-        productType: preset.productType,
-        customRequirements: preset.requirements,
-        budget: preset.budget,
-        inspirationImages: [...wizardDraft.inspirationImages, preset.image]
-      });
-    }
-    toast.success(`Applied "${preset.title}" signature preset! Your form fields have been beautifully pre-filled.`);
-    setCurrentStep(4); // Advance directly to custom description
-  };
 
   const handleWhatsAppConsult = () => {
     const phone = "919866006648";
@@ -310,7 +258,7 @@ export function CustomOrders() {
         }
       }
     } catch (err) {
-      console.error("Failed to load workspace data:", err);
+      logger.error("Failed to load workspace data:", err);
     } finally {
       setLoading(false);
     }
@@ -891,40 +839,7 @@ export function CustomOrders() {
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">Upload reference photos, venue drawings, or choose from our beautiful signature curation presets.</p>
                       </div>
 
-                      {/* SIGNATURE PRESETS CARDS */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#D4AF37]">star</span>
-                          <h3 className="text-[13.5px] font-bold text-[#2D2B29]">Siri Signature Curated Presets</h3>
-                        </div>
-                        <p className="text-[11px] text-[#685C57] font-light">Don't have a picture? Instant-apply one of our award-winning boutique designs:</p>
-                        <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-x-visible gap-4 pb-4 md:pb-0 pt-1 snap-x" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-                          {signaturePresets.map(preset => (
-                            <div key={preset.id} className="bg-[#FAF9F6] border border-black/5 rounded-2xl overflow-hidden hover:border-[#D4AF37] transition-all flex flex-col justify-between group shadow-sm min-w-[245px] md:min-w-0 snap-start shrink-0">
-                              <div>
-                                <div className="aspect-[4/3] w-full overflow-hidden relative">
-                                  <img src={preset.image} alt={preset.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                  <span className="absolute top-2 left-2 bg-[#2D2B29]/80 backdrop-blur-sm text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">{preset.occasion}</span>
-                                </div>
-                                <div className="p-3.5 space-y-1">
-                                  <h4 className="text-[12.5px] font-bold text-[#2D2B29]">{preset.title}</h4>
-                                  <p className="text-[10px] text-[#685C57]/80 leading-normal font-light line-clamp-2">{preset.description}</p>
-                                </div>
-                              </div>
-                              <div className="px-3.5 pb-3.5 pt-1 flex items-center justify-between border-t border-black/5 mt-auto">
-                                <span className="text-[9.5px] font-mono text-[#D4AF37] font-bold">{preset.budget}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleApplyPreset(preset)}
-                                  className="px-3 py-1 bg-[#2D2B29] text-white hover:bg-[#D4AF37] rounded-full text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer"
-                                >
-                                  Apply Design
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+
 
                       {/* FILE UPLOAD DRAG & DROP AREA */}
                       <div className="border-t border-black/5 pt-5 space-y-3">

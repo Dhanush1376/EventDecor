@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AdminProvider, useAdmin } from "../context/AdminContext";
@@ -8,6 +8,7 @@ import { PublishToast } from "../components/AdminUIKit";
 import { AdminErrorBoundary } from "../components/AdminErrorBoundary";
 import { GlobalSearchPalette } from "../components/GlobalSearchPalette";
 import { MandalaElement } from "../../components/ui/MandalaElement";
+import { AdminLoader } from "../../components/ui/PageLoader";
 import toast from "react-hot-toast";
 
 function AdminLayoutInner() {
@@ -91,7 +92,9 @@ function AdminLayoutInner() {
             className="flex-1 p-4 sm:p-5 md:p-6 lg:p-8 pb-24 lg:pb-12 relative max-w-[1920px] mx-auto w-full min-w-0"
           >
             <AdminErrorBoundary>
-              <Outlet />
+              <Suspense fallback={<AdminLoader />}>
+                <Outlet />
+              </Suspense>
             </AdminErrorBoundary>
           </main>
         </div>

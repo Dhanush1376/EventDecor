@@ -19,7 +19,7 @@ export function CategoryTabs({
             className={`px-4 sm:px-6 py-2.5 rounded-full border font-label text-[10px] sm:text-[11px] uppercase tracking-[0.12em] sm:tracking-[0.15em] transition-all duration-300 whitespace-nowrap min-h-11 ${
               activeCategory === cat
                 ? "bg-primary text-white border-primary shadow-md shadow-primary/10"
-                : "border-outline-variant/30 text-secondary hover:border-primary hover:text-primary"
+                : "bg-surface-bright/90 backdrop-blur-md border-outline-variant/30 text-secondary hover:border-primary hover:text-primary shadow-sm"
             }`}
           >
             {cat}

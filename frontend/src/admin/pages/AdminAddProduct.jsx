@@ -8,6 +8,7 @@ import { ImageUpload } from "../components/ImageUpload";
 import toast from "react-hot-toast";
 import { AdminToggle } from "../components/AdminUIKit";
 
+import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideIn = {
   hidden: { opacity: 0, x: 20 },
@@ -116,7 +117,7 @@ export function AdminAddProduct() {
         toast.error("Failed to generate details. Please try again.", { id: loadingToast });
       }
     } catch (err) {
-      console.error("AI AutoFill Error:", err);
+      logger.error("AI AutoFill Error:", err);
       const errorMessage = err.response?.data?.message || "AI service is offline. Please make sure GROQ_API_KEY is configured in your backend .env file.";
       toast.error(errorMessage, { id: loadingToast, duration: 6000 });
     } finally {
@@ -197,7 +198,7 @@ export function AdminAddProduct() {
           });
         }
       } catch (err) {
-        console.error("Failed to load dynamic categories:", err);
+        logger.error("Failed to load dynamic categories:", err);
       }
     };
     loadCategories();
@@ -407,7 +408,7 @@ export function AdminAddProduct() {
           try {
             await refreshProducts();
           } catch (err) {
-            console.error("Failed to refresh products state", err);
+            logger.error("Failed to refresh products state", err);
           }
         }
         navigate("/admin/products");

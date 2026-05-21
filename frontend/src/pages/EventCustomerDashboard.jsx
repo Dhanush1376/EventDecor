@@ -6,6 +6,7 @@ import { bookingService } from "../services/domainServices";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import toast from "react-hot-toast";
 
+import logger from '../utils/logger';
 const STATUS_STEPS = [
   { id: "inquiry", label: "Inquiry Received", desc: "Our design team is checking setup details" },
   { id: "review", label: "Under Review", desc: "Design architects are mapping prop blueprint dimensions" },
@@ -19,7 +20,7 @@ const STATUS_STEPS = [
   { id: "completed", label: "Completed", desc: "Logistics completed & inventory returned" },
 ];
 
-export function EventCustomerDashboard() {
+export function EventCustomerDashboard({ isEmbedded = false }) {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,12 @@ export function EventCustomerDashboard() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentNote, setPaymentNote] = useState("Milestone Deposit");
+
+  // Expandable timeline state
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+
+  // Mobile chat bottom-sheet state
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
   async function fetchBookings() {
     setLoading(true);
@@ -46,7 +53,7 @@ export function EventCustomerDashboard() {
         }
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error("Failed to sync event bookings catalog.");
     } finally {
       setLoading(false);
@@ -83,7 +90,7 @@ export function EventCustomerDashboard() {
       }
     } catch (err) {
       toast.dismiss(loadId);
-      console.error(err);
+      logger.error(err);
       toast.error("Error submitting response.");
     }
   };
@@ -103,7 +110,7 @@ export function EventCustomerDashboard() {
         }
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error("Failed to post message.");
     }
   };
@@ -137,7 +144,7 @@ export function EventCustomerDashboard() {
       }
     } catch (err) {
       toast.dismiss(loadId);
-      console.error(err);
+      logger.error(err);
       toast.error("Transaction error. Please try again.");
     }
   };
@@ -150,7 +157,7 @@ export function EventCustomerDashboard() {
         setSelectedBooking(res.data);
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }
@@ -162,30 +169,35 @@ export function EventCustomerDashboard() {
     : 0;
 
   return (
-    <div className="bg-[#fbf9f6] min-h-screen text-on-surface pt-20 md:pt-32 pb-24 relative overflow-hidden font-body">
-      <SEO title="My Events Workspace | Siri Arts & Crafts" description="Track your live event timelines, coordinate theme palette adjustments, and manage payments." />
+    <div className={isEmbedded ? "text-on-surface font-body" : "bg-[#fbf9f6] min-h-screen text-on-surface pt-20 md:pt-32 pb-24 relative overflow-hidden font-body"}>
+      {!isEmbedded && (
+        <>
+          <SEO title="My Events Workspace | Siri Arts & Crafts" description="Track your live event timelines, coordinate theme palette adjustments, and manage payments." />
+          <MandalaArtDecor variant={2} size={450} className="-top-24 -right-24 absolute opacity-[0.06] z-0" spinDuration={240} />
+        </>
+      )}
 
-      <MandalaArtDecor variant={2} size={450} className="-top-24 -right-24 absolute opacity-[0.06] z-0" spinDuration={240} />
-
-      <div className="max-w-[1300px] mx-auto px-4 relative z-10">
+      <div className={isEmbedded ? "" : "max-w-[1300px] mx-auto px-4 relative z-10"}>
         {/* Editorial Heading */}
-        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-black/5 pb-6">
-          <div className="space-y-1">
-            <span className="font-label text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block">
-              PORTFOLIO STUDIO
-            </span>
-            <h1 className="font-display text-[26px] md:text-[44px] text-black font-light tracking-tight leading-none">
-              My Event Design Center.
-            </h1>
+        {!isEmbedded && (
+          <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-black/5 pb-6">
+            <div className="space-y-1">
+              <span className="font-label text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block">
+                PORTFOLIO STUDIO
+              </span>
+              <h1 className="font-display text-[26px] md:text-[44px] text-black font-light tracking-tight leading-none">
+                My Event Design Center.
+              </h1>
+            </div>
+            <Link
+              to="/events"
+              className="bg-black text-white px-6 py-2.5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors self-start md:self-auto flex items-center gap-1.5"
+            >
+              Browse Events & Setups
+              <span className="material-symbols-outlined text-[14px] normal-case">add</span>
+            </Link>
           </div>
-          <Link
-            to="/events"
-            className="bg-black text-white px-6 py-2.5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors self-start md:self-auto flex items-center gap-1.5"
-          >
-            Browse Events & Setups
-            <span className="material-symbols-outlined text-[14px] normal-case">add</span>
-          </Link>
-        </div>
+        )}
 
         {loading && bookings.length === 0 ? (
           <div className="min-h-[400px] flex items-center justify-center">
@@ -212,46 +224,51 @@ export function EventCustomerDashboard() {
           </div>
         ) : (
           /* Main Workspace Dashboard */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Sidebar list of active client bookings */}
-            <div className="lg:col-span-3 space-y-4">
-              <h3 className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold">Celebrations list</h3>
-              <div className="space-y-3">
-                {bookings.map((b) => (
-                  <div
-                    key={b._id || b.id}
-                    onClick={() => handleSelectBooking(b)}
-                    className={`p-4 rounded-2xl border text-left cursor-pointer transition-all ${
-                      selectedBooking?._id === b._id
-                        ? "bg-white border-primary/40 shadow-lg scale-[1.02]"
-                        : "border-black/5 hover:border-black/10 bg-white/70"
-                    }`}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="bg-primary/5 text-primary px-2 py-0.5 rounded-full font-label text-[8px] uppercase tracking-widest font-bold">
-                          {b.eventType}
-                        </span>
-                        <span className="font-mono text-[9px] text-black/30">
-                          {new Date(b.date).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
-                        </span>
+          <div className="space-y-6">
+            {/* Horizontal list of bookings at the top (only shown if there are multiple bookings) */}
+            {bookings.length > 1 && (
+              <div className="space-y-2">
+                <h3 className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold">Your Celebrations</h3>
+                <div className="flex flex-row gap-4 overflow-x-auto pb-3 pt-1 no-scrollbar">
+                  {bookings.map((b) => {
+                    const isSelected = selectedBooking?._id === b._id;
+                    return (
+                      <div
+                        key={b._id || b.id}
+                        onClick={() => handleSelectBooking(b)}
+                        className={`flex-shrink-0 min-w-[240px] md:min-w-[280px] p-4 rounded-2xl border text-left cursor-pointer transition-all ${
+                          isSelected
+                            ? "bg-white border-primary shadow-md ring-1 ring-primary/20 scale-[1.01]"
+                            : "border-black/5 hover:border-black/10 bg-white/70"
+                        }`}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center gap-2">
+                            <span className="bg-primary/5 text-primary px-2.5 py-0.5 rounded-full font-label text-[8px] uppercase tracking-widest font-bold truncate">
+                              {b.eventType}
+                            </span>
+                            <span className="font-mono text-[9px] text-black/35 shrink-0">
+                              {new Date(b.date).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
+                            </span>
+                          </div>
+                          <h4 className="font-display text-[13px] text-black font-bold truncate leading-tight">{b.title}</h4>
+                          <div className="flex justify-between items-center text-[10px] pt-1 border-t border-black/5">
+                            <span className="text-black/40">Status:</span>
+                            <span className="font-semibold text-primary capitalize">{b.status.replace("_", " ")}</span>
+                          </div>
+                        </div>
                       </div>
-                      <h4 className="font-display text-[14px] text-black font-bold truncate leading-tight">{b.title}</h4>
-                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="text-black/40">Status:</span>
-                        <span className="font-semibold text-primary capitalize">{b.status.replace("_", " ")}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Selected Booking interactive board */}
             {selectedBooking && (
-              <div className="lg:col-span-9 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                {/* Center Column: Timelines, Logistics, Invoices & Quotations */}
-                <div className="md:col-span-7 space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Left Column: Timelines, Logistics, Invoices & Quotations */}
+                <div className="lg:col-span-8 space-y-6">
                   {/* Visual Setup/Inquiry Details */}
                   <div className="bg-white rounded-3xl border border-black/5 p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
                     <div className="flex justify-between items-start border-b border-black/5 pb-4">
@@ -261,9 +278,20 @@ export function EventCustomerDashboard() {
                         </span>
                         <h2 className="font-display text-[22px] text-black font-light tracking-tight">{selectedBooking.title}</h2>
                       </div>
-                      <span className="bg-stone-100 text-stone-700 px-3 py-1 rounded-full font-label text-[9px] uppercase tracking-widest font-bold">
-                        ID: {selectedBooking._id?.substring(18).toUpperCase()}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {/* Mobile: Open chat bottom-sheet trigger */}
+                        <button
+                          type="button"
+                          onClick={() => setIsMobileChatOpen(true)}
+                          className="lg:hidden flex items-center gap-1.5 bg-primary text-white px-3 py-1.5 rounded-full font-label text-[9px] uppercase tracking-wider font-bold shadow-md active:scale-95 transition-transform"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">forum</span>
+                          Chat
+                        </button>
+                        <span className="bg-stone-100 text-stone-700 px-3 py-1 rounded-full font-label text-[9px] uppercase tracking-widest font-bold">
+                          ID: {selectedBooking._id?.substring(18).toUpperCase()}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
@@ -283,11 +311,39 @@ export function EventCustomerDashboard() {
                           {selectedBooking.timing?.start} - {selectedBooking.timing?.end}
                         </span>
                       </div>
-                      <div className="space-y-0.5 sm:col-span-2">
-                        <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">Setup Destination Address</span>
-                        <span className="font-body text-xs text-stone-700 font-medium block leading-relaxed">
+                      <div className="space-y-1.5 sm:col-span-2 bg-[#FAF6F0] p-4.5 rounded-2xl border border-[#C4A87C]/15 relative overflow-hidden">
+                        <span className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block mb-1">Setup Destination Address</span>
+                        {selectedBooking.venue?.name && (
+                          <span className="font-display text-xs text-black font-bold flex items-center gap-1.5 leading-none">
+                            <span className="material-symbols-outlined text-primary text-[16px]">storefront</span>
+                            {selectedBooking.venue.name}
+                          </span>
+                        )}
+                        <span className="font-body text-[11px] text-stone-700 font-light block leading-relaxed">
                           {selectedBooking.venue?.address}
                         </span>
+                        <div className="flex flex-wrap items-center gap-3 pt-1">
+                          {selectedBooking.venue?.city && (
+                            <span className="font-body text-[9px] text-stone-500 font-semibold bg-stone-100 px-2 py-0.5 rounded-full">
+                              City: {selectedBooking.venue.city}
+                            </span>
+                          )}
+                          {selectedBooking.venue?.pincode && (
+                            <span className="font-body text-[9px] text-stone-500 font-semibold bg-stone-100 px-2 py-0.5 rounded-full">
+                              Pincode: {selectedBooking.venue.pincode}
+                            </span>
+                          )}
+                          {selectedBooking.venue?.googleMapsLink && (
+                            <a
+                              href={selectedBooking.venue.googleMapsLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-label text-[8px] uppercase tracking-wider text-primary font-bold hover:underline flex items-center gap-0.5"
+                            >
+                              <span className="material-symbols-outlined text-[12px]">directions</span> Open Navigation
+                            </a>
+                          )}
+                        </div>
                       </div>
                       <div className="space-y-0.5">
                         <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">Setup Type</span>
@@ -354,29 +410,92 @@ export function EventCustomerDashboard() {
                     </div>
                   )}
 
-                  {/* Vertical interactive timeline status indicators */}
-                  <div className="bg-white rounded-3xl border border-black/5 p-6 md:p-8 space-y-6 shadow-xl">
-                    <h3 className="font-display text-lg text-black font-bold border-b border-black/5 pb-2">Setup Timeline Progress</h3>
-                    <div className="relative pl-6 border-l border-black/5 space-y-6 ml-2">
-                      {STATUS_STEPS.map((step, idx) => {
-                        const isPast = currentStatusIndex > idx;
-                        const isCurrent = currentStatusIndex === idx;
-                        return (
-                          <div key={step.id} className="relative group/step">
-                            <div className={`absolute -left-[31px] top-0 w-4.5 h-4.5 rounded-full border-2 transition-colors flex items-center justify-center ${
-                              isCurrent ? "bg-primary border-primary scale-110 shadow-lg" : isPast ? "bg-primary/25 border-primary" : "bg-white border-black/10"
-                            }`}>
-                              {isPast && <span className="material-symbols-outlined text-[10px] text-primary font-bold">check</span>}
-                            </div>
-                            <div className="space-y-0.5">
-                              <h4 className={`font-display text-[13px] font-bold ${isCurrent ? "text-primary font-bold" : isPast ? "text-black/60 font-semibold" : "text-black/35 font-normal"}`}>
-                                {step.label}
-                              </h4>
-                              <p className="font-body text-[10px] text-black/40 leading-relaxed font-light">{step.desc}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
+                  {/* Compact Modern Progress Bar & Highlighted Active Phase */}
+                  <div className="bg-white rounded-3xl border border-black/5 p-6 md:p-8 space-y-5 shadow-xl">
+                    <div className="flex justify-between items-center border-b border-black/5 pb-3">
+                      <div>
+                        <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block mb-0.5">TIMELINE STATUS</span>
+                        <h3 className="font-display text-base text-black font-bold">Setup Progress Tracker</h3>
+                      </div>
+                      <span className="text-[10px] text-black/50 font-mono">
+                        Phase {currentStatusIndex + 1} of {STATUS_STEPS.length}
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-2">
+                      <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary rounded-full transition-all duration-500 ease-out" 
+                          style={{ width: `${((currentStatusIndex + 1) / STATUS_STEPS.length) * 100}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[9px] text-black/35 uppercase tracking-wider font-semibold">
+                        <span>Inquiry</span>
+                        <span>Active Celebration</span>
+                        <span>Completed</span>
+                      </div>
+                    </div>
+
+                    {/* Highlighted Current Step */}
+                    <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 mt-0.5 animate-pulse">
+                        <span className="material-symbols-outlined text-[16px]">hourglass_empty</span>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded-full font-label text-[8px] uppercase tracking-wider font-bold">
+                          Current Phase: {STATUS_STEPS[currentStatusIndex]?.label}
+                        </span>
+                        <p className="font-body text-[11px] text-stone-700 leading-relaxed pt-1">
+                          {STATUS_STEPS[currentStatusIndex]?.desc}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Expandable full history */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
+                        className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl border border-black/5 text-stone-850 hover:bg-stone-50 transition-colors font-label text-[10px] uppercase tracking-wider font-bold"
+                      >
+                        <span>{isTimelineExpanded ? "Hide Full Timeline Roster" : "View Full Timeline Roster"}</span>
+                        <span className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${isTimelineExpanded ? "rotate-180" : ""}`}>
+                          expand_more
+                        </span>
+                      </button>
+
+                      <AnimatePresence>
+                        {isTimelineExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden mt-4 pl-4 border-l border-black/5 space-y-4 ml-2"
+                          >
+                            {STATUS_STEPS.map((step, idx) => {
+                              const isPast = currentStatusIndex > idx;
+                              const isCurrent = currentStatusIndex === idx;
+                              return (
+                                <div key={step.id} className="relative pl-6">
+                                  <div className={`absolute -left-[23px] top-0 w-3.5 h-3.5 rounded-full border-2 transition-colors flex items-center justify-center ${
+                                    isCurrent ? "bg-primary border-primary scale-110 shadow-md" : isPast ? "bg-primary/20 border-primary" : "bg-white border-black/10"
+                                  }`}>
+                                    {isPast && <span className="material-symbols-outlined text-[8px] text-primary font-bold">check</span>}
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    <h4 className={`font-display text-[12px] font-bold ${isCurrent ? "text-primary font-bold" : isPast ? "text-black/60 font-semibold" : "text-black/35 font-normal"}`}>
+                                      {step.label}
+                                    </h4>
+                                    <p className="font-body text-[10px] text-black/40 leading-relaxed font-light">{step.desc}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
 
@@ -456,8 +575,8 @@ export function EventCustomerDashboard() {
                   </div>
                 </div>
 
-                {/* Right Column: Creative design Live Studio Chat thread */}
-                <div className="md:col-span-5 bg-white rounded-3xl border border-black/5 p-4 md:p-6 shadow-xl flex flex-col h-[600px]">
+                {/* Right Column: Creative design Live Studio Chat thread — desktop only */}
+                <div className="hidden lg:flex lg:col-span-4 bg-white rounded-3xl border border-black/5 p-4 md:p-6 shadow-xl flex-col h-[600px] lg:sticky lg:top-24">
                   <div className="border-b border-black/5 pb-3 shrink-0 flex items-center justify-between">
                     <div>
                       <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">LIVE WORKSPACE</span>
@@ -471,12 +590,12 @@ export function EventCustomerDashboard() {
                     {selectedBooking.chatHistory?.map((chat, idx) => {
                       const isAdmin = chat.sender === "admin";
                       return (
-                        <div key={idx} className={`flex flex-col max-w-[80%] ${isAdmin ? "self-start text-left" : "self-end text-right ml-auto"}`}>
+                        <div key={idx} className={`flex flex-col max-w-[85%] ${isAdmin ? "self-start text-left" : "self-end text-right ml-auto"}`}>
                           <span className="font-label text-[8px] text-black/35 font-bold uppercase tracking-widest mb-1 block">
                             {isAdmin ? "Siri Arts Designer" : "You"}
                           </span>
-                          <div className={`p-3.5 rounded-[18px] text-xs leading-relaxed font-light ${
-                            isAdmin ? "bg-stone-100 text-stone-900 rounded-tl-none" : "bg-black text-white rounded-tr-none"
+                          <div className={`p-3 rounded-[18px] text-xs leading-relaxed font-light ${
+                            isAdmin ? "bg-[#F5F3EF] text-stone-900 rounded-tl-none" : "bg-black text-white rounded-tr-none"
                           }`}>
                             {chat.message}
                           </div>
@@ -512,6 +631,111 @@ export function EventCustomerDashboard() {
           </div>
         )}
       </div>
+
+      {/* Mobile Chat Bottom-Sheet Drawer (lg:hidden equivalent — only rendered & shown on mobile) */}
+      <AnimatePresence>
+        {isMobileChatOpen && selectedBooking && (
+          <div className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setIsMobileChatOpen(false)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+
+            {/* Sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              className="relative z-10 bg-white rounded-t-[28px] flex flex-col"
+              style={{ height: "82vh" }}
+            >
+              {/* Drag handle pill */}
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-black/10" />
+              </div>
+
+              {/* Sheet header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-black/5 shrink-0">
+                <div>
+                  <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">LIVE WORKSPACE</span>
+                  <h4 className="font-display text-sm text-black font-bold">Creative Design Studio</h4>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-primary animate-pulse">forum</span>
+                  <button
+                    onClick={() => setIsMobileChatOpen(false)}
+                    className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center active:scale-90 transition-transform"
+                  >
+                    <span className="material-symbols-outlined text-[18px] text-black/60">close</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages list */}
+              <div className="flex-1 overflow-y-auto py-4 px-5 space-y-4 no-scrollbar flex flex-col">
+                {selectedBooking.chatHistory?.length === 0 || !selectedBooking.chatHistory ? (
+                  <div className="flex flex-col items-center justify-center flex-1 gap-3 py-12">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[28px]">chat_bubble_outline</span>
+                    </div>
+                    <p className="font-body text-xs text-black/45 text-center max-w-[200px] leading-relaxed">
+                      Send a message to discuss color palettes, venue dimensions, or prop customizations.
+                    </p>
+                  </div>
+                ) : (
+                  selectedBooking.chatHistory.map((chat, idx) => {
+                    const isAdmin = chat.sender === "admin";
+                    return (
+                      <div key={idx} className={`flex flex-col max-w-[82%] ${isAdmin ? "self-start text-left" : "self-end text-right ml-auto"}`}>
+                        <span className="font-label text-[8px] text-black/35 font-bold uppercase tracking-widest mb-1 block">
+                          {isAdmin ? "Siri Arts Designer" : "You"}
+                        </span>
+                        <div className={`p-3.5 rounded-[18px] text-xs leading-relaxed ${
+                          isAdmin ? "bg-[#F5F3EF] text-stone-900 rounded-tl-none" : "bg-black text-white rounded-tr-none"
+                        }`}>
+                          {chat.message}
+                        </div>
+                        <span className="font-mono text-[8px] text-black/25 mt-1 block">
+                          {new Date(chat.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Message input */}
+              <form
+                onSubmit={handleSendChat}
+                className="border-t border-black/5 px-4 py-3 shrink-0 flex items-center gap-2 bg-white"
+                style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
+              >
+                <input
+                  type="text"
+                  placeholder="Discuss color swatches, venue details..."
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  className="flex-1 bg-[#FAF9F6] border border-black/5 px-4 py-3 rounded-full text-xs outline-none focus:border-primary/45 transition-colors"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="w-11 h-11 rounded-full bg-black text-white flex items-center justify-center hover:bg-primary hover:text-black transition-all shrink-0 active:scale-90"
+                >
+                  <span className="material-symbols-outlined text-[17px]">send</span>
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Payment simulation modal */}
       <AnimatePresence>

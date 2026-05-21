@@ -4,6 +4,7 @@ import { ProductCard } from "../ui/ProductCard";
 import { productService, userService } from "../../services/domainServices";
 import { useAuth } from "../../context/AuthContext";
 
+import logger from '../../utils/logger';
 export function RecommendationSystem({ category, currentProductId }) {
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("recommendations"); // 'recommendations' | 'recent'
@@ -49,7 +50,7 @@ export function RecommendationSystem({ category, currentProductId }) {
           setRecommendedList(filtered.slice(0, 3));
         }
       } catch (err) {
-        console.warn("Failed to fetch dynamic recommendations", err);
+        logger.warn("Failed to fetch dynamic recommendations", err);
       } finally {
         setLoading(false);
       }
@@ -84,7 +85,7 @@ export function RecommendationSystem({ category, currentProductId }) {
             setRecentlyViewedList(formatted.slice(0, 3));
           }
         } catch (err) {
-          console.warn("Failed to fetch recently viewed list from API", err);
+          logger.warn("Failed to fetch recently viewed list from API", err);
         }
       } else {
         setRecentlyViewedList([]);

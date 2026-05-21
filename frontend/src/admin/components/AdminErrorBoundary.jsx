@@ -1,5 +1,6 @@
 import React from "react";
 
+import logger from '../../utils/logger';
 /**
  * Error Boundary for Admin Portal sections.
  * Catches JavaScript errors in child component tree and shows
@@ -17,7 +18,7 @@ export class AdminErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
-    console.error("[Admin Error Boundary]", error, errorInfo);
+    logger.error("[Admin Error Boundary]", error, errorInfo);
   }
 
   handleReset = () => {

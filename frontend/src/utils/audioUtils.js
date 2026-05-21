@@ -1,3 +1,4 @@
+import logger from './logger';
 /**
  * Premium Web Audio API Sound Chimes for Enterprise Logistics Scanning
  * Synthesizes pure synth wave tones to give instant acoustic confirmations.
@@ -29,7 +30,7 @@ export const playSuccessBeep = () => {
       }, 150);
     }, 170);
   } catch (e) {
-    console.warn("Audio Context blocked or not supported by browser security policies", e);
+    logger.warn("Audio Context blocked or not supported by browser security policies", e);
   }
 };
 
@@ -54,6 +55,6 @@ export const playErrorBeep = () => {
       }, 250);
     }, 45);
   } catch (e) {
-    console.warn("Audio Context blocked or not supported by browser security policies", e);
+    logger.warn("Audio Context blocked or not supported by browser security policies", e);
   }
 };

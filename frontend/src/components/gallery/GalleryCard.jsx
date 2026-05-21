@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
 import { handleImageError } from "../../utils/imageUtils";
 
-function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
+function CardContent({ item, displayImage, itemId, linkTo, navigate, minH }) {
   const [isHovered, setIsHovered] = React.useState(false);
 
   return (
@@ -14,9 +14,10 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
       transition={{ duration: 0.5 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`break-inside-avoid mb-4 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 ${item.height || "aspect-square"}`}
+      style={{ minHeight: minH || 200 }}
+      className="break-inside-avoid mb-3 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
     >
-      {/* Background Image/Video with Cinematic Zoom */}
+      {/* Background Image/Video — natural height, no forced aspect ratio */}
       {isHovered && item.video ? (
         <video
           src={item.video}
@@ -24,14 +25,14 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
           loop
           autoPlay
           playsInline
-          className="w-full h-full object-cover transition-all duration-700"
+          className="w-full h-auto block transition-all duration-700"
         />
       ) : (
         <CloudinaryImage
           src={displayImage}
           alt={item.title}
-          className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110 ease-out"
-          containerClassName="w-full h-full"
+          className="w-full h-auto block transition-transform duration-[1.5s] group-hover:scale-105 ease-out"
+          containerClassName="w-full"
           loading="lazy"
           width={600}
           height={800}
@@ -39,7 +40,7 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
         />
       )}
 
-      {/* Heritage Floating Circle Badges - Delicate Scale - Hidden on Mobile to declutter */}
+      {/* Heritage Floating Circle Badges - Hidden on Mobile to declutter */}
       <div className="absolute top-3 left-3 right-3 hidden md:flex justify-between items-start z-10">
         <div className="flex flex-col gap-2">
           {/* Shop Circle */}
@@ -80,7 +81,7 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
       {/* Luxury Immersive Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 flex flex-col justify-end p-5 @[400px]:p-10">
         <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-700 ease-out">
-          {/* Bilingual Title Stack - Matching Shop Card */}
+          {/* Bilingual Title Stack */}
           <div className="mb-3">
             {item.teluguTitle && (
               <span className="block font-label text-[11px] text-white/60 mb-0.5 tracking-wider uppercase font-bold animate-fade-in-up">
@@ -106,7 +107,6 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
             <p className="text-white/70 font-body text-[11px] font-light leading-relaxed line-clamp-2 max-w-[240px]">
               {item.description}
             </p>
-            {/* Use span + onClick instead of nested Link to avoid <a> inside <a> */}
             <span
               role="button"
               tabIndex={0}
@@ -141,17 +141,16 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate }) {
   );
 }
 
-export function GalleryCard({ item, onImageClick }) {
+export function GalleryCard({ item, onImageClick, minH }) {
   const navigate = useNavigate();
   const itemId = item._id || item.id;
   const linkTo = `/gallery/${itemId}`;
   const displayImage = item.image || item.imageSrc;
 
-  // Don't render a link if there's no valid ID
   if (!itemId) {
     return (
       <div className="block">
-        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} />
+        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} />
       </div>
     );
   }
@@ -159,14 +158,14 @@ export function GalleryCard({ item, onImageClick }) {
   if (onImageClick) {
     return (
       <div onClick={onImageClick} className="block">
-        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} />
+        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} />
       </div>
     );
   }
 
   return (
     <Link to={linkTo} className="block">
-      <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} />
+      <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} />
     </Link>
   );
 }

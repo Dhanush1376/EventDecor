@@ -48,27 +48,28 @@ export function StickyMobileATC({ product, triggerRef }) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 150, opacity: 0 }}
           transition={{ type: "spring", damping: 28, stiffness: 220 }}
-          className="sticky-mobile-atc fixed left-4 right-4 bottom-28 z-[110] md:hidden bg-surface/95 backdrop-blur-3xl border border-outline-variant/10 p-3 pl-6 flex items-center justify-between gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-[32px] select-none"
+          className="sticky-mobile-atc fixed left-3 right-3 bottom-24 z-[110] md:hidden bg-surface/95 backdrop-blur-3xl border border-outline-variant/10 px-4 py-2.5 flex items-center justify-between gap-3 shadow-[0_12px_36px_rgba(0,0,0,0.15)] rounded-[28px] select-none"
         >
           <div className="flex flex-col truncate">
-            <span className="font-label text-[9px] uppercase tracking-[0.3em] text-on-surface-variant/50 font-bold leading-none">
+            <span className="font-label text-[8px] uppercase tracking-[0.25em] text-on-surface-variant/45 font-bold leading-none">
               Price
             </span>
-            <p className="font-sans text-[20px] text-black font-bold leading-none mt-2">
+            <p className="font-sans text-[15px] text-black font-bold leading-none mt-1">
               ₹ {product?.price?.toLocaleString("en-IN")}
             </p>
           </div>
 
           <button
             onClick={handleAddToCart}
-            className="bg-on-surface text-surface h-14 px-8 rounded-full font-label text-[11px] uppercase tracking-[0.25em] font-bold shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+            className="bg-on-surface text-surface h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0"
           >
-            <span className="material-symbols-outlined text-[18px]">
+            <span className="material-symbols-outlined text-[15px]">
               shopping_bag
             </span>
             Add to Bag
           </button>
         </motion.div>
+
       )}
     </AnimatePresence>
   );

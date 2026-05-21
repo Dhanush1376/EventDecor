@@ -10,6 +10,7 @@ import { userService } from "../services/domainServices";
 import { useAuth } from "./AuthContext";
 import toast from "react-hot-toast";
 
+import logger from '../utils/logger';
 const CartContext = createContext(null);
 
 const CART_STORAGE_KEY = "siri_arts_cart";
@@ -65,7 +66,7 @@ export function CartProvider({ children }) {
           setSummary({ subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 });
         }
       } catch (err) {
-        console.error("Cart synchronization failed:", err);
+        logger.error("Cart synchronization failed:", err);
       } finally {
         setLoading(false);
       }
@@ -112,7 +113,7 @@ export function CartProvider({ children }) {
         setItems(transformDbCart(res.data?.items));
         setSummary(res.data?.summary);
       } catch (err) {
-        console.error("Failed to add item to database cart:", err);
+        logger.error("Failed to add item to database cart:", err);
         toast.error("Shopping bag synchronization failed");
       }
     };
@@ -130,7 +131,7 @@ export function CartProvider({ children }) {
         setItems(transformDbCart(res.data?.items));
         setSummary(res.data?.summary);
       } catch (err) {
-        console.error("Failed to remove item from database cart:", err);
+        logger.error("Failed to remove item from database cart:", err);
         toast.error("Failed to remove item from cloud bag");
       }
     };
@@ -166,7 +167,7 @@ export function CartProvider({ children }) {
         itemsRef.current = transformed;
         setSummary(res.data?.summary);
       } catch (err) {
-        console.error("Failed to update cart quantity in database:", err);
+        logger.error("Failed to update cart quantity in database:", err);
         toast.error("Failed to sync quantity update");
       }
     };
@@ -181,7 +182,7 @@ export function CartProvider({ children }) {
       try {
         await userService.syncCart([]);
       } catch (err) {
-        console.error("Failed to clear database cart:", err);
+        logger.error("Failed to clear database cart:", err);
       }
     };
 

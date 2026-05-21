@@ -7,6 +7,7 @@ import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { inquiryService } from "../services/domainServices";
 import toast from "react-hot-toast";
 
+import logger from '../utils/logger';
 export function Contact() {
   const { contact } = useWebsiteContent();
   const [formState, setFormState] = useState("idle"); // idle, sending, success
@@ -39,7 +40,7 @@ export function Contact() {
         toast.error("Failed to send inquiry. Please try again.");
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setFormState("idle");
       toast.error("An error occurred. Please try again.");
     }

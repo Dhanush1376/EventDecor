@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { loyaltyService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
+import logger from '../../utils/logger';
 export function LoyaltyPanel() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -17,7 +18,7 @@ export function LoyaltyPanel() {
         setData(res.data);
       }
     } catch (err) {
-      console.error('Failed to load loyalty dashboard:', err);
+      logger.error('Failed to load loyalty dashboard:', err);
       toast.error('Could not fetch wallet details.');
     } finally {
       setLoading(false);

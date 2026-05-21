@@ -5,6 +5,7 @@ import App from "./App.jsx";
 import { initAnalytics } from "./utils/analytics";
 import { initObservability } from "./utils/observability";
 
+import logger from './utils/logger';
 // Initialize observability monitoring layers (Sentry & LogRocket)
 initObservability();
 
@@ -18,7 +19,7 @@ window.addEventListener('error', (event) => {
     event.message?.includes('Failed to fetch dynamically imported module');
   
   if (isChunkError) {
-    console.warn('[Observability] Detected chunk loading error. Attempting automatic reload...');
+    logger.warn('[Observability] Detected chunk loading error. Attempting automatic reload...');
     const lastReload = sessionStorage.getItem('siri_chunk_reload_time');
     const now = Date.now();
     if (!lastReload || now - parseInt(lastReload, 10) > 10000) {

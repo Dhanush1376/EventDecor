@@ -16,3 +16,5 @@ export * from "./CustomDropdown";
 export * from "./ShowcaseCard";
 export * from "./LazySection";
 export * from "./ShareButton";
+export * from "./InvoiceTemplate";
+export * from "./PageLoader";

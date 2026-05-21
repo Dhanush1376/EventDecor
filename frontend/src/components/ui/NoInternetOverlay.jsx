@@ -63,7 +63,6 @@ export function NoInternetOverlay() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [networkState]);
 
-  console.log("🖥️ [NoInternetOverlay] Render tick - networkState:", networkState, "quality:", connectionQuality);
 
   return (
     <AnimatePresence>

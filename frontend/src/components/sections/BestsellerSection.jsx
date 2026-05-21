@@ -10,6 +10,7 @@ import { productService } from "../../services/domainServices";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { BestsellerSkeleton } from "../ui/Skeleton";
 
+import logger from '../../utils/logger';
 export function BestsellerSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [bestsellers, setBestsellers] = useState([]);
@@ -44,7 +45,7 @@ export function BestsellerSection() {
           setBestsellers(products);
         }
       } catch (err) {
-        console.error("Failed to fetch bestsellers", err);
+        logger.error("Failed to fetch bestsellers", err);
       } finally {
         setFetchLoading(false);
       }
