@@ -86,46 +86,34 @@ app.use((req, res, next) => {
 });
 
 // 2. CORS Configuration
-const allowedOrigins = (process.env.FRONTEND_URLS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'])
-  .map((origin) => origin.trim().replace(/\/$/, ''))
-  .filter(Boolean)
-  .flatMap((origin) => {
-    if (!origin.startsWith('http://') && !origin.startsWith('https://')) {
-      const hosts = [origin, `www.${origin}`];
-      return hosts.flatMap(host => [`https://${host}`, `http://${host}`]);
-    }
-    try {
-      const url = new URL(origin);
-      const isWww = url.hostname.startsWith('www.');
-      const apexHostname = isWww ? url.hostname.substring(4) : url.hostname;
-      const wwwHostname = isWww ? url.hostname : `www.${url.hostname}`;
-      const portStr = url.port ? `:${url.port}` : '';
-      return [
-        `${url.protocol}//${apexHostname}${portStr}`,
-        `${url.protocol}//${wwwHostname}${portStr}`
-      ];
-    } catch {
-      return [origin];
-    }
-  });
-const isVercelPreview = (origin: string): boolean => {
-  return /^https:\/\/siriarts-n-crafts(-[a-z0-9-]+)?\.vercel\.app$/.test(origin);
-};
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://siriartsandcrafts.com",
+  "https://www.siriartsandcrafts.com",
+  "https://siriarts-n-crafts.vercel.app",
+];
 
 export const isOriginAllowed = (origin: string): boolean => {
-  return allowedOrigins.includes(origin) || isVercelPreview(origin);
+  return allowedOrigins.includes(origin) || origin.includes("vercel.app");
 };
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || isOriginAllowed(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`Not allowed by CORS: Origin "${origin}" is not in the allowed list: [${allowedOrigins.join(', ')}]`));
-    }
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.includes("vercel.app")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Not allowed by CORS: ${origin}`));
+      }
+    },
+    credentials: true,
+  })
+);
 
 app.use((req, res, next) => {
   const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
