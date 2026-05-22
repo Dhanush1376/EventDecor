@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNetwork } from '../../context/NetworkContext';
 
 /**
@@ -6,8 +6,21 @@ import { useNetwork } from '../../context/NetworkContext';
  */
 export function SlowConnectionBanner() {
   const { networkState, connectionQuality } = useNetwork();
+  const [visible, setVisible] = useState(true);
 
-  if (networkState === 'online' && connectionQuality !== 'poor') {
+  useEffect(() => {
+    // Show banner on state changes
+    setVisible(true);
+    
+    // Auto-hide the banner after 5 seconds
+    const timer = setTimeout(() => {
+      setVisible(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [networkState, connectionQuality]);
+
+  if (!visible || (networkState === 'online' && connectionQuality !== 'poor')) {
     return null;
   }
 
