@@ -98,9 +98,13 @@ app.use((req, res, next) => {
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://siriartsandcrafts.com",
-  "https://www.siriartsandcrafts.com",
-  "https://siriarts-n-crafts.vercel.app",
+  // Merge production origins from FRONTEND_URLS env var
+  ...(process.env.FRONTEND_URLS || '')
+    .split(',')
+    .map(u => u.trim())
+    .filter(Boolean)
+    .map(u => u.startsWith('http') ? u : `https://${u}`)
+    .filter(u => !['http://localhost:3000', 'http://localhost:5173'].includes(u)),
 ];
 
 export const isOriginAllowed = (origin: string): boolean => {
@@ -140,7 +144,7 @@ app.use((req, res, next) => {
 
   return res.status(403).json({
     success: false,
-    message: `Request origin "${origin || 'unknown'}" is not allowed. Allowed: [${allowedOrigins.join(', ')}]`,
+    message: 'Request origin is not allowed by server policy.',
   });
 });
 

@@ -78,6 +78,8 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
 /**
  * Send email via Nodemailer SMTP (works locally, may be blocked on some cloud providers)
  */
+let cachedTransporter: any = null;
+
 export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: string }> => {
   const nodemailer = require('nodemailer');
   const smtpUser = process.env.SMTP_USER;
@@ -85,10 +87,14 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
 
-  const transporter = nodemailer.createTransport({
-    host: smtpHost, port: smtpPort, secure: smtpPort === 465,
-    auth: { user: smtpUser, pass: smtpPass },
-  });
+  if (!cachedTransporter) {
+    cachedTransporter = nodemailer.createTransport({
+      host: smtpHost, port: smtpPort, secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+  }
+
+  const transporter = cachedTransporter;
 
   const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || smtpUser;
   const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';

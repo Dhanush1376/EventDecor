@@ -398,6 +398,19 @@
   }
 }
 
+@utility animate-pulse-subtle {
+  animation: pulse-subtle 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
 /* Typography Utilities */
 @utility font-headline-xl {
   font-size: clamp(36px, 8vw, 75px);

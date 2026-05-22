@@ -210,83 +210,6 @@ export function AdminOrderDetail() {
         <InvoiceTemplate order={order} />
       </div>
 
-      {/* PRINT-ONLY STICKER LAYOUT */}
-      <div className="hidden sticker-print-only bg-white text-black p-4 w-full max-w-sm mx-auto">
-        <div className="border-2 border-black p-3 font-mono uppercase text-[9px] tracking-tight">
-          <div className="flex justify-between items-center border-b-2 border-black pb-2 mb-2">
-            <div>
-              <span className="font-sans font-black tracking-tighter text-sm">SIRI ARTS</span>
-              <span className="block text-[8px] text-gray-600 font-sans tracking-wide">STUDIO & CRAFTS</span>
-            </div>
-            <div className="border-2 border-black bg-black text-white px-3 py-1 font-bold text-center leading-none">
-              <span className="text-[12px] block">
-                {order.payment === "Paid" ? "PREPAID" : "COD"}
-              </span>
-              <span className="text-[8px] tracking-wider block mt-0.5">
-                ₹{order.total.toLocaleString()}
-              </span>
-            </div>
-          </div>
-
-          <div className="text-center border-b-2 border-black pb-2 mb-2 flex flex-col items-center">
-            <Barcode value={order.trackingNumber || `SR-${order.id.substring(order.id.length - 8).toUpperCase()}-IN`} height={32} width={1.2} displayValue={false} margin={0} />
-            <div className="flex justify-between items-center w-full px-1 font-bold text-[8px] mt-1">
-              <span>AWB: {order.trackingNumber || `SR-${order.id.substring(order.id.length - 8).toUpperCase()}-IN`}</span>
-              <span>ORD: #{order.id.substring(0, 8).toUpperCase()}</span>
-            </div>
-          </div>
-
-          <div className="border-b-2 border-black pb-2 mb-2 text-left">
-            <span className="font-bold text-[9px] block mb-1">DELIVER TO:</span>
-            <strong className="text-[11px] block">{order.customer}</strong>
-            <p className="text-[9px] leading-tight mt-1 lowercase">
-              {order.address}
-            </p>
-            <div className="flex justify-between items-center mt-2 pt-1 border-t border-dashed border-gray-300">
-              <span className="font-black text-[12px]">PIN: {order.shippingAddress?.pincode || "523001"}</span>
-              <span className="font-bold">PH: {order.phone}</span>
-            </div>
-          </div>
-
-          <div className="border-b-2 border-black pb-2 mb-2 text-left">
-            <table className="w-full text-[8px] border-collapse">
-              <thead>
-                <tr className="border-b border-black font-bold">
-                  <th className="py-1 text-left">ITEM DETAIL</th>
-                  <th className="py-1 text-center">QTY</th>
-                  <th className="py-1 text-right">TOTAL</th>
-                </tr>
-              </thead>
-              <tbody>
-                {order.items.map((item, i) => (
-                  <tr key={i} className="border-b border-gray-200">
-                    <td className="py-1 text-left truncate max-w-[180px]">
-                      {item.name} <span className="text-[7px] text-gray-500">({item.variant || 'Default'})</span>
-                    </td>
-                    <td className="py-1 text-center font-bold">{item.qty}</td>
-                    <td className="py-1 text-right font-bold">₹{item.price.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex justify-between items-start">
-            <div className="text-left text-[7px] text-gray-600 space-y-0.5">
-              <p><strong>SOLD BY:</strong> SIRI ARTS & CRAFTS, HYD, IN</p>
-              <p><strong>GSTIN:</strong> 36AAAES9284D1ZX</p>
-              <p><strong>INV NO:</strong> {order.invoiceNumber || `IN-${order.id.substring(order.id.length - 8).toUpperCase()}`}</p>
-              <p><strong>DATE:</strong> {order.date}</p>
-              <p className="mt-1 font-bold text-black text-[6px]">COMPUTER GENERATED LABEL. NO SIGNATURE REQ.</p>
-            </div>
-            <div className="shrink-0 flex flex-col items-center">
-              <QRCodeSVG value={trackingQR} size={44} level="M" />
-              <span className="text-[6px] font-bold text-gray-500 mt-0.5">VERIFIED</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* NORMAL SCREEN LAYOUT */}
       <motion.div
         initial="hidden"
@@ -338,7 +261,7 @@ export function AdminOrderDetail() {
               <span className="material-symbols-outlined text-[16px]">
                 receipt_long
               </span>
-              Print Sticker
+              View Invoice
             </button>
             <a
               href={`https://wa.me/${order.phone.replace(/[^0-9]/g, "")}`}
@@ -681,133 +604,78 @@ export function AdminOrderDetail() {
         </div>
       </motion.div>
 
-      {/* shipping sticker preview modal */}
       <AnimatePresence>
         {showStickerModal && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm no-print">
+          <>
+            {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="bg-surface-bright rounded-2xl p-5 max-w-sm w-full shadow-2xl relative border border-outline-variant/30 flex flex-col items-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowStickerModal(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] no-print"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="invoice-modal-container fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-3xl w-full md:h-[90vh] bg-white rounded-2xl shadow-2xl z-[101] overflow-y-auto no-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
             >
-              {/* Close Button */}
-              <button
-                onClick={() => setShowStickerModal(false)}
-                className="absolute top-4 right-4 text-secondary hover:text-on-surface transition-colors w-8 h-8 rounded-full bg-surface-container flex items-center justify-center cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-base">close</span>
-              </button>
+              {/* PRINT STYLE SHEET DETACHED AND ISOLATED */}
+              <style type="text/css" media="print">
+                {`
+                  @page { size: A4 portrait; margin: 10mm; }
+                  html, body { 
+                    height: 100vh !important; 
+                    overflow: hidden !important; 
+                    margin: 0 !important; 
+                    padding: 0 !important;
+                  }
+                  body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white !important; }
+                  body * {
+                    visibility: hidden !important;
+                  }
+                  .invoice-modal-container {
+                    position: fixed !important;
+                    left: 0 !important;
+                    top: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    transform: none !important;
+                    overflow: hidden !important;
+                    background: transparent !important;
+                    box-shadow: none !important;
+                  }
+                  .print-invoice-area, .print-invoice-area * {
+                    visibility: visible !important;
+                  }
+                  .print-invoice-area {
+                    position: absolute !important;
+                    left: 0 !important;
+                    top: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                    background: white !important;
+                    overflow: hidden !important;
+                  }
+                  .no-print, .no-print * {
+                    display: none !important;
+                  }
+                `}
+              </style>
 
-              <div className="text-center mb-4">
-                <span className="material-symbols-outlined text-black text-3xl font-bold">local_shipping</span>
-                <h3 className="font-display text-[16px] font-bold text-on-surface mt-1">Package Shipping Sticker</h3>
-                <p className="text-[9px] text-secondary uppercase tracking-widest font-bold">Thermal Print Format</p>
-              </div>
-
-              {/* The Live Sticker Preview Panel */}
-              <div className="w-full bg-white border-2 border-dashed border-black p-3.5 font-mono text-[9px] leading-tight text-black rounded-lg shadow-inner select-none mb-5 uppercase">
-                {/* Top row with logo and payment type */}
-                <div className="flex justify-between items-center border-b-2 border-black pb-2 mb-2">
-                  <div>
-                    <span className="font-sans font-black tracking-tighter text-sm">SIRI ARTS</span>
-                    <span className="block text-[8px] text-gray-600 font-sans tracking-wide">STUDIO & CRAFTS</span>
-                  </div>
-                  <div className="border-2 border-black bg-black text-white px-3 py-1 font-bold text-center leading-none">
-                    <span className="text-[12px] block">
-                      {order.payment === "Paid" ? "PREPAID" : "COD"}
-                    </span>
-                    <span className="text-[8px] tracking-wider block mt-0.5">
-                      ₹{order.total.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                {/* AWB & Barcode */}
-                <div className="text-center border-b-2 border-black pb-2 mb-2 flex flex-col items-center">
-                  <Barcode value={order.trackingNumber || `SR-${order.id.substring(order.id.length - 8).toUpperCase()}-IN`} height={32} width={1.2} displayValue={false} margin={0} />
-                  <div className="flex justify-between items-center w-full px-1 font-bold text-[8px] mt-1">
-                    <span>AWB: {order.trackingNumber || `SR-${order.id.substring(order.id.length - 8).toUpperCase()}-IN`}</span>
-                    <span>ORD: #{order.id.substring(0, 8).toUpperCase()}</span>
-                  </div>
-                </div>
-
-                {/* Deliver To Address */}
-                <div className="border-b-2 border-black pb-2 mb-2 text-left">
-                  <span className="font-bold text-[9px] block mb-1">DELIVER TO:</span>
-                  <strong className="text-[11px] block">{order.customer}</strong>
-                  <p className="text-[9px] leading-tight mt-1 lowercase">
-                    {order.address}
-                  </p>
-                  <div className="flex justify-between items-center mt-2 pt-1 border-t border-dashed border-gray-300">
-                    <span className="font-black text-[12px]">PIN: {order.shippingAddress?.pincode || "523001"}</span>
-                    <span className="font-bold">PH: {order.phone}</span>
-                  </div>
-                </div>
-
-                {/* Seller & Product table */}
-                <div className="border-b-2 border-black pb-2 mb-2 text-left">
-                  <table className="w-full text-[8px] border-collapse">
-                    <thead>
-                      <tr className="border-b border-black font-bold">
-                        <th className="py-1 text-left">ITEM DETAIL</th>
-                        <th className="py-1 text-center">QTY</th>
-                        <th className="py-1 text-right">TOTAL</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {order.items.map((item, i) => (
-                        <tr key={i} className="border-b border-gray-200">
-                          <td className="py-1 text-left truncate max-w-[150px]">
-                            {item.name} <span className="text-[7px] text-gray-500">({item.variant || 'Default'})</span>
-                          </td>
-                          <td className="py-1 text-center font-bold">{item.qty}</td>
-                          <td className="py-1 text-right font-bold">₹{item.price.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Invoice Details & QR */}
-                <div className="flex justify-between items-start">
-                  <div className="text-left text-[7px] text-gray-600 space-y-0.5">
-                    <p><strong>SOLD BY:</strong> SIRI ARTS & CRAFTS, HYD, IN</p>
-                    <p><strong>GSTIN:</strong> 36AAAES9284D1ZX</p>
-                    <p><strong>INV NO:</strong> {order.invoiceNumber || `IN-${order.id.substring(order.id.length - 8).toUpperCase()}`}</p>
-                    <p><strong>DATE:</strong> {order.date}</p>
-                    <p className="mt-1 font-bold text-black text-[6px]">COMPUTER GENERATED LABEL. NO SIGNATURE REQ.</p>
-                  </div>
-                  <div className="shrink-0 flex flex-col items-center">
-                    <QRCodeSVG value={trackingQR} size={44} level="M" />
-                    <span className="text-[6px] font-bold text-gray-500 mt-0.5">VERIFIED</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3.5 w-full">
-                <button
-                  onClick={() => {
-                    setPrintStickerOnly(true);
-                    setTimeout(() => {
-                      window.print();
-                      setTimeout(() => setPrintStickerOnly(false), 500);
-                    }, 150);
-                  }}
-                  className="flex-1 bg-black hover:bg-slate-950 text-white font-bold text-xs uppercase tracking-widest py-3.5 rounded-lg shadow-md cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-base">print</span>
-                  Print Sticker
-                </button>
-                <button
-                  onClick={() => setShowStickerModal(false)}
-                  className="bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-xs uppercase tracking-widest px-5 py-3.5 rounded-lg cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
+              <InvoiceTemplate 
+                order={order} 
+                onClose={() => setShowStickerModal(false)} 
+              />
             </motion.div>
-          </div>
+          </>
         )}
       </AnimatePresence>
     </>

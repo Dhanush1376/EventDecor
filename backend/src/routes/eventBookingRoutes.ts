@@ -10,7 +10,9 @@ import {
   adminUpdateStatus,
   adminUpdateQuotation,
   adminUpdateLogistics,
-  adminUpdateNotes
+  adminUpdateNotes,
+  initializeBookingCheckout,
+  verifyBookingCheckout
 } from '../controllers/eventBookingController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 import { validate } from '../middleware/validateMiddleware';
@@ -35,6 +37,8 @@ router.patch('/:id/logistics', requireAuth, requireAdmin, ...eventBookingIdParam
 router.patch('/:id/notes', requireAuth, requireAdmin, ...adminBookingNotesValidator, validate, adminUpdateNotes);
 
 // Client Endpoints
+router.post('/checkout/initialize', requireAuth, initializeBookingCheckout);
+router.post('/checkout/verify', requireAuth, verifyBookingCheckout);
 router.post('/', requireAuth, submitEventBookingValidator, validate, submitEventBooking);
 router.get('/my-bookings', requireAuth, getMyEventBookings);
 router.get('/:id', requireAuth, ...eventBookingIdParam, validate, getSingleEventBooking);

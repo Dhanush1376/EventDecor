@@ -1,20 +1,40 @@
 node_modules
+
+# ═══ Secrets & environment files ═══
 .env
 .env.*
+!.env.example
+backend/.env
+frontend/.env
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+
+# ═══ Build output ═══
 dist
 dist/
 build
 build/
 .vite
+
+# ═══ Logs & temp ═══
 logs
 logs/
 temp_backup_dir/
 scratch/
+
+# ═══ Deployment / hosting ═══
 .vercel
 
 # Legacy local image stash — serve from Cloudinary (see backend uploadAssetsToCloud seed)
 frontend/images/
 
-# Editor / IDE configurations
+# ═══ Editor / IDE configurations ═══
 .cursor/
 .cursor
+.idea/
+.vscode/
+*.swp
+*.swo

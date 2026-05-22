@@ -19,7 +19,9 @@ const resolveMultiInstance = (): boolean => {
 
 const createRedisConfig = () => {
   const socketOpts: any = {
-    rejectUnauthorized: false,
+    // SECURITY: Default to verifying TLS certificates (Upstash/Redis Cloud use valid certs).
+    // Override with REDIS_REJECT_UNAUTHORIZED=false only for self-signed dev certs.
+    rejectUnauthorized: process.env.REDIS_REJECT_UNAUTHORIZED !== 'false',
     connectTimeout: 10000,
     reconnectStrategy: (retries: number) => {
       const delay = Math.min(50 * Math.pow(2, retries), 10000);

@@ -113,7 +113,7 @@ export function ConsentPopup() {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 pointer-events-none flex items-end justify-center p-4 sm:p-6 md:p-8">
+      <div className="fixed inset-0 z-[110] pointer-events-none flex items-end justify-center p-4 sm:p-6 md:p-8">
         <motion.div
           initial={{ opacity: 0, y: 100, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

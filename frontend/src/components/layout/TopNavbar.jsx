@@ -330,14 +330,27 @@ export function TopNavbar() {
                     </div>
                   </div>
                 )}
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1">
-                    <span className="font-display text-[15px] md:text-[20px] font-bold tracking-[0.03em] text-on-surface uppercase">
+                <div className="flex flex-col justify-center">
+                  {/* Desktop Layout: Side-by-side */}
+                  <div className="hidden md:flex items-center gap-1">
+                    <span className="font-display text-[20px] font-bold tracking-[0.03em] text-on-surface uppercase">
                       {firstWord}
                     </span>
-                    <span className="font-display text-[15px] md:text-[20px] font-bold tracking-[0.03em] text-primary uppercase">
+                    <span className="font-display text-[20px] font-bold tracking-[0.03em] text-primary uppercase">
                       {restWords ? ` ${restWords}` : ""}
                     </span>
+                  </div>
+
+                  {/* Mobile Layout: Stacked */}
+                  <div className="flex md:hidden flex-col leading-none">
+                    <span className="font-display text-[14px] font-bold tracking-[0.03em] text-on-surface uppercase">
+                      {firstWord}
+                    </span>
+                    {restWords && (
+                      <span className="font-display text-[8px] font-bold tracking-[0.15em] text-primary uppercase mt-0.5 whitespace-nowrap">
+                        {restWords}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>
@@ -461,10 +474,10 @@ export function TopNavbar() {
             {/* Right side actions group */}
             <div className="flex-shrink-0 flex items-center justify-end gap-1 md:gap-2">
               {/* Trailing Luxury Icons */}
-              <div className="flex items-center space-x-1 md:space-x-1.5">
+              <div className="flex items-center gap-1 md:gap-1.5">
                 <button
                   onClick={() => setIsSearchOpen(true)}
-                  className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer"
+                  className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0"
                   aria-label="Search Catalog"
                 >
                   <span className="material-symbols-outlined text-[18px]">
@@ -488,7 +501,7 @@ export function TopNavbar() {
                 <button
                   id="cart-trigger-desktop"
                   onClick={() => setIsCartOpen(true)}
-                  className="text-on-surface hover:text-[#d4af37] transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#d4af37]/10 relative group font-bold cursor-pointer"
+                  className="text-on-surface hover:text-[#d4af37] transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#d4af37]/10 relative group font-bold cursor-pointer min-h-0"
                   aria-label="View Shopping Bag"
                 >
                   <span
@@ -512,7 +525,7 @@ export function TopNavbar() {
                 {!isAuthenticated ? (
                   <button
                     onClick={openAuthModal}
-                    className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer"
+                    className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0"
                     aria-label="User Account"
                   >
                     <span className="material-symbols-outlined text-[18px]">
@@ -523,7 +536,7 @@ export function TopNavbar() {
                   <div className="relative hidden md:block">
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                      className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full bg-primary-container/10 border border-primary/25 relative group font-bold cursor-pointer overflow-hidden"
+                      className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full bg-primary-container/10 border border-primary/25 relative group font-bold cursor-pointer overflow-hidden min-h-0"
                       aria-label="User Dropdown"
                     >
                       <span className="text-[10px] text-primary uppercase font-bold tracking-wider">
@@ -611,14 +624,14 @@ export function TopNavbar() {
 
               <button
                 onClick={() => setIsOpen(true)}
-                className={`md:hidden flex flex-col items-end gap-[6px] p-2 rounded-full transition-all cursor-pointer group/menu text-on-surface`}
+                className="md:hidden flex flex-col items-center justify-center gap-[4.5px] w-9 h-9 rounded-full hover:bg-primary-container/10 hover:text-primary transition-all duration-300 hover:scale-110 cursor-pointer text-on-surface min-h-0"
                 aria-label="Open navigation menu"
                 aria-expanded={isOpen}
                 aria-controls="mobile-menu-drawer"
               >
-                <span className="w-6 h-[1.5px] bg-current" />
-                <span className="w-6 h-[1.5px] bg-current" />
-                <span className="w-6 h-[1.5px] bg-current" />
+                <span className="w-5 h-[1.5px] bg-current" />
+                <span className="w-5 h-[1.5px] bg-current" />
+                <span className="w-5 h-[1.5px] bg-current" />
               </button>
             </div>
           </div>
@@ -752,6 +765,20 @@ export function TopNavbar() {
 
                   {isAuthenticated ? (
                     <>
+                      {(user?.role === 'admin' || user?.role === 'manager') && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center justify-center gap-2 py-2.5 bg-primary/10 border border-primary/25 rounded-lg text-primary hover:bg-primary/20 transition-all shadow-2xs font-bold col-span-2 animate-pulse-subtle"
+                        >
+                          <span className="material-symbols-outlined text-[15px] font-bold">
+                            shield_person
+                          </span>
+                          <span className="font-label-sm text-[9px] uppercase tracking-wider font-bold">
+                            Admin Portal
+                          </span>
+                        </Link>
+                      )}
                       <Link
                         to="/dashboard"
                         onClick={() => setIsOpen(false)}

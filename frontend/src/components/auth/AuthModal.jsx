@@ -11,10 +11,6 @@ export function AuthModal() {
   
   const [step, setStep] = useState("identifier"); // identifier, otp, success
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [requiresPassword, setRequiresPassword] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,16 +31,9 @@ export function AuthModal() {
 
     isSubmittingRef.current = true;
     setIsLoading(true);
-    
-    if (requiresPassword && !password) {
-      toast.error("Please enter your admin portal password");
-      isSubmittingRef.current = false;
-      setIsLoading(false);
-      return;
-    }
 
     try {
-      const response = await authService.sendOTP(email, password);
+      const response = await authService.sendOTP(email);
       toast.success("Verification code sent to your email!");
       setStep("otp");
       setTimer(60);
@@ -117,10 +106,6 @@ export function AuthModal() {
       const t = setTimeout(() => {
         setStep("identifier");
         setEmail("");
-        setPassword("");
-        setRequiresPassword(false);
-        setShowPassword(false);
-        setPasswordFocused(false);
         setOtp(["", "", "", "", "", ""]);
         setTimer(0);
         setError(false);
@@ -363,83 +348,21 @@ export function AuthModal() {
                               className="w-full bg-surface-container-low/50 border border-outline-variant/35 rounded-xl pl-10 pr-4 py-3.5 font-body text-[14px] text-on-surface-variant outline-none transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5"
                               placeholder={isFocused ? "e.g. creative@siriartsandcrafts.com" : ""}
                               value={email}
-                              onChange={(e) => {
-                                setEmail(e.target.value);
-                                if (requiresPassword) {
-                                  setRequiresPassword(false);
-                                  setPassword("");
-                                }
-                              }}
+                              onChange={(e) => setEmail(e.target.value)}
                               onFocus={() => setIsFocused(true)}
                               onBlur={() => setIsFocused(false)}
                             />
                           </div>
 
-                          {requiresPassword ? (
-                            <motion.div
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="relative group mt-5"
-                            >
-                              <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/30 text-[16px] group-focus-within:text-primary transition-colors">
-                                lock
-                              </span>
-
-                              <label
-                                htmlFor="auth-password-input"
-                                className={`absolute transition-all duration-300 pointer-events-none font-bold ${
-                                  passwordFocused || password
-                                    ? "text-[9px] -top-2 left-4 bg-white px-1.5 text-primary tracking-[0.2em] uppercase z-10"
-                                    : "text-[12px] top-1/2 -translate-y-1/2 left-10 text-on-surface-variant/40 tracking-[0.15em] uppercase"
-                                }`}
-                              >
-                                Portal Password
-                              </label>
-
-                              <input
-                                id="auth-password-input"
-                                type={showPassword ? "text" : "password"}
-                                required
-                                autoComplete="new-password"
-                                className="w-full bg-surface-container-low/50 border border-outline-variant/35 rounded-xl pl-10 pr-10 py-3.5 font-body text-[14px] text-on-surface-variant outline-none transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5"
-                                placeholder={passwordFocused ? "••••••••" : ""}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                onFocus={() => setPasswordFocused(true)}
-                                onBlur={() => setPasswordFocused(false)}
-                              />
-
-                              <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/30 hover:text-primary transition-colors flex items-center justify-center cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">
-                                  {showPassword ? "visibility_off" : "visibility"}
-                                </span>
-                              </button>
-                            </motion.div>
-                          ) : (
-                            <div className="flex justify-end mt-2">
-                              <button
-                                type="button"
-                                onClick={() => setRequiresPassword(true)}
-                                className="font-label-sm text-[10px] text-primary uppercase tracking-widest font-bold hover:text-on-surface-variant transition-colors"
-                              >
-                                Admin Access?
-                              </button>
-                            </div>
-                          )}
-
                           <button
-                            disabled={!email || (requiresPassword && !password) || isLoading}
+                            disabled={!email || isLoading}
                             className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
                           >
                             {isLoading ? (
                               <div className="w-4 h-4 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
                             ) : (
                               <>
-                                <span>{requiresPassword ? "Verify & Get Key" : "Get Verification Key"}</span>
+                                <span>Get Verification Key</span>
                                 <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
                                   arrow_forward
                                 </span>

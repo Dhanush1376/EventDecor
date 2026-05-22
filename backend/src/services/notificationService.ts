@@ -71,7 +71,7 @@ const formatPlaceholderValue = (key: string, raw: unknown): string => {
 const replacePlaceholders = (templateHtml: string, data: Record<string, any>): string => {
   let result = templateHtml;
   for (const key in data) {
-    const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+    const regex = new RegExp(`{{\s*${key}\s*}}`, 'g');
     result = result.replace(regex, formatPlaceholderValue(key, data[key]));
   }
 
@@ -152,10 +152,20 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     if (templateName) {
       const template = await EmailTemplate.findOne({ name: templateName, isActive: true });
       if (!template) {
-        throw new Error(`Email template "${templateName}" not found or disabled.`);
+        logger.warn(`Email template "${templateName}" not found or disabled. Using fallback content.`);
+        if (!bodyHtml) {
+          bodyHtml = `
+            <div style="font-family: sans-serif; padding: 20px;">
+              <h2>Notification: ${finalSubject}</h2>
+              <p>You have a new system notification.</p>
+              <p>Please log in to your account dashboard to review.</p>
+            </div>
+          `;
+        }
+      } else {
+        bodyHtml = template.htmlContent;
+        finalSubject = replacePlaceholders(template.subjectLine, templateData);
       }
-      bodyHtml = template.htmlContent;
-      finalSubject = replacePlaceholders(template.subjectLine, templateData);
     }
 
     // Replace all placeholders inside body

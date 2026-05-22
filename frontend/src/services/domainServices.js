@@ -636,6 +636,14 @@ export const loyaltyService = {
 };
 
 export const bookingService = {
+  initializeCheckout: async (data) => {
+    const response = await api.post('/event-bookings/checkout/initialize', data);
+    return response.data;
+  },
+  verifyCheckout: async (paymentData) => {
+    const response = await api.post('/event-bookings/checkout/verify', paymentData);
+    return response.data;
+  },
   create: async (data) => {
     const response = await api.post('/event-bookings', data);
     return response.data;

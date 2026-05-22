@@ -8,6 +8,7 @@ import { galleryService, cmsService } from "../services/domainServices";
 import { CloudinaryImage } from "../components/ui/CloudinaryImage";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { StackedSectionWrapper } from "../components/layout/StackedSectionWrapper";
+import { initialWebsiteContent } from "../admin/data/websiteContentData";
 
 import logger from '../utils/logger';
 const cleanSignatureImg = (imgUrl, founderName) => {
@@ -116,7 +117,7 @@ export function About() {
           className="absolute inset-0 w-full h-full"
         >
           <CloudinaryImage
-            src={cmsContent?.heroImage || ""}
+            src={cmsContent?.heroImage || initialWebsiteContent?.aboutPage?.heroImage || "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop"}
             alt="Cinematic Wedding Decor"
             className="w-full h-full object-cover opacity-60 mix-blend-screen"
             containerClassName="w-full h-full"
@@ -128,41 +129,7 @@ export function About() {
           <div className="absolute inset-0 bg-primary/10 mix-blend-overlay" />
         </motion.div>
 
-        <div className="absolute inset-0 pointer-events-none">
-          <MandalaElement
-            size={800}
-            duration={200}
-            className="absolute -top-40 -right-40 opacity-10"
-            skipFade
-          />
-          <MandalaElement
-            size={1000}
-            duration={240}
-            variant={2}
-            className="absolute -bottom-60 -left-40 opacity-[0.05]"
-            skipFade
-          />
-        </div>
 
-        {/* Detailed mandala art — hero */}
-        <MandalaArtDecor
-          variant={1}
-          size={400}
-          className="-bottom-20 -right-20 md:hidden z-[1]"
-          opacity={0.3}
-          dark
-          blendModeDark="screen"
-          spinDuration={160}
-        />
-        <MandalaArtDecor
-          variant={1}
-          size={800}
-          className="-bottom-48 -right-48 hidden md:block z-[1]"
-          opacity={0.18}
-          dark
-          blendModeDark="screen"
-          spinDuration={160}
-        />
 
         <div className="relative z-10 text-center text-white px-6 mt-16 max-w-5xl mx-auto flex flex-col items-center">
           <motion.div
@@ -253,7 +220,7 @@ export function About() {
           >
             <div className="w-full h-full rounded-[32px] md:rounded-t-full md:rounded-b-full overflow-hidden relative">
               <CloudinaryImage
-                src={cmsContent?.storyImage || ""}
+                src={cmsContent?.storyImage || "/assets/legacy_artistry_decor.png"}
                 alt="Handcrafted Details"
                 className="scale-[1.02] hover:scale-110 transition-transform duration-[3s] ease-out"
                 containerClassName="w-full h-full"
@@ -650,7 +617,12 @@ export function About() {
         </div>
 
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 columns-2 md:columns-4 gap-4 md:gap-6">
-          {galleryPreview.map((item, i) => (
+          {galleryPreview.map((item, i) => {
+            const dynamicHeight = (!item.height || item.height === "aspect-square") 
+              ? (i % 4 === 0 ? "aspect-[2/3]" : i % 4 === 1 ? "aspect-square" : i % 4 === 2 ? "aspect-[4/5]" : "aspect-[3/4]") 
+              : item.height;
+
+            return (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -661,7 +633,7 @@ export function About() {
             >
               <Link to={`/gallery?id=${item._id || item.id}`}>
                 <div
-                  className={`relative ${item.height || 'aspect-square'} w-full overflow-hidden`}
+                  className={`relative ${dynamicHeight} w-full overflow-hidden`}
                 >
                   <CloudinaryImage
                     src={item.image}
@@ -689,7 +661,8 @@ export function About() {
                 </div>
               </Link>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="text-center mt-16 md:mt-24">

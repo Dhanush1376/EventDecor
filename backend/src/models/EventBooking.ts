@@ -48,6 +48,7 @@ export interface IEventBooking extends Document {
   title: string;
   eventType: string;
   date: Date;
+  rentalDurationDays?: number;
   timing: {
     start: string;
     end: string;
@@ -82,17 +83,19 @@ export interface IEventBooking extends Document {
   };
   payments?: IBookingPayment[];
   status:
-    | 'inquiry'
-    | 'review'
-    | 'discussion'
-    | 'quotation_sent'
-    | 'awaiting_approval'
+    | 'draft'
+    | 'pending_payment'
+    | 'payment_processing'
     | 'confirmed'
+    | 'cancelled'
+    | 'refunded'
+    | 'failed'
+    | 'completed'
     | 'team_assigned'
-    | 'setup_in_progress'
-    | 'active'
-    | 'pickup_scheduled'
-    | 'completed';
+    | 'setup_in_progress';
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
   assignedTeam?: IAssignedTeam[];
   rentedInventory?: IRentedInventory[];
   adminNotes?: string;
@@ -151,6 +154,7 @@ const EventBookingSchema: Schema = new Schema(
     title: { type: String, required: true },
     eventType: { type: String, required: true },
     date: { type: Date, required: true },
+    rentalDurationDays: { type: Number, default: 1 },
     timing: {
       start: { type: String, required: true },
       end: { type: String, required: true },
@@ -187,20 +191,22 @@ const EventBookingSchema: Schema = new Schema(
     status: {
       type: String,
       enum: [
-        'inquiry',
-        'review',
-        'discussion',
-        'quotation_sent',
-        'awaiting_approval',
+        'draft',
+        'pending_payment',
+        'payment_processing',
         'confirmed',
-        'team_assigned',
-        'setup_in_progress',
-        'active',
-        'pickup_scheduled',
+        'cancelled',
+        'refunded',
+        'failed',
         'completed',
+        'team_assigned',
+        'setup_in_progress'
       ],
-      default: 'inquiry',
+      default: 'draft',
     },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
     assignedTeam: [AssignedTeamSchema],
     rentedInventory: [RentedInventorySchema],
     adminNotes: { type: String },

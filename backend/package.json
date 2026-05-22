@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only server.ts",
     "start": "node dist/server.js",
+    "start:pm2": "pm2-runtime start ecosystem.config.js",
     "build": "tsc",
     "create-indexes": "ts-node src/scripts/createIndexes.ts",
     "check-env": "ts-node --transpile-only src/scripts/checkEnv.ci.ts",

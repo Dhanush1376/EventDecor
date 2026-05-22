@@ -10,6 +10,9 @@ import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { generateUniqueBookingId } from '../utils/bookingId';
+import { ADMIN_ROLES } from '../config/adminConfig';
+import razorpay from '../config/razorpay';
+import crypto from 'crypto';
 
 // 1. Submit Event Booking Inquiry (Customer)
 export const submitEventBooking = asyncHandler(async (req: any, res: Response) => {
@@ -58,7 +61,7 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
 
     const duplicate = await EventBooking.findOne({
       date: { $gte: startOfDay, $lte: endOfDay },
-      'venue.address': { $regex: new RegExp(`^${venue.address.trim()}$`, 'i') },
+      'venue.address': { $regex: new RegExp(`^${venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
       status: { $nin: ['completed'] }
     });
 
@@ -106,16 +109,16 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
       depositAmount: Math.round(totalPrice * 0.25), // 25% initial milestone deposit
       totalPrice,
       pendingBalance: totalPrice,
-      paymentStatus: 'unpaid',
+      paymentStatus: 'unpaid' as const,
     },
     payments: [],
-    status: 'inquiry',
+    status: 'draft' as const,
     assignedTeam: [],
     rentedInventory: [],
     clientApproved: false,
     chatHistory: [
       {
-        sender: 'admin',
+        sender: 'admin' as const,
         message: 'Welcome to your premium Siri Arts Event Studio! Our designers are actively reviewing your floorplans, venue, and Pinterest visual boards.',
         timestamp: new Date(),
       },
@@ -126,7 +129,7 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
     day: 'numeric',
     month: 'long',
     year: 'numeric'
-  });
+  } as const);
 
   // 3. Dispatch persistent real-time admin notification
   createAdminNotification({
@@ -134,7 +137,7 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
     message: `${user.name || 'A customer'} submitted a new event booking inquiry ("${booking.title}") for ${eventDateStr}.`,
     type: 'custom_request',
     actionLink: `/admin/bookings`,
-    metadata: { bookingId: booking._id }
+    metadata: { bookingId: booking._id.toString() }
   }).catch((err: any) => logger.error('Failed to create admin notification for booking:', err));
 
   // 4. Send elegant emails in background
@@ -145,12 +148,199 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
   res.status(201).json(new ApiResponse(true, 'Your luxury event design has been submitted!', booking));
 });
 
+// 1.B Initialize Booking Checkout (Secure eCommerce Flow)
+export const initializeBookingCheckout = asyncHandler(async (req: any, res: Response) => {
+  const { eventPackageId, eventType, title, date, rentalDurationDays, timing, guestCount, venue, customization, selectedAddons, inspirationImages } = req.body;
+  const userId = req.user?.id;
+  if (!userId) throw new ApiError(401, 'Authentication credentials missing.');
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, 'User not found.');
+
+  if (!razorpay) {
+    throw new ApiError(503, 'Payment gateway configuration is missing.');
+  }
+
+  // Double Booking Check
+  if (venue?.address && venue.address.trim() && venue.address.toUpperCase() !== 'TBD') {
+    const bookingDate = new Date(date);
+    const startOfDay = new Date(bookingDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bookingDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const duplicate = await EventBooking.findOne({
+      date: { $gte: startOfDay, $lte: endOfDay },
+      'venue.address': { $regex: new RegExp(`^${venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+      status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] }
+    });
+
+    if (duplicate) {
+      throw new ApiError(409, 'This venue is already locked for the selected date. Please choose another date or contact support.');
+    }
+  }
+
+  // Calculate strict backend price
+  let basePrice = 25000;
+  let pkgObj = null;
+  if (eventPackageId) {
+    pkgObj = await Event.findById(eventPackageId);
+    if (pkgObj) {
+      basePrice = pkgObj.basePrice || 35000;
+    }
+  }
+
+  const durationDays = Number(rentalDurationDays) || 1;
+  const durationMultiplier = durationDays === 1 ? 1 : durationDays === 2 ? 1.5 : 1.5 + (durationDays - 2) * 0.4;
+  basePrice = Math.round(basePrice * durationMultiplier);
+
+  const addOnCharges = (selectedAddons || []).reduce((acc: number, item: any) => acc + (Number(item.price) || 0), 0);
+  const totalPrice = basePrice + addOnCharges;
+  const depositAmount = Math.round(totalPrice * 0.50); // 50% strict advance deposit
+
+  // Create Razorpay Order for deposit
+  const options = {
+    amount: depositAmount * 100, // in paise
+    currency: 'INR',
+    receipt: `receipt_${Date.now()}`,
+    payment_capture: 1,
+  };
+
+  const order = await razorpay.orders.create(options);
+
+  // Create Pending Booking
+  const bookingId = await generateUniqueBookingId();
+  const booking = await EventBooking.create({
+    bookingId,
+    user: userId,
+    eventPackage: eventPackageId || null,
+    title: title || `${eventType || 'Special'} Celebration`,
+    eventType: eventType || 'Wedding',
+    date: new Date(date),
+    rentalDurationDays: durationDays,
+    timing: timing || { start: '10:00 AM', end: '10:00 PM' },
+    guestCount: parseInt(guestCount) || 100,
+    venue: venue || { address: 'TBD', isOutdoor: false },
+    customization: customization || {},
+    selectedAddons: selectedAddons || [],
+    inspirationImages: inspirationImages || [],
+    pricing: {
+      rentalFee: basePrice,
+      setupCharges: 0,
+      transportationCost: 0,
+      addOnCharges,
+      depositAmount,
+      totalPrice,
+      pendingBalance: totalPrice,
+      paymentStatus: 'unpaid',
+    },
+    payments: [],
+    status: 'pending_payment',
+    razorpayOrderId: order.id,
+    assignedTeam: [],
+    rentedInventory: [],
+    clientApproved: false,
+    chatHistory: [],
+  });
+
+  res.status(200).json(new ApiResponse(true, 'Booking checkout initialized', {
+    bookingId: booking._id,
+    razorpayOrderId: order.id,
+    amount: depositAmount,
+    currency: 'INR',
+    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID
+  }));
+});
+
+// 1.C Verify Booking Checkout Payment
+export const verifyBookingCheckout = asyncHandler(async (req: any, res: Response) => {
+  const { razorpayOrderId, razorpayPaymentId, razorpaySignature, bookingId } = req.body;
+
+  if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature || !bookingId) {
+    throw new ApiError(400, 'Missing payment verification parameters');
+  }
+
+  const booking = await EventBooking.findById(bookingId).populate('user');
+  if (!booking) {
+    throw new ApiError(404, 'Booking not found');
+  }
+
+  if (String(booking.user._id || booking.user) !== String(req.user?.id)) {
+    throw new ApiError(403, 'Unauthorized access to this booking');
+  }
+
+  const body = razorpayOrderId + '|' + razorpayPaymentId;
+  const expectedSignature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET as string)
+    .update(body.toString())
+    .digest('hex');
+
+  const isAuthentic = expectedSignature === razorpaySignature;
+
+  if (!isAuthentic) {
+    booking.status = 'failed';
+    booking.payments?.push({
+      amount: booking.pricing.depositAmount,
+      date: new Date(),
+      transactionId: razorpayPaymentId,
+      status: 'failed',
+      note: 'Signature mismatch'
+    });
+    await booking.save();
+    throw new ApiError(400, 'Payment signature verification failed. Booking marked as failed.');
+  }
+
+  // Update booking as confirmed
+  booking.status = 'confirmed';
+  booking.razorpayPaymentId = razorpayPaymentId;
+  booking.razorpaySignature = razorpaySignature;
+  booking.clientApproved = true;
+  booking.pricing.paymentStatus = 'partial';
+  booking.pricing.pendingBalance = booking.pricing.totalPrice - booking.pricing.depositAmount;
+
+  booking.payments?.push({
+    amount: booking.pricing.depositAmount,
+    date: new Date(),
+    transactionId: razorpayPaymentId,
+    status: 'success',
+    note: 'Initial 50% deposit via Razorpay'
+  });
+
+  booking.chatHistory?.push({
+    sender: 'admin',
+    message: 'Payment verified! Your luxury event design is now CONFIRMED. Our artisans will review your floorplans.',
+    timestamp: new Date(),
+  });
+
+  await booking.save();
+
+  // Send Notifications
+  const eventDateStr = new Date(booking.date).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  } as const);
+
+  createAdminNotification({
+    title: 'New Confirmed Event Booking (Paid)',
+    message: `A customer paid the advance deposit for "${booking.title}" on ${eventDateStr}.`,
+    type: 'payment',
+    actionLink: `/admin/bookings`,
+    metadata: { bookingId: booking._id.toString() }
+  }).catch(err => logger.error('Failed admin notification', err));
+
+  EventBookingMailService.sendSubmissionEmails(booking, booking.user as any).catch(err =>
+    logger.error('Failed to dispatch booking emails', err)
+  );
+
+  res.status(200).json(new ApiResponse(true, 'Payment successful. Booking confirmed!', booking));
+});
+
 // 2. Get Customer Event Bookings
 export const getMyEventBookings = asyncHandler(async (req: any, res: Response) => {
   const bookings = await EventBooking.find({ user: req.user?.id })
     .populate('eventPackage', 'title image') // only get necessary package fields
     .select('bookingId title eventType date status pricing.totalPrice pricing.paymentStatus createdAt')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
   res.status(200).json(new ApiResponse(true, 'Your active event curation synced successfully', bookings));
 });
 
@@ -158,14 +348,15 @@ export const getMyEventBookings = asyncHandler(async (req: any, res: Response) =
 export const getSingleEventBooking = asyncHandler(async (req: any, res: Response) => {
   const booking = await EventBooking.findById(req.params.id)
     .populate('user', 'name email phone')
-    .populate('eventPackage');
+    .populate('eventPackage')
+    .lean();
 
   if (!booking) {
     throw new ApiError(404, 'Event details could not be found.');
   }
 
   // Security bounds checks
-  if (req.user.role !== 'admin' && String(booking.user._id || booking.user) !== String(req.user.id)) {
+  if (!ADMIN_ROLES.includes(req.user.role as any) && String(booking.user._id || booking.user) !== String(req.user.id)) {
     throw new ApiError(403, 'Access denied to this secure design workspace.');
   }
 
@@ -189,14 +380,14 @@ export const customerApproveQuote = asyncHandler(async (req: any, res: Response)
   if (approved) {
     booking.status = 'confirmed';
     booking.chatHistory?.push({
-      sender: 'client',
+      sender: 'client' as const,
       message: 'I have approved the custom quotation and setup scope. Let us finalize schedules and milestone deposits!',
       timestamp: new Date(),
     });
   } else {
-    booking.status = 'discussion';
+    booking.status = 'draft' as const;
     booking.chatHistory?.push({
-      sender: 'client',
+      sender: 'client' as const,
       message: 'I have requested modifications on the quotation items. Let us discuss color palette adjustments.',
       timestamp: new Date(),
     });
@@ -264,7 +455,7 @@ export const postChatMessage = asyncHandler(async (req: any, res: Response) => {
     throw new ApiError(404, 'Workspace not found');
   }
 
-  const isAdmin = req.user?.role === 'admin';
+  const isAdmin = ADMIN_ROLES.includes(req.user?.role as any);
 
   if (!isAdmin && String(booking.user) !== String(req.user?.id)) {
     throw new ApiError(403, 'Restricted messaging permission.');
@@ -317,7 +508,8 @@ export const adminGetAllBookings = asyncHandler(async (req: Request, res: Respon
       .populate('eventPackage')
       .sort({ date: 1 })
       .skip(skip)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
     EventBooking.countDocuments(filterQuery),
   ]);
 
@@ -389,13 +581,13 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
     setupCharges: setup,
     transportationCost: trans,
     addOnCharges: add,
-    depositAmount: Number(depositAmount) || Math.round(total * 0.25),
+    depositAmount: (Number(depositAmount) || Math.round(total * 0.25)) as number,
     totalPrice: total,
     pendingBalance: Math.max(0, total - (booking.payments || []).reduce((acc, p) => acc + (p.status === 'success' ? p.amount : 0), 0)),
-    paymentStatus: booking.pricing.paymentStatus,
+    paymentStatus: booking.pricing.paymentStatus as any,
   };
 
-  booking.status = 'quotation_sent';
+  booking.status = 'pending_payment';
   booking.chatHistory?.push({
     sender: 'admin',
     message: `STUDIO PROPOSAL: A refined luxury estimate totaling ₹${total.toLocaleString('en-IN')} has been calculated and dispatched for your final approval.`,

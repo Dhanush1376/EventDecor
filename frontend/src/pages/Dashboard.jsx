@@ -1432,7 +1432,7 @@ export function Dashboard() {
                                   className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/70 backdrop-blur-md border border-outline-variant/15 flex items-center justify-center text-red-600 shadow-sm cursor-pointer hover:bg-white transition-all"
                                   title="Unsave Product"
                                 >
-                                  <span className="material-symbols-outlined text-[15px] font-bold">favorite</span>
+                                  <span className="material-symbols-outlined text-[15px] font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
                                 </button>
                               </div>
 

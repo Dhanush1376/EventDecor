@@ -3,14 +3,14 @@
 // The admin can edit these values and see exactly where they appear on the live site.
 
 const IMAGES = {
-  luxuryRoyalWedding: "",
-  templeStyleMandap: "",
-  galleryBackdrop: "",
-  galleryHampers: "",
-  modernReceptionLounge: "",
-  haldiVibrantSetup: "",
-  galleryMetalPots: "",
-  galleryPlatePacking: ""
+  luxuryRoyalWedding: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop",
+  templeStyleMandap: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=1974&auto=format&fit=crop",
+  galleryBackdrop: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=2069&auto=format&fit=crop",
+  galleryHampers: "https://images.unsplash.com/photo-1607344645866-009c320b63e0?q=80&w=2080&auto=format&fit=crop",
+  modernReceptionLounge: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop",
+  haldiVibrantSetup: "https://images.unsplash.com/photo-1582293041079-7814c2f12063?q=80&w=1974&auto=format&fit=crop",
+  galleryMetalPots: "https://images.unsplash.com/photo-1604085572504-a392ddf0d86a?q=80&w=2000&auto=format&fit=crop",
+  galleryPlatePacking: "https://images.unsplash.com/photo-1616166160538-4e142e057351?q=80&w=2000&auto=format&fit=crop"
 };
 
 export const initialWebsiteContent = {
@@ -26,6 +26,11 @@ export const initialWebsiteContent = {
     backgroundImage: IMAGES.luxuryRoyalWedding,
     mobileBackgroundImage: "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779181764/event_decor_ecommerce/assets/event_decor_mobile%20hero%20background.png",
     badgeText: "Artisan Excellence Since 2015",
+    rotatingSealText: "• HANDCRAFTED LUXURY • HERITAGE ARTISTRY •",
+    floatingCardTitle: "Heritage Craft.",
+    floatingCardDesc: "Meticulously detailed by master artisans over 120 hours.",
+    floatingCardCtaText: "Explore Technique",
+    floatingCardCtaLink: "/about",
     isVisible: true,
     status: "published", // published | draft | modified
   },

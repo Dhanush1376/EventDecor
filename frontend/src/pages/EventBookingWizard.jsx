@@ -8,6 +8,16 @@ import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 
 import logger from '../utils/logger';
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 const EVENT_TYPES = [
   { id: "wedding", label: "Wedding / Vivaham", icon: "church", desc: "Grand traditional structures, modular mandaps & royal backdrops" },
   { id: "engagement", label: "Engagement Ceremony", icon: "diamond", desc: "Modern floral panels, elegant backdrops & grand entrances" },
@@ -15,6 +25,7 @@ const EVENT_TYPES = [
   { id: "reception", label: "Reception Gala", icon: "celebration", desc: "Bespoke stage styling, luxury uplighting & contemporary look" },
   { id: "birthday", label: "Birthday / Cradle", icon: "child_care", desc: "Vibrant custom themes, balloon archways & kid-friendly elements" },
   { id: "festival", label: "Festival / Puja Decor", icon: "spa", desc: "Traditional South Indian mango leaves, lotus hangings & brass props" },
+  { id: "other", label: "Other Celebration", icon: "more_horiz", desc: "Specify your custom milestone celebration and setup blueprints" },
 ];
 
 const BUDGET_RANGES = [
@@ -45,6 +56,7 @@ export function EventBookingWizard() {
     }
     return {
       eventType: "wedding",
+      customOccasion: "",
       eventPackageId: "",
       title: "",
       date: "",
@@ -104,8 +116,12 @@ export function EventBookingWizard() {
   }, [location]);
 
   const handleEventTypeSelect = (type) => {
-    setFormData(prev => ({ ...prev, eventType: type }));
-    setCurrentStep(2);
+    if (type === "other") {
+      setFormData(prev => ({ ...prev, eventType: "other" }));
+    } else {
+      setFormData(prev => ({ ...prev, eventType: type, customOccasion: "" }));
+      setCurrentStep(2);
+    }
   };
 
   const handlePackageSelect = (pkgId) => {
@@ -148,7 +164,7 @@ export function EventBookingWizard() {
     setTimeout(() => {
       setIsAiAnalyzing(false);
       setAiAnalysisResult({
-        detectedOccasion: formData.eventType.toUpperCase() + " CELEBRATION",
+        detectedOccasion: (formData.eventType === "other" ? formData.customOccasion || "Custom" : formData.eventType).toUpperCase() + " CELEBRATION",
         mood: "Sacred South Indian Royal Temple Heritage",
         palette: ["#8B0000", "#FFD700", "#FFF8DC", "#228B22"],
         paletteLabels: ["Deep Crimson", "Gilded Gold", "Temple Ivory", "Forest Leaf Green"],
@@ -197,7 +213,7 @@ export function EventBookingWizard() {
         setTimeout(() => {
           setIsAiAnalyzing(false);
           setAiAnalysisResult({
-            detectedOccasion: formData.eventType.toUpperCase() + " CELEBRATION",
+            detectedOccasion: (formData.eventType === "other" ? formData.customOccasion || "Custom" : formData.eventType).toUpperCase() + " CELEBRATION",
             mood: "Sacred South Indian Royal Temple Heritage",
             palette: ["#8B0000", "#FFD700", "#FFF8DC", "#228B22"],
             paletteLabels: ["Deep Crimson", "Gilded Gold", "Temple Ivory", "Forest Leaf Green"],
@@ -246,6 +262,10 @@ export function EventBookingWizard() {
       toast.error("Please enter a booking title.");
       return;
     }
+    if (formData.eventType === "other" && !formData.customOccasion?.trim()) {
+      toast.error("Please specify your custom occasion name.");
+      return;
+    }
     if (!formData.date) {
       toast.error("Please select a date for your event.");
       return;
@@ -255,17 +275,80 @@ export function EventBookingWizard() {
       return;
     }
 
-    const loadId = toast.loading("Setting up your event workspace...");
+    const loadId = toast.loading("Initializing secure checkout...");
     try {
-      const res = await bookingService.create(formData);
-      toast.dismiss(loadId);
-      if (res.success) {
-        toast.success("Congratulations! Your event design planner is ready.");
-        localStorage.removeItem("siri_arts_wizard_form_data");
-        navigate("/dashboard"); // Redirects to Client Dashboard containing Events!
-      } else {
-        toast.error(res.message || "Failed to create booking.");
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        toast.dismiss(loadId);
+        toast.error("Failed to load payment gateway. Please check your connection.");
+        return;
       }
+
+      // Map eventType to customOccasion if "other" is selected
+      const checkoutPayload = {
+        ...formData,
+        eventType: formData.eventType === "other" ? (formData.customOccasion || "Other Celebration") : formData.eventType
+      };
+
+      // 1. Initialize Booking Checkout
+      const initRes = await bookingService.initializeCheckout(checkoutPayload);
+      if (!initRes.success || !initRes.data) {
+        toast.dismiss(loadId);
+        toast.error(initRes.message || "Failed to initialize checkout.");
+        return;
+      }
+
+      const { bookingId, razorpayOrderId, amount, currency, key } = initRes.data;
+      toast.dismiss(loadId);
+
+      // 2. Open Razorpay Modal
+      const options = {
+        key,
+        amount,
+        currency,
+        name: "Siri Arts Event Decor",
+        description: `Advance Deposit for ${formData.title}`,
+        order_id: razorpayOrderId,
+        handler: async function (response) {
+          const verifyLoadId = toast.loading("Verifying your payment securely...");
+          try {
+            // 3. Verify Payment Signature
+            const verifyRes = await bookingService.verifyCheckout({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              bookingId,
+            });
+
+            toast.dismiss(verifyLoadId);
+            if (verifyRes.success) {
+              toast.success("Payment successful! Your luxury event is confirmed.");
+              localStorage.removeItem("siri_arts_wizard_form_data");
+              navigate(`/booking-success/${bookingId}`); // Redirects to new success page
+            } else {
+              toast.error(verifyRes.message || "Payment verification failed.");
+            }
+          } catch (err) {
+            toast.dismiss(verifyLoadId);
+            logger.error("Verification Error:", err);
+            toast.error("An error occurred during verification. Contact support.");
+          }
+        },
+        prefill: {
+          name: "Customer",
+          email: "customer@example.com",
+        },
+        theme: {
+          color: "#735c00", // Brand Primary
+        },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.on('payment.failed', function (response) {
+        toast.error(`Payment Failed: ${response.error.description}`);
+      });
+      paymentObject.open();
+
     } catch (err) {
       toast.dismiss(loadId);
       logger.error(err);
@@ -274,6 +357,7 @@ export function EventBookingWizard() {
   };
 
   const activePackage = packages.find((p) => (p._id || p.id) === formData.eventPackageId);
+  const hasCategoryPackages = packages.some((p) => p.category?.toLowerCase() === formData.eventType);
 
   return (
     <div className="bg-[#fcfbf9] min-h-screen text-on-surface pt-20 md:pt-32 pb-24 relative overflow-hidden font-body">
@@ -357,6 +441,46 @@ export function EventBookingWizard() {
                     </div>
                   ))}
                 </div>
+
+                {formData.eventType === "other" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="bg-primary/5 border border-primary/20 rounded-[20px] p-6 space-y-4"
+                  >
+                    <div className="space-y-1">
+                      <label className="font-label text-[10px] uppercase tracking-wider text-primary font-bold block">Specify Your Custom Occasion</label>
+                      <p className="font-body text-black/45 text-[11px]">Type the classification of your custom celebration (e.g. Housewarming, Baby Shower, Corporate Seminar, Anniversary Gala).</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        placeholder="e.g. Housewarming Ceremony"
+                        value={formData.customOccasion || ""}
+                        onChange={(e) => handleInputChange("customOccasion", e.target.value)}
+                        className="flex-1 px-5 py-3 rounded-full border border-black/5 bg-white text-[13px] outline-none focus:border-primary/45 transition-colors"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && formData.customOccasion?.trim()) {
+                            setCurrentStep(2);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!formData.customOccasion?.trim()) {
+                            toast.error("Please enter your custom occasion name.");
+                            return;
+                          }
+                          setCurrentStep(2);
+                        }}
+                        className="bg-primary text-white px-6 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-md shadow-primary/20 hover:scale-105 transition-all"
+                      >
+                        Proceed
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
             )}
 
@@ -376,6 +500,8 @@ export function EventBookingWizard() {
                     <div
                       onClick={() => handlePackageSelect("")}
                       className={`p-6 rounded-[24px] border text-left cursor-pointer transition-all flex flex-col justify-between h-56 ${
+                        hasCategoryPackages ? "" : "md:col-span-2"
+                      } ${
                         !formData.eventPackageId ? "bg-primary/5 border-primary/40 shadow-lg" : "border-black/5 hover:border-black/15 bg-stone-50"
                       }`}
                     >
@@ -722,7 +848,12 @@ export function EventBookingWizard() {
                   <div className="space-y-4 bg-stone-50 rounded-[20px] p-6 border border-black/5">
                     <h4 className="font-display text-base text-black font-bold border-b border-black/5 pb-2">Operational Scope</h4>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between"><span className="text-black/45">Occasion Type:</span><span className="text-black font-semibold capitalize">{formData.eventType}</span></div>
+                      <div className="flex justify-between">
+                        <span className="text-black/45">Occasion Type:</span>
+                        <span className="text-black font-semibold capitalize">
+                          {formData.eventType === "other" ? formData.customOccasion || "Other" : formData.eventType}
+                        </span>
+                      </div>
                       {activePackage && <div className="flex justify-between"><span className="text-black/45">Curated Theme:</span><span className="text-black font-semibold">{activePackage.title}</span></div>}
                       <div className="flex justify-between"><span className="text-black/45">Target Date:</span><span className="text-black font-semibold">{formData.date || "Not Selected"}</span></div>
                       <div className="flex justify-between"><span className="text-black/45">Target Timing:</span><span className="text-black font-semibold">{formData.timing.start} - {formData.timing.end}</span></div>
@@ -749,22 +880,18 @@ export function EventBookingWizard() {
 
                       <div className="border-t border-black/5 pt-4 flex justify-between items-end">
                         <span className="font-display text-base text-black font-bold">Total Initial Price:</span>
-                        <span className="font-display text-xl text-black font-bold italic">
-                          ₹{((formData.eventPackageId ? (activePackage ? parseInt(activePackage.pricing.replace(/[^0-9]/g, "")) || 35000 : 35000) : 25000) +
-                            formData.selectedAddons.reduce((acc, a) => acc + a.price, 0)).toLocaleString("en-IN")}*
+                        <span className="font-display text-xl text-black font-bold italic line-through opacity-50">
+                          ₹{((formData.eventPackageId ? (activePackage ? parseInt(activePackage.pricing?.replace(/[^0-9]/g, "") || activePackage.basePrice || 35000) : 35000) : 25000) +
+                            formData.selectedAddons?.reduce((acc, curr) => acc + curr.price, 0)).toLocaleString("en-IN")}
                         </span>
                       </div>
-                      <div className="border-t border-black/5 pt-4 flex justify-between items-end">
-                        <div className="space-y-0.5">
-                          <span className="font-display text-[11px] text-stone-900 font-bold block">Milestone Deposit:</span>
-                          <span className="font-body text-[10px] text-black/40 block">25% required upon final admin approval</span>
-                        </div>
-                        <span className="font-display text-base text-primary font-bold">
-                          ₹{Math.round(((formData.eventPackageId ? (activePackage ? parseInt(activePackage.pricing.replace(/[^0-9]/g, "")) || 35000 : 35000) : 25000) +
-                            formData.selectedAddons.reduce((acc, a) => acc + a.price, 0)) * 0.25).toLocaleString("en-IN")}
+                      <div className="flex justify-between items-end mt-1">
+                        <span className="font-display text-sm text-primary font-bold">Advance Deposit to Reserve (50%):</span>
+                        <span className="font-display text-2xl text-primary font-bold italic">
+                          ₹{Math.round(((formData.eventPackageId ? (activePackage ? parseInt(activePackage.pricing?.replace(/[^0-9]/g, "") || activePackage.basePrice || 35000) : 35000) : 25000) +
+                            formData.selectedAddons?.reduce((acc, curr) => acc + curr.price, 0)) * 0.50).toLocaleString("en-IN")}
                         </span>
                       </div>
-                      <span className="font-body text-[10px] text-black/30 block leading-tight pt-2">*Final contract quotes including transportation costs, local taxes, and customized labor offsets will be logged inside your dashboard workspace after operational studio review.</span>
                     </div>
                   </div>
                 </div>
@@ -805,18 +932,17 @@ export function EventBookingWizard() {
                   }
                   setCurrentStep(prev => prev + 1);
                 }}
-                className="bg-black text-white px-8 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors"
+                className="bg-primary text-white px-8 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
               >
-                Continue
+                Proceed Next →
               </button>
             ) : (
               <button
                 type="button"
                 onClick={handleSubmitBooking}
-                className="bg-primary text-white px-10 py-3.5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2"
+                className="bg-black text-white px-8 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-xl shadow-black/20 hover:bg-primary hover:scale-105 transition-all flex items-center gap-2"
               >
-                Submit Booking
-                <span className="material-symbols-outlined text-[16px]">celebration</span>
+                <span className="material-symbols-outlined text-[16px]">lock</span> Pay 50% Deposit & Reserve
               </button>
             )}
           </div>

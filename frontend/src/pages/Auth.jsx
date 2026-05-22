@@ -35,10 +35,6 @@ export function Auth() {
   const [pending2faUserId, setPending2faUserId] = useState(null);
   const [totpCode, setTotpCode] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [requiresPassword, setRequiresPassword] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [devOtp, setDevOtp] = useState("");
   const [timer, setTimer] = useState(0);
@@ -96,16 +92,9 @@ export function Auth() {
 
     isSubmittingRef.current = true;
     setIsLoading(true);
-    
-    if (requiresPassword && !password) {
-      toast.error("Please enter your admin portal password");
-      isSubmittingRef.current = false;
-      setIsLoading(false);
-      return;
-    }
 
     try {
-      const response = await authService.sendOTP(email, password);
+      const response = await authService.sendOTP(email);
       toast.success("Verification code sent to your email!");
       setStep("otp");
       setTimer(60);
@@ -266,7 +255,7 @@ export function Auth() {
         >
           <img
             onError={handleImageError}
-            src=""
+            src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop"
             alt="Luxury Event Decor"
             className="w-full h-full object-cover opacity-60 mix-blend-screen"
           />
@@ -441,81 +430,21 @@ export function Auth() {
                             className="w-full bg-surface-container-low/50 border border-outline-variant/40 rounded-2xl pl-12 pr-5 py-4.5 font-body text-[15px] text-on-surface-variant outline-none transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5"
                             placeholder={isFocused ? "e.g. creative@siriartsandcrafts.com" : ""}
                             value={email}
-                            onChange={(e) => {
-                              setEmail(e.target.value);
-                              if (requiresPassword) {
-                                setRequiresPassword(false);
-                                setPassword("");
-                              }
-                            }}
+                            onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setIsFocused(true)}
                             onBlur={() => setIsFocused(false)}
                           />
                         </div>
 
-                        {requiresPassword ? (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="relative group mt-5"
-                          >
-                            <span className="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/30 text-[18px] group-focus-within:text-primary transition-colors">
-                              lock
-                            </span>
-
-                            <label
-                              className={`absolute transition-all duration-300 pointer-events-none font-bold ${
-                                passwordFocused || password
-                                  ? "text-[10px] -top-2 left-5 bg-white px-1.5 text-primary tracking-[0.2em] uppercase z-10"
-                                  : "text-[13px] top-1/2 -translate-y-1/2 left-12 text-on-surface-variant/40 tracking-[0.15em] uppercase"
-                              }`}
-                            >
-                              Portal Password
-                            </label>
-
-                            <input
-                              type={showPassword ? "text" : "password"}
-                              required
-                              autoComplete="new-password"
-                              className="w-full bg-surface-container-low/50 border border-outline-variant/40 rounded-2xl pl-12 pr-12 py-4.5 font-body text-[15px] text-on-surface-variant outline-none transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5"
-                              placeholder={passwordFocused ? "••••••••" : ""}
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              onFocus={() => setPasswordFocused(true)}
-                              onBlur={() => setPasswordFocused(false)}
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-5 top-1/2 -translate-y-1/2 text-on-surface-variant/30 hover:text-primary transition-colors flex items-center justify-center cursor-pointer"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">
-                                {showPassword ? "visibility_off" : "visibility"}
-                              </span>
-                            </button>
-                          </motion.div>
-                        ) : (
-                          <div className="flex justify-end mt-2">
-                            <button
-                              type="button"
-                              onClick={() => setRequiresPassword(true)}
-                              className="font-label-sm text-[10px] text-primary uppercase tracking-widest font-bold hover:text-on-surface-variant transition-colors"
-                            >
-                              Admin Access?
-                            </button>
-                          </div>
-                        )}
-
                         <button
-                          disabled={!email || (requiresPassword && !password) || isLoading}
+                          disabled={!email || isLoading}
                           className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20 cursor-pointer"
                         >
                           {isLoading ? (
                             <div className="w-5 h-5 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
                           ) : (
                             <>
-                              <span>{requiresPassword ? "Verify & Send Code" : "Send Verification Code"}</span>
+                              <span>Send Verification Code</span>
                               <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
                                 arrow_forward
                               </span>

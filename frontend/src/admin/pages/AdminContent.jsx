@@ -37,7 +37,6 @@ const CMS_SIDEBAR = [
     title: "Storefront Layout",
     items: [
       { id: "hero", label: "Hero Banner", icon: "aspect_ratio", desc: "Primary entrance visuals" },
-      { id: "hero-cards", label: "Hero Cards", icon: "view_carousel", desc: "Mobile carousel navigation" },
       { id: "collections", label: "Featured Collections", icon: "grid_view", desc: "Catalog category strips" },
       { id: "story", label: "About Teaser", icon: "history_edu", desc: "Studio lineage details" },
       { id: "bestsellers", label: "Bestsellers", icon: "stars", desc: "Featured product rows" },
@@ -208,15 +207,24 @@ function HeroSectionEditor({ content, onUpdate }) {
           </div>
         </AdminField>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <AdminField label="Gold Badge Tagline">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <AdminField label="Gold Badge Tagline" description="Main badge line (e.g. 'Artisan Excellence Since 2015')">
             <AdminInput
               value={hero.badgeText || ""}
               onChange={(e) => onUpdate("hero", { badgeText: e.target.value })}
               className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
-          
+          <AdminField label="Rotating Seal Ring Text" description="Floating seal label (e.g. '• HANDCRAFTED LUXURY • HERITAGE ARTISTRY •')">
+            <AdminInput
+              value={hero.rotatingSealText || ""}
+              onChange={(e) => onUpdate("hero", { rotatingSealText: e.target.value })}
+              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+            />
+          </AdminField>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <ImageUpload
             label="Lossless Background Image"
             value={hero.backgroundImage || ""}
@@ -236,125 +244,77 @@ function HeroSectionEditor({ content, onUpdate }) {
           <AdminField label="Primary Action Button Text">
             <AdminInput
               value={hero.ctaPrimary?.text || ""}
-              onChange={(e) => onUpdate("hero", { ctaPrimary: { ...hero.ctaPrimary, text: e.target.value } })}
+              onChange={(e) => onUpdate("hero", { ctaPrimary: { ...(hero.ctaPrimary || {}), text: e.target.value } })}
               className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
+          <AdminField label="Primary Action Button Destination Link" description="Page path (e.g. '/collections')">
+            <AdminInput
+              value={hero.ctaPrimary?.link || ""}
+              onChange={(e) => onUpdate("hero", { ctaPrimary: { ...(hero.ctaPrimary || {}), link: e.target.value } })}
+              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+            />
+          </AdminField>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
           <AdminField label="Secondary Action Button Text">
             <AdminInput
               value={hero.ctaSecondary?.text || ""}
-              onChange={(e) => onUpdate("hero", { ctaSecondary: { ...hero.ctaSecondary, text: e.target.value } })}
+              onChange={(e) => onUpdate("hero", { ctaSecondary: { ...(hero.ctaSecondary || {}), text: e.target.value } })}
+              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+            />
+          </AdminField>
+          <AdminField label="Secondary Action Button Destination Link" description="Page path (e.g. '/about')">
+            <AdminInput
+              value={hero.ctaSecondary?.link || ""}
+              onChange={(e) => onUpdate("hero", { ctaSecondary: { ...(hero.ctaSecondary || {}), link: e.target.value } })}
               className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
         </div>
-      </div>
-    </div>
-  );
-}
 
-// 1.5. HERO NAVIGATION CARDS (MOBILE CAROUSEL)
-function HeroNavigationCardsEditor({ content, onUpdate }) {
-  const navCards = content.heroNavigationCards || {};
-  return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
-      <SectionHeader
-        icon="view_carousel"
-        title="Hero Navigation Cards"
-        description="Configure the mobile homepage carousel cards that navigate to Shop, Events, and Gallery sections"
-      />
-      <div className="space-y-5">
-        <div className="p-4.5 bg-[#F1F5F9] rounded-2xl border border-[#000000]/15 space-y-2.5 shadow-3xs">
-          <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.15em] block">Mobile Carousel Preview</span>
-          <p className="text-[9.5px] text-stone-500 font-light leading-relaxed">
-            These cards appear as a horizontal snap-scrolling carousel on the mobile homepage hero section. Each card links to a main section of your website.
-          </p>
-        </div>
-
-        <div className="space-y-4 pt-4 border-t border-[#000000]/10">
-          <label className="text-[9.5px] font-extrabold uppercase tracking-[0.18em] text-[#000000] block mb-1">Card Configuration</label>
-          <div className="grid grid-cols-1 gap-4.5">
-            {navCards.items?.map((item, idx) => (
-              <div key={item.id || idx} className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
-                <div className="flex items-center justify-between border-b border-[#000000]/5 pb-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-serif font-extrabold text-[10px] shrink-0 shadow-sm">
-                      {idx + 1}
-                    </div>
-                    <span className="material-symbols-outlined text-[18px] text-[#d4af37]">{item.icon || "storefront"}</span>
-                    <span className="text-[11px] font-extrabold text-stone-800 tracking-tight">{item.title || `Card ${idx + 1}`}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9.5px] font-bold text-stone-500 uppercase tracking-wider">Visible</span>
-                    <AdminToggle
-                      checked={item.isVisible !== false}
-                      onChange={() => {
-                        const copy = [...navCards.items];
-                        copy[idx] = { ...copy[idx], isVisible: !copy[idx].isVisible };
-                        onUpdate("heroNavigationCards", { items: copy });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3.5">
-                    <AdminField label="Card Title" description="Display name shown on the card">
-                      <AdminInput
-                        value={item.title || ""}
-                        onChange={(e) => {
-                          const copy = [...navCards.items];
-                          copy[idx] = { ...copy[idx], title: e.target.value };
-                          onUpdate("heroNavigationCards", { items: copy });
-                        }}
-                        className="!py-2 !text-[11.5px] bg-white border-stone-200/80 focus:border-[#000000]"
-                      />
-                    </AdminField>
-                    <AdminField label="Link Destination" description="URL path the card navigates to">
-                      <AdminInput
-                        value={item.link || ""}
-                        onChange={(e) => {
-                          const copy = [...navCards.items];
-                          copy[idx] = { ...copy[idx], link: e.target.value };
-                          onUpdate("heroNavigationCards", { items: copy });
-                        }}
-                        className="!py-2 !text-[11.5px] bg-white border-stone-200/80 focus:border-[#000000]"
-                      />
-                    </AdminField>
-                    <AdminField label="Material Icon Name" description="Google Material Symbols icon identifier">
-                      <AdminInput
-                        value={item.icon || ""}
-                        onChange={(e) => {
-                          const copy = [...navCards.items];
-                          copy[idx] = { ...copy[idx], icon: e.target.value };
-                          onUpdate("heroNavigationCards", { items: copy });
-                        }}
-                        className="!py-2 !text-[11.5px] bg-white border-stone-200/80 focus:border-[#000000]"
-                      />
-                    </AdminField>
-                  </div>
-                  <div className="shrink-0">
-                    <ImageUpload
-                      label="Card Background Image"
-                      value={item.image || ""}
-                      onChange={(val) => {
-                        const copy = [...navCards.items];
-                        copy[idx] = { ...copy[idx], image: val };
-                        onUpdate("heroNavigationCards", { items: copy });
-                      }}
-                      folder="cms"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+        <div className="pt-4 border-t border-[#000000]/10 space-y-4">
+          <h4 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#000000]">Floating Glass Card Settings (Desktop View)</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <AdminField label="Floating Card Title">
+              <AdminInput
+                value={hero.floatingCardTitle || ""}
+                onChange={(e) => onUpdate("hero", { floatingCardTitle: e.target.value })}
+                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              />
+            </AdminField>
+            <AdminField label="Floating Card Action Button Link">
+              <AdminInput
+                value={hero.floatingCardCtaLink || ""}
+                onChange={(e) => onUpdate("hero", { floatingCardCtaLink: e.target.value })}
+                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              />
+            </AdminField>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <AdminField label="Floating Card Action Button Text">
+              <AdminInput
+                value={hero.floatingCardCtaText || ""}
+                onChange={(e) => onUpdate("hero", { floatingCardCtaText: e.target.value })}
+                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              />
+            </AdminField>
+            <AdminField label="Floating Card Description Paragraph">
+              <AdminInput
+                value={hero.floatingCardDesc || ""}
+                onChange={(e) => onUpdate("hero", { floatingCardDesc: e.target.value })}
+                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              />
+            </AdminField>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+
 
 // 2. FEATURED STRIP
 function FeaturedCollectionsEditor({ content, onUpdate }) {
@@ -1835,9 +1795,6 @@ export function AdminContent() {
             >
               {activeSection === "hero" && (
                 <HeroSectionEditor content={websiteContent} onUpdate={handleUpdate} />
-              )}
-              {activeSection === "hero-cards" && (
-                <HeroNavigationCardsEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
               {activeSection === "collections" && (
                 <FeaturedCollectionsEditor content={websiteContent} onUpdate={handleUpdate} />

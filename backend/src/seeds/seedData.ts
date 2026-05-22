@@ -39,6 +39,11 @@ const initialWebsiteContent = {
     backgroundImage: IMAGES.luxuryRoyalWedding,
     mobileBackgroundImage: "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779181764/event_decor_ecommerce/assets/event_decor_mobile%20hero%20background.png",
     badgeText: "Artisan Excellence Since 2015",
+    rotatingSealText: "• HANDCRAFTED LUXURY • HERITAGE ARTISTRY •",
+    floatingCardTitle: "Heritage Craft.",
+    floatingCardDesc: "Meticulously detailed by master artisans over 120 hours.",
+    floatingCardCtaText: "Explore Technique",
+    floatingCardCtaLink: "/about",
     isVisible: true,
   },
   featuredCollections: {

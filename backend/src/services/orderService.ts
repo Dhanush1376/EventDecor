@@ -21,6 +21,7 @@ import { createAdminNotification } from './notificationService';
 import { compileTemplate } from '../utils/templateEngine';
 import { LoyaltyService } from './loyaltyService';
 import { emitUserEvent } from '../socket';
+import { redisClient } from '../utils/redis';
 
 class OrderService {
   static async validateTotals(userId: string, data: any) {
@@ -198,8 +199,23 @@ class OrderService {
   }
 
   static async createOrder(userId: string, orderData: any) {
-    const { items, shippingAddress, couponCode, notes, needByDate, paymentMethod, useWallet } = orderData;
+    const { items, shippingAddress, couponCode, notes, needByDate, paymentMethod, useWallet, idempotencyKey } = orderData;
     const isCod = paymentMethod === 'cod';
+
+    // Idempotency check: if the client provided an Idempotency-Key, check Redis cache first
+    let redisKey = '';
+    if (idempotencyKey && redisClient) {
+      redisKey = `idempotency:order:${userId}:${idempotencyKey}`;
+      try {
+        const cachedResponse = await redisClient.get(redisKey);
+        if (cachedResponse) {
+          logger.info(`[IDEMPOTENCY] Returning cached order creation for key: ${idempotencyKey}`);
+          return JSON.parse(cachedResponse);
+        }
+      } catch (err) {
+        logger.warn('Redis error during idempotency check:', err);
+      }
+    }
 
     let subtotal = 0;
     const orderItems = [];
@@ -273,18 +289,16 @@ class OrderService {
       let couponValid = false;
 
       if (couponCode) {
-        const coupon = await Coupon.findOneAndUpdate(
-          { 
-            code: couponCode.toUpperCase(), 
-            isActive: true, 
-            $or: [
-              { usageLimit: null }, 
-              { $expr: { $lt: ['$usedCount', '$usageLimit'] } }
-            ] 
-          },
-          { $inc: { usedCount: 1 } },
-          { new: true }
-        );
+        // Validate coupon but do NOT increment usedCount yet — that happens on payment confirmation
+        // to prevent double-counting when both createOrder and verifyPayment run
+        const coupon = await Coupon.findOne({
+          code: couponCode.toUpperCase(),
+          isActive: true,
+          $or: [
+            { usageLimit: null },
+            { $expr: { $lt: ['$usedCount', '$usageLimit'] } }
+          ]
+        });
         if (coupon && new Date() <= coupon.expiryDate && subtotal >= coupon.minOrderAmount) {
           couponValid = true;
           if (coupon.discountType === 'percentage') {
@@ -401,6 +415,18 @@ class OrderService {
         // Clear the user's cart in database immediately
         await User.findByIdAndUpdate(userId, { $set: { cart: [] } });
 
+        const resultCod = {
+          order,
+          type: 'cod',
+        };
+
+        if (redisKey && redisClient) {
+          try {
+            await redisClient.set(redisKey, JSON.stringify(resultCod), { EX: 86400 });
+          } catch (err) {
+            logger.warn('Redis error during idempotency save:', err);
+          }
+        }
 
         // Trigger Admin Alert, Invoice PDF, and Dispatch Email
         try {
@@ -486,7 +512,7 @@ class OrderService {
           logger.error('Failed to dispatch COD confirmation email/PDF:', emailErr);
         }
 
-        return { order };
+        return resultCod;
       } else {
         // 3b. Handle online Razorpay payment
         const options = {
@@ -543,14 +569,25 @@ class OrderService {
         await order.save();
         await User.findByIdAndUpdate(userId, { $push: { orders: order._id } });
 
-        return {
+        const result = {
           order,
           razorpayOrder: {
             id: razorpayOrder.id,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
-          }
+          },
+          type: 'online'
         };
+
+        if (redisKey && redisClient) {
+          try {
+            await redisClient.set(redisKey, JSON.stringify(result), { EX: 86400 });
+          } catch (err) {
+            logger.warn('Redis error during idempotency save:', err);
+          }
+        }
+
+        return result;
       }
     } catch (err) {
       // 1. Rollback reserved stock
@@ -598,77 +635,99 @@ class OrderService {
       throw new ApiError(400, 'Missing payment verification parameters');
     }
 
-    // 1. Atomically lock the order in "processing" state to prevent race conditions
-    let order: any = await Order.findOneAndUpdate(
-      { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
-      { $set: { paymentStatus: 'processing' } },
-      { new: true }
-    );
-
-    if (!order) {
-      // Check if it's already marked as paid by a webhook or concurrent request
-      const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
-      if (existingOrder && existingOrder.paymentStatus === 'paid') {
-        logger.info(`[PAYMENT REDUNDANCY] Payment already processed successfully for order: ${existingOrder._id}`);
-        return existingOrder;
-      }
-      throw new ApiError(404, 'Order record not found or cannot be locked for processing');
-    }
-
-    if (order.user.toString() !== userId && role !== 'admin') {
-      // Rollback lock state
-      order.paymentStatus = 'pending';
-      await order.save();
-      throw new ApiError(403, 'You are not authorized to verify this payment');
-    }
-
-
     if (!razorpay_signature) {
       throw new ApiError(400, 'Missing payment signature verification parameter');
     }
 
-    // 1. Verify Razorpay signature using HMAC SHA256
-    const shasum = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!);
+    // 1. Verify Razorpay signature using HMAC SHA256 before doing any DB ops
+    const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!razorpayKeySecret) {
+      throw new ApiError(500, 'Payment verification is not configured on the server');
+    }
+    const shasum = crypto.createHmac('sha256', razorpayKeySecret);
     shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const digest = shasum.digest('hex');
 
-    if (digest !== razorpay_signature) {
-      // 2. Handle failed payment: Return reserved stock
-      for (const item of order.items) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: item.quantity }
-        });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    let order: any;
+
+    try {
+      // 1. Atomically lock the order in "processing" state to prevent race conditions
+      order = await Order.findOneAndUpdate(
+        { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
+        { $set: { paymentStatus: 'processing' } },
+        { new: true, session }
+      );
+
+      if (!order) {
+        // Check if it's already marked as paid by a webhook or concurrent request
+        const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+        if (existingOrder && existingOrder.paymentStatus === 'paid') {
+          logger.info(`[PAYMENT REDUNDANCY] Payment already processed successfully for order: ${existingOrder._id}`);
+          await session.abortTransaction();
+          session.endSession();
+          return existingOrder;
+        }
+        throw new ApiError(404, 'Order record not found or cannot be locked for processing');
       }
 
-      order.paymentStatus = 'failed';
-      order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Signature Mismatch) - Stock Released' });
-      await order.save();
-      throw new ApiError(400, 'Invalid payment signature. Payment untrusted.');
-    }
+      if (order.user.toString() !== userId && role !== 'admin') {
+        // Rollback lock state
+        order.paymentStatus = 'pending';
+        await order.save({ session });
+        throw new ApiError(403, 'You are not authorized to verify this payment');
+      }
 
-    // 3. Mark order as confirmed and paid
-    order.paymentStatus = 'paid';
-    order.orderStatus = 'Confirmed';
-    order.razorpayPaymentId = razorpay_payment_id;
-    order.razorpaySignature = razorpay_signature;
-    order.statusHistory.push({ status: 'Confirmed', note: 'Payment verified and order confirmed' });
-    
-    await order.save();
-    AnalyticsService.clearCache();
-
-    // 4. Clear the user's cart in the database upon successful verification
-    await User.findByIdAndUpdate(order.user, { $set: { cart: [] } });
-
-    // 5. Increment Coupon used count if coupon was active
-    if (order.couponCode) {
-      await Coupon.findOneAndUpdate(
-        { code: order.couponCode.toUpperCase() }, 
-        { 
-          $inc: { usedCount: 1 },
-          $push: { usedBy: { userId: order.user, orderId: order._id } }
+      if (digest !== razorpay_signature) {
+        // 2. Handle failed payment: Return reserved stock
+        for (const item of order.items) {
+          await Product.findByIdAndUpdate(item.productId, {
+            $inc: { stock: item.quantity }
+          }, { session });
         }
-      );
+
+        order.paymentStatus = 'failed';
+        order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Signature Mismatch) - Stock Released' });
+        await order.save({ session });
+        await session.commitTransaction();
+        session.endSession();
+        throw new ApiError(400, 'Invalid payment signature. Payment untrusted.');
+      }
+
+      // 3. Mark order as confirmed and paid
+      order.paymentStatus = 'paid';
+      order.orderStatus = 'Confirmed';
+      order.razorpayPaymentId = razorpay_payment_id;
+      order.razorpaySignature = razorpay_signature;
+      order.statusHistory.push({ status: 'Confirmed', note: 'Payment verified and order confirmed' });
+      
+      await order.save({ session });
+
+      // 4. Clear the user's cart in the database upon successful verification
+      await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
+
+      // 5. Increment Coupon used count if coupon was active
+      if (order.couponCode) {
+        await Coupon.findOneAndUpdate(
+          { code: order.couponCode.toUpperCase() }, 
+          { 
+            $inc: { usedCount: 1 },
+            $push: { usedBy: { userId: order.user, orderId: order._id } }
+          },
+          { session }
+        );
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
     }
+
+    AnalyticsService.clearCache();
     
     // Trigger Admin Alert, Invoice PDF, and Order Confirmation Email
     try {
@@ -944,25 +1003,13 @@ class OrderService {
         await sendDirectEmail({
           email: user.email,
           subject: `Order Updated to ${finalStatus.toUpperCase()}! ✦ Siri Arts & Crafts [${order._id}]`,
-          customHtml: `
-            <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 50px 30px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29; box-shadow: 0 15px 40px rgba(115, 92, 0, 0.04); text-align: center;">
-              <div style="margin-bottom: 25px; text-align: center;">
-                <div style="font-size: 28px; color: #735c00; margin-bottom: 12px; font-weight: 300;">✦</div>
-                <h1 style="color: #735c00; font-size: 24px; font-weight: 300; letter-spacing: 4px; margin: 0; text-transform: uppercase;">Siri Arts</h1>
-                <div style="width: 50px; height: 1px; background-color: #735c00; margin: 12px auto 0 auto; opacity: 0.25;"></div>
-              </div>
-              <h2 style="font-size: 18px; font-weight: 400; color: #2d2b29; margin-bottom: 20px;">Order Dispatch Update</h2>
-              <p style="font-family: 'Inter', sans-serif; font-size: 13px; color: #7f7663; line-height: 1.8; font-weight: 300;">
-                Dear ${user.name},<br/><br/>
-                We are pleased to inform you that your order <strong>${order._id}</strong> has been updated to <strong>${finalStatus.toUpperCase()}</strong>.
-                <br/><br/>
-                Atelier Note: <em>${note || 'Your exquisite items are being handled with care.'}</em>
-              </p>
-              <div style="margin-top: 30px; text-align: center;">
-                <a href="${frontendUrl}/dashboard?tab=orders" style="display: inline-block; background-color: #735c00; color: #ffffff; text-decoration: none; padding: 13px 30px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-family: 'Inter', sans-serif;">Track Live Dispatch</a>
-              </div>
-            </div>
-          `,
+          customHtml: compileTemplate('order-status', {
+            customerName: user.name,
+            orderId: order._id.toString(),
+            finalStatus: finalStatus.toUpperCase(),
+            note: note || 'Your exquisite items are being handled with care.',
+            frontendUrl
+          }),
           type: 'order',
           action: `order_${finalStatus.toLowerCase().replace(/ /g, '_')}`,
           userId: user._id.toString(),

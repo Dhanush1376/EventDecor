@@ -8,7 +8,7 @@ import { useCheckout } from "./CheckoutProvider";
 
 
 export default function CheckoutSidebar() {
-  const { user, backendTotals, useWallet, setUseWallet, appliedCoupon, couponValid, couponInput, setCouponInput, handleApplyCoupon, handleRemoveCoupon, couponMessage, availableCoupons, loadingCoupons, activeStep, paymentOption, isProcessing, handleConfirmOrder } = useCheckout();
+  const { user, backendTotals, useWallet, setUseWallet, appliedCoupon, couponValid, couponInput, setCouponInput, handleApplyCoupon, handleRemoveCoupon, couponMessage, availableCoupons, loadingCoupons, activeStep, paymentOption, isProcessing, handleConfirmOrder, activeItems } = useCheckout();
   return (
     <>
       {/* Right Column: PRICE DETAILS & promo code side card */}

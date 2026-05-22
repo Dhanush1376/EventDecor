@@ -8,11 +8,7 @@ import React from 'react';
 export function StackedSectionWrapper({ children, index, isLast, bgClass = "bg-surface" }) {
   return (
     <section className={`w-full relative z-[${index}] ${bgClass}`}>
-      <div
-        className={`w-full relative flex flex-col justify-center ${
-          index > 0 ? "pt-12 md:pt-16" : ""
-        }`}
-      >
+      <div className="w-full relative flex flex-col justify-center">
         {children}
       </div>
     </section>

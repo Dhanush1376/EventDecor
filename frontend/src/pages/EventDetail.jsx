@@ -13,6 +13,27 @@ import { useAuth } from "../context/AuthContext";
 import { LocationSelectorModal } from "../components/ui/LocationSelectorModal";
 
 import logger from '../utils/logger';
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+const EVENT_TYPES = [
+  { id: "wedding", label: "Wedding / Vivaham", icon: "church", desc: "Grand traditional structures, modular mandaps & royal backdrops" },
+  { id: "engagement", label: "Engagement Ceremony", icon: "diamond", desc: "Modern floral panels, elegant backdrops & grand entrances" },
+  { id: "haldi", label: "Haldi & Mehndi", icon: "palette", desc: "Vibrant yellow marigold blasting, traditional swings & photo booths" },
+  { id: "reception", label: "Reception Gala", icon: "celebration", desc: "Bespoke stage styling, luxury uplighting & contemporary look" },
+  { id: "birthday", label: "Birthday / Cradle", icon: "child_care", desc: "Vibrant custom themes, balloon archways & kid-friendly elements" },
+  { id: "festival", label: "Festival / Puja Decor", icon: "spa", desc: "Traditional South Indian mango leaves, lotus hangings & brass props" },
+  { id: "other", label: "Other Celebration", icon: "more_horiz", desc: "Specify your custom milestone celebration and setup blueprints" },
+];
+
 export function EventDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -45,6 +66,10 @@ export function EventDetail() {
   const [startTime, setStartTime] = useState("09:00 AM");
   const [endTime, setEndTime] = useState("09:00 PM");
   const [isOutdoor, setIsOutdoor] = useState(false);
+  const [customizerStep, setCustomizerStep] = useState(1);
+  const [eventType, setEventType] = useState("wedding");
+  const [customOccasion, setCustomOccasion] = useState("");
+  const customizerCardRef = useRef(null);
 
   useEffect(() => {
     if (venueDetails) {
@@ -129,6 +154,15 @@ export function EventDetail() {
             defaultInclusions.map(inc => ({ ...inc, selected: true, qty: inc.defaultQty }))
           );
           setSelectedPaletteColor(sc.colorPalette?.[0] || "#8B0000");
+
+          // Pre-populate occasion category matching
+          const cat = sc.category?.toLowerCase() || "wedding";
+          if (EVENT_TYPES.some(t => t.id === cat)) {
+            setEventType(cat);
+          } else {
+            setEventType("other");
+            setCustomOccasion(sc.category || "");
+          }
         }
 
         const relatedRes = await showcaseService.getAll();
@@ -163,15 +197,74 @@ export function EventDetail() {
   const calculateLivePrice = () => {
     if (!event) return 0;
 
-    let basePrice = 15000;
-    if (event.rentalPrice) {
-      basePrice = Number(event.rentalPrice);
-    } else if (event.pricing) {
-      basePrice = parseInt(event.pricing.replace(/[^0-9]/g, "")) || 15000;
+    let basePrice = event.basePrice || 35000;
+    if (!event.basePrice) {
+      if (event.rentalPrice) {
+        basePrice = Number(event.rentalPrice);
+      } else if (event.pricing) {
+        basePrice = parseInt(event.pricing.replace(/[^0-9]/g, "")) || 35000;
+      }
     }
 
     const durationMultiplier = rentalDurationDays === 1 ? 1 : rentalDurationDays === 2 ? 1.5 : 1.5 + (rentalDurationDays - 2) * 0.4;
     return Math.round(basePrice * durationMultiplier);
+  };
+
+  const validateStep1 = () => {
+    if (eventType === "other" && !customOccasion.trim()) {
+      toast.error("Please specify your custom occasion.");
+      return false;
+    }
+    if (!bookingDate) {
+      toast.error("Please select a Ceremony Date.");
+      return false;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = new Date(bookingDate);
+    if (selected < today) {
+      toast.error("Ceremony Date cannot be in the past.");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep3 = () => {
+    const finalAddress = isManualLocationInput 
+      ? `${manualVenueName ? manualVenueName + ', ' : ''}${manualAddress} ${manualCity} ${manualState} ${manualPincode}`.trim()
+      : (venueDetails?.address || "");
+
+    if (!finalAddress) {
+      toast.error("Please configure your venue location (either by map or manual entry).");
+      return false;
+    }
+    if (isManualLocationInput) {
+      if (!manualVenueName.trim()) {
+        toast.error("Please enter a Venue Name.");
+        return false;
+      }
+      if (!manualAddress.trim()) {
+        toast.error("Please enter the Full Address.");
+        return false;
+      }
+      if (!manualCity.trim()) {
+        toast.error("Please enter the City.");
+        return false;
+      }
+      if (!manualState.trim()) {
+        toast.error("Please enter the State.");
+        return false;
+      }
+      if (!manualPincode.trim()) {
+        toast.error("Please enter the Pincode.");
+        return false;
+      }
+      if (!/^\d{6}$/.test(manualPincode.trim())) {
+        toast.error("Pincode must be exactly 6 digits.");
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleBookRental = async () => {
@@ -179,52 +272,133 @@ export function EventDetail() {
       runProtectedAction(() => handleBookRental());
       return;
     }
-    if (!bookingDate) {
-      toast.error("Please select a target ceremony date!");
+
+    // Validation
+    if (!validateStep1()) {
+      setCustomizerStep(1);
       return;
     }
-    if (!venueDetails || !venueDetails.address || !venueDetails.name) {
-      toast.error("Please specify your celebration venue location on the map!");
+    if (!validateStep3()) {
+      setCustomizerStep(3);
       return;
     }
 
-    const loadId = toast.loading("Reserving showcase arrangement crates...");
+    const loadId = toast.loading("Initializing secure checkout...");
     try {
-      const bookingData = {
-        title: `Rent: ${event.title}`,
-        eventType: event.category || "Showcase Rental",
-        date: bookingDate,
-        timing: { start: startTime, end: endTime },
-        guestCount: guestCount,
-        venue: {
-          address: venueDetails.address,
-          name: venueDetails.name,
-          city: venueDetails.city,
-          state: venueDetails.state,
-          country: venueDetails.country,
-          pincode: venueDetails.pincode,
-          latitude: venueDetails.latitude,
-          longitude: venueDetails.longitude,
-          googleMapsLink: venueDetails.googleMapsLink,
-          isOutdoor: isOutdoor,
-        },
-        customization: {
-          themeColor: `Color Profile: ${event.colorPalette?.[0] || "Traditional Gold"}`,
-          floralPreference: "Matching Traditional Silk-Thread Accents",
-          additionalRequests: `Showcase Duration: ${rentalDurationDays} Days. Placement: ${placementPreference}. Note: ${customNote}`,
-        },
-        selectedAddons: [],
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        toast.dismiss(loadId);
+        toast.error("Failed to load payment gateway. Please check your connection.");
+        return;
+      }
+
+      // Prepare venue payload
+      const venuePayload = isManualLocationInput ? {
+        name: manualVenueName,
+        address: manualAddress,
+        city: manualCity,
+        state: manualState,
+        pincode: manualPincode,
+        country: "India",
+        isOutdoor: isOutdoor,
+        googleMapsLink: venueDetails?.googleMapsLink || ""
+      } : {
+        name: venueDetails?.name,
+        address: venueDetails?.address,
+        city: venueDetails?.city,
+        state: venueDetails?.state,
+        pincode: venueDetails?.pincode,
+        country: venueDetails?.country || "India",
+        latitude: venueDetails?.latitude,
+        longitude: venueDetails?.longitude,
+        googleMapsLink: venueDetails?.googleMapsLink,
+        isOutdoor: isOutdoor
       };
 
-      const res = await bookingService.create(bookingData);
-      toast.dismiss(loadId);
-      if (res.success) {
-        toast.success("Decor Showcase reserved! Track setup times in your dashboard.");
-        navigate("/dashboard?tab=bookings");
+      const finalEventType = eventType === "other" ? customOccasion : eventType;
+
+      const checkoutPayload = {
+        eventPackageId: event._id || event.id,
+        eventType: finalEventType,
+        title: `${event.title} Booking`,
+        date: bookingDate,
+        rentalDurationDays,
+        timing: { start: startTime, end: endTime },
+        guestCount,
+        venue: venuePayload,
+        customization: {
+          themeColor: selectedPaletteColor || (event.colorPalette?.[0] || "Standard"),
+          floralPreference: "Standard Garlands",
+          lightingPreference: "Standard Lighting",
+          stageSize: "Standard",
+          additionalRequests: customNote || ""
+        },
+        selectedAddons: [],
+        inspirationImages: []
+      };
+
+      // 1. Initialize Booking Checkout
+      const initRes = await bookingService.initializeCheckout(checkoutPayload);
+      if (!initRes.success || !initRes.data) {
+        toast.dismiss(loadId);
+        toast.error(initRes.message || "Failed to initialize checkout.");
+        return;
       }
+
+      const { bookingId, razorpayOrderId, amount, currency, key } = initRes.data;
+      toast.dismiss(loadId);
+
+      // 2. Open Razorpay Modal
+      const options = {
+        key,
+        amount: amount * 100, // in paise
+        currency,
+        name: "Siri Arts Event Decor",
+        description: `Advance Deposit for ${event.title}`,
+        order_id: razorpayOrderId,
+        handler: async function (response) {
+          const verifyLoadId = toast.loading("Verifying your payment securely...");
+          try {
+            // 3. Verify Payment Signature
+            const verifyRes = await bookingService.verifyCheckout({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              bookingId,
+            });
+
+            toast.dismiss(verifyLoadId);
+            if (verifyRes.success) {
+              toast.success("Payment successful! Your luxury event is confirmed.");
+              navigate(`/booking-success/${bookingId}`);
+            } else {
+              toast.error(verifyRes.message || "Payment verification failed.");
+            }
+          } catch (err) {
+            toast.dismiss(verifyLoadId);
+            logger.error("Verification Error:", err);
+            toast.error("An error occurred during verification. Contact support.");
+          }
+        },
+        prefill: {
+          name: "Customer",
+          email: "customer@example.com",
+        },
+        theme: {
+          color: "#735c00",
+        },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.on('payment.failed', function (response) {
+        toast.error(`Payment Failed: ${response.error.description}`);
+      });
+      paymentObject.open();
+
     } catch (err) {
       toast.dismiss(loadId);
-      toast.error("Failed to place rental inquiry.");
+      logger.error(err);
+      toast.error(err.response?.data?.message || "An error occurred. Please verify required fields and login state.");
     }
   };
 
@@ -470,300 +644,468 @@ export function EventDetail() {
           </div>
 
           {/* Right Column: Artisan Customizer Form */}
-          <div className="lg:col-span-5 flex flex-col gap-6">
+          <div ref={customizerCardRef} className="lg:col-span-5 flex flex-col gap-6">
 
             {/* 2. Customizer Crate Form */}
             <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-[#C4A87C]/20 p-6 md:p-8 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)]">
-              <div className="flex items-center gap-2 pb-3 border-b border-black/5">
-                <span className="material-symbols-outlined text-primary text-[18px]">tune</span>
-                <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">Artisan Customizer</span>
+              <div className="flex items-center justify-between pb-3 border-b border-black/5">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[18px]">tune</span>
+                  <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">Artisan Customizer</span>
+                </div>
+                <span className="text-[10px] text-stone-400 font-bold">Step {customizerStep} of 4</span>
               </div>
 
-              {/* Date & Duration Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Ceremony Date *</label>
-                  <input
-                    type="date"
-                    value={bookingDate}
-                    onChange={(e) => setBookingDate(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Rental Days</label>
-                  <select
-                    value={rentalDurationDays}
-                    onChange={(e) => setRentalDurationDays(Number(e.target.value))}
-                    className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                  >
-                    <option value={1}>1 Day Setup (Standard)</option>
-                    <option value={2}>2 Days Setup (Ceremony + Return)</option>
-                    <option value={3}>3 Days Setup (Extensive)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Setup Environment Toggle */}
-              <div className="space-y-2 pt-3 border-t border-black/5">
-                <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">Setup Environment</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsOutdoor(false)}
-                    className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer ${!isOutdoor ? 'bg-black text-white border-none' : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border border-black/10'}`}
-                  >
-                    <span className="material-symbols-outlined text-[16px]">home</span>
-                    <span>Indoor Celebration</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsOutdoor(true)}
-                    className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer ${isOutdoor ? 'bg-black text-white border-none' : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border border-black/10'}`}
-                  >
-                    <span className="material-symbols-outlined text-[16px]">park</span>
-                    <span>Outdoor Celebration</span>
-                  </button>
-                </div>
-              </div>
-
-
-
-              {/* Setup Timings */}
-              <div className="grid grid-cols-2 gap-4 pt-3 border-t border-black/5">
-                <div className="space-y-1">
-                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Setup Start Time</label>
-                  <select
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                  >
-                    <option value="06:00 AM">06:00 AM (Early Dawn)</option>
-                    <option value="09:00 AM">09:00 AM (Standard Morning)</option>
-                    <option value="12:00 PM">12:00 PM (Midday)</option>
-                    <option value="03:00 PM">03:00 PM (Afternoon)</option>
-                    <option value="06:00 PM">06:00 PM (Evening Glow)</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Ceremony End Time</label>
-                  <select
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                  >
-                    <option value="01:00 PM">01:00 PM (Afternoon)</option>
-                    <option value="05:00 PM">05:00 PM (Sundown)</option>
-                    <option value="09:00 PM">09:00 PM (Standard Night)</option>
-                    <option value="11:00 PM">11:00 PM (Late Night Gala)</option>
-                    <option value="02:00 AM">02:00 AM (Midnight Auspicious)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Placement Preference */}
-              <div className="space-y-2 pt-3 border-t border-black/5">
-                <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">Placement Destination</label>
-                <select
-                  value={placementPreference}
-                  onChange={(e) => setPlacementPreference(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                >
-                  <option value="Side-Stage Showcase Corner">Side-Stage Showcase Corner</option>
-                  <option value="Entrance Presentation Desk">Entrance Presentation Desk</option>
-                  <option value="Traditional Mandap Flanks">Traditional Mandap Flanks</option>
-                  <option value="Groom/Bride Seating Podiums">Groom/Bride Seating Podiums</option>
-                </select>
-              </div>
-
-              {/* Event Venue Location Selection */}
-              <div className="space-y-3 pt-3 border-t border-black/5">
-                <div className="flex items-center justify-between">
-                  <label className="font-label text-[9px] uppercase tracking-widest text-[#735c00] font-bold block">Select Event Venue *</label>
-                  {venueDetails && (
-                    <span className="text-[10px] text-green-600 font-bold flex items-center gap-0.5 animate-pulse">
-                      <span className="material-symbols-outlined text-[12px]">check_circle</span> Verified
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLocationModalOpen(true);
-                      setIsManualLocationInput(false);
-                    }}
-                    className="flex-1 bg-white hover:bg-stone-50 text-black border border-black/10 py-2.5 px-4 rounded-full font-semibold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[16px] text-primary">map</span>
-                    <span>Choose on Map</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsManualLocationInput(!isManualLocationInput)}
-                    className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer ${isManualLocationInput ? 'bg-primary text-black border-none' : 'bg-primary/10 text-primary border border-primary/20'}`}
-                  >
-                    <span className="material-symbols-outlined text-[16px]">edit_note</span>
-                    <span>Add Location Manually</span>
-                  </button>
-                </div>
-
-                {/* Manual Location Form */}
-                {isManualLocationInput && (
-                  <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/20 space-y-3">
-                    <div className="space-y-1">
-                      <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Venue Name *</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Grand Palace Hall, Temple Flanks"
-                        value={manualVenueName}
-                        onChange={(e) => {
-                          setManualVenueName(e.target.value);
-                          handleManualFieldChange("name", e.target.value);
-                        }}
-                        className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Full Address *</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 123 Heritage Lane, Near Old Circle"
-                        value={manualAddress}
-                        onChange={(e) => {
-                          setManualAddress(e.target.value);
-                          handleManualFieldChange("address", e.target.value);
-                        }}
-                        className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="space-y-1">
-                        <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">City *</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Bengaluru"
-                          value={manualCity}
-                          onChange={(e) => {
-                            setManualCity(e.target.value);
-                            handleManualFieldChange("city", e.target.value);
-                          }}
-                          className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                        />
+              {/* Stepper Progress Indicator */}
+              <div className="flex items-center justify-between pb-2">
+                {[
+                  { number: 1, label: "Occasion" },
+                  { number: 2, label: "Schedule" },
+                  { number: 3, label: "Venue" },
+                  { number: 4, label: "Confirm" }
+                ].map((s, idx) => (
+                  <React.Fragment key={s.number}>
+                    <div className="flex flex-col items-center gap-1">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center font-display text-[10px] font-bold transition-all duration-300 ${
+                        customizerStep === s.number
+                          ? "bg-black text-white scale-110 shadow-md"
+                          : customizerStep > s.number
+                          ? "bg-primary text-black"
+                          : "bg-stone-100 text-stone-400"
+                      }`}>
+                        {customizerStep > s.number ? "✓" : s.number}
                       </div>
-                      <div className="space-y-1">
-                        <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">State *</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Karnataka"
-                          value={manualState}
-                          onChange={(e) => {
-                            setManualState(e.target.value);
-                            handleManualFieldChange("state", e.target.value);
-                          }}
-                          className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Pincode *</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. 560001"
-                          value={manualPincode}
-                          onChange={(e) => {
-                            setManualPincode(e.target.value);
-                            handleManualFieldChange("pincode", e.target.value);
-                          }}
-                          className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                        />
-                      </div>
+                      <span className={`text-[8px] uppercase tracking-wider font-semibold ${
+                        customizerStep === s.number ? "text-black" : "text-stone-400"
+                      }`}>{s.label}</span>
                     </div>
-                  </div>
-                )}
-
-                {/* Venue Detail Card Preview */}
-                {(venueDetails && !isManualLocationInput) ? (
-                  <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/25 space-y-2 relative overflow-hidden">
-                    <div className="flex items-start justify-between gap-2 z-10 relative">
-                      <div className="space-y-0.5">
-                        <h4 className="text-xs font-bold text-black flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-primary text-[16px]">storefront</span>
-                          {venueDetails.name}
-                        </h4>
-                        <p className="text-[11px] text-stone-600 leading-normal font-light">{venueDetails.address}</p>
-                        <div className="flex gap-x-2 text-[9px] text-stone-500 font-semibold font-mono pt-1">
-                          {venueDetails.city && <span>City: {venueDetails.city}</span>}
-                          {venueDetails.pincode && <span>Pincode: {venueDetails.pincode}</span>}
-                        </div>
-                      </div>
-                      <a
-                        href={venueDetails.googleMapsLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="w-7 h-7 rounded-full bg-white border border-black/5 flex items-center justify-center text-primary hover:bg-stone-50 shrink-0 transition-colors shadow-sm"
-                        title="Open in Google Maps"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">directions</span>
-                      </a>
-                    </div>
-                  </div>
-                ) : (!isManualLocationInput && (
-                  <div className="bg-stone-50 border border-dashed border-black/10 p-4 rounded-2xl text-center text-stone-400 font-light text-xs">
-                    No venue location specified yet. Tap "Choose on Map" to configure.
-                  </div>
+                    {idx < 3 && (
+                      <div className={`h-[1px] flex-1 border-t ${
+                        customizerStep > s.number ? "border-primary" : "border-stone-200"
+                      } -mt-4`} />
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
 
-              {/* Custom notes */}
-              <div className="space-y-2">
-                <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">Arrangement Instruction Notes</label>
-                <textarea
-                  placeholder="Enter traditional naming preferences, gift tray custom wording, or placement dimensions..."
-                  value={customNote}
-                  onChange={(e) => setCustomNote(e.target.value)}
-                  className="w-full p-4 rounded-2xl border border-black/10 bg-stone-50/20 text-xs h-24 resize-none focus:border-primary outline-none font-medium"
-                />
-              </div>
+              {/* STEP 1: Occasion & Basic Schedule */}
+              {customizerStep === 1 && (
+                <div className="space-y-4 pt-2">
+                  {/* Select Your Occasion */}
+                  <div className="space-y-1.5">
+                    <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Select Your Occasion *</label>
+                    <select
+                      value={eventType}
+                      onChange={(e) => setEventType(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                    >
+                      {EVENT_TYPES.map(type => (
+                        <option key={type.id} value={type.id}>{type.label}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              {/* Price Calculation & Reserve CTA */}
-              <div className="pt-6 border-t border-black/5 space-y-4">
-                <div className="flex justify-between items-center bg-[#FAF6F0] p-4.5 rounded-2xl border border-[#C4A87C]/15 relative overflow-hidden">
-                  {/* Floral Mandala Watermark */}
-                  <div className="absolute right-0 top-0 bottom-0 w-24 overflow-hidden pointer-events-none flex items-center justify-end z-0">
-                    <MandalaElement
-                      variant={3}
-                      size={120}
-                      opacity={0.05}
-                      rotate={true}
-                      duration={50}
-                      skipFade={true}
-                      className="translate-x-4 mix-blend-darken"
+                  {eventType === "other" && (
+                    <div className="space-y-1.5 bg-primary/5 p-4 rounded-2xl border border-primary/20">
+                      <label className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">Specify Custom Occasion *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Housewarming, Baby Shower"
+                        value={customOccasion}
+                        onChange={(e) => setCustomOccasion(e.target.value)}
+                        className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                      />
+                    </div>
+                  )}
+
+                  {/* Date & Duration Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Ceremony Date *</label>
+                      <input
+                        type="date"
+                        value={bookingDate}
+                        onChange={(e) => setBookingDate(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Rental Days</label>
+                      <select
+                        value={rentalDurationDays}
+                        onChange={(e) => setRentalDurationDays(Number(e.target.value))}
+                        className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                      >
+                        <option value={1}>1 Day Setup (Standard)</option>
+                        <option value={2}>2 Days Setup (Ceremony + Return)</option>
+                        <option value={3}>3 Days Setup (Extensive)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Setup Environment Toggle */}
+                  <div className="space-y-2">
+                    <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">Setup Environment</label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsOutdoor(false)}
+                        className={`flex-1 py-2 px-3 rounded-full font-semibold text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${!isOutdoor ? 'bg-black text-white border-none shadow-sm' : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border border-black/10'}`}
+                      >
+                        <span className="material-symbols-outlined text-[14px]">home</span>
+                        <span>Indoor</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsOutdoor(true)}
+                        className={`flex-1 py-2 px-3 rounded-full font-semibold text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${isOutdoor ? 'bg-black text-white border-none shadow-sm' : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border border-black/10'}`}
+                      >
+                        <span className="material-symbols-outlined text-[14px]">park</span>
+                        <span>Outdoor</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: Timings & Placement */}
+              {customizerStep === 2 && (
+                <div className="space-y-4 pt-2">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Setup Start Time</label>
+                      <select
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                      >
+                        <option value="06:00 AM">06:00 AM (Early Dawn)</option>
+                        <option value="09:00 AM">09:00 AM (Standard Morning)</option>
+                        <option value="12:00 PM">12:00 PM (Midday)</option>
+                        <option value="03:00 PM">03:00 PM (Afternoon)</option>
+                        <option value="06:00 PM">06:00 PM (Evening Glow)</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Ceremony End Time</label>
+                      <select
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                      >
+                        <option value="01:00 PM">01:00 PM (Afternoon)</option>
+                        <option value="05:00 PM">05:00 PM (Sundown)</option>
+                        <option value="09:00 PM">09:00 PM (Standard Night)</option>
+                        <option value="11:00 PM">11:00 PM (Late Night Gala)</option>
+                        <option value="02:00 AM">02:00 AM (Midnight Auspicious)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Placement Preference */}
+                  <div className="space-y-2">
+                    <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">Placement Destination</label>
+                    <select
+                      value={placementPreference}
+                      onChange={(e) => setPlacementPreference(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                    >
+                      <option value="Side-Stage Showcase Corner">Side-Stage Showcase Corner</option>
+                      <option value="Entrance Presentation Desk">Entrance Presentation Desk</option>
+                      <option value="Traditional Mandap Flanks">Traditional Mandap Flanks</option>
+                      <option value="Groom/Bride Seating Podiums">Groom/Bride Seating Podiums</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: Venue Location & Notes */}
+              {customizerStep === 3 && (
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="font-label text-[9px] uppercase tracking-widest text-[#735c00] font-bold block">Select Event Venue *</label>
+                      {venueDetails && (
+                        <span className="text-[10px] text-green-600 font-bold flex items-center gap-0.5 animate-pulse">
+                          <span className="material-symbols-outlined text-[12px]">check_circle</span> Verified
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsLocationModalOpen(true);
+                          setIsManualLocationInput(false);
+                        }}
+                        className="flex-1 bg-white hover:bg-stone-50 text-black border border-black/10 py-2.5 px-3 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px] text-primary">map</span>
+                        <span>Choose on Map</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsManualLocationInput(!isManualLocationInput)}
+                        className={`flex-1 py-2.5 px-3 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${isManualLocationInput ? 'bg-primary text-black border-none shadow-sm' : 'bg-primary/10 text-primary border border-primary/20'}`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                        <span>Add Manually</span>
+                      </button>
+                    </div>
+
+                    {/* Manual Location Form */}
+                    {isManualLocationInput && (
+                      <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/20 space-y-3">
+                        <div className="space-y-1">
+                          <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Venue Name *</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Grand Palace Hall, Temple Flanks"
+                            value={manualVenueName}
+                            onChange={(e) => {
+                              setManualVenueName(e.target.value);
+                              handleManualFieldChange("name", e.target.value);
+                            }}
+                            className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Full Address *</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 123 Heritage Lane, Near Old Circle"
+                            value={manualAddress}
+                            onChange={(e) => {
+                              setManualAddress(e.target.value);
+                              handleManualFieldChange("address", e.target.value);
+                            }}
+                            className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="space-y-1">
+                            <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">City *</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Bengaluru"
+                              value={manualCity}
+                              onChange={(e) => {
+                                setManualCity(e.target.value);
+                                handleManualFieldChange("city", e.target.value);
+                              }}
+                              className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">State *</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Karnataka"
+                              value={manualState}
+                              onChange={(e) => {
+                                setManualState(e.target.value);
+                                handleManualFieldChange("state", e.target.value);
+                              }}
+                              className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Pincode *</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. 560001"
+                              value={manualPincode}
+                              onChange={(e) => {
+                                setManualPincode(e.target.value);
+                                handleManualFieldChange("pincode", e.target.value);
+                              }}
+                              className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Venue Detail Card Preview */}
+                    {(venueDetails && !isManualLocationInput) ? (
+                      <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/25 space-y-2 relative overflow-hidden">
+                        <div className="flex items-start justify-between gap-2 z-10 relative">
+                          <div className="space-y-0.5">
+                            <h4 className="text-xs font-bold text-black flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-primary text-[16px]">storefront</span>
+                              {venueDetails.name}
+                            </h4>
+                            <p className="text-[11px] text-stone-600 leading-normal font-light">{venueDetails.address}</p>
+                            <div className="flex gap-x-2 text-[9px] text-stone-500 font-semibold font-mono pt-1">
+                              {venueDetails.city && <span>City: {venueDetails.city}</span>}
+                              {venueDetails.pincode && <span>Pincode: {venueDetails.pincode}</span>}
+                            </div>
+                          </div>
+                          <a
+                            href={venueDetails.googleMapsLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-7 h-7 rounded-full bg-white border border-black/5 flex items-center justify-center text-primary hover:bg-stone-50 shrink-0 transition-colors shadow-sm"
+                            title="Open in Google Maps"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">directions</span>
+                          </a>
+                        </div>
+                      </div>
+                    ) : (!isManualLocationInput && (
+                      <div className="bg-stone-50 border border-dashed border-black/10 p-4 rounded-2xl text-center text-stone-400 font-light text-xs">
+                        No venue location specified yet. Tap "Choose on Map" to configure.
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Custom notes */}
+                  <div className="space-y-2">
+                    <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">Arrangement Notes</label>
+                    <textarea
+                      placeholder="Traditional naming, gift tray customize, placement dimensions..."
+                      value={customNote}
+                      onChange={(e) => setCustomNote(e.target.value)}
+                      className="w-full p-4 rounded-2xl border border-black/10 bg-stone-50/20 text-xs h-20 resize-none focus:border-primary outline-none font-medium"
                     />
                   </div>
-                  <div className="relative z-10">
-                    <span className="font-label text-[8px] uppercase tracking-widest text-black/45 font-bold block mb-1">Estimated Rental Price</span>
-                    <span className="text-[10px] text-stone-500 font-light block leading-none">(Includes custom inclusions)</span>
-                  </div>
-                  <span className="font-display text-3xl font-bold text-black font-sans relative z-10">
-                    ₹{calculateLivePrice().toLocaleString("en-IN")}
-                  </span>
                 </div>
+              )}
 
-                <button
-                  ref={reserveButtonRef}
-                  type="button"
-                  onClick={handleBookRental}
-                  className="w-full bg-black text-white py-4 rounded-full font-label-sm text-[10px] uppercase tracking-[0.25em] font-bold shadow-xl hover:bg-primary hover:text-black transition-all flex items-center justify-center gap-2 group active:scale-98 cursor-pointer"
-                >
-                  <span>Reserve Setup Inquiry</span>
-                  <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">trending_flat</span>
-                </button>
-                <p className="text-center font-body text-[10px] text-black/35 italic">
-                  Subject to boutique workshop schedule availability.
-                </p>
+              {/* STEP 4: Review & Payment */}
+              {customizerStep === 4 && (
+                <div className="space-y-4 pt-2">
+                  <div className="bg-stone-50 p-4 rounded-2xl border border-black/5 space-y-3">
+                    <span className="font-label text-[9px] uppercase tracking-widest text-black/40 font-bold block">Booking Summary</span>
+                    
+                    <div className="grid grid-cols-2 gap-y-2.5 gap-x-2 text-[11px] font-semibold text-stone-700">
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Occasion</span>
+                        <span className="text-black capitalize truncate block">{eventType === "other" ? customOccasion : eventType}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Ceremony Date</span>
+                        <span className="text-black">{bookingDate}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Rental Duration</span>
+                        <span className="text-black">{rentalDurationDays} Day{rentalDurationDays > 1 ? 's' : ''}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Environment</span>
+                        <span className="text-black">{isOutdoor ? 'Outdoor' : 'Indoor'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Setup Start</span>
+                        <span className="text-black">{startTime}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Ceremony End</span>
+                        <span className="text-black">{endTime}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Venue Location</span>
+                        <span className="text-black line-clamp-1">{isManualLocationInput ? `${manualVenueName}, ${manualAddress}` : (venueDetails?.name || "TBD")}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Price Calculation breakdown */}
+                  <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/20 relative overflow-hidden space-y-3">
+                    {/* Floral Mandala Watermark */}
+                    <div className="absolute right-0 top-0 bottom-0 w-24 overflow-hidden pointer-events-none flex items-center justify-end z-0">
+                      <MandalaElement
+                        variant={3}
+                        size={120}
+                        opacity={0.05}
+                        rotate={true}
+                        duration={50}
+                        skipFade={true}
+                        className="translate-x-4 mix-blend-darken"
+                      />
+                    </div>
+                    
+                    <div className="relative z-10 space-y-2 text-xs">
+                      <div className="flex justify-between items-center text-stone-600">
+                        <span>Base Package Rental</span>
+                        <span>₹{(event.basePrice || 35000).toLocaleString("en-IN")}</span>
+                      </div>
+                      {rentalDurationDays > 1 && (
+                        <div className="flex justify-between items-center text-stone-600 text-[11px]">
+                          <span>Duration Multiplier ({rentalDurationDays} Days)</span>
+                          <span>x{rentalDurationDays === 2 ? '1.5' : (1.5 + (rentalDurationDays - 2) * 0.4).toFixed(1)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center font-bold text-black border-t border-black/5 pt-2 text-[14px]">
+                        <span>Grand Total Price</span>
+                        <span>₹{calculateLivePrice().toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="flex justify-between items-center font-bold text-primary border-t border-dashed border-primary/20 pt-2 text-[14px] bg-primary/5 -mx-4 px-4 py-1.5 rounded-lg">
+                        <div className="flex flex-col">
+                          <span>50% Secure Deposit</span>
+                          <span className="text-[8px] font-normal text-stone-500 leading-none">Paid now to confirm booking</span>
+                        </div>
+                        <span>₹{Math.round(calculateLivePrice() * 0.50).toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-stone-500 text-[10px]">
+                        <span>Remaining Balance</span>
+                        <span>₹{(calculateLivePrice() - Math.round(calculateLivePrice() * 0.50)).toLocaleString("en-IN")}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Stepper Navigation Footer */}
+              <div className="pt-4 border-t border-black/5 space-y-3">
+                <div className="flex gap-2">
+                  {customizerStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setCustomizerStep(prev => prev - 1)}
+                      className="w-1/3 bg-stone-100 hover:bg-stone-200 text-stone-700 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-1 active:scale-95 cursor-pointer border border-stone-250"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">chevron_left</span>
+                      <span>Back</span>
+                    </button>
+                  )}
+                  {customizerStep < 4 ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customizerStep === 1 && validateStep1()) {
+                          setCustomizerStep(2);
+                        } else if (customizerStep === 2) {
+                          setCustomizerStep(3);
+                        } else if (customizerStep === 3 && validateStep3()) {
+                          setCustomizerStep(4);
+                        }
+                      }}
+                      className={`${customizerStep === 1 ? 'w-full' : 'w-2/3'} bg-black hover:bg-primary hover:text-black text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-1 active:scale-95 cursor-pointer`}
+                    >
+                      <span>Continue</span>
+                      <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+                    </button>
+                  ) : (
+                    <button
+                      ref={reserveButtonRef}
+                      type="button"
+                      onClick={handleBookRental}
+                      className="w-2/3 bg-black text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary hover:text-black transition-all flex items-center justify-center gap-1.5 group active:scale-95 cursor-pointer"
+                    >
+                      <span>Pay Deposit & Reserve</span>
+                      <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">trending_flat</span>
+                    </button>
+                  )}
+                </div>
+                {customizerStep === 4 && (
+                  <p className="text-center font-body text-[9px] text-black/35 italic">
+                    Secure payment powered by Razorpay.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -862,11 +1204,13 @@ export function EventDetail() {
             </div>
 
             <button
-              onClick={handleBookRental}
+              onClick={() => {
+                customizerCardRef.current?.scrollIntoView({ behavior: "smooth" });
+              }}
               className="bg-black text-white h-10 px-5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer relative z-10 shrink-0"
             >
-              <span>Reserve</span>
-              <span className="material-symbols-outlined text-[14px]">trending_flat</span>
+              <span>Customize</span>
+              <span className="material-symbols-outlined text-[14px]">tune</span>
             </button>
           </motion.div>
 

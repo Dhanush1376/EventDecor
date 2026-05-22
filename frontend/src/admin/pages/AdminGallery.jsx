@@ -659,7 +659,7 @@ export function AdminGallery() {
                     <span>{item.views || 0}</span>
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px] text-rose-400">favorite</span>
+                    <span className="material-symbols-outlined text-[12px] text-rose-400" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
                     <span>{item.likes || 0}</span>
                   </span>
                 </div>

@@ -311,26 +311,6 @@ export function Gallery() {
           </AnimatePresence>
         </div>
 
-        <AnimatePresence>
-          {slideshowIndex !== -1 && (
-            <GallerySlideshow
-              items={filteredItems}
-              currentIndex={slideshowIndex}
-              onClose={() => setSlideshowIndex(-1)}
-              onPrev={() =>
-                setSlideshowIndex((prev) =>
-                  prev > 0 ? prev - 1 : filteredItems.length - 1,
-                )
-              }
-              onNext={() =>
-                setSlideshowIndex((prev) =>
-                  prev < filteredItems.length - 1 ? prev + 1 : 0,
-                )
-              }
-            />
-          )}
-        </AnimatePresence>
-
         {filteredItems.length === 0 && (
           <div className="py-32 text-center">
             <h3 className="font-headline-sm text-black/40">
@@ -362,6 +342,26 @@ export function Gallery() {
             <span className="material-symbols-outlined text-[18px]">close</span>
             Exit Gallery Mode
           </motion.button>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {slideshowIndex !== -1 && (
+          <GallerySlideshow
+            items={filteredItems}
+            currentIndex={slideshowIndex}
+            onClose={() => setSlideshowIndex(-1)}
+            onPrev={() =>
+              setSlideshowIndex((prev) =>
+                prev > 0 ? prev - 1 : filteredItems.length - 1,
+              )
+            }
+            onNext={() =>
+              setSlideshowIndex((prev) =>
+                prev < filteredItems.length - 1 ? prev + 1 : 0,
+              )
+            }
+          />
         )}
       </AnimatePresence>
 

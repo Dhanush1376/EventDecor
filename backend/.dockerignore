@@ -4,6 +4,8 @@ dist
 logs
 .env
 .env.local
+.env.*
+!.env.example
 .git
 .github
 README.md
@@ -13,3 +15,10 @@ docker-compose.yml
 npx
 tmp
 scratch
+*.md
+jest.config.*
+tsconfig.jest.json
+src/**/__tests__
+eslint.config.*
+.cursor
+.cursor/

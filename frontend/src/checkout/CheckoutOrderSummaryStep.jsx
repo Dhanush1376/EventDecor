@@ -8,7 +8,7 @@ import { useCheckout } from "./CheckoutProvider";
 
 
 export default function CheckoutOrderSummaryStep() {
-  const { activeStep, setActiveStep, activeSelectedAddress, activeItems, needByDate, setNeedByDate, isAddingNewAddress, settings } = useCheckout();
+  const { activeStep, setActiveStep, activeSelectedAddress, activeItems, needByDate, setNeedByDate, isAddingNewAddress, settings, sendUpdatesToWhatsApp, setSendUpdatesToWhatsApp } = useCheckout();
   return (
     <>
       {/* Accordion Block 3: ORDER SUMMARY */}

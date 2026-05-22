@@ -8,7 +8,9 @@ import ApiError from '../utils/ApiError';
 import Order from '../models/Order';
 
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
-  const result = await OrderService.createOrder(req.user!.id, req.body);
+  const idempotencyKey = req.headers['idempotency-key'] as string;
+  const orderData = { ...req.body, idempotencyKey };
+  const result = await OrderService.createOrder(req.user!.id, orderData);
   res.status(201).json(new ApiResponse(true, 'Order created and payment initiated', result));
 });
 
@@ -249,6 +251,14 @@ export const verifyCodOtp = asyncHandler(async (req: Request, res: Response) => 
 
 export const updateOrderNotes = asyncHandler(async (req: Request, res: Response) => {
   const { notes } = req.body;
+
+  // Authorization: only the order owner or admin staff may update notes
+  const existingOrder = await Order.findById(req.params.id);
+  if (!existingOrder) throw new ApiError(404, 'Order not found');
+  if (existingOrder.user.toString() !== req.user!.id && !['admin', 'super_admin', 'main_admin', 'moderator', 'order_manager'].includes(req.user!.role)) {
+    throw new ApiError(403, 'You are not authorized to update notes for this order');
+  }
+
   const order = await Order.findByIdAndUpdate(
     req.params.id,
     { $set: { notes: notes || '' } },

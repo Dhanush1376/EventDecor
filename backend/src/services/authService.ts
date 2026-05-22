@@ -16,6 +16,17 @@ import FailedLoginAttempt from '../models/FailedLoginAttempt';
 // Cache to handle concurrent/duplicate OTP verification requests (grace period of 10 seconds)
 const recentlyVerifiedOtps = new Map<string, { email: string; verifiedAt: number; session: any }>();
 
+// Periodic cleanup to prevent memory leak from accumulated OTP cache entries
+const OTP_CACHE_CLEANUP_INTERVAL_MS = 60_000; // 1 minute
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of recentlyVerifiedOtps.entries()) {
+    if (now - val.verifiedAt > 30_000) {
+      recentlyVerifiedOtps.delete(key);
+    }
+  }
+}, OTP_CACHE_CLEANUP_INTERVAL_MS).unref(); // .unref() so it doesn't block graceful shutdown
+
 class AuthService {
   static generateAccessToken(user: IUser) {
     return jwt.sign(
@@ -383,11 +394,11 @@ class AuthService {
       action: 'request'
     });
 
-    // 8. Send beautifully designed OTP email synchronously and wait for verification response
-    const { sendDirectEmailProcessor } = require('./notificationService');
+    // 8. Send beautifully designed OTP email asynchronously
+    const { sendDirectEmail } = require('./notificationService');
     const { getOtpEmailTemplate } = require('../utils/emailTemplates');
     try {
-      await sendDirectEmailProcessor({
+      sendDirectEmail({
         email: cleanEmail,
         subject: 'Your Siri Arts Security Code',
         customHtml: getOtpEmailTemplate(otp, expiryMinutes),
@@ -399,8 +410,8 @@ class AuthService {
       await OtpVerification.deleteOne({ _id: otpRecord._id });
       // Delete the request log as well so they can try again immediately
       await OtpRequestLog.deleteOne({ email: cleanEmail, action: 'request', createdAt: { $gte: new Date(Date.now() - 10000) } });
-      logger.error(`[OTP EMAIL ERROR] Synchronous OTP email delivery failed for ${cleanEmail}:`, err);
-      throw new ApiError(500, `Email delivery failed: ${err.message || 'SMTP connection timeout'}. Please verify your email or try again.`);
+      logger.error(`[OTP QUEUE ERROR] Failed to enqueue OTP email for ${cleanEmail}:`, err);
+      throw new ApiError(500, `Failed to queue email delivery. Please try again.`);
     }
 
     // Always log in development for easier testing and recovery
@@ -722,11 +733,11 @@ class AuthService {
       expiresAt
     });
 
-    // 5. Send custom COD email synchronously and wait for verification response
-    const { sendDirectEmailProcessor } = require('./notificationService');
+    // 5. Send custom COD email asynchronously
+    const { sendDirectEmail } = require('./notificationService');
     const { getCodOtpEmailTemplate } = require('../utils/emailTemplates');
     try {
-      await sendDirectEmailProcessor({
+      sendDirectEmail({
         email: cleanEmail,
         subject: '✦ Cash on Delivery Verification Code ✦ Siri Arts & Crafts',
         customHtml: getCodOtpEmailTemplate(otp, 5),
@@ -735,8 +746,8 @@ class AuthService {
       });
     } catch (err: any) {
       await OtpVerification.deleteOne({ email: cleanEmail, type: 'cod' });
-      logger.error(`[COD OTP EMAIL ERROR] Synchronous COD OTP email delivery failed for ${cleanEmail}:`, err);
-      throw new ApiError(500, `COD verification email delivery failed: ${err.message || 'SMTP connection timeout'}. Please try again.`);
+      logger.error(`[COD OTP QUEUE ERROR] Failed to enqueue COD OTP email for ${cleanEmail}:`, err);
+      throw new ApiError(500, `COD verification email queueing failed. Please try again.`);
     }
 
     return otp;
@@ -759,7 +770,8 @@ class AuthService {
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
-    const isBypassConfigured = process.env.BYPASS_OTP_CODE && otp === process.env.BYPASS_OTP_CODE;
+    // SECURITY: BYPASS_OTP_CODE is only allowed in development mode
+    const isBypassConfigured = process.env.NODE_ENV === 'development' && process.env.BYPASS_OTP_CODE && otp === process.env.BYPASS_OTP_CODE;
     const isMatch = isBypassConfigured || await bcrypt.compare(otp, otpRecord.otpHash);
     if (!isMatch) {
       otpRecord.attempts += 1;

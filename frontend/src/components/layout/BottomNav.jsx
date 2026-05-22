@@ -13,9 +13,9 @@ export function BottomNav() {
     { label: "Home", icon: "home", path: "/" },
     { label: "Shop", icon: "storefront", path: "/collections" },
     { label: "Wishlist", icon: "favorite", path: "/wishlist" },
-    { label: "Cart", icon: "shopping_bag", isCart: true },
+    { label: "Events", icon: "celebration", path: "/events" },
     isAuthenticated
-      ? { label: "Account", icon: "person", path: "/dashboard" }
+      ? { label: "Profile", icon: "person", path: "/dashboard" }
       : { label: "Sign In", icon: "login", isAuth: true },
   ];
 

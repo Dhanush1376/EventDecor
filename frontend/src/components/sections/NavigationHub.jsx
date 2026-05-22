@@ -130,8 +130,8 @@ export function NavigationHub() {
 
         {/* Spacious Layout: Shuffling Card Stack on Mobile, Elegant Grid on Desktop */}
         {isMobile ? (
-          <div className="relative w-full flex flex-col items-center justify-center min-h-[440px] z-20 mt-2">
-            <div className="relative w-[310px] h-[390px] flex items-center justify-center">
+          <div className="relative w-full flex flex-col items-center justify-center min-h-[490px] z-20 mt-2">
+            <div className="relative w-[88vw] max-w-[340px] h-[440px] flex items-center justify-center">
               {deck.length > 0 && deck.map((id, index) => {
                 const card = displayCards[id];
                 if (!card) return null;
@@ -143,7 +143,7 @@ export function NavigationHub() {
                 return (
                   <motion.div
                     key={card.id}
-                    className="absolute w-[300px] h-[380px] rounded-[32px] overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.12)] border border-black/5 bg-white origin-bottom cursor-pointer"
+                    className="absolute w-[85vw] max-w-[330px] h-[430px] rounded-[32px] overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.12)] border border-black/5 bg-white origin-bottom cursor-pointer"
                     style={{
                       cursor: position === 0 ? "grab" : "default",
                       touchAction: "none"
@@ -185,7 +185,7 @@ export function NavigationHub() {
                       <div className="absolute inset-0 p-6 flex flex-col justify-between z-10 pointer-events-none">
                         {/* Top: Card ID & line divider */}
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-white/80 text-[11px] font-medium tracking-widest">
+                          <span className="font-mono text-white/80 text-[12px] font-medium tracking-widest">
                             {card.id}
                           </span>
                           <div className="w-10 h-[1px] bg-[#D4AF37]/50" />
@@ -193,20 +193,20 @@ export function NavigationHub() {
 
                         {/* Bottom: Title & CTA */}
                         <div className="flex flex-col text-left">
-                          <h3 className="font-headline text-white text-[20px] leading-tight mb-2 drop-shadow-md">
+                          <h3 className="font-headline text-white text-[23px] sm:text-[25px] leading-tight mb-2.5 drop-shadow-md">
                             {card.title}
                           </h3>
-                          <p className="font-body text-white/70 text-[11px] leading-snug font-light mb-3">
+                          <p className="font-body text-white/70 text-[12.5px] leading-snug font-light mb-3.5">
                             {card.description}
                           </p>
 
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center shadow-md">
-                              <span className="material-symbols-outlined text-white text-[14px]">
+                            <div className="w-9 h-9 rounded-full bg-[#D4AF37] flex items-center justify-center shadow-md">
+                              <span className="material-symbols-outlined text-white text-[15px]">
                                 arrow_forward
                               </span>
                             </div>
-                            <span className="font-label text-white/90 text-[8px] uppercase tracking-[0.2em] font-bold">
+                            <span className="font-label text-white/90 text-[9px] uppercase tracking-[0.2em] font-bold">
                               Explore
                             </span>
                           </div>

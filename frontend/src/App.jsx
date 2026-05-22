@@ -40,6 +40,7 @@ const OrderTrackingPublic = lazy(() => import("./pages/OrderTrackingPublic").the
 const EventCollections = lazy(() => import("./pages/EventCollections").then((m) => ({ default: m.EventCollections })));
 const EventDetail = lazy(() => import("./pages/EventDetail").then((m) => ({ default: m.EventDetail })));
 const EventBookingWizard = lazy(() => import("./pages/EventBookingWizard").then((m) => ({ default: m.EventBookingWizard })));
+const EventBookingSuccess = lazy(() => import("./pages/EventBookingSuccess").then((m) => ({ default: m.EventBookingSuccess })));
 const EventCustomerDashboard = lazy(() => import("./pages/EventCustomerDashboard").then((m) => ({ default: m.EventCustomerDashboard })));
 const EventShowcases = lazy(() => import("./pages/EventShowcases").then((m) => ({ default: m.EventShowcases })));
 const Shipping = lazy(() => import("./pages/Shipping").then((m) => ({ default: m.Shipping })));
@@ -139,6 +140,7 @@ function App() {
                           <Route path="/events/collections" element={<EventCollections />} />
                           <Route path="/events/:id" element={<EventDetail />} />
                           <Route path="/events/book" element={<EventBookingWizard />} />
+                          <Route path="/booking-success/:id" element={<EventBookingSuccess />} />
                           <Route path="/events/dashboard" element={<ProtectedRoute><EventCustomerDashboard /></ProtectedRoute>} />
                           <Route path="/showcases" element={<EventShowcases />} />
                            <Route path="/shipping" element={<Shipping />} />

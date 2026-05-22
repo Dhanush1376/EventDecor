@@ -4,7 +4,9 @@ import connectDB from './src/config/db';
 import { ensureIndexes } from './src/config/ensureIndexes';
 import logger from './src/config/logger';
 import { generateSitemap } from './src/utils/sitemapGenerator';
-import { initSocket } from './src/socket';
+import { initSocket, getIO } from './src/socket';
+import { initJobs } from './src/jobs/cronJobs';
+import { initRedis, closeRedisConnections } from './src/utils/redis';
 
 import mongoose from 'mongoose';
 
@@ -55,8 +57,7 @@ process.on('unhandledRejection', (reason: any) => {
   const error = reason instanceof Error ? reason : new Error(String(reason));
   handleFatalError(error, 'unhandledRejection');
 });
-import { initJobs } from './src/jobs/cronJobs';
-import { initRedis, closeRedisConnections } from './src/utils/redis';
+
 
 const PORT = process.env.PORT || 5000;
 
@@ -93,37 +94,56 @@ const startServer = async () => {
           🏠 URL: http://localhost:${PORT}
           🏥 Health Check: http://localhost:${PORT}/api/health
         `);
-
-        // Initialize Socket.io
-        initSocket(server);
-
-        // Auto-generate sitemap on boot in the background
-        generateSitemap().catch((err: any) => logger.error(`[BOOT SITEMAP] Initial generation failed: ${err.message}`));
       });
 
-    // 4. Graceful Shutdown Handling
+    // Initialize Socket.io after server is listening
+    initSocket(server);
+
+    // Auto-generate sitemap on boot in the background
+    generateSitemap().catch((err: any) => logger.error(`[BOOT SITEMAP] Initial generation failed: ${err.message}`));
+
+    // 5. Graceful Shutdown Handling
     const shutdown = async (signal: string) => {
       logger.info(`Received ${signal}. Starting graceful shutdown...`);
-      
-      server.close(async () => {
-        logger.info('HTTP server closed.');
-        
-        try {
-          await closeRedisConnections();
-          await mongoose.connection.close();
-          logger.info('MongoDB connection closed.');
-          process.exit(0);
-        } catch (err) {
-          logger.error('Error during shutdown:', err);
-          process.exit(1);
-        }
-      });
 
       // Force shutdown if it takes too long
-      setTimeout(() => {
+      const forceTimeout = setTimeout(() => {
         logger.error('Could not close connections in time, forcefully shutting down');
         process.exit(1);
       }, 10000);
+      forceTimeout.unref();
+
+      try {
+        // 1. Close Socket.io connections first
+        try {
+          const io = getIO();
+          io.close();
+          logger.info('Socket.io connections closed.');
+        } catch {
+          // Socket.io may not be initialized
+        }
+
+        // 2. Stop accepting new HTTP connections
+        await new Promise<void>((resolve) => {
+          server.close(() => {
+            logger.info('HTTP server closed.');
+            resolve();
+          });
+        });
+
+        // 3. Close Redis connections
+        await closeRedisConnections();
+
+        // 4. Close MongoDB connection
+        await mongoose.connection.close();
+        logger.info('MongoDB connection closed.');
+
+        clearTimeout(forceTimeout);
+        process.exit(0);
+      } catch (err) {
+        logger.error('Error during shutdown:', err);
+        process.exit(1);
+      }
     };
 
     process.on('SIGTERM', () => shutdown('SIGTERM'));

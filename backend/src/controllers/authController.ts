@@ -43,7 +43,7 @@ const clearRefreshCookie = (res: Response) => {
 // Deprecated register and login removed
 
 export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email } = req.body;
   if (!email) {
     throw new ApiError(400, 'Email address is required');
   }
@@ -57,15 +57,6 @@ export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
   }
 
   logger.info(`[AUTH] Initiating passwordless OTP verification for user: ${cleanEmail}`);
-  try {
-    await AuthService.checkAdminPassword(cleanEmail, password);
-  } catch (err: any) {
-    if (err.message === 'SILENT_ADMIN_ABORT') {
-      logger.info(`[AUTH] Silent abort for admin check: ${cleanEmail}`);
-      return res.status(200).json(new ApiResponse(true, 'Verification code sent to your email successfully'));
-    }
-    throw err;
-  }
 
   const otp = await AuthService.generateOTP(email, clientIp);
 

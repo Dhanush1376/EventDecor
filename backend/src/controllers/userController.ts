@@ -261,7 +261,10 @@ const computeAndValidateCart = async (user: any) => {
       quantity: item.quantity,
       variant: item.variant
     }));
-    await user.save();
+    await User.findOneAndUpdate(
+      { _id: user._id },
+      { $set: { cart: user.cart } }
+    );
   }
 
   const shippingFee = subtotal > 2000 || subtotal === 0 ? 0 : 100;
@@ -328,7 +331,7 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
   const user = await User.findById(req.user.id);
   if (!user) throw new ApiError(404, 'User not found');
 
-  user.cart = (cartItems || [])
+  const updatedCart = (cartItems || [])
     .filter((item: any) => (item.product || item._id || item.id))
     .map((item: any) => ({
       product: item.product || item._id || item.id,
@@ -336,7 +339,14 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
       variant: item.variant || 'Default'
     }));
 
-  await user.save();
+  user.cart = updatedCart;
+  
+  // To avoid VersionError on concurrent syncs, use findOneAndUpdate just for the cart
+  await User.findOneAndUpdate(
+    { _id: req.user.id },
+    { $set: { cart: updatedCart } }
+  );
+
   await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await computeAndValidateCart(user);
   res.status(200).json(new ApiResponse(true, 'Cart synced successfully', cartDetails));

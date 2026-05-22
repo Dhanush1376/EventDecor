@@ -85,12 +85,14 @@ export const codOtpEmailValidator = [
 export const codOtpVerifyValidator = [
   ...codOtpEmailValidator,
   body('otp')
+    .customSanitizer(val => String(val))
     .trim()
     .notEmpty()
     .withMessage('OTP is required')
-    .isLength({ min: 6, max: 6 })
+    .isLength({ min: 4, max: 4 })
+    .withMessage('OTP must be exactly 4 digits. Check if your input was cut short.')
     .isNumeric()
-    .withMessage('OTP must be 6 digits'),
+    .withMessage('OTP must contain only numbers'),
 ];
 
 export const orderNotesValidator = [

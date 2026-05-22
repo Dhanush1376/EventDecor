@@ -27,11 +27,13 @@ declare global {
   }
 }
 
-// Validate JWT_SECRET exists at module load time
+// Validate JWT_SECRET exists at module load time — fail fast in ALL environments
 const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+if (!JWT_SECRET) {
   logger.error('FATAL: JWT_SECRET environment variable is not set. Authentication will fail.');
-  process.exit(1);
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
 }
 
 /**
@@ -91,7 +93,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     throw new ApiError(401, 'Not authorized to access this route');
   }
 
-  const secret = process.env.JWT_SECRET;
+  const secret = JWT_SECRET;
   if (!secret) {
     throw new ApiError(500, 'Server authentication configuration error');
   }
