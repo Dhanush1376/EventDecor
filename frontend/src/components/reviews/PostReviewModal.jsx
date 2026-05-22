@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import { REVIEW_SAMPLE_IMAGES } from "../../constants/placeholderImages";
 
 const EXPERIENCE_TYPES = [
   { id: "product", title: "Product Masterpiece", desc: "Handcrafted decor, brass diyas, artisanal trays & divine idola", icon: "diamond" },
@@ -426,12 +427,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     ✨ Click pre-curated gorgeous event memories to test upload instantly:
                   </span>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      { url: "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop", label: "Wedding Archway" },
-                      { url: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=800&auto=format&fit=crop", label: "Floral Stage Setup" },
-                      { url: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=800&auto=format&fit=crop", label: "Banquet Banquet Props" },
-                      { url: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=800&auto=format&fit=crop", label: "Traditional Trays" },
-                    ].map((sample, idx) => (
+                    {REVIEW_SAMPLE_IMAGES.map((sample, idx) => (
                       <div
                         key={idx}
                         onClick={() => addSampleMedia(sample.url, "image")}

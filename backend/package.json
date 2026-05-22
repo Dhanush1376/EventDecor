@@ -9,7 +9,7 @@
     "build": "tsc",
     "create-indexes": "ts-node src/scripts/createIndexes.ts",
     "check-env": "ts-node --transpile-only src/scripts/checkEnv.ci.ts",
-    "lint": "eslint src",
+    "lint": "eslint src && node ../scripts/check-no-console.mjs",
     "test": "npm run build && ts-node --transpile-only src/scripts/smokeTest.ts && jest --runInBand --forceExit",
     "test:integration": "jest --runInBand --forceExit"
   },

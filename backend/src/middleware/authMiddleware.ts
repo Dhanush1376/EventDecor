@@ -8,6 +8,7 @@ import logger from '../config/logger';
 import { updateRequestContext } from './requestTracker';
 import { getAdminEmails, ADMIN_ROLES } from '../config/adminConfig';
 import { isSameEmail } from '../utils/emailHelper';
+import { getSafetyLockDocument } from '../utils/safetyLockCache';
 
 interface JwtPayload {
   id: string;
@@ -69,13 +70,7 @@ const checkSafetyLock = async (req: Request) => {
     return;
   }
 
-  const ContentSection = require('../models/ContentSection').default;
-  const { safetyLockCache } = require('../utils/MemoryCache');
-  const safetyLockDoc = await safetyLockCache.getOrSet(
-    'admin_safety_lock',
-    async () => ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean(),
-    30000
-  );
+  const safetyLockDoc = await getSafetyLockDocument();
 
   req._safetyLockChecked = true;
 

@@ -82,10 +82,20 @@ export function AuthModal() {
     setIsLoading(true);
     try {
       const response = await authService.verifyOTP(email, otpString);
+      if (response.success && response.data?.requires2FA) {
+        toast("Enter your authenticator code on the login page.", { icon: "🔐" });
+        closeAuthModal();
+        window.location.href = "/auth";
+        return;
+      }
       if (response.success) {
         setStep("success");
         setTimeout(async () => {
-          await loginSuccess(response.data.user, response.data.token, response.data.refreshToken);
+          await loginSuccess(
+            response.data.user,
+            response.data.accessToken || response.data.token,
+            response.data.refreshToken
+          );
         }, 1800);
       }
     } catch (err) {

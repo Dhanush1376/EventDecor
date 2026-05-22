@@ -19,17 +19,10 @@ const validateEnv = () => {
       logger.warn('[ENV WARNING] SENTRY_DSN is not configured. Production error monitoring will be disabled.');
     }
 
-    const hasBrevo = !!process.env.BREVO_API_KEY;
-    const hasSmtp = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
-    if (!hasBrevo && !hasSmtp) {
-      logger.error(
-        '[EMAIL CONFIG WARNING] Neither BREVO_API_KEY nor SMTP_USER/SMTP_PASS is configured! ' +
-          'OTP and transactional emails will FAIL in production.'
-      );
-    } else if (!hasBrevo && hasSmtp) {
-      logger.warn('[EMAIL CONFIG] Only SMTP configured — Render free tier may block SMTP ports. Prefer BREVO_API_KEY.');
-    } else if (hasBrevo) {
+    if (!!process.env.BREVO_API_KEY) {
       logger.info('[EMAIL CONFIG] Brevo HTTP API configured ✓');
+    } else if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      logger.warn('[EMAIL CONFIG] Only SMTP configured — Render free tier may block SMTP ports. Prefer BREVO_API_KEY.');
     }
   }
 

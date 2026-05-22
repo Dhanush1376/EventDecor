@@ -1,80 +1,58 @@
 import cron from 'node-cron';
 import logger from '../config/logger';
 import ContentSection from '../models/ContentSection';
-import Order from '../models/Order';
-import Product from '../models/Product';
 import { FailedEmailRetryService } from '../services/failedEmailRetryService';
 import { AdminRoleReconciliationService } from '../services/adminRoleReconciliationService';
+import { withCronLock } from '../utils/cronLock';
+import { releaseStalePendingOrders } from './staleOrderCleanup';
+import { PaymentReconciliationService } from '../services/paymentReconciliationService';
+import { checkCloudinaryCdn } from '../utils/cdnHealth';
 
 export const initJobs = () => {
   // 1. Cleanup Draft Revisions every Sunday at midnight
   cron.schedule('0 0 * * 0', async () => {
-    logger.info('Running weekly CMS revision cleanup...');
-    try {
-      // Example logic: Remove revisions older than 30 days
+    await withCronLock('cms-revision-cleanup', 3600, async () => {
+      logger.info('Running weekly CMS revision cleanup...');
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       await ContentSection.updateMany(
         {},
         { $pull: { revisionHistory: { modifiedAt: { $lt: thirtyDaysAgo } } } }
       );
       logger.info('CMS revision cleanup completed.');
-    } catch (err) {
-      logger.error('CMS revision cleanup failed:', err);
-    }
+    });
   });
 
-  // 2. Release Stock for stale pending orders (every 15 minutes)
+  // 2. Release stock for stale pending orders (every 15 minutes)
   cron.schedule('*/15 * * * *', async () => {
-    logger.info('Running stale pending orders stock release...');
-    try {
-      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-      const staleOrders = await Order.find({
-        paymentStatus: 'pending',
-        orderStatus: 'Pending',
-        createdAt: { $lt: thirtyMinutesAgo }
-      });
-
-      for (const order of staleOrders) {
-        // Return stock
-        for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } });
-        }
-        
-        order.paymentStatus = 'failed';
-        order.orderStatus = 'Cancelled';
-        order.statusHistory.push({ status: 'Cancelled', note: 'Order cancelled due to payment timeout - Stock Released' });
-        await order.save();
-        logger.info(`Stock released for stale order: ${order._id}`);
+    await withCronLock('stale-order-stock-release', 14 * 60, async () => {
+      logger.info('Running stale pending orders stock release...');
+      const count = await releaseStalePendingOrders();
+      if (count > 0) {
+        logger.info(`[CRON] Released stock for ${count} stale pending order(s)`);
       }
-    } catch (err) {
-      logger.error('Stale orders cleanup failed:', err);
-    }
+    });
   });
 
   // 3. Retry failed transactional emails (dead-letter queue)
   cron.schedule('*/2 * * * *', async () => {
-    try {
+    await withCronLock('email-dlq-retry', 110, async () => {
       const result = await FailedEmailRetryService.processDueRetries();
       if (result.processed > 0) {
         logger.info(
           `[EMAIL DLQ] Processed ${result.processed} jobs — ${result.succeeded} succeeded, ${result.failed} failed/exhausted`
         );
       }
-    } catch (err) {
-      logger.error('[EMAIL DLQ] Retry cron failed:', err);
-    }
+    });
   });
 
   // 4. Reconcile admin roles with ADMIN_EMAIL config (daily at 03:00)
   cron.schedule('0 3 * * *', async () => {
-    try {
+    await withCronLock('admin-role-reconcile', 3600, async () => {
       const result = await AdminRoleReconciliationService.reconcile();
       if (result.upgraded > 0 || result.downgraded > 0) {
         logger.info(`[ADMIN RECONCILE] Upgraded: ${result.upgraded}, Downgraded: ${result.downgraded}`);
       }
-    } catch (err) {
-      logger.error('[ADMIN RECONCILE] Job failed:', err);
-    }
+    });
   });
 
   // 5. Daily Health Heartbeat
@@ -82,5 +60,44 @@ export const initJobs = () => {
     logger.info('☀️ Daily server heartbeat: System is healthy.');
   });
 
-  logger.info('⏰ Background jobs initialized');
+  // 6. Payment reconciliation (daily 04:00 UTC)
+  cron.schedule('0 4 * * *', async () => {
+    await withCronLock('payment-reconciliation', 3600, async () => {
+      const report = await PaymentReconciliationService.runReport();
+      if (report.discrepancyCount > 0) {
+        logger.warn(
+          `[PAYMENT RECONCILE] ${report.discrepancyCount} discrepancy(ies) — see /api/analytics/payments/reconciliation`
+        );
+      } else {
+        logger.info('[PAYMENT RECONCILE] No discrepancies detected.');
+      }
+    });
+  });
+
+  // 7. CDN health probe (every 30 minutes)
+  cron.schedule('*/30 * * * *', async () => {
+    await withCronLock('cdn-health-check', 25 * 60, async () => {
+      const status = await checkCloudinaryCdn();
+      if (status === 'down') {
+        logger.error('[CDN] Cloudinary CDN probe failed — check CLOUDINARY_* env and network egress.');
+      }
+    });
+  });
+
+  // 8. Weekly backup health reminder
+  cron.schedule('0 6 * * 1', () => {
+    const atlasUri = process.env.MONGO_URI || '';
+    const usesAtlas = atlasUri.includes('mongodb.net') || atlasUri.includes('mongodb+srv');
+    if (usesAtlas) {
+      logger.info(
+        '[BACKUP] Weekly reminder: verify MongoDB Atlas continuous backup / PITR is enabled in the Atlas project dashboard.'
+      );
+    } else {
+      logger.warn(
+        '[BACKUP] MONGO_URI does not appear to be Atlas-hosted — document and test your backup RTO/RPO manually.'
+      );
+    }
+  });
+
+  logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');
 };

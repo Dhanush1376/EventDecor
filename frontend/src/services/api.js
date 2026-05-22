@@ -1,19 +1,6 @@
 import axios from 'axios';
 import logger from '../utils/logger';
-
-const getApiUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    // If running in production (e.g. Vercel), fallback to the live Render backend URL
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return 'https://siri-arts-n-crafts.onrender.com/api';
-    }
-  }
-  return 'http://localhost:5000/api';
-};
+import { getApiUrl } from '../utils/apiUrl';
 
 const API_URL = getApiUrl();
 
@@ -28,6 +15,27 @@ const api = axios.create({
 
 let accessToken = null;
 let refreshPromise = null;
+let csrfToken = null;
+let csrfInitPromise = null;
+
+const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
+
+export const ensureCsrfToken = async () => {
+  if (csrfToken) return csrfToken;
+  if (!csrfInitPromise) {
+    csrfInitPromise = api
+      .get('/csrf-token', { _bypassOfflineQueue: true })
+      .then((res) => {
+        csrfToken = res.data?.csrfToken || csrfToken;
+        return csrfToken;
+      })
+      .catch((err) => {
+        csrfInitPromise = null;
+        throw err;
+      });
+  }
+  return csrfInitPromise;
+};
 
 export const setAccessToken = (token) => {
   accessToken = token || null;
@@ -71,10 +79,18 @@ const getRequestDescription = (config) => {
 
 // Add a request interceptor to include auth token and manage offline states
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     // ─── AUTH TOKEN INTEGRATION ───
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    const method = (config.method || 'get').toLowerCase();
+    if (MUTATING_METHODS.has(method) && !config.url?.includes('/orders/webhook')) {
+      const token = await ensureCsrfToken();
+      if (token) {
+        config.headers['X-CSRF-Token'] = token;
+      }
     }
 
     // ─── OFFLINE INTEGRATION ───

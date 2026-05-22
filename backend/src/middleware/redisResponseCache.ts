@@ -14,7 +14,14 @@ export const redisResponseCache = (ttlSeconds: number) => {
     const isAuthRequest = req.headers.authorization || req.cookies?.siri_refresh_token;
     if (isAuthRequest) return next();
 
-    if (!redisClient) return next();
+    if (!redisClient) {
+      if (process.env.NODE_ENV === 'production' && process.env.REQUIRE_REDIS === 'true') {
+        logger.error(
+          '[REDIS CACHE] REDIS_URL missing in production — public GET responses are not cached'
+        );
+      }
+      return next();
+    }
 
     try {
       const version = await getPublicCacheVersion();

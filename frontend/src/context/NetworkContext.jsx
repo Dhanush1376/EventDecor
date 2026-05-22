@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { safeLocalStorage } from "../utils/storage";
 
 import logger from '../utils/logger';
+import { getApiUrl } from '../utils/apiUrl';
 const NetworkContext = createContext(null);
 
 export const useNetwork = () => {
@@ -68,15 +69,6 @@ export function NetworkProvider({ children }) {
   const checkConnection = useCallback(async () => {
     const startTime = performance.now();
     try {
-      const getApiUrl = () => {
-        if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-        const hostname = window.location.hostname;
-        if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-          return 'https://siri-arts-n-crafts.onrender.com/api';
-        }
-        return 'http://localhost:5000/api';
-      };
-
       const apiUrl = getApiUrl();
       const response = await fetch(`${apiUrl}/health?t=${Date.now()}`, {
         method: "GET",

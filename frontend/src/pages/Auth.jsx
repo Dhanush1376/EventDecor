@@ -31,7 +31,9 @@ export function Auth() {
   const whatsappNumber = contact?.whatsapp || "9866006648";
   const cleanWhatsapp = whatsappNumber.replace(/^\+?91/, "").trim();
 
-  const [step, setStep] = useState("identifier"); // identifier, otp, success
+  const [step, setStep] = useState("identifier"); // identifier, otp, 2fa, success
+  const [pending2faUserId, setPending2faUserId] = useState(null);
+  const [totpCode, setTotpCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [requiresPassword, setRequiresPassword] = useState(false);
@@ -150,6 +152,14 @@ export function Auth() {
     setIsLoading(true);
     try {
       const response = await authService.verifyOTP(email, otpString);
+      if (response.success && response.data?.requires2FA) {
+        setPending2faUserId(response.data.userId);
+        setTotpCode("");
+        setStep("2fa");
+        isSubmittingRef.current = false;
+        setIsLoading(false);
+        return;
+      }
       if (response.success) {
         setUserRole(response.data.user.role);
         setStep("success");
@@ -183,6 +193,32 @@ export function Auth() {
       }, 200);
     }
   };
+
+  async function submit2FA(code) {
+    if (!pending2faUserId || isSubmittingRef.current || isLoading) return;
+    isSubmittingRef.current = true;
+    setIsLoading(true);
+    try {
+      const response = await authService.verify2FALogin(pending2faUserId, code);
+      if (response.success) {
+        setUserRole(response.data.user.role);
+        setStep("success");
+        setTimeout(async () => {
+          await loginSuccess(
+            response.data.user,
+            response.data.accessToken || response.data.token,
+            response.data.refreshToken
+          );
+        }, 1800);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Invalid authenticator code");
+      setTotpCode("");
+    } finally {
+      isSubmittingRef.current = false;
+      setIsLoading(false);
+    }
+  }
 
   const handleVerifyOTP = async (e) => {
     e?.preventDefault();
@@ -366,13 +402,18 @@ export function Auth() {
                       Login Gateway
                     </span>
                     <h1 className="font-headline text-[36px] md:text-[42px] leading-tight text-on-surface-variant font-light">
-                      {step === "otp" ? "Enter Security Key" : "Enter Email"}
+                      {step === "2fa"
+                        ? "Authenticator Code"
+                        : step === "otp"
+                        ? "Enter Security Key"
+                        : "Enter Email"}
                     </h1>
                     <p className="text-on-surface-variant/60 text-[14px] font-light leading-relaxed">
-                      {step === "otp" 
+                      {step === "2fa"
+                        ? "Enter the 6-digit code from your authenticator app."
+                        : step === "otp"
                         ? `A secure verification key has been dispatched to your email.`
-                        : "Authenticate securely to step into the digital studio of Siri Arts, manage your customized orders, and explore your private design collections."
-                      }
+                        : "Authenticate securely to step into the digital studio of Siri Arts, manage your customized orders, and explore your private design collections."}
                     </p>
                   </motion.div>
                 </div>
@@ -486,6 +527,48 @@ export function Auth() {
                               </span>
                             </>
                           )}
+                        </button>
+                      </motion.form>
+                    ) : step === "2fa" ? (
+                      <motion.form
+                        key="2fa-form"
+                        variants={itemVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (totpCode.length >= 6) submit2FA(totpCode);
+                        }}
+                        className="space-y-8"
+                      >
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                          autoComplete="one-time-code"
+                          value={totpCode}
+                          onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          className="w-full text-center font-display text-[24px] tracking-[0.4em] bg-surface-container-low/50 border border-outline-variant/40 rounded-2xl py-4 outline-none focus:border-primary"
+                          placeholder="000000"
+                        />
+                        <button
+                          type="submit"
+                          disabled={totpCode.length < 6 || isLoading}
+                          className="w-full h-14 bg-primary text-surface rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold disabled:opacity-30"
+                        >
+                          {isLoading ? "Verifying…" : "Verify Authenticator"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStep("identifier");
+                            setPending2faUserId(null);
+                          }}
+                          className="font-label-sm text-[9px] text-primary uppercase tracking-[0.2em] font-bold hover:underline"
+                        >
+                          Start over
                         </button>
                       </motion.form>
                     ) : (

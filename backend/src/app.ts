@@ -13,32 +13,17 @@ import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
-import redisClient from './utils/redis';
+import redisClient, { pingRedis } from './utils/redis';
 import errorMiddleware from './middleware/errorMiddleware';
-import productRoutes from './routes/productRoutes';
-import uploadRoutes from './routes/uploadRoutes';
-import authRoutes from './routes/authRoutes';
-import eventRoutes from './routes/eventRoutes';
-import orderRoutes from './routes/orderRoutes';
-import cmsRoutes from './routes/cmsRoutes';
-import analyticsRoutes from './routes/analyticsRoutes';
-import galleryRoutes from './routes/galleryRoutes';
-import reviewRoutes from './routes/reviewRoutes';
-import couponRoutes from './routes/couponRoutes';
-import userRoutes from './routes/userRoutes';
-import inquiryRoutes from './routes/inquiryRoutes';
-import notificationRoutes from './routes/notificationRoutes';
-import customOrderRoutes from './routes/customOrderRoutes';
-import loyaltyRoutes from './routes/loyaltyRoutes';
-import eventBookingRoutes from './routes/eventBookingRoutes';
-import showcaseRoutes from './routes/showcaseRoutes';
-import adminSystemRoutes from './routes/adminSystemRoutes';
+import { registerApiRoutes } from './routes/registerApiRoutes';
+import { checkCloudinaryCdn } from './utils/cdnHealth';
 import logger from './config/logger';
 import { getSocketAdapterMode } from './config/socketState';
 import { generateSitemap } from './utils/sitemapGenerator';
 import * as Sentry from "@sentry/node";
 import { requestTrackerMiddleware } from './middleware/requestTracker';
 import { requestLogger } from './middleware/requestLogger';
+import { issueCsrfToken, validateCsrf } from './middleware/csrfMiddleware';
 
 // Use require for the inner xss-clean function
 const { clean: xssClean } = require('xss-clean/lib/xss');
@@ -99,6 +84,8 @@ app.use(helmet({
     },
   },
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  // Razorpay checkout iframe + Cloudinary assets break under require-corp
+  crossOriginEmbedderPolicy: false,
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
 
@@ -137,6 +124,11 @@ app.use(
 );
 
 app.use((req, res, next) => {
+  // Payment provider webhooks have no browser Origin header
+  if (req.path === '/api/orders/webhook') {
+    return next();
+  }
+
   const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
   if (!mutatingMethod || process.env.NODE_ENV === 'development') {
     return next();
@@ -157,17 +149,43 @@ app.use((req, res, next) => {
 // ─── Razorpay Webhook (MUST be registered BEFORE body parsing middleware) ───
 // Razorpay HMAC signature verification requires the raw, unparsed request body.
 // Parsing with express.json() + XSS sanitization corrupts the payload and breaks signature checks.
-app.post('/api/orders/webhook', express.raw({ type: 'application/json' }), (req: Request, res: Response, next) => {
-  // Convert raw Buffer to parsed JSON for the controller, preserving the original raw body for HMAC
-  (req as any).rawBody = req.body;
-  req.body = JSON.parse(req.body.toString());
-  next();
-}, handleRazorpayWebhook);
+app.post(
+  '/api/orders/webhook',
+  (req: Request, res: Response, next) => {
+    const contentType = String(req.headers['content-type'] || '').toLowerCase();
+    if (!contentType.includes('application/json')) {
+      return res.status(415).json({
+        success: false,
+        message: 'Content-Type must be application/json',
+      });
+    }
+    next();
+  },
+  express.raw({ type: 'application/json' }),
+  (req: Request, res: Response, next) => {
+    const raw = req.body as Buffer;
+    if (!raw?.length) {
+      return res.status(400).json({ success: false, message: 'Webhook body is empty' });
+    }
+    (req as any).rawBody = raw;
+    try {
+      req.body = JSON.parse(raw.toString('utf8'));
+    } catch {
+      return res.status(400).json({ success: false, message: 'Webhook body is not valid JSON' });
+    }
+    next();
+  },
+  handleRazorpayWebhook
+);
 
 // 3. Request Parsing (MUST be before sanitization)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// CSRF double-submit cookie (required for cookie-credentialed mutating requests)
+app.get('/api/csrf-token', issueCsrfToken);
+app.use('/api', validateCsrf);
 
 // Enable production-safe structured request logging and execution telemetry
 app.use(requestLogger);
@@ -269,13 +287,30 @@ const otpSendLimiter = rateLimitConfig({
   legacyHeaders: false,
 });
 
-if (process.env.NODE_ENV === 'production') {
-  app.use('/api/', globalLimiter);
-  app.use('/api/auth/send-otp', otpSendLimiter);
-  app.use('/api/auth', authLimiter);
+const testRateLimitEnabled = process.env.TEST_RATE_LIMIT === 'true';
+
+if (process.env.NODE_ENV === 'production' || testRateLimitEnabled) {
+  if (testRateLimitEnabled) {
+    const testLimiter = rateLimitConfig({
+      windowMs: 60 * 1000,
+      max: 3,
+      message: 'Too many requests (TEST_RATE_LIMIT)',
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    app.use('/api/', testLimiter);
+  } else {
+    app.use('/api/', globalLimiter);
+    app.use('/api/auth/send-otp', otpSendLimiter);
+    app.use('/api/auth', authLimiter);
+  }
 } else {
-  // Relaxed rate limiter for non-production to catch integration bugs early
-  const devLimiter = rateLimitConfig({ windowMs: 15 * 60 * 1000, max: 1000, standardHeaders: true, legacyHeaders: false });
+  const devLimiter = rateLimitConfig({
+    windowMs: 15 * 60 * 1000,
+    max: 1000,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
   app.use('/api/', devLimiter);
 }
 
@@ -284,30 +319,43 @@ if (process.env.NODE_ENV === 'production') {
 
 
 // 6. Health Check (Centralized observibility for system and DB health status)
-app.get('/api/health', (req: Request, res: Response) => {
+app.get('/api/health', async (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
-  
+
   const dbState = mongoose.connection.readyState;
-  // State description: 0: disconnected, 1: connected, 2: connecting, 3: disconnecting
   const dbStatus = dbState === 1 ? 'UP' : 'DOWN';
-  
+  const redisStatus = await pingRedis();
+  const cdnStatus = await checkCloudinaryCdn();
+  const requireRedis = process.env.REQUIRE_REDIS === 'true';
+  const redisRequiredDown =
+    requireRedis && (redisStatus === 'down' || redisStatus === 'not_configured');
+  const cdnDown = cdnStatus === 'down';
+
   const healthData = {
-    success: dbState === 1,
-    status: dbState === 1 ? 'healthy' : 'degraded',
+    success: dbState === 1 && !redisRequiredDown && !cdnDown,
+    status: dbState === 1 && !redisRequiredDown && !cdnDown ? 'healthy' : 'degraded',
     message: 'Siri Arts API Status',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     database: {
       status: dbStatus,
-      state: dbState
+      state: dbState,
+    },
+    redis: {
+      status: redisStatus,
+      required: requireRedis,
+    },
+    cdn: {
+      provider: 'cloudinary',
+      status: cdnStatus,
     },
     system: {
       memory: {
         free: os.freemem(),
         total: os.totalmem(),
-        usage: `${Math.round((1 - os.freemem() / os.totalmem()) * 100)}%`
+        usage: `${Math.round((1 - os.freemem() / os.totalmem()) * 100)}%`,
       },
-      cpuLoad: os.loadavg()
+      cpuLoad: os.loadavg(),
     },
     realtime: {
       adapter: getSocketAdapterMode(),
@@ -316,8 +364,8 @@ app.get('/api/health', (req: Request, res: Response) => {
     },
   };
 
-  if (dbState !== 1) {
-    logger.error('🏥 HEALTHCHECK FAILED: MongoDB is unreachable or degraded', healthData);
+  if (dbState !== 1 || redisRequiredDown || cdnDown) {
+    logger.error('🏥 HEALTHCHECK FAILED: dependency degraded', healthData);
     return res.status(503).json(healthData);
   }
 
@@ -337,25 +385,9 @@ app.get('/api/version', (req: Request, res: Response) => {
   res.json({ version: process.env.npm_package_version || '1.0.0' });
 });
 
-// 7. API Routes
-app.use('/api/products', productRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/cms', cmsRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/gallery', galleryRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/coupons', couponRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/inquiries', inquiryRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/custom-orders', customOrderRoutes);
-app.use('/api/loyalty', loyaltyRoutes);
-app.use('/api/event-bookings', eventBookingRoutes);
-app.use('/api/showcases', showcaseRoutes);
-app.use('/api/admin', adminSystemRoutes);
+// 7. API Routes (stable + versioned alias)
+registerApiRoutes(app, '/api');
+registerApiRoutes(app, '/api/v1');
 
 // 8. Sentry Error Handler (must be before any other error middleware)
 if (process.env.SENTRY_DSN) {

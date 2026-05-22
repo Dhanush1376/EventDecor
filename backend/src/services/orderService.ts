@@ -7,7 +7,7 @@ import User from '../models/User';
 import Coupon from '../models/Coupon';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
-import { formatPaginationResponse } from '../utils/pagination';
+import { formatPaginationResponse, getPaginationOptions } from '../utils/pagination';
 import { sendDirectEmail } from './notificationService';
 import AnalyticsService from './analyticsService';
 import { cmsCache } from '../utils/MemoryCache';
@@ -872,24 +872,28 @@ class OrderService {
   }
 
   static async getMyOrders(userId: string) {
-    return await Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
+    const { limit, skip } = getPaginationOptions({ limit: 100, page: 1 });
+    return Order.find({ user: userId }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
   }
 
   static async getAllOrders(query: any) {
-    const { page = 1, limit = 10, paymentStatus, orderStatus } = query;
+    const { page, limit, skip } = getPaginationOptions(query);
+    const { paymentStatus, orderStatus } = query;
     const filter: any = {};
     if (paymentStatus) filter.paymentStatus = paymentStatus;
     if (orderStatus) filter.orderStatus = orderStatus;
 
-    const totalCount = await Order.countDocuments(filter);
-    const orders = await Order.find(filter)
-      .populate('user', 'name email phone')
-      .sort({ createdAt: -1 })
-      .skip((Number(page) - 1) * Number(limit))
-      .limit(Number(limit))
-      .lean();
+    const [totalCount, orders] = await Promise.all([
+      Order.countDocuments(filter),
+      Order.find(filter)
+        .populate('user', 'name email phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
 
-    return formatPaginationResponse(orders, totalCount, Number(page), Number(limit));
+    return formatPaginationResponse(orders, totalCount, page, limit);
   }
 
   static async updateOrderStatus(id: string, status: string, note?: string, courierCharges?: number) {

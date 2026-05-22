@@ -23,6 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import { refreshWebsiteContent } from "../../hooks/useWebsiteContent";
 import { io as socketIO } from "socket.io-client";
 import { getAccessToken } from "../../services/api";
+import { getApiUrl } from "../../utils/apiUrl";
 import logger from "../../utils/logger";
 
 const mapDbNotificationToFrontend = (n) => ({
@@ -776,7 +777,7 @@ export function AdminProvider({ children }) {
     if (!token) return;
 
     // Construct backend WS URL from API URL
-    const rawApiUrl = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? 'https://siri-arts-n-crafts.onrender.com/api' : 'http://localhost:5000/api');
+    const rawApiUrl = getApiUrl();
     const socketServerUrl = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
     logger.dev('[WEBSOCKET] Initiating admin alert subscription at:', socketServerUrl);

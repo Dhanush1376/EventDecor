@@ -27,6 +27,7 @@ import {
   getInviteDetailsByToken,
   respondToInvite,
 } from '../controllers/userController';
+import { exportMyData, eraseMyAccount } from '../controllers/privacyController';
 import { requireAuth, requireAdmin, requireSuperAdmin } from '../middleware/authMiddleware';
 import { uploadAvatar } from '../middleware/upload';
 
@@ -58,6 +59,9 @@ router.post('/recently-viewed', requireAuth, trackRecentlyViewed);
 
 router.patch('/preferences', requireAuth, updatePreferences);
 router.post('/avatar', requireAuth, ...uploadAvatar.single('avatar'), uploadAvatarController);
+
+router.get('/me/export', requireAuth, exportMyData);
+router.delete('/me', requireAuth, eraseMyAccount);
 
 // Admin Routes & Team Management
 router.get('/', requireAuth, requireAdmin, getUsers);

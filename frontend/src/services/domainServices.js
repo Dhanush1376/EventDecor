@@ -30,6 +30,10 @@ export const authService = {
     const response = await api.post('/auth/verify-otp', { email, otp });
     return response.data;
   },
+  verify2FALogin: async (userId, token) => {
+    const response = await api.post('/auth/2fa/verify-login', { userId, token });
+    return response.data;
+  },
   refresh: async (refreshToken) => {
     const response = await api.post('/auth/refresh', { refreshToken });
     return response.data;

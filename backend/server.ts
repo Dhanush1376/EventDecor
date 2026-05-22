@@ -62,7 +62,14 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
-    await ensureIndexes();
+
+    if (process.env.SKIP_INDEX_BUILD !== 'true') {
+      ensureIndexes()
+        .then(() => logger.info('[DATABASE] Background index verification finished'))
+        .catch((err) => logger.error('[DATABASE] Background index verification failed:', err));
+    } else {
+      logger.warn('[DATABASE] SKIP_INDEX_BUILD=true — skipping background index build');
+    }
 
     // Prevent BYPASS_OTP_CODE in production
     if (process.env.NODE_ENV === 'production' && process.env.BYPASS_OTP_CODE) {

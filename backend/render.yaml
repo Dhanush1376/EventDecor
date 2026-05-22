@@ -3,6 +3,7 @@ services:
   - type: web
     name: siri-arts-backend
     runtime: docker
+    # Production: upgrade to "standard" or higher — starter can OOM under Redis + Mongo pools
     plan: starter
     autoDeploy: true
     healthCheckPath: /api/health
@@ -15,6 +16,7 @@ services:
         fromConfig: true
       - key: JWT_SECRET
         fromConfig: true
+      # Intentionally short — forces refresh-token rotation; do not use 7d in production
       - key: JWT_EXPIRES_IN
         value: 15m
       - key: REFRESH_TOKEN_EXPIRES_DAYS
@@ -51,6 +53,8 @@ services:
         fromConfig: true
       - key: REDIS_URL
         fromConfig: true
+      - key: REQUIRE_REDIS
+        value: "true"
       - key: SMTP_FROM_EMAIL
         fromConfig: true
       - key: SMTP_FROM_NAME

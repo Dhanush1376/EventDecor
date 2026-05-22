@@ -22,10 +22,18 @@ env:
   VITE_RAZORPAY_KEY_ID: rzptest_ci_placeholder
   VITE_SITE_NAME: Siri Arts & Crafts
   VITE_CONTACT_PHONE: "+91-9866006648"
+  VITE_MARBLE_TEXTURE_URL: https://res.cloudinary.com/drxgnnzeb/image/upload/q_auto,f_webp,w_1920/v1/event_decor_ecommerce/assets/event_decor_marble-texture
+  REDIS_URL: redis://127.0.0.1:6379
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
 
     steps:
       - uses: actions/checkout@v4
@@ -47,9 +55,18 @@ jobs:
         working-directory: backend
         run: npm run check-env
 
+      - name: Check no stray console.* in src
+        run: node scripts/check-no-console.mjs
+
       - name: Build Backend
         working-directory: backend
         run: npm run build
+
+      - name: Verify index script (dry run against CI Mongo)
+        working-directory: backend
+        run: npm run create-indexes
+        env:
+          SKIP_INDEX_BUILD: "false"
 
       - name: Test Backend
         working-directory: backend

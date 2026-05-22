@@ -14,6 +14,18 @@ let io: Server;
 
 type SocketUser = { _id: { toString(): string }; role: string; email: string };
 
+const socketLogContext = (
+  socket: Socket,
+  namespace: '/admin' | '/user',
+  user: SocketUser
+) => ({
+  correlationId: socket.id,
+  socketId: socket.id,
+  namespace,
+  userId: user._id.toString(),
+  email: user.email,
+});
+
 const resolveMultiInstance = (): boolean => {
   const explicit = process.env.RENDER_INSTANCE_COUNT || process.env.WEB_CONCURRENCY;
   if (explicit) {
@@ -75,6 +87,27 @@ const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void)
   }
 };
 
+/** Single active /admin socket per user — disconnects older sessions (works with Redis adapter). */
+const enforceSingleAdminSession = async (
+  namespace: Namespace,
+  userId: string,
+  currentSocketId: string
+): Promise<void> => {
+  const sockets = await namespace.fetchSockets();
+  for (const remote of sockets) {
+    if (remote.id === currentSocketId) continue;
+    const remoteUser = (remote as unknown as { user?: SocketUser }).user;
+    if (remoteUser?._id?.toString() === userId) {
+      logger.info('[Socket /admin] Replacing prior session', {
+        correlationId: currentSocketId,
+        priorSocketId: remote.id,
+        userId,
+      });
+      remote.disconnect(true);
+    }
+  }
+};
+
 const registerNamespace = (namespace: Namespace, options: { adminOnly?: boolean }) => {
   namespace.use(socketAuthMiddleware);
 
@@ -88,20 +121,28 @@ const registerNamespace = (namespace: Namespace, options: { adminOnly?: boolean 
     });
   }
 
-  namespace.on('connection', (socket: Socket) => {
+  namespace.on('connection', async (socket: Socket) => {
     const user = (socket as Socket & { user: SocketUser }).user;
 
+    const ns = options.adminOnly ? '/admin' : '/user';
+
     if (options.adminOnly) {
-      logger.info(`[Socket /admin] Connected: ${user.email} (${socket.id})`);
+      await enforceSingleAdminSession(namespace, user._id.toString(), socket.id);
+      logger.info('[Socket /admin] Connected', socketLogContext(socket, ns, user));
       socket.join('admin-alerts');
+      logger.info('[Socket /admin] Room join', { ...socketLogContext(socket, ns, user), room: 'admin-alerts' });
     } else {
-      logger.info(`[Socket /user] Connected: ${user.email} (${socket.id})`);
-      socket.join(`user-${user._id}`);
+      logger.info('[Socket /user] Connected', socketLogContext(socket, ns, user));
+      const room = `user-${user._id}`;
+      socket.join(room);
+      logger.info('[Socket /user] Room join', { ...socketLogContext(socket, ns, user), room });
     }
 
-    socket.on('disconnect', () => {
-      const ns = options.adminOnly ? '/admin' : '/user';
-      logger.debug(`[Socket ${ns}] Disconnected: ${user.email} (${socket.id})`);
+    socket.on('disconnect', (reason) => {
+      logger.info(`[Socket ${ns}] Disconnected`, {
+        ...socketLogContext(socket, ns, user),
+        reason,
+      });
     });
   });
 };
@@ -135,7 +176,10 @@ export const initSocket = (server: HttpServer) => {
   io.use(async (socket, next) => {
     const { allowed, ip } = await checkSocketConnectionRateLimit(socket);
     if (!allowed) {
-      logger.warn(`[SOCKET] Connection rate limit exceeded for IP: ${ip}`);
+      logger.warn('[SOCKET] Connection rate limit exceeded', {
+        correlationId: socket.id,
+        ip,
+      });
       return next(new Error('Too many connection attempts'));
     }
     next();

@@ -64,8 +64,19 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   const userAgent = req.headers['user-agent'] || '';
   const result = await AuthService.verifyOTP(email, otp, req.ip, userAgent);
   
+  if ((result as { requires2FA?: boolean }).requires2FA) {
+    logger.info(`[AUTH] OTP verified — awaiting 2FA for user: ${result.user._id}`);
+    return res.status(200).json(
+      new ApiResponse(true, 'Two-factor authentication required', {
+        requires2FA: true,
+        userId: result.user._id,
+        user: result.user,
+      })
+    );
+  }
+
   logger.info(`[AUTH] Authentication successful. User session created. ID: ${result.user._id}`);
-  
+
   // A-02: One-time admin role alignment on first successful OTP (not on every getProfile fetch)
   const adminEmails = getAdminEmails();
   const staffRoles = ['admin', 'super_admin', 'main_admin', 'manager', 'coordinator'];

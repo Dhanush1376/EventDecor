@@ -94,18 +94,68 @@ Transactional HTML lives in the repository (not generated at runtime):
 Copy `backend/.env.example` to `backend/.env` and set **`BREVO_API_KEY`** (recommended) or SMTP credentials.
 
 ### 8. Performance
-- Public GET APIs (`/products`, `/events`, `/gallery`) use **Redis response cache** (120–300s TTL) when `REDIS_URL` is set, plus HTTP `Cache-Control` / ETag versioning.
+- Public GET APIs (`/products`, `/events`, `/gallery`) use **Redis response cache** (120–300s TTL) when `REDIS_URL` is set, plus HTTP `Cache-Control` / ETag versioning. See [docs/CACHE.md](docs/CACHE.md) for TTLs and invalidation triggers.
+- `ensureIndexes()` runs in the **background** after boot so HTTP binds immediately; run `npm run create-indexes` in CI/CD before first production deploy.
+- Stale pending-order cleanup uses a **MongoDB cursor + bulkWrite** (batched, memory-safe).
+- Cron jobs use **Redis SETNX locks** when `REDIS_URL` is set so horizontal scaling does not double-run stock release, email DLQ, or CMS cleanup.
 - Marble texture is loaded from **Cloudinary CDN** (`VITE_MARBLE_TEXTURE_URL`), not the 520KB bundled PNG.
 - Run `cd frontend && npm run build:report` to audit JS chunk sizes after changes.
 
 ### 9. Security
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for `TRUST_PROXY_HOPS`, refresh cookie path, and Socket.io namespaces.
 
+#### JWT access token lifetime (dev vs production)
+| Environment | `JWT_EXPIRES_IN` | Notes |
+|-------------|------------------|-------|
+| Local `.env` | `15m` (default in `.env.example`) | Matches production refresh behaviour |
+| Render (`render.yaml`) | `15m` | Short-lived access tokens; clients must use `/api/auth/refresh` |
+
+Do **not** use `7d` access tokens in production — refresh-token rotation and session revocation only surface when access tokens expire quickly.
+
+#### HTTP rate limiting
+- **Production:** 200 req / 15 min per IP on `/api/`, stricter limits on `/api/auth/*`.
+- **Development:** relaxed limiter (1000 / 15 min) unless `TEST_RATE_LIMIT=true`.
+- **CI / integration tests:** set `TEST_RATE_LIMIT=true` to apply 3 req/min and assert `429` responses (`backend/src/__tests__/rateLimit.integration.test.ts`).
+
+#### Socket.io connection limits
+- **All environments:** `checkSocketConnectionRateLimit` runs on every connection (max **10 connections/min per IP**), not gated on `NODE_ENV`.
+- **`/admin` namespace:** one active socket per admin user; older sessions are disconnected when a new connection succeeds (works across instances via Redis adapter + `fetchSockets`).
+
+#### Crawlers & admin routes
+`frontend/public/robots.txt` disallows `/admin` and `/api`. Admin UI routes are also code-split via `React.lazy()` in `frontend/src/App.jsx` — run `npm run build:report` to confirm admin chunks are not in the initial storefront bundle.
+
+#### Ephemeral MongoDB collections (TTL)
+`RefreshToken`, `OtpVerification`, `UsedRefreshToken`, and `FailedLoginAttempt` define TTL indexes on `expiresAt` (`expireAfterSeconds: 0`). Run `npm run create-indexes` after deploy so indexes exist when `autoIndex` is off.
+
+#### Database backups (RTO / RPO)
+| Target | Recommendation |
+|--------|----------------|
+| **RPO** (max data loss) | ≤ 24 h with Atlas continuous backup; ≤ 1 h with Point-in-Time Recovery (PITR) |
+| **RTO** (max downtime) | Document cluster restore steps in Atlas; test restore quarterly |
+
+Enable **continuous backup** or **PITR** in the MongoDB Atlas project (not in `render.yaml`). A weekly cron job logs a backup reminder; `backend/scripts/prod-maintenance.sh` prints an Atlas backup check during maintenance runs.
+
 ### 10. CI/CD
 GitHub Actions (`.github/workflows/ci.yml`) runs on every PR to `main`:
+- `node scripts/check-no-console.mjs` — fails if `console.*` appears outside `logger.js` / seed scripts
 - `npm run check-env` — validates required backend and `VITE_*` variables before build
 - `npm test` — Vitest (frontend) and backend smoke tests
 - `npm run build` — TypeScript + Vite production builds
+
+### 11. Pre-launch checklist (low-severity)
+| Item | Status |
+|------|--------|
+| **PWA updates** | `registerType: 'prompt'` + in-app reload toast (deferred on `/checkout` and `/cart`) |
+| **Chunk audit** | `cd frontend && npm run build:report` — flags chunks >300KB raw / ~120KB gzip |
+| **OpenGraph** | `frontend/public/og-image.jpg` and `og-image.png` served at `/og-image.jpg` |
+| **2FA secrets** | `twoFactorSecret` encrypted at rest (`FIELD_ENCRYPTION_KEY` or `JWT_SECRET`) |
+| **Socket logs** | `correlationId` = Socket.io `socket.id` on connect/disconnect/room join |
+| **Render plan** | Upgrade from `starter` to **Standard** (2GB+) for production traffic |
+| **Safety lock** | Cached in Redis (5s TTL) when `REDIS_URL` is set |
+| **Cron jobs** | Redis `SETNX` distributed locks per job when scaled |
+| **MongoDB pool** | `MONGO_POOL_SIZE` (default 20) — see `backend/.env.example` |
+| **Helmet COEP** | `crossOriginEmbedderPolicy: false` for Razorpay + Cloudinary |
+| **LogRocket** | `inputSanitizer`, network sanitizers, Sentry replay masking enabled |
 
 ---
 
@@ -118,7 +168,7 @@ PORT=5000
 NODE_ENV=production
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secure_jwt_secret
-JWT_EXPIRES_IN=7d
+JWT_EXPIRES_IN=15m
 OTP_EXPIRY_MINUTES=5
 
 # SMTP Transporter Configs
@@ -164,10 +214,11 @@ VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
 1.  Create a new **Web Service** on **Render**.
 2.  Set **Root Directory** to `backend`.
 3.  Choose your closest Region (e.g. `Singapore (Southeast Asia)`).
-4.  Use these exact build settings:
+4.  **Plan:** use **Standard** (2 GB RAM / 1 CPU minimum) or higher for production. The `starter` plan in `render.yaml` is fine for staging only — concurrent MongoDB + Redis + Socket.io pools can OOM on starter under load.
+5.  Use these exact build settings:
     *   **Build Command**: `npm install && npm run build`
     *   **Start Command**: `npm start`
-5.  Populate all Environment Variables in Render's configuration tab.
+6.  Populate all Environment Variables in Render's configuration tab.
 
 ---
 

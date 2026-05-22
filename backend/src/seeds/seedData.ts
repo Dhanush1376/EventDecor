@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-
-if (process.env.NODE_ENV === 'production') {
-  // eslint-disable-next-line no-console -- runs before logger module is available
-  console.error('❌ SEEDING SHIELD: Seeding operations are strictly disabled in production mode to prevent accidental data loss.');
-  process.exit(1);
-}
-
 import bcrypt from 'bcryptjs';
 import logger from '../config/logger';
+
+dotenv.config();
+
+if (process.env.NODE_ENV === 'production') {
+  logger.error('❌ SEEDING SHIELD: Seeding operations are strictly disabled in production mode to prevent accidental data loss.');
+  process.exit(1);
+}
 import connectDB from '../config/db';
 import Product from '../models/Product';
 import Event from '../models/Event';
@@ -16,8 +16,6 @@ import Gallery from '../models/Gallery';
 import ContentSection from '../models/ContentSection';
 import User from '../models/User';
 import Review from '../models/Review';
-
-dotenv.config();
 
 // C-04: External Unsplash URLs below are for LOCAL DEV SEEDING ONLY.
 // Before any production seed, upload assets to your Cloudinary account and replace these URLs.

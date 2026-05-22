@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:report": "vite build && node scripts/report-chunk-sizes.mjs",
-    "lint": "eslint .",
+    "lint": "eslint . && node ../scripts/check-no-console.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "check-env": "node scripts/check-env.ci.mjs"
@@ -41,6 +41,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "axe-core": "^4.10.3",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",

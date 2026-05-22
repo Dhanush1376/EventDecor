@@ -17,6 +17,7 @@ const productionRequiredEnvVars = [
   'CLOUDINARY_API_SECRET',
   'FRONTEND_URLS',
   'RAZORPAY_WEBHOOK_SECRET',
+  'REDIS_URL',
 ];
 
 export const collectMissingEnvVars = (options?: { ciMode?: boolean }): string[] => {

@@ -12,7 +12,7 @@ const RefreshTokenSchema: Schema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     tokenHash: { type: String, required: true, unique: true, index: true },
-    expiresAt: { type: Date, required: true },
+    expiresAt: { type: Date, required: true }, // TTL index below — auto-deletes when expiresAt passes
     userAgent: { type: String, default: '' },
   },
   { timestamps: true }

@@ -1,0 +1,41 @@
+import { Application } from 'express';
+import productRoutes from './productRoutes';
+import uploadRoutes from './uploadRoutes';
+import authRoutes from './authRoutes';
+import eventRoutes from './eventRoutes';
+import orderRoutes from './orderRoutes';
+import cmsRoutes from './cmsRoutes';
+import analyticsRoutes from './analyticsRoutes';
+import galleryRoutes from './galleryRoutes';
+import reviewRoutes from './reviewRoutes';
+import couponRoutes from './couponRoutes';
+import userRoutes from './userRoutes';
+import inquiryRoutes from './inquiryRoutes';
+import notificationRoutes from './notificationRoutes';
+import customOrderRoutes from './customOrderRoutes';
+import loyaltyRoutes from './loyaltyRoutes';
+import eventBookingRoutes from './eventBookingRoutes';
+import showcaseRoutes from './showcaseRoutes';
+import adminSystemRoutes from './adminSystemRoutes';
+
+/** Mount all API routers under a prefix (`/api` or `/api/v1`). */
+export const registerApiRoutes = (app: Application, prefix: string): void => {
+  app.use(`${prefix}/products`, productRoutes);
+  app.use(`${prefix}/upload`, uploadRoutes);
+  app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/events`, eventRoutes);
+  app.use(`${prefix}/orders`, orderRoutes);
+  app.use(`${prefix}/cms`, cmsRoutes);
+  app.use(`${prefix}/analytics`, analyticsRoutes);
+  app.use(`${prefix}/gallery`, galleryRoutes);
+  app.use(`${prefix}/reviews`, reviewRoutes);
+  app.use(`${prefix}/coupons`, couponRoutes);
+  app.use(`${prefix}/users`, userRoutes);
+  app.use(`${prefix}/inquiries`, inquiryRoutes);
+  app.use(`${prefix}/notifications`, notificationRoutes);
+  app.use(`${prefix}/custom-orders`, customOrderRoutes);
+  app.use(`${prefix}/loyalty`, loyaltyRoutes);
+  app.use(`${prefix}/event-bookings`, eventBookingRoutes);
+  app.use(`${prefix}/showcases`, showcaseRoutes);
+  app.use(`${prefix}/admin`, adminSystemRoutes);
+};

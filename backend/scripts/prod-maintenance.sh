@@ -26,7 +26,15 @@ if command -v pm2 &> /dev/null; then
   echo "✅ PM2 logs flushed."
 fi
 
-# 4. Restart Background Workers or Queues if necessary
+# 4. MongoDB backup reminder (Atlas PITR / continuous backup is configured in Atlas UI, not render.yaml)
+echo "Backup check: confirm MongoDB Atlas continuous backup or PITR is enabled for your cluster."
+if [ -n "$MONGO_URI" ] && echo "$MONGO_URI" | grep -qE 'mongodb(\+srv)?://.*mongodb\.net'; then
+  echo "✅ MONGO_URI appears to be MongoDB Atlas — verify backup status in Atlas → Backup."
+else
+  echo "⚠️  Non-Atlas MONGO_URI detected — ensure your provider's backup RTO/RPO is documented."
+fi
+
+# 5. Restart Background Workers or Queues if necessary
 # pm2 restart worker_name
 
 echo "Production Maintenance Complete!"

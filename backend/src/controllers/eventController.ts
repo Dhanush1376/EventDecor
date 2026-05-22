@@ -4,15 +4,23 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import { bumpPublicCacheVersion } from '../utils/cacheVersion';
+import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 
 export const getEvents = asyncHandler(async (req: Request, res: Response) => {
   const { category, style } = req.query;
+  const { page, limit, skip } = getPaginationOptions(req.query);
   const filter: any = { isActive: true };
   if (category) filter.category = category;
   if (style) filter.style = style;
 
-  const events = await Event.find(filter);
-  res.status(200).json(new ApiResponse(true, 'Events fetched', events));
+  const [events, totalCount] = await Promise.all([
+    Event.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Event.countDocuments(filter),
+  ]);
+
+  res.status(200).json(
+    new ApiResponse(true, 'Events fetched', formatPaginationResponse(events, totalCount, page, limit))
+  );
 });
 
 export const getEventById = asyncHandler(async (req: Request, res: Response) => {

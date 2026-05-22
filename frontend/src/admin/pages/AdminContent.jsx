@@ -13,6 +13,7 @@ import { ImageUpload } from "../components/ImageUpload";
 import toast from "react-hot-toast";
 import { cmsService } from "../../services/domainServices";
 import logger from "../../utils/logger";
+import { DEFAULT_SPECIALIZATIONS, PLACEHOLDER_IMAGES } from "../../constants/placeholderImages";
 
 const cleanSignatureImg = (imgUrl, founderName) => {
   if (!imgUrl || imgUrl.includes("unsplash.com") || imgUrl === "" || imgUrl.includes("images.unsplash.com")) {
@@ -781,15 +782,6 @@ function GalleryPortfolioEditor({ content, onUpdate }) {
   );
 }
 
-const DEFAULT_SPECIALIZATIONS = [
-  { title: "Traditional Decor", img: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop" },
-  { title: "Floral Mastery", img: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop" },
-  { title: "Engagement Trays", img: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop" },
-  { title: "Pooja Artistry", img: "https://images.unsplash.com/photo-1590073844006-33379778ae09?q=80&w=1974&auto=format&fit=crop" },
-  { title: "Harathi Plates", img: "https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=1974&auto=format&fit=crop" },
-  { title: "Bespoke Baskets", img: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop" },
-];
-
 const DEFAULT_FEATURES = [
   {
     icon: "handyman",
@@ -1535,8 +1527,8 @@ function PublisherVersionsEditor() {
 // 15. MEDIA VAULT
 function MediaLibraryEditor() {
   const mediaFiles = [
-    { id: 1, name: "temple_style_mandap.png", size: "1.4 MB", url: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop" },
-    { id: 2, name: "luxury_royal_wedding.png", size: "2.1 MB", url: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2074&auto=format&fit=crop" }
+    { id: 1, name: "temple_style_mandap.png", size: "1.4 MB", url: PLACEHOLDER_IMAGES.collectionWedding },
+    { id: 2, name: "luxury_royal_wedding.png", size: "2.1 MB", url: PLACEHOLDER_IMAGES.mandalaHero }
   ];
 
   return (

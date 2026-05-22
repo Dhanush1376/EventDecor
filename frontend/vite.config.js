@@ -9,9 +9,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: 'auto',
-      includeAssets: ['favicon.png', 'favicon.ico', 'manifest.json', 'robots.txt'],
+      includeAssets: ['favicon.png', 'favicon.ico', 'manifest.json', 'robots.txt', 'sitemap.xml', 'og-image.jpg', 'og-image.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp,avif}'],
         navigateFallback: '/index.html',
@@ -80,8 +80,8 @@ export default defineConfig({
     // CSS code splitting
     cssCodeSplit: true,
 
-    // Chunk size warning limit
-    chunkSizeWarningLimit: 500,
+    // Warn earlier than default — audit vendor chunks with npm run build:report
+    chunkSizeWarningLimit: 300,
 
     // Rollup options for manual chunk splitting
     rollupOptions: {

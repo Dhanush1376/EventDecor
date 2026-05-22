@@ -14,3 +14,7 @@ scratch/
 
 # Legacy local image stash — serve from Cloudinary (see backend uploadAssetsToCloud seed)
 frontend/images/
+
+# Editor / IDE configurations
+.cursor/
+.cursor

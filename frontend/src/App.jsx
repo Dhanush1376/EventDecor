@@ -1,4 +1,5 @@
-import React, { lazy, Suspense, useState } from "react";
+import React, { lazy, Suspense, useState, useEffect } from "react";
+import { ensureCsrfToken } from "./services/api";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
@@ -13,6 +14,7 @@ import { MainLayout, MinimalLayout } from "./layouts/MainLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { NetworkProvider } from "./context/NetworkContext";
+import { PwaUpdatePrompt } from "./components/ui/PwaUpdatePrompt";
 import { safeSessionStorage } from "./utils/storage";
 
 // Lazy load heavy auth modal to remove it from initial load bundle
@@ -73,11 +75,16 @@ const AdminTeam = lazy(() => import("./admin/pages/AdminTeam").then((m) => ({ de
 const AdminSettings = lazy(() => import("./admin/pages/AdminSettings").then((m) => ({ default: m.AdminSettings })));
 const AdminSystemUsers = lazy(() => import("./admin/pages/AdminSystemUsers").then((m) => ({ default: m.AdminSystemUsers })));
 
+// All /admin/* pages are React.lazy() — not in the storefront initial JS bundle (see npm run build:report).
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
     return !safeSessionStorage.getItem("siri_splash_shown");
   });
+
+  useEffect(() => {
+    ensureCsrfToken().catch(() => {});
+  }, []);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -99,6 +106,7 @@ function App() {
                 <AuthModal />
               </Suspense>
               <Router>
+                <PwaUpdatePrompt />
                 <ErrorBoundary>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>

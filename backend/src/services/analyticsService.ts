@@ -65,9 +65,11 @@ class AnalyticsService {
       {
         $group: {
           _id: '$items.category',
-          value: { $sum: '$items.quantity' }
-        }
-      }
+          value: { $sum: '$items.quantity' },
+        },
+      },
+      { $sort: { value: -1 } },
+      { $limit: 20 },
     ]);
 
     const result = {

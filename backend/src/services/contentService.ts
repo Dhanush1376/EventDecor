@@ -1,7 +1,9 @@
 import ContentSection, { IContentSection } from '../models/ContentSection';
+import { PLACEHOLDER_IMAGES } from '../constants/placeholderImages';
 import ApiError from '../utils/ApiError';
 import { cmsCache } from '../utils/MemoryCache';
 import { bumpPublicCacheVersion } from '../utils/cacheVersion';
+import { invalidateSafetyLockCache } from '../utils/safetyLockCache';
 
 const SENSITIVE_STUDIO_SETTINGS_KEYS = ['razorpaySecret', 'razorpayKeySecret'] as const;
 const ADMIN_ONLY_SECTION_KEYS = new Set(['studio_settings']);
@@ -47,16 +49,16 @@ class ContentService {
         admin_theme_mode: { themeMode: 'dark' },
         custom_categories: {
           products: [
-            { id: "p1", name: "Traditional Return Gifts", count: 24, image: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=600&auto=format&fit=crop", active: true, description: "Bespoke brass tambulam bowls and handcrafted shagun packaging." },
-            { id: "p2", name: "Engagement Ring Trays", count: 18, image: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=600&auto=format&fit=crop", active: true, description: "Pearl beaded trays and custom carved wooden initials." },
-            { id: "p3", name: "Carved Coconuts & Shagun", count: 12, image: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=600&auto=format&fit=crop", active: true, description: "Artisanal hand-painted coconuts for traditional ceremonies." },
-            { id: "p4", name: "Customized Gift Hampers", count: 30, image: "https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=600&auto=format&fit=crop", active: true, description: "Velvet presentation hampers with South Indian sweet boxes." }
+            { id: "p1", name: "Traditional Return Gifts", count: 24, image: PLACEHOLDER_IMAGES.emptyCart, active: true, description: "Bespoke brass tambulam bowls and handcrafted shagun packaging." },
+            { id: "p2", name: "Engagement Ring Trays", count: 18, image: PLACEHOLDER_IMAGES.mandalaArt3, active: true, description: "Pearl beaded trays and custom carved wooden initials." },
+            { id: "p3", name: "Carved Coconuts & Shagun", count: 12, image: PLACEHOLDER_IMAGES.collectionWedding, active: true, description: "Artisanal hand-painted coconuts for traditional ceremonies." },
+            { id: "p4", name: "Customized Gift Hampers", count: 30, image: PLACEHOLDER_IMAGES.mandalaArt2, active: true, description: "Velvet presentation hampers with South Indian sweet boxes." }
           ],
           events: [
-            { id: "e1", name: "Telugu Heritage (Pellikuthuru)", count: 8, image: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=600&auto=format&fit=crop", active: true, description: "Royal Mysore brass urlis, marigold strings, and wooden carved seats." },
-            { id: "e2", name: "Engagement Gift Setup", count: 15, image: "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=600&auto=format&fit=crop", active: true, description: "Side-stage gift presentation pedestals and LED uplighting." },
-            { id: "e3", name: "Ring Ceremony Showcases", count: 10, image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=600&auto=format&fit=crop", active: true, description: "Gold-leaf backdrop rings and velvet pedestal arrangements." },
-            { id: "e4", name: "Tambulam & Shagun Counter", count: 20, image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=600&auto=format&fit=crop", active: true, description: "Royal wooden shelving with fresh jasmine runners." }
+            { id: "e1", name: "Telugu Heritage (Pellikuthuru)", count: 8, image: PLACEHOLDER_IMAGES.collectionWedding, active: true, description: "Royal Mysore brass urlis, marigold strings, and wooden carved seats." },
+            { id: "e2", name: "Engagement Gift Setup", count: 15, image: PLACEHOLDER_IMAGES.heroBackground, active: true, description: "Side-stage gift presentation pedestals and LED uplighting." },
+            { id: "e3", name: "Ring Ceremony Showcases", count: 10, image: PLACEHOLDER_IMAGES.mandalaHero, active: true, description: "Gold-leaf backdrop rings and velvet pedestal arrangements." },
+            { id: "e4", name: "Tambulam & Shagun Counter", count: 20, image: PLACEHOLDER_IMAGES.mandalaArt4, active: true, description: "Royal wooden shelving with fresh jasmine runners." }
           ]
         }
       };
@@ -111,6 +113,9 @@ class ContentService {
     cmsCache.delete(`cms:content:${key}`);
     cmsCache.delete('cms:all_sections');
     cmsCache.delete(key); // Just in case cache key is set without prefix (like 'studio_settings')
+    if (key === 'admin_safety_lock') {
+      await invalidateSafetyLockCache();
+    }
     await bumpPublicCacheVersion();
 
     return section;

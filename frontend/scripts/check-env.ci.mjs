@@ -5,13 +5,13 @@ const required = [
   'VITE_API_URL',
   'VITE_SITE_URL',
   'VITE_RAZORPAY_KEY_ID',
+  'VITE_MARBLE_TEXTURE_URL',
 ];
 
 const recommended = [
   'VITE_SITE_NAME',
   'VITE_OG_IMAGE_URL',
   'VITE_CONTACT_PHONE',
-  'VITE_MARBLE_TEXTURE_URL',
 ];
 
 const missing = required.filter((key) => !process.env[key]?.trim());

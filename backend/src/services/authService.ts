@@ -9,6 +9,7 @@ import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { isSameEmail, canonicalizeEmail } from '../utils/emailHelper';
 import { getAdminEmails } from '../config/adminConfig';
+import { setTwoFactorPending } from '../utils/twoFactorPending';
 import UsedRefreshToken from '../models/UsedRefreshToken';
 import FailedLoginAttempt from '../models/FailedLoginAttempt';
 
@@ -616,6 +617,23 @@ class AuthService {
       });
     } catch (err) {
       logger.error('Failed to trigger Suspicious Login email:', err);
+    }
+
+    const userWith2fa = await User.findById(user._id).select('+twoFactorEnabled');
+    if (userWith2fa?.twoFactorEnabled) {
+      await setTwoFactorPending(user._id.toString());
+      const pendingResult = {
+        requires2FA: true as const,
+        user: userWith2fa.toObject(),
+        refreshToken: '',
+        accessToken: '',
+      };
+      recentlyVerifiedOtps.set(cacheKey, {
+        email: cleanEmail,
+        verifiedAt: Date.now(),
+        session: pendingResult as any,
+      });
+      return pendingResult;
     }
 
     const session = await this.createSession(user, userAgent);

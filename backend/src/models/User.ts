@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { decryptField, encryptField } from '../utils/fieldEncryption';
 
 export interface IUser extends Document {
   id: string;
@@ -127,7 +128,18 @@ const UserSchema: Schema = new Schema(
     passwordHash: { type: String, select: false },
     passwordChangedAt: { type: Date },
     twoFactorEnabled: { type: Boolean, default: false, select: false },
-    twoFactorSecret: { type: String, select: false },
+    twoFactorSecret: {
+      type: String,
+      select: false,
+      set: (value: string | undefined) => {
+        if (!value) return value;
+        return encryptField(value);
+      },
+      get: (value: string | undefined) => {
+        if (!value) return value;
+        return decryptField(value);
+      },
+    },
     failedLoginAttempts: { type: Number, default: 0 },
     isLocked: { type: Boolean, default: false },
     lockUntil: { type: Date },
@@ -138,7 +150,11 @@ const UserSchema: Schema = new Schema(
     referredBy: { type: Schema.Types.ObjectId, ref: 'User' },
     referralsCount: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
+  }
 );
 
 UserSchema.index({ role: 1 });
