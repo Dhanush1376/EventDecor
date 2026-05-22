@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { couponService } from "../../services/domainServices";
 import { useAdmin } from "../context/AdminContext";
 import toast from "react-hot-toast";
@@ -11,61 +12,52 @@ const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 export function AdminCoupons() {
   const navigate = useNavigate();
   const { searchQuery } = useAdmin();
-  const [coupons, setCoupons] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const filteredCoupons = coupons.filter(c => {
-    return !searchQuery ||
-      c.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.discountType?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.description || "").toLowerCase().includes(searchQuery.toLowerCase());
+  const { data: coupons = [], isLoading: loading } = useQuery({
+    queryKey: ["adminCoupons"],
+    queryFn: async () => {
+      const res = await couponService.getAll();
+      if (!res.success) throw new Error("Failed to load discount coupons");
+      return res.data?.data || res.data?.items || (Array.isArray(res.data) ? res.data : []);
+    },
+    onError: () => toast.error("Failed to load discount coupons"),
   });
 
-  const fetchCoupons = async () => {
-    setLoading(true);
-    try {
-      const res = await couponService.getAll();
-      if (res.success) {
-        const list = res.data?.data || res.data?.items || (Array.isArray(res.data) ? res.data : []);
-        setCoupons(list);
-      }
-    } catch (err) {
-      toast.error("Failed to load discount coupons");
-    } finally {
-      setLoading(false);
-    }
+  const filteredCoupons = coupons.filter((c) => {
+    return (
+      !searchQuery ||
+      c.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.discountType?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, isActive }) => couponService.update(id, { isActive }),
+    onSuccess: (_, variables) => {
+      toast.success(`Coupon ${variables.isActive ? "activated" : "deactivated"}`);
+      queryClient.invalidateQueries({ queryKey: ["adminCoupons"] });
+    },
+    onError: () => toast.error("Failed to update coupon status"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => couponService.delete(id),
+    onSuccess: () => {
+      toast.success("Coupon deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["adminCoupons"] });
+    },
+    onError: () => toast.error("Failed to delete coupon"),
+  });
+
+  const handleToggleActive = (id, currentStatus) => {
+    toggleMutation.mutate({ id, isActive: !currentStatus });
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchCoupons();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleToggleActive = async (id, currentStatus) => {
-    try {
-      const res = await couponService.update(id, { isActive: !currentStatus });
-      if (res.success) {
-        toast.success(`Coupon ${!currentStatus ? "activated" : "deactivated"}`);
-        fetchCoupons();
-      }
-    } catch (err) {
-      toast.error("Failed to update coupon status");
-    }
-  };
-
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (!window.confirm("Are you sure you want to permanently delete this coupon?")) return;
-    try {
-      const res = await couponService.delete(id);
-      if (res.success) {
-        toast.success("Coupon deleted successfully");
-        fetchCoupons();
-      }
-    } catch (err) {
-      toast.error("Failed to delete coupon");
-    }
+    deleteMutation.mutate(id);
   };
 
   return (

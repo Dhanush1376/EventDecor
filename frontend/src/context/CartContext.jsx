@@ -16,7 +16,7 @@ const CartContext = createContext(null);
 const CART_STORAGE_KEY = "siri_arts_cart";
 
 export function CartProvider({ children }) {
-  const { isAuthenticated, runProtectedAction } = useAuth();
+  const { isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
   const [items, setItems] = useState([]);
   const [claimedCoupon, setClaimedCoupon] = useState("");
   const itemsRef = useRef([]);
@@ -52,12 +52,14 @@ export function CartProvider({ children }) {
 
   // 1. Initial Load and Synchronization on Auth State Changes
   useEffect(() => {
+    const controller = new AbortController();
     const initializeCart = async () => {
+      if (!isAuthInitialized) return;
       setLoading(true);
       try {
         if (isAuthenticated) {
           // Retrieve database cart
-          const res = await userService.getCart();
+          const res = await userService.getCart({ signal: controller.signal });
           setItems(transformDbCart(res.data?.items));
           setSummary(res.data?.summary || summary);
         } else {
@@ -66,14 +68,17 @@ export function CartProvider({ children }) {
           setSummary({ subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 });
         }
       } catch (err) {
-        logger.error("Cart synchronization failed:", err);
+        if (err.name !== 'CanceledError') {
+          logger.error("Cart synchronization failed:", err);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     initializeCart();
-  }, [isAuthenticated]);
+    return () => controller.abort();
+  }, [isAuthenticated, isAuthInitialized]);
 
   const addItem = async (product) => {
     const qty = product.quantity || 1;

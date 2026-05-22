@@ -21,11 +21,11 @@ export const checkSocketConnectionRateLimit = async (
   const ip = getClientIp(socket);
   const key = `socket:conn:${ip}`;
 
-  if (redisClient) {
+  if (redisClient && redisClient.isReady) {
     try {
       const count = await redisClient.incr(key);
       if (count === 1) {
-        await redisClient.pexpire(key, WINDOW_MS);
+        await redisClient.pExpire(key, WINDOW_MS);
       }
       return { allowed: count <= MAX_CONNECTIONS_PER_IP, ip };
     } catch (err) {

@@ -56,6 +56,7 @@ process.on('unhandledRejection', (reason: any) => {
   handleFatalError(error, 'unhandledRejection');
 });
 import { initJobs } from './src/jobs/cronJobs';
+import { initRedis, closeRedisConnections } from './src/utils/redis';
 
 const PORT = process.env.PORT || 5000;
 
@@ -80,9 +81,12 @@ const startServer = async () => {
     // 2. Initialize Background Jobs
     initJobs();
 
+    // 3. Initialize Redis Connection
+    logger.info('Initializing Redis...');
+    await initRedis();
 
-      // 3. Start Express Server
-      server = app.listen(PORT, () => {
+    // 4. Start Express Server
+    server = app.listen(PORT, () => {
         logger.info(`
           🚀 Server is running in ${process.env.NODE_ENV || 'development'} mode
           📡 Port: ${PORT}
@@ -105,11 +109,12 @@ const startServer = async () => {
         logger.info('HTTP server closed.');
         
         try {
+          await closeRedisConnections();
           await mongoose.connection.close();
           logger.info('MongoDB connection closed.');
           process.exit(0);
         } catch (err) {
-          logger.error('Error during MongoDB closure:', err);
+          logger.error('Error during shutdown:', err);
           process.exit(1);
         }
       });

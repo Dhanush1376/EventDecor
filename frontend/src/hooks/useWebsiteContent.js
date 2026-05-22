@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { cmsService } from "../services/domainServices";
 import { initialWebsiteContent } from "../admin/data/websiteContentData";
+import { invalidateApiCache } from "../utils/apiCache";
 
 import logger from '../utils/logger';
-const CACHE_TTL = 30 * 1000; // 30 seconds cache TTL
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — stale-while-revalidate in background
+const STALE_REFRESH_MS = 60 * 1000; // revalidate at most once per minute when stale
 const LOCAL_STORAGE_KEY = "siri_arts_website_content";
 
 // Global shared state for singleton caching and request de-duplication
@@ -34,6 +36,7 @@ const updateGlobalCache = (newContent) => {
 export const refreshWebsiteContent = async () => {
   lastFetchedTime = 0;
   globalPromise = null;
+  invalidateApiCache('/cms');
   
   try {
     const response = await cmsService.getPublished();
@@ -81,9 +84,12 @@ export function useWebsiteContent() {
 
     listeners.add(handleUpdate);
 
-    const fetchContent = async () => {
-      // Check cache freshness: BYPASS if lastFetchedTime is 0 (first load in page session)
-      if (lastFetchedTime > 0 && (Date.now() - lastFetchedTime < CACHE_TTL)) {
+    const fetchContent = async (force = false) => {
+      const age = Date.now() - lastFetchedTime;
+      if (!force && lastFetchedTime > 0 && age < CACHE_TTL) {
+        if (age >= STALE_REFRESH_MS && !globalPromise) {
+          fetchContent(true);
+        }
         return;
       }
 

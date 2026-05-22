@@ -7,6 +7,13 @@ import User from '../models/User';
 import { isSameEmail } from '../utils/emailHelper';
 import { getAdminEmails } from '../config/adminConfig';
 import logger from '../config/logger';
+import {
+  cacheProfile,
+  getCachedSessionJson,
+  invalidateUserSessionCaches,
+  sessionKeys,
+} from '../utils/userSessionCache';
+import { checkOtpSendAllowed, isOtpVerifyBlocked } from '../utils/otpRateLimit';
 
 const refreshCookieName = 'siri_refresh_token';
 
@@ -42,6 +49,13 @@ export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const cleanEmail = email.trim().toLowerCase();
+  const clientIp = req.ip || '127.0.0.1';
+
+  const sendAllowed = await checkOtpSendAllowed(clientIp);
+  if (!sendAllowed) {
+    throw new ApiError(429, 'Too many OTP requests. Please try again in a few minutes.');
+  }
+
   logger.info(`[AUTH] Initiating passwordless OTP verification for user: ${cleanEmail}`);
   try {
     await AuthService.checkAdminPassword(cleanEmail, password);
@@ -53,7 +67,7 @@ export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
     throw err;
   }
 
-  const otp = await AuthService.generateOTP(email, req.ip);
+  const otp = await AuthService.generateOTP(email, clientIp);
 
   logger.info(`[AUTH] OTP successfully dispatched to user: ${cleanEmail}`);
 
@@ -67,9 +81,14 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, 'Email and OTP are required');
   }
   
+  const clientIp = req.ip || '127.0.0.1';
+  if (process.env.NODE_ENV !== 'development' && (await isOtpVerifyBlocked(clientIp))) {
+    throw new ApiError(429, 'Too many failed verification attempts. Your IP has been temporarily restricted for 15 minutes.');
+  }
+
   logger.info(`[AUTH] Verifying authentication credentials for user: ${email.trim().toLowerCase()}`);
   const userAgent = req.headers['user-agent'] || '';
-  const result = await AuthService.verifyOTP(email, otp, req.ip, userAgent);
+  const result = await AuthService.verifyOTP(email, otp, clientIp, userAgent);
   
   if ((result as { requires2FA?: boolean }).requires2FA) {
     logger.info(`[AUTH] OTP verified — awaiting 2FA for user: ${result.user._id}`);
@@ -83,6 +102,7 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   }
 
   logger.info(`[AUTH] Authentication successful. User session created. ID: ${result.user._id}`);
+  await invalidateUserSessionCaches(String(result.user._id));
 
   // A-02: One-time admin role alignment on first successful OTP (not on every getProfile fetch)
   const adminEmails = getAdminEmails();
@@ -119,10 +139,14 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
  
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(req.body?.refreshToken || req.cookies?.[refreshCookieName] || req.headers['x-refresh-token'] || '').trim();
-  
+  const userId = (req as any).user?.id;
+
   logger.info('[AUTH] Revoking user session on manual logout request');
   if (refreshToken) {
     await AuthService.revokeSession(refreshToken);
+  }
+  if (userId) {
+    await invalidateUserSessionCaches(String(userId));
   }
   clearRefreshCookie(res);
   
@@ -131,11 +155,27 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {
-  const user = await User.findById((req as any).user.id).select('-password');
+  const userId = String((req as any).user.id);
+  const cacheKey = sessionKeys.profile(userId);
+
+  const cached = await getCachedSessionJson<Record<string, unknown>>(cacheKey);
+  if (cached) {
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Session-Cache', 'HIT');
+    return res.status(200).json(new ApiResponse(true, 'Profile fetched', cached));
+  }
+
+  const user = await User.findById(userId)
+    .select('name email phone role avatar walletBalance loyaltyPoints loyaltyTier referralCode createdAt')
+    .lean();
   if (!user) {
     throw new ApiError(404, 'User session not found in database');
   }
 
+  await cacheProfile(userId, user);
+
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('X-Session-Cache', 'MISS');
   res.status(200).json(new ApiResponse(true, 'Profile fetched', user));
 });
 

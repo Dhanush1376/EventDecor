@@ -2,16 +2,17 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { authService } from '../services/domainServices';
 import { setAccessToken } from '../services/api';
 import toast from 'react-hot-toast';
-
-
+import { loadCachedProfile, saveCachedProfile, clearCachedProfile } from '../utils/authSessionCache';
 
 import logger from '../utils/logger';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const cachedProfile = loadCachedProfile();
+  const [user, setUser] = useState(cachedProfile);
+  const [loading, setLoading] = useState(!cachedProfile);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!cachedProfile);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
 
   // Intended Action Queue & Modal States for seamless Protected Action Interception
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -22,6 +23,8 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async (silent = false) => {
     setAccessToken(null);
+    clearCachedProfile();
+    localStorage.removeItem("siri_auth_token");
     if (!silent) {
       authService.logout().catch(() => {});
     }
@@ -39,22 +42,26 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const checkAuth = useCallback(async () => {
+  const checkAuth = useCallback(async (signal) => {
     if (checkAuthInProgress.current) return;
     checkAuthInProgress.current = true;
 
     try {
-      const response = await authService.getProfile();
+      const response = await authService.getProfile({ signal });
       if (response.success) {
         setUser(response.data);
         setIsAuthenticated(true);
+        saveCachedProfile(response.data);
       }
     } catch (err) {
-      // If profile fails, interceptor already tried to refresh the token and failed
-      // Or we simply don't have a valid session
-      logout(true);
+      if (err.name !== 'CanceledError' && err.code !== 'ERR_NO_SESSION') {
+        // If profile fails, interceptor already tried to refresh the token and failed
+        // Or we simply don't have a valid session
+        logout(true);
+      }
     } finally {
       setLoading(false);
+      setIsAuthInitialized(true);
       checkAuthInProgress.current = false;
     }
   }, [logout]);
@@ -65,8 +72,10 @@ export function AuthProvider({ children }) {
       if (response.success) {
         const token = response.data.accessToken || response.data.token;
         setAccessToken(token);
+        localStorage.setItem("siri_auth_token", "true");
         setUser(response.data.user);
         setIsAuthenticated(true);
+        saveCachedProfile(response.data.user);
         toast.success('Welcome back!');
         return true;
       }
@@ -85,8 +94,10 @@ export function AuthProvider({ children }) {
       if (response.success) {
         const token = response.data.accessToken || response.data.token;
         setAccessToken(token);
+        localStorage.setItem("siri_auth_token", "true");
         setUser(response.data.user);
         setIsAuthenticated(true);
+        saveCachedProfile(response.data.user);
         return true;
       }
     } catch (err) {
@@ -97,15 +108,25 @@ export function AuthProvider({ children }) {
   const completeAdminLogin = async (sessionData) => {
     const token = sessionData.accessToken || sessionData.token;
     setAccessToken(token);
+    localStorage.setItem("siri_auth_token", "true");
     setUser(sessionData.user);
     setIsAuthenticated(true);
+    saveCachedProfile(sessionData.user);
     return true;
   };
 
   useEffect(() => {
+    const hasToken = localStorage.getItem("siri_auth_token") || cachedProfile;
+    if (!hasToken) {
+      setLoading(false);
+      setIsAuthInitialized(true);
+      return;
+    }
+
+    const controller = new AbortController();
     const timer = setTimeout(() => {
-      checkAuth();
-    }, 0);
+      checkAuth(controller.signal);
+    }, cachedProfile ? 50 : 0);
 
     const handleUnauthorized = () => {
       logout(true);
@@ -115,6 +136,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       clearTimeout(timer);
+      controller.abort();
       window.removeEventListener('auth-unauthorized', handleUnauthorized);
     };
   }, [checkAuth, logout]);
@@ -149,8 +171,10 @@ export function AuthProvider({ children }) {
   // Triggers after successful OTP verification to restore queued action and finalize login
   const loginSuccess = async (userData, token) => {
     setAccessToken(token);
+    localStorage.setItem("siri_auth_token", "true");
     setUser(userData);
     setIsAuthenticated(true);
+    saveCachedProfile(userData);
     setIsAuthModalOpen(false);
 
     toast.success('Welcome back to the Studio!');
@@ -185,7 +209,8 @@ export function AuthProvider({ children }) {
       openAuthModal,
       closeAuthModal,
       runProtectedAction,
-      loginSuccess
+      loginSuccess,
+      isAuthInitialized
     }}>
       {children}
     </AuthContext.Provider>

@@ -4,19 +4,24 @@ import { MandalaElement } from "./MandalaElement";
 
 export function SplashScreen({ onComplete }) {
   useEffect(() => {
-    // 3 seconds duration for the full cinematic experience
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const duration = prefersReducedMotion ? 400 : 900;
     const timer = setTimeout(() => {
       onComplete();
-    }, 3200);
+    }, duration);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
   return (
     <motion.div
+      role="presentation"
+      aria-hidden="true"
+      onClick={onComplete}
+      onKeyDown={(e) => e.key === 'Escape' && onComplete()}
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: "blur(10px)", scale: 1.05 }}
-      transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-[99999] bg-surface flex flex-col items-center justify-center overflow-hidden"
+      exit={{ opacity: 0, filter: "blur(6px)", scale: 1.02 }}
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-[99999] bg-surface flex flex-col items-center justify-center overflow-hidden cursor-pointer"
     >
       {/* Background Atmosphere */}
       <div className="absolute inset-0 bg-marble opacity-[0.03] pointer-events-none mix-blend-multiply" />

@@ -11,6 +11,7 @@ export function CloudinaryImage({
   fetchPriority,
   containerClassName = "",
   sizes = "(max-width: 768px) 100vw, 50vw",
+  aspectRatio,
   ...props 
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -27,8 +28,13 @@ export function CloudinaryImage({
                          containerClassName.includes('relative') ||
                          containerClassName.includes('sticky');
 
+  const aspectStyle = aspectRatio ? { aspectRatio } : undefined;
+
   return (
-    <div className={`${hasPositioning ? '' : 'relative'} overflow-hidden ${containerClassName}`}>
+    <div
+      className={`${hasPositioning ? '' : 'relative'} overflow-hidden ${containerClassName}`}
+      style={aspectStyle}
+    >
       {/* Blurred Placeholder */}
       {isCloudinary && !isLoaded && (
         <div 
@@ -43,10 +49,16 @@ export function CloudinaryImage({
         srcSet={srcSet}
         sizes={sizes}
         alt={alt}
+        width={width}
+        height={height}
         loading={loading}
+        decoding="async"
         fetchPriority={fetchPriority}
         onLoad={() => setIsLoaded(true)}
-        onError={handleImageError}
+        onError={(e) => {
+          setIsLoaded(true);
+          handleImageError(e);
+        }}
         className={`w-full h-full object-cover rounded-[inherit] transition-all duration-1000 ease-out ${className} ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
         {...props}
       />

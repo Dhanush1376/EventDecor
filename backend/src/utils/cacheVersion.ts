@@ -11,7 +11,7 @@ let adminAnalyticsMemoryVersion = Date.now().toString();
  * Bumped when products, CMS, gallery, or events are mutated.
  */
 export async function getPublicCacheVersion(): Promise<string> {
-  if (redisClient) {
+  if (redisClient && redisClient.isReady) {
     try {
       const remote = await redisClient.get(REDIS_KEY);
       if (remote) return remote;
@@ -26,7 +26,7 @@ export async function bumpPublicCacheVersion(): Promise<void> {
   const next = Date.now().toString();
   memoryVersion = next;
 
-  if (redisClient) {
+  if (redisClient && redisClient.isReady) {
     try {
       await redisClient.set(REDIS_KEY, next);
     } catch (err) {
@@ -39,7 +39,7 @@ export async function bumpPublicCacheVersion(): Promise<void> {
 }
 
 export async function getAdminAnalyticsCacheVersion(): Promise<string> {
-  if (redisClient) {
+  if (redisClient && redisClient.isReady) {
     try {
       const remote = await redisClient.get(ADMIN_ANALYTICS_KEY);
       if (remote) return remote;
@@ -55,7 +55,7 @@ export async function bumpAdminAnalyticsCacheVersion(options?: { quiet?: boolean
   const next = Date.now().toString();
   adminAnalyticsMemoryVersion = next;
 
-  if (redisClient) {
+  if (redisClient && redisClient.isReady) {
     try {
       await redisClient.set(ADMIN_ANALYTICS_KEY, next);
     } catch (err) {

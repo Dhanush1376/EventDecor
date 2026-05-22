@@ -3,6 +3,7 @@ import { getPublishedContent, getSectionByKey, updateSection, publishAll } from 
 import { aiGenerateContent } from '../controllers/cmsController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 import { cacheResponse } from '../middleware/cacheMiddleware';
+import { redisResponseCache } from '../middleware/redisResponseCache';
 import ContentService from '../services/contentService';
 
 const router = Router();
@@ -14,9 +15,9 @@ const requireAdminForSensitiveSections = (req: Request, res: Response, next: Nex
   next();
 };
 
-// Public Routes
-router.get('/', cacheResponse(300), getPublishedContent);
-router.get('/:key', requireAdminForSensitiveSections, cacheResponse(300), getSectionByKey);
+// Public Routes — memory + Redis + CDN cache for fast cold starts
+router.get('/', redisResponseCache(300), cacheResponse(300), getPublishedContent);
+router.get('/:key', requireAdminForSensitiveSections, redisResponseCache(300), cacheResponse(300), getSectionByKey);
 
 // Admin Routes
 router.put('/:key', requireAuth, requireAdmin, updateSection);

@@ -15,7 +15,7 @@ import logger from '../utils/logger';
 const WishlistContext = createContext(null);
 
 export function WishlistProvider({ children }) {
-  const { user, isAuthenticated, runProtectedAction } = useAuth();
+  const { user, isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -23,17 +23,21 @@ export function WishlistProvider({ children }) {
 
   // Load wishlist from backend only for logged-in users with a valid token safeguard
   useEffect(() => {
+    const controller = new AbortController();
     const loadWishlist = async () => {
+      if (!isAuthInitialized) return;
       if (userId && isAuthenticated) {
         setLoading(true);
         try {
-          const res = await userService.getWishlist();
+          const res = await userService.getWishlist({ signal: controller.signal });
           if (res.success) {
             setItems(res.data || []);
           }
         } catch (error) {
-          logger.error("Failed to fetch wishlist:", error);
-          toast.error("Failed to load wishlist items");
+          if (error.name !== 'CanceledError') {
+            logger.error("Failed to fetch wishlist:", error);
+            toast.error("Failed to load wishlist items");
+          }
         } finally {
           setLoading(false);
         }
@@ -42,7 +46,8 @@ export function WishlistProvider({ children }) {
       }
     };
     loadWishlist();
-  }, [userId, isAuthenticated]);
+    return () => controller.abort();
+  }, [userId, isAuthenticated, isAuthInitialized]);
 
   const toggleItem = useCallback(async (product) => {
     runProtectedAction(async () => {

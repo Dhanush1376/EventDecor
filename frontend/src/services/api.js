@@ -1,6 +1,7 @@
 import axios from 'axios';
 import logger from '../utils/logger';
 import { getApiUrl } from '../utils/apiUrl';
+import { getCachedGet, setCachedGet } from '../utils/apiCache';
 
 const API_URL = getApiUrl();
 
@@ -77,9 +78,32 @@ const getRequestDescription = (config) => {
   return `${method} request to ${url.split('/').pop()}`;
 };
 
+const hasLocalAuthMarker = () => {
+  try {
+    return !!localStorage.getItem('siri_auth_token');
+  } catch {
+    return false;
+  }
+};
+
 // Add a request interceptor to include auth token and manage offline states
 api.interceptors.request.use(
   async (config) => {
+    const path = (config.url || '').toLowerCase();
+
+    // Prevent protected profile/cart/wishlist calls before a session marker exists
+    if (
+      !accessToken &&
+      !hasLocalAuthMarker() &&
+      (path.includes('/auth/profile') ||
+        path.includes('/users/cart') ||
+        path.includes('/users/wishlist') ||
+        path.includes('/users/profile'))
+    ) {
+      const err = new axios.AxiosError('Not authenticated', 'ERR_NO_SESSION', config);
+      return Promise.reject(err);
+    }
+
     // ─── AUTH TOKEN INTEGRATION ───
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -137,14 +161,26 @@ api.interceptors.request.use(
       }
     }
 
+    config.metadata = { startTime: Date.now() };
     return config;
   },
   (error) => Promise.reject(error)
 );
 
+const SLOW_REQUEST_MS = 4000;
+
 // Add a response interceptor to handle errors globally
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const started = response.config?.metadata?.startTime;
+    if (started && import.meta.env.PROD) {
+      const duration = Date.now() - started;
+      if (duration > SLOW_REQUEST_MS) {
+        logger.warn(`[API] Slow request ${response.config?.method?.toUpperCase()} ${response.config?.url} (${duration}ms)`);
+      }
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
     const isAuthRefresh = originalRequest?.url?.includes('/auth/refresh');
@@ -167,6 +203,17 @@ api.interceptors.response.use(
       
       await new Promise((resolve) => setTimeout(resolve, backoffDelay));
       return api(originalRequest);
+    }
+
+    const isProtectedWithoutSession =
+      !hasLocalAuthMarker() &&
+      !accessToken &&
+      (originalRequest?.url?.includes('/auth/profile') ||
+        originalRequest?.url?.includes('/users/cart') ||
+        originalRequest?.url?.includes('/users/wishlist'));
+
+    if (isProtectedWithoutSession) {
+      return Promise.reject(error);
     }
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRefresh && !isAuthLogout) {
@@ -220,6 +267,12 @@ const clearPendingGets = () => {
 
 api.get = function (url, config) {
   const requestKey = `${url}?${JSON.stringify(config || {})}`;
+
+  const cached = getCachedGet(url, config);
+  if (cached && !cached.stale) {
+    return Promise.resolve({ data: cached.data, status: 200, statusText: 'OK', headers: {}, config: config || {}, fromCache: true });
+  }
+
   if (pendingGetRequests.has(requestKey)) {
     return pendingGetRequests.get(requestKey);
   }
@@ -227,10 +280,16 @@ api.get = function (url, config) {
   const promise = originalGet.call(this, url, config)
     .then((response) => {
       pendingGetRequests.delete(requestKey);
+      if (response?.data !== undefined) {
+        setCachedGet(url, config, response.data);
+      }
       return response;
     })
     .catch((error) => {
       pendingGetRequests.delete(requestKey);
+      if (cached?.data) {
+        return { data: cached.data, status: 200, statusText: 'OK', headers: {}, config: config || {}, fromCache: true, stale: true };
+      }
       throw error;
     });
 

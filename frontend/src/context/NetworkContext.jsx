@@ -115,9 +115,9 @@ export function NetworkProvider({ children }) {
     return false;
   }, []);
 
-  // Background ping daemon to verify status and detect captive portals/silent drops
+  // Background ping — less aggressive when stable to reduce cold-start API noise
   useEffect(() => {
-    const intervalTime = networkState === 'online' ? 20000 : 5000; // Check more frequently when disconnected
+    const intervalTime = networkState === 'online' ? 45000 : 8000;
     const timer = setInterval(() => {
       checkConnection();
     }, intervalTime);
@@ -270,8 +270,12 @@ export function NetworkProvider({ children }) {
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // Run initial connectivity verification
-    checkConnection();
+    const runInitialCheck = () => checkConnection();
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(runInitialCheck, { timeout: 3000 });
+    } else {
+      setTimeout(runInitialCheck, 500);
+    }
 
     return () => {
       window.removeEventListener("online", handleOnline);

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import debounce from "lodash.debounce";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 
 export function SearchBar({
   value = "",
@@ -10,26 +11,27 @@ export function SearchBar({
 
   // Sync internal state with external prop (for clear/reset)
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalValue(value);
   }, [value]);
 
+  const debouncedOnChange = useMemo(
+    () => debounce((newVal) => onChange?.({ target: { value: newVal } }), 400),
+    [onChange]
+  );
+
   useEffect(() => {
-    if (localValue === value) return;
-    const handler = setTimeout(() => {
-      onChange?.({ target: { value: localValue } });
-    }, 220);
-    return () => clearTimeout(handler);
-  }, [localValue, onChange, value]);
+    return () => debouncedOnChange.cancel();
+  }, [debouncedOnChange]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
     setLocalValue(newValue);
+    debouncedOnChange(newValue);
   };
 
   const handleClear = () => {
     setLocalValue("");
-    onChange?.({ target: { value: "" } });
+    debouncedOnChange("");
   };
 
   return (

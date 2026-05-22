@@ -10,7 +10,7 @@ export const withCronLock = async (
   ttlSeconds: number,
   job: () => Promise<void>
 ): Promise<void> => {
-  if (!redisClient) {
+  if (!redisClient || !redisClient.isReady) {
     await job();
     return;
   }
@@ -22,7 +22,7 @@ export const withCronLock = async (
     throw new Error(`[cronLock] Invalid ttlSeconds: ${ttlSeconds}. Must be a positive integer.`);
   }
 
-  const acquired = await redisClient.set(key, owner, 'EX', ttlSeconds, 'NX');
+  const acquired = await redisClient.set(key, owner, { EX: ttlSeconds, NX: true });
   if (acquired !== 'OK') {
     logger.debug(`[CRON] Skipping "${lockName}" — another instance holds the lock`);
     return;

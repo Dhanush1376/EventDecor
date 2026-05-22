@@ -12,6 +12,13 @@ import { canonicalizeEmail } from '../utils/emailHelper';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import logger from '../config/logger';
 import { setPaginationHeaders } from '../utils/paginationHeaders';
+import {
+  cacheCart,
+  cacheWishlist,
+  getCachedSessionJson,
+  invalidateUserSessionCaches,
+  sessionKeys,
+} from '../utils/userSessionCache';
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
@@ -118,6 +125,7 @@ export const updateProfile = asyncHandler(async (req: any, res: Response) => {
   if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
 
   await user.save();
+  await invalidateUserSessionCaches(String(req.user.id));
   res.status(200).json(new ApiResponse(true, 'Profile updated successfully', user));
 });
 
@@ -177,13 +185,24 @@ export const setDefaultAddress = asyncHandler(async (req: any, res: Response) =>
 
 // Wishlist Management
 export const getWishlist = asyncHandler(async (req: any, res: Response) => {
+  const userId = String(req.user.id);
+  const cacheKey = sessionKeys.wishlist(userId);
+  const cached = await getCachedSessionJson<unknown[]>(cacheKey);
+  if (cached) {
+    res.setHeader('X-Session-Cache', 'HIT');
+    return res.status(200).json(new ApiResponse(true, 'Wishlist fetched', cached));
+  }
+
   const user = await User.findById(req.user.id).select('wishlist');
   if (!user) throw new ApiError(404, 'User not found');
   
   // Bug-11 Fix: Single optimized query instead of N+1
   const products = await Product.find({ _id: { $in: user.wishlist } })
-    .select('title price images rating slug category isActive');
+    .select('title price images rating slug category isActive')
+    .lean();
 
+  await cacheWishlist(userId, products);
+  res.setHeader('X-Session-Cache', 'MISS');
   res.status(200).json(new ApiResponse(true, 'Wishlist fetched', products));
 });
 
@@ -200,6 +219,7 @@ export const toggleWishlist = asyncHandler(async (req: any, res: Response) => {
   }
 
   await user.save();
+  await invalidateUserSessionCaches(String(req.user.id));
   res.status(200).json(new ApiResponse(true, index === -1 ? 'Added to wishlist' : 'Removed from wishlist', user.wishlist));
 });
 
@@ -262,9 +282,19 @@ const computeAndValidateCart = async (user: any) => {
 };
 
 export const getCart = asyncHandler(async (req: any, res: Response) => {
+  const userId = String(req.user.id);
+  const cacheKey = sessionKeys.cart(userId);
+  const cached = await getCachedSessionJson<{ items: unknown[]; summary: Record<string, number> }>(cacheKey);
+  if (cached) {
+    res.setHeader('X-Session-Cache', 'HIT');
+    return res.status(200).json(new ApiResponse(true, 'Cart fetched', cached));
+  }
+
   const user = await User.findById(req.user.id);
   if (!user) throw new ApiError(404, 'User not found');
   const cartDetails = await computeAndValidateCart(user);
+  await cacheCart(userId, cartDetails);
+  res.setHeader('X-Session-Cache', 'MISS');
   res.status(200).json(new ApiResponse(true, 'Cart fetched', cartDetails));
 });
 
@@ -288,6 +318,7 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
   }
 
   await user.save();
+  await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await computeAndValidateCart(user);
   res.status(200).json(new ApiResponse(true, 'Cart updated', cartDetails));
 });
@@ -306,6 +337,7 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
     }));
 
   await user.save();
+  await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await computeAndValidateCart(user);
   res.status(200).json(new ApiResponse(true, 'Cart synced successfully', cartDetails));
 });
@@ -317,7 +349,8 @@ export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
 
   user.cart = user.cart.filter((item: any) => item.product && item.product.toString() !== productId);
   await user.save();
-  
+  await invalidateUserSessionCaches(String(req.user.id));
+
   const cartDetails = await computeAndValidateCart(user);
   res.status(200).json(new ApiResponse(true, 'Removed from cart', cartDetails));
 });

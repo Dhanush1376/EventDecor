@@ -30,13 +30,25 @@ class ContentService {
   }
 
   static async getPublishedContent() {
-    const sections = await ContentSection.find({ status: 'published' }).select('sectionKey data');
-    const flatContent: any = {};
-    sections.forEach(section => {
-      if (ADMIN_ONLY_SECTION_KEYS.has(section.sectionKey)) return;
-      flatContent[section.sectionKey] = stripSensitiveFromSectionData(section.sectionKey, section.data);
-    });
-    return flatContent;
+    const cacheKey = 'cms:published:flat';
+    return cmsCache.getOrSet(
+      cacheKey,
+      async () => {
+        const sections = await ContentSection.find({ status: 'published' })
+          .select('sectionKey data')
+          .lean();
+        const flatContent: Record<string, unknown> = {};
+        sections.forEach((section) => {
+          if (ADMIN_ONLY_SECTION_KEYS.has(section.sectionKey)) return;
+          flatContent[section.sectionKey] = stripSensitiveFromSectionData(
+            section.sectionKey,
+            section.data
+          );
+        });
+        return flatContent;
+      },
+      10 * 60 * 1000
+    );
   }
 
   static async getSectionByKey(key: string) {
@@ -112,6 +124,7 @@ class ContentService {
     // Invalidate MemoryCache to ensure immediate sync
     cmsCache.delete(`cms:content:${key}`);
     cmsCache.delete('cms:all_sections');
+    cmsCache.delete('cms:published:flat');
     cmsCache.delete(key); // Just in case cache key is set without prefix (like 'studio_settings')
     if (key === 'admin_safety_lock') {
       await invalidateSafetyLockCache();

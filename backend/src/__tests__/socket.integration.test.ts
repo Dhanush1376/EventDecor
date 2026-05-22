@@ -1,8 +1,9 @@
+/// <reference types="jest" />
+
 import http from 'http';
 import jwt from 'jsonwebtoken';
 import { io as ioClient, Socket } from 'socket.io-client';
 
-// Mock the logger to prevent expected errors from polluting the test output
 jest.mock('../config/logger', () => ({
   __esModule: true,
   default: {
@@ -13,7 +14,22 @@ jest.mock('../config/logger', () => ({
   },
 }));
 
-// Mock the User model BEFORE it is imported by socket.ts
+jest.mock('../app', () => ({
+  isOriginAllowed: jest.fn(() => true),
+}));
+
+jest.mock('../utils/redis', () => ({
+  __esModule: true,
+  default: null,
+  pubClient: null,
+  subClient: null,
+  pingRedis: jest.fn(async () => 'not_configured' as const),
+}));
+
+jest.mock('../utils/socketConnectionRateLimit', () => ({
+  checkSocketConnectionRateLimit: jest.fn(async () => ({ allowed: true, ip: '127.0.0.1' })),
+}));
+
 jest.mock('../models/User', () => ({
   __esModule: true,
   default: {
@@ -24,26 +40,41 @@ jest.mock('../models/User', () => ({
 import User from '../models/User';
 import { initSocket, getIO } from '../socket';
 
+const mockFindById = User.findById as jest.Mock;
+
 describe('Socket.io namespaces', () => {
   let httpServer: http.Server;
   let port: number;
   const sockets: Socket[] = [];
 
-  beforeAll((done) => {
+  beforeAll(async () => {
     process.env.JWT_SECRET = 'test_jwt_secret_must_be_at_least_32_chars';
+    process.env.NODE_ENV = 'test';
+    delete process.env.REDIS_URL;
+
     httpServer = http.createServer();
     initSocket(httpServer);
-    httpServer.listen(0, () => {
-      const addr = httpServer.address();
-      port = typeof addr === 'object' && addr ? addr.port : 0;
-      done();
+
+    await new Promise<void>((resolve) => {
+      httpServer.listen(0, () => {
+        const addr = httpServer.address();
+        port = typeof addr === 'object' && addr ? addr.port : 0;
+        resolve();
+      });
     });
   });
 
-  afterAll((done) => {
-    sockets.forEach((s) => s.disconnect());
-    getIO().close(() => {
-      done();
+  afterAll(async () => {
+    sockets.forEach((s) => {
+      if (s.connected) s.disconnect();
+    });
+
+    await new Promise<void>((resolve) => {
+      getIO().close(() => resolve());
+    });
+
+    await new Promise<void>((resolve) => {
+      httpServer.close(() => resolve());
     });
   });
 
@@ -52,20 +83,29 @@ describe('Socket.io namespaces', () => {
       const socket = ioClient(`http://127.0.0.1:${port}${namespace}`, {
         transports: ['websocket'],
         forceNew: true,
-        reconnection: false, // Prevents open handles from automatic retries
+        reconnection: false,
         auth: token ? { token } : {},
       });
       sockets.push(socket);
-      const timer = setTimeout(() => reject(new Error('connect timeout')), 5000);
+
+      const timer = setTimeout(() => {
+        socket.disconnect();
+        reject(new Error('connect timeout'));
+      }, 5000);
+
       socket.on('connect', () => {
         clearTimeout(timer);
         resolve(socket);
       });
-      socket.on('connect_error', (err) => {
+      socket.on('connect_error', (err: Error) => {
         clearTimeout(timer);
         reject(err);
       });
     });
+
+  beforeEach(() => {
+    mockFindById.mockReset();
+  });
 
   it('rejects /user connection without JWT', async () => {
     await expect(connectClient('/user')).rejects.toThrow();
@@ -80,19 +120,20 @@ describe('Socket.io namespaces', () => {
   });
 
   it('accepts /user connection with valid JWT when user exists', async () => {
-    // Mock the DB call made by socketAuthMiddleware
-    (User.findById as jest.Mock).mockReturnValue({
+    mockFindById.mockReturnValue({
       select: jest.fn().mockResolvedValue({
-        _id: 'mock_user_id',
+        _id: { toString: () => 'mock_user_id' },
         role: 'customer',
         email: 'test@example.com',
-        isVerified: true
-      })
+        isVerified: true,
+      }),
     });
 
-    const token = jwt.sign({ id: 'mock_user_id', role: 'customer' }, process.env.JWT_SECRET as string, {
-      expiresIn: '15m',
-    });
+    const token = jwt.sign(
+      { id: 'mock_user_id', role: 'customer' },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '15m' }
+    );
 
     const socket = await connectClient('/user', token);
     expect(socket.connected).toBe(true);

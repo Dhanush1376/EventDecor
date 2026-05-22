@@ -1,6 +1,15 @@
 import api from './api';
 
 import logger from '../utils/logger';
+
+const checkAuthLocal = () => {
+  try {
+    return !!localStorage.getItem('siri_auth_token');
+  } catch {
+    return false; // Fail safe for incognito or SSR
+  }
+};
+
 export const authService = {
   login: async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
@@ -26,8 +35,11 @@ export const authService = {
     const response = await api.post('/auth/register', userData);
     return response.data;
   },
-  getProfile: async () => {
-    const response = await api.get('/auth/profile');
+  getProfile: async (options = {}) => {
+    if (!checkAuthLocal()) {
+      return Promise.reject(new Error('Not authenticated'));
+    }
+    const response = await api.get('/auth/profile', options);
     return response.data;
   },
   sendOTP: async (email, password) => {
@@ -105,6 +117,7 @@ export const orderService = {
     return response.data;
   },
   getMyOrders: async () => {
+    if (!checkAuthLocal()) return Promise.reject(new Error('Not authenticated'));
     const response = await api.get('/orders/my-orders');
     return response.data;
   },
@@ -250,6 +263,7 @@ export const reviewService = {
 
 export const couponService = {
   getAll: async () => {
+    if (!checkAuthLocal()) return Promise.reject(new Error('Not authenticated'));
     const response = await api.get('/coupons');
     return response.data;
   },
@@ -292,8 +306,9 @@ export const userService = {
     const response = await api.get('/users/categories');
     return response.data;
   },
-  getProfile: async () => {
-    const response = await api.get('/users/profile');
+  getProfile: async (options = {}) => {
+    if (!checkAuthLocal()) return Promise.reject(new Error('Not authenticated'));
+    const response = await api.get('/users/profile', options);
     return response.data;
   },
   updateProfile: async (data) => {
@@ -316,8 +331,9 @@ export const userService = {
     const response = await api.delete(`/users/addresses/${id}`);
     return response.data;
   },
-  getWishlist: async () => {
-    const response = await api.get('/users/wishlist');
+  getWishlist: async (options = {}) => {
+    if (!checkAuthLocal()) return Promise.reject(new Error('Not authenticated'));
+    const response = await api.get('/users/wishlist', options);
     return response.data;
   },
   toggleWishlist: async (productId) => {
@@ -328,8 +344,9 @@ export const userService = {
     const response = await api.patch(`/users/addresses/${id}/default`);
     return response.data;
   },
-  getCart: async () => {
-    const response = await api.get('/users/cart');
+  getCart: async (options = {}) => {
+    if (!checkAuthLocal()) return Promise.reject(new Error('Not authenticated'));
+    const response = await api.get('/users/cart', options);
     return response.data;
   },
   addToCart: async (productId, quantity) => {

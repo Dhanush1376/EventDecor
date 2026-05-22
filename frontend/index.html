@@ -67,8 +67,11 @@
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />
 
-    <!-- Fonts — display=swap for CLS optimization -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+    <!-- Fonts — non-blocking load; display=swap reduces CLS -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" /></noscript>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" /></noscript>
 
     <!-- Critical CSS: Prevent FOUC -->
     <style>
@@ -113,6 +116,42 @@
       /* Prevent CLS: reserve space for common layout elements */
       #root {
         min-height: 100vh;
+      }
+
+      /* Instant shell before React hydrates — avoids blank screen on cold start */
+      .app-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: #faf9f6;
+        color: #1a1a1a;
+        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      }
+      .app-shell__mark {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1.5rem;
+        color: #b8860b;
+        animation: shell-pulse 1.4s ease-in-out infinite;
+      }
+      .app-shell__label {
+        font-size: 0.625rem;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        color: rgba(26, 26, 26, 0.55);
+      }
+      @keyframes shell-pulse {
+        0%, 100% { opacity: 0.65; transform: scale(0.98); }
+        50% { opacity: 1; transform: scale(1); }
       }
     </style>
 
@@ -172,7 +211,12 @@
       </div>
     </noscript>
 
-    <div id="root"></div>
+    <div id="root">
+      <div class="app-shell" id="app-shell" aria-hidden="true">
+        <div class="app-shell__mark">S</div>
+        <span class="app-shell__label">Loading studio</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
 
   </body>

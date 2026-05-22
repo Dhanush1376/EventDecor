@@ -8,7 +8,7 @@ const TTL_SECONDS = 5;
 type SafetyLockDoc = { data?: { safetyLock?: boolean } } | null;
 
 export const getSafetyLockDocument = async (): Promise<SafetyLockDoc> => {
-  if (redisClient) {
+  if (redisClient && redisClient.isReady) {
     try {
       const cached = await redisClient.get(REDIS_KEY);
       if (cached) {
@@ -19,7 +19,7 @@ export const getSafetyLockDocument = async (): Promise<SafetyLockDoc> => {
     }
   }
 
-  if (!redisClient) {
+  if (!redisClient || !redisClient.isReady) {
     return memorySafetyLockCache.getOrSet(
       'admin_safety_lock',
       async () => ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean(),
@@ -31,7 +31,7 @@ export const getSafetyLockDocument = async (): Promise<SafetyLockDoc> => {
 
   if (doc) {
     try {
-      await redisClient.setex(REDIS_KEY, TTL_SECONDS, JSON.stringify(doc));
+      await redisClient.set(REDIS_KEY, JSON.stringify(doc), { EX: TTL_SECONDS });
     } catch {
       // non-fatal
     }
@@ -43,7 +43,7 @@ export const getSafetyLockDocument = async (): Promise<SafetyLockDoc> => {
 /** Cross-instance safety lock cache bust (Redis + local fallback). */
 export const invalidateSafetyLockCache = async (): Promise<void> => {
   memorySafetyLockCache.delete('admin_safety_lock');
-  if (redisClient) {
+  if (redisClient && redisClient.isReady) {
     try {
       await redisClient.del(REDIS_KEY);
     } catch {

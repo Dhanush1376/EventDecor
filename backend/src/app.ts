@@ -250,16 +250,24 @@ app.get('/sitemap.xml', async (req: Request, res: Response) => {
 
 // Rate Limiting
 const rateLimitConfig = (options: any) => {
-  if (redisClient) {
-    return rateLimit({
-      ...options,
-      store: new RedisStore({
-        // @ts-ignore - rate-limit-redis typescript issue with ioredis
-        sendCommand: (...args: string[]) => redisClient!.call(...args),
-      }),
-    });
-  }
-  return rateLimit(options);
+  const memoryLimiter = rateLimit(options);
+  let redisLimiter: any = null;
+
+  return (req: Request, res: Response, next: any) => {
+    if (redisClient && redisClient.isReady) {
+      if (!redisLimiter) {
+        redisLimiter = rateLimit({
+          ...options,
+          store: new RedisStore({
+            // @ts-ignore
+            sendCommand: (...args: string[]) => redisClient!.sendCommand(args),
+          }),
+        });
+      }
+      return redisLimiter(req, res, next);
+    }
+    return memoryLimiter(req, res, next);
+  };
 };
 
 const globalLimiter = rateLimitConfig({
@@ -343,9 +351,11 @@ app.get('/api/health', async (req: Request, res: Response) => {
     requireRedis && (redisStatus === 'down' || redisStatus === 'not_configured');
   const cdnDown = cdnStatus === 'down';
 
+  const dbHealthFail = dbState !== 1 || redisRequiredDown;
+
   const healthData = {
-    success: dbState === 1 && !redisRequiredDown && !cdnDown,
-    status: dbState === 1 && !redisRequiredDown && !cdnDown ? 'healthy' : 'degraded',
+    success: !dbHealthFail,
+    status: dbHealthFail ? 'critical' : (cdnDown ? 'degraded' : 'healthy'),
     message: 'Siri Arts API Status',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -376,9 +386,13 @@ app.get('/api/health', async (req: Request, res: Response) => {
     },
   };
 
-  if (dbState !== 1 || redisRequiredDown || cdnDown) {
-    logger.error('🏥 HEALTHCHECK FAILED: dependency degraded', healthData);
+  if (dbHealthFail) {
+    logger.error('🏥 HEALTHCHECK FAILED: Critical dependency down', healthData);
     return res.status(503).json(healthData);
+  }
+
+  if (cdnDown) {
+    logger.warn('🏥 HEALTHCHECK DEGRADED: CDN is down but core API is up', healthData);
   }
 
   return res.status(200).json(healthData);

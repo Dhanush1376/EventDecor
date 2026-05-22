@@ -3,9 +3,8 @@ import { createRoot } from "react-dom/client";
 import "./styles/globals.css";
 import App from "./App.jsx";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
-import { initAnalytics } from "./utils/analytics";
-import { initObservability } from "./utils/observability";
 import { MARBLE_TEXTURE_URL } from "./constants/assets";
+import { runAppBootstrap } from "./utils/bootstrap";
 
 import logger from './utils/logger';
 
@@ -13,11 +12,20 @@ document.documentElement.style.setProperty(
   '--marble-texture-url',
   `url("${MARBLE_TEXTURE_URL}")`
 );
-// Initialize observability monitoring layers (Sentry & LogRocket)
-initObservability();
 
-// Initialize analytics (consent-aware — won't fire without user consent)
-initAnalytics();
+// Defer non-critical monitoring and analytics until after first paint
+const deferNonCriticalInit = () => {
+  import('./utils/observability').then(({ initObservability }) => initObservability()).catch(() => {});
+  import('./utils/analytics').then(({ initAnalytics }) => initAnalytics()).catch(() => {});
+};
+
+if (typeof requestIdleCallback === 'function') {
+  requestIdleCallback(deferNonCriticalInit, { timeout: 4000 });
+} else {
+  setTimeout(deferNonCriticalInit, 1);
+}
+
+runAppBootstrap();
 
 // ─── Global Error Handler for Outdated Bundles (Chunk Loading Errors) ───
 window.addEventListener('error', (event) => {
@@ -36,10 +44,17 @@ window.addEventListener('error', (event) => {
   }
 }, true); // Use capture phase to catch resource load errors
 
-createRoot(document.getElementById("root")).render(
+const rootEl = document.getElementById("root");
+const shellEl = document.getElementById("app-shell");
+
+createRoot(rootEl).render(
   <StrictMode>
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
   </StrictMode>,
 );
+
+if (shellEl) {
+  shellEl.remove();
+}
