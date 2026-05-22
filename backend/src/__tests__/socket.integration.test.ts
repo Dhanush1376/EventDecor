@@ -1,8 +1,17 @@
 import http from 'http';
 import jwt from 'jsonwebtoken';
 import { io as ioClient, Socket } from 'socket.io-client';
+
+// Mock the User model BEFORE it is imported by socket.ts
+jest.mock('../models/User', () => ({
+  __esModule: true,
+  default: {
+    findById: jest.fn(),
+  },
+}));
+
+import User from '../models/User';
 import { initSocket } from '../socket';
-import mongoose from 'mongoose';
 
 describe('Socket.io namespaces', () => {
   let httpServer: http.Server;
@@ -10,7 +19,7 @@ describe('Socket.io namespaces', () => {
   const sockets: Socket[] = [];
 
   beforeAll((done) => {
-    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_must_be_at_least_32_chars';
+    process.env.JWT_SECRET = 'test_jwt_secret_must_be_at_least_32_chars';
     httpServer = http.createServer();
     initSocket(httpServer);
     httpServer.listen(0, () => {
@@ -30,6 +39,7 @@ describe('Socket.io namespaces', () => {
       const socket = ioClient(`http://127.0.0.1:${port}${namespace}`, {
         transports: ['websocket'],
         forceNew: true,
+        reconnection: false, // Prevents open handles from automatic retries
         auth: token ? { token } : {},
       });
       sockets.push(socket);
@@ -57,19 +67,17 @@ describe('Socket.io namespaces', () => {
   });
 
   it('accepts /user connection with valid JWT when user exists', async () => {
-    if (mongoose.connection.readyState !== 1) {
-      process.stdout.write('Skipping socket user test — MongoDB not connected in Jest\n');
-      return;
-    }
+    // Mock the DB call made by socketAuthMiddleware
+    (User.findById as jest.Mock).mockReturnValue({
+      select: jest.fn().mockResolvedValue({
+        _id: 'mock_user_id',
+        role: 'customer',
+        email: 'test@example.com',
+        isVerified: true
+      })
+    });
 
-    const User = mongoose.model('User');
-    const user = await User.findOne({ isVerified: true }).select('_id role');
-    if (!user) {
-      process.stdout.write('Skipping socket user test — no verified user in database\n');
-      return;
-    }
-
-    const token = jwt.sign({ id: user._id.toString(), role: user.role }, process.env.JWT_SECRET as string, {
+    const token = jwt.sign({ id: 'mock_user_id', role: 'customer' }, process.env.JWT_SECRET as string, {
       expiresIn: '15m',
     });
 
