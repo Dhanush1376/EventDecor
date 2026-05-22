@@ -181,28 +181,29 @@ export function AuthModal() {
     }
   };
 
-  if (!isAuthModalOpen) return null;
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-        {/* Dark blurred background overlay */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={closeAuthModal}
-          className="absolute inset-0 bg-black/40 backdrop-blur-md"
-        />
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          {/* Dark blurred background overlay */}
+          <motion.div
+            key="auth-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeAuthModal}
+            className="absolute inset-0 bg-black/40 backdrop-blur-md"
+          />
 
-        {/* Floating Auth Card Modal Container */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="relative bg-[#faf9f6] w-full max-w-[440px] rounded-[32px] p-5 xs:p-8 sm:p-10 border border-outline-variant/30 shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-hidden"
-        >
+          {/* Floating Auth Card Modal Container */}
+          <motion.div
+            key="auth-modal"
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="relative bg-[#faf9f6] w-full max-w-[440px] rounded-[32px] p-5 xs:p-8 sm:p-10 border border-outline-variant/30 shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-hidden"
+          >
           {/* Concentric rotating gold mandalas for luxury styling */}
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.06] z-0">
             <MandalaElement
@@ -462,6 +463,7 @@ export function AuthModal() {
           </div>
         </motion.div>
       </div>
+      )}
     </AnimatePresence>
   );
 }
