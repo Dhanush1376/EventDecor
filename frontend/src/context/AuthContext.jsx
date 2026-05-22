@@ -85,36 +85,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const adminLogin = async (email, password) => {
-    try {
-      const response = await authService.adminLogin(email, password);
-      if (response.success && (response.data?.requires2FA || response.data?.requires2FASetup)) {
-        return response.data;
-      }
-      if (response.success) {
-        const token = response.data.accessToken || response.data.token;
-        setAccessToken(token);
-        localStorage.setItem("siri_auth_token", "true");
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        saveCachedProfile(response.data.user);
-        return true;
-      }
-    } catch (err) {
-      throw err.response?.data || new Error('Login failed');
-    }
-  };
-
-  const completeAdminLogin = async (sessionData) => {
-    const token = sessionData.accessToken || sessionData.token;
-    setAccessToken(token);
-    localStorage.setItem("siri_auth_token", "true");
-    setUser(sessionData.user);
-    setIsAuthenticated(true);
-    saveCachedProfile(sessionData.user);
-    return true;
-  };
-
   useEffect(() => {
     const hasToken = localStorage.getItem("siri_auth_token") || cachedProfile;
     if (!hasToken) {
@@ -201,8 +171,6 @@ export function AuthProvider({ children }) {
       loading, 
       isAuthenticated, 
       login, 
-      adminLogin,
-      completeAdminLogin,
       logout, 
       checkAuth,
       isAuthModalOpen,

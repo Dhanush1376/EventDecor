@@ -52,7 +52,6 @@ const AcceptInvite = lazy(() => import("./pages/AcceptInvite").then((m) => ({ de
 const NotFound = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFound })));
 
 // ─── Admin Portal (Lazy Loaded) ───
-const AdminLogin = lazy(() => import("./admin/pages/AdminLogin").then((m) => ({ default: m.AdminLogin })));
 const AdminLayout = lazy(() => import("./admin/layouts/AdminLayout").then((m) => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard").then((m) => ({ default: m.AdminDashboard })));
 const AdminProducts = lazy(() => import("./admin/pages/AdminProducts").then((m) => ({ default: m.AdminProducts })));
@@ -158,7 +157,6 @@ function App() {
                         <Route element={<MinimalLayout />}>
                           <Route path="/checkout" element={<Checkout />} />
                         </Route>
-                        <Route path="/admin/login" element={<AdminLogin />} />
                         <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
                           <Route index element={<AdminDashboard />} />
                           <Route path="homepage" element={<AdminContent />} />

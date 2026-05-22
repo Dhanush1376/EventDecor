@@ -12,9 +12,7 @@ export function ProtectedRoute({ children, adminOnly = false }) {
   }
 
   if (!isAuthenticated) {
-    const loginPath = adminOnly
-      ? `/admin/login?redirect=${encodeURIComponent(location.pathname)}`
-      : `/auth?redirect=${encodeURIComponent(location.pathname)}`;
+    const loginPath = `/auth?redirect=${encodeURIComponent(location.pathname)}`;
     return <Navigate to={loginPath} replace />;
   }
 
