@@ -20,12 +20,12 @@ const refreshCookieName = 'siri_refresh_token';
 const setRefreshCookie = (res: Response, refreshToken: string) => {
   const maxAge = AuthService.getRefreshTokenTtlMs();
   const isProd = process.env.NODE_ENV === 'production';
-  // A-03: Cookie is scoped to /api/auth only — frontend refresh MUST call POST /api/auth/refresh
+  // A-03: Cookie is scoped to /api (so it works with /api/v1/auth/refresh as well)
   res.cookie(refreshCookieName, refreshToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
-    path: '/api/auth',
+    path: '/api',
     maxAge,
   });
 };
@@ -36,7 +36,7 @@ const clearRefreshCookie = (res: Response) => {
     httpOnly: true,
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
-    path: '/api/auth',
+    path: '/api',
   });
 };
 
