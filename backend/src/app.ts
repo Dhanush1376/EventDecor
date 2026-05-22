@@ -102,6 +102,7 @@ const allowedOrigins = [
   "https://siriartsandcrafts.com",
   "https://www.siriartsandcrafts.com",
   "https://siriarts-n-crafts.vercel.app",
+  "https://siri-artsandcrafts.vercel.app",
   "https://siri-arts-n-crafts.onrender.com",
   // Merge production origins from FRONTEND_URLS env var
   ...(process.env.FRONTEND_URLS || '')
