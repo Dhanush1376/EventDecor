@@ -39,7 +39,17 @@ window.addEventListener('error', (event) => {
     const now = Date.now();
     if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
       sessionStorage.setItem('siri_chunk_reload_time', String(now));
-      window.location.reload();
+      
+      // Unregister service workers first to bypass PWA cache
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => registration.unregister());
+        });
+      }
+
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('v', Date.now().toString());
+      window.location.href = currentUrl.toString();
     }
   }
 }, true); // Use capture phase to catch resource load errors
