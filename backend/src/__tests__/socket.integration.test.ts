@@ -58,14 +58,14 @@ describe('Socket.io namespaces', () => {
 
   it('accepts /user connection with valid JWT when user exists', async () => {
     if (mongoose.connection.readyState !== 1) {
-      console.warn('Skipping socket user test — MongoDB not connected in Jest');
+      process.stdout.write('Skipping socket user test — MongoDB not connected in Jest\n');
       return;
     }
 
     const User = mongoose.model('User');
     const user = await User.findOne({ isVerified: true }).select('_id role');
     if (!user) {
-      console.warn('Skipping socket user test — no verified user in database');
+      process.stdout.write('Skipping socket user test — no verified user in database\n');
       return;
     }
 

@@ -50,7 +50,7 @@ export const collectMissingEnvVars = (options?: { ciMode?: boolean }): string[] 
   }
 
   if (!process.env.GROQ_API_KEY) {
-    console.warn('\x1b[33m%s\x1b[0m', '⚠️ WARNING: GROQ_API_KEY is missing. AI auto-fill features will fail.');
+    process.stdout.write('\x1b[33m⚠️ WARNING: GROQ_API_KEY is missing. AI auto-fill features will fail.\x1b[0m\n');
   }
 
   return missingVars;
