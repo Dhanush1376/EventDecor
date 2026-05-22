@@ -75,7 +75,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", (req, res) => `'nonce-${(res as any).locals.nonce}'`, "https://checkout.razorpay.com", "https://www.googletagmanager.com"],
       styleSrc: ["'self'", (req, res) => `'nonce-${(res as any).locals.nonce}'`, "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://www.gravatar.com", "https://*.cloudinary.com"],
+      imgSrc: ["* data: blob: 'unsafe-inline'"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       connectSrc: ["'self'", "https://api.razorpay.com", "https://lux.razorpay.com", ...(process.env.SENTRY_DSN ? ["https://*.sentry.io"] : [])],
       frameSrc: ["'self'", "https://api.razorpay.com"],
