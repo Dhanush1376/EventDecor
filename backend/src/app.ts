@@ -294,7 +294,7 @@ const skipRateLimit = (req: Request) => {
 const globalLimiter = rateLimitConfig({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200, // Limit each IP to 200 requests per windowMs
-  message: 'Too many requests from this IP, please try again after 15 minutes',
+  message: { message: 'Too many requests from this IP, please try again after 15 minutes' },
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipRateLimit,
@@ -303,7 +303,7 @@ const globalLimiter = rateLimitConfig({
 const authLimiter = rateLimitConfig({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // Strict limit for auth routes (login/register/otp)
-  message: 'Too many login attempts, please try again after 15 minutes',
+  message: { message: 'Too many login attempts, please try again after 15 minutes' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -311,7 +311,7 @@ const authLimiter = rateLimitConfig({
 const otpSendLimiter = rateLimitConfig({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 5, // Limit each IP to 5 OTP requests per 10 minutes
-  message: 'Too many OTP requests from this IP. Please try again after 10 minutes.',
+  message: { message: 'Too many OTP requests from this IP. Please try again after 10 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -319,7 +319,7 @@ const otpSendLimiter = rateLimitConfig({
 const otpVerifyLimiter = rateLimitConfig({
   windowMs: 10 * 60 * 1000,
   max: 15,
-  message: 'Too many OTP verification attempts from this IP. Please try again after 10 minutes.',
+  message: { message: 'Too many OTP verification attempts from this IP. Please try again after 10 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
