@@ -21,8 +21,9 @@ export function SlowConnectionBanner() {
   return (
     <div
       role="status"
-      className="fixed top-0 left-0 right-0 z-[9998] px-4 py-2 bg-amber-50 border-b border-amber-200/80 text-amber-950 text-center text-xs tracking-wide"
+      className="fixed bottom-24 left-1/2 -translate-x-1/2 w-max max-w-[90vw] z-[9998] px-6 py-3 bg-black/90 backdrop-blur-md border border-white/10 text-white rounded-full text-center text-[10px] tracking-widest uppercase font-bold shadow-2xl flex items-center gap-3"
     >
+      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
       {message}
     </div>
   );
