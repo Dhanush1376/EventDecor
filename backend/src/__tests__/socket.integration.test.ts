@@ -2,6 +2,17 @@ import http from 'http';
 import jwt from 'jsonwebtoken';
 import { io as ioClient, Socket } from 'socket.io-client';
 
+// Mock the logger to prevent expected errors from polluting the test output
+jest.mock('../config/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
+
 // Mock the User model BEFORE it is imported by socket.ts
 jest.mock('../models/User', () => ({
   __esModule: true,
