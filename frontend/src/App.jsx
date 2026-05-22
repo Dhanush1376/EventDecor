@@ -1,4 +1,5 @@
-import React, { lazy, Suspense, useState } from "react";
+import React, { Suspense, useState } from "react";
+import { lazyWithRetry as lazy } from "./utils/lazyWithRetry";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
