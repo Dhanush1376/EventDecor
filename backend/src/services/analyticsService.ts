@@ -3,15 +3,14 @@ import Product from '../models/Product';
 import User from '../models/User';
 import Event from '../models/Event';
 import logger from '../config/logger';
-import { MemoryCache } from '../utils/MemoryCache';
-
-const analyticsCache = new MemoryCache({ defaultTtlMs: 5 * 60 * 1000 }); // 5-minute cache threshold
+import { analyticsCache, broadcastCacheDelete } from '../utils/MemoryCache';
 
 class AnalyticsService {
   // Method to programmatically invalidate analytics cache when orders/inventory changes
   static clearCache() {
     logger.info('[ANALYTICS CACHE] Invalidation triggered. Purging stale dashboard statistics cache.');
     analyticsCache.delete('dashboard_stats');
+    broadcastCacheDelete('analyticsCache', 'dashboard_stats');
   }
 
   static async getDashboardStats() {
@@ -36,7 +35,7 @@ class AnalyticsService {
         { $group: { _id: null, total: { $sum: '$total' } } }
       ]),
       Order.countDocuments({ orderStatus: 'Pending' }),
-      User.countDocuments({ role: 'customer' }), // Standard role for storefront customers
+      User.countDocuments({ role: { $in: ['customer', 'user'] } }), // Standard and legacy roles for storefront customers
       Product.countDocuments({ isActive: true }),
       Event.countDocuments({ isActive: true })
     ]);

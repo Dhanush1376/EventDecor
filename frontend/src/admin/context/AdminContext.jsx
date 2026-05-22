@@ -458,7 +458,7 @@ export function AdminProvider({ children }) {
             reviewService.getAll({ limit: 50 }),
             analyticsService.getDashboardStats(),
             eventService.getAll({ limit: 50 }),
-            analyticsService.getAuditLogs(),
+            analyticsService.getAuditLogs({ limit: 100 }),
             notificationService.getAdminAlerts(),
           ]);
 
@@ -486,7 +486,7 @@ export function AdminProvider({ children }) {
           setEventBookings(list.map(mapDbEventToFrontend));
         }
         if (auditLogsRes.status === "fulfilled" && auditLogsRes.value?.success) {
-          const rawLogs = auditLogsRes.value.data || [];
+          const rawLogs = auditLogsRes.value.data?.data || auditLogsRes.value.data || [];
           setAuditLogs(rawLogs.map(log => ({
             id: log._id || log.id,
             actor: (log.actorRole || 'OWNER').toUpperCase(),

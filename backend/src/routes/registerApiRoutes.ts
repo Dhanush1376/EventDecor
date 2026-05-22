@@ -1,4 +1,5 @@
-import { Application } from 'express';
+import express, { Application } from 'express';
+import { attachApiVersion, ApiVersionTag } from '../middleware/apiVersion';
 import productRoutes from './productRoutes';
 import uploadRoutes from './uploadRoutes';
 import authRoutes from './authRoutes';
@@ -18,24 +19,36 @@ import eventBookingRoutes from './eventBookingRoutes';
 import showcaseRoutes from './showcaseRoutes';
 import adminSystemRoutes from './adminSystemRoutes';
 
-/** Mount all API routers under a prefix (`/api` or `/api/v1`). */
-export const registerApiRoutes = (app: Application, prefix: string): void => {
-  app.use(`${prefix}/products`, productRoutes);
-  app.use(`${prefix}/upload`, uploadRoutes);
-  app.use(`${prefix}/auth`, authRoutes);
-  app.use(`${prefix}/events`, eventRoutes);
-  app.use(`${prefix}/orders`, orderRoutes);
-  app.use(`${prefix}/cms`, cmsRoutes);
-  app.use(`${prefix}/analytics`, analyticsRoutes);
-  app.use(`${prefix}/gallery`, galleryRoutes);
-  app.use(`${prefix}/reviews`, reviewRoutes);
-  app.use(`${prefix}/coupons`, couponRoutes);
-  app.use(`${prefix}/users`, userRoutes);
-  app.use(`${prefix}/inquiries`, inquiryRoutes);
-  app.use(`${prefix}/notifications`, notificationRoutes);
-  app.use(`${prefix}/custom-orders`, customOrderRoutes);
-  app.use(`${prefix}/loyalty`, loyaltyRoutes);
-  app.use(`${prefix}/event-bookings`, eventBookingRoutes);
-  app.use(`${prefix}/showcases`, showcaseRoutes);
-  app.use(`${prefix}/admin`, adminSystemRoutes);
+/**
+ * Mount all API routers under a prefix.
+ * @param apiVersion — `v1` for `/api/v1` (stable contract); `legacy` for deprecated `/api` alias.
+ */
+export const registerApiRoutes = (
+  app: Application,
+  prefix: string,
+  apiVersion: ApiVersionTag = 'v1'
+): void => {
+  const apiRouter = express.Router();
+  apiRouter.use(attachApiVersion(apiVersion));
+
+  apiRouter.use('/products', productRoutes);
+  apiRouter.use('/upload', uploadRoutes);
+  apiRouter.use('/auth', authRoutes);
+  apiRouter.use('/events', eventRoutes);
+  apiRouter.use('/orders', orderRoutes);
+  apiRouter.use('/cms', cmsRoutes);
+  apiRouter.use('/analytics', analyticsRoutes);
+  apiRouter.use('/gallery', galleryRoutes);
+  apiRouter.use('/reviews', reviewRoutes);
+  apiRouter.use('/coupons', couponRoutes);
+  apiRouter.use('/users', userRoutes);
+  apiRouter.use('/inquiries', inquiryRoutes);
+  apiRouter.use('/notifications', notificationRoutes);
+  apiRouter.use('/custom-orders', customOrderRoutes);
+  apiRouter.use('/loyalty', loyaltyRoutes);
+  apiRouter.use('/event-bookings', eventBookingRoutes);
+  apiRouter.use('/showcases', showcaseRoutes);
+  apiRouter.use('/admin', adminSystemRoutes);
+
+  app.use(prefix, apiRouter);
 };

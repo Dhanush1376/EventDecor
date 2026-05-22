@@ -11,6 +11,12 @@ import {
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 import { cacheResponse } from '../middleware/cacheMiddleware';
 import { redisResponseCache } from '../middleware/redisResponseCache';
+import { validate } from '../middleware/validateMiddleware';
+import {
+  createGalleryValidator,
+  updateGalleryValidator,
+  galleryIdParam,
+} from '../validators/galleryValidator';
 
 const router = Router();
 
@@ -23,8 +29,8 @@ router.get('/:id', cacheResponse(60), getGalleryById);
 router.post('/:id/like', requireAuth, likeGalleryItem);
 
 // Admin Routes
-router.post('/', requireAuth, requireAdmin, createGalleryItem);
-router.put('/:id', requireAuth, requireAdmin, updateGalleryItem);
-router.delete('/:id', requireAuth, requireAdmin, deleteGalleryItem);
+router.post('/', requireAuth, requireAdmin, createGalleryValidator, validate, createGalleryItem);
+router.put('/:id', requireAuth, requireAdmin, updateGalleryValidator, validate, updateGalleryItem);
+router.delete('/:id', requireAuth, requireAdmin, ...galleryIdParam, validate, deleteGalleryItem);
 
 export default router;

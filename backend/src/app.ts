@@ -3,8 +3,6 @@ import os from 'os';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
-import dotenv from 'dotenv';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
@@ -24,12 +22,10 @@ import * as Sentry from "@sentry/node";
 import { requestTrackerMiddleware } from './middleware/requestTracker';
 import { requestLogger } from './middleware/requestLogger';
 import { issueCsrfToken, validateCsrf } from './middleware/csrfMiddleware';
+import { enforceHttps } from './middleware/enforceHttps';
 
 // Use require for the inner xss-clean function
 const { clean: xssClean } = require('xss-clean/lib/xss');
-
-// Initialize dotenv
-dotenv.config();
 
 const app: Application = express();
 
@@ -45,6 +41,9 @@ if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 
 }
 app.set('trust proxy', trustProxyHops);
 logger.info(`[STARTUP] Express trust proxy hops: ${trustProxyHops}`);
+
+// Production: redirect when TLS is not terminated (bare Docker / misconfigured proxy)
+app.use(enforceHttps);
 logger.warn(
   `[STARTUP] TRUST_PROXY_HOPS=${trustProxyHops}. Client IP accuracy depends on this matching your proxy chain ` +
     '(Render=1, Cloudflare+Render=2, local dev=0). Wrong values allow IP spoofing on rate limits. See docs/DEPLOYMENT.md'
@@ -287,6 +286,14 @@ const otpSendLimiter = rateLimitConfig({
   legacyHeaders: false,
 });
 
+const otpVerifyLimiter = rateLimitConfig({
+  windowMs: 10 * 60 * 1000,
+  max: 15,
+  message: 'Too many OTP verification attempts from this IP. Please try again after 10 minutes.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const testRateLimitEnabled = process.env.TEST_RATE_LIMIT === 'true';
 
 if (process.env.NODE_ENV === 'production' || testRateLimitEnabled) {
@@ -299,10 +306,15 @@ if (process.env.NODE_ENV === 'production' || testRateLimitEnabled) {
       legacyHeaders: false,
     });
     app.use('/api/', testLimiter);
+    app.use('/api/v1/', testLimiter);
   } else {
     app.use('/api/', globalLimiter);
     app.use('/api/auth/send-otp', otpSendLimiter);
+    app.use('/api/v1/auth/send-otp', otpSendLimiter);
+    app.use('/api/auth/verify-otp', otpVerifyLimiter);
+    app.use('/api/v1/auth/verify-otp', otpVerifyLimiter);
     app.use('/api/auth', authLimiter);
+    app.use('/api/v1/auth', authLimiter);
   }
 } else {
   const devLimiter = rateLimitConfig({
@@ -385,9 +397,9 @@ app.get('/api/version', (req: Request, res: Response) => {
   res.json({ version: process.env.npm_package_version || '1.0.0' });
 });
 
-// 7. API Routes (stable + versioned alias)
-registerApiRoutes(app, '/api');
-registerApiRoutes(app, '/api/v1');
+// 7. API Routes — /api/v1 is the stable contract; /api is a legacy alias (see docs/API_VERSIONING.md)
+registerApiRoutes(app, '/api/v1', 'v1');
+registerApiRoutes(app, '/api', 'legacy');
 
 // 8. Sentry Error Handler (must be before any other error middleware)
 if (process.env.SENTRY_DSN) {

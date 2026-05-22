@@ -11,6 +11,7 @@ import crypto from 'crypto';
 import { canonicalizeEmail } from '../utils/emailHelper';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import logger from '../config/logger';
+import { setPaginationHeaders } from '../utils/paginationHeaders';
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
@@ -49,8 +50,23 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
-  const user = await User.findById(req.params.id).populate('orders');
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const user = await User.findById(req.params.id).populate({
+    path: 'orders',
+    select: 'totalAmount status createdAt paymentStatus paymentMethod deliveryStatus razorpayOrderId',
+    options: {
+      sort: { createdAt: -1 },
+      limit: Number(limit),
+      skip: skip,
+    }
+  });
+
   if (!user) throw new ApiError(404, 'User not found');
+
+  // We fetch total order count directly from the Order model if needed for full pagination,
+  // but to maintain API compatibility we return the user document.
   res.status(200).json(new ApiResponse(true, 'User fetched', user));
 });
 
@@ -58,6 +74,10 @@ export const updateUserRole = asyncHandler(async (req: Request, res: Response) =
   const { role } = req.body;
   if (!['user', 'admin', 'manager', 'coordinator'].includes(role)) {
     throw new ApiError(400, 'Invalid role');
+  }
+
+  if (role === 'admin' && (req as any).user!.role !== 'super_admin') {
+    throw new ApiError(403, 'Only super admins can assign the admin role.');
   }
 
   const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true });
@@ -157,9 +177,14 @@ export const setDefaultAddress = asyncHandler(async (req: any, res: Response) =>
 
 // Wishlist Management
 export const getWishlist = asyncHandler(async (req: any, res: Response) => {
-  const user = await User.findById(req.user.id).populate('wishlist');
+  const user = await User.findById(req.user.id).select('wishlist');
   if (!user) throw new ApiError(404, 'User not found');
-  res.status(200).json(new ApiResponse(true, 'Wishlist fetched', user.wishlist));
+  
+  // Bug-11 Fix: Single optimized query instead of N+1
+  const products = await Product.find({ _id: { $in: user.wishlist } })
+    .select('title price images rating slug category isActive');
+
+  res.status(200).json(new ApiResponse(true, 'Wishlist fetched', products));
 });
 
 export const toggleWishlist = asyncHandler(async (req: any, res: Response) => {
@@ -378,10 +403,31 @@ export const uploadAvatarController = asyncHandler(async (req: any, res: Respons
 
 // Get all team members & invites
 export const getTeamMembers = asyncHandler(async (req: Request, res: Response) => {
-  const members = await User.find({ role: { $in: ['admin', 'manager', 'coordinator'] } }).sort({ createdAt: -1 });
-  const invites = await TeamInvite.find().sort({ createdAt: -1 });
+  const { page, limit, skip } = getPaginationOptions(req.query);
+  const [members, memberCount, invites, inviteCount] = await Promise.all([
+    User.find({ role: { $in: ['admin', 'manager', 'coordinator'] as const } })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    User.countDocuments({ role: { $in: ['admin', 'manager', 'coordinator'] as const } }),
+    TeamInvite.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+    TeamInvite.countDocuments(),
+  ]);
 
-  res.status(200).json(new ApiResponse(true, 'Team data fetched', { members, invites }));
+  setPaginationHeaders(res, memberCount + inviteCount, page, limit);
+  res.status(200).json(
+    new ApiResponse(true, 'Team data fetched', {
+      members,
+      invites,
+      pagination: {
+        memberCount,
+        inviteCount,
+        page,
+        limit,
+        totalCount: memberCount + inviteCount,
+      },
+    })
+  );
 });
 
 // Create team invitation
@@ -448,6 +494,10 @@ export const getInviteDetailsByToken = asyncHandler(async (req: Request, res: Re
 
   const invite = await TeamInvite.findOne({ token: String(token) });
   if (!invite) throw new ApiError(404, 'Invalid or expired invitation token');
+  
+  if (invite.expiresAt && invite.expiresAt < new Date()) {
+    throw new ApiError(400, 'This invitation link has expired.');
+  }
 
   res.status(200).json(new ApiResponse(true, 'Invitation details loaded', invite));
 });
@@ -461,6 +511,10 @@ export const respondToInvite = asyncHandler(async (req: any, res: Response) => {
 
   const invite = await TeamInvite.findOne({ token: String(token), status: 'pending' });
   if (!invite) throw new ApiError(404, 'Invalid, expired, or already-processed invitation');
+
+  if (invite.expiresAt && invite.expiresAt < new Date()) {
+    throw new ApiError(400, 'This invitation link has expired and cannot be accepted.');
+  }
 
   invite.status = status;
   await invite.save();

@@ -8,6 +8,9 @@ import ConsentPreference from '../models/ConsentPreference';
 import User from '../models/User';
 import logger from '../config/logger';
 import { sendEmail as smartSendEmail } from './emailProvider';
+import { escapeHtml } from '../utils/htmlEscape';
+import AdminNotification from '../models/AdminNotification';
+import { emitAdminNotification } from '../socket';
 
 // Rewrite links in HTML to include click tracking
 const rewriteLinks = (html: string, token: string): string => {
@@ -49,19 +52,29 @@ const formatShippingAddress = (addr: any): string => {
   return parts.join(', ');
 };
 
-// Replace template placeholders (e.g. {{name}}, {{otp}}, {{orderId}}, etc.)
+/** Pre-built safe URLs only — never pass raw user input through this set. */
+const TRUSTED_RAW_PLACEHOLDER_KEYS = new Set(['unsubscribe_link', 'dashboardUrl', 'trackingUrl']);
+
+const formatPlaceholderValue = (key: string, raw: unknown): string => {
+  if (raw == null) return '';
+  if (key === 'shippingAddress' && typeof raw === 'object') {
+    return escapeHtml(formatShippingAddress(raw));
+  }
+  if (typeof raw === 'object') {
+    return escapeHtml(JSON.stringify(raw));
+  }
+  const text = String(raw);
+  return TRUSTED_RAW_PLACEHOLDER_KEYS.has(key) ? text : escapeHtml(text);
+};
+
+// Replace template placeholders (e.g. {{name}}, {{otp}}) — always HTML-escape user-supplied values
 const replacePlaceholders = (templateHtml: string, data: Record<string, any>): string => {
   let result = templateHtml;
   for (const key in data) {
     const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-    let value = data[key];
-    if (key === 'shippingAddress' && value && typeof value === 'object') {
-      value = formatShippingAddress(value);
-    }
-    result = result.replace(regex, value);
+    result = result.replace(regex, formatPlaceholderValue(key, data[key]));
   }
-  
-  // Clean remaining placeholders if any
+
   result = result.replace(/{{\s*[\w.-]+\s*}}/g, '');
   return result;
 };
@@ -308,4 +321,25 @@ export const runCampaignDispatch = async (campaignId: string) => {
   }
 };
 
-
+/**
+ * Internal Helper: Create & Emit Admin Notification
+ */
+export const createAdminNotification = async (payload: {
+  title: string;
+  message: string;
+  type: 'order' | 'custom_request' | 'payment' | 'inquiry' | 'user' | 'system';
+  actionLink?: string;
+  metadata?: Record<string, any>;
+}) => {
+  try {
+    const notification = new AdminNotification(payload);
+    await notification.save();
+    
+    // Emit via WebSocket to all connected admins instantly
+    emitAdminNotification(notification);
+    
+    return notification;
+  } catch (error) {
+    logger.error('Failed to create admin notification:', error);
+  }
+};

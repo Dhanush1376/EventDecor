@@ -17,6 +17,7 @@ export interface IGallery extends Document {
   similarInspirations: mongoose.Types.ObjectId[];
   views: number;
   likes: number;
+  likedBy: mongoose.Types.ObjectId[];
   isActive: boolean;
   type: 'inspiration' | 'real-event';
 }
@@ -40,6 +41,7 @@ const GallerySchema: Schema = new Schema(
     similarInspirations: [{ type: Schema.Types.ObjectId, ref: 'Gallery' }],
     views: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },
+    likedBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

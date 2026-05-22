@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/globals.css";
 import App from "./App.jsx";
+import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { initAnalytics } from "./utils/analytics";
 import { initObservability } from "./utils/observability";
 import { MARBLE_TEXTURE_URL } from "./constants/assets";
@@ -37,6 +38,8 @@ window.addEventListener('error', (event) => {
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );

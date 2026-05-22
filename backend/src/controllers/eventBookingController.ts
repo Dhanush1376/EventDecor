@@ -3,7 +3,7 @@ import EventBooking from '../models/EventBooking';
 import Event from '../models/Event';
 import User from '../models/User';
 import { EventBookingMailService } from '../services/eventBookingMailService';
-import { createAdminNotification } from './adminNotificationController';
+import { createAdminNotification } from '../services/notificationService';
 import logger from '../config/logger';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -36,6 +36,18 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
     throw new ApiError(404, 'Authorized customer account not found.');
   }
 
+  const bookingDate = new Date(date);
+  if (isNaN(bookingDate.getTime())) {
+    throw new ApiError(400, 'Invalid event date format.');
+  }
+  
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  if (bookingDate < startOfToday) {
+    throw new ApiError(400, 'Event date must be in the future.');
+  }
+
   // 1. Double Booking Check (same venue address, same date)
   if (venue?.address && venue.address.trim() && venue.address.toUpperCase() !== 'TBD') {
     const bookingDate = new Date(date);
@@ -63,9 +75,8 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
   if (eventPackageId) {
     const pkg = await Event.findById(eventPackageId);
     if (pkg) {
-      // Parse pricing string like "Starting at ₹75,000" or similar
-      const rawPrice = pkg.pricing ? pkg.pricing.replace(/[^0-9]/g, '') : '0';
-      rentalFee = parseInt(rawPrice) || 35000; // default fallback if unparseable
+      // Use the structured basePrice instead of parsing freetext strings
+      rentalFee = pkg.basePrice || 35000;
     }
   } else {
     rentalFee = 25000; // base customization fee if guest didn't select package
@@ -137,7 +148,8 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
 // 2. Get Customer Event Bookings
 export const getMyEventBookings = asyncHandler(async (req: any, res: Response) => {
   const bookings = await EventBooking.find({ user: req.user?.id })
-    .populate('eventPackage')
+    .populate('eventPackage', 'title image') // only get necessary package fields
+    .select('bookingId title eventType date status pricing.totalPrice pricing.paymentStatus createdAt')
     .sort({ createdAt: -1 });
   res.status(200).json(new ApiResponse(true, 'Your active event curation synced successfully', bookings));
 });
@@ -258,15 +270,27 @@ export const postChatMessage = asyncHandler(async (req: any, res: Response) => {
     throw new ApiError(403, 'Restricted messaging permission.');
   }
 
-  booking.chatHistory?.push({
+  const newMessage = {
     sender: isAdmin ? 'admin' : 'client',
     message: message || '',
     timestamp: new Date(),
     attachments: attachments || [],
-  });
+  };
 
-  await booking.save();
-  res.status(200).json(new ApiResponse(true, 'Message sent successfully', booking));
+  const updatedBooking = await EventBooking.findByIdAndUpdate(
+    booking._id,
+    {
+      $push: {
+        chatHistory: {
+          $each: [newMessage],
+          $slice: -500 // Cap history to last 500 messages
+        }
+      }
+    },
+    { new: true }
+  );
+
+  res.status(200).json(new ApiResponse(true, 'Message sent successfully', updatedBooking));
 });
 
 // 7. Get All Bookings (Admin Panel Pipeline)

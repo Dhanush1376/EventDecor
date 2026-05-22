@@ -93,9 +93,31 @@ export const deleteGalleryItem = asyncHandler(async (req: Request, res: Response
   res.status(200).json(new ApiResponse(true, 'Gallery item completely deleted successfully', item));
 });
 
-export const likeGalleryItem = asyncHandler(async (req: Request, res: Response) => {
-  const item = await Gallery.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } }, { new: true });
-  if (!item) throw new ApiError(404, 'Gallery item not found');
+export const likeGalleryItem = asyncHandler(async (req: any, res: Response) => {
+  if (!req.user || !req.user.id) {
+    throw new ApiError(401, 'Unauthorized to like items');
+  }
+
+  // Find item and only increment if the user's ID is not already in the likedBy array
+  const item = await Gallery.findOneAndUpdate(
+    { _id: req.params.id, likedBy: { $ne: req.user.id } },
+    { 
+      $addToSet: { likedBy: req.user.id },
+      $inc: { likes: 1 } 
+    },
+    { new: true }
+  );
+
+  if (!item) {
+    // If not found, either the item doesn't exist, or it was already liked
+    const currentItem = await Gallery.findById(req.params.id);
+    if (!currentItem) {
+      throw new ApiError(404, 'Gallery item not found');
+    }
+    // Idempotent success response
+    return res.status(200).json(new ApiResponse(true, 'Gallery item already liked', currentItem));
+  }
+
   res.status(200).json(new ApiResponse(true, 'Gallery item liked', item));
 });
 

@@ -18,6 +18,10 @@ export const withCronLock = async (
   const key = `lock:cron:${lockName}`;
   const owner = process.env.RENDER_INSTANCE_ID || process.env.HOSTNAME || 'api';
 
+  if (!Number.isInteger(ttlSeconds) || ttlSeconds < 1) {
+    throw new Error(`[cronLock] Invalid ttlSeconds: ${ttlSeconds}. Must be a positive integer.`);
+  }
+
   const acquired = await redisClient.set(key, owner, 'EX', ttlSeconds, 'NX');
   if (acquired !== 'OK') {
     logger.debug(`[CRON] Skipping "${lockName}" — another instance holds the lock`);

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { sendOTP, verifyOTP, getProfile, checkEmail, refreshSession, logout } from '../controllers/authController';
+import { sendOTP, verifyOTP, getProfile, refreshSession, logout } from '../controllers/authController';
 import {
   getTwoFactorStatus,
   setupTwoFactor,
@@ -8,18 +8,22 @@ import {
   verifyTwoFactorLogin,
 } from '../controllers/twoFactorController';
 import { requireAuth } from '../middleware/authMiddleware';
-import { sendOtpValidator, verifyOtpValidator, checkEmailValidator } from '../validators/authValidator';
+import {
+  sendOtpValidator,
+  verifyOtpValidator,
+  refreshSessionValidator,
+  logoutValidator,
+} from '../validators/authValidator';
 import { validate } from '../middleware/validateMiddleware';
 
 const router = Router();
 
 // Removed deprecated register/login routes (A-01)
 
-router.post('/check-email', checkEmailValidator, validate, checkEmail);
 router.post('/send-otp', sendOtpValidator, validate, sendOTP);
 router.post('/verify-otp', verifyOtpValidator, validate, verifyOTP);
-router.post('/refresh', refreshSession);
-router.post('/logout', logout);
+router.post('/refresh', refreshSessionValidator, validate, refreshSession);
+router.post('/logout', logoutValidator, validate, logout);
 router.get('/profile', requireAuth, getProfile);
 
 router.get('/2fa/status', requireAuth, getTwoFactorStatus);

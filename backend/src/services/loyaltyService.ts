@@ -5,6 +5,7 @@ import Order from '../models/Order';
 import Coupon from '../models/Coupon';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
+import { saveUniqueReferralCode } from '../utils/referralCode';
 
 export class LoyaltyService {
   /**
@@ -20,7 +21,7 @@ export class LoyaltyService {
   /**
    * Welcomes a newly registered user with onboarding credits and generates their referral code
    */
-  static async setupNewUserRewards(userId: string) {
+  static async setupNewUserRewards(userId: string, retryCount = 0): Promise<void> {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -31,13 +32,13 @@ export class LoyaltyService {
       }
 
       const welcomeCash = 100;
-      const refCode = user.referralCode || this.generateReferralCode(user.name);
-
       const updateQuery: Record<string, unknown> = {
         $inc: { walletBalance: welcomeCash },
       };
       const setFields: Record<string, string> = {};
-      if (!user.referralCode) setFields.referralCode = refCode;
+      if (!user.referralCode) {
+        setFields.referralCode = await saveUniqueReferralCode(user._id, user.name, session);
+      }
       if (!user.loyaltyTier) setFields.loyaltyTier = 'Bronze';
       if (Object.keys(setFields).length > 0) {
         updateQuery.$set = setFields;
@@ -57,7 +58,8 @@ export class LoyaltyService {
         { session }
       );
 
-      const code = `WELCOME${Math.floor(10 + Math.random() * 90)}`;
+      const crypto = require('crypto');
+      const code = `WELCOME-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
       await Coupon.create(
         [{
           code,
@@ -76,8 +78,12 @@ export class LoyaltyService {
 
       await session.commitTransaction();
       logger.info(`Loyalty Welcome Setup successful for user: ${userId}`);
-    } catch (err) {
+    } catch (err: any) {
       await session.abortTransaction();
+      if (err.code === 11000 && retryCount < 3) {
+        logger.warn(`Duplicate coupon code generated for ${userId}, retrying...`);
+        return this.setupNewUserRewards(userId, retryCount + 1);
+      }
       logger.error('Failed to setup welcome onboarding rewards:', err);
     } finally {
       session.endSession();
@@ -152,10 +158,9 @@ export class LoyaltyService {
       const coinsEarned = Math.round(order.subtotal / 10);
 
       // 2. Calculate Cashback percentage based on loyalty tier
-      let cashbackRate = 0.02; // Bronze: 2%
-      if (user.loyaltyTier === 'Silver') cashbackRate = 0.05; // 5%
-      else if (user.loyaltyTier === 'Gold') cashbackRate = 0.08; // 8%
-      else if (user.loyaltyTier === 'Platinum') cashbackRate = 0.12; // 12%
+      const { LOYALTY_TIERS } = require('../constants/loyaltyTiers');
+      const currentTier = LOYALTY_TIERS.find((t: any) => t.tier === user.loyaltyTier) || LOYALTY_TIERS[0];
+      const cashbackRate = currentTier.cashbackRate;
 
       const cashbackEarned = Math.round((order.total || totalSpend) * cashbackRate);
 
@@ -188,7 +193,7 @@ export class LoyaltyService {
       await session.commitTransaction();
 
       // 4. Check for Referral Rewards on Referee's First Purchase
-      const ordersCount = await Order.countDocuments({ user: userId, orderStatus: { $ne: 'Cancelled' } });
+      const ordersCount = await Order.countDocuments({ user: userId, orderStatus: { $nin: ['Cancelled', 'Refunded'] } });
       if (ordersCount === 1 && user.referredBy) {
         await this.applyReferralBonus(user.referredBy.toString(), userId);
       }
@@ -266,18 +271,15 @@ export class LoyaltyService {
       const user = await User.findById(userId);
       if (!user) return;
 
-      // Calculate lifetime purchase spend (excluding cancelled orders)
-      const validOrders = await Order.find({ user: userId, orderStatus: { $nin: ['Cancelled', 'Refunded'] } });
-      const lifetimeSpend = validOrders.reduce((sum, ord) => sum + ord.total, 0);
+      // Calculate lifetime purchase spend (excluding cancelled/refunded orders) via DB Aggregation
+      const result = await Order.aggregate([
+        { $match: { user: new mongoose.Types.ObjectId(userId), orderStatus: { $nin: ['Cancelled', 'Refunded'] } } },
+        { $group: { _id: null, lifetimeSpend: { $sum: '$total' } } }
+      ]);
+      const lifetimeSpend = result[0]?.lifetimeSpend || 0;
 
-      let newTier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum' = 'Bronze';
-      if (lifetimeSpend >= 40000) {
-        newTier = 'Platinum';
-      } else if (lifetimeSpend >= 15000) {
-        newTier = 'Gold';
-      } else if (lifetimeSpend >= 5000) {
-        newTier = 'Silver';
-      }
+      const { getTierBySpend } = require('../constants/loyaltyTiers');
+      const newTier = getTierBySpend(lifetimeSpend);
 
       if (user.loyaltyTier !== newTier) {
         const oldTier = user.loyaltyTier;

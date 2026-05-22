@@ -60,8 +60,10 @@ export function StickyMobileATC({ product, triggerRef }) {
           </div>
 
           <button
+            type="button"
             onClick={handleAddToCart}
             className="bg-on-surface text-surface h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0"
+            aria-label={`Add ${product?.title || 'product'} to bag`}
           >
             <span className="material-symbols-outlined text-[15px]">
               shopping_bag

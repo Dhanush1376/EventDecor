@@ -1,9 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export const OTP_MAX_ATTEMPTS = 5;
+
 export interface IOtpVerification extends Document {
   email: string;
   otpHash: string;
   attempts: number;
+  maxAttempts: number;
+  exhausted: boolean;
   type: 'auth' | 'cod';
   expiresAt: Date;
   createdAt: Date;
@@ -15,6 +19,8 @@ const OtpVerificationSchema: Schema = new Schema(
     email: { type: String, required: true, lowercase: true, trim: true },
     otpHash: { type: String, required: true },
     attempts: { type: Number, default: 0, required: true },
+    maxAttempts: { type: Number, default: OTP_MAX_ATTEMPTS, required: true },
+    exhausted: { type: Boolean, default: false, required: true },
     type: { type: String, enum: ['auth', 'cod'], default: 'auth', required: true },
     expiresAt: { type: Date, required: true },
   },

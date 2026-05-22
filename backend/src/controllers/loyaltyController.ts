@@ -8,8 +8,14 @@ import Coupon from '../models/Coupon';
 import Review from '../models/Review';
 import Order from '../models/Order';
 import { LoyaltyService } from '../services/loyaltyService';
+import { saveUniqueReferralCode } from '../utils/referralCode';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { updateProductRating } from './reviewController';
+import { LOYALTY_TIERS } from '../constants/loyaltyTiers';
+
+export const getLoyaltyTiers = asyncHandler(async (req: Request, res: Response) => {
+  res.status(200).json(new ApiResponse(true, 'Loyalty tiers fetched', LOYALTY_TIERS));
+});
 
 export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
@@ -18,10 +24,8 @@ export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Respon
     throw new ApiError(404, 'User not found');
   }
 
-  // Self-heal: ensure referral code exists
   if (!user.referralCode) {
-    user.referralCode = LoyaltyService.generateReferralCode(user.name);
-    await user.save();
+    user.referralCode = await saveUniqueReferralCode(user._id, user.name);
   }
 
   // Fetch detailed wallet ledger sorted by latest transaction first
@@ -36,19 +40,23 @@ export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Respon
   const validOrders = await Order.find({ user: userId, orderStatus: { $nin: ['Cancelled', 'Refunded'] } });
   const lifetimeSpend = validOrders.reduce((sum, ord) => sum + ord.total, 0);
 
+  const { LOYALTY_TIERS, getTierBySpend } = require('../constants/loyaltyTiers');
+  
   let nextTier = 'Silver';
   let spendRequired = Math.max(0, 5000 - lifetimeSpend);
   let progressPercentage = Math.min(100, Math.round((lifetimeSpend / 5000) * 100));
 
-  if (user.loyaltyTier === 'Silver') {
-    nextTier = 'Gold';
-    spendRequired = Math.max(0, 15000 - lifetimeSpend);
-    progressPercentage = Math.min(100, Math.round((lifetimeSpend / 15000) * 100));
-  } else if (user.loyaltyTier === 'Gold') {
-    nextTier = 'Platinum';
-    spendRequired = Math.max(0, 40000 - lifetimeSpend);
-    progressPercentage = Math.min(100, Math.round((lifetimeSpend / 40000) * 100));
-  } else if (user.loyaltyTier === 'Platinum') {
+  const currentTierIndex = LOYALTY_TIERS.findIndex((t: any) => t.tier === user.loyaltyTier);
+  const nextTierObj = LOYALTY_TIERS[currentTierIndex + 1];
+
+  if (nextTierObj) {
+    nextTier = nextTierObj.tier;
+    spendRequired = Math.max(0, nextTierObj.minSpend - lifetimeSpend);
+    const currentTierSpend = LOYALTY_TIERS[currentTierIndex].minSpend;
+    const tierRange = nextTierObj.minSpend - currentTierSpend;
+    const currentProgress = lifetimeSpend - currentTierSpend;
+    progressPercentage = Math.max(0, Math.min(100, Math.round((currentProgress / tierRange) * 100)));
+  } else {
     nextTier = 'None (Max Tier reached)';
     spendRequired = 0;
     progressPercentage = 100;

@@ -3,6 +3,8 @@ import AnalyticsService from '../services/analyticsService';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import AdminAuditLog from '../models/AdminAuditLog';
+import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
+import { setPaginationHeaders } from '../utils/paginationHeaders';
 
 export const getDashboardStats = asyncHandler(async (req: Request, res: Response) => {
   const stats = await AnalyticsService.getDashboardStats();
@@ -10,10 +12,17 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
 });
 
 export const getAuditLogs = asyncHandler(async (req: Request, res: Response) => {
-  const logs = await AdminAuditLog.find()
-    .sort({ createdAt: -1 })
-    .limit(100);
-  res.status(200).json(new ApiResponse(true, 'Audit logs retrieved', logs));
+  const { page, limit, skip } = getPaginationOptions(req.query);
+
+  const [logs, totalCount] = await Promise.all([
+    AdminAuditLog.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+    AdminAuditLog.countDocuments(),
+  ]);
+
+  setPaginationHeaders(res, totalCount, page, limit);
+  res.status(200).json(
+    new ApiResponse(true, 'Audit logs retrieved', formatPaginationResponse(logs, totalCount, page, limit))
+  );
 });
 
 export const createAuditLog = asyncHandler(async (req: Request, res: Response) => {

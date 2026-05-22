@@ -90,6 +90,10 @@ export class PrivacyService {
     user.twoFactorSecret = undefined;
     user.isVerified = false;
     user.notificationPreferences = { email: false, marketing: false };
+    user.passwordHash = undefined;
+    user.referralCode = `ERASED-${userId.toString().slice(-6)}`;
+    user.referredBy = undefined;
+    user.referralsCount = 0;
     await user.save();
 
     logger.info(`[GDPR ERASURE] User ${userId} anonymized`);

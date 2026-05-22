@@ -43,8 +43,15 @@ export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
 
   const cleanEmail = email.trim().toLowerCase();
   logger.info(`[AUTH] Initiating passwordless OTP verification for user: ${cleanEmail}`);
-  
-  await AuthService.checkAdminPassword(cleanEmail, password);
+  try {
+    await AuthService.checkAdminPassword(cleanEmail, password);
+  } catch (err: any) {
+    if (err.message === 'SILENT_ADMIN_ABORT') {
+      logger.info(`[AUTH] Silent abort for admin check: ${cleanEmail}`);
+      return res.status(200).json(new ApiResponse(true, 'Verification code sent to your email successfully'));
+    }
+    throw err;
+  }
 
   const otp = await AuthService.generateOTP(email, req.ip);
 
@@ -97,7 +104,10 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 });
  
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = String(req.body?.refreshToken || req.cookies?.[refreshCookieName] || req.headers['x-refresh-token'] || '').trim();
+  // Bug-16 Fix: Enforce cookie-only token delivery in production
+  const refreshToken = process.env.NODE_ENV === 'production'
+    ? String(req.cookies?.[refreshCookieName] || '').trim()
+    : String(req.body?.refreshToken || req.cookies?.[refreshCookieName] || req.headers['x-refresh-token'] || '').trim();
   const userAgent = req.headers['user-agent'] || '';
   const result = await AuthService.refreshSession(refreshToken, userAgent);
   setRefreshCookie(res, result.refreshToken);
@@ -129,13 +139,3 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(new ApiResponse(true, 'Profile fetched', user));
 });
 
-export const checkEmail = asyncHandler(async (req: Request, res: Response) => {
-  const { email } = req.body;
-  if (!email) {
-    throw new ApiError(400, 'Email address is required');
-  }
-  const cleanEmail = email.trim().toLowerCase();
-  const adminEmails = getAdminEmails();
-  const requiresPassword = adminEmails.some(addr => isSameEmail(cleanEmail, addr));
-  res.status(200).json(new ApiResponse(true, 'Email checked successfully', { requiresPassword }));
-});

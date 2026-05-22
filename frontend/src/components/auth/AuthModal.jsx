@@ -36,21 +36,6 @@ export function AuthModal() {
     isSubmittingRef.current = true;
     setIsLoading(true);
     
-    if (!requiresPassword) {
-      try {
-        const response = await authService.checkEmail(email);
-        if (response.success && response.data.requiresPassword) {
-          setRequiresPassword(true);
-          toast.success("Security validation required for admin access.");
-          isSubmittingRef.current = false;
-          setIsLoading(false);
-          return;
-        }
-      } catch (err) {
-        logger.error("Check email failed:", err);
-      }
-    }
-    
     if (requiresPassword && !password) {
       toast.error("Please enter your admin portal password");
       isSubmittingRef.current = false;
@@ -390,7 +375,7 @@ export function AuthModal() {
                             />
                           </div>
 
-                          {requiresPassword && (
+                          {requiresPassword ? (
                             <motion.div
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -434,6 +419,16 @@ export function AuthModal() {
                                 </span>
                               </button>
                             </motion.div>
+                          ) : (
+                            <div className="flex justify-end mt-2">
+                              <button
+                                type="button"
+                                onClick={() => setRequiresPassword(true)}
+                                className="font-label-sm text-[10px] text-primary uppercase tracking-widest font-bold hover:text-on-surface-variant transition-colors"
+                              >
+                                Admin Access?
+                              </button>
+                            </div>
                           )}
 
                           <button

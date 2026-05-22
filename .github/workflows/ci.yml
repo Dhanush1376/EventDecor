@@ -23,7 +23,6 @@ env:
   VITE_SITE_NAME: Siri Arts & Crafts
   VITE_CONTACT_PHONE: "+91-9866006648"
   VITE_MARBLE_TEXTURE_URL: https://res.cloudinary.com/drxgnnzeb/image/upload/q_auto,f_webp,w_1920/v1/event_decor_ecommerce/assets/event_decor_marble-texture
-  REDIS_URL: redis://127.0.0.1:6379
 
 jobs:
   build:

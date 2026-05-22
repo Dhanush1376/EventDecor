@@ -10,6 +10,7 @@ export interface ICoupon extends Document {
   expiryDate: Date;
   usageLimit?: number;
   usedCount: number;
+  usedBy: { userId: mongoose.Types.ObjectId; orderId: mongoose.Types.ObjectId }[];
   isActive: boolean;
   // Advanced Promotion Attributes
   targetType: 'all' | 'products' | 'categories' | 'tiers';
@@ -36,6 +37,12 @@ const CouponSchema: Schema = new Schema(
     expiryDate: { type: Date, required: true },
     usageLimit: { type: Number },
     usedCount: { type: Number, default: 0 },
+    usedBy: [
+      {
+        userId: { type: Schema.Types.ObjectId, ref: 'User' },
+        orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
+      }
+    ],
     isActive: { type: Boolean, default: true },
     // Enterprise Promotion Settings
     targetType: { type: String, enum: ['all', 'products', 'categories', 'tiers'], default: 'all' },

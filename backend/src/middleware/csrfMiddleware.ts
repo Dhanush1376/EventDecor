@@ -45,7 +45,17 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   const cookieToken = String(req.cookies?.[CSRF_COOKIE_NAME] || '');
   const headerToken = String(req.headers[CSRF_HEADER_NAME] || '');
 
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  if (!cookieToken || !headerToken || cookieToken.length !== headerToken.length) {
+    res.status(403).json({
+      success: false,
+      message: 'Invalid or missing CSRF token',
+    });
+    return;
+  }
+
+  const cookieBuf = Buffer.from(cookieToken);
+  const headerBuf = Buffer.from(headerToken);
+  if (!crypto.timingSafeEqual(cookieBuf, headerBuf)) {
     res.status(403).json({
       success: false,
       message: 'Invalid or missing CSRF token',

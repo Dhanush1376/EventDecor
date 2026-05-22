@@ -3,7 +3,6 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User, { IUser } from '../models/User';
 import RefreshToken from '../models/RefreshToken';
-import OtpVerification from '../models/OtpVerification';
 import OtpRequestLog from '../models/OtpRequestLog';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
@@ -11,6 +10,7 @@ import { isSameEmail, canonicalizeEmail } from '../utils/emailHelper';
 import { getAdminEmails } from '../config/adminConfig';
 import { setTwoFactorPending } from '../utils/twoFactorPending';
 import UsedRefreshToken from '../models/UsedRefreshToken';
+import OtpVerification, { OTP_MAX_ATTEMPTS } from '../models/OtpVerification';
 import FailedLoginAttempt from '../models/FailedLoginAttempt';
 
 // Cache to handle concurrent/duplicate OTP verification requests (grace period of 10 seconds)
@@ -81,8 +81,12 @@ class AuthService {
         }
       }
 
-      // Replay detected — only revoke the compromised session family, NOT all user sessions
-      logger.error(`[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Potential replay attack.`);
+      // Replay detected — revoke entire refresh-token family for this user (RFC 6749 rotation)
+      logger.error(
+        `[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Revoking all sessions. Potential token theft.`
+      );
+      await RefreshToken.deleteMany({ userId: isUsed.userId });
+      await UsedRefreshToken.deleteMany({ userId: isUsed.userId });
       throw new ApiError(401, 'Session expired. Please log in again.');
     }
 
@@ -157,7 +161,11 @@ class AuthService {
       ? await bcrypt.compare(cleanPassword, cleanAdminPassword)
       : cleanPassword === cleanAdminPassword;
 
-    if (!password || !isPasswordValid) {
+    if (!password) {
+      throw new ApiError(200, 'SILENT_ADMIN_ABORT');
+    }
+
+    if (!isPasswordValid) {
       let attempts = 1;
       let lockoutUntil: Date | null = null;
 
@@ -251,8 +259,34 @@ class AuthService {
     user.lastLogin = new Date();
     await user.save();
 
-    // Generate Session
-    return this.createSession(user, userAgent);
+    const userWith2fa = await User.findById(user._id).select('+twoFactorEnabled');
+    const publicUser = {
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
+
+    // All admin accounts must use 2FA — verify existing or force enrollment before issuing tokens
+    if (userWith2fa?.twoFactorEnabled) {
+      await setTwoFactorPending(user._id.toString());
+      return {
+        requires2FA: true as const,
+        userId: user._id.toString(),
+        user: publicUser,
+        refreshToken: '',
+        accessToken: '',
+      };
+    }
+
+    await setTwoFactorPending(user._id.toString());
+    return {
+      requires2FASetup: true as const,
+      userId: user._id.toString(),
+      user: publicUser,
+      refreshToken: '',
+      accessToken: '',
+    };
   }
 
   static async generateOTP(email: string, ip: string = '127.0.0.1') {
@@ -334,6 +368,8 @@ class AuthService {
       email: cleanEmail,
       otpHash,
       attempts: 0,
+      maxAttempts: OTP_MAX_ATTEMPTS,
+      exhausted: false,
       type: 'auth',
       expiresAt
     });
@@ -423,41 +459,45 @@ class AuthService {
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
-    // 3. Validate attempt limits (Max 5 attempts)
-    if (otpRecord.attempts >= 5) {
-      logger.error(`[OTP EXCEEDED LIMIT] Max attempts reached (5/5) for ${cleanEmail}. Invalidating.`);
-      await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
+    const maxAttempts = otpRecord.maxAttempts ?? OTP_MAX_ATTEMPTS;
+
+    if (otpRecord.exhausted || otpRecord.attempts >= maxAttempts) {
+      logger.error(`[OTP EXCEEDED LIMIT] OTP exhausted for ${cleanEmail}.`);
+      await OtpVerification.updateOne({ _id: otpRecord._id }, { $set: { exhausted: true } });
       throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
     }
 
     // 4. Verify OTP Match using bcrypt (safe development bypass codes only when NODE_ENV is explicitly 'development')
     const isBypassConfigured = process.env.BYPASS_OTP_CODE && otp === process.env.BYPASS_OTP_CODE;
-    const isDevBypass = (process.env.NODE_ENV === 'development' && (otp === '777777' || otp === '123456')) || isBypassConfigured;
+    const isDevBypass = process.env.NODE_ENV === 'development' && isBypassConfigured;
     if (isDevBypass) {
       logger.warn(`[OTP BYPASS] Bypass code used for ${cleanEmail}.${isBypassConfigured ? ' (Configured via BYPASS_OTP_CODE)' : ' (Development default)'}`);
     }
     const isMatch = isDevBypass || await bcrypt.compare(otp, otpRecord.otpHash);
 
     if (!isMatch) {
-      // Track verification failure to enforce rate limits/cooldowns
       await OtpRequestLog.create({
         ip,
         email: cleanEmail,
         action: 'verify_fail'
       });
 
-      // Increment attempt count
-      otpRecord.attempts += 1;
-      logger.warn(`[OTP VERIFICATION FAILED MATCH] Incorrect OTP entered for ${cleanEmail}. Attempt incremented to: ${otpRecord.attempts}/5`);
-      
-      if (otpRecord.attempts >= 5) {
-        logger.error(`[OTP EXCEEDED LIMIT] Max attempts reached (5/5) after mismatch for ${cleanEmail}. Deleting record.`);
-        await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
+      const updated = await OtpVerification.findOneAndUpdate(
+        { _id: otpRecord._id, exhausted: false },
+        { $inc: { attempts: 1 } },
+        { new: true }
+      );
+
+      const attemptCount = updated?.attempts ?? otpRecord.attempts + 1;
+      logger.warn(
+        `[OTP VERIFICATION FAILED MATCH] Incorrect OTP for ${cleanEmail}. Attempts: ${attemptCount}/${maxAttempts}`
+      );
+
+      if (updated && attemptCount >= maxAttempts) {
+        await OtpVerification.updateOne({ _id: updated._id }, { $set: { exhausted: true } });
         throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
-      } else {
-        await otpRecord.save();
       }
-      
+
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 

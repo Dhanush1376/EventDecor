@@ -6,17 +6,30 @@ import User from '../models/User';
 import bcrypt from 'bcryptjs';
 import { canonicalizeEmail } from '../utils/emailHelper';
 import { isProtectedSuperAdminEmail } from '../config/adminConfig';
+import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
+import { setPaginationHeaders } from '../utils/paginationHeaders';
 
 /**
  * Get all administrators (Staff)
  * Protected by requireSuperAdmin
  */
 export const getAdmins = asyncHandler(async (req: Request, res: Response) => {
-  const admins = await User.find({
-    role: { $in: ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'] }
-  }).select('-passwordHash -twoFactorSecret').sort({ createdAt: -1 });
+  const { page, limit, skip } = getPaginationOptions(req.query);
+  const adminRoles = [
+    'super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager',
+    'content_manager', 'admin', 'manager', 'coordinator',
+  ] as const;
+  const filter = { role: { $in: adminRoles } };
 
-  res.status(200).json(new ApiResponse(true, 'Admins retrieved successfully', admins));
+  const [admins, totalCount] = await Promise.all([
+    User.find(filter).select('-passwordHash -twoFactorSecret').sort({ createdAt: -1 }).skip(skip).limit(limit),
+    User.countDocuments(filter),
+  ]);
+
+  setPaginationHeaders(res, totalCount, page, limit);
+  res.status(200).json(
+    new ApiResponse(true, 'Admins retrieved successfully', formatPaginationResponse(admins, totalCount, page, limit))
+  );
 });
 
 /**

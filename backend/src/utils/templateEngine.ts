@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import logger from '../config/logger';
 
-// Helper to register partials and helpers if needed
+// {{value}} is HTML-escaped by default. Use {{{value}}} only for trusted, server-controlled markup.
 handlebars.registerHelper('formatCurrency', function(value) {
   return `₹${Number(value).toLocaleString('en-IN')}`;
 });

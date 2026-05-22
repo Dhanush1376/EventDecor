@@ -14,6 +14,7 @@ interface JwtPayload {
   id: string;
   role: string;
   email?: string;
+  iat?: number;
 }
 
 // Extend Express Request interface to include user
@@ -97,10 +98,19 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
 
   try {
     const decoded = jwt.verify(token, secret) as JwtPayload;
-    const user = await User.findById(decoded.id).select('role email isVerified');
+    const user = await User.findById(decoded.id).select('role email isVerified passwordChangedAt');
     if (!user || !user.isVerified) {
       throw new ApiError(401, 'Not authorized to access this route');
     }
+
+    if (
+      user.passwordChangedAt &&
+      decoded.iat != null &&
+      decoded.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)
+    ) {
+      throw new ApiError(401, 'Password changed. Please log in again.');
+    }
+
     decoded.role = user.role;
     decoded.email = user.email;
     req.user = decoded;

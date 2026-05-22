@@ -11,7 +11,7 @@ if (!cloudName || !apiKey || !apiSecret) {
     process.exit(1);
   }
 } else {
-  logger.info(`[CLOUDINARY INITIALIZATION] Cloudinary SDK configured successfully. Cloud: ${cloudName}, API Key: ${apiKey.substring(0, 4)}****`);
+  logger.info(`[CLOUDINARY INITIALIZATION] Cloudinary SDK configured. cloud_name=${cloudName}`);
 }
 
 cloudinary.config({

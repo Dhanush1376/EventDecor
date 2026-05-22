@@ -88,7 +88,6 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
   const transporter = nodemailer.createTransport({
     host: smtpHost, port: smtpPort, secure: smtpPort === 465,
     auth: { user: smtpUser, pass: smtpPass },
-    tls: { rejectUnauthorized: false },
   });
 
   const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || smtpUser;

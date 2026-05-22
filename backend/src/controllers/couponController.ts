@@ -3,10 +3,21 @@ import Coupon from '../models/Coupon';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
+import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
+import { setPaginationHeaders } from '../utils/paginationHeaders';
 
 export const getCoupons = asyncHandler(async (req: Request, res: Response) => {
-  const coupons = await Coupon.find().sort({ createdAt: -1 });
-  res.status(200).json(new ApiResponse(true, 'Coupons fetched', coupons));
+  const { page, limit, skip } = getPaginationOptions(req.query);
+
+  const [coupons, totalCount] = await Promise.all([
+    Coupon.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Coupon.countDocuments(),
+  ]);
+
+  setPaginationHeaders(res, totalCount, page, limit);
+  res.status(200).json(
+    new ApiResponse(true, 'Coupons fetched', formatPaginationResponse(coupons, totalCount, page, limit))
+  );
 });
 
 export const getCouponByCode = asyncHandler(async (req: Request, res: Response) => {
@@ -55,6 +66,13 @@ export const applyCoupon = asyncHandler(async (req: Request, res: Response) => {
 
   if (new Date() > coupon.expiryDate) throw new ApiError(400, 'Coupon has expired');
   if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) throw new ApiError(400, 'Coupon usage limit reached');
+  
+  // Bug-13: Per-User Usage Limit Check
+  const alreadyUsed = coupon.usedBy?.some(u => String(u.userId) === String((req as any).user.id));
+  if (alreadyUsed) {
+    throw new ApiError(400, 'You have already used this coupon.');
+  }
+
   if (orderAmount < coupon.minOrderAmount) throw new ApiError(400, `Minimum order amount is ₹${coupon.minOrderAmount}`);
 
   let discount = 0;

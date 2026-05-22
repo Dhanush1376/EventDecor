@@ -120,7 +120,7 @@ export function ShareButton({
       <button
         onClick={handleShare}
         className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-        aria-label="Share this content"
+        aria-label={iconOnly ? 'Share product' : 'Share this content'}
         aria-expanded={isOpen}
       >
         <Share2 size={size === 'sm' ? 14 : size === 'lg' ? 20 : 16} />
@@ -138,9 +138,11 @@ export function ShareButton({
           >
             <div className="flex items-center justify-between mb-4">
               <span className="font-playfair text-sm font-semibold text-neutral-800">Share with your network</span>
-              <button 
+              <button
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="text-neutral-400 hover:text-neutral-700 transition-colors p-1 rounded-full hover:bg-neutral-100"
+                aria-label="Close share menu"
               >
                 <X size={16} />
               </button>
@@ -171,9 +173,10 @@ export function ShareButton({
                 className="w-full rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 pr-12 text-xs text-neutral-500 focus:outline-none"
               />
               <button
+                type="button"
                 onClick={handleCopy}
                 className="absolute right-1 top-1 flex h-7 w-9 items-center justify-center rounded-md bg-white border border-neutral-200 text-neutral-600 shadow-sm transition-all hover:bg-neutral-50 hover:text-primary active:scale-95"
-                title="Copy link"
+                aria-label={copied ? 'Link copied' : 'Copy share link'}
               >
                 {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
               </button>

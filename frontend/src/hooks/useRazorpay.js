@@ -33,30 +33,6 @@ export const useRazorpay = () => {
 
       const { razorpayOrder, orderId } = response.data;
 
-      if (razorpayOrder.isSimulated) {
-        toast.success('[Dev Mode] Simulating online payment authorization...');
-        try {
-          const verifyRes = await orderService.verifyPayment({
-            orderId: orderId,
-            razorpayOrderId: razorpayOrder.id,
-            razorpayPaymentId: `pay_sim_${Math.random().toString(36).substring(2, 10)}`,
-            razorpaySignature: 'simulated_signature',
-          });
-
-          if (verifyRes.success) {
-            toast.success('Simulated Payment successful!');
-            onSuccess(verifyRes.data);
-          } else {
-            toast.error('Simulated Payment verification failed');
-            onError(verifyRes);
-          }
-        } catch (err) {
-          toast.error('Error verifying simulated payment');
-          onError(err);
-        }
-        return;
-      }
-
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: razorpayOrder.amount,

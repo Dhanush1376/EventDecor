@@ -63,6 +63,11 @@ export const verifyTwoFactorLogin = asyncHandler(async (req: Request, res: Respo
   const user = await User.findById(userId);
   if (!user || !user.isVerified) throw new ApiError(401, 'Invalid session');
 
+  // Bug-14 Fix: Account lockout check during 2FA
+  if (user.isLocked && user.lockUntil && user.lockUntil > new Date()) {
+    throw new ApiError(423, 'Account is temporarily locked due to too many failed attempts.');
+  }
+
   const userAgent = req.headers['user-agent'] || '';
   const session = await AuthService.createSession(user, userAgent);
   setRefreshCookie(res, session.refreshToken);

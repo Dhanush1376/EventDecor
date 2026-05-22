@@ -16,18 +16,18 @@ import Gallery from '../models/Gallery';
 import ContentSection from '../models/ContentSection';
 import User from '../models/User';
 import Review from '../models/Review';
+import { PLACEHOLDER_IMAGES, REVIEW_SAMPLE_IMAGES } from '../constants/placeholderImages';
+import { assertSeedImagesCloudinaryOnly } from '../utils/seedImageGuard';
 
-// C-04: External Unsplash URLs below are for LOCAL DEV SEEDING ONLY.
-// Before any production seed, upload assets to your Cloudinary account and replace these URLs.
 const IMAGES = {
-  luxuryRoyalWedding: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2074&auto=format&fit=crop",
-  templeStyleMandap: "https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?q=80&w=1974&auto=format&fit=crop",
-  galleryBackdrop: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=1974&auto=format&fit=crop",
-  galleryHampers: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop",
-  modernReceptionLounge: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop",
-  haldiVibrantSetup: "https://images.unsplash.com/photo-1561571994-3c61c554181a?q=80&w=1974&auto=format&fit=crop",
-  galleryMetalPots: "https://images.unsplash.com/photo-1590073844006-33379778ae09?q=80&w=1974&auto=format&fit=crop",
-  galleryPlatePacking: "https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=1974&auto=format&fit=crop"
+  luxuryRoyalWedding: PLACEHOLDER_IMAGES.collectionWedding,
+  templeStyleMandap: PLACEHOLDER_IMAGES.mandalaHero,
+  galleryBackdrop: PLACEHOLDER_IMAGES.mandalaArt2,
+  galleryHampers: PLACEHOLDER_IMAGES.mandalaArt3,
+  modernReceptionLounge: PLACEHOLDER_IMAGES.mandalaArt4,
+  haldiVibrantSetup: PLACEHOLDER_IMAGES.mandalaArt2,
+  galleryMetalPots: PLACEHOLDER_IMAGES.mandalaArt3,
+  galleryPlatePacking: PLACEHOLDER_IMAGES.emptyCart,
 };
 
 const initialWebsiteContent = {
@@ -277,6 +277,13 @@ const seed = async () => {
     process.exit(1);
   }
 
+  assertSeedImagesCloudinaryOnly({
+    IMAGES,
+    initialWebsiteContent,
+    masterEventsData,
+    galleryInspirations,
+  });
+
   try {
     await connectDB();
 
@@ -398,10 +405,7 @@ const seed = async () => {
         customerName: 'Meera & Devraj Singhania',
         rating: 5,
         comment: 'The Royal Mandap Arch was the absolute soul of our celebration. The gold leaf detailing and brass lotus pillars felt incredibly authentic and royal. Our event planner was astounded by the pristine quality of these handcrafted rental masterpieces. Worth every single rupee for the premium aura it brought to our palace venue!',
-        images: [
-          'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=800&auto=format&fit=crop',
-        ],
+        images: [REVIEW_SAMPLE_IMAGES[0].url, REVIEW_SAMPLE_IMAGES[1].url],
         status: 'approved',
         location: 'Jubilee Hills, Hyderabad',
         eventType: 'Royal Haldi & Engagement Arch',
@@ -417,9 +421,7 @@ const seed = async () => {
         customerName: 'Ananya Varma',
         rating: 5,
         comment: 'Siri Arts & Crafts redefined what traditional decor means to our family. The delivery concierge arrived perfectly on time, and the setup team transformed our garden marquee into an absolute sanctuary. The handcrafted coconut leaf arrangements and brass diyas were praised by all our elder relatives.',
-        images: [
-          'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=800&auto=format&fit=crop',
-        ],
+        images: [REVIEW_SAMPLE_IMAGES[2].url],
         status: 'approved',
         location: 'Banjara Hills, Hyderabad',
         eventType: 'Traditional Bridal Shower Curation',
@@ -435,9 +437,7 @@ const seed = async () => {
         customerName: 'Vikramaditya Rao',
         rating: 5,
         comment: 'We rented the premium stage backdrop and 12 antique brass stands for our annual corporate heritage gala. The entire booking experience was flawless. Seamless online quotation, lightning-fast delivery, and an immaculate setup that radiated prestige.',
-        images: [
-          'https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=800&auto=format&fit=crop',
-        ],
+        images: [REVIEW_SAMPLE_IMAGES[3].url],
         status: 'approved',
         location: 'Gachibowli, Hyderabad',
         eventType: 'Corporate Heritage Banquet',

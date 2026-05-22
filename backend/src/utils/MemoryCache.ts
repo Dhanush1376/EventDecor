@@ -1,4 +1,5 @@
 import logger from '../config/logger';
+import { pubClient, subClient } from './redis';
 
 interface CacheEntry<T> {
   value: T;
@@ -50,6 +51,10 @@ export class MemoryCache {
       return null;
     }
 
+    // Re-insert to move to end (LRU promotion)
+    this.cache.delete(key);
+    this.cache.set(key, entry);
+
     return entry.value as T;
   }
 
@@ -92,3 +97,49 @@ export const categoryCache = new MemoryCache({ defaultTtlMs: 15 * 60 * 1000 }); 
 export const cmsCache = new MemoryCache({ defaultTtlMs: 10 * 60 * 1000 }); // 10 minutes
 export const featuredProductCache = new MemoryCache({ defaultTtlMs: 3 * 60 * 1000 }); // 3 minutes
 export const safetyLockCache = new MemoryCache({ defaultTtlMs: 30 * 1000 }); // 30 seconds
+export const analyticsCache = new MemoryCache({ defaultTtlMs: 5 * 60 * 1000 }); // 5 minutes
+
+// Multi-instance cache invalidation subscriber
+if (subClient) {
+  subClient.subscribe('cache:invalidate', (err) => {
+    if (err) logger.error('Failed to subscribe to cache:invalidate channel:', err);
+  });
+  subClient.on('message', (channel, message) => {
+    if (channel === 'cache:invalidate') {
+      try {
+        const { cacheName, key, action } = JSON.parse(message);
+        const targetCache = 
+          cacheName === 'categoryCache' ? categoryCache :
+          cacheName === 'cmsCache' ? cmsCache :
+          cacheName === 'featuredProductCache' ? featuredProductCache :
+          cacheName === 'safetyLockCache' ? safetyLockCache : 
+          cacheName === 'analyticsCache' ? analyticsCache : null;
+
+        if (targetCache) {
+          if (action === 'clear') {
+            targetCache.clear();
+            logger.debug(`[Redis PubSub] Cleared ${cacheName} across cluster.`);
+          } else if (action === 'delete' && key) {
+            targetCache.delete(key);
+            logger.debug(`[Redis PubSub] Deleted ${key} from ${cacheName} across cluster.`);
+          }
+        }
+      } catch (e) {
+        logger.error('Error processing cache invalidation message:', e);
+      }
+    }
+  });
+}
+
+// Global broadcast helpers
+export const broadcastCacheClear = (cacheName: string) => {
+  if (pubClient) {
+    pubClient.publish('cache:invalidate', JSON.stringify({ cacheName, action: 'clear' })).catch(() => {});
+  }
+};
+
+export const broadcastCacheDelete = (cacheName: string, key: string) => {
+  if (pubClient) {
+    pubClient.publish('cache:invalidate', JSON.stringify({ cacheName, action: 'delete', key })).catch(() => {});
+  }
+};

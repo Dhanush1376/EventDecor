@@ -14,6 +14,13 @@ import { cmsCache } from '../utils/MemoryCache';
 import { getAdminEmails } from '../config/adminConfig';
 import { bumpAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
+import { debitWalletBalance } from '../utils/walletMutations';
+import ContentSection from '../models/ContentSection';
+import WalletTransaction from '../models/WalletTransaction';
+import { createAdminNotification } from './notificationService';
+import { compileTemplate } from '../utils/templateEngine';
+import { LoyaltyService } from './loyaltyService';
+import { emitUserEvent } from '../socket';
 
 class OrderService {
   static async validateTotals(userId: string, data: any) {
@@ -132,7 +139,6 @@ class OrderService {
     if (paymentMethod && paymentMethod.toLowerCase() === 'cod') {
       try {
         const settingsSection = await cmsCache.getOrSet('studio_settings', async () => {
-          const ContentSection = require('../models/ContentSection').default;
           return await ContentSection.findOne({ sectionKey: 'studio_settings' });
         });
         if (settingsSection && settingsSection.data && settingsSection.data.codFee) {
@@ -267,8 +273,19 @@ class OrderService {
       let couponValid = false;
 
       if (couponCode) {
-        const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
-        if (coupon && new Date() <= coupon.expiryDate && (!coupon.usageLimit || coupon.usedCount < coupon.usageLimit) && subtotal >= coupon.minOrderAmount) {
+        const coupon = await Coupon.findOneAndUpdate(
+          { 
+            code: couponCode.toUpperCase(), 
+            isActive: true, 
+            $or: [
+              { usageLimit: null }, 
+              { $expr: { $lt: ['$usedCount', '$usageLimit'] } }
+            ] 
+          },
+          { $inc: { usedCount: 1 } },
+          { new: true }
+        );
+        if (coupon && new Date() <= coupon.expiryDate && subtotal >= coupon.minOrderAmount) {
           couponValid = true;
           if (coupon.discountType === 'percentage') {
             discount = (subtotal * coupon.discountValue) / 100;
@@ -286,7 +303,6 @@ class OrderService {
       if (isCod) {
         try {
           const settingsSection = await cmsCache.getOrSet('studio_settings', async () => {
-            const ContentSection = require('../models/ContentSection').default;
             return await ContentSection.findOne({ sectionKey: 'studio_settings' });
           });
           if (settingsSection && settingsSection.data && settingsSection.data.codFee) {
@@ -306,34 +322,11 @@ class OrderService {
       if (useWallet && user) {
         const potentialWalletDeduction = Math.min(preliminaryTotal, user.walletBalance || 0);
         if (potentialWalletDeduction > 0) {
-          // Attempt lock-free atomic balance decrement
-          const updatedUser = await User.findOneAndUpdate(
-            { _id: userId, walletBalance: { $gte: potentialWalletDeduction } },
-            { $inc: { walletBalance: -potentialWalletDeduction } },
-            { new: true }
-          );
+          const updatedUser = await debitWalletBalance(userId, potentialWalletDeduction);
           if (updatedUser) {
             walletDeduction = potentialWalletDeduction;
             walletDeducted = true;
             user = updatedUser;
-          } else {
-            // Concurrent modification fallback: reload user and attempt safe deduction on latest state
-            const reloadedUser = await User.findById(userId);
-            if (reloadedUser) {
-              const retryDeduction = Math.min(preliminaryTotal, reloadedUser.walletBalance || 0);
-              if (retryDeduction > 0) {
-                const finalUser = await User.findOneAndUpdate(
-                  { _id: userId, walletBalance: { $gte: retryDeduction } },
-                  { $inc: { walletBalance: -retryDeduction } },
-                  { new: true }
-                );
-                if (finalUser) {
-                  walletDeduction = retryDeduction;
-                  walletDeducted = true;
-                  user = finalUser;
-                }
-              }
-            }
           }
         }
       }
@@ -342,15 +335,14 @@ class OrderService {
 
       // Log wallet debit transaction if atomic deduction succeeded
       if (walletDeducted && walletDeduction > 0 && user) {
-        const WalletTransaction = require('../models/WalletTransaction').default;
-        await WalletTransaction.create({
+        await WalletTransaction.create([{
           userId: user._id,
           type: 'debit',
           amount: walletDeduction,
           source: 'checkout_redeem',
           description: `Redeemed Siri Cash at checkout`,
           status: 'active'
-        });
+        }]);
       }
 
       // Auto-generate enterprise logistics fields using cryptographically random ID
@@ -409,18 +401,12 @@ class OrderService {
         // Clear the user's cart in database immediately
         await User.findByIdAndUpdate(userId, { $set: { cart: [] } });
 
-        // Increment Coupon used count if applicable
-        if (couponValid) {
-          await Coupon.findOneAndUpdate({ code: couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
-        }
 
         // Trigger Admin Alert, Invoice PDF, and Dispatch Email
         try {
           const user = await User.findById(userId);
-          const adminEmails = require('../config/adminConfig').getAdminEmails();
 
           // 1. Send Admin Real-time Notification
-          const { createAdminNotification } = require('../controllers/adminNotificationController');
           await createAdminNotification({
             title: 'New Order Received',
             message: `${user?.name || 'A customer'} placed a new COD order (₹${order.total}).`,
@@ -429,7 +415,6 @@ class OrderService {
           });
 
           // 2. Generate PDF Invoice
-          const { generateInvoicePDF } = require('../utils/pdfGenerator');
           const pdfBuffer = await generateInvoicePDF({
             orderId: order._id.toString(),
             date: order.createdAt || new Date(),
@@ -445,7 +430,6 @@ class OrderService {
             const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
             
             // 3. Compile beautiful HTML Template
-            const { compileTemplate } = require('../utils/templateEngine');
             const htmlContent = compileTemplate('order-confirmation', {
               customerName: user.name,
               orderId: order._id.toString(),
@@ -482,6 +466,7 @@ class OrderService {
             });
             
             // 5. Send Admin Alert Email
+            const adminEmails = getAdminEmails();
             if (adminEmails.length > 0) {
               await sendDirectEmail({
                 email: adminEmails[0], // primary admin
@@ -511,57 +496,7 @@ class OrderService {
         };
 
         if (!razorpay) {
-          if (process.env.NODE_ENV !== 'production') {
-            logger.info(`[PAYMENT SIMULATION] Creating simulated Razorpay order for total: ₹${total}`);
-            const simulatedRazorpayOrderId = `order_sim_${crypto.randomBytes(8).toString('hex')}`;
-            
-            const pendingOrderId = new mongoose.Types.ObjectId();
-            const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
-
-            order = new Order({
-              _id: pendingOrderId,
-              user: userId,
-              items: orderItems,
-              shippingAddress,
-              subtotal,
-              shippingFee,
-              discount,
-              walletDeduction,
-              total,
-              couponCode: couponValid ? couponCode.toUpperCase() : undefined,
-              paymentMethod: 'razorpay',
-              razorpayOrderId: simulatedRazorpayOrderId,
-              paymentStatus: 'pending',
-              orderStatus: 'Pending',
-              statusHistory: [{ status: 'Pending', note: 'Simulated payment initiated' }],
-              invoiceNumber,
-              trackingNumber,
-              courierPartner,
-              weight: 1.8,
-              dimensions: { length: 30, width: 20, height: 15 },
-              packageType: 'Standard Box',
-              barcodeData,
-              qrCodeData: finalQrCodeData,
-              publicTrackingToken,
-              notes,
-              needByDate,
-            });
-
-            await order.save();
-            await User.findByIdAndUpdate(userId, { $push: { orders: order._id } });
-
-            return {
-              order,
-              razorpayOrder: {
-                id: simulatedRazorpayOrderId,
-                amount: Math.round(total * 100),
-                currency: "INR",
-                isSimulated: true
-              }
-            };
-          }
-
-          throw new ApiError(500, 'Razorpay payments are not configured on this server');
+          throw new ApiError(500, 'Payment gateway is not configured. Contact support.');
         }
 
         let razorpayOrder;
@@ -627,7 +562,6 @@ class OrderService {
       if (walletDeducted && user) {
         await User.findByIdAndUpdate(userId, { $inc: { walletBalance: walletDeduction } });
         try {
-          const WalletTransaction = require('../models/WalletTransaction').default;
           await WalletTransaction.create({
             userId: user._id,
             type: 'credit',
@@ -688,56 +622,6 @@ class OrderService {
       throw new ApiError(403, 'You are not authorized to verify this payment');
     }
 
-    // Handle payment simulation in development mode
-    if (razorpay_order_id.startsWith('order_sim_')) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new ApiError(400, 'Simulated payment verification is strictly disabled in production mode');
-      }
-
-      logger.info(`[PAYMENT SIMULATION SUCCESS] Verifying simulated payment for order: ${order._id}`);
-      
-      order.paymentStatus = 'paid';
-      order.orderStatus = 'Confirmed';
-      order.razorpayPaymentId = razorpay_payment_id;
-      order.razorpaySignature = razorpay_signature || 'simulated_signature';
-      order.statusHistory.push({ status: 'Confirmed', note: 'Simulated payment verified successfully' });
-      
-      await order.save();
-      await User.findByIdAndUpdate(order.user, { $set: { cart: [] } });
-      AnalyticsService.clearCache();
-
-      if (order.couponCode) {
-        await Coupon.findOneAndUpdate({ code: order.couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
-      }
-
-      // Trigger Order Confirmation Email in background
-      try {
-        const user = await User.findById(order.user);
-        if (user) {
-          const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
-          await sendDirectEmail({
-            email: user.email,
-            subject: `Order Successfully Placed! ✦ Siri Arts & Crafts [${order._id}]`,
-            templateName: 'Order Confirmation',
-            templateData: {
-              name: user.name,
-              orderId: order._id.toString(),
-              totalAmount: order.total.toLocaleString('en-IN'),
-              shippingAddress: order.shippingAddress,
-              frontend_url: frontendUrl,
-            },
-            type: 'order',
-            action: 'order_placed',
-            userId: user._id.toString(),
-          });
-        }
-      } catch (emailErr) {
-        logger.error('Failed to dispatch simulated confirmation email:', emailErr);
-      }
-
-      logger.info(`[PAYMENT SUCCESS] Successful Razorpay simulated payment logs verified for order: ${order._id}`);
-      return order;
-    }
 
     if (!razorpay_signature) {
       throw new ApiError(400, 'Missing payment signature verification parameter');
@@ -777,16 +661,21 @@ class OrderService {
 
     // 5. Increment Coupon used count if coupon was active
     if (order.couponCode) {
-      await Coupon.findOneAndUpdate({ code: order.couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
+      await Coupon.findOneAndUpdate(
+        { code: order.couponCode.toUpperCase() }, 
+        { 
+          $inc: { usedCount: 1 },
+          $push: { usedBy: { userId: order.user, orderId: order._id } }
+        }
+      );
     }
     
     // Trigger Admin Alert, Invoice PDF, and Order Confirmation Email
     try {
       const user = await User.findById(order.user);
-      const adminEmails = require('../config/adminConfig').getAdminEmails();
+      const adminEmails = getAdminEmails();
 
       // 1. Send Admin Real-time Notification
-      const { createAdminNotification } = require('../controllers/adminNotificationController');
       await createAdminNotification({
         title: 'New Online Payment Order',
         message: `${user?.name || 'A customer'} placed a new order (₹${order.total}) via Razorpay.`,
@@ -795,7 +684,6 @@ class OrderService {
       });
 
       // 2. Generate PDF Invoice
-      const { generateInvoicePDF } = require('../utils/pdfGenerator');
       const pdfBuffer = await generateInvoicePDF({
         orderId: order._id.toString(),
         date: order.createdAt || new Date(),
@@ -811,7 +699,6 @@ class OrderService {
         const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
         
         // 3. Compile HTML Template
-        const { compileTemplate } = require('../utils/templateEngine');
         const htmlContent = compileTemplate('order-confirmation', {
           customerName: user.name,
           orderId: order._id.toString(),
@@ -919,6 +806,15 @@ class OrderService {
     // Automatic COD Remittance Transitions
     if (order.paymentMethod?.toLowerCase() === 'cod') {
       if (finalStatus === 'Delivered') {
+        if (!order.codCollected && order.couponCode) {
+          await Coupon.findOneAndUpdate(
+            { code: order.couponCode.toUpperCase() }, 
+            { 
+              $inc: { usedCount: 1 },
+              $push: { usedBy: { userId: order.user, orderId: order._id } }
+            }
+          );
+        }
         order.codCollected = true;
         order.paymentStatus = 'COD Collected';
         order.settlementStatus = 'Pending';
@@ -931,6 +827,15 @@ class OrderService {
           note: 'Package delivered. Cash collected by courier agent. Reconciliation pending.' 
         });
       } else if (finalStatus === 'Settled') {
+        if (!order.codCollected && order.couponCode) {
+          await Coupon.findOneAndUpdate(
+            { code: order.couponCode.toUpperCase() }, 
+            { 
+              $inc: { usedCount: 1 },
+              $push: { usedBy: { userId: order.user, orderId: order._id } }
+            }
+          );
+        }
         order.codCollected = true;
         order.paymentStatus = 'paid';
         order.settlementStatus = 'Settled';
@@ -951,14 +856,12 @@ class OrderService {
     // Process Loyalty/Wallet adjustments based on status change
     if (finalStatus === 'Delivered') {
       try {
-        const { LoyaltyService } = require('./loyaltyService');
         await LoyaltyService.processPurchaseRewards(order.user.toString(), order._id.toString(), order.total);
       } catch (rewardsErr) {
         logger.error('Failed to process purchase rewards on delivery:', rewardsErr);
       }
     } else if (finalStatus === 'Cancelled' || finalStatus === 'Returned' || finalStatus === 'Refunded') {
       try {
-        const { LoyaltyService } = require('./loyaltyService');
         await LoyaltyService.reversePurchaseRewards(order._id.toString());
       } catch (reversalErr) {
         logger.error('Failed to reverse purchase rewards on status transition:', reversalErr);
@@ -1008,7 +911,6 @@ class OrderService {
     await order.save();
 
     try {
-      const { emitUserEvent } = require('../socket');
       emitUserEvent(order.user.toString(), 'order_status_updated', {
         orderId: order._id,
         orderStatus: order.orderStatus,
@@ -1145,7 +1047,10 @@ class OrderService {
         if (order.couponCode) {
           await Coupon.findOneAndUpdate(
             { code: order.couponCode.toUpperCase() },
-            { $inc: { usedCount: 1 } },
+            { 
+              $inc: { usedCount: 1 },
+              $push: { usedBy: { userId: order.user, orderId: order._id } }
+            },
             { session }
           );
         }

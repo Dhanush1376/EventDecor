@@ -42,6 +42,15 @@ export const collectMissingEnvVars = (options?: { ciMode?: boolean }): string[] 
     }
     if (!process.env.RAZORPAY_KEY_ID) missingVars.push('RAZORPAY_KEY_ID');
     if (!process.env.RAZORPAY_KEY_SECRET) missingVars.push('RAZORPAY_KEY_SECRET');
+    if (!process.env.FIELD_ENCRYPTION_KEY) {
+      missingVars.push('FIELD_ENCRYPTION_KEY (must be separate from JWT_SECRET)');
+    } else if (process.env.FIELD_ENCRYPTION_KEY === process.env.JWT_SECRET) {
+      missingVars.push('FIELD_ENCRYPTION_KEY (must be distinct from JWT_SECRET)');
+    }
+  }
+
+  if (!process.env.GROQ_API_KEY) {
+    console.warn('\x1b[33m%s\x1b[0m', '⚠️ WARNING: GROQ_API_KEY is missing. AI auto-fill features will fail.');
   }
 
   return missingVars;

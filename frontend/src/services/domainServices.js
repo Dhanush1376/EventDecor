@@ -10,16 +10,24 @@ export const authService = {
     const response = await api.post('/admin/auth/login', { email, password });
     return response.data;
   },
+  adminSetup2FA: async (userId) => {
+    const response = await api.post('/admin/auth/2fa/setup', { userId });
+    return response.data;
+  },
+  adminEnable2FA: async (userId, token) => {
+    const response = await api.post('/admin/auth/2fa/enable', { userId, token });
+    return response.data;
+  },
+  adminVerify2FA: async (userId, token) => {
+    const response = await api.post('/admin/auth/verify-2fa', { userId, token });
+    return response.data;
+  },
   register: async (userData) => {
     const response = await api.post('/auth/register', userData);
     return response.data;
   },
   getProfile: async () => {
     const response = await api.get('/auth/profile');
-    return response.data;
-  },
-  checkEmail: async (email) => {
-    const response = await api.post('/auth/check-email', { email });
     return response.data;
   },
   sendOTP: async (email, password) => {
@@ -383,8 +391,8 @@ export const analyticsService = {
     const response = await api.get('/analytics/dashboard');
     return response.data;
   },
-  getAuditLogs: async () => {
-    const response = await api.get('/analytics/audit-logs');
+  getAuditLogs: async (params = {}) => {
+    const response = await api.get('/analytics/audit-logs', { params });
     return response.data;
   },
   createAuditLog: async (action, details, status) => {

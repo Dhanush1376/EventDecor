@@ -3,7 +3,7 @@ import { authService } from '../services/domainServices';
 import { setAccessToken } from '../services/api';
 import toast from 'react-hot-toast';
 
-import { safeLocalStorage } from '../utils/storage';
+
 
 import logger from '../utils/logger';
 const AuthContext = createContext();
@@ -79,6 +79,9 @@ export function AuthProvider({ children }) {
   const adminLogin = async (email, password) => {
     try {
       const response = await authService.adminLogin(email, password);
+      if (response.success && (response.data?.requires2FA || response.data?.requires2FASetup)) {
+        return response.data;
+      }
       if (response.success) {
         const token = response.data.accessToken || response.data.token;
         setAccessToken(token);
@@ -89,6 +92,14 @@ export function AuthProvider({ children }) {
     } catch (err) {
       throw err.response?.data || new Error('Login failed');
     }
+  };
+
+  const completeAdminLogin = async (sessionData) => {
+    const token = sessionData.accessToken || sessionData.token;
+    setAccessToken(token);
+    setUser(sessionData.user);
+    setIsAuthenticated(true);
+    return true;
   };
 
   useEffect(() => {
@@ -167,6 +178,7 @@ export function AuthProvider({ children }) {
       isAuthenticated, 
       login, 
       adminLogin,
+      completeAdminLogin,
       logout, 
       checkAuth,
       isAuthModalOpen,

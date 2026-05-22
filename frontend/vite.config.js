@@ -66,6 +66,11 @@ export default defineConfig({
     }),
   ],
 
+  // ─── ESBuild Optimization ───
+  esbuild: {
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+  },
+
   // ─── Build Optimization ───
   build: {
     // Target modern browsers for smaller bundles

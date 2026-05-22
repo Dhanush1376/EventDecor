@@ -1,0 +1,8 @@
+Contact: mailto:security@siriartsandcrafts.com
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://siriartsandcrafts.com/.well-known/security.txt
+Policy: https://siriartsandcrafts.com/privacy
+
+# Responsible disclosure — report suspected vulnerabilities to the contact above.
+# Please allow reasonable time to remediate before public disclosure.

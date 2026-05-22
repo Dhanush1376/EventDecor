@@ -69,14 +69,27 @@ const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void)
       return next(new Error('Authentication error: Token missing'));
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id?: string };
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return next(new Error('Authentication error: Server misconfigured'));
+    }
+
+    const decoded = jwt.verify(token, secret) as { id?: string; iat?: number };
     if (!decoded?.id) {
       return next(new Error('Authentication error: Invalid token'));
     }
 
-    const user = await User.findById(decoded.id).select('role email isVerified');
+    const user = await User.findById(decoded.id).select('role email isVerified passwordChangedAt');
     if (!user || !user.isVerified) {
       return next(new Error('Authentication error: Invalid user'));
+    }
+
+    if (
+      user.passwordChangedAt &&
+      decoded.iat != null &&
+      decoded.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)
+    ) {
+      return next(new Error('Authentication error: Session invalidated'));
     }
 
     (socket as Socket & { user: SocketUser }).user = user as SocketUser;
@@ -183,6 +196,15 @@ export const initSocket = (server: HttpServer) => {
       return next(new Error('Too many connection attempts'));
     }
     next();
+  });
+
+  // JWT required on all namespace connections (handshake auth.token or Authorization header)
+  io.use(socketAuthMiddleware);
+
+  // Default namespace is not used — reject stray unauthenticated connections
+  io.on('connection', (socket) => {
+    logger.warn('[SOCKET] Rejected connection on default namespace', { socketId: socket.id });
+    socket.disconnect(true);
   });
 
   registerNamespace(io.of('/admin'), { adminOnly: true });

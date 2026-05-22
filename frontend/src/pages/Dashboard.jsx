@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import Barcode from "react-barcode";
 import { InvoiceTemplate } from "../components/ui";
 import { LoyaltyPanel } from "../components/loyalty/LoyaltyPanel";
-import { EventCustomerDashboard } from "./EventCustomerDashboard";
+const EventCustomerDashboard = React.lazy(() => import("./EventCustomerDashboard").then(m => ({ default: m.EventCustomerDashboard })));
 
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { useDashboardData } from "../hooks/useDashboardData";
@@ -777,8 +777,9 @@ export function Dashboard() {
                       Track your reserved setups, theme boards, milestone deposits, and site lead coordinates.
                     </span>
                   </div>
-
-                  <EventCustomerDashboard isEmbedded={true} />
+                  <React.Suspense fallback={<div className="p-8 text-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div></div>}>
+                    <EventCustomerDashboard isEmbedded={true} />
+                  </React.Suspense>
                 </motion.div>
               )}
 

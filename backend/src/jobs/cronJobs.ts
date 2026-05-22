@@ -7,6 +7,7 @@ import { withCronLock } from '../utils/cronLock';
 import { releaseStalePendingOrders } from './staleOrderCleanup';
 import { PaymentReconciliationService } from '../services/paymentReconciliationService';
 import { checkCloudinaryCdn } from '../utils/cdnHealth';
+import { getAdminEmails } from '../config/adminConfig';
 
 export const initJobs = () => {
   // 1. Cleanup Draft Revisions every Sunday at midnight
@@ -84,19 +85,42 @@ export const initJobs = () => {
     });
   });
 
-  // 8. Weekly backup health reminder
-  cron.schedule('0 6 * * 1', () => {
-    const atlasUri = process.env.MONGO_URI || '';
-    const usesAtlas = atlasUri.includes('mongodb.net') || atlasUri.includes('mongodb+srv');
-    if (usesAtlas) {
-      logger.info(
-        '[BACKUP] Weekly reminder: verify MongoDB Atlas continuous backup / PITR is enabled in the Atlas project dashboard.'
-      );
-    } else {
-      logger.warn(
-        '[BACKUP] MONGO_URI does not appear to be Atlas-hosted — document and test your backup RTO/RPO manually.'
-      );
-    }
+  // 8. Weekly backup health reminder (log + admin email)
+  cron.schedule('0 6 * * 1', async () => {
+    await withCronLock('weekly-backup-reminder', 3600, async () => {
+      const atlasUri = process.env.MONGO_URI || '';
+      const usesAtlas = atlasUri.includes('mongodb.net') || atlasUri.includes('mongodb+srv');
+      const message = usesAtlas
+        ? 'Verify MongoDB Atlas continuous backup / PITR is enabled in the Atlas project dashboard (Backup → Backup Policy).'
+        : 'MONGO_URI is not Atlas-hosted — document and test your provider backup RTO/RPO manually.';
+
+      if (usesAtlas) {
+        logger.info(`[BACKUP] Weekly reminder: ${message}`);
+      } else {
+        logger.warn(`[BACKUP] ${message}`);
+      }
+
+      const recipients = getAdminEmails();
+      if (recipients.length === 0) {
+        logger.warn('[BACKUP] No admin emails configured — skipping backup reminder email');
+        return;
+      }
+
+      try {
+        const { sendDirectEmail } = require('../services/notificationService');
+        for (const email of recipients) {
+          await sendDirectEmail({
+            email,
+            subject: `[Siri Arts] Weekly database backup check — ${usesAtlas ? 'Atlas' : 'non-Atlas'}`,
+            customHtml: `<p>${message}</p><p>Timestamp: ${new Date().toISOString()}</p>`,
+            type: 'system',
+            action: 'backup_weekly_reminder',
+          });
+        }
+      } catch (err) {
+        logger.error('[BACKUP] Failed to send weekly backup reminder email:', err);
+      }
+    });
   });
 
   logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');

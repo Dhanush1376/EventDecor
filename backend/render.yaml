@@ -3,17 +3,25 @@ services:
   - type: web
     name: siri-arts-backend
     runtime: docker
-    # Production: upgrade to "standard" or higher — starter can OOM under Redis + Mongo pools
-    plan: starter
+    # Production minimum: standard (2 GB RAM). starter (512 MB) OOMs under Mongo pool + Redis + Socket.io.
+    plan: standard
     autoDeploy: true
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      # Client IP for rate limits / audit logs. Render-only: 1. Cloudflare → Render: 2 (see docs/DEPLOYMENT.md).
+      - key: TRUST_PROXY_HOPS
+        value: "1"
       - key: PORT
         value: 10000
       - key: MONGO_URI
         fromConfig: true
+      # Per-instance pool cap — keep low when scaling horizontally (10 × N instances vs Atlas limit)
+      - key: MONGO_POOL_SIZE
+        value: "10"
+      - key: ADMIN_ANALYTICS_CACHE_TTL
+        value: "300"
       - key: JWT_SECRET
         fromConfig: true
       # Intentionally short — forces refresh-token rotation; do not use 7d in production
@@ -59,3 +67,48 @@ services:
         fromConfig: true
       - key: SMTP_FROM_NAME
         value: "Siri Arts Studio"
+      - key: GROQ_API_KEY
+        fromConfig: true
+
+  # Staging — validate changes before production (separate MongoDB + Redis recommended in Render config)
+  - type: web
+    name: siri-arts-backend-staging
+    runtime: docker
+    plan: standard
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        fromConfig: true
+      - key: MONGO_POOL_SIZE
+        value: "10"
+      - key: JWT_SECRET
+        fromConfig: true
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: REFRESH_TOKEN_EXPIRES_DAYS
+        value: 30
+      - key: REDIS_URL
+        fromConfig: true
+      - key: REQUIRE_REDIS
+        value: "true"
+      - key: ADMIN_ANALYTICS_CACHE_TTL
+        value: "120"
+      - key: FRONTEND_URLS
+        fromConfig: true
+      - key: CLOUDINARY_CLOUD_NAME
+        fromConfig: true
+      - key: CLOUDINARY_API_KEY
+        fromConfig: true
+      - key: CLOUDINARY_API_SECRET
+        fromConfig: true
+      - key: SENTRY_DSN
+        fromConfig: true
+      - key: GROQ_API_KEY
+        fromConfig: true

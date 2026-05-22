@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
 
 import logger from '../../utils/logger';
 /**
@@ -25,12 +25,9 @@ export class ErrorBoundary extends Component {
     // Log to console in development
     logger.error('ErrorBoundary caught:', error, errorInfo);
 
-    // Report to Sentry if available
-    if (typeof window !== 'undefined' && window.Sentry) {
-      window.Sentry.captureException(error, {
-        contexts: { react: { componentStack: errorInfo?.componentStack } },
-      });
-    }
+    Sentry.captureException(error, {
+      contexts: { react: { componentStack: errorInfo?.componentStack } },
+    });
   }
 
   handleRetry = () => {

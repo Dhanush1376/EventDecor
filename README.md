@@ -104,6 +104,8 @@ Copy `backend/.env.example` to `backend/.env` and set **`BREVO_API_KEY`** (recom
 ### 9. Security
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for `TRUST_PROXY_HOPS`, refresh cookie path, and Socket.io namespaces.
 
+API clients should use **`/api/v1`** as the stable contract; see [docs/API_VERSIONING.md](docs/API_VERSIONING.md).
+
 #### JWT access token lifetime (dev vs production)
 | Environment | `JWT_EXPIRES_IN` | Notes |
 |-------------|------------------|-------|
@@ -219,6 +221,8 @@ VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
     *   **Build Command**: `npm install && npm run build`
     *   **Start Command**: `npm start`
 6.  Populate all Environment Variables in Render's configuration tab.
+
+**Ephemeral filesystem:** Render web services do not persist local disk across deploys or restarts. The API does not write PDFs or uploads to local disk in the request hot path (invoices are streamed or held in memory for email; media goes to Cloudinary). Do not add `disk` mounts expecting durable temp files unless you introduce external object storage.
 
 ---
 

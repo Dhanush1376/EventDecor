@@ -9,6 +9,7 @@ export interface IEvent extends Document {
   decorCount?: string;
   venueType?: string;
   pricing?: string;
+  basePrice: number;
   description: string;
   colorPalette: string[];
   features: string[];
@@ -34,6 +35,7 @@ const EventSchema: Schema = new Schema(
     decorCount: { type: String },
     venueType: { type: String },
     pricing: { type: String },
+    basePrice: { type: Number, default: 35000 },
     description: { type: String, required: true },
     colorPalette: [{ type: String }],
     features: [{ type: String }],
