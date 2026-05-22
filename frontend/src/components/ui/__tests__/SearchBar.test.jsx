@@ -39,22 +39,22 @@ describe('SearchBar Component', () => {
     expect(handleChange).not.toHaveBeenCalled();
   });
 
-  it('fires onChange callback only after debounce delay of 220ms', () => {
+  it('fires onChange callback only after debounce delay of 400ms', () => {
     const handleChange = vi.fn();
     render(<SearchBar value="" onChange={handleChange} />);
     const inputEl = screen.getByLabelText('Search');
 
     fireEvent.change(inputEl, { target: { value: 'pooja sets' } });
 
-    // Advance timers by less than 220ms
+    // Advance timers by less than 400ms
     act(() => {
-      vi.advanceTimersByTime(150);
+      vi.advanceTimersByTime(250);
     });
     expect(handleChange).not.toHaveBeenCalled();
 
-    // Advance timers to complete 220ms debounce
+    // Advance timers to complete 400ms debounce
     act(() => {
-      vi.advanceTimersByTime(100); // 150 + 100 = 250ms total
+      vi.advanceTimersByTime(200); // 250 + 200 = 450ms total
     });
     expect(handleChange).toHaveBeenCalledTimes(1);
     expect(handleChange).toHaveBeenCalledWith(

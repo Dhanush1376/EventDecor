@@ -31,7 +31,8 @@ export function SearchBar({
 
   const handleClear = () => {
     setLocalValue("");
-    debouncedOnChange("");
+    debouncedOnChange.cancel();
+    onChange?.({ target: { value: "" } });
   };
 
   return (
