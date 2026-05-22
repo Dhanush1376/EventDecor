@@ -114,8 +114,8 @@ const allowedOrigins = [
 ];
 
 export const isOriginAllowed = (origin: string): boolean => {
-  // Require hyphen after "siriarts" so siriartsfake.vercel.app does NOT match
-  const vercelPreviewRegex = /^https:\/\/siriarts-[a-z0-9-]+\.vercel\.app$/i;
+  // Allow any vercel domain containing 'siri' and 'arts' to cover all potential aliases
+  const vercelPreviewRegex = /^https:\/\/.*siri.*arts.*\.vercel\.app$/i;
   return allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
 };
 
