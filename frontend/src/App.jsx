@@ -101,10 +101,6 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* TEMP DEPLOYMENT VERIFICATION BANNER */}
-      <div style={{position:"fixed",top:0,left:0,zIndex:99999,background:"red",color:"white",padding:"10px",fontWeight:"bold",width:"100%",textAlign:"center",pointerEvents:"none"}}>
-        BUILD TEST VERSION 999 - CACHE CLEARED
-      </div>
       <NetworkProvider>
         <SlowConnectionBanner />
         <HelmetProvider>
