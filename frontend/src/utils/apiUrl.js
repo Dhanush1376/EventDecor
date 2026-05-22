@@ -5,6 +5,10 @@
 export const getApiUrl = () => {
   const configured = import.meta.env.VITE_API_URL?.trim();
   if (configured) {
+    // Auto-append /api/v1 if the user only provided the root domain
+    if (!configured.endsWith('/api') && !configured.endsWith('/api/v1')) {
+      return configured.replace(/\/+$/, '') + '/api/v1';
+    }
     return configured;
   }
   if (import.meta.env.DEV) {

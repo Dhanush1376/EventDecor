@@ -70,7 +70,9 @@ export function NetworkProvider({ children }) {
     const startTime = performance.now();
     try {
       const apiUrl = getApiUrl();
-      const response = await fetch(`${apiUrl}/readiness?t=${Date.now()}`, {
+      // Readiness is at /api/readiness, not /api/v1/readiness
+      const readinessUrl = apiUrl.replace(/\/v1$/, '') + '/readiness';
+      const response = await fetch(`${readinessUrl}?t=${Date.now()}`, {
         method: "GET",
         headers: {
           "Cache-Control": "no-cache",
