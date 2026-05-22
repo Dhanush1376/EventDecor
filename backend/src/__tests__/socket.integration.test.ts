@@ -11,7 +11,7 @@ jest.mock('../models/User', () => ({
 }));
 
 import User from '../models/User';
-import { initSocket } from '../socket';
+import { initSocket, getIO } from '../socket';
 
 describe('Socket.io namespaces', () => {
   let httpServer: http.Server;
@@ -31,7 +31,9 @@ describe('Socket.io namespaces', () => {
 
   afterAll((done) => {
     sockets.forEach((s) => s.disconnect());
-    httpServer.close(done);
+    getIO().close(() => {
+      done();
+    });
   });
 
   const connectClient = (namespace: string, token?: string): Promise<Socket> =>
