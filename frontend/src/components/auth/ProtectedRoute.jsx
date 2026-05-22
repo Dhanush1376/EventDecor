@@ -4,10 +4,10 @@ import { useAuth } from "../../context/AuthContext";
 import { RouteSkeleton } from "../ui/RouteSkeleton";
 
 export function ProtectedRoute({ children, adminOnly = false }) {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated, isAuthInitialized } = useAuth();
   const location = useLocation();
 
-  if (loading && !user) {
+  if (!isAuthInitialized || (loading && !user)) {
     return <RouteSkeleton variant="page" />;
   }
 

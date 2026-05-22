@@ -7,30 +7,11 @@ import logger from '../config/logger';
 import { TwoFactorService } from '../services/twoFactorService';
 import { consumeTwoFactorPending, hasTwoFactorPending } from '../utils/twoFactorPending';
 import User from '../models/User';
-
-const refreshCookieName = 'siri_admin_refresh_token';
-
-const setRefreshCookie = (res: Response, refreshToken: string) => {
-  const maxAge = AuthService.getRefreshTokenTtlMs();
-  const isProd = process.env.NODE_ENV === 'production';
-  res.cookie(refreshCookieName, refreshToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    path: '/api/admin/auth',
-    maxAge,
-  });
-};
-
-const clearRefreshCookie = (res: Response) => {
-  const isProd = process.env.NODE_ENV === 'production';
-  res.clearCookie(refreshCookieName, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    path: '/api/admin/auth',
-  });
-};
+import {
+  ADMIN_REFRESH_COOKIE,
+  setAdminRefreshCookie,
+  clearAdminRefreshCookie,
+} from '../utils/authCookies';
 
 const issueAdminSession = async (req: Request, res: Response, userId: string) => {
   const user = await User.findById(userId);
@@ -40,7 +21,7 @@ const issueAdminSession = async (req: Request, res: Response, userId: string) =>
 
   const userAgent = req.headers['user-agent'] || '';
   const session = await AuthService.createSession(user, userAgent);
-  setRefreshCookie(res, session.refreshToken);
+  setAdminRefreshCookie(res, session.refreshToken);
 
   return res.status(200).json(
     new ApiResponse(true, 'Admin authenticated successfully', {
@@ -152,16 +133,13 @@ export const adminVerifyTwoFactor = asyncHandler(async (req: Request, res: Respo
 });
 
 export const adminLogout = asyncHandler(async (req: Request, res: Response) => {
-  const cookieHeader = req.headers.cookie || '';
-  const cookies = cookieHeader.split(';').map(cookie => cookie.trim());
-  const target = cookies.find(cookie => cookie.startsWith(`${refreshCookieName}=`));
-  const refreshToken = target ? decodeURIComponent(target.slice(refreshCookieName.length + 1)) : '';
+  const refreshToken = String(req.cookies?.[ADMIN_REFRESH_COOKIE] || '').trim();
 
   logger.info('[ADMIN AUTH] Admin manual logout requested');
   if (refreshToken) {
     await AuthService.revokeSession(refreshToken);
   }
-  clearRefreshCookie(res);
+  clearAdminRefreshCookie(res);
 
   res.status(200).json(new ApiResponse(true, 'Admin logged out successfully'));
 });

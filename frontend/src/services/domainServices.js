@@ -1,14 +1,9 @@
-import api from './api';
+import api, { refreshAccessToken } from './api';
+import { hasSessionMarker, getPersistedRefreshToken } from '../utils/authStorage';
 
 import logger from '../utils/logger';
 
-const checkAuthLocal = () => {
-  try {
-    return !!localStorage.getItem('siri_auth_token');
-  } catch {
-    return false; // Fail safe for incognito or SSR
-  }
-};
+const checkAuthLocal = () => hasSessionMarker() || !!getPersistedRefreshToken();
 
 export const authService = {
   login: async (email, password) => {
@@ -54,9 +49,12 @@ export const authService = {
     const response = await api.post('/auth/2fa/verify-login', { userId, token });
     return response.data;
   },
-  refresh: async (refreshToken) => {
-    const response = await api.post('/auth/refresh', { refreshToken });
-    return response.data;
+  refresh: async () => {
+    const token = await refreshAccessToken();
+    if (!token) {
+      throw new Error('Refresh failed');
+    }
+    return { success: true, data: { accessToken: token, token } };
   },
   logout: async (refreshToken) => {
     const response = await api.post('/auth/logout', { refreshToken });

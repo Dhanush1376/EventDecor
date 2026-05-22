@@ -1,20 +1,43 @@
 /**
- * Resolves the API base URL. Production builds must set VITE_API_URL.
- * Local dev falls back to localhost when the variable is unset.
+ * Resolves the API base URL.
+ * - Dev: same-origin `/api/v1` via Vite proxy (cookies work).
+ * - Prod on site host: same-origin `/api/v1` via Vercel rewrite (cookies work).
+ * - Override with VITE_API_URL when needed.
  */
+const normalizeConfigured = (configured) => {
+  if (!configured.endsWith('/api') && !configured.endsWith('/api/v1')) {
+    return configured.replace(/\/+$/, '') + '/api/v1';
+  }
+  return configured;
+};
+
+const shouldUseSameOriginApi = (configured) => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const target = new URL(configured, window.location.origin);
+    return target.origin !== window.location.origin;
+  } catch {
+    return false;
+  }
+};
+
 export const getApiUrl = () => {
   const configured = import.meta.env.VITE_API_URL?.trim();
+
   if (configured) {
-    // Auto-append /api/v1 if the user only provided the root domain
-    if (!configured.endsWith('/api') && !configured.endsWith('/api/v1')) {
-      return configured.replace(/\/+$/, '') + '/api/v1';
+    const useProxy =
+      (import.meta.env.PROD && shouldUseSameOriginApi(configured)) ||
+      (import.meta.env.DEV &&
+        /localhost:5000|127\.0\.0\.1:5000/i.test(configured));
+    if (useProxy) {
+      return '/api/v1';
     }
-    return configured;
+    return normalizeConfigured(configured);
   }
+
   if (import.meta.env.DEV) {
-    return 'http://localhost:5000/api';
+    return '/api/v1';
   }
-  throw new Error(
-    'VITE_API_URL is not set. Configure it in your deployment environment.'
-  );
+
+  return '/api/v1';
 };

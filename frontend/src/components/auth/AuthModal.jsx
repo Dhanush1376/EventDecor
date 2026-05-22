@@ -19,6 +19,7 @@ export function AuthModal() {
   
   const otpRefs = useRef([]);
   const isSubmittingRef = useRef(false);
+  const lastAutoSubmittedOtp = useRef('');
 
   const handleCheckEmailOrSend = async (e) => {
     e?.preventDefault();
@@ -37,6 +38,7 @@ export function AuthModal() {
       toast.success("Verification code sent to your email!");
       setStep("otp");
       setTimer(60);
+      lastAutoSubmittedOtp.current = '';
       setOtp(["", "", "", "", "", ""]);
       setTimeout(() => {
         if (otpRefs.current[0]) otpRefs.current[0].focus();
@@ -55,7 +57,7 @@ export function AuthModal() {
     isSubmittingRef.current = true;
     setIsLoading(true);
     try {
-      const response = await authService.verifyOTP(email, otpString);
+      const response = await authService.verifyOTP(email, otpString.replace(/\D/g, ''));
       if (response.success && response.data?.requires2FA) {
         toast("Enter your authenticator code on the login page.", { icon: "🔐" });
         closeAuthModal();
@@ -74,6 +76,7 @@ export function AuthModal() {
       }
     } catch (err) {
       setError(true);
+      lastAutoSubmittedOtp.current = '';
       toast.error(err.response?.data?.message || "Invalid or expired code");
       setOtp(["", "", "", "", "", ""]);
       setTimeout(() => {

@@ -47,6 +47,7 @@ export function Auth() {
   const [searchParams] = useSearchParams();
   const otpRefs = useRef([]);
   const isSubmittingRef = useRef(false);
+  const lastAutoSubmittedOtp = useRef('');
 
   // If user is already authenticated, redirect them away from /auth (DO NOT clear their session)
   useEffect(() => {
@@ -69,13 +70,19 @@ export function Auth() {
     return () => clearInterval(interval);
   }, [timer]);
 
-  // Auto-submit OTP when 6 digits are fully filled
+  // Auto-submit OTP when 6 digits are fully filled (once per code)
   useEffect(() => {
-    const otpString = otp.join("");
-    if (otpString.length === 6 && step === "otp") {
+    const otpString = otp.join('');
+    if (
+      otpString.length === 6 &&
+      step === 'otp' &&
+      !isLoading &&
+      lastAutoSubmittedOtp.current !== otpString
+    ) {
+      lastAutoSubmittedOtp.current = otpString;
       submitOTP(otpString);
     }
-  }, [otp]);
+  }, [otp, step, isLoading]);
 
   async function handleCheckEmailOrSend(e) {
     e?.preventDefault();
@@ -98,6 +105,7 @@ export function Auth() {
       toast.success("Verification code sent to your email!");
       setStep("otp");
       setTimer(60);
+      lastAutoSubmittedOtp.current = '';
       setOtp(["", "", "", "", "", ""]);
       if (import.meta.env.DEV && response.success && response.data && response.data.otp) {
         setDevOtp(response.data.otp);
@@ -125,7 +133,7 @@ export function Auth() {
     isSubmittingRef.current = true;
     setIsLoading(true);
     try {
-      const response = await authService.verifyOTP(email, otpString);
+      const response = await authService.verifyOTP(email, otpString.replace(/\D/g, ''));
       if (response.success && response.data?.requires2FA) {
         setPending2faUserId(response.data.userId);
         setTotpCode("");
@@ -140,13 +148,16 @@ export function Auth() {
         // Keep isSubmittingRef and isLoading locked to true during success state transition
         isSubmittingRef.current = true;
         setIsLoading(true);
+        const accessToken = response.data.accessToken || response.data.token;
+        const refreshToken = response.data.refreshToken;
         setTimeout(async () => {
-          await loginSuccess(response.data.user, response.data.token, response.data.refreshToken);
+          await loginSuccess(response.data.user, accessToken, refreshToken);
         }, 1800);
       }
     } catch (err) {
       setError(true);
       toast.error(err.response?.data?.message || 'Invalid or expired code');
+      lastAutoSubmittedOtp.current = '';
       setOtp(["", "", "", "", "", ""]);
       setTimeout(() => {
         setError(false);
@@ -177,12 +188,10 @@ export function Auth() {
       if (response.success) {
         setUserRole(response.data.user.role);
         setStep("success");
+        const accessToken = response.data.accessToken || response.data.token;
+        const refreshToken = response.data.refreshToken;
         setTimeout(async () => {
-          await loginSuccess(
-            response.data.user,
-            response.data.accessToken || response.data.token,
-            response.data.refreshToken
-          );
+          await loginSuccess(response.data.user, accessToken, refreshToken);
         }, 1800);
       }
     } catch (err) {

@@ -6,20 +6,7 @@ import { TwoFactorService } from '../services/twoFactorService';
 import AuthService from '../services/authService';
 import { consumeTwoFactorPending } from '../utils/twoFactorPending';
 import User from '../models/User';
-
-const refreshCookieName = 'siri_refresh_token';
-
-const setRefreshCookie = (res: Response, refreshToken: string) => {
-  const maxAge = AuthService.getRefreshTokenTtlMs();
-  const isProd = process.env.NODE_ENV === 'production';
-  res.cookie(refreshCookieName, refreshToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    path: '/api/auth',
-    maxAge,
-  });
-};
+import { setCustomerRefreshCookie } from '../utils/authCookies';
 
 export const getTwoFactorStatus = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
@@ -70,12 +57,14 @@ export const verifyTwoFactorLogin = asyncHandler(async (req: Request, res: Respo
 
   const userAgent = req.headers['user-agent'] || '';
   const session = await AuthService.createSession(user, userAgent);
-  setRefreshCookie(res, session.refreshToken);
+  setCustomerRefreshCookie(res, session.refreshToken);
 
   res.status(200).json(
     new ApiResponse(true, 'Authenticated successfully', {
       user: session.user,
       accessToken: session.accessToken,
+      token: session.accessToken,
+      refreshToken: session.refreshToken,
     })
   );
 });

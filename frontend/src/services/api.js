@@ -2,6 +2,15 @@ import axios from 'axios';
 import logger from '../utils/logger';
 import { getApiUrl } from '../utils/apiUrl';
 import { getCachedGet, setCachedGet } from '../utils/apiCache';
+import {
+  hasSessionMarker,
+  persistAccessToken,
+  getPersistedAccessToken,
+  persistRefreshToken,
+  getPersistedRefreshToken,
+  setSessionMarker,
+  clearAuthStorage,
+} from '../utils/authStorage';
 
 const API_URL = getApiUrl();
 
@@ -14,10 +23,15 @@ const api = axios.create({
   },
 });
 
-let accessToken = null;
+let accessToken = getPersistedAccessToken() || null;
 let refreshPromise = null;
 let csrfToken = null;
 let csrfInitPromise = null;
+let authBootstrapActive = false;
+
+export const setAuthBootstrapActive = (active) => {
+  authBootstrapActive = !!active;
+};
 
 const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
 
@@ -40,9 +54,28 @@ export const ensureCsrfToken = async () => {
 
 export const setAccessToken = (token) => {
   accessToken = token || null;
+  persistAccessToken(accessToken);
 };
 
 export const getAccessToken = () => accessToken;
+
+const applyRefreshPayload = (payload) => {
+  const token = payload?.accessToken || payload?.token;
+  const refresh = payload?.refreshToken;
+  if (token) {
+    setAccessToken(token);
+    setSessionMarker();
+  }
+  if (refresh) {
+    persistRefreshToken(refresh);
+  }
+  return token;
+};
+
+const buildRefreshBody = () => {
+  const stored = getPersistedRefreshToken();
+  return stored ? { refreshToken: stored } : {};
+};
 
 // Helper to identify queueable mutating requests
 const isQueueable = (url, method) => {
@@ -78,12 +111,34 @@ const getRequestDescription = (config) => {
   return `${method} request to ${url.split('/').pop()}`;
 };
 
-const hasLocalAuthMarker = () => {
-  try {
-    return !!localStorage.getItem('siri_auth_token');
-  } catch {
-    return false;
+const hasLocalAuthMarker = () => hasSessionMarker();
+
+const dispatchUnauthorized = () => {
+  if (authBootstrapActive) {
+    logger.dev('[API] Suppressed auth-unauthorized during session bootstrap');
+    return;
   }
+  setAccessToken(null);
+  clearAuthStorage();
+  window.dispatchEvent(new Event('auth-unauthorized'));
+};
+
+export const refreshAccessToken = async () => {
+  if (!hasLocalAuthMarker() && !getPersistedRefreshToken()) {
+    return null;
+  }
+  if (!refreshPromise) {
+    refreshPromise = api
+      .post('/auth/refresh', buildRefreshBody(), { _skipAuthRetry: true })
+      .then((res) => {
+        const payload = res.data?.data || res.data;
+        return applyRefreshPayload(payload);
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
 };
 
 // Add a request interceptor to include auth token and manage offline states
@@ -216,42 +271,37 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRefresh && !isAuthLogout) {
+    const skipAuthRetry = originalRequest?._skipAuthRetry;
+
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !isAuthRefresh &&
+      !isAuthLogout &&
+      !skipAuthRetry
+    ) {
       originalRequest._retry = true;
       logger.dev('[API] 401 Unauthorized - Attempting token refresh for:', originalRequest.url);
 
       try {
-        if (!refreshPromise) {
-          logger.dev('[API] Initiating refresh token request...');
-          refreshPromise = api.post('/auth/refresh').finally(() => {
-            refreshPromise = null;
-          });
-        }
-        const refreshResponse = await refreshPromise;
-        const token = refreshResponse.data?.data?.accessToken || refreshResponse.data?.data?.token;
-
+        const token = await refreshAccessToken();
         if (token) {
-          setAccessToken(token);
+          logger.dev('[API] Token refresh successful. Retrying original request.');
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
         }
-
-        logger.dev('[API] Token refresh successful. Retrying original request.');
-        originalRequest.headers.Authorization = `Bearer ${token}`;
-        return api(originalRequest);
       } catch (refreshErr) {
-        // Only trigger logout if it's a true 4xx/5xx rejection from the server
         if (refreshErr.response) {
-          logger.error('[API] Token refresh rejected by server. Triggering logout.');
-          setAccessToken(null);
-          window.dispatchEvent(new Event('auth-unauthorized'));
+          logger.error('[API] Token refresh rejected by server.');
+          dispatchUnauthorized();
         } else {
           logger.warn('[API] Token refresh failed due to network error. Preserving session.');
-          // Don't wipe session on timeout/network drop!
         }
       }
     } else if (error.response?.status === 401 && isAuthRefresh) {
       logger.error('[API] Refresh endpoint returned 401. Session expired.');
-      setAccessToken(null);
-      window.dispatchEvent(new Event('auth-unauthorized'));
+      dispatchUnauthorized();
     }
     return Promise.reject(error);
   }
@@ -302,8 +352,9 @@ const originalPost = api.post;
 api.post = function (url, data, config) {
   clearPendingGets();
   if (url === '/auth/refresh' || url?.includes('/auth/refresh')) {
+    const body = data && Object.keys(data).length ? data : buildRefreshBody();
     if (!refreshPromise) {
-      refreshPromise = originalPost.call(this, url, data, config).finally(() => {
+      refreshPromise = originalPost.call(this, url, body, config).finally(() => {
         refreshPromise = null;
       });
     }

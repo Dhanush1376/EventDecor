@@ -12,22 +12,19 @@ import { setTwoFactorPending } from '../utils/twoFactorPending';
 import UsedRefreshToken from '../models/UsedRefreshToken';
 import OtpVerification, { OTP_MAX_ATTEMPTS } from '../models/OtpVerification';
 import FailedLoginAttempt from '../models/FailedLoginAttempt';
-
-// Cache to handle concurrent/duplicate OTP verification requests (grace period of 10 seconds)
-const recentlyVerifiedOtps = new Map<string, { email: string; verifiedAt: number; session: any }>();
-
-// Periodic cleanup to prevent memory leak from accumulated OTP cache entries
-const OTP_CACHE_CLEANUP_INTERVAL_MS = 60_000; // 1 minute
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, val] of recentlyVerifiedOtps.entries()) {
-    if (now - val.verifiedAt > 30_000) {
-      recentlyVerifiedOtps.delete(key);
-    }
-  }
-}, OTP_CACHE_CLEANUP_INTERVAL_MS).unref(); // .unref() so it doesn't block graceful shutdown
+import { cacheOtpSession, getCachedOtpSession } from '../utils/otpVerifyCache';
+import { recordOtpVerifyFailure } from '../utils/otpRateLimit';
 
 class AuthService {
+  /** Strip non-digits and enforce 6-digit OTP shape. */
+  static normalizeOtpInput(otp: string): string {
+    return String(otp || '').replace(/\D/g, '').slice(0, 6);
+  }
+
+  static getOtpExpiryMinutes(): number {
+    const parsed = parseInt(process.env.OTP_EXPIRY_MINUTES || '10', 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+  }
   static generateAccessToken(user: IUser) {
     return jwt.sign(
       { id: user.id, role: user.role, email: user.email },
@@ -355,15 +352,11 @@ class AuthService {
       logger.warn(`[FRONTEND DUPLICATE REQUEST DETECTED] Multiple OTP requests received for ${cleanEmail} within 2 seconds. This indicates frontend race conditions or duplicate click triggers!`);
     }
 
-        // Check for existing active OTP verifications to detect overwriting
-    const existingOtp = await OtpVerification.findOne({ email: cleanEmail, type: 'auth' });
-    if (existingOtp) {
-      logger.warn(`[OTP OVERWRITE DETECTED] An active OTP created at ${existingOtp.createdAt} for ${cleanEmail} is being invalidated and overwritten by a new request. This is likely due to duplicate triggers or user clicking resend.`);
+    // Invalidate prior OTPs so only one active code exists per email (prevents confusion / race attacks)
+    const removed = await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
+    if (removed.deletedCount > 0) {
+      logger.info(`[OTP RESEND] Invalidated ${removed.deletedCount} prior OTP record(s) for ${cleanEmail}`);
     }
-
-    // We no longer delete existing OTPs here. This allows users who click "Resend" 
-    // multiple times to use ANY of the unexpired OTPs they receive in their email,
-    // fixing the issue where entering the first received OTP fails because the second click invalidated it.
 
     // 4. Generate cryptographically secure 6-digit OTP
     const otp = crypto.randomInt(100000, 999999).toString();
@@ -372,8 +365,8 @@ class AuthService {
     const salt = await bcrypt.genSalt(10);
     const otpHash = await bcrypt.hash(otp, salt);
 
-    // 6. Save OTP in MongoDB with expiry (5 minutes from now)
-    const expiryMinutes = parseInt(process.env.OTP_EXPIRY_MINUTES || '5', 10);
+    // 6. Save OTP in MongoDB with configured expiry
+    const expiryMinutes = this.getOtpExpiryMinutes();
     const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
     const otpRecord = await OtpVerification.create({
@@ -395,24 +388,26 @@ class AuthService {
       action: 'request'
     });
 
-    // 8. Send beautifully designed OTP email asynchronously
-    const { sendDirectEmail } = require('./notificationService');
+    // 8. Send OTP email synchronously (auth-critical path — must not rely on background queue alone)
+    const { sendDirectEmailProcessor } = require('./notificationService');
     const { getOtpEmailTemplate } = require('../utils/emailTemplates');
     try {
-      sendDirectEmail({
+      await sendDirectEmailProcessor({
         email: cleanEmail,
         subject: 'Your Siri Arts Security Code',
         customHtml: getOtpEmailTemplate(otp, expiryMinutes),
         type: 'security',
-        action: 'otp_auth'
+        action: 'otp_auth',
       });
     } catch (err: any) {
-      // Clean up the OTP verification record from MongoDB so it doesn't count against rate limits or leave dead records
       await OtpVerification.deleteOne({ _id: otpRecord._id });
-      // Delete the request log as well so they can try again immediately
-      await OtpRequestLog.deleteOne({ email: cleanEmail, action: 'request', createdAt: { $gte: new Date(Date.now() - 10000) } });
-      logger.error(`[OTP QUEUE ERROR] Failed to enqueue OTP email for ${cleanEmail}:`, err);
-      throw new ApiError(500, `Failed to queue email delivery. Please try again.`);
+      await OtpRequestLog.deleteOne({
+        email: cleanEmail,
+        action: 'request',
+        createdAt: { $gte: new Date(Date.now() - 10000) },
+      });
+      logger.error(`[OTP EMAIL ERROR] Failed to deliver OTP email for ${cleanEmail}:`, err?.message || err);
+      throw new ApiError(500, 'Failed to send verification email. Please check your email address and try again.');
     }
 
     // Always log in development for easier testing and recovery
@@ -429,24 +424,27 @@ class AuthService {
     }
 
     const cleanEmail = canonicalizeEmail(email);
+    const normalizedOtp = this.normalizeOtpInput(otp);
 
-    // Concurrency & duplicate verification check
-    const cacheKey = `${cleanEmail}:${otp}`;
-    const recentVerification = recentlyVerifiedOtps.get(cacheKey);
-    if (recentVerification && (Date.now() - recentVerification.verifiedAt) < 10000) {
-      logger.info(`[OTP CONCURRENCY RESILIENCE] Duplicate concurrent OTP verification request allowed for ${cleanEmail}`);
-      return recentVerification.session;
+    if (normalizedOtp.length !== 6) {
+      throw new ApiError(400, 'Verification code must be exactly 6 digits');
+    }
+
+    // Redis idempotency for duplicate concurrent verify (multi-instance safe)
+    const cachedSession = await getCachedOtpSession<any>(cleanEmail, normalizedOtp);
+    if (cachedSession) {
+      logger.info(`[OTP CACHE HIT] Returning cached session for duplicate verify: ${cleanEmail}`);
+      return cachedSession;
     }
 
     const isDev = process.env.NODE_ENV === 'development';
 
-    // 1. Cooldown & IP Restriction Check: Max 5 failed OTP attempts in the last 15 minutes per IP (Bypassed in Dev)
     if (!isDev) {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
       const failedAttemptsCount = await OtpRequestLog.countDocuments({
         ip,
         action: 'verify_fail',
-        createdAt: { $gte: fifteenMinutesAgo }
+        createdAt: { $gte: fifteenMinutesAgo },
       });
 
       if (failedAttemptsCount >= 5) {
@@ -454,44 +452,39 @@ class AuthService {
       }
     }
 
-    // Find all active OTP verification records for this user (they might have clicked resend, generating multiple valid OTPs)
-    const otpRecords = await OtpVerification.find({ email: cleanEmail, type: 'auth' }).sort({ createdAt: -1 });
+    const now = new Date();
+    const otpRecords = await OtpVerification.find({
+      email: cleanEmail,
+      type: 'auth',
+      expiresAt: { $gt: now },
+      exhausted: false,
+    }).sort({ createdAt: -1 });
 
     if (otpRecords.length === 0) {
-      logger.warn(`[OTP VERIFICATION FAIL] No active OTP record found in DB for: ${cleanEmail}`);
-      throw new ApiError(400, 'Invalid or expired OTP');
+      logger.warn(`[OTP VERIFY] No active OTP for ${cleanEmail}`);
+      throw new ApiError(400, 'Invalid or expired OTP. Please request a new code.');
     }
 
-    let matchedRecord = null;
-    let latestRecord = otpRecords[0];
+    const activeRecord = otpRecords[0];
+    const maxAttempts = activeRecord.maxAttempts ?? OTP_MAX_ATTEMPTS;
 
-    // 2. Validate Expiration (in case MongoDB TTL index hasn't run yet)
-    if (new Date() > latestRecord.expiresAt) {
-      logger.warn(`[OTP EXPIRED] OTP created at ${latestRecord.createdAt} for ${cleanEmail} has expired at: ${latestRecord.expiresAt}`);
-      await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
-      throw new ApiError(400, 'Invalid or expired OTP');
-    }
-
-    const maxAttempts = latestRecord.maxAttempts ?? OTP_MAX_ATTEMPTS;
-
-    if (latestRecord.exhausted || latestRecord.attempts >= maxAttempts) {
-      logger.error(`[OTP EXCEEDED LIMIT] OTP exhausted for ${cleanEmail}.`);
-      await OtpVerification.updateOne({ _id: latestRecord._id }, { $set: { exhausted: true } });
+    if (activeRecord.attempts >= maxAttempts) {
+      await OtpVerification.updateOne({ _id: activeRecord._id }, { $set: { exhausted: true } });
       throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
     }
 
-    // 4. Verify OTP Match across all active records
-    const isBypassConfigured = process.env.BYPASS_OTP_CODE && otp === process.env.BYPASS_OTP_CODE;
-    const isDevBypass = process.env.NODE_ENV === 'development' && isBypassConfigured;
-    if (isDevBypass) {
-      logger.warn(`[OTP BYPASS] Bypass code used for ${cleanEmail}.${isBypassConfigured ? ' (Configured via BYPASS_OTP_CODE)' : ' (Development default)'}`);
+    const isBypassConfigured =
+      process.env.NODE_ENV === 'development' &&
+      process.env.BYPASS_OTP_CODE &&
+      normalizedOtp === String(process.env.BYPASS_OTP_CODE).replace(/\D/g, '').slice(0, 6);
+
+    if (isBypassConfigured) {
+      logger.warn(`[OTP BYPASS] Development bypass used for ${cleanEmail}`);
     }
 
+    let matchedRecord: (typeof otpRecords)[0] | null = null;
     for (const record of otpRecords) {
-      // Skip expired or exhausted records
-      if (new Date() > record.expiresAt || record.exhausted) continue;
-      
-      const isMatch = isDevBypass || await bcrypt.compare(otp, record.otpHash);
+      const isMatch = isBypassConfigured || (await bcrypt.compare(normalizedOtp, record.otpHash));
       if (isMatch) {
         matchedRecord = record;
         break;
@@ -499,25 +492,21 @@ class AuthService {
     }
 
     if (!matchedRecord) {
-      await OtpRequestLog.create({
-        ip,
-        email: cleanEmail,
-        action: 'verify_fail'
-      });
+      await OtpRequestLog.create({ ip, email: cleanEmail, action: 'verify_fail' });
+      await recordOtpVerifyFailure(ip);
 
       const updated = await OtpVerification.findOneAndUpdate(
-        { _id: latestRecord._id, exhausted: false },
+        { _id: activeRecord._id, exhausted: false },
         { $inc: { attempts: 1 } },
         { new: true }
       );
 
-      const attemptCount = updated?.attempts ?? latestRecord.attempts + 1;
+      const attemptCount = updated?.attempts ?? activeRecord.attempts + 1;
       logger.warn(
-        `[OTP VERIFICATION FAILED MATCH] Incorrect OTP for ${cleanEmail}. Attempts: ${attemptCount}/${maxAttempts}`
+        `[OTP VERIFY FAIL] Invalid code for ${cleanEmail}. Attempt ${attemptCount}/${maxAttempts}`
       );
 
       if (updated && attemptCount >= maxAttempts) {
-        // If max attempts reached on the latest record, exhaust ALL active records
         await OtpVerification.updateMany({ email: cleanEmail, type: 'auth' }, { $set: { exhausted: true } });
         throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
       }
@@ -525,14 +514,26 @@ class AuthService {
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
-    // 5. Verification Successful: Single-Use Cleanup (Delete ALL OTP records for this email to prevent reuse)
-    const deletedStatus = await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
-    if (deletedStatus.deletedCount === 0) {
-      logger.warn(`[OTP CONCURRENCY RACE] OTP for ${cleanEmail} was consumed by a concurrent verification request.`);
-      throw new ApiError(400, 'Invalid or expired OTP (consumed by another active session)');
+    // Atomic consume: delete matched record; if already consumed, serve from cache
+    const consumed = await OtpVerification.findOneAndDelete({
+      _id: matchedRecord._id,
+      email: cleanEmail,
+      type: 'auth',
+    });
+
+    if (!consumed) {
+      const raced = await getCachedOtpSession<any>(cleanEmail, normalizedOtp);
+      if (raced) {
+        logger.info(`[OTP RACE] Concurrent verify resolved via cache for ${cleanEmail}`);
+        return raced;
+      }
+      logger.warn(`[OTP RACE] OTP already consumed for ${cleanEmail}`);
+      throw new ApiError(400, 'Invalid or expired OTP');
     }
 
-    logger.info(`[OTP VERIFICATION SUCCESS] OTP successfully verified and consumed for ${cleanEmail} in ${latestRecord.attempts + 1} attempt(s).`);
+    await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
+
+    logger.info(`[OTP VERIFY OK] Code consumed for ${cleanEmail} (attempts: ${consumed.attempts + 1})`);
 
     // 6. Track verification success request to prevent spam
     await OtpRequestLog.create({
@@ -692,29 +693,12 @@ class AuthService {
         refreshToken: '',
         accessToken: '',
       };
-      recentlyVerifiedOtps.set(cacheKey, {
-        email: cleanEmail,
-        verifiedAt: Date.now(),
-        session: pendingResult as any,
-      });
+      await cacheOtpSession(cleanEmail, normalizedOtp, pendingResult);
       return pendingResult;
     }
 
     const session = await this.createSession(user, userAgent);
-
-    // Cache the successful verification to absorb duplicate concurrent hits
-    recentlyVerifiedOtps.set(cacheKey, {
-      email: cleanEmail,
-      verifiedAt: Date.now(),
-      session
-    });
-
-    // Clean up expired cache items to prevent memory leaks
-    for (const [key, val] of recentlyVerifiedOtps.entries()) {
-      if (Date.now() - val.verifiedAt > 30000) {
-        recentlyVerifiedOtps.delete(key);
-      }
-    }
+    await cacheOtpSession(cleanEmail, normalizedOtp, session);
 
     return session;
   }

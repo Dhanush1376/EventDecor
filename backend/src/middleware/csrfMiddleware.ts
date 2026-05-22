@@ -11,6 +11,17 @@ const CSRF_EXEMPT_PATHS = new Set([
   '/api/orders/webhook',
 ]);
 
+/** Auth routes that must work on cold load before CSRF cookie is established. */
+const CSRF_EXEMPT_SUFFIXES = [
+  '/auth/send-otp',
+  '/auth/verify-otp',
+  '/auth/refresh',
+  '/auth/logout',
+  '/admin/auth/login',
+  '/admin/auth/logout',
+  '/admin/auth/verify-2fa',
+];
+
 const generateToken = (): string => crypto.randomBytes(32).toString('hex');
 
 const setCsrfCookie = (res: Response, token: string): void => {
@@ -39,6 +50,11 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   }
 
   if (CSRF_EXEMPT_PATHS.has(req.path)) {
+    return next();
+  }
+
+  const original = req.originalUrl || req.path;
+  if (CSRF_EXEMPT_SUFFIXES.some((suffix) => original.includes(suffix))) {
     return next();
   }
 

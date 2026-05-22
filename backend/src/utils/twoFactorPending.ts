@@ -9,13 +9,17 @@ export const setTwoFactorPending = async (userId: string): Promise<void> => {
 };
 
 export const consumeTwoFactorPending = async (userId: string): Promise<boolean> => {
-  if (!redisClient || !redisClient.isReady) return true;
+  if (!redisClient || !redisClient.isReady) {
+    return process.env.NODE_ENV !== 'production';
+  }
   const removed = await redisClient.del(keyFor(userId));
   return removed === 1;
 };
 
 export const hasTwoFactorPending = async (userId: string): Promise<boolean> => {
-  if (!redisClient || !redisClient.isReady) return true;
+  if (!redisClient || !redisClient.isReady) {
+    return process.env.NODE_ENV !== 'production';
+  }
   const val = await redisClient.get(keyFor(userId));
   return val === '1';
 };
