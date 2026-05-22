@@ -6,7 +6,6 @@ import { fadeUp } from "../../animations/variants";
 import { MandalaElement } from "../ui/MandalaElement";
 import { MandalaArtDecor } from "../ui/MandalaArtDecor";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
-import { MARBLE_TEXTURE_URL } from "../../constants/assets";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
 import { StorySkeleton } from "../ui/Skeleton";
 
@@ -32,16 +31,7 @@ export function StorySection() {
       ref={containerRef}
       className="relative pt-16 pb-28 lg:py-28 overflow-hidden bg-surface"
     >
-      <div className="absolute inset-0 pointer-events-none mix-blend-multiply">
-        <img
-          src={MARBLE_TEXTURE_URL}
-          alt=""
-          className="w-full h-full object-cover opacity-[0.03]"
-          loading="lazy"
-          width="1920"
-          height="1080"
-        />
-      </div>
+
 
       {/* Background Depth Glimmer */}
       <div className="absolute top-1/4 left-0 w-[400px] md:w-[700px] h-[400px] md:h-[700px] bg-primary-container/15 rounded-full blur-[100px] md:blur-[150px] -translate-x-1/2 pointer-events-none" />

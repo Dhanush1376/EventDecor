@@ -3,15 +3,11 @@ import { createRoot } from "react-dom/client";
 import "./styles/globals.css";
 import App from "./App.jsx";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
-import { MARBLE_TEXTURE_URL } from "./constants/assets";
 import { runAppBootstrap } from "./utils/bootstrap";
 
 import logger from './utils/logger';
 
-document.documentElement.style.setProperty(
-  '--marble-texture-url',
-  `url("${MARBLE_TEXTURE_URL}")`
-);
+
 
 // Defer non-critical monitoring and analytics until after first paint
 const deferNonCriticalInit = () => {
