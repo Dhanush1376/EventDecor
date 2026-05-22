@@ -197,6 +197,7 @@ app.use(cookieParser());
 
 // CSRF double-submit cookie (required for cookie-credentialed mutating requests)
 app.get('/api/csrf-token', issueCsrfToken);
+app.get('/api/v1/csrf-token', issueCsrfToken); // Fallback for frontend base URLs pointing to /api/v1
 app.use('/api', validateCsrf);
 
 // Enable production-safe structured request logging and execution telemetry
