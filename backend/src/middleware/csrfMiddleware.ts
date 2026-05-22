@@ -45,7 +45,22 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   const cookieToken = String(req.cookies?.[CSRF_COOKIE_NAME] || '');
   const headerToken = String(req.headers[CSRF_HEADER_NAME] || '');
 
+  // Origin-based CSRF mitigation fallback:
+  // If third-party cookies (SameSite=None) are blocked by the browser, cookieToken will be empty.
+  // In this case, we securely validate the request using the browser-enforced Origin header.
+  const origin = req.headers.origin;
+  const isTrustedOrigin = origin && (
+    origin === 'https://siriartsandcrafts.com' ||
+    origin === 'https://www.siriartsandcrafts.com' ||
+    origin === 'https://siriarts-n-crafts.vercel.app' ||
+    origin === 'http://localhost:5173'
+  );
+
   if (!cookieToken || !headerToken || cookieToken.length !== headerToken.length) {
+    if (isTrustedOrigin) {
+      // Browser blocked the cookie but Origin is explicitly trusted and verified.
+      return next();
+    }
     res.status(403).json({
       success: false,
       message: 'Invalid or missing CSRF token',
@@ -56,6 +71,9 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   const cookieBuf = Buffer.from(cookieToken);
   const headerBuf = Buffer.from(headerToken);
   if (!crypto.timingSafeEqual(cookieBuf, headerBuf)) {
+    if (isTrustedOrigin) {
+      return next();
+    }
     res.status(403).json({
       success: false,
       message: 'Invalid or missing CSRF token',
