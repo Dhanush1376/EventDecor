@@ -114,6 +114,9 @@ const allowedOrigins = [
 ];
 
 export const isOriginAllowed = (origin: string): boolean => {
+  // Allow all origins in development (for mobile LAN testing)
+  if (process.env.NODE_ENV === 'development') return true;
+  
   // Allow any vercel domain containing 'siri' and 'arts' to cover all potential aliases
   const vercelPreviewRegex = /^https:\/\/.*siri.*arts.*\.vercel\.app$/i;
   return allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
