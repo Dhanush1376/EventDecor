@@ -19,7 +19,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      injectRegister: null, // DISABLED TO PREVENT AGGRESSIVE CACHING
       includeAssets: ['favicon.png', 'favicon.ico', 'manifest.json', 'robots.txt', 'sitemap.xml', 'og-image.jpg', 'og-image.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp,avif}'],
