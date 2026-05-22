@@ -217,6 +217,13 @@ export function Footer() {
             </Link>
           </div>
         </div>
+        
+        {/* Version Display for Production Diagnostics */}
+        <div className="mt-4 flex justify-center md:justify-start">
+          <p className="font-mono text-[9px] text-black/20 uppercase tracking-widest">
+            Build: {import.meta.env.VITE_BUILD_ID || 'Local'}
+          </p>
+        </div>
       </div>
     </footer>
   );
