@@ -70,7 +70,7 @@ export function NetworkProvider({ children }) {
     const startTime = performance.now();
     try {
       const apiUrl = getApiUrl();
-      const response = await fetch(`${apiUrl}/health?t=${Date.now()}`, {
+      const response = await fetch(`${apiUrl}/readiness?t=${Date.now()}`, {
         method: "GET",
         headers: {
           "Cache-Control": "no-cache",

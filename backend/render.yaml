@@ -6,7 +6,7 @@ services:
     # Production minimum: standard (2 GB RAM). starter (512 MB) OOMs under Mongo pool + Redis + Socket.io.
     plan: standard
     autoDeploy: true
-    healthCheckPath: /api/health
+    healthCheckPath: /api/readiness
     envVars:
       - key: NODE_ENV
         value: production
@@ -63,6 +63,8 @@ services:
         fromConfig: true
       - key: REQUIRE_REDIS
         value: "true"
+      - key: LOG_LEVEL
+        value: warn
       - key: SMTP_FROM_EMAIL
         fromConfig: true
       - key: SMTP_FROM_NAME
@@ -76,7 +78,7 @@ services:
     runtime: docker
     plan: standard
     autoDeploy: true
-    healthCheckPath: /api/health
+    healthCheckPath: /api/readiness
     envVars:
       - key: NODE_ENV
         value: staging
@@ -98,6 +100,8 @@ services:
         fromConfig: true
       - key: REQUIRE_REDIS
         value: "true"
+      - key: LOG_LEVEL
+        value: warn
       - key: ADMIN_ANALYTICS_CACHE_TTL
         value: "120"
       - key: FRONTEND_URLS

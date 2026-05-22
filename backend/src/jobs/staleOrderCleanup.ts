@@ -63,7 +63,9 @@ export const releaseStalePendingOrders = async (): Promise<number> => {
     );
 
     processed += cancelResult.modifiedCount;
-    logger.info(`[CRON] Stale-order batch cancelled ${cancelResult.modifiedCount} order(s)`);
+    if (cancelResult.modifiedCount > 0) {
+      logger.info(`[CRON] Stale-order batch cancelled ${cancelResult.modifiedCount} order(s)`);
+    }
   };
 
   for await (const doc of cursor) {

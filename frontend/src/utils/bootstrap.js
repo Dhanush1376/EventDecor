@@ -4,6 +4,7 @@
 import { cmsService } from '../services/domainServices';
 import { getApiUrl } from './apiUrl';
 import logger from './logger';
+import { purgeLegacyClientStorage } from './purgeLegacyStorage';
 
 let bootstrapStarted = false;
 
@@ -32,6 +33,8 @@ export const prefetchCriticalData = () => {
 export const runAppBootstrap = () => {
   if (bootstrapStarted) return;
   bootstrapStarted = true;
+
+  purgeLegacyClientStorage();
 
   const run = () => prefetchCriticalData();
 

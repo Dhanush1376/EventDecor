@@ -3,26 +3,39 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const buildId =
+  process.env.VITE_BUILD_ID ||
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ||
+  process.env.RENDER_GIT_COMMIT?.slice(0, 12) ||
+  String(Date.now());
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_BUILD_ID': JSON.stringify(buildId),
+  },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       injectRegister: 'auto',
       includeAssets: ['favicon.png', 'favicon.ico', 'manifest.json', 'robots.txt', 'sitemap.xml', 'og-image.jpg', 'og-image.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp,avif}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             urlPattern: /\/assets\/.*\.(js|css)$/i,
-            handler: 'CacheFirst',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'shell-chunks',
-              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              networkTimeoutSeconds: 4,
+              expiration: { maxEntries: 48, maxAgeSeconds: 60 * 60 * 24 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

@@ -14,7 +14,7 @@ import RedisStore from 'rate-limit-redis';
 import redisClient, { pingRedis } from './utils/redis';
 import errorMiddleware from './middleware/errorMiddleware';
 import { registerApiRoutes } from './routes/registerApiRoutes';
-import { checkCloudinaryCdn } from './utils/cdnHealth';
+import { checkCloudinaryCdn, getCachedCdnHealth } from './utils/cdnHealth';
 import logger from './config/logger';
 import { getSocketAdapterMode } from './config/socketState';
 import { generateSitemap } from './utils/sitemapGenerator';
@@ -44,10 +44,11 @@ logger.info(`[STARTUP] Express trust proxy hops: ${trustProxyHops}`);
 
 // Production: redirect when TLS is not terminated (bare Docker / misconfigured proxy)
 app.use(enforceHttps);
-logger.warn(
-  `[STARTUP] TRUST_PROXY_HOPS=${trustProxyHops}. Client IP accuracy depends on this matching your proxy chain ` +
-    '(Render=1, Cloudflare+Render=2, local dev=0). Wrong values allow IP spoofing on rate limits. See docs/DEPLOYMENT.md'
-);
+if (process.env.NODE_ENV !== 'production') {
+  logger.info(
+    `[STARTUP] TRUST_PROXY_HOPS=${trustProxyHops} — must match proxy chain (Render=1, Cloudflare+Render=2). See docs/DEPLOYMENT.md`
+  );
+}
 
 // Boot Request Tracker AsyncLocalStorage context as early as possible
 app.use(requestTrackerMiddleware);
@@ -278,12 +279,24 @@ const rateLimitConfig = (options: any) => {
   };
 };
 
+const skipRateLimit = (req: Request) => {
+  const path = (req.originalUrl || req.url || '').split('?')[0];
+  return (
+    path === '/api/health' ||
+    path === '/api/readiness' ||
+    path === '/api/version' ||
+    path === '/favicon.ico' ||
+    path === '/'
+  );
+};
+
 const globalLimiter = rateLimitConfig({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200, // Limit each IP to 200 requests per windowMs
   message: 'Too many requests from this IP, please try again after 15 minutes',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipRateLimit,
 });
 
 const authLimiter = rateLimitConfig({
@@ -346,24 +359,24 @@ if (process.env.NODE_ENV === 'production' || testRateLimitEnabled) {
 // 5. Caching & Performance telemetry already loaded above
 
 
-// 6. Health Check (Centralized observibility for system and DB health status)
+// 6. Health Check — lite by default (no CDN probe); ?full=1 runs delivery probe for dashboards
 app.get('/api/health', async (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
 
   const dbState = mongoose.connection.readyState;
   const dbStatus = dbState === 1 ? 'UP' : 'DOWN';
   const redisStatus = await pingRedis();
-  const cdnStatus = await checkCloudinaryCdn();
+  const fullProbe = req.query.full === '1' || req.query.full === 'true';
+  const cdnStatus = fullProbe ? await checkCloudinaryCdn() : getCachedCdnHealth();
   const requireRedis = process.env.REQUIRE_REDIS === 'true';
   const redisRequiredDown =
     requireRedis && (redisStatus === 'down' || redisStatus === 'not_configured');
-  const cdnDown = cdnStatus === 'down';
 
   const dbHealthFail = dbState !== 1 || redisRequiredDown;
 
   const healthData = {
     success: !dbHealthFail,
-    status: dbHealthFail ? 'critical' : (cdnDown ? 'degraded' : 'healthy'),
+    status: dbHealthFail ? 'critical' : 'healthy',
     message: 'Siri Arts API Status',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -378,6 +391,8 @@ app.get('/api/health', async (req: Request, res: Response) => {
     cdn: {
       provider: 'cloudinary',
       status: cdnStatus,
+      advisory: true,
+      probed: fullProbe,
     },
     system: {
       memory: {
@@ -395,12 +410,8 @@ app.get('/api/health', async (req: Request, res: Response) => {
   };
 
   if (dbHealthFail) {
-    logger.error('🏥 HEALTHCHECK FAILED: Critical dependency down', healthData);
+    logger.error('[HEALTH] Critical dependency down', healthData);
     return res.status(503).json(healthData);
-  }
-
-  if (cdnDown) {
-    logger.warn('🏥 HEALTHCHECK DEGRADED: CDN is down but core API is up', healthData);
   }
 
   return res.status(200).json(healthData);

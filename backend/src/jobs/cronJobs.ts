@@ -26,7 +26,6 @@ export const initJobs = () => {
   // 2. Release stock for stale pending orders (every 15 minutes)
   cron.schedule('*/15 * * * *', async () => {
     await withCronLock('stale-order-stock-release', 14 * 60, async () => {
-      logger.info('Running stale pending orders stock release...');
       const count = await releaseStalePendingOrders();
       if (count > 0) {
         logger.info(`[CRON] Released stock for ${count} stale pending order(s)`);
@@ -75,13 +74,10 @@ export const initJobs = () => {
     });
   });
 
-  // 7. CDN health probe (every 30 minutes)
+  // 7. CDN delivery probe (every 30 minutes; logs only on state change via cdnHealth util)
   cron.schedule('*/30 * * * *', async () => {
     await withCronLock('cdn-health-check', 25 * 60, async () => {
-      const status = await checkCloudinaryCdn();
-      if (status === 'down') {
-        logger.error('[CDN] Cloudinary CDN probe failed — check CLOUDINARY_* env and network egress.');
-      }
+      await checkCloudinaryCdn({ force: true });
     });
   });
 
