@@ -76,8 +76,8 @@ export function NetworkProvider({ children }) {
           "Cache-Control": "no-cache",
           "Accept": "application/json"
         },
-        // Abort quickly to ensure we don't hang
-        signal: AbortSignal.timeout(4000),
+        // Abort after 10 seconds to accommodate slow Render free-tier cold boots
+        signal: AbortSignal.timeout(10000),
       });
 
       if (response.ok) {
