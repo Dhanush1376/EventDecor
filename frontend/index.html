@@ -13,10 +13,10 @@
     <!-- Anti-Stale Service Worker Cleanup Script -->
     <script>
       if ('serviceWorker' in navigator) {
-        // Automatically check for service worker updates on page load
+        // Forcefully unregister all service workers to kill the aggressive PWA cache
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
           for(let registration of registrations) {
-            registration.update();
+            registration.unregister();
           }
         });
       }

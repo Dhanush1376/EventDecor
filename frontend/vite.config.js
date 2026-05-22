@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { VitePWA } from 'vite-plugin-pwa'
+// import { VitePWA } from 'vite-plugin-pwa'
 
 const buildId =
   process.env.VITE_BUILD_ID ||
@@ -17,66 +17,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: null, // DISABLED TO PREVENT AGGRESSIVE CACHING
-      includeAssets: ['favicon.png', 'favicon.ico', 'manifest.json', 'robots.txt', 'sitemap.xml', 'og-image.jpg', 'og-image.png'],
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp,avif}'],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
-        runtimeCaching: [
-          {
-            urlPattern: /\/assets\/.*\.(js|css)$/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'shell-chunks',
-              networkTimeoutSeconds: 4,
-              expiration: { maxEntries: 48, maxAgeSeconds: 60 * 60 * 24 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /\/assets\/.*\.(png|jpg|jpeg|svg|webp|avif|woff2?)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'shell-static',
-              expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: ({ request }) => request.mode === 'navigate',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'pages',
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: ({ url }) =>
-              url.pathname.includes('/api/') ||
-              url.hostname.includes('onrender.com') ||
-              url.hostname.includes('razorpay.com'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: { maxEntries: 32, maxAgeSeconds: 60 * 5 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
-      },
-      devOptions: {
-        enabled: false,
-      },
-    }),
+    // VitePWA({...})
   ],
 
   // ─── ESBuild Optimization ───
