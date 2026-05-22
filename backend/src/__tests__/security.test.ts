@@ -6,9 +6,12 @@ describe('CSRF protection', () => {
     req.set('Origin', 'http://localhost:5173');
 
   it('rejects mutating requests without a matching CSRF token', async () => {
-    const res = await withOrigin(request(app).post('/api/auth/check-email')).send({
-      email: 'test@example.com',
-    });
+    // We omit Origin entirely. If we sent an untrusted Origin, CORS would block it with 500.
+    // If we sent a trusted Origin, the new bypass logic would allow it.
+    // By sending no Origin, it passes CORS but fails CSRF validation.
+    const res = await request(app).post('/api/auth/check-email')
+      .set('Origin', 'http://localhost:3000')
+      .send({ email: 'test@example.com' });
     expect(res.status).toBe(403);
     expect(res.body.message).toMatch(/CSRF/i);
   });
