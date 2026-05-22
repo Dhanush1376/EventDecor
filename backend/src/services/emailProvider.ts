@@ -47,17 +47,23 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
   const senderEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
   const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
 
-  const body = {
+  const body: any = {
     sender: { name: senderName, email: senderEmail },
     to: [{ email: payload.to }],
     subject: payload.subject,
     htmlContent: payload.html,
-    headers: payload.headers,
-    attachment: payload.attachments?.map(a => ({
+  };
+
+  if (payload.headers && Object.keys(payload.headers).length > 0) {
+    body.headers = payload.headers;
+  }
+
+  if (payload.attachments && payload.attachments.length > 0) {
+    body.attachment = payload.attachments.map(a => ({
       name: a.filename,
       content: typeof a.content === 'string' ? Buffer.from(a.content).toString('base64') : a.content.toString('base64')
-    }))
-  };
+    }));
+  }
 
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
