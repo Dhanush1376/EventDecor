@@ -2,7 +2,7 @@ import request from 'supertest';
 import app, { isOriginAllowed } from '../app';
 
 describe('CSRF protection', () => {
-  const withOrigin = (req: ReturnType<typeof request>) =>
+  const withOrigin = (req: request.Test) =>
     req.set('Origin', 'http://localhost:5173');
 
   it('rejects mutating requests without a matching CSRF token', async () => {

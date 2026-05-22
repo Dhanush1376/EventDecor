@@ -116,12 +116,24 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
  * Smart Email Sender: Tries Resend -> SendGrid -> Brevo -> SMTP fallback
  */
 export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: string }> => {
+  const errors: string[] = [];
+
   if (process.env.BREVO_API_KEY) {
-    try { return await sendViaBrevo(payload); } catch (err: any) { logger.warn(`Brevo failed: ${err.message}`); }
+    try { 
+      return await sendViaBrevo(payload); 
+    } catch (err: any) { 
+      logger.error(`Brevo failed: ${err.message}`);
+      errors.push(`Brevo: ${err.message}`);
+    }
   }
 
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    try { return await sendViaSMTP(payload); } catch (err: any) { logger.warn(`SMTP failed: ${err.message}`); }
+    try { 
+      return await sendViaSMTP(payload); 
+    } catch (err: any) { 
+      logger.error(`SMTP failed: ${err.message}`);
+      errors.push(`SMTP: ${err.message}`);
+    }
   }
 
   if (process.env.NODE_ENV !== 'production') {
@@ -143,5 +155,9 @@ export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: str
     return { messageId: info.messageId };
   }
 
-  throw new Error('No email provider configured! Set RESEND_API_KEY, SENDGRID_API_KEY, BREVO_API_KEY, or SMTP_USER/PASS.');
+  if (errors.length > 0) {
+    throw new Error(`Email delivery failed: ${errors.join(', ')}`);
+  }
+
+  throw new Error('No email provider configured! Set BREVO_API_KEY or SMTP_USER/PASS.');
 };
