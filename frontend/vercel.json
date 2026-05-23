@@ -1,73 +1,8 @@
 {
-  "trailingSlash": false,
-  "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://siri-arts-n-crafts.onrender.com/api/:path*"
-    },
-    {
-      "source": "/((?!assets/|.*\\..*).*)",
+      "source": "/:path*",
       "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(self), interest-cohort=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self' https://siriartsandcrafts.com https://*.siriartsandcrafts.com https://*.vercel.app; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://siriartsandcrafts.com https://*.siriartsandcrafts.com https://*.vercel.app https://checkout.razorpay.com https://*.razorpay.com; style-src 'self' 'unsafe-inline' https://siriartsandcrafts.com https://*.siriartsandcrafts.com https://*.vercel.app https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://siriartsandcrafts.com https://*.siriartsandcrafts.com https://*.vercel.app https://*.onrender.com wss://*.onrender.com https://*.sentry.io https://*.ingest.sentry.io https://*.cloudinary.com https://api.razorpay.com https://lumberjack.razorpay.com https://*.razorpay.com; manifest-src 'self' https://siriartsandcrafts.com https://*.siriartsandcrafts.com https://*.vercel.app; object-src 'none'; base-uri 'self' https://siriartsandcrafts.com https://*.siriartsandcrafts.com https://*.vercel.app; frame-ancestors 'self' https://siriartsandcrafts.com https://*.siriartsandcrafts.com https://*.vercel.app;"
-        }
-      ]
-    },
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
-      ]
-    },
-    {
-      "source": "/(sw\\.js|workbox-.*\\.js)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
-      ]
-    },
-    {
-      "source": "/(favicon\\.png|favicon\\.ico|manifest\\.json|robots\\.txt|sitemap\\.xml)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" }
-      ]
-    },
-    {
-      "source": "/og-image.(png|jpg)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=604800" },
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
-      ]
-    },
-    {
-      "source": "/index.html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }
-      ]
-    },
-    {
-      "source": "/:path*\\.(webp|avif|woff2)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
     }
   ]
 }
