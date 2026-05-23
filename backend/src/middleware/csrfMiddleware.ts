@@ -65,13 +65,13 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   // If third-party cookies (SameSite=None) are blocked by the browser, cookieToken will be empty.
   // In this case, we securely validate the request using the browser-enforced Origin header.
   const origin = req.headers.origin;
-  const vercelPreviewRegex = /^https:\/\/.*siri.*arts.*\.vercel\.app$/i;
+  const vercelPreviewRegex = /^https:\/\/.*(siri-arts|siriarts-).*\.vercel\.app$/i;
   const isTrustedOrigin = origin && (
     origin === 'https://siriartsandcrafts.com' ||
     origin === 'https://www.siriartsandcrafts.com' ||
     origin === 'https://siriarts-n-crafts.vercel.app' ||
     origin === 'http://localhost:5173' ||
-    process.env.NODE_ENV === 'development' ||
+    (process.env.NODE_ENV === 'development' && !process.env.JEST_WORKER_ID) ||
     vercelPreviewRegex.test(origin)
   );
 

@@ -116,11 +116,11 @@ const allowedOrigins = [
 ];
 
 export const isOriginAllowed = (origin: string): boolean => {
-  // Allow all origins in development (for mobile LAN testing)
-  if (process.env.NODE_ENV === 'development') return true;
+  // Allow all origins in development (for mobile LAN testing), but not in Jest tests
+  if (process.env.NODE_ENV === 'development' && !process.env.JEST_WORKER_ID) return true;
   
-  // Allow any vercel domain containing 'siri' and 'arts' to cover all potential aliases
-  const vercelPreviewRegex = /^https:\/\/.*siri.*arts.*\.vercel\.app$/i;
+  // Allow any vercel domain containing 'siri-arts' or 'siriarts-' to cover all potential aliases
+  const vercelPreviewRegex = /^https:\/\/.*(siri-arts|siriarts-).*\.vercel\.app$/i;
   return allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
 };
 
