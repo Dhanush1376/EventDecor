@@ -216,9 +216,9 @@ export function AdminGallery() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-5"
       >
         <div>
-          <h1 className="text-[26px] font-bold text-stone-850 font-display tracking-tight">
+          <h2 className="text-[26px] font-bold text-stone-850 font-display tracking-tight">
             Gallery Curation Studio
-          </h1>
+          </h2>
           <p className="text-[12.5px] text-stone-400 font-light mt-0.5">
             Manage your high-fidelity Design Inspirations and Real Event Celebrations ({items.length} items cataloged)
           </p>

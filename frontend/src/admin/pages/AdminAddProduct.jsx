@@ -440,9 +440,9 @@ export function AdminAddProduct() {
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
           <div>
-            <h1 className="text-[24px] font-bold text-[#0F172A] font-display">
+            <h2 className="text-[24px] font-bold text-[#0F172A] font-display">
               {isEditMode ? "Edit Product Curation" : "New Craft Curation"}
-            </h1>
+            </h2>
             <p className="text-[12.5px] text-[#64748B]">
               {isEditMode
                 ? `Modifying #${id.substring(id.length - 8).toUpperCase()}`
@@ -1368,7 +1368,7 @@ export function AdminAddProduct() {
                     key={i}
                     className="w-8 h-8 rounded-lg overflow-hidden border border-[#E5E7EB] cursor-pointer hover:border-[#000000]"
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="Traditional wedding event decoration" className="w-full h-full object-cover" />
                   </div>
                 ))}
               </div>

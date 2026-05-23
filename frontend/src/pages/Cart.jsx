@@ -518,7 +518,7 @@ export function Cart() {
                             <img
                               onError={handleImageError}
                               src={savedItem.imageSrc}
-                              alt=""
+                              alt="Traditional wedding event decoration"
                               className="w-full sm:w-16 h-40 sm:h-20 bg-surface-container rounded object-cover flex-shrink-0"
                             />
                             <div className="flex-1 min-w-0">

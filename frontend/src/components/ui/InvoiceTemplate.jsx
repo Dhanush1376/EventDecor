@@ -81,7 +81,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
       {/* Tax Invoice Header */}
       <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-6">
         <div>
-          <h1 className="text-3xl font-display font-black uppercase tracking-widest text-[#735c00]">Siri Arts & Crafts</h1>
+          <h2 className="text-3xl font-display font-black uppercase tracking-widest text-[#735c00]">Siri Arts & Crafts</h2>
           <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-1">Premium Studio & Handicrafts</p>
           <div className="text-[11px] text-gray-600 mt-2 space-y-0.5 leading-relaxed font-light">
             <p>#28-1-92, South Street</p>

@@ -116,9 +116,9 @@ export function EventBookingSuccess() {
             <span className="font-label text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block">
               Reservation Confirmed
             </span>
-            <h1 className="font-display text-3xl md:text-5xl text-black font-light tracking-tight">
+            <h2 className="font-display text-3xl md:text-5xl text-black font-light tracking-tight">
               Thank You!
-            </h1>
+            </h2>
             <p className="font-body text-black/50 text-sm max-w-md mx-auto">
               Your luxury event setup for <strong className="text-black">{booking.title}</strong> has been successfully confirmed.
             </p>

@@ -211,9 +211,9 @@ export function OrderTrackingPublic() {
         <span className="material-symbols-outlined text-[64px] text-red-400 mb-4 animate-bounce">
           local_shipping
         </span>
-        <h1 className="font-display text-xl font-bold text-on-surface mb-2">
+        <h2 className="font-display text-xl font-bold text-on-surface mb-2">
           Tracking Record Unreachable
-        </h1>
+        </h2>
         <p className="text-xs text-secondary max-w-sm mb-6 leading-relaxed">
           {error || "We could not fetch tracking details for this dispatch token."}
         </p>
@@ -256,9 +256,9 @@ export function OrderTrackingPublic() {
             <span>{order.courierPartner || "Delhivery Logistics"} Feed</span>
           </div>
 
-          <h1 className="font-display text-2xl font-bold text-on-surface mb-2">
+          <h2 className="font-display text-2xl font-bold text-on-surface mb-2">
             Live Dispatch Tracking
-          </h1>
+          </h2>
           <p className="text-xs text-secondary leading-relaxed max-w-md mx-auto">
             Order Reference: <strong className="text-on-surface font-mono">{order._id}</strong>
           </p>

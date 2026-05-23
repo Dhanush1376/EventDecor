@@ -130,13 +130,13 @@ export function Wishlist() {
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-outline-variant/50 mb-8">
               <div>
-                <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-[#1a1c1a]">
+                <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-[#1a1c1a]">
                   My Wishlist
                   <span className="font-body text-lg font-normal text-[#685c57]">
                     {" "}
                     ({enhancedItems.length} items)
                   </span>
-                </h1>
+                </h2>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-3">

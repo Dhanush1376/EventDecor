@@ -126,7 +126,7 @@ export default function CheckoutOrderSummaryStep() {
                           <img
                             onError={handleImageError}
                             src={item.imageSrc}
-                            alt=""
+                            alt="Traditional wedding event decoration"
                             className="w-16 h-20 bg-[#f4f3f1] rounded object-cover flex-shrink-0"
                             loading="lazy"
                             width={64}

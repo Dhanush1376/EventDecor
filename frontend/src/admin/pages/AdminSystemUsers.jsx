@@ -111,7 +111,7 @@ export const AdminSystemUsers = () => {
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-display text-stone-900 tracking-tight">System Access</h1>
+          <h2 className="text-3xl font-display text-stone-900 tracking-tight">System Access</h2>
           <p className="text-stone-500 mt-1">Manage administrators, staff, and access control</p>
         </div>
         <button

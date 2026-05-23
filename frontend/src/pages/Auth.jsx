@@ -384,13 +384,13 @@ export function Auth() {
                     <span className="font-label-sm text-[10px] text-primary uppercase tracking-[0.4em] block font-bold">
                       Login Gateway
                     </span>
-                    <h1 className="font-headline text-[36px] md:text-[42px] leading-tight text-on-surface-variant font-light">
+                    <h2 className="font-headline text-[36px] md:text-[42px] leading-tight text-on-surface-variant font-light">
                       {step === "2fa"
                         ? "Authenticator Code"
                         : step === "otp"
                         ? "Enter Security Key"
                         : "Enter Email"}
-                    </h1>
+                    </h2>
                     <p className="text-on-surface-variant/60 text-[14px] font-light leading-relaxed">
                       {step === "2fa"
                         ? "Enter the 6-digit code from your authenticator app."

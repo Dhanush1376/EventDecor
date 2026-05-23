@@ -315,9 +315,9 @@ export function AdminSettings() {
       className="max-w-[1440px] mx-auto space-y-6 font-body text-on-surface"
     >
       <motion.div variants={fadeUp}>
-        <h1 className="text-[24px] font-bold text-on-surface font-display tracking-tight">
+        <h2 className="text-[24px] font-bold text-on-surface font-display tracking-tight">
           System Settings & Profile
-        </h1>
+        </h2>
         <p className="text-[13px] text-outline mt-0.5">
           Administer your contact profile, business models, and secure API gateways
         </p>

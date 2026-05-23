@@ -38,9 +38,9 @@ export function Shipping() {
             <span>/</span>
             <span className="text-on-surface">Shipping Policy</span>
           </nav>
-          <h1 className="text-3xl sm:text-4xl font-display font-bold text-on-surface">
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-on-surface">
             {shipping.title}
-          </h1>
+          </h2>
           <p className="text-[11px] text-secondary mt-2">
             Last updated: {shipping.lastUpdated}
           </p>

@@ -77,9 +77,9 @@ export function AdminReviews() {
       {/* Title block */}
       <motion.div variants={fadeUp} className="flex justify-between items-center">
         <div>
-          <h1 className="text-[24px] font-bold text-on-surface font-display">
+          <h2 className="text-[24px] font-bold text-on-surface font-display">
             Reviews & Testimonials
-          </h1>
+          </h2>
           <p className="text-[13px] text-outline">
             {reviews.length} total reviews ·{" "}
             {reviews.filter((r) => r.status === "pending").length} pending approval payout

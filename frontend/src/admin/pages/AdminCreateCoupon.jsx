@@ -245,9 +245,9 @@ export function AdminCreateCoupon() {
           <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         </button>
         <div>
-          <h1 className="text-[24px] font-bold text-on-surface font-display">
+          <h2 className="text-[24px] font-bold text-on-surface font-display">
             {isEdit ? "Edit Premium Promo Campaign" : "Configure Advanced Promotion Code"}
-          </h1>
+          </h2>
           <p className="text-[13px] text-outline">
             {isEdit ? "Refine segmentation rules, wallet loyalty parameters, and exclusions" : "Set up high-fidelity checkout coupons with custom targeting models"}
           </p>
@@ -384,7 +384,7 @@ export function AdminCreateCoupon() {
                         <div className="flex items-center gap-2">
                           <img
                             src={p.imageSrc}
-                            alt=""
+                            alt="Traditional wedding event decoration"
                             className="w-8 h-8 rounded-lg object-cover"
                           />
                           <div>

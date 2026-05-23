@@ -282,9 +282,9 @@ export function OrderSuccess() {
                 </span>
               </div>
 
-              <h1 className="font-display text-2xl md:text-3xl text-on-surface font-bold mb-3">
+              <h2 className="font-display text-2xl md:text-3xl text-on-surface font-bold mb-3">
                 Order Confirmed!
-              </h1>
+              </h2>
               <p className="text-xs text-secondary max-w-md mx-auto leading-relaxed mb-8">
                 Your artisanal journey has begun. We've sent the order details
                 to your registered number and email address.
@@ -332,7 +332,7 @@ export function OrderSuccess() {
                       <img
                         onError={handleImageError}
                         src={item.imageSrc}
-                        alt=""
+                        alt="Traditional wedding event decoration"
                         className="w-full h-full object-cover"
                       />
                     </div>

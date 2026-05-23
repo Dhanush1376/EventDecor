@@ -105,9 +105,9 @@ export function HeroSection() {
             </div>
 
             {/* Title */}
-            <h1 className="font-headline text-[33px] sm:text-[38px] leading-[1.1] text-white mb-5 tracking-wide">
+            <h2 className="font-headline text-[33px] sm:text-[38px] leading-[1.1] text-white mb-5 tracking-wide">
               {getFormattedTitle()}
-            </h1>
+            </h2>
 
             {/* Thin Gold Divider */}
             <div className="w-12 h-[1px] bg-[#d4af37]/60 mb-5" />

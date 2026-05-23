@@ -328,6 +328,7 @@ export function TopNavbar() {
 : "bg-surface/90 backdrop-blur-md py-2.5 border-b border-outline-variant/10 shadow-2xs"
         }`}
       >
+        <h1 className="sr-only">Siri Arts & Crafts</h1>
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
           <div className="flex items-center justify-between w-full gap-4">
             {/* Exquisite Boutique Brand Logo */}

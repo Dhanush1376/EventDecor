@@ -73,9 +73,9 @@ export function AdminCoupons() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-[24px] font-bold text-on-surface font-display">
+          <h2 className="text-[24px] font-bold text-on-surface font-display">
             Coupons & Offers
-          </h1>
+          </h2>
           <p className="text-[13px] text-outline">
             {coupons.filter((c) => c.isActive).length} active coupons in store catalog
           </p>

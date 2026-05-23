@@ -202,9 +202,9 @@ export function AdminOrders() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="text-left">
-          <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
+          <h2 className="text-[22px] font-bold text-slate-900 tracking-tight">
             Inquiry & Order Hub
-          </h1>
+          </h2>
           <p className="text-[12px] text-slate-500 mt-0.5">
             {orders.length} transactions managing handcrafted traditional setups
           </p>
@@ -641,7 +641,7 @@ export function AdminOrders() {
                       <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
                         <div className="flex items-center gap-3">
                           {item.image && (
-                            <img src={item.image} alt="" className="w-8 h-8 rounded-lg object-cover border border-slate-200" />
+                            <img src={item.image} alt="Traditional wedding event decoration" className="w-8 h-8 rounded-lg object-cover border border-slate-200" />
                           )}
                           <div>
                             <p className="text-[12px] font-bold text-slate-800">{item.name}</p>

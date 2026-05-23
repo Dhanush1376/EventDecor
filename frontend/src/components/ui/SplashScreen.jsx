@@ -96,9 +96,9 @@ export function SplashScreen({ onComplete }) {
           transition={{ duration: 1.2, delay: 1, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center"
         >
-          <h1 className="font-display text-2xl md:text-3xl text-on-surface tracking-[0.25em] uppercase font-light mb-4">
+          <h2 className="font-display text-2xl md:text-3xl text-on-surface tracking-[0.25em] uppercase font-light mb-4">
             Siri Arts & Crafts
-          </h1>
+          </h2>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: "60px" }}

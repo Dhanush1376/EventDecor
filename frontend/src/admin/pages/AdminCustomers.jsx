@@ -38,9 +38,9 @@ export function AdminCustomers() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-[24px] font-bold text-on-surface font-display">
+          <h2 className="text-[24px] font-bold text-on-surface font-display">
             Customers
-          </h1>
+          </h2>
           <p className="text-[13px] text-outline">
             {customers.length} registered customers
           </p>

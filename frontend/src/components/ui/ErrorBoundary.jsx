@@ -67,9 +67,9 @@ export class ErrorBoundary extends Component {
               </span>
             </div>
 
-            <h1 className="font-display text-2xl md:text-3xl font-semibold text-on-surface mb-3 tracking-tight">
+            <h2 className="font-display text-2xl md:text-3xl font-semibold text-on-surface mb-3 tracking-tight">
               {isChunkError ? 'Update Available' : 'Something went wrong'}
-            </h1>
+            </h2>
 
             <p className="font-body-md text-on-surface-variant/70 mb-8 text-sm md:text-base leading-relaxed max-w-sm mx-auto">
               {isChunkError

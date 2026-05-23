@@ -88,14 +88,14 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
       {/* Product Title & Metadata - Luxury Editorial */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2 md:space-y-3 flex-1">
-          <h1 className="font-display text-[26px] sm:text-[30px] md:text-[38px] text-on-surface leading-[1.1] tracking-[-0.01em] font-light">
+          <h2 className="font-display text-[26px] sm:text-[30px] md:text-[38px] text-on-surface leading-[1.1] tracking-[-0.01em] font-light">
             {product.title}
             {(product.teluguTitle || product.nameTE || product.teluguName) && (
               <span className="ml-2 text-on-surface/30 font-display italic text-[18px] sm:text-[22px] md:text-[26px] font-extralight">
                 ({product.teluguTitle || product.nameTE || product.teluguName})
               </span>
             )}
-          </h1>
+          </h2>
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-0.5 text-primary-container">
               {[...Array(5)].map((_, i) => (

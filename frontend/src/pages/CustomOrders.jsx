@@ -514,9 +514,9 @@ export function CustomOrders() {
         {/* Simple & Luxury Header & Workspace Toggle */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#2D2B29]/5 pb-5">
           <div>
-            <h1 className="text-[24px] md:text-[36px] font-light text-[#2D2B29] font-display leading-tight">
+            <h2 className="text-[24px] md:text-[36px] font-light text-[#2D2B29] font-display leading-tight">
               Custom Event Decor Studio
-            </h1>
+            </h2>
             <p className="text-[12px] md:text-[13px] text-[#685C57] mt-1 font-light tracking-wide max-w-lg">
               Design your dream event decor with us! Submit your ideas, get custom prices, and track your order's progress easily.
             </p>

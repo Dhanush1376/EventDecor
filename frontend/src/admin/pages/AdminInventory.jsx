@@ -20,9 +20,9 @@ export function AdminInventory() {
       className="max-w-[1440px] mx-auto space-y-6"
     >
       <motion.div variants={fadeUp}>
-        <h1 className="text-[24px] font-bold text-on-surface font-display">
+        <h2 className="text-[24px] font-bold text-on-surface font-display">
           Inventory
-        </h1>
+        </h2>
         <p className="text-[13px] text-outline">
           Stock levels across all products
         </p>
@@ -102,7 +102,7 @@ export function AdminInventory() {
                       <img
                         onError={handleImageError}
                         src={p.image}
-                        alt=""
+                        alt="Traditional wedding event decoration"
                         className="w-9 h-9 rounded-lg object-cover"
                       />
                       <div>

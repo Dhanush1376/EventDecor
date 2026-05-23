@@ -266,9 +266,9 @@ export function GalleryDetail() {
                         {item.style}
                       </span>
                     </div>
-                    <h1 className="font-display text-[20px] md:text-[32px] text-black leading-tight font-bold tracking-tight">
+                    <h2 className="font-display text-[20px] md:text-[32px] text-black leading-tight font-bold tracking-tight">
                       {item.title}.
-                    </h1>
+                    </h2>
                   </div>
 
                   <button

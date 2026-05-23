@@ -251,9 +251,9 @@ export function AdminInquiries() {
       {/* Page Header Area */}
       <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#0F172A]/10 pb-5">
         <div>
-          <h1 className="text-[26px] font-light text-[#0F172A] font-display">
+          <h2 className="text-[26px] font-light text-[#0F172A] font-display">
             Custom Orders Manager
-          </h1>
+          </h2>
           <p className="text-[12px] text-[#64748B] font-light tracking-wide mt-0.5">
             Manage custom customer requests, write quotations, chat with customers, and edit storefront form options.
           </p>

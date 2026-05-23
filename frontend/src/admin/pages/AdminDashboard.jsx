@@ -364,9 +364,9 @@ export function AdminDashboard() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
+          <h2 className="text-[22px] font-bold text-slate-900 tracking-tight">
             Dashboard
-          </h1>
+          </h2>
           <p className="text-[12px] text-slate-500 mt-0.5">
             Welcome back, Siri. Here's your business overview.
           </p>
@@ -804,7 +804,7 @@ export function AdminDashboard() {
                         <img
                           onError={handleImageError}
                           src={p.image}
-                          alt=""
+                          alt="Traditional wedding event decoration"
                           className="w-7 h-7 rounded-md object-cover border border-slate-205"
                         />
                         <span className="text-[11.5px] text-slate-700 font-medium truncate max-w-[120px]">

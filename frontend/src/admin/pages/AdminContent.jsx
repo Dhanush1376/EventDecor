@@ -1608,9 +1608,9 @@ export function AdminContent() {
         className="flex items-center justify-between pb-4.5 border-b border-stone-200/80 gap-4"
       >
         <div>
-          <h1 className="text-[22px] font-serif font-extrabold text-neutral-900 tracking-wide">
+          <h2 className="text-[22px] font-serif font-extrabold text-neutral-900 tracking-wide">
             Storefront CMS Editor
-          </h1>
+          </h2>
           <p className="text-[9.5px] text-[#64748B] uppercase tracking-[0.25em] font-extrabold mt-1 block">
             Bespoke Website Layout & Theme Styling Studio
           </p>

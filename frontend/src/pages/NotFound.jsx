@@ -17,9 +17,9 @@ export function NotFound() {
       </div>
 
       <div className="relative z-10 text-center">
-        <h1 className="font-display text-[120px] md:text-[180px] leading-none text-primary/10 select-none">
+        <h2 className="font-display text-[120px] md:text-[180px] leading-none text-primary/10 select-none">
           404
-        </h1>
+        </h2>
         <div className="mt-[-40px] md:mt-[-60px]">
           <h2 className="font-display text-3xl md:text-5xl mb-4 text-on-surface">
             Page Not Found

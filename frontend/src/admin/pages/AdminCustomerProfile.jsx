@@ -45,9 +45,9 @@ export function AdminCustomerProfile() {
             arrow_back
           </span>
         </button>
-        <h1 className="text-[24px] font-bold text-on-surface font-display">
+        <h2 className="text-[24px] font-bold text-on-surface font-display">
           Customer Profile
-        </h1>
+        </h2>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">

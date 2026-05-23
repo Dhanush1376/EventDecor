@@ -38,9 +38,9 @@ export function Returns() {
             <span>/</span>
             <span className="text-on-surface">Returns & Refunds</span>
           </nav>
-          <h1 className="text-3xl sm:text-4xl font-display font-bold text-on-surface">
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-on-surface">
             {returns.title}
-          </h1>
+          </h2>
           <p className="text-[11px] text-secondary mt-2">
             Last updated: {returns.lastUpdated}
           </p>

@@ -233,9 +233,9 @@ export function AdminOrderDetail() {
             </button>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-[24px] font-bold text-on-surface font-display">
+                <h2 className="text-[24px] font-bold text-on-surface font-display">
                   {order.id}
-                </h1>
+                </h2>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${order.payment === "Paid" ? "bg-emerald-100 text-emerald-700" : order.payment === "COD" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
                   {order.payment}
                 </span>

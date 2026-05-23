@@ -228,9 +228,9 @@ export function AdminTeam() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-[24px] font-bold text-on-surface font-display tracking-tight">
+          <h2 className="text-[24px] font-bold text-on-surface font-display tracking-tight">
             Team Workspace & Authorization
-          </h1>
+          </h2>
           <p className="text-[13px] text-outline mt-0.5">
             Manage administrative access rights, role hierarchies, and active invitations
           </p>

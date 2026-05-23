@@ -91,9 +91,9 @@ export function AcceptInvite() {
         {/* Logo/Branding Header */}
         <motion.div variants={fadeUp} className="mb-8">
           <div className="text-[32px] text-primary mb-3 select-none">✦</div>
-          <h1 className="text-[28px] font-bold text-on-surface font-display tracking-[0.2em] uppercase leading-none">
+          <h2 className="text-[28px] font-bold text-on-surface font-display tracking-[0.2em] uppercase leading-none">
             Siri Arts
-          </h1>
+          </h2>
           <p className="text-[10px] text-outline-variant font-bold tracking-[0.3em] uppercase mt-2">
             Craft & Heritage Studio
           </p>

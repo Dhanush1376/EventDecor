@@ -51,9 +51,9 @@ export function AdminBookingDetail() {
           </span>
         </button>
         <div className="flex-1">
-          <h1 className="text-[24px] font-bold text-on-surface font-display">
+          <h2 className="text-[24px] font-bold text-on-surface font-display">
             {booking.eventType}
-          </h1>
+          </h2>
           <p className="text-[13px] text-outline">
             Booking {booking.id} · {booking.date}
           </p>

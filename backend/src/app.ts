@@ -22,7 +22,7 @@ import * as Sentry from "@sentry/node";
 import { requestTrackerMiddleware } from './middleware/requestTracker';
 import { requestLogger } from './middleware/requestLogger';
 import { issueCsrfToken, validateCsrf } from './middleware/csrfMiddleware';
-import { enforceHttps } from './middleware/enforceHttps';
+
 
 // Use require for the inner xss-clean function
 const { clean: xssClean } = require('xss-clean/lib/xss');
@@ -43,7 +43,12 @@ app.set('trust proxy', trustProxyHops);
 logger.info(`[STARTUP] Express trust proxy hops: ${trustProxyHops}`);
 
 // Production: redirect when TLS is not terminated (bare Docker / misconfigured proxy)
-app.use(enforceHttps);
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers["x-forwarded-proto"] !== "https") {
+    return res.redirect(`https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
 if (process.env.NODE_ENV !== 'production') {
   logger.info(
     `[STARTUP] TRUST_PROXY_HOPS=${trustProxyHops} — must match proxy chain (Render=1, Cloudflare+Render=2). See docs/DEPLOYMENT.md`

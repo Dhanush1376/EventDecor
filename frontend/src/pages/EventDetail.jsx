@@ -598,9 +598,9 @@ export function EventDetail() {
               <span className="font-label-sm text-primary uppercase tracking-[0.4em] font-bold text-[10px] md:text-[12px] block">
                 {event.subtitle || "The Digital Studio Mastery"}
               </span>
-              <h1 className="font-display text-black text-[32px] md:text-[44px] font-normal leading-tight tracking-tight">
+              <h2 className="font-display text-black text-[32px] md:text-[44px] font-normal leading-tight tracking-tight">
                 {event.title}
-              </h1>
+              </h2>
               <p className="font-body text-black/60 text-[14px] leading-relaxed font-light mt-4">
                 {event.description}
               </p>

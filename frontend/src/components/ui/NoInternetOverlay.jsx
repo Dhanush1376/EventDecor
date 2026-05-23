@@ -123,12 +123,12 @@ export function NoInternetOverlay() {
             </div>
 
             {/* Typography */}
-            <h1 
+            <h2 
               id="offline-title" 
               className="font-display font-medium text-3xl md:text-4xl text-on-surface mb-3 tracking-tight"
             >
               You’re offline
-            </h1>
+            </h2>
             <p 
               id="offline-desc" 
               className="font-body text-sm md:text-base text-on-surface-variant/80 max-w-sm mx-auto mb-8 leading-relaxed"

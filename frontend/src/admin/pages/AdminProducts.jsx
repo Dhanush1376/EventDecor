@@ -67,9 +67,9 @@ export function AdminProducts() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div className="text-left">
-          <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
+          <h2 className="text-[22px] font-bold text-slate-900 tracking-tight">
             Products Catalog
-          </h1>
+          </h2>
           <p className="text-[12px] text-slate-500 mt-0.5">
             {products.length} active products in storefront database
           </p>

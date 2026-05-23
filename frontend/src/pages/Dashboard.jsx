@@ -1278,7 +1278,7 @@ export function Dashboard() {
                                     <img
                                       onError={handleImageError}
                                       src={prodImage}
-                                      alt=""
+                                      alt="Traditional wedding event decoration"
                                       className="w-14 h-16 bg-surface-container rounded object-cover flex-shrink-0 border border-outline-variant/20 shadow-2xs"
                                     />
 

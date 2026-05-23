@@ -188,9 +188,9 @@ export function AdminCampaigns() {
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between border-b border-black/5 pb-4 gap-4">
         <div>
-          <h1 className="text-[26px] font-bold text-on-surface font-display">
+          <h2 className="text-[26px] font-bold text-on-surface font-display">
             Marketing Campaigns & Curation
-          </h1>
+          </h2>
           <p className="text-[13px] text-outline">
             Administer customer email dispatches, draft holiday newsletters, and track live link-click open rates
           </p>

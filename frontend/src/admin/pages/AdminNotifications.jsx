@@ -79,9 +79,9 @@ export function AdminNotifications() {
       {/* Header Block */}
       <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-bold font-display text-on-surface">
+          <h2 className="text-[26px] font-bold font-display text-on-surface">
             Notification Center
-          </h1>
+          </h2>
           <p className="text-[13px] text-outline mt-0.5">
             {unreadCount > 0 ? (
               <span className="text-black font-bold">{unreadCount} actionable alerts needing response</span>

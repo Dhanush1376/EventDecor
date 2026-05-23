@@ -247,7 +247,7 @@ export function AdminSidebar() {
                 >
                   <img
                     src={p.image}
-                    alt=""
+                    alt="Traditional wedding event decoration"
                     className="w-6.5 h-6.5 rounded-md object-cover shrink-0 border border-slate-200/80"
                   />
                   <div className="flex-1 min-w-0">

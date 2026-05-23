@@ -306,9 +306,9 @@ export function AuthModal() {
                     <span className="font-label-sm text-[9px] text-primary uppercase tracking-[0.4em] block font-bold">
                       Bespoke Portal
                     </span>
-                    <h1 className="font-display text-[28px] sm:text-[32px] leading-tight text-on-surface-variant font-light">
+                    <h2 className="font-display text-[28px] sm:text-[32px] leading-tight text-on-surface-variant font-light">
                       {step === "otp" ? "Enter Security Key" : "Access Studio"}
-                    </h1>
+                    </h2>
                     <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
                       {step === "otp"
                         ? "A secure verification code has been dispatched to your inbox."

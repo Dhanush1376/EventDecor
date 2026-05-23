@@ -372,9 +372,9 @@ export function EventBookingWizard() {
           <span className="font-label text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block mb-3">
             SIRI CREATIVE STUDIO
           </span>
-          <h1 className="font-display text-[28px] md:text-[54px] text-black font-light tracking-tight leading-tight">
+          <h2 className="font-display text-[28px] md:text-[54px] text-black font-light tracking-tight leading-tight">
             Design Your Celebration.
-          </h1>
+          </h2>
           <p className="font-body text-black/50 text-[13px] md:text-[15px] max-w-xl mx-auto mt-3 font-light">
             A premium guided easy step-by-step event planner to map venue dimensions, customized color palettes, and rental inventories.
           </p>

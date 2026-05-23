@@ -823,9 +823,9 @@ export function AdminEvents() {
       {/* Tab bar selector */}
       <div className="flex flex-wrap items-center justify-between border-b border-black/5 pb-4 gap-4">
         <div>
-          <h1 className="text-[26px] font-bold text-on-surface font-display">
+          <h2 className="text-[26px] font-bold text-on-surface font-display">
             Events & Bookings Manager
-          </h1>
+          </h2>
           <p className="text-[13px] text-outline">
             {bookings.length} active event bookings recorded
           </p>

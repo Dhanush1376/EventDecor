@@ -185,9 +185,9 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
               <span className="font-label text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block">
                 PORTFOLIO STUDIO
               </span>
-              <h1 className="font-display text-[26px] md:text-[44px] text-black font-light tracking-tight leading-none">
+              <h2 className="font-display text-[26px] md:text-[44px] text-black font-light tracking-tight leading-none">
                 My Event Design Center.
-              </h1>
+              </h2>
             </div>
             <Link
               to="/events"

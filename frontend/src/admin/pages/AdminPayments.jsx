@@ -145,9 +145,9 @@ export function AdminPayments() {
     >
       {/* Header */}
       <motion.div variants={fadeUp}>
-        <h1 className="text-[24px] font-bold text-on-surface font-display">
+        <h2 className="text-[24px] font-bold text-on-surface font-display">
           Payments
-        </h1>
+        </h2>
         <p className="text-[13px] text-outline">
           Real-time transaction tracking and sales revenue aggregations
         </p>

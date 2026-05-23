@@ -131,7 +131,7 @@ export function ProductDetails() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface p-6">
         <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold mb-4">Masterpiece Not Found</h1>
+          <h2 className="text-2xl font-bold mb-4">Masterpiece Not Found</h2>
           <p className="text-on-surface-variant mb-8">
             The artisanal piece you are looking for may have been moved or is currently unavailable in our heritage collection.
           </p>
