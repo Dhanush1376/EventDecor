@@ -52,6 +52,9 @@ const Terms = lazy(() => import("./pages/Terms").then((m) => ({ default: m.Terms
 const Auth = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Auth })));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite").then((m) => ({ default: m.AcceptInvite })));
 const NotFound = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFound })));
+const BlogListing = lazy(() => import("./pages/BlogListing").then((m) => ({ default: m.BlogListing })));
+const BlogPost = lazy(() => import("./pages/BlogPost").then((m) => ({ default: m.BlogPost })));
+const LocationLanding = lazy(() => import("./pages/LocationLanding").then((m) => ({ default: m.LocationLanding })));
 
 // ─── Admin Portal (Lazy Loaded) ───
 const AdminLayout = lazy(() => import("./admin/layouts/AdminLayout").then((m) => ({ default: m.AdminLayout })));
@@ -134,6 +137,9 @@ function App() {
                       <Routes>
                         <Route element={<MainLayout />}>
                           <Route path="/" element={<Home />} />
+                          <Route path="/blog" element={<BlogListing />} />
+                          <Route path="/blog/:slug" element={<BlogPost />} />
+                          <Route path="/:city(wedding-decorations-hyderabad|event-decorators-telangana|event-decorators-secunderabad|event-decorators-ongole|wedding-decorations-ongole|handmade-gifts-ongole|event-decorators-vijayawada|event-decorators-guntur|wedding-decorations-bangalore|event-decorators-chennai)" element={<LocationLanding />} />
                           <Route path="/collections" element={<ProductListing />} />
                           <Route path="/product/:id" element={<ProductDetails />} />
                           <Route path="/cart" element={<Cart />} />

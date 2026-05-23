@@ -89,7 +89,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
         user: customerName || "Bespoke Patron",
         eventType: eventType || "Milestone Celebration",
         favoriteElement: favoriteElement || "Handcrafted Masterpieces",
-        location: "Hyderabad, India",
+        location: "Ongole, India",
         rating: ratings.overall,
         subRatings: ratings,
         date: "Today",

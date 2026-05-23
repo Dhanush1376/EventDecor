@@ -62,7 +62,7 @@ const initialWebsiteContent = {
     heroSubtitle: "Preserving Heritage, Crafting Dreams",
     founderName: "Siri Devi",
     founderRole: "Founder & Master Artisan",
-    founderStory: "Born into a family of traditional artisans in Hyderabad, Siri Devi founded Siri Arts & Crafts with a singular vision — to preserve the dying art of ceremonial decoration while bringing it to modern celebrations.",
+    founderStory: "Born into a family of traditional artisans in Ongole, Siri Devi founded Siri Arts & Crafts with a singular vision — to preserve the dying art of ceremonial decoration while bringing it to modern celebrations.",
     missionStatement: "To honor the sacred art of Indian ceremonial decoration by creating handcrafted masterpieces that blend timeless heritage with contemporary elegance.",
     stats: [
       { label: "Events Decorated", value: "2,500+" },

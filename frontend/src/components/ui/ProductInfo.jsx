@@ -146,7 +146,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
               local_shipping
             </span>
             <span className="font-body-sm text-[13px] sm:text-[14px] font-medium italic">
-              Free premium shipping included
+              All India premium shipping included
             </span>
           </div>
           <div className="flex items-center gap-3 text-on-surface/70">
@@ -154,7 +154,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
               event_available
             </span>
             <span className="font-body-sm text-[13px] sm:text-[14px] font-medium italic">
-              Delivered in 3-5 working days
+              Delivered nationwide in 3-5 working days
             </span>
           </div>
         </div>

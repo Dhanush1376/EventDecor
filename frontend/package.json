@@ -10,7 +10,32 @@
     "lint": "eslint . && node ../scripts/check-no-console.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "check-env": "node scripts/check-env.ci.mjs"
+    "check-env": "node scripts/check-env.ci.mjs",
+    "postbuild": "react-snap"
+  },
+  "reactSnap": {
+    "include": [
+      "/",
+      "/blog",
+      "/blog/best-wedding-decoration-ideas",
+      "/blog/traditional-pooja-decoration-setup-guide",
+      "/wedding-decorations-hyderabad",
+      "/event-decorators-telangana",
+      "/event-decorators-secunderabad",
+      "/event-decorators-ongole"
+    ],
+    "exclude": [
+      "/admin/*",
+      "/dashboard",
+      "/checkout",
+      "/auth"
+    ],
+    "inlineCss": true,
+    "source": "dist",
+    "puppeteerArgs": [
+      "--no-sandbox",
+      "--disable-setuid-sandbox"
+    ]
   },
   "dependencies": {
     "@sentry/react": "^10.53.1",
@@ -49,6 +74,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "react-snap": "^1.23.0",
     "vite": "^8.0.12",
     "vitest": "^4.1.6"
   }

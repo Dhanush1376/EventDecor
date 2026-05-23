@@ -521,7 +521,7 @@ export function OrderTrackingPublic() {
                       </label>
                       <input
                         type="text"
-                        placeholder="Enter courier notes (e.g. Dispatched from Hyderabad warehouse, Out for delivery at Jubilee Hills hub)"
+                        placeholder="Enter courier notes (e.g. Dispatched from Ongole warehouse, Out for delivery at Jubilee Hills hub)"
                         value={operatorNote}
                         onChange={(e) => setOperatorNote(e.target.value)}
                         className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"

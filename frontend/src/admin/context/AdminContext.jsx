@@ -107,7 +107,7 @@ const mapDbOrderToFrontend = (o) => {
     status: fStatus,
     payment: o.paymentStatus === "paid" ? "Paid" : (o.paymentStatus === "COD Collected" ? "COD Collected" : (o.paymentMethod?.toLowerCase() === "cod" ? "COD Pending" : "Pending")),
     date: dateStr,
-    address: o.shippingAddress ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}` : "Hyderabad",
+    address: o.shippingAddress ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}` : "Ongole",
     rawOrder: o,
     // Enterprise logistics mapping
     invoiceNumber: o.invoiceNumber,
@@ -138,7 +138,7 @@ const mapDbCustomerToFrontend = (c) => {
   }
   
   const lastOrderDate = c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : "2026-05-15";
-  const city = c.addresses && c.addresses[0] ? c.addresses[0].city : "Hyderabad";
+  const city = c.addresses && c.addresses[0] ? c.addresses[0].city : "Ongole";
   
   return {
     id: c._id || c.id || "CUS-UNKNOWN",
@@ -169,7 +169,7 @@ const mapDbEventToFrontend = (e) => {
     customer: e.category || "Consultation Request",
     status: e.isActive ? "Confirmed" : "Pending",
     date: dateStr,
-    venue: e.venueType || "Hyderabad",
+    venue: e.venueType || "Ongole",
     amount: e.pricing ? parseInt(e.pricing.replace(/[^0-9]/g, "")) || 45000 : 45000,
     payment: "Paid",
     staff: ["Siri", "Anji"],

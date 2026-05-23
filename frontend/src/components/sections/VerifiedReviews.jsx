@@ -135,7 +135,7 @@ export const VerifiedReviews = () => {
             .map(r => ({
               id: r._id || r.id,
               user: r.customerName || "Patron Customer",
-              location: r.location || "Hyderabad",
+              location: r.location || "Ongole",
               eventType: r.eventType || "Traditional Event",
               favoriteElement: r.favoriteElement || "Artisanal Curation",
               rating: r.rating || 5,
@@ -202,7 +202,7 @@ export const VerifiedReviews = () => {
         const mappedRev = {
           id: savedRev._id || savedRev.id,
           user: savedRev.customerName || "Patron Customer",
-          location: savedRev.location || "Hyderabad",
+          location: savedRev.location || "Ongole",
           eventType: savedRev.eventType || "Traditional Event",
           favoriteElement: savedRev.favoriteElement || "Artisanal Curation",
           rating: savedRev.rating || 5,

@@ -19,7 +19,7 @@ export const getGalleryItems = asyncHandler(async (req: Request, res: Response) 
   if (search) filter.$text = { $search: search as string };
 
   const [items, totalCount] = await Promise.all([
-    Gallery.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Gallery.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     Gallery.countDocuments(filter),
   ]);
 

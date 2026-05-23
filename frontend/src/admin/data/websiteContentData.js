@@ -154,7 +154,7 @@ export const initialWebsiteContent = {
     founderName: "Siri Devi",
     founderRole: "Founder & Master Artisan",
     founderStory:
-      "Born into a family of traditional artisans in Hyderabad, Siri Devi founded Siri Arts & Crafts with a singular vision — to preserve the dying art of ceremonial decoration while bringing it to modern celebrations.",
+      "Born into a family of traditional artisans in Ongole, Siri Devi founded Siri Arts & Crafts with a singular vision — to preserve the dying art of ceremonial decoration while bringing it to modern celebrations.",
     missionStatement:
       "To honor the sacred art of Indian ceremonial decoration by creating handcrafted masterpieces that blend timeless heritage with contemporary elegance.",
     values: [
@@ -420,9 +420,9 @@ export const initialWebsiteContent = {
   seo: {
     globalTitle: "Siri Arts & Crafts — Luxury Handcrafted Event Decorations",
     globalDescription:
-      "Premium handcrafted wedding, engagement, and ceremonial decorations rooted in South Indian heritage. Custom designs by master artisans in Hyderabad.",
+      "Premium handcrafted wedding, engagement, and ceremonial decorations rooted in South Indian heritage. Custom designs by master artisans in Ongole.",
     globalKeywords:
-      "wedding decorations, Indian wedding, handcrafted decor, bridal entry, harathi plates, engagement trays, Hyderabad",
+      "wedding decorations, Indian wedding, handcrafted decor, bridal entry, harathi plates, engagement trays, Ongole",
     ogImage: IMAGES.luxuryRoyalWedding,
     pages: {
       home: {

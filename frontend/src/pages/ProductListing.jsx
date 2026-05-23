@@ -16,7 +16,7 @@ import { useCart } from "../context/CartContext";
 
 import { productService, userService, couponService } from "../services/domainServices";
 import toast from "react-hot-toast";
-import { useApi } from "../hooks/useApi";
+import { useQuery } from "@tanstack/react-query";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { FilterPanel } from "../components/ui/FilterPanel";
 import { MandalaElement } from "../components/ui/MandalaElement";
@@ -39,8 +39,6 @@ export function ProductListing() {
   const [activeProduct, setActiveProduct] = useState(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(pageParam);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     setActiveCategory(searchParams.get("category") || "All");
@@ -147,7 +145,63 @@ export function ProductListing() {
     collection: [],
   });
 
-  const { data: productsData, loading, request: fetchProducts } = useApi(productService.getAll);
+  const sortMap = {
+    Popularity: "rating",
+    "Price: Low to High": "price_asc",
+    "Price: High to Low": "price_desc",
+    "New Arrivals": "newest",
+  };
+
+  // Debounced search to prevent API calls on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const currentSearchInUrl = searchParams.get("search") || "";
+    if (debouncedSearch !== currentSearchInUrl) {
+      setSearchParams(prev => {
+        const params = new URLSearchParams(prev);
+        if (debouncedSearch) {
+          params.set("search", debouncedSearch);
+        } else {
+          params.delete("search");
+        }
+        params.delete("page");
+        return params;
+      }, { replace: true });
+    }
+  }, [debouncedSearch, setSearchParams, searchParams]);
+
+  const queryParams = {
+    page: currentPage,
+    limit: 12,
+    search: debouncedSearch,
+    category: activeCategory !== "All" ? activeCategory : undefined,
+    sort: sortMap[sortBy] || "newest",
+  };
+
+  const { data: productsData, isLoading: loading, isError } = useQuery({
+    queryKey: ['products', queryParams],
+    queryFn: async () => {
+      const res = await productService.getAll(queryParams);
+      return res.success ? res.data : null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (isError) {
+      toast.error("Failed to load products.");
+    }
+  }, [isError]);
+
+  const totalPages = productsData?.totalPages || 1;
+  const totalCount = productsData?.totalCount || 0;
 
   // Fetch categories dynamically from API
   const [categories, setCategories] = useState(["All"]);
@@ -180,53 +234,9 @@ export function ProductListing() {
     return () => document.body.classList.remove("filters-open");
   }, [isFilterOpen]);
 
-  // Debounced search to prevent API calls on every keystroke
-  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
-  useEffect(() => {
-    const currentSearchInUrl = searchParams.get("search") || "";
-    if (debouncedSearch !== currentSearchInUrl) {
-      setSearchParams(prev => {
-        const params = new URLSearchParams(prev);
-        if (debouncedSearch) {
-          params.set("search", debouncedSearch);
-        } else {
-          params.delete("search");
-        }
-        params.delete("page");
-        return params;
-      }, { replace: true });
-    }
-  }, [debouncedSearch, setSearchParams, searchParams]);
 
-  useEffect(() => {
-    const sortMap = {
-      Popularity: "rating",
-      "Price: Low to High": "price_asc",
-      "Price: High to Low": "price_desc",
-      "New Arrivals": "newest",
-    };
-
-    const params = {
-      page: currentPage,
-      limit: 12,
-      search: debouncedSearch,
-      category: activeCategory !== "All" ? activeCategory : undefined,
-      sort: sortMap[sortBy] || "newest",
-    };
-    fetchProducts(params).then(res => {
-      if (res) {
-        setTotalPages(res.totalPages || 1);
-        setTotalCount(res.totalCount || 0);
-      }
-    });
-  }, [currentPage, debouncedSearch, activeCategory, sortBy, filters, fetchProducts]);
+  // Data is now fetched using React Query automatically when dependencies change.
 
   const products = productsData?.data || productsData?.products || [];
 
@@ -434,6 +444,21 @@ export function ProductListing() {
         />
       )}
 
+      {/* Default Promo Banner */}
+      {!promoCoupon && (
+        <PromoBanner
+          backgroundImage={shopContent.promo.backgroundImage}
+          badgeText={shopContent.promo.badgeText}
+          title={shopContent.promo.title}
+          highlightText={shopContent.promo.highlightText}
+          ctaText={shopContent.promo.ctaText}
+          onCtaClick={() => {
+            const el = document.getElementById("artisan-collection");
+            if (el) el.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
+      )}
+
       {/* Main Grid Section */}
       <main
         id="artisan-collection"
@@ -488,10 +513,11 @@ export function ProductListing() {
             ) : products.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
-                  {products.map((product) => (
+                  {products.map((product, index) => (
                     <ProductCard
                       key={product.id || product._id}
                       {...product}
+                      eager={index < 4}
                       onQuickView={(e) => openQuickView(e, product)}
                     />
                   ))}

@@ -32,7 +32,7 @@ const ReviewSchema: Schema = new Schema(
       enum: ['pending', 'approved', 'rejected'],
       default: 'approved', // Usually auto-approved in simpler setups
     },
-    location: { type: String, default: 'Hyderabad' },
+    location: { type: String, default: 'Ongole' },
     eventType: { type: String, default: 'Traditional Celebration' },
     favoriteElement: { type: String },
     helpfulCount: { type: Number, default: 0 },

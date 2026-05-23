@@ -100,7 +100,7 @@ export function AdminCustomers() {
                     <p className="text-[14px] font-semibold text-on-surface">
                       {c.name}
                     </p>
-                    <p className="text-[11px] text-outline">{c.city || "Hyderabad"}</p>
+                    <p className="text-[11px] text-outline">{c.city || "Ongole"}</p>
                     
                     {/* Siri Wallet & Loyalty Progression Stats */}
                     <div className="mt-1.5 flex items-center gap-1.5">

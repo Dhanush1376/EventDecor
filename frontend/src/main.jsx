@@ -1,5 +1,5 @@
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
 import "./styles/globals.css";
 import App from "./App.jsx";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
@@ -59,10 +59,22 @@ const warmBackend = () => {
   const healthUrl = root.startsWith('/')
     ? `${root}/health`
     : `${root}/health`;
+    
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+  
   fetch(`${healthUrl}?t=${Date.now()}`, {
     credentials: 'include',
     cache: 'no-store',
-  }).catch(() => {});
+    signal: controller.signal
+  })
+  .then(() => clearTimeout(timeoutId))
+  .catch((err) => {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      logger.warn('Backend cold start ping timed out. Consider setting up a cron job (e.g. cron-job.org) to keep the Render service awake.');
+    }
+  });
 };
 if (typeof requestIdleCallback === 'function') {
   requestIdleCallback(warmBackend, { timeout: 3000 });
@@ -73,13 +85,24 @@ if (typeof requestIdleCallback === 'function') {
 const rootEl = document.getElementById("root");
 const shellEl = document.getElementById("app-shell");
 
-createRoot(rootEl).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </StrictMode>,
-);
+if (rootEl.hasChildNodes()) {
+  hydrateRoot(
+    rootEl,
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>
+  );
+} else {
+  createRoot(rootEl).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+}
 
 // Fallback to ensure loader is removed even if React suspends indefinitely
 setTimeout(() => {

@@ -19,6 +19,13 @@ export async function generateSitemap(): Promise<string> {
     const staticRoutes = [
       { loc: '', changefreq: 'daily', priority: '1.0' },
       { loc: '/collections', changefreq: 'daily', priority: '0.9' },
+      { loc: '/blog', changefreq: 'daily', priority: '0.9' },
+      { loc: '/blog/best-wedding-decoration-ideas', changefreq: 'monthly', priority: '0.8' },
+      { loc: '/blog/traditional-pooja-decoration-setup-guide', changefreq: 'monthly', priority: '0.8' },
+      { loc: '/wedding-decorations-hyderabad', changefreq: 'monthly', priority: '0.9' },
+      { loc: '/event-decorators-telangana', changefreq: 'monthly', priority: '0.9' },
+      { loc: '/event-decorators-secunderabad', changefreq: 'monthly', priority: '0.9' },
+      { loc: '/event-decorators-ongole', changefreq: 'monthly', priority: '0.9' },
       { loc: '/about', changefreq: 'monthly', priority: '0.6' },
       { loc: '/contact', changefreq: 'monthly', priority: '0.6' },
       { loc: '/gallery', changefreq: 'weekly', priority: '0.7' },

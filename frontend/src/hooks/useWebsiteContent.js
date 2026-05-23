@@ -26,7 +26,7 @@ try {
 }
 
 if (!globalCache) {
-  globalCache = emptyWebsiteContent;
+  globalCache = initialWebsiteContent;
 }
 
 const updateGlobalCache = (newContent) => {

@@ -9,6 +9,8 @@ import { VerifiedReviews } from "../components/sections/VerifiedReviews";
 import { GallerySection } from "../components/sections/GallerySection";
 
 import { SEO } from "../components/seo/SEO";
+import { FAQAccordion } from "../components/seo/FAQAccordion";
+import faqsData from "../content/faqs.json";
 
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { SITE_URL, OG_IMAGE_URL, buildSameAsLinks } from "../constants/brandEnv";
@@ -68,6 +70,7 @@ export function Home() {
             "Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor."
           }
           schema={homeSchema}
+          faq={faqsData.homepage}
         />
         <HeroSkeleton />
         <NavigationHubSkeleton />
@@ -92,6 +95,7 @@ export function Home() {
           "Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor."
         }
         schema={homeSchema}
+        faq={faqsData.homepage}
       />
       {visibleSections.map((section, index) => {
         const Component = sectionComponents[section.id];
@@ -114,6 +118,10 @@ export function Home() {
           </StackedSectionWrapper>
         );
       })}
+      
+      <div className="bg-surface relative z-10 w-full pt-12 pb-24 rounded-b-[40px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] border-x border-b border-outline-variant/10 max-w-[1920px] mx-auto">
+        <FAQAccordion faqs={faqsData.homepage} title="Frequently Asked Questions" />
+      </div>
     </>
   );
 }

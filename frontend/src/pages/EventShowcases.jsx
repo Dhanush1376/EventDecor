@@ -10,6 +10,7 @@ import { handleImageError } from "../utils/imageUtils";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import { useQuery } from "@tanstack/react-query";
 import logger from "../utils/logger";
 
 const SHOWCASE_CATEGORIES = [
@@ -34,7 +35,6 @@ const CATEGORY_MAP = {
 export function EventShowcases() {
   const navigate = useNavigate();
   const { isAuthenticated, runProtectedAction } = useAuth();
-  const [showcases, setShowcases] = useState([]);
 
   const websiteContent = useWebsiteContent();
   const eventsPageContent = websiteContent?.eventsPage || {
@@ -48,7 +48,6 @@ export function EventShowcases() {
       backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w",
     }
   };
-  const [loading, setLoading] = useState(true);
   
   // Storefront Listing Filters & Controls (Matching Shop Design)
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,25 +76,21 @@ export function EventShowcases() {
   const [bookingDate, setBookingDate] = useState("");
   const [aiSuggestions, setAiSuggestions] = useState([]);
 
-  const fetchShowcases = async () => {
-    setLoading(true);
-    try {
+  const { data: showcases = [], isLoading: loading, isError } = useQuery({
+    queryKey: ['showcases'],
+    queryFn: async () => {
       const res = await showcaseService.getAll();
-      if (res.success) {
-        setShowcases(res.data || []);
-      }
-    } catch (err) {
-      logger.error(err);
-      toast.error("Failed to load event design packages.");
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (!res.success) throw new Error("Failed to load event design packages.");
+      return res.data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchShowcases();
-  }, []);
+    if (isError) {
+      toast.error("Failed to load event design packages.");
+    }
+  }, [isError]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 350);

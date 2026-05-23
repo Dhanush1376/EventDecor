@@ -322,10 +322,10 @@ export function TopNavbar() {
       <nav
         className={`top-navbar fixed top-0 w-full z-50 transition-all duration-500 ${
           scrolled
-            ? "bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-2 shadow-md shadow-black/5"
+            ? "bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-3 shadow-md shadow-black/5"
             : isImmersive
-              ? "bg-white/10 backdrop-blur-md py-3.5 border border-white/20 mt-3.5 mx-auto max-w-[95%] lg:max-w-[720px] rounded-full text-white shadow-2xl"
-: "bg-surface/90 backdrop-blur-md py-2.5 border-b border-outline-variant/10 shadow-2xs"
+              ? "bg-white/10 backdrop-blur-md py-4 border border-white/20 mt-3.5 mx-auto max-w-[95%] lg:max-w-[720px] rounded-full text-white shadow-2xl"
+: "bg-surface/90 backdrop-blur-md py-4 border-b border-outline-variant/10 shadow-2xs"
         }`}
       >
         <h1 className="sr-only">Siri Arts & Crafts</h1>

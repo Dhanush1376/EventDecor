@@ -1171,7 +1171,7 @@ export function CustomOrders() {
                             type="text"
                             value={wizardDraft.city}
                             onChange={(e) => updateDraft({ city: e.target.value })}
-                            placeholder="E.g., Bangalore, Hyderabad"
+                            placeholder="E.g., Bangalore, Ongole"
                             className="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[#D4AF37] text-[#2D2B29] transition-all"
                           />
                         </div>

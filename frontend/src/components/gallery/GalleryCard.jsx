@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
 import { handleImageError } from "../../utils/imageUtils";
 
-function CardContent({ item, displayImage, itemId, linkTo, navigate, minH }) {
+function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager }) {
   const [isHovered, setIsHovered] = React.useState(false);
 
   return (
@@ -30,10 +30,11 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate, minH }) {
       ) : (
         <CloudinaryImage
           src={displayImage}
-          alt={item.title}
+          alt={item.altText || item.title}
           className="w-full h-auto block transition-transform duration-[1.5s] group-hover:scale-105 ease-out"
           containerClassName="w-full"
-          loading="lazy"
+          loading={eager ? "eager" : "lazy"}
+          fetchPriority={eager ? "high" : "auto"}
           width={600}
           height={800}
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -141,7 +142,7 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate, minH }) {
   );
 }
 
-export function GalleryCard({ item, onImageClick, minH }) {
+export function GalleryCard({ item, onImageClick, minH, eager }) {
   const navigate = useNavigate();
   const itemId = item._id || item.id;
   const linkTo = `/gallery/${itemId}`;
@@ -150,7 +151,7 @@ export function GalleryCard({ item, onImageClick, minH }) {
   if (!itemId) {
     return (
       <div className="block">
-        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} />
+        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} eager={eager} />
       </div>
     );
   }
@@ -158,14 +159,14 @@ export function GalleryCard({ item, onImageClick, minH }) {
   if (onImageClick) {
     return (
       <div onClick={onImageClick} className="block">
-        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} />
+        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} eager={eager} />
       </div>
     );
   }
 
   return (
     <Link to={linkTo} className="block">
-      <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} />
+      <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} eager={eager} />
     </Link>
   );
 }

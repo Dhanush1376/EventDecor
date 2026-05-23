@@ -59,7 +59,7 @@ process.on('unhandledRejection', (reason: any) => {
 });
 
 
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || '5000', 10);
 
 const startServer = async () => {
   try {
@@ -87,7 +87,7 @@ const startServer = async () => {
     await initRedis();
 
     // 4. Start Express Server
-    server = app.listen(PORT, () => {
+    server = app.listen(PORT, '0.0.0.0', () => {
         logger.info(
           `[STARTUP] Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`
         );

@@ -23,6 +23,7 @@ export function ProductCard({
   onQuickView,
   hideDetails = false,
   loading = false,
+  eager = false,
   sizes = "(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 25vw",
 }) {
   const navigate = useNavigate();
@@ -131,7 +132,8 @@ export function ProductCard({
             alt={title}
             className="transition-all duration-[1.5s] cubic-bezier(0.2, 1, 0.2, 1) group-hover:scale-110"
             containerClassName="w-full h-full"
-            loading="lazy"
+            loading={eager ? "eager" : "lazy"}
+            fetchPriority={eager ? "high" : "auto"}
             width={400}
             height={500}
             sizes={sizes}

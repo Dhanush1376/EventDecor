@@ -7,6 +7,8 @@ import { ProductCard, QuickViewModal, SearchBar, CategoryTabs, CustomDropdown } 
 import { SEO } from "../components/seo/SEO";
 import { MandalaElement } from "../components/ui/MandalaElement";
 import { GallerySlideshow } from "../components/gallery/GallerySlideshow";
+import { GallerySkeleton } from "../components/ui/Skeleton";
+import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import logger from '../utils/logger';
@@ -23,10 +25,40 @@ export function Gallery() {
   const [showFloatingExit, setShowFloatingExit] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
 
-  const [galleryItems, setGalleryItems] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState(["All"]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: galleryItems = [], isLoading: isGalleryLoading, isError: isGalleryError } = useQuery({
+    queryKey: ['gallery'],
+    queryFn: async () => {
+      const res = await galleryService.getAll();
+      return res.success ? (res.data.data || res.data.items || res.data || []) : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: categories = ["All"], isLoading: isCategoriesLoading, isError: isCategoriesError } = useQuery({
+    queryKey: ['galleryCategories'],
+    queryFn: async () => {
+      const res = await galleryService.getCategories();
+      return res.success ? ["All", ...(res.data || [])] : ["All"];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: products = [], isLoading: isProductsLoading, isError: isProductsError } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const res = await productService.getAll();
+      return res.success ? (res.data.data || res.data.items || res.data || []) : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (isGalleryError || isCategoriesError || isProductsError) {
+      toast.error("Failed to load some gallery resources.");
+    }
+  }, [isGalleryError, isCategoriesError, isProductsError]);
+
+  const isLoading = isGalleryLoading || isCategoriesLoading || isProductsLoading;
 
   const handleCategorySelect = (cat) => {
     setActiveCategory(cat);
@@ -45,37 +77,6 @@ export function Gallery() {
     const handleScroll = () => setIsSticky(window.scrollY > 300);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Fetch initial data
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      setIsLoading(true);
-      try {
-        const [galleryRes, categoriesRes, productsRes] = await Promise.all([
-          galleryService.getAll(),
-          galleryService.getCategories(),
-          productService.getAll()
-        ]);
-
-        if (galleryRes.success) {
-          setGalleryItems(galleryRes.data.data || galleryRes.data.items || galleryRes.data || []);
-        }
-        if (categoriesRes.success) {
-          setCategories(["All", ...(categoriesRes.data || [])]);
-        }
-        if (productsRes.success) {
-          setProducts(productsRes.data.data || productsRes.data.items || productsRes.data || []);
-        }
-      } catch (err) {
-        logger.error("Gallery fetch failed:", err);
-        toast.error("Failed to load gallery content");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchInitialData();
   }, []);
 
   // Handle immersive gallery mode UI
@@ -287,45 +288,52 @@ export function Gallery() {
       </div>
 
       <main id="gallery-collection" className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-4 md:py-6 relative z-10">
-        {/* Pinterest Masonry Grid */}
-        <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-6">
-          <AnimatePresence mode="popLayout">
-            {filteredItems.map((item, index) => (
-              <motion.div
-                key={`${item.type}-${item.id}`}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.5 }}
-                className="break-inside-avoid mb-6"
-              >
-                <GalleryCard
-                  item={item}
-                  onImageClick={
-                    isGalleryMode ? () => setSlideshowIndex(index) : undefined
-                  }
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        {isLoading ? (
+          <GallerySkeleton />
+        ) : (
+          <>
+            {/* Pinterest Masonry Grid */}
+            <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-6">
+              <AnimatePresence mode="popLayout">
+                {filteredItems.map((item, index) => (
+                  <motion.div
+                    key={`${item.type}-${item.id}`}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.5 }}
+                    className="break-inside-avoid mb-6"
+                  >
+                    <GalleryCard
+                      item={item}
+                      eager={index < 4}
+                      onImageClick={
+                        isGalleryMode ? () => setSlideshowIndex(index) : undefined
+                      }
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
 
-        {filteredItems.length === 0 && (
-          <div className="py-32 text-center">
-            <h3 className="font-headline-sm text-black/40">
-              No moments found matching your criteria.
-            </h3>
-            <button
-              onClick={() => {
-                setActiveCategory("All");
-                setSearchQuery("");
-              }}
-              className="mt-4 font-label-sm text-primary underline uppercase tracking-widest text-[10px] font-bold"
-            >
-              Clear all filters
-            </button>
-          </div>
+            {filteredItems.length === 0 && (
+              <div className="py-32 text-center">
+                <h3 className="font-headline-sm text-black/40">
+                  No moments found matching your criteria.
+                </h3>
+                <button
+                  onClick={() => {
+                    setActiveCategory("All");
+                    setSearchQuery("");
+                  }}
+                  className="mt-4 font-label-sm text-primary underline uppercase tracking-widest text-[10px] font-bold"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
 

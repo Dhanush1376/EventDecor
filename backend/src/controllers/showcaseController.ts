@@ -9,7 +9,7 @@ export const getShowcases = asyncHandler(async (req: Request, res: Response) => 
   const filter: any = { isActive: true };
   if (category) filter.category = category;
 
-  const collections = await ShowcaseCollection.find(filter).sort({ popularityScore: -1 });
+  const collections = await ShowcaseCollection.find(filter).sort({ popularityScore: -1 }).lean();
   res.status(200).json(new ApiResponse(true, 'Showcase collections fetched', collections));
 });
 

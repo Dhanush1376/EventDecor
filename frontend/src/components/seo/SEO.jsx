@@ -54,7 +54,6 @@ export function SEO({
   const currentUrl = canonicalUrl || (siteUrl ? `${siteUrl}${normalizedPath}` : normalizedPath);
   const metaImage = ogImage || OG_IMAGE_URL;
   const metaImageType = metaImage.endsWith('.png') ? 'image/png' : metaImage.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
-
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -62,6 +61,12 @@ export function SEO({
     url: siteUrl,
     logo: siteUrl ? `${siteUrl}/favicon.png` : undefined,
     description: 'Premium handcrafted event decor, wedding trays, and heritage pooja essentials.',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Ongole',
+      addressRegion: 'Andhra Pradesh',
+      addressCountry: 'IN',
+    },
     ...(contactPhone && {
       contactPoint: {
         '@type': 'ContactPoint',
@@ -83,15 +88,15 @@ export function SEO({
     description: 'Premium handcrafted event decor, wedding trays, and heritage pooja essentials. Woven with tradition and refined for the modern aesthetic.',
     address: {
       '@type': 'PostalAddress',
-      addressLocality: contact?.address ? undefined : 'Hyderabad',
-      addressRegion: 'Telangana',
+      addressLocality: contact?.address ? undefined : 'Ongole',
+      addressRegion: 'Andhra Pradesh',
       addressCountry: 'IN',
       ...(contact?.address && { streetAddress: contact.address }),
     },
     geo: {
       '@type': 'GeoCoordinates',
-      latitude: 17.385,
-      longitude: 78.4867,
+      latitude: 15.5057,
+      longitude: 80.0499,
     },
     priceRange: '₹₹',
     openingHours: 'Mo-Sa 10:00-19:00',
