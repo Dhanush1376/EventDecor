@@ -349,3 +349,56 @@ export const getAdminNotificationTemplate = (title: string, message: string, act
   return getLuxuryEmailWrapper('Admin System Alert', body);
 };
 
+/**
+ * Generates the premium Welcome Email
+ */
+export const getWelcomeEmailTemplate = (name: string, frontendUrl: string): string => {
+  const body = `
+    <h2 style="color: #735c00; font-size: 19px; font-weight: 400; margin: 0 0 15px 0; font-family: 'Playfair Display', Georgia, serif; text-align: center;">
+      Welcome to Siri Arts & Crafts
+    </h2>
+    <p style="margin: 0 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      Dear ${name},
+    </p>
+    <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; text-align: left;">
+      Thank you for joining our community of art lovers. Every creation at Siri Arts & Crafts is a labor of love — hand-carved, hand-painted, and hand-assembled by master artisans who have inherited their skills across generations.
+    </p>
+    <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; text-align: left;">
+      We invite you to discover our curated heritage collections and use our digital studio to transform your milestone celebrations into living masterpieces.
+    </p>
+    <div class="button-wrapper">
+      <a href="${frontendUrl}" class="cta-button" target="_blank">Explore Studio</a>
+    </div>
+    <p style="margin: 20px 0 0 0; color: #7f7663; font-size: 12.5px; font-weight: 300; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center;">
+      If you have any questions or would like to discuss a bespoke event setup, please contact our concierge service.
+    </p>
+  `;
+  return getLuxuryEmailWrapper('Welcome to Siri Arts', body);
+};
+
+/**
+ * Generates the premium Suspicious Login Alert Email
+ */
+export const getSuspiciousLoginEmailTemplate = (name: string, loginTime: string, ipAddress: string): string => {
+  const body = `
+    <h2 style="color: #8b0000; font-size: 19px; font-weight: 400; margin: 0 0 15px 0; font-family: 'Playfair Display', Georgia, serif; text-align: center;">
+      New Login Detected
+    </h2>
+    <p style="margin: 0 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      Dear ${name},
+    </p>
+    <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; text-align: left;">
+      We detected a new login session to your Siri Arts & Crafts account. Below are the details of the session:
+    </p>
+    <div style="background-color: #fbfaf8; border: 1px solid #e5dfd3; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: left; font-size: 13px; color: #5c5545; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <strong style="color: #735c00;">Login Time:</strong> ${loginTime}<br/>
+      <strong style="color: #735c00;">Device/IP Address:</strong> ${ipAddress}<br/>
+      <strong style="color: #735c00;">Status:</strong> Success (Session Created)
+    </div>
+    <p style="margin: 20px 0 0 0; color: #8b0000; font-size: 13px; font-weight: 400; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: left; line-height: 1.5;">
+      If this was you, no further action is required. If you did not authorize this login, please contact our security team immediately to protect your account.
+    </p>
+  `;
+  return getLuxuryEmailWrapper('Security Alert', body, 'This is a critical security notification. If you did not log in, contact us immediately.');
+};
+

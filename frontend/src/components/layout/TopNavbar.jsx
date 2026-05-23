@@ -309,27 +309,7 @@ export function TopNavbar() {
           <div className="flex items-center justify-between w-full gap-4">
             {/* Exquisite Boutique Brand Logo */}
             <div className="flex-shrink-0 flex justify-start min-w-0">
-              <Link to="/" className="group flex items-center gap-2.5 md:gap-4 shrink-0">
-                {navigation?.logo?.image ? (
-                  <img
-                    src={navigation.logo.image}
-                    alt={logoText}
-                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover shadow-sm transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="relative w-8 h-8 md:w-10 md:h-10 shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                    {/* Layered backgrounds for logo stamp */}
-                    <div className="absolute inset-0 rounded-full bg-[#d4af37]/10" />
-                    <div className="absolute inset-0.5 rounded-full border border-[#d4af37]/30" />
-
-                    {/* Core Icon Container */}
-                    <div className="relative w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center bg-[#1c1a17] border border-[#d4af37] shadow-lg shadow-black/30">
-                      <span className="font-display font-medium text-[13px] md:text-[16px] text-[#d4af37] tracking-tight">
-                        {firstWord[0]}
-                      </span>
-                    </div>
-                  </div>
-                )}
+              <Link to="/" className="group flex items-center shrink-0">
                 <div className="flex flex-col justify-center">
                   {/* Desktop Layout: Side-by-side */}
                   <div className="hidden md:flex items-center gap-1">
@@ -662,20 +642,7 @@ export function TopNavbar() {
               className="fixed right-0 top-0 h-full w-[80%] max-w-sm bg-surface-bright z-[120] lg:hidden p-6 md:p-8 flex flex-col shadow-2xl border-l border-outline-variant/10 overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-5 pb-3 border-b border-outline-variant/10">
-                <div className="flex items-center gap-3">
-                  {navigation?.logo?.image ? (
-                    <img
-                      src={navigation.logo.image}
-                      alt={logoText}
-                      className="w-10 h-10 rounded-full object-cover shadow-sm"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-on-surface-variant flex items-center justify-center shadow-lg border border-white/5">
-                      <span className="font-display font-bold text-[14px] text-white">
-                        {firstWord[0]}
-                      </span>
-                    </div>
-                  )}
+                <div className="flex items-center">
                   <div className="flex flex-col justify-center leading-none">
                     <span className="font-display text-[18px] md:text-[20px] text-on-surface font-bold tracking-[0.05em] uppercase">
                       {firstWord}

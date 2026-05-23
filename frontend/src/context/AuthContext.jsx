@@ -81,6 +81,12 @@ export function AuthProvider({ children }) {
         return true;
       }
 
+      if (err.response?.status === 401) {
+        logger.warn('[Auth] Session invalid or expired (401) — clearing local credentials');
+        logout(true);
+        return false;
+      }
+
       const token = await refreshAccessToken();
       if (token) {
         try {
@@ -93,6 +99,11 @@ export function AuthProvider({ children }) {
             return true;
           }
         } catch (retryErr) {
+          if (retryErr.response?.status === 401) {
+            logger.warn('[Auth] Retry session invalid (401) — clearing credentials');
+            logout(true);
+            return false;
+          }
           if (!retryErr.response && (cachedProfile || user)) {
             setIsAuthenticated(true);
             return true;

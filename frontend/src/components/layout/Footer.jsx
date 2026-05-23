@@ -27,22 +27,7 @@ export function Footer() {
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-6 pb-32 md:pb-10 relative z-10">
         {/* Brand Soul - Left Aligned */}
         <div className="flex flex-col items-start text-left mb-5.5 md:mb-7">
-          <Link to="/" className="group flex items-center gap-3 mb-4">
-            {navigation?.logo?.image ? (
-              <img
-                src={navigation.logo.image}
-                alt={logoText}
-                className="w-8 h-8 rounded-full object-cover shadow-sm transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-on-surface flex items-center justify-center shadow-lg border border-white/5 transition-transform group-hover:scale-105 duration-300">
-                <span className="font-display font-bold text-[12px] text-white">
-                  {firstWord[0]}
-                </span>
-              </div>
-            )}
+          <Link to="/" className="group flex items-center mb-4">
             <div className="flex items-center gap-1">
               <span className="font-display text-[18px] md:text-[20px] text-on-surface font-bold tracking-[0.05em]">
                 {firstWord}
