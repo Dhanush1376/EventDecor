@@ -7,7 +7,7 @@
       "destination": "https://siri-arts-n-crafts.onrender.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ],

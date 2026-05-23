@@ -23,12 +23,11 @@ try {
     fs.rmSync(distPath, { recursive: true, force: true });
   }
 
-  // Move frontend/dist to root/dist using cpSync & rmSync to avoid EXDEV and Windows EPERM issues
+  // Copy frontend/dist to root/dist using cpSync to satisfy both root dist and frontend/dist expectations
   console.log('🚚 Copying build assets to root...');
   fs.cpSync(path.join(__dirname, 'frontend', 'dist'), distPath, { recursive: true });
   
-  console.log('🧹 Cleaning up frontend dist folder...');
-  fs.rmSync(path.join(__dirname, 'frontend', 'dist'), { recursive: true, force: true });
+  console.log('ℹ️ Retaining frontend/dist folder for Vercel output directory fallback.');
 
   // Copy frontend/vercel.json to root/vercel.json
   const vercelConfigSrc = path.join(__dirname, 'frontend', 'vercel.json');
