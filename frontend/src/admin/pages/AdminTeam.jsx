@@ -53,13 +53,13 @@ export function AdminTeam() {
       // 2. Fetch pending invites
       const pendingRes = await adminInviteService.getPendingInvites({ limit: 50 });
       if (pendingRes?.success) {
-        setInvites(pendingRes.data?.results || pendingRes.data || []);
+        setInvites(pendingRes.data?.data || pendingRes.data?.results || pendingRes.data || []);
       }
 
       // 3. Fetch invitation history
       const historyRes = await adminInviteService.getInviteHistory({ limit: 50 });
       if (historyRes?.success) {
-        setHistory(historyRes.data?.results || historyRes.data || []);
+        setHistory(historyRes.data?.data || historyRes.data?.results || historyRes.data || []);
       }
     } catch (err) {
       toast.error("Failed to sync team listings from database.");
