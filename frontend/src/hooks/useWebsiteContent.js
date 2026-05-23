@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { cmsService } from "../services/domainServices";
+import { emptyWebsiteContent } from "../constants/emptyWebsiteContent";
 import { initialWebsiteContent } from "../admin/data/websiteContentData";
 import { invalidateApiCache } from "../utils/apiCache";
 
@@ -25,7 +26,7 @@ try {
 }
 
 if (!globalCache) {
-  globalCache = initialWebsiteContent;
+  globalCache = emptyWebsiteContent;
 }
 
 const updateGlobalCache = (newContent) => {
@@ -74,7 +75,7 @@ export const refreshWebsiteContent = async () => {
 
 export function useWebsiteContent() {
   const [content, setContent] = useState(() => globalCache);
-  const [loading, setLoading] = useState(false); // Instantly ready using local cache or default content!
+  const [loading, setLoading] = useState(!globalCache || globalCache === emptyWebsiteContent);
 
   useEffect(() => {
     const handleUpdate = (newContent) => {

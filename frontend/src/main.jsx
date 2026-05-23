@@ -4,6 +4,8 @@ import "./styles/globals.css";
 import App from "./App.jsx";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { runAppBootstrap } from "./utils/bootstrap";
+import { getApiRootUrl } from "./config/apiConfig";
+import { logStartupDiagnostics } from "./utils/diagnostics";
 
 import logger from './utils/logger';
 
@@ -22,6 +24,7 @@ if (typeof requestIdleCallback === 'function') {
 }
 
 runAppBootstrap();
+logStartupDiagnostics();
 
 // ─── Global Error Handler for Outdated Bundles (Chunk Loading Errors) ───
 window.addEventListener('error', (event) => {
@@ -50,8 +53,22 @@ window.addEventListener('error', (event) => {
   }
 }, true); // Use capture phase to catch resource load errors
 
-// ─── Pre-warm backend ───
-fetch('/api/health').catch(() => {});
+// ─── Pre-warm backend (Render cold start) ───
+const warmBackend = () => {
+  const root = getApiRootUrl();
+  const healthUrl = root.startsWith('/')
+    ? `${root}/health`
+    : `${root}/health`;
+  fetch(`${healthUrl}?t=${Date.now()}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  }).catch(() => {});
+};
+if (typeof requestIdleCallback === 'function') {
+  requestIdleCallback(warmBackend, { timeout: 3000 });
+} else {
+  setTimeout(warmBackend, 100);
+}
 
 const rootEl = document.getElementById("root");
 const shellEl = document.getElementById("app-shell");

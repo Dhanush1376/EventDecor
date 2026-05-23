@@ -146,7 +146,7 @@ export function AuthProvider({ children }) {
       logger.warn('[Auth] Session restoration timeout reached — forcing loader to turn off');
       setLoading(false);
       setIsAuthInitialized(true);
-    }, 6000);
+    }, 12000);
 
     (async () => {
       try {

@@ -2,7 +2,7 @@
  * Post-paint bootstrap: prefetch public data and warm connections without blocking first render.
  */
 import { cmsService } from '../services/domainServices';
-import { getApiUrl } from './apiUrl';
+import { getApiUrl, getApiOrigin } from '../config/apiConfig';
 import logger from './logger';
 import { purgeLegacyClientStorage } from './purgeLegacyStorage';
 
@@ -10,9 +10,8 @@ let bootstrapStarted = false;
 
 const preconnectApi = () => {
   try {
-    const apiUrl = getApiUrl();
-    const origin = new URL(apiUrl).origin;
-    if (document.querySelector(`link[rel="preconnect"][href="${origin}"]`)) return;
+    const origin = getApiOrigin();
+    if (!origin || document.querySelector(`link[rel="preconnect"][href="${origin}"]`)) return;
     const link = document.createElement('link');
     link.rel = 'preconnect';
     link.href = origin;

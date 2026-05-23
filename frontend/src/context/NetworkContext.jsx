@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { safeLocalStorage } from "../utils/storage";
 
 import logger from '../utils/logger';
-import { getApiUrl } from '../utils/apiUrl';
+import { getApiRootUrl } from '../config/apiConfig';
 const NetworkContext = createContext(null);
 
 export const useNetwork = () => {
@@ -69,17 +69,15 @@ export function NetworkProvider({ children }) {
   const checkConnection = useCallback(async () => {
     const startTime = performance.now();
     try {
-      const apiUrl = getApiUrl();
-      // Readiness is at /api/readiness, not /api/v1/readiness
-      const readinessUrl = apiUrl.replace(/\/v1$/, '') + '/readiness';
+      const readinessUrl = `${getApiRootUrl()}/readiness`;
       const response = await fetch(`${readinessUrl}?t=${Date.now()}`, {
         method: "GET",
+        credentials: 'include',
         headers: {
           "Cache-Control": "no-cache",
           "Accept": "application/json"
         },
-        // Abort after 10 seconds to accommodate slow Render free-tier cold boots
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (response.ok) {

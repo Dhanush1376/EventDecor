@@ -29,12 +29,11 @@ try {
   
   console.log('ℹ️ Retaining frontend/dist folder for Vercel output directory fallback.');
 
-  // Copy frontend/vercel.json to root/vercel.json
-  const vercelConfigSrc = path.join(__dirname, 'frontend', 'vercel.json');
-  const vercelConfigDst = path.join(__dirname, 'vercel.json');
-  if (fs.existsSync(vercelConfigSrc)) {
-    fs.copyFileSync(vercelConfigSrc, vercelConfigDst);
-    console.log('📄 Copied vercel.json configuration to root for routing.');
+  // Vercel project uses Root Directory = frontend; keep vercel.json only in frontend/
+  const legacyRootVercel = path.join(__dirname, 'vercel.json');
+  if (fs.existsSync(legacyRootVercel)) {
+    fs.unlinkSync(legacyRootVercel);
+    console.log('🧹 Removed legacy root vercel.json (frontend/vercel.json is canonical).');
   }
 
   console.log('✨ Build completed successfully for Vercel deployment!');

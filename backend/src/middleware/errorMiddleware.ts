@@ -8,7 +8,7 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
   let errors = err.errors || undefined;
 
   // Gracefully translate CORS verification failures to 403 JSON responses
-  if (err.message === 'Not allowed by CORS') {
+  if (typeof err.message === 'string' && err.message.startsWith('Not allowed by CORS')) {
     statusCode = 403;
     message = 'CORS Policy Violation: Request from origin is not allowed.';
   }

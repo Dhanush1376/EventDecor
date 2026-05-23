@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { normalizeApiError } from '../utils/apiErrors';
 
 export const useApi = (apiFunc) => {
   const [data, setData] = useState(null);
@@ -18,22 +19,23 @@ export const useApi = (apiFunc) => {
         throw new Error(response.message || 'Something went wrong');
       }
     } catch (err) {
-      let message = err.response?.data?.message || err.message || 'API Error';
-      const status = err.response?.status;
+      if (err.code === 'ERR_NO_SESSION' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        return null;
+      }
 
-      // ─── DESCRIPTIVE USER-FRIENDLY TRANSLATIONS ───
-      if (err.message === 'Network Error' || message.includes('Network Error')) {
-        message = 'Unable to connect to our studio. Please check your internet connection.';
-      } else if (status === 403) {
+      const normalized = err.normalized || normalizeApiError(err);
+      let message = normalized.message;
+
+      if (normalized.status === 403) {
         message = 'You do not have administrative clearance to access this curating tool.';
-      } else if (status === 404) {
+      } else if (normalized.status === 404) {
         message = 'The requested masterpiece or collection could not be found.';
-      } else if (status >= 500) {
-        message = 'The studio is experiencing a momentary pause. Please try again in a few moments.';
       }
 
       setError(message);
-      toast.error(message);
+      if (normalized.status !== 401) {
+        toast.error(message);
+      }
       return null;
     } finally {
       setLoading(false);

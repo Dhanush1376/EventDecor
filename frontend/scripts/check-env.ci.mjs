@@ -28,4 +28,14 @@ if (missingRecommended.length > 0) {
   missingRecommended.forEach((k) => console.warn(`  - ${k}`));
 }
 
+const apiUrl = process.env.VITE_API_URL?.trim() || '';
+if (apiUrl.startsWith('/')) {
+  console.error('[check-env] VITE_API_URL must be an absolute URL in production (not a relative path).');
+  process.exit(1);
+}
+
+if (apiUrl && !/^https:\/\//i.test(apiUrl)) {
+  console.warn('[check-env] VITE_API_URL should use HTTPS in production:', apiUrl);
+}
+
 console.log('[check-env] Frontend environment variables OK');

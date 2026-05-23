@@ -1,6 +1,7 @@
 import axios from 'axios';
 import logger from '../utils/logger';
-import { getApiUrl } from '../utils/apiUrl';
+import { getApiUrl } from '../config/apiConfig';
+import { normalizeApiError } from '../utils/apiErrors';
 import { getCachedGet, setCachedGet } from '../utils/apiCache';
 import {
   hasSessionMarker,
@@ -12,16 +13,18 @@ import {
   clearAuthStorage,
 } from '../utils/authStorage';
 
-const API_URL = getApiUrl();
-
 const api = axios.create({
-  baseURL: API_URL,
   withCredentials: true,
-  timeout: 30000, // 30s timeout to prevent hanging requests
+  timeout: 45000,
   headers: {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache',
   },
 });
+
+const TRANSIENT_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
+const MAX_GET_RETRIES = 4;
+const MAX_MUTATION_RETRIES = 2;
 
 let accessToken = getPersistedAccessToken() || null;
 let refreshPromise = null;
@@ -34,6 +37,8 @@ export const setAuthBootstrapActive = (active) => {
 };
 
 const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
+
+const pathIncludesAuth = (url = '') => String(url).toLowerCase().includes('/auth/');
 
 export const ensureCsrfToken = async () => {
   if (csrfToken) return csrfToken;
@@ -144,6 +149,7 @@ export const refreshAccessToken = async () => {
 // Add a request interceptor to include auth token and manage offline states
 api.interceptors.request.use(
   async (config) => {
+    config.baseURL = getApiUrl();
     const path = (config.url || '').toLowerCase();
 
     // Prevent protected profile/cart/wishlist calls before a session marker exists
@@ -238,24 +244,40 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+    const normalized = normalizeApiError(error);
+    error.normalized = normalized;
+
     const isAuthRefresh = originalRequest?.url?.includes('/auth/refresh');
     const isAuthLogout = originalRequest?.url?.includes('/auth/logout');
 
-    // ─── TRANSIENT FAILURE AUTOMATIC RETRIES (GET ONLY) ───
-    const isGet = originalRequest?.method?.toLowerCase() === 'get';
-    const isTransientError = !error.response || [500, 502, 503, 504].includes(error.response.status);
-    const hasRetryAttemptsLeft = originalRequest && (!originalRequest._retryCount || originalRequest._retryCount < 3);
+    const method = originalRequest?.method?.toLowerCase() || 'get';
+    const isGet = method === 'get';
+    const status = error.response?.status;
+    const isTransientError =
+      !error.response || TRANSIENT_STATUSES.has(status) || normalized.isTimeout;
+    const maxRetries = isGet ? MAX_GET_RETRIES : MAX_MUTATION_RETRIES;
+    const hasRetryAttemptsLeft =
+      originalRequest && (!originalRequest._retryCount || originalRequest._retryCount < maxRetries);
+    const isAuthRoute = pathIncludesAuth(originalRequest?.url);
+    const canRetryMutation = !isAuthRoute && ['post', 'put', 'patch'].includes(method);
 
-    // Skip retries entirely if we are currently offline to keep network cleaner
-    if (isGet && isTransientError && hasRetryAttemptsLeft && !originalRequest?._retry && !window.__isOffline) {
+    if (
+      isTransientError &&
+      hasRetryAttemptsLeft &&
+      !originalRequest?._retry &&
+      !window.__isOffline &&
+      (isGet || canRetryMutation)
+    ) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
-      // Exponential backoff: 2^attempt * 1000ms + randomized jitter
-      const backoffDelay = Math.pow(2, originalRequest._retryCount) * 1000 + Math.random() * 100;
-      
-      if (import.meta.env.DEV) {
-        logger.warn(`⚠️ [API TRANSIENT RETRY] GET ${originalRequest.url} failed. Retrying attempt ${originalRequest._retryCount} in ${Math.round(backoffDelay)}ms...`);
-      }
-      
+      const backoffDelay =
+        Math.pow(2, originalRequest._retryCount) * 1000 +
+        Math.random() * 500 +
+        (status === 429 ? 2000 : 0);
+
+      logger.warn(
+        `[API] Transient ${method.toUpperCase()} ${originalRequest.url} — retry ${originalRequest._retryCount}/${maxRetries} in ${Math.round(backoffDelay)}ms`
+      );
+
       await new Promise((resolve) => setTimeout(resolve, backoffDelay));
       return api(originalRequest);
     }
@@ -302,7 +324,16 @@ api.interceptors.response.use(
     } else if (error.response?.status === 401 && isAuthRefresh) {
       logger.error('[API] Refresh endpoint returned 401. Session expired.');
       dispatchUnauthorized();
+    } else if (status === 403) {
+      logger.warn('[API] Forbidden:', originalRequest?.url, normalized.message);
+    } else if (status === 404) {
+      logger.dev('[API] Not found:', originalRequest?.url);
+    } else if (status === 429) {
+      logger.warn('[API] Rate limited:', originalRequest?.url);
+    } else if (normalized.isNetwork && !isAuthRoute) {
+      logger.warn('[API] Network failure:', originalRequest?.url, normalized.message);
     }
+
     return Promise.reject(error);
   }
 );

@@ -26,6 +26,12 @@ export function purgeLegacyClientStorage(deployVersion = import.meta.env.VITE_BU
       const previous = safeLocalStorage.getItem(DEPLOY_VERSION_KEY);
       if (previous && previous !== deployVersion) {
         safeLocalStorage.removeItem('siri_arts_website_content');
+        safeLocalStorage.removeItem('siri_offline_sync_queue');
+        try {
+          sessionStorage.removeItem('siri_chunk_reload_time');
+        } catch {
+          // ignore
+        }
       }
       safeLocalStorage.setItem(DEPLOY_VERSION_KEY, deployVersion);
     }

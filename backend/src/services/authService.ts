@@ -453,10 +453,16 @@ class AuthService {
     }
 
     const now = new Date();
+    const otpClockSkewMs = Math.max(
+      0,
+      parseInt(process.env.OTP_CLOCK_SKEW_SECONDS || '90', 10) * 1000
+    );
+    const expiryGraceCutoff = new Date(now.getTime() - otpClockSkewMs);
+
     const otpRecords = await OtpVerification.find({
       email: cleanEmail,
       type: 'auth',
-      expiresAt: { $gt: now },
+      expiresAt: { $gt: expiryGraceCutoff },
       exhausted: false,
     }).sort({ createdAt: -1 });
 

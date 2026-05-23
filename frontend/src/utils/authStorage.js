@@ -39,16 +39,19 @@ export const persistRefreshToken = (token) => {
 
 export const getPersistedRefreshToken = () => safeLocalStorage.getItem(REFRESH_TOKEN_KEY);
 
-/** Short-lived access token — restored on tab refresh for instant API calls. */
+/** Access token — persisted for tab refresh and browser restart until explicit logout. */
 export const persistAccessToken = (token) => {
   if (!token) {
+    safeLocalStorage.removeItem(ACCESS_TOKEN_KEY);
     safeSessionStorage.removeItem(ACCESS_TOKEN_KEY);
     return;
   }
+  safeLocalStorage.setItem(ACCESS_TOKEN_KEY, token);
   safeSessionStorage.setItem(ACCESS_TOKEN_KEY, token);
 };
 
-export const getPersistedAccessToken = () => safeSessionStorage.getItem(ACCESS_TOKEN_KEY);
+export const getPersistedAccessToken = () =>
+  safeLocalStorage.getItem(ACCESS_TOKEN_KEY) || safeSessionStorage.getItem(ACCESS_TOKEN_KEY);
 
 export const clearAuthStorage = () => {
   clearSessionMarker();

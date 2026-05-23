@@ -1,6 +1,7 @@
 import React, { Suspense, useState } from "react";
 import { lazyWithRetry as lazy } from "./utils/lazyWithRetry";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { logRouteDiagnostic } from "./utils/diagnostics";
 import { AnimatePresence } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "react-hot-toast";
@@ -82,6 +83,14 @@ const AdminSystemUsers = lazy(() => import("./admin/pages/AdminSystemUsers").the
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+function RouteDiagnostics() {
+  const location = useLocation();
+  React.useEffect(() => {
+    logRouteDiagnostic(location.pathname);
+  }, [location.pathname]);
+  return null;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -118,6 +127,7 @@ function App() {
                 </Suspense>
                 <AdminInviteModal />
                 <Router>
+                  <RouteDiagnostics />
                   <PwaUpdatePrompt />
                   <ErrorBoundary>
                     <Suspense fallback={<PageLoader />}>
