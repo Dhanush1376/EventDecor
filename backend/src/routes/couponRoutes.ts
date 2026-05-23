@@ -15,8 +15,8 @@ const router = Router();
 router.get('/validate/:code', getCouponByCode);
 router.post('/apply', requireAuth, applyCoupon);
 
-// Admin Routes
-router.get('/', requireAuth, requireAdmin, getCoupons);
+// Admin & Authenticated Routes
+router.get('/', requireAuth, getCoupons);
 router.post('/', requireAuth, requireAdmin, createCoupon);
 router.put('/:id', requireAuth, requireAdmin, updateCoupon);
 router.delete('/:id', requireAuth, requireAdmin, deleteCoupon);

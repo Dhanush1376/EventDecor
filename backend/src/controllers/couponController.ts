@@ -7,11 +7,14 @@ import { getPaginationOptions, formatPaginationResponse } from '../utils/paginat
 import { setPaginationHeaders } from '../utils/paginationHeaders';
 
 export const getCoupons = asyncHandler(async (req: Request, res: Response) => {
+  const isAdmin = (req as any).user?.role === 'admin';
   const { page, limit, skip } = getPaginationOptions(req.query);
 
+  const filter = isAdmin ? {} : { isActive: true, expiryDate: { $gt: new Date() } };
+
   const [coupons, totalCount] = await Promise.all([
-    Coupon.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-    Coupon.countDocuments(),
+    Coupon.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Coupon.countDocuments(filter),
   ]);
 
   setPaginationHeaders(res, totalCount, page, limit);
