@@ -50,6 +50,9 @@ window.addEventListener('error', (event) => {
   }
 }, true); // Use capture phase to catch resource load errors
 
+// ─── Pre-warm backend ───
+fetch('/api/health').catch(() => {});
+
 const rootEl = document.getElementById("root");
 const shellEl = document.getElementById("app-shell");
 
@@ -61,6 +64,17 @@ createRoot(rootEl).render(
   </StrictMode>,
 );
 
+// Fallback to ensure loader is removed even if React suspends indefinitely
+setTimeout(() => {
+  const shell = document.getElementById("app-shell");
+  if (shell) {
+    shell.style.transition = 'opacity 0.5s ease-out';
+    shell.style.opacity = '0';
+    setTimeout(() => shell.remove(), 500);
+  }
+}, 5000);
+
 if (shellEl) {
-  shellEl.remove();
+  // Hide it immediately if rendering succeeds
+  shellEl.style.display = 'none';
 }

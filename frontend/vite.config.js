@@ -47,17 +47,10 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react-router-dom')) return 'vendor-router';
-            if (id.includes('react-dom') || id.includes('react/')) return 'vendor-react';
-            if (id.includes('framer-motion')) return 'vendor-motion';
-            if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
-            if (id.includes('leaflet')) return 'vendor-maps';
-            if (id.includes('qrcode') || id.includes('react-barcode')) return 'vendor-codes';
-            if (id.includes('socket.io-client')) return 'vendor-socket';
-            if (id.includes('axios')) return 'vendor-axios';
-            if (id.includes('react-hot-toast') || id.includes('lucide-react')) return 'vendor-ui';
-            if (id.includes('@sentry')) return 'vendor-sentry';
-            return 'vendor-others';
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'react-core';
+            }
+            return 'vendor';
           }
           // Admin routes use React.lazy() — do not merge into a single admin-pages chunk
         },

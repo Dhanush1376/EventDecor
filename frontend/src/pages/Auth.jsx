@@ -116,7 +116,7 @@ export function Auth() {
         if (otpRefs.current[0]) otpRefs.current[0].focus();
       }, 300);
     } catch (err) {
-      console.error("[AUTH ERROR]", err);
+      logger.error("[AUTH ERROR]", err);
       toast.error(err.response?.data?.message || err.message || 'Failed to send verification credentials');
     } finally {
       isSubmittingRef.current = false;
