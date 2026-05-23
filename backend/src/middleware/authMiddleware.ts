@@ -167,6 +167,25 @@ export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response
   }
 });
 
+export const requireSuperAdminOrOwner = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    throw new ApiError(401, 'Authentication required');
+  }
+
+  const userEmail = req.user.email?.trim()?.toLowerCase();
+  const isOwner = req.user.role === 'owner';
+  const isSuperAdmin = req.user.role === 'super_admin';
+  const isPrivilegedEmail = userEmail && getAdminEmails().some(addr => isSameEmail(userEmail, addr));
+
+  if (isOwner || isSuperAdmin || isPrivilegedEmail) {
+    await checkSafetyLock(req);
+    logAdminAudit(req, res);
+    next();
+  } else {
+    throw new ApiError(403, 'Super Admin or Owner privileges required! Access denied');
+  }
+});
+
 /**
  * Flexible RBAC middleware to allow specific roles
  */

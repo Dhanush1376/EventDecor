@@ -13,6 +13,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { MainLayout, MinimalLayout } from "./layouts/MainLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
+import { AdminInviteModal } from "./components/auth/AdminInviteModal";
 import { NetworkProvider } from "./context/NetworkContext";
 import { PwaUpdatePrompt } from "./components/ui/PwaUpdatePrompt";
 import { SlowConnectionBanner } from "./components/ui/SlowConnectionBanner";
@@ -115,6 +116,7 @@ function App() {
                 <Suspense fallback={null}>
                   <AuthModal />
                 </Suspense>
+                <AdminInviteModal />
                 <Router>
                   <PwaUpdatePrompt />
                   <ErrorBoundary>

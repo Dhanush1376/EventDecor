@@ -5,7 +5,7 @@ import ApiError from '../utils/ApiError';
 import User from '../models/User';
 import bcrypt from 'bcryptjs';
 import { canonicalizeEmail } from '../utils/emailHelper';
-import { isProtectedSuperAdminEmail } from '../config/adminConfig';
+import { isProtectedSuperAdminEmail, ADMIN_ROLES, canActorManageTarget, canActorAssignRole } from '../config/adminConfig';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { setPaginationHeaders } from '../utils/paginationHeaders';
 
@@ -15,11 +15,7 @@ import { setPaginationHeaders } from '../utils/paginationHeaders';
  */
 export const getAdmins = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
-  const adminRoles = [
-    'super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager',
-    'content_manager', 'admin', 'manager', 'coordinator',
-  ] as const;
-  const filter = { role: { $in: adminRoles } };
+  const filter = { role: { $in: ADMIN_ROLES } };
 
   const [admins, totalCount] = await Promise.all([
     User.find(filter).select('-passwordHash -twoFactorSecret').sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -38,9 +34,15 @@ export const getAdmins = asyncHandler(async (req: Request, res: Response) => {
  */
 export const addAdmin = asyncHandler(async (req: Request, res: Response) => {
   const { name, email, role, password } = req.body;
+  const actorRole = (req as any).user!.role;
   
   if (!name || !email || !role || !password) {
     throw new ApiError(400, 'Name, email, role, and temporary password are required');
+  }
+
+  // Enforce role assignment permissions
+  if (!canActorAssignRole(actorRole, role)) {
+    throw new ApiError(403, `You do not have permission to grant the role "${role}".`);
   }
 
   const cleanEmail = canonicalizeEmail(email);
@@ -82,6 +84,8 @@ export const addAdmin = asyncHandler(async (req: Request, res: Response) => {
 export const updateAdminRole = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { role } = req.body;
+  const actorRole = (req as any).user!.role;
+  const actorId = (req as any).user!.id;
 
   if (!role) {
     throw new ApiError(400, 'Role is required');
@@ -92,8 +96,23 @@ export const updateAdminRole = asyncHandler(async (req: Request, res: Response) 
     throw new ApiError(404, 'Admin not found');
   }
 
+  // Prevent self-role modification
+  if (String(admin._id) === String(actorId)) {
+    throw new ApiError(400, 'You cannot modify your own role.');
+  }
+
   if (isProtectedSuperAdminEmail(admin.email)) {
     throw new ApiError(403, 'The primary Super Admin role cannot be changed');
+  }
+
+  // Verify actor can manage the target admin's current role
+  if (!canActorManageTarget(actorRole, admin.role)) {
+    throw new ApiError(403, `You do not have permission to manage this admin (Role: "${admin.role}").`);
+  }
+
+  // Verify actor can assign the new role
+  if (!canActorAssignRole(actorRole, role)) {
+    throw new ApiError(403, `You do not have permission to assign the role "${role}".`);
   }
 
   admin.role = role;
@@ -108,14 +127,26 @@ export const updateAdminRole = asyncHandler(async (req: Request, res: Response) 
  */
 export const removeAdmin = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
+  const actorRole = (req as any).user!.role;
+  const actorId = (req as any).user!.id;
 
   const admin = await User.findById(id);
   if (!admin) {
     throw new ApiError(404, 'Admin not found');
   }
 
+  // Prevent self-privilege revocation
+  if (String(admin._id) === String(actorId)) {
+    throw new ApiError(400, 'You cannot revoke your own admin privileges.');
+  }
+
   if (isProtectedSuperAdminEmail(admin.email)) {
     throw new ApiError(403, 'The primary Super Admin cannot be removed');
+  }
+
+  // Verify actor can manage/revoke target user's role
+  if (!canActorManageTarget(actorRole, admin.role)) {
+    throw new ApiError(403, `You do not have permission to revoke privileges for this admin (Role: "${admin.role}").`);
   }
 
   // Downgrade to customer and remove password hash

@@ -34,10 +34,12 @@ export const isProtectedSuperAdminEmail = (email: string): boolean => {
  * Roles that are allowed access to admin resources.
  */
 export const ADMIN_ROLES = [
+  'owner',
   'super_admin',
   'main_admin',
   'moderator',
   'support_admin',
+  'support',
   'order_manager',
   'content_manager',
   'admin',
@@ -45,3 +47,54 @@ export const ADMIN_ROLES = [
   'coordinator'
 ] as const;
 export type AdminRole = typeof ADMIN_ROLES[number];
+
+/**
+ * Role weight hierarchy mapping for security access checks (higher = more privileged).
+ */
+export const ROLE_HIERARCHY: Record<string, number> = {
+  owner: 100,
+  super_admin: 90,
+  main_admin: 85,
+  admin: 80,
+  moderator: 70,
+  support_admin: 60,
+  support: 50,
+  order_manager: 40,
+  content_manager: 30,
+  manager: 20,
+  coordinator: 10,
+  customer: 0,
+  user: 0
+};
+
+/**
+ * Checks if an actor can perform administrative tasks on a target user based on role weights.
+ * - Only owner and super_admin can manage other users.
+ * - Owners can manage anyone (except another owner, handled separately for protection).
+ * - Super admins can only manage roles strictly lower than super_admin (weight < 90).
+ */
+export const canActorManageTarget = (actorRole: string, targetRole: string): boolean => {
+  const actorWeight = ROLE_HIERARCHY[actorRole] ?? 0;
+  const targetWeight = ROLE_HIERARCHY[targetRole] ?? 0;
+
+  if (actorWeight < 90) return false;
+  if (actorRole === 'owner') return true;
+
+  return actorWeight > targetWeight;
+};
+
+/**
+ * Checks if an actor is authorized to assign/invite a user to a specific role.
+ * - Actor must be owner or super_admin.
+ * - Super admins cannot assign owner or super_admin roles.
+ */
+export const canActorAssignRole = (actorRole: string, roleToAssign: string): boolean => {
+  const actorWeight = ROLE_HIERARCHY[actorRole] ?? 0;
+  const targetWeight = ROLE_HIERARCHY[roleToAssign] ?? 0;
+
+  if (actorWeight < 90) return false;
+  if (actorRole === 'owner') return true;
+
+  return targetWeight < 90;
+};
+

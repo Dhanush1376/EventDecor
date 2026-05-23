@@ -18,6 +18,7 @@ import loyaltyRoutes from './loyaltyRoutes';
 import eventBookingRoutes from './eventBookingRoutes';
 import showcaseRoutes from './showcaseRoutes';
 import adminSystemRoutes from './adminSystemRoutes';
+import adminInviteRoutes from './adminInviteRoutes';
 
 /**
  * Mount all API routers under a prefix.
@@ -49,6 +50,7 @@ export const registerApiRoutes = (
   apiRouter.use('/event-bookings', eventBookingRoutes);
   apiRouter.use('/showcases', showcaseRoutes);
   apiRouter.use('/admin', adminSystemRoutes);
+  apiRouter.use('/admin/invites', adminInviteRoutes);
 
   app.use(prefix, apiRouter);
 };

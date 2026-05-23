@@ -1,28 +1,65 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../../context/AuthContext";
+import { adminInviteService } from "../../services/domainServices";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
+const ROLE_WEIGHTS = {
+  owner: 100,
+  super_admin: 90,
+  main_admin: 85,
+  admin: 80,
+  moderator: 70,
+  support_admin: 60,
+  support: 50,
+  order_manager: 40,
+  content_manager: 30,
+  manager: 20,
+  coordinator: 10,
+  customer: 0,
+  user: 0
+};
+
 export function AdminTeam() {
+  const { user: currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState([]);
   const [invites, setInvites] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [activeTab, setActiveTab] = useState("roster"); // roster, pending, history
 
   // Modal Invitation Drawer
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("manager");
-  const [invitePermissions, setInvitePermissions] = useState("Full Access");
+  const [inviteRole, setInviteRole] = useState("admin");
+  const [invitePermissions, setInvitePermissions] = useState("Access Admin Portal & Dashboard");
   const [submitting, setSubmitting] = useState(false);
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const fetchTeamData = async () => {
     try {
+      // 1. Fetch active roster (members)
       const res = await api.get("/users/team");
       if (res.data?.success) {
         setMembers(res.data.data.members || []);
-        setInvites(res.data.data.invites || []);
+      }
+
+      // 2. Fetch pending invites
+      const pendingRes = await adminInviteService.getPendingInvites({ limit: 50 });
+      if (pendingRes?.success) {
+        setInvites(pendingRes.data?.results || pendingRes.data || []);
+      }
+
+      // 3. Fetch invitation history
+      const historyRes = await adminInviteService.getInviteHistory({ limit: 50 });
+      if (historyRes?.success) {
+        setHistory(historyRes.data?.results || historyRes.data || []);
       }
     } catch (err) {
       toast.error("Failed to sync team listings from database.");
@@ -32,11 +69,44 @@ export function AdminTeam() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchTeamData();
-    }, 0);
-    return () => clearTimeout(timer);
+    fetchTeamData();
   }, []);
+
+  // Helper check: Can current user manage target user?
+  const canManageMember = (targetRole, targetEmail) => {
+    if (!currentUser) return false;
+    
+    // Protect primary super admin configured in env
+    const protectedEmails = [
+      (process.env.REACT_APP_SUPER_ADMIN_EMAIL || "").trim().toLowerCase(),
+      "siriarts.superadmin@gmail.com" // safety fallback
+    ];
+    if (targetEmail && protectedEmails.includes(targetEmail.toLowerCase())) {
+      return false;
+    }
+
+    const actorWeight = ROLE_WEIGHTS[currentUser.role] || 0;
+    const targetWeight = ROLE_WEIGHTS[targetRole] || 0;
+
+    if (actorWeight < 90) return false; // Only super admins & owners
+    if (currentUser.role === 'owner') return true;
+
+    // Super Admin can only manage roles strictly lower than super_admin
+    return actorWeight > targetWeight;
+  };
+
+  // Helper check: Can current user assign/invite to a role?
+  const canAssignRole = (roleToAssign) => {
+    if (!currentUser) return false;
+    const actorWeight = ROLE_WEIGHTS[currentUser.role] || 0;
+    const targetWeight = ROLE_WEIGHTS[roleToAssign] || 0;
+
+    if (actorWeight < 90) return false;
+    if (currentUser.role === 'owner') return true;
+
+    // Super Admin cannot assign owner or super_admin roles
+    return targetWeight < 90;
+  };
 
   const handleSendInvite = async (e) => {
     e.preventDefault();
@@ -44,39 +114,95 @@ export function AdminTeam() {
       toast.error("Please enter a valid email address.");
       return;
     }
+
+    if (!canAssignRole(inviteRole)) {
+      toast.error("Privilege escalation blocked: You cannot assign a role equal to or higher than your own.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const res = await api.post("/users/team/invite", {
+      const res = await adminInviteService.sendInvite({
         email: inviteEmail,
         role: inviteRole,
-        permissions: invitePermissions,
+        permissionsSummary: invitePermissions,
       });
-      if (res.data?.success) {
-        toast.success(`Invitation dispatched to ${inviteEmail} via SMTP!`);
+      if (res?.success) {
+        toast.success(`Access invitation dispatched to ${inviteEmail}!`);
         setInviteEmail("");
-        setInvitePermissions("Full Access");
+        setInvitePermissions("Access Admin Portal & Dashboard");
         setIsInviteOpen(false);
         fetchTeamData();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to dispatch email invitation.");
+      toast.error(err.response?.data?.message || "Failed to create invitation request.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleCancelInvite = async (inviteId) => {
-    if (!confirm("Are you sure you want to deactivate and cancel this invitation?")) return;
+  const handleRevokeInvite = async (inviteId) => {
+    if (!confirm("Are you sure you want to revoke this pending invitation?")) return;
     try {
-      const res = await api.delete(`/users/team/invite/${inviteId}`);
-      if (res.data?.success) {
-        toast.success("Invitation cancelled successfully.");
+      const res = await adminInviteService.revokeInvite(inviteId);
+      if (res?.success) {
+        toast.success("Invitation revoked successfully.");
         fetchTeamData();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to cancel invitation.");
+      toast.error(err.response?.data?.message || "Failed to revoke invitation.");
     }
   };
+
+  const handleUpdateRole = async (userId, targetEmail, currentRole, newRole) => {
+    if (!canManageMember(currentRole, targetEmail)) {
+      toast.error("Permission denied: You do not have role clearance to modify this user.");
+      return;
+    }
+    if (!canAssignRole(newRole)) {
+      toast.error("Privilege escalation blocked: You cannot elevate a user to a role equal to or higher than your own.");
+      return;
+    }
+
+    const loadToast = toast.loading("Updating administrative privileges...");
+    try {
+      const res = await api.put(`/admin/system/users/${userId}/role`, { role: newRole });
+      if (res.data?.success) {
+        toast.dismiss(loadToast);
+        toast.success("Administrative role updated successfully.");
+        fetchTeamData();
+      }
+    } catch (err) {
+      toast.dismiss(loadToast);
+      toast.error(err.response?.data?.message || "Failed to update administrator role.");
+    }
+  };
+
+  const handleRemoveAdmin = async (userId, targetEmail, targetRole) => {
+    if (!canManageMember(targetRole, targetEmail)) {
+      toast.error("Permission denied: You do not have role clearance to remove this user.");
+      return;
+    }
+    if (!confirm("Are you sure you want to completely revoke admin access for this user? This will downgrade their account to customer status.")) return;
+
+    const loadToast = toast.loading("Revoking administrator privileges...");
+    try {
+      const res = await api.delete(`/admin/system/users/${userId}`);
+      if (res.data?.success) {
+        toast.dismiss(loadToast);
+        toast.success("Access privileges revoked successfully.");
+        fetchTeamData();
+      }
+    } catch (err) {
+      toast.dismiss(loadToast);
+      toast.error(err.response?.data?.message || "Failed to revoke admin privileges.");
+    }
+  };
+
+  // Filter assignable roles for the invite drawer
+  const assignableRoles = Object.keys(ROLE_WEIGHTS).filter(
+    (role) => !['user', 'customer'].includes(role) && canAssignRole(role)
+  );
 
   if (loading) {
     return (
@@ -106,7 +232,7 @@ export function AdminTeam() {
             Team Workspace & Authorization
           </h1>
           <p className="text-[13px] text-outline mt-0.5">
-            Manage administrative access rights, role designations, and active invitations
+            Manage administrative access rights, role hierarchies, and active invitations
           </p>
         </div>
         <button
@@ -118,12 +244,37 @@ export function AdminTeam() {
         </button>
       </motion.div>
 
-      {/* Roster & Active Directory Grid */}
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-[15px] font-bold text-on-surface uppercase tracking-wider mb-4">
-            Active Roster Directory ({members.length})
-          </h2>
+      {/* Tabs Menu Navigation */}
+      <div className="flex border-b border-surface-container-low gap-6">
+        <button
+          onClick={() => setActiveTab("roster")}
+          className={`pb-3 text-[12px] uppercase tracking-widest font-bold border-b-2 cursor-pointer transition-all ${
+            activeTab === "roster" ? "border-primary text-primary" : "border-transparent text-outline hover:text-on-surface"
+          }`}
+        >
+          Active Roster ({members.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("pending")}
+          className={`pb-3 text-[12px] uppercase tracking-widest font-bold border-b-2 cursor-pointer transition-all ${
+            activeTab === "pending" ? "border-primary text-primary" : "border-transparent text-outline hover:text-on-surface"
+          }`}
+        >
+          Pending Invites ({invites.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`pb-3 text-[12px] uppercase tracking-widest font-bold border-b-2 cursor-pointer transition-all ${
+            activeTab === "history" ? "border-primary text-primary" : "border-transparent text-outline hover:text-on-surface"
+          }`}
+        >
+          Invitation History ({history.length})
+        </button>
+      </div>
+
+      {/* Roster Tab */}
+      {activeTab === "roster" && (
+        <div className="space-y-6">
           <motion.div
             variants={fadeUp}
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
@@ -135,88 +286,119 @@ export function AdminTeam() {
                 <p className="text-[12px] text-[#64748B] max-w-[280px]">No active team members found in the database.</p>
               </div>
             ) : (
-              members.map((m) => (
-                <motion.div
-                  key={m._id || m.id}
-                  whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(115,92,0,0.04)" }}
-                  className="bg-white rounded-[2rem] p-8 border border-surface-container-highest/60 transition-all duration-300 relative group"
-                >
-                  <div className="flex flex-col gap-6">
-                    <div className="flex items-start gap-5">
-                      {/* Dynamic Avatar */}
-                      <div className="relative">
-                        {m.avatar ? (
-                          <img
-                            src={m.avatar}
-                            alt={m.name}
-                            className="w-16 h-16 rounded-2xl object-cover shadow-lg border-2 border-white"
-                          />
+              members.map((m) => {
+                const canManage = canManageMember(m.role, m.email) && String(m._id || m.id) !== String(currentUser?._id || currentUser?.id);
+                return (
+                  <motion.div
+                    key={m._id || m.id}
+                    whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(115,92,0,0.04)" }}
+                    className="bg-white rounded-[2rem] p-8 border border-surface-container-highest/60 transition-all duration-300 relative group"
+                  >
+                    <div className="flex flex-col gap-6">
+                      <div className="flex items-start gap-5">
+                        {/* Dynamic Avatar */}
+                        <div className="relative">
+                          {m.avatar ? (
+                            <img
+                              src={m.avatar}
+                              alt={m.name}
+                              className="w-16 h-16 rounded-2xl object-cover shadow-lg border-2 border-white"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-container to-primary-container/80 flex items-center justify-center shadow-lg border-2 border-white">
+                              <span className="text-white text-[20px] font-bold font-display tracking-tight">
+                                {m.name
+                                  ?.split(" ")
+                                  ?.map((n) => n[0])
+                                  ?.join("")
+                                  ?.toUpperCase() || "U"}
+                              </span>
+                            </div>
+                          )}
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
+                          </div>
+                        </div>
+
+                        <div className="flex-1 pt-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-[16px] font-bold text-on-surface font-display leading-tight">
+                              {m.name || "Curator"}
+                            </h3>
+                          </div>
+                          <p className="text-[11px] text-primary font-bold tracking-tight uppercase">
+                            {m.role}
+                          </p>
+                          <p className="text-[11px] text-outline font-medium mt-1 font-mono break-all">
+                            {m.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Controls Area */}
+                      <div className="pt-5 border-t border-surface-container-low flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] text-outline-variant uppercase tracking-[0.2em] font-bold">
+                            Administrative Controls
+                          </span>
+                          {canManage && (
+                            <button
+                              onClick={() => handleRemoveAdmin(m._id || m.id, m.email, m.role)}
+                              className="px-3 py-1 text-[10px] text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100/60 rounded-lg font-bold transition-colors cursor-pointer"
+                            >
+                              Revoke Access
+                            </button>
+                          )}
+                        </div>
+
+                        {canManage ? (
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] text-outline font-bold">Update Role Level</label>
+                            <select
+                              value={m.role}
+                              onChange={(e) => handleUpdateRole(m._id || m.id, m.email, m.role, e.target.value)}
+                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-on-surface outline-none focus:border-slate-900 transition-all font-semibold"
+                            >
+                              {Object.keys(ROLE_WEIGHTS)
+                                .filter((role) => !['user', 'customer'].includes(role) && canAssignRole(role))
+                                .map((role) => (
+                                  <option key={role} value={role}>
+                                    {role.toUpperCase()}
+                                  </option>
+                                ))}
+                            </select>
+                          </div>
                         ) : (
-                          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-container to-primary-container/80 flex items-center justify-center shadow-lg border-2 border-white">
-                            <span className="text-white text-[20px] font-bold font-display tracking-tight">
-                              {m.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()}
-                            </span>
+                          <div className="text-[10.5px] text-slate-400 font-medium bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[14px]">lock</span>
+                            <span>Managed by Root Account/Hierarchy Rules</span>
                           </div>
                         )}
-                        {/* Active Status Indicator */}
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
-                          <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
-                        </div>
-                      </div>
-
-                      <div className="flex-1 pt-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-[16px] font-bold text-on-surface font-display leading-tight">
-                            {m.name || "Active Curator"}
-                          </h3>
-                          <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-                        </div>
-                        <p className="text-[12px] text-black font-bold tracking-tight uppercase">
-                          {m.role || "Manager"}
-                        </p>
-                        <p className="text-[11px] text-outline font-medium mt-1 font-mono break-all">
-                          {m.email}
-                        </p>
                       </div>
                     </div>
-
-                    {/* Roster Access Permissions */}
-                    <div className="pt-5 border-t border-surface-container-low">
-                      <p className="text-[9px] text-outline-variant uppercase tracking-[0.2em] font-bold mb-3">
-                        Access Scope
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="px-3 py-1 bg-surface-container-low rounded-full text-[9px] text-on-surface-variant font-bold border border-surface-container-highest/40">
-                          {m.role === "admin"
-                            ? "Full Suite Access"
-                            : m.role === "manager"
-                            ? "Catalog & Bookings"
-                            : "Visual Portfolios"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                );
+              })
             )}
           </motion.div>
         </div>
+      )}
 
-        {/* Invited / Pending Permissions Directory */}
-        {invites.length > 0 && (
-          <div className="pt-6">
-            <h2 className="text-[15px] font-bold text-on-surface uppercase tracking-wider mb-4">
-              Pending Team Invitations ({invites.length})
-            </h2>
-            <motion.div
-              variants={fadeUp}
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-            >
-              {invites.map((inv) => (
+      {/* Pending Invites Tab */}
+      {activeTab === "pending" && (
+        <div className="space-y-6">
+          <motion.div
+            variants={fadeUp}
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+          >
+            {invites.length === 0 ? (
+              <div className="py-16 text-center bg-white rounded-[2rem] border border-surface-container-highest/60 flex flex-col items-center justify-center p-6 shadow-sm col-span-full">
+                <span className="material-symbols-outlined text-[48px] text-[#64748B]/40 mb-2 block">mail_lock</span>
+                <p className="text-[14px] font-bold text-[#0F172A] mt-1">No Pending Invites</p>
+                <p className="text-[12px] text-[#64748B] max-w-[280px]">All invitations have been processed or expired.</p>
+              </div>
+            ) : (
+              invites.map((inv) => (
                 <motion.div
                   key={inv._id}
                   className="bg-white rounded-[2rem] p-7 border border-surface-container-highest/60 relative group flex flex-col justify-between"
@@ -233,45 +415,100 @@ export function AdminTeam() {
                           <p className="text-[13px] font-bold text-on-surface font-mono break-all">
                             {inv.email}
                           </p>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold border uppercase mt-1 inline-block ${
-                              inv.status === "declined"
-                                ? "text-rose-600 bg-rose-50 border-rose-200"
-                                : "text-amber-600 bg-amber-50 border-amber-200"
-                            }`}
-                          >
+                          <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold border uppercase mt-1 inline-block text-amber-600 bg-amber-50 border-amber-200">
                             {inv.status}
                           </span>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleCancelInvite(inv._id)}
-                        className="p-1.5 rounded-lg hover:bg-rose-50 text-outline/40 hover:text-rose-500 transition-colors cursor-pointer"
-                        title="Cancel Invitation"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
-                      </button>
+                      {canAssignRole(inv.roleAssigned) && (
+                        <button
+                          onClick={() => handleRevokeInvite(inv._id)}
+                          className="p-1.5 rounded-lg hover:bg-rose-50 text-outline/40 hover:text-rose-500 transition-colors cursor-pointer"
+                          title="Revoke Invitation"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">cancel</span>
+                        </button>
+                      )}
                     </div>
 
-                    <div className="pt-3 border-t border-surface-container-low text-[11px] text-outline space-y-1">
+                    <div className="pt-3 border-t border-surface-container-low text-[11.5px] text-outline space-y-1">
                       <p>
-                        Role Scope: <strong className="text-on-surface uppercase">{inv.role}</strong>
+                        Role Level: <strong className="text-on-surface uppercase">{inv.roleAssigned}</strong>
                       </p>
                       <p>
-                        Scope Rights:{" "}
-                        <strong className="text-on-surface">"{inv.permissions}"</strong>
+                        Permissions: <strong className="text-on-surface">"{inv.permissionsSummary}"</strong>
                       </p>
-                      <p className="text-[9px] text-outline-variant font-mono">
-                        Invited: {new Date(inv.createdAt).toLocaleString()}
+                      <p className="text-[9.5px] text-outline-variant font-mono">
+                        Invited By: {inv.invitedBy?.name || inv.invitedBy?.email} <br />
+                        Date: {new Date(inv.createdAt).toLocaleString()}
                       </p>
                     </div>
                   </div>
                 </motion.div>
-              ))}
-            </motion.div>
+              ))
+            )}
+          </motion.div>
+        </div>
+      )}
+
+      {/* History Tab */}
+      {activeTab === "history" && (
+        <div className="bg-white rounded-[2rem] border border-surface-container-highest/60 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-[12px]">
+              <thead>
+                <tr className="bg-slate-50 border-b border-surface-container-low text-outline font-bold uppercase tracking-wider">
+                  <th className="px-6 py-4">Invited Email</th>
+                  <th className="px-6 py-4">Designation</th>
+                  <th className="px-6 py-4">Invited By</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Created At</th>
+                  <th className="px-6 py-4">Resolved At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {history.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-12 text-outline">
+                      No invitation history logs found in database audit trail.
+                    </td>
+                  </tr>
+                ) : (
+                  history.map((h) => {
+                    const resolvedDate = h.acceptedAt || h.rejectedAt || h.revokedAt;
+                    return (
+                      <tr key={h._id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-mono font-medium text-[#0F172A]">{h.email}</td>
+                        <td className="px-6 py-4 text-primary font-bold uppercase text-[10px]">{h.roleAssigned}</td>
+                        <td className="px-6 py-4 text-outline font-medium">{h.invitedBy?.name || h.invitedBy?.email}</td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border uppercase ${
+                              h.status === "accepted"
+                                ? "text-emerald-600 bg-emerald-50 border-emerald-200"
+                                : h.status === "rejected"
+                                ? "text-rose-600 bg-rose-50 border-rose-200"
+                                : h.status === "revoked"
+                                ? "text-slate-500 bg-slate-50 border-slate-200"
+                                : "text-amber-600 bg-amber-50 border-amber-200"
+                            }`}
+                          >
+                            {h.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-outline-variant font-mono">{new Date(h.createdAt).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-outline font-mono">
+                          {resolvedDate ? new Date(resolvedDate).toLocaleString() : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Dynamic Slide-Over Invitation Drawer */}
       <AnimatePresence>
@@ -301,7 +538,7 @@ export function AdminTeam() {
                       Invite Member Access
                     </h3>
                     <p className="text-[11px] text-outline">
-                      Dispatches email request to member for authorization verification
+                      Grants admin access to an existing user email. A popup will show up on their next login.
                     </p>
                   </div>
                   <button
@@ -315,7 +552,7 @@ export function AdminTeam() {
                 <form onSubmit={handleSendInvite} className="space-y-5">
                   <div className="space-y-1.5">
                     <label className="text-[11px] text-outline uppercase tracking-wider font-bold">
-                      Member Email Address
+                      Member Registered Email
                     </label>
                     <input
                       required
@@ -336,15 +573,17 @@ export function AdminTeam() {
                       onChange={(e) => setInviteRole(e.target.value)}
                       className="w-full px-4 py-3.5 bg-[#F8F9FB] border border-surface-container-highest rounded-xl text-[12px] text-on-surface outline-none focus:border-slate-900 font-medium transition-all"
                     >
-                      <option value="manager">Event Manager (CMS & Bookings)</option>
-                      <option value="coordinator">Product Coordinator (Catalog CRUD)</option>
-                      <option value="admin">Co-Administrator (Full Studio Access)</option>
+                      {assignableRoles.map((role) => (
+                        <option key={role} value={role}>
+                          {role.toUpperCase()}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-[11px] text-outline uppercase tracking-wider font-bold">
-                      Custom Access Scope Permissions
+                      Access Scope Permissions
                     </label>
                     <input
                       type="text"
@@ -369,9 +608,8 @@ export function AdminTeam() {
               </div>
 
               <div className="border-t border-surface-container-low pt-4 text-[10px] text-outline leading-normal">
-                <strong>SMTP Security Note:</strong> Members invited receive an explicit secure email
-                with an invitation responder token. Access rights to the studio panel are pending
-                until the user actively clicks and accepts the request.
+                <strong>SMTP Security Note:</strong> Members invited receive an explicit secure email.
+                Access rights to the studio panel are pending until the user logs into their account and clicks accept.
               </div>
             </motion.div>
           </div>

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
-import { productService } from "../../services/domainServices";
+import { productService, adminInviteService } from "../../services/domainServices";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 
 // ─── CACHING SEARCH SEEDS AT MODULE LEVEL ───
@@ -31,6 +31,29 @@ export function TopNavbar() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [hasPendingInvite, setHasPendingInvite] = useState(false);
+
+  const adminRoles = ['owner', 'super_admin', 'main_admin', 'moderator', 'support_admin', 'support', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
+
+  useEffect(() => {
+    let active = true;
+    if (isAuthenticated && user) {
+      adminInviteService.getMyPendingInvite()
+        .then((res) => {
+          if (active && res?.success && res?.data) {
+            setHasPendingInvite(true);
+          } else if (active) {
+            setHasPendingInvite(false);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setHasPendingInvite(false);
+    }
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, user]);
 
   // ─── SIRI PREDICTIVE SEARCH STATE ───
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -516,12 +539,15 @@ export function TopNavbar() {
                   <div className="relative hidden md:block">
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                      className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full bg-primary-container/10 border border-primary/25 relative group font-bold cursor-pointer overflow-hidden min-h-0"
+                      className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative"
                       aria-label="User Dropdown"
                     >
                       <span className="text-[10px] text-primary uppercase font-bold tracking-wider">
                         {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || "U"}
                       </span>
+                      {hasPendingInvite && (
+                        <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm" />
+                      )}
                     </button>
 
                     <AnimatePresence>
@@ -546,7 +572,14 @@ export function TopNavbar() {
                               </p>
                             </div>
 
-                            {(user?.role === 'admin' || user?.role === 'manager') && (
+                            {hasPendingInvite && (
+                              <div className="px-4 py-2 bg-rose-50 border-b border-rose-100 text-[10px] text-rose-600 font-bold flex items-center gap-1.5 animate-pulse">
+                                <span className="material-symbols-outlined text-[13px]">info</span>
+                                <span>Pending Admin Invitation</span>
+                              </div>
+                            )}
+
+                            {adminRoles.includes(user?.role) && (
                               <Link
                                 to="/admin"
                                 onClick={() => setIsProfileDropdownOpen(false)}
@@ -732,7 +765,7 @@ export function TopNavbar() {
 
                   {isAuthenticated ? (
                     <>
-                      {(user?.role === 'admin' || user?.role === 'manager') && (
+                      {adminRoles.includes(user?.role) && (
                         <Link
                           to="/admin"
                           onClick={() => setIsOpen(false)}

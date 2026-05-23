@@ -16,7 +16,7 @@ export function ProtectedRoute({ children, adminOnly = false }) {
     return <Navigate to={loginPath} replace />;
   }
 
-  const allowedAdminRoles = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
+  const allowedAdminRoles = ['owner', 'super_admin', 'main_admin', 'moderator', 'support_admin', 'support', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
   
   if (adminOnly && !allowedAdminRoles.includes(user?.role)) {
     return <Navigate to="/" replace />;
