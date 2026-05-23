@@ -87,28 +87,32 @@ export function AuthProvider({ children }) {
         return false;
       }
 
-      const token = await refreshAccessToken();
-      if (token) {
-        try {
-          const retry = await authService.getProfile({ signal });
-          if (retry.success) {
-            setUser(retry.data);
-            setIsAuthenticated(true);
-            saveCachedProfile(retry.data);
-            setSessionMarker();
-            return true;
-          }
-        } catch (retryErr) {
-          if (retryErr.response?.status === 401) {
-            logger.warn('[Auth] Retry session invalid (401) — clearing credentials');
-            logout(true);
-            return false;
-          }
-          if (!retryErr.response && (cachedProfile || user)) {
-            setIsAuthenticated(true);
-            return true;
+      try {
+        const token = await refreshAccessToken();
+        if (token) {
+          try {
+            const retry = await authService.getProfile({ signal });
+            if (retry.success) {
+              setUser(retry.data);
+              setIsAuthenticated(true);
+              saveCachedProfile(retry.data);
+              setSessionMarker();
+              return true;
+            }
+          } catch (retryErr) {
+            if (retryErr.response?.status === 401) {
+              logger.warn('[Auth] Retry session invalid (401) — clearing credentials');
+              logout(true);
+              return false;
+            }
+            if (!retryErr.response && (cachedProfile || user)) {
+              setIsAuthenticated(true);
+              return true;
+            }
           }
         }
+      } catch (refreshErr) {
+        logger.error('[Auth] Failed to refresh token in error recovery', refreshErr);
       }
 
       if (!cachedProfile && !user) {
@@ -138,10 +142,22 @@ export function AuthProvider({ children }) {
 
     const controller = new AbortController();
 
-    (async () => {
-      await restoreSession(controller.signal);
+    const safetyTimeout = setTimeout(() => {
+      logger.warn('[Auth] Session restoration timeout reached — forcing loader to turn off');
       setLoading(false);
       setIsAuthInitialized(true);
+    }, 6000);
+
+    (async () => {
+      try {
+        await restoreSession(controller.signal);
+      } catch (restoreErr) {
+        logger.error('[Auth] Critical error during session restoration', restoreErr);
+      } finally {
+        clearTimeout(safetyTimeout);
+        setLoading(false);
+        setIsAuthInitialized(true);
+      }
     })();
 
     const handleUnauthorized = () => {
@@ -152,6 +168,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       controller.abort();
+      clearTimeout(safetyTimeout);
       window.removeEventListener('auth-unauthorized', handleUnauthorized);
     };
   }, [restoreSession, logout, cachedProfile, hasStoredSession]);

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node -e \"const fs=require('fs'); fs.rmSync('node_modules/.vite', { recursive: true, force: true });\" && vite build",
-    "build:report": "node -e \"const fs=require('fs'); fs.rmSync('node_modules/.vite', { recursive: true, force: true });\" && vite build && node scripts/report-chunk-sizes.mjs",
+    "build": "vite build",
+    "build:report": "vite build && node scripts/report-chunk-sizes.mjs",
     "lint": "eslint . && node ../scripts/check-no-console.mjs",
     "preview": "vite preview",
     "test": "vitest run",
