@@ -19,7 +19,7 @@ export default defineConfig({
   },
 
   build: {
-    target: 'es2020',
+    target: 'es2015',
     minify: true,
     sourcemap: 'hidden',
     cssCodeSplit: true,
