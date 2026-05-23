@@ -47,12 +47,38 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-              return 'react-core';
+            if (id.includes('react-dom') || id.includes('@hot-loader/react-dom')) {
+              return 'react-dom';
+            }
+            if (id.includes('react-router') || id.includes('react-router-dom')) {
+              return 'react-router';
+            }
+            if (id.includes('react')) {
+              return 'react';
+            }
+            if (id.includes('@sentry')) {
+              return 'sentry';
+            }
+            if (id.includes('@tanstack') || id.includes('react-query')) {
+              return 'tanstack-query';
+            }
+            if (id.includes('framer-motion')) {
+              return 'framer-motion';
+            }
+            if (id.includes('recharts')) {
+              return 'recharts';
+            }
+            if (id.includes('leaflet')) {
+              return 'leaflet';
+            }
+            if (id.includes('lucide-react')) {
+              return 'lucide-icons';
+            }
+            if (id.includes('logrocket')) {
+              return 'logrocket';
             }
             return 'vendor';
           }
-          // Admin routes use React.lazy() — do not merge into a single admin-pages chunk
         },
         // Asset file naming for long-term caching
         assetFileNames: (assetInfo) => {
