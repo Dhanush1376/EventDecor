@@ -1,14 +1,6 @@
 {
   "trailingSlash": false,
   "cleanUrls": true,
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.siriartsandcrafts.com" }],
-      "destination": "https://siriartsandcrafts.com/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/:path*",
