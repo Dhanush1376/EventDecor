@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "check-env": "node scripts/check-env.ci.mjs",
-    "postbuild": "react-snap"
+    "postbuild": "node scripts/postbuild.mjs"
   },
   "reactSnap": {
     "include": [
