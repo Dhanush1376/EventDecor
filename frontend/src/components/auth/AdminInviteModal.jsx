@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { adminInviteService } from "../../services/domainServices";
 import { refreshAccessToken } from "../../services/api";
 import toast from "react-hot-toast";
+import logger from "../../utils/logger";
 
 export function AdminInviteModal() {
   const { user, isAuthenticated, checkAuth } = useAuth();
@@ -24,7 +25,7 @@ export function AdminInviteModal() {
         }
       } catch (err) {
         // Silent error to prevent UI disturbance
-        console.error("Failed to check pending admin invitations:", err);
+        logger.error("Failed to check pending admin invitations:", err);
       }
     };
 
