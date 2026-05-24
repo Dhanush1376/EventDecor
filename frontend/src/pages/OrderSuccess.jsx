@@ -528,7 +528,7 @@ export function OrderSuccess() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowStickerModal(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] no-print"
+              className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] no-print"
             />
 
             {/* Modal Container */}
@@ -536,7 +536,7 @@ export function OrderSuccess() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="invoice-modal-container fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-3xl w-full md:h-[90vh] bg-white rounded-2xl shadow-2xl z-[101] overflow-y-auto no-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
+              className="invoice-modal-container fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] md:w-full md:max-w-3xl max-h-[calc(100vh-2rem)] md:max-h-[90vh] bg-white rounded-2xl shadow-2xl z-[101] overflow-y-auto no-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
             >
               {/* PRINT STYLE SHEET DETACHED AND ISOLATED */}
               <style type="text/css" media="print">

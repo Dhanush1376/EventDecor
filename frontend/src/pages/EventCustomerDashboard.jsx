@@ -270,25 +270,25 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                 {/* Left Column: Timelines, Logistics, Invoices & Quotations */}
                 <div className="lg:col-span-8 space-y-6">
                   {/* Visual Setup/Inquiry Details */}
-                  <div className="bg-white rounded-3xl border border-black/5 p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
-                    <div className="flex justify-between items-start border-b border-black/5 pb-4">
+                  <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
+                    <div className="flex flex-col md:flex-row justify-between items-start border-b border-black/5 pb-4 gap-4 md:gap-0">
                       <div>
                         <span className="font-label text-[9px] text-primary uppercase tracking-[0.2em] font-bold block mb-1">
                           Booking Details
                         </span>
                         <h2 className="font-display text-[22px] text-black font-light tracking-tight">{selectedBooking.title}</h2>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 md:gap-3">
                         {/* Mobile: Open chat bottom-sheet trigger */}
                         <button
                           type="button"
                           onClick={() => setIsMobileChatOpen(true)}
-                          className="lg:hidden flex items-center gap-1.5 bg-primary text-white px-3 py-1.5 rounded-full font-label text-[9px] uppercase tracking-wider font-bold shadow-md active:scale-95 transition-transform"
+                          className="lg:hidden flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-full font-label text-[9px] uppercase tracking-wider font-bold shadow-md active:scale-95 transition-transform"
                         >
                           <span className="material-symbols-outlined text-[14px]">forum</span>
                           Chat
                         </button>
-                        <span className="bg-stone-100 text-stone-700 px-3 py-1 rounded-full font-label text-[9px] uppercase tracking-widest font-bold">
+                        <span className="bg-stone-100 text-stone-700 px-3 py-2 rounded-full font-label text-[9px] uppercase tracking-widest font-bold">
                           ID: {selectedBooking._id?.substring(18).toUpperCase()}
                         </span>
                       </div>
@@ -311,7 +311,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                           {selectedBooking.timing?.start} - {selectedBooking.timing?.end}
                         </span>
                       </div>
-                      <div className="space-y-1.5 sm:col-span-2 bg-[#FAF6F0] p-4.5 rounded-2xl border border-[#C4A87C]/15 relative overflow-hidden">
+                      <div className="space-y-1.5 col-span-2 sm:col-span-3 lg:col-span-2 bg-[#FAF6F0] p-4 md:p-5 rounded-2xl border border-[#C4A87C]/15 relative overflow-hidden">
                         <span className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block mb-1">Setup Destination Address</span>
                         {selectedBooking.venue?.name && (
                           <span className="font-display text-xs text-black font-bold flex items-center gap-1.5 leading-none">
@@ -320,7 +320,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                           </span>
                         )}
                         <span className="font-body text-[11px] text-stone-700 font-light block leading-relaxed">
-                          {selectedBooking.venue?.address}
+                          {selectedBooking.venue?.address || "Address pending finalization"}
                         </span>
                         <div className="flex flex-wrap items-center gap-3 pt-1">
                           {selectedBooking.venue?.city && (
@@ -356,7 +356,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
 
                   {/* Operational Setup/Pickup Timing & Teams */}
                   {(selectedBooking.setupTiming || selectedBooking.pickupTiming || selectedBooking.assignedTeam?.length > 0) && (
-                    <div className="bg-white rounded-3xl border border-black/5 p-6 md:p-8 space-y-6 shadow-xl">
+                    <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-6 shadow-xl">
                       <h3 className="font-display text-lg text-black font-bold border-b border-black/5 pb-2">Logistics & Crew Roster</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {/* Setup schedule */}
@@ -411,7 +411,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                   )}
 
                   {/* Compact Modern Progress Bar & Highlighted Active Phase */}
-                  <div className="bg-white rounded-3xl border border-black/5 p-6 md:p-8 space-y-5 shadow-xl">
+                  <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-5 shadow-xl">
                     <div className="flex justify-between items-center border-b border-black/5 pb-3">
                       <div>
                         <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block mb-0.5">TIMELINE STATUS</span>
@@ -500,10 +500,10 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                   </div>
 
                   {/* Financial Quotation Summary details */}
-                  <div className="bg-white rounded-3xl border border-black/5 p-6 md:p-8 space-y-6 shadow-xl">
-                    <div className="flex justify-between items-center border-b border-black/5 pb-2">
+                  <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-6 shadow-xl">
+                    <div className="flex flex-col md:flex-row justify-between md:items-center border-b border-black/5 pb-3 gap-2">
                       <h3 className="font-display text-lg text-black font-bold">Quotation Estimate Details</h3>
-                      <span className={`px-2.5 py-0.5 rounded-full font-label text-[8px] uppercase tracking-widest font-bold ${
+                      <span className={`px-2.5 py-0.5 rounded-full font-label text-[8px] uppercase tracking-widest font-bold self-start md:self-auto ${
                         selectedBooking.clientApproved ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
                       }`}>
                         {selectedBooking.clientApproved ? "Approved by Client" : "Awaiting Client Approval"}
@@ -511,32 +511,32 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                     </div>
 
                     <div className="space-y-3 text-xs">
-                      <div className="flex justify-between"><span className="text-black/50">Event Decor & Rental:</span><span className="text-black font-semibold">₹{selectedBooking.pricing?.rentalFee?.toLocaleString("en-IN")}</span></div>
-                      <div className="flex justify-between"><span className="text-black/50">Bespoke Setup Logistics Crew Labor:</span><span className="text-black font-semibold">₹{selectedBooking.pricing?.setupCharges?.toLocaleString("en-IN")}</span></div>
-                      <div className="flex justify-between"><span className="text-black/50">Logistics Transportation Fleet Cost:</span><span className="text-black font-semibold">₹{selectedBooking.pricing?.transportationCost?.toLocaleString("en-IN")}</span></div>
+                      <div className="flex justify-between gap-3"><span className="text-black/50 leading-snug">Event Decor & Rental:</span><span className="text-black font-semibold shrink-0">₹{selectedBooking.pricing?.rentalFee?.toLocaleString("en-IN")}</span></div>
+                      <div className="flex justify-between gap-3"><span className="text-black/50 leading-snug">Bespoke Setup Logistics Crew Labor:</span><span className="text-black font-semibold shrink-0">₹{selectedBooking.pricing?.setupCharges?.toLocaleString("en-IN")}</span></div>
+                      <div className="flex justify-between gap-3"><span className="text-black/50 leading-snug">Logistics Transportation Fleet Cost:</span><span className="text-black font-semibold shrink-0">₹{selectedBooking.pricing?.transportationCost?.toLocaleString("en-IN")}</span></div>
                       {selectedBooking.selectedAddons?.map((addon, idx) => (
-                        <div key={idx} className="flex justify-between"><span className="text-black/50">+ {addon.name}:</span><span className="text-black font-semibold">₹{addon.price?.toLocaleString("en-IN")}</span></div>
+                        <div key={idx} className="flex justify-between gap-3"><span className="text-black/50 leading-snug">+ {addon.name}:</span><span className="text-black font-semibold shrink-0">₹{addon.price?.toLocaleString("en-IN")}</span></div>
                       ))}
 
-                      <div className="border-t border-black/5 pt-4 flex justify-between items-end">
-                        <span className="font-display text-sm text-black font-bold">Total Estimate Contract Price:</span>
-                        <span className="font-display text-lg text-black font-bold italic">₹{selectedBooking.pricing?.totalPrice?.toLocaleString("en-IN")}</span>
+                      <div className="border-t border-black/5 pt-4 flex justify-between items-end gap-3">
+                        <span className="font-display text-sm text-black font-bold leading-snug">Total Estimate Contract Price:</span>
+                        <span className="font-display text-lg text-black font-bold italic shrink-0">₹{selectedBooking.pricing?.totalPrice?.toLocaleString("en-IN")}</span>
                       </div>
 
-                      <div className="border-t border-black/5 pt-4 flex justify-between items-end">
+                      <div className="border-t border-black/5 pt-4 flex justify-between items-end gap-3">
                         <div className="space-y-0.5">
-                          <span className="font-display text-[11px] text-stone-900 font-bold block">Milestone Deposit Required:</span>
+                          <span className="font-display text-[11px] text-stone-900 font-bold block leading-snug">Milestone Deposit Required:</span>
                           <span className="font-body text-[10px] text-black/40 block">25% to confirm schedules</span>
                         </div>
-                        <span className="font-display text-sm text-primary font-bold">₹{selectedBooking.pricing?.depositAmount?.toLocaleString("en-IN")}</span>
+                        <span className="font-display text-sm text-primary font-bold shrink-0">₹{selectedBooking.pricing?.depositAmount?.toLocaleString("en-IN")}</span>
                       </div>
 
-                      <div className="border-t border-black/5 pt-4 flex justify-between items-end">
+                      <div className="border-t border-black/5 pt-4 flex justify-between items-end gap-3">
                         <div className="space-y-0.5">
-                          <span className="font-display text-[11px] text-stone-900 font-bold block">Pending Balance Remaining:</span>
+                          <span className="font-display text-[11px] text-stone-900 font-bold block leading-snug">Pending Balance Remaining:</span>
                           <span className="font-body text-[10px] text-black/40 block capitalize">Payment Status: {selectedBooking.pricing?.paymentStatus}</span>
                         </div>
-                        <span className="font-display text-lg text-black font-bold italic">₹{selectedBooking.pricing?.pendingBalance?.toLocaleString("en-IN")}</span>
+                        <span className="font-display text-lg text-black font-bold italic shrink-0">₹{selectedBooking.pricing?.pendingBalance?.toLocaleString("en-IN")}</span>
                       </div>
 
                       {/* Action buttons on Quote status */}
@@ -635,7 +635,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
       {/* Mobile Chat Bottom-Sheet Drawer (lg:hidden equivalent — only rendered & shown on mobile) */}
       <AnimatePresence>
         {isMobileChatOpen && selectedBooking && (
-          <div className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden">
+          <div className="fixed inset-0 z-[100] flex flex-col justify-end lg:hidden">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}

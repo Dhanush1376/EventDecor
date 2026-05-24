@@ -88,12 +88,18 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
       {/* Product Title & Metadata - Luxury Editorial */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2 md:space-y-3 flex-1">
-          <h2 className="font-display text-[26px] sm:text-[30px] md:text-[38px] text-on-surface leading-[1.1] tracking-[-0.01em] font-light">
-            {product.title}
+          <h2 className="flex flex-col gap-1.5 font-display text-[26px] sm:text-[30px] md:text-[38px] text-on-surface leading-[1.1] tracking-[-0.01em] font-light">
+            <span>{product.title}</span>
             {(product.teluguTitle || product.nameTE || product.teluguName) && (
-              <span className="ml-2 text-on-surface/30 font-display italic text-[18px] sm:text-[22px] md:text-[26px] font-extralight">
-                ({product.teluguTitle || product.nameTE || product.teluguName})
-              </span>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-on-surface/70 font-display text-[18px] sm:text-[22px] md:text-[26px] font-extralight">
+                  {product.teluguTitle || product.nameTE || product.teluguName}
+                </span>
+                <span className="w-8 sm:w-12 h-px bg-primary/40 shrink-0"></span>
+                <span className="material-symbols-outlined text-[14px] sm:text-[16px] text-primary/60 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  favorite
+                </span>
+              </div>
             )}
           </h2>
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">

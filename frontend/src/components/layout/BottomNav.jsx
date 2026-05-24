@@ -21,41 +21,14 @@ export function BottomNav() {
 
   const isActive = (path) => location.pathname === path;
 
-  // Track if we should hide the nav based on immersive modes or gallery details
-  const [shouldHide, setShouldHide] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkHide = () => {
-      const isGalleryDetail = location.pathname.startsWith("/gallery/");
-      const isGalleryActive = document.body.classList.contains(
-        "gallery-mode-active",
-      );
-      const isSlideshowActive =
-        document.body.classList.contains("slideshow-active");
-      setShouldHide(
-        isGalleryDetail || isGalleryActive || isSlideshowActive || isCartOpen,
-      );
-    };
-
-    checkHide();
-
-    // Set up an observer to catch class changes on body
-    const observer = new MutationObserver(checkHide);
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => observer.disconnect();
-  }, [location.pathname, isCartOpen]);
-
-  if (shouldHide) return null;
+  // Always render BottomNav on mobile
+  if (isCartOpen) return null;
 
   return (
     <motion.nav
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bottom-nav lg:hidden fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full h-[72px] md:h-[80px] w-[calc(100%-2rem)] max-w-[400px] flex items-center justify-around px-4 md:px-6 select-none"
+      className="bottom-nav lg:hidden fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-[90] bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full h-[72px] md:h-[80px] w-[calc(100%-2rem)] max-w-[400px] flex items-center justify-around px-4 md:px-6 select-none"
     >
       {navItems.map((item) => {
         const active = item.isCart

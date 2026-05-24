@@ -48,7 +48,7 @@ export function StickyMobileATC({ product, triggerRef }) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 150, opacity: 0 }}
           transition={{ type: "spring", damping: 28, stiffness: 220 }}
-          className="sticky-mobile-atc fixed left-3 right-3 bottom-24 z-[110] md:hidden bg-surface/95 backdrop-blur-3xl border border-outline-variant/10 px-4 py-2.5 flex items-center justify-between gap-3 shadow-[0_12px_36px_rgba(0,0,0,0.15)] rounded-[28px] select-none"
+          className="sticky-mobile-atc fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[150] md:hidden bg-white/95 backdrop-blur-3xl border border-outline-variant/10 px-6 flex items-center justify-between gap-3 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full select-none"
         >
           <div className="flex flex-col truncate">
             <span className="font-label text-[8px] uppercase tracking-[0.25em] text-on-surface-variant/45 font-bold leading-none">

@@ -11,7 +11,7 @@ import { MandalaElement } from "../components/ui/MandalaElement";
 import { WriteReviewModal } from "../components/sections/ProductReviews";
 import toast from "react-hot-toast";
 import Barcode from "react-barcode";
-import { InvoiceTemplate } from "../components/ui";
+import { InvoiceTemplate, ProductCard } from "../components/ui";
 import { LoyaltyPanel } from "../components/loyalty/LoyaltyPanel";
 const EventCustomerDashboard = React.lazy(() => import("./EventCustomerDashboard").then(m => ({ default: m.EventCustomerDashboard })));
 
@@ -404,12 +404,34 @@ export function Dashboard() {
       />
 
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
-        <nav className="text-[11px] text-secondary mb-6 flex items-center gap-2 tracking-wider uppercase font-bold">
+        <nav className="text-[11px] text-secondary mb-6 flex flex-wrap items-center gap-2 tracking-wider uppercase font-bold">
           <Link to="/" className="hover:text-primary transition-colors">
             Home
           </Link>
           <span>/</span>
-          <span className="text-on-surface">My Account</span>
+          <button 
+            onClick={() => setMobileShowContent(false)}
+            className={`hover:text-primary transition-colors cursor-pointer uppercase ${!mobileShowContent ? "text-on-surface" : ""}`}
+          >
+            My Account
+          </button>
+          {mobileShowContent && (
+            <>
+              <span className="hidden md:inline">/</span>
+              <span className="md:hidden text-primary">/</span>
+              <span className="text-on-surface">
+                {activeTab === "profile" && "Profile Settings"}
+                {activeTab === "orders" && "My Order History"}
+                {activeTab === "bookings" && "My Event Bookings"}
+                {activeTab === "addresses" && "Delivery Sites"}
+                {activeTab === "wishlist" && "Curated Wishlist"}
+                {activeTab === "cart" && "My Shopping Bag"}
+                {activeTab === "recently-viewed" && "Recently Viewed"}
+                {activeTab === "preferences" && "Platform Preferences"}
+                {activeTab === "loyalty" && "Loyalty Club"}
+              </span>
+            </>
+          )}
         </nav>
 
         <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6">
@@ -744,17 +766,6 @@ export function Dashboard() {
 
           {/* MAIN DYNAMIC CONTENT PORTAL PANELS */}
           <div className={`col-span-1 md:col-span-4 lg:col-span-9 space-y-4 ${mobileShowContent ? "block" : "hidden md:block"}`}>
-            {mobileShowContent && (
-              <div className="md:hidden">
-                <button
-                  onClick={() => setMobileShowContent(false)}
-                  className="flex items-center gap-2 px-4 py-2 border border-outline-variant/30 rounded-full text-[11px] font-bold text-primary bg-surface-bright uppercase tracking-wider hover:bg-surface-container-low transition-colors cursor-pointer shadow-xs mb-2"
-                >
-                  <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-                  Back to Account Menu
-                </button>
-              </div>
-            )}
             <AnimatePresence mode="wait">
               
               {/* TAB 0: RESERVED EVENT BOOKINGS */}
@@ -767,7 +778,7 @@ export function Dashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.3 }}
-                  className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs space-y-6"
+                  className="bg-surface-bright border border-outline-variant/40 rounded-lg p-3 md:p-6 shadow-xs space-y-6 overflow-hidden"
                 >
                   <div className="pb-4 border-b border-outline-variant/40">
                     <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
@@ -871,7 +882,7 @@ export function Dashboard() {
                         </select>
                       </div>
 
-                      <div>
+                      <div className="min-w-0">
                         <label htmlFor="dashboard-profile-dob" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
                           Date Of Birth (DOB)
                         </label>
@@ -881,7 +892,7 @@ export function Dashboard() {
                           autoComplete="bday"
                           value={profileForm.dateOfBirth}
                           onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+                          className="w-full min-w-0 max-w-full bg-white border border-outline-variant/30 rounded-lg px-2 md:px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
                         />
                       </div>
                     </div>
@@ -920,7 +931,7 @@ export function Dashboard() {
                   transition={{ duration: 0.3 }}
                   className="space-y-4"
                 >
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 flex items-center justify-between shadow-xs">
+                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
                     <div>
                       <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
                         Delivery Sites
@@ -950,10 +961,11 @@ export function Dashboard() {
                         });
                         setIsAddressModalOpen(true);
                       }}
-                      className="bg-primary text-surface rounded-full px-5 py-2.5 font-bold text-[9px] uppercase tracking-widest hover:bg-on-surface transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      className="bg-primary text-surface rounded-full px-4 md:px-5 py-2 md:py-2.5 font-bold text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-on-surface transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-md whitespace-nowrap shrink-0 self-start sm:self-auto"
                     >
-                      <span className="material-symbols-outlined text-xs">add</span>
-                      Add Delivery Destination
+                      <span className="material-symbols-outlined text-[14px]">add</span>
+                      <span className="hidden sm:inline">Add Delivery Destination</span>
+                      <span className="sm:hidden">Add New</span>
                     </motion.button>
                   </div>
 
@@ -1115,56 +1127,20 @@ export function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Account Settings */}
-                    <div className="space-y-4 pt-2">
-                      <h3 className="font-bold text-xs uppercase tracking-wider text-primary">App Display Variables</h3>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-                            Visual Theme
-                          </label>
-                          <select
-                            value={prefsForm.theme}
-                            onChange={(e) => setPrefsForm({ ...prefsForm, theme: e.target.value })}
-                            className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
-                          >
-                            <option value="light">Light (Classic Studio)</option>
-                            <option value="dark">Dark (Midnight Gallery)</option>
-                            <option value="ethereal">Ethereal Glassmorphism</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-                            Account Language
-                          </label>
-                          <select
-                            value={prefsForm.language}
-                            onChange={(e) => setPrefsForm({ ...prefsForm, language: e.target.value })}
-                            className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
-                          >
-                            <option value="en">English (Universal)</option>
-                            <option value="te">Telugu (తెలుగు)</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex justify-end">
+                    <div className="pt-6 flex justify-end">
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         disabled={isPreferencesSaving}
                         type="submit"
-                        className="btn-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[10px] inline-flex items-center gap-2 cursor-pointer shadow-md"
+                        className="bg-primary text-surface px-5 py-2 rounded-full font-bold uppercase tracking-widest text-[9px] inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-on-surface transition-colors"
                       >
                         {isPreferencesSaving ? (
                           <div className="w-3.5 h-3.5 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
                         ) : (
                           <>
                             <span className="material-symbols-outlined text-[13px]">tune</span>
-                            <span>Commit App Preferences</span>
+                            <span>Save Preferences</span>
                           </>
                         )}
                       </motion.button>
@@ -1407,63 +1383,20 @@ export function Dashboard() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       <AnimatePresence>
                         {wishlistItems.map((prod) => (
-                          <motion.div
-                            layout
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            key={prod._id || prod.id}
-                            className="bg-surface-bright border border-outline-variant/30 rounded-xl overflow-hidden shadow-2xs hover:shadow-Luxury hover:border-primary/45 transition-all group relative flex flex-col justify-between"
-                          >
-                            <div>
-                              <div className="aspect-[4/5] relative bg-surface-container overflow-hidden">
-                                <img
-                                  src={prod.imageSrc || prod.images?.[0]}
-                                  alt={prod.title}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                  onError={handleImageError}
-                                />
-                                
-                                <button
-                                  onClick={() => {
-                                    removeFromWishlist(prod._id || prod.id);
-                                    toast.success("Removed from wishlist");
-                                  }}
-                                  className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/70 backdrop-blur-md border border-outline-variant/15 flex items-center justify-center text-red-600 shadow-sm cursor-pointer hover:bg-white transition-all"
-                                  title="Unsave Product"
-                                >
-                                  <span className="material-symbols-outlined text-[15px] font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
-                                </button>
-                              </div>
-
-                              <div className="p-3 text-[11px] space-y-1">
-                                <span className="text-[9px] uppercase tracking-wider text-secondary font-bold font-label-sm block">
-                                  {prod.category}
-                                </span>
-                                <h4 className="font-bold text-on-surface line-clamp-1">
-                                  {prod.title}
-                                </h4>
-                                <strong className="text-primary text-xs block">
-                                  ₹{prod.price?.toLocaleString()}
-                                </strong>
-                              </div>
-                            </div>
-
-                            <div className="p-3 pt-0">
-                              <Link
-                                to={`/products/${prod._id || prod.id}`}
-                                className="w-full h-8 bg-surface-container border border-outline-variant/30 text-on-surface text-[9px] uppercase tracking-widest font-bold rounded-lg flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
-                              >
-                                View Specs
-                              </Link>
-                            </div>
-                          </motion.div>
+                          <ProductCard key={prod._id || prod.id} {...prod} imageSrc={prod.imageSrc || prod.images?.[0]} />
                         ))}
                       </AnimatePresence>
                     </div>
                   ) : (
-                    <div className="text-center py-16 bg-surface-bright rounded-lg border border-outline-variant/40 text-[11px] text-secondary italic">
-                      Your curated gallery wishlist is completely empty. Explore the shop to save event masterpieces!
+                    <div className="flex flex-col items-center justify-center text-center py-20 bg-surface-bright rounded-xl border border-outline-variant/40 shadow-xs relative overflow-hidden">
+                      <span className="material-symbols-outlined text-[48px] text-primary/20 mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                      <h3 className="font-display text-xl text-on-surface mb-2 font-medium">Curated Gallery Empty</h3>
+                      <p className="text-[11px] text-secondary font-light max-w-sm mx-auto mb-6">
+                        Your wishlist is completely empty. Explore the shop to save event masterpieces!
+                      </p>
+                      <Link to="/products" className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md">
+                        Explore Collection
+                      </Link>
                     </div>
                   )}
                 </motion.div>
@@ -1481,7 +1414,7 @@ export function Dashboard() {
                   transition={{ duration: 0.3 }}
                   className="space-y-4"
                 >
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs flex justify-between items-center">
+                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
                     <div>
                       <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
                         My Shopping Bag
@@ -1490,72 +1423,16 @@ export function Dashboard() {
                         Items currently reserved for your signature verification and checkout session.
                       </span>
                     </div>
-
-                    <strong className="text-primary text-sm font-bold bg-primary-container/10 px-3 py-1 rounded">
-                      {cartCount} Items Blocked
-                    </strong>
                   </div>
 
                   {cartItems && cartItems.length > 0 ? (
-                    <div className="space-y-4">
-                      {cartItems.map((item) => {
-                        const prod = item.product || item;
-                        return (
-                          <div
-                            key={prod._id || prod.id}
-                            className="bg-surface-bright border border-outline-variant/30 rounded-xl p-4 flex gap-4 items-center shadow-2xs hover:border-outline-variant transition-colors"
-                          >
-                            <img
-                              src={prod.imageSrc || prod.images?.[0]}
-                              alt={prod.title}
-                              className="w-16 h-20 bg-surface-container rounded object-cover flex-shrink-0 border border-outline-variant/20 shadow-2xs"
-                              onError={handleImageError}
-                            />
-
-                            <div className="flex-1 min-w-0 text-[11px] space-y-1">
-                              <span className="text-[9px] uppercase tracking-wider text-secondary font-semibold font-label-sm block">
-                                {prod.category}
-                              </span>
-                              <h4 className="font-bold text-on-surface text-xs truncate">
-                                {prod.title}
-                              </h4>
-                              <strong className="text-primary text-xs block">
-                                ₹{prod.price?.toLocaleString()}
-                              </strong>
-                              
-                              {/* Quantity selectors */}
-                              <div className="flex items-center gap-2.5 pt-1.5">
-                                <button
-                                  disabled={item.quantity <= 1}
-                                  onClick={() => updateQuantity(prod._id || prod.id, item.quantity - 1)}
-                                  className="w-6 h-6 border border-outline-variant/30 rounded flex items-center justify-center hover:bg-surface-container disabled:opacity-30 cursor-pointer"
-                                >
-                                  -
-                                </button>
-                                <span className="font-bold font-mono text-xs">{item.quantity}</span>
-                                <button
-                                  onClick={() => updateQuantity(prod._id || prod.id, item.quantity + 1)}
-                                  className="w-6 h-6 border border-outline-variant/30 rounded flex items-center justify-center hover:bg-surface-container cursor-pointer"
-                                >
-                                  +
-                                </button>
-                              </div>
-                            </div>
-
-                            <button
-                              onClick={() => {
-                                removeItem(prod._id || prod.id);
-                                toast.success("Item removed from bag");
-                              }}
-                              className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant/40 hover:text-red-600 transition-colors cursor-pointer shadow-2xs"
-                              title="Discard Item"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">delete</span>
-                            </button>
-                          </div>
-                        );
-                      })}
-
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {cartItems.map((item) => {
+                          const prod = item.product || item;
+                          return <ProductCard key={prod._id || prod.id} {...prod} imageSrc={prod.imageSrc || prod.images?.[0]} />;
+                        })}
+                      </div>
                       <div className="pt-4 flex justify-end">
                         <Link
                           to="/cart"
@@ -1567,8 +1444,15 @@ export function Dashboard() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-16 bg-surface-bright rounded-lg border border-outline-variant/40 text-[11px] text-secondary italic">
-                      Your shopping bag is completely empty. Start browsing our curated catalog!
+                    <div className="flex flex-col items-center justify-center text-center py-20 bg-surface-bright rounded-xl border border-outline-variant/40 shadow-xs relative overflow-hidden">
+                      <span className="material-symbols-outlined text-[48px] text-primary/20 mb-4">shopping_bag</span>
+                      <h3 className="font-display text-xl text-on-surface mb-2 font-medium">Your Bag is Empty</h3>
+                      <p className="text-[11px] text-secondary font-light max-w-sm mx-auto mb-6">
+                        Your shopping bag is completely empty. Start browsing our curated catalog to reserve your event pieces.
+                      </p>
+                      <Link to="/products" className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md">
+                        Browse Boutique
+                      </Link>
                     </div>
                   )}
                 </motion.div>
@@ -1606,60 +1490,20 @@ export function Dashboard() {
                         {recentlyViewed.map((item) => {
                           const prod = item.product;
                           if (!prod) return null;
-                          return (
-                            <motion.div
-                              layout
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              key={prod._id || prod.id}
-                              className="bg-surface-bright border border-outline-variant/30 rounded-xl overflow-hidden shadow-2xs hover:shadow-Luxury hover:border-primary/45 transition-all group flex flex-col justify-between"
-                            >
-                              <div>
-                                <div className="aspect-[4/5] relative bg-surface-container overflow-hidden">
-                                  <img
-                                    src={prod.imageSrc || prod.images?.[0]}
-                                    alt={prod.title}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                    onError={handleImageError}
-                                  />
-                                  
-                                  {item.viewedAt && (
-                                    <span className="absolute bottom-2 left-2 bg-black/50 backdrop-blur-xs text-[8px] text-white px-2 py-0.5 rounded font-bold uppercase tracking-widest pointer-events-none">
-                                      Viewed {new Date(item.viewedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="p-3 text-[11px] space-y-1">
-                                  <span className="text-[9px] uppercase tracking-wider text-secondary font-bold font-label-sm block">
-                                    {prod.category}
-                                  </span>
-                                  <h4 className="font-bold text-on-surface line-clamp-1">
-                                    {prod.title}
-                                  </h4>
-                                  <strong className="text-primary text-xs block">
-                                    ₹{prod.price?.toLocaleString()}
-                                  </strong>
-                                </div>
-                              </div>
-
-                              <div className="p-3 pt-0">
-                                <Link
-                                  to={`/products/${prod._id || prod.id}`}
-                                  className="w-full h-8 bg-surface-container border border-outline-variant/30 text-on-surface text-[9px] uppercase tracking-widest font-bold rounded-lg flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
-                                >
-                                  Revisit specs
-                                </Link>
-                              </div>
-                            </motion.div>
-                          );
+                          return <ProductCard key={prod._id || prod.id} {...prod} imageSrc={prod.imageSrc || prod.images?.[0]} />;
                         })}
                       </AnimatePresence>
                     </div>
                   ) : (
-                    <div className="text-center py-16 bg-surface-bright rounded-lg border border-outline-variant/40 text-[11px] text-secondary italic">
-                      No recently viewed items tracked yet. Open any spec-sheet from the boutique to build your session history!
+                    <div className="flex flex-col items-center justify-center text-center py-20 bg-surface-bright rounded-xl border border-outline-variant/40 shadow-xs relative overflow-hidden">
+                      <span className="material-symbols-outlined text-[48px] text-primary/20 mb-4">history</span>
+                      <h3 className="font-display text-xl text-on-surface mb-2 font-medium">No Session History</h3>
+                      <p className="text-[11px] text-secondary font-light max-w-sm mx-auto mb-6">
+                        No recently viewed items tracked yet. Open any spec-sheet from the boutique to build your session history!
+                      </p>
+                      <Link to="/products" className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md">
+                        Discover Pieces
+                      </Link>
                     </div>
                   )}
                 </motion.div>
@@ -2006,7 +1850,7 @@ export function Dashboard() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedInvoiceOrder(null)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] no-print"
+              className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] print:hidden"
             />
 
             {/* Modal Container */}
@@ -2014,7 +1858,7 @@ export function Dashboard() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="invoice-modal-container fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-3xl w-full md:h-[90vh] bg-white rounded-2xl shadow-2xl z-[101] overflow-y-auto no-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
+              className="invoice-modal-container fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] md:w-full md:max-w-3xl max-h-[calc(100vh-2rem)] md:max-h-[90vh] bg-white rounded-2xl shadow-2xl z-[101] overflow-y-auto no-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
             >
               {/* PRINT STYLE SHEET DETACHED AND ISOLATED */}
               <style type="text/css" media="print">

@@ -270,33 +270,7 @@ export function Cart() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Content List: Cart Entities */}
             <div className="lg:col-span-7 xl:col-span-8 space-y-4">
-              {/* Available Offers Ribbon */}
-              <AnimatePresence>
-                {activeCoupons.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="bg-surface-bright border border-outline-variant/40 rounded-lg p-3 sm:p-4 flex items-start gap-3 shadow-xs"
-                  >
-                    <span className="material-symbols-outlined text-base text-primary mt-0.5 animate-bounce">
-                      local_offer
-                    </span>
-                    <div className="text-xs">
-                      <span className="font-bold text-on-surface">
-                        Available Offers
-                      </span>
-                      <ul className="list-disc pl-4 mt-1 space-y-1 text-secondary">
-                        {activeCoupons.map((coupon) => (
-                          <li key={coupon._id}>
-                            Use code <span className="font-bold text-primary">{coupon.code}</span> to get {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`} off on orders above ₹{coupon.minOrderAmount}.
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Available Offers Ribbon moved to the Coupons Block */}
 
               {/* Main Items Roster Header */}
               <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 flex items-center justify-between font-bold text-xs shadow-xs">
@@ -641,6 +615,33 @@ export function Cart() {
                     </motion.form>
                   )}
                 </AnimatePresence>
+
+                {/* Available Offers List moved here */}
+                {activeCoupons.length > 0 && !appliedCoupon && (
+                  <div className="mt-4 pt-4 border-t border-outline-variant/40">
+                    <div className="text-[11px]">
+                      <span className="font-bold text-on-surface flex items-center gap-1.5 mb-2">
+                        <span className="material-symbols-outlined text-[13px] text-primary">local_offer</span>
+                        Available Offers
+                      </span>
+                      <ul className="list-disc pl-4 space-y-1.5 text-secondary">
+                        {activeCoupons.map((coupon) => (
+                          <li key={coupon._id}>
+                            Use code <span 
+                              className="font-bold text-primary cursor-pointer hover:underline"
+                              onClick={() => {
+                                setCouponInput(coupon.code);
+                                setCouponError("");
+                              }}
+                            >
+                              {coupon.code}
+                            </span> to get {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`} off on orders above ₹{coupon.minOrderAmount}.
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Gift wrapping block */}

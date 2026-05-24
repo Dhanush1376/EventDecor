@@ -104,7 +104,7 @@ export function TopNavbar() {
           id: product._id || product.id,
           text: product.title,
           cat: product.category,
-          imageSrc: product.imageSrc,
+          image: product.image || product.imageSrc || (product.images && product.images[0]),
         }));
 
         searchCache.set(trimmedQuery, formattedSuggestions);
@@ -904,8 +904,12 @@ export function TopNavbar() {
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-primary text-[18px]">verified</span>
-                            <span className="text-[12.5px] font-bold text-on-surface group-hover:text-primary transition-colors">{item.text}</span>
+                            {item.image ? (
+                              <img src={item.image} alt={item.text} className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-cover border border-outline-variant/20 shadow-sm bg-surface shrink-0" />
+                            ) : (
+                              <span className="material-symbols-outlined text-primary text-[18px]">verified</span>
+                            )}
+                            <span className="text-[12.5px] font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-1">{item.text}</span>
                           </div>
                           <span className="text-[9.5px] font-bold uppercase tracking-wider text-on-surface-variant/60 bg-white border border-outline-variant/10 px-2 py-0.5 rounded-full">{item.cat}</span>
                         </Link>

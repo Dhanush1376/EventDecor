@@ -13,36 +13,34 @@ export function PolicySidebar() {
   ];
 
   return (
-    <aside className="lg:col-span-3 space-y-2 sticky top-28 h-fit hidden lg:block">
-      <h2 className="font-label-sm text-secondary uppercase tracking-[0.2em] mb-6 font-bold">
-        Policy Navigation
+    <aside className="lg:col-span-3 space-y-6 sticky top-32 h-fit hidden lg:block border-r border-outline-variant/20 pr-8">
+      <h2 className="font-label-sm text-on-surface-variant uppercase tracking-[0.2em] mb-8 font-semibold text-[11px]">
+        Help Center
       </h2>
-      {policies.map((policy) => {
-        const isActive = pathname === policy.path;
-        return (
-          <Link
-            key={policy.path}
-            to={policy.path}
-            className={`block px-4 py-3 rounded-xl font-label-sm text-[12px] uppercase tracking-widest transition-all ${
-              isActive
-                ? "bg-primary text-surface shadow-md font-bold"
-                : "text-secondary hover:bg-surface-container-low hover:text-primary font-medium"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span>{policy.title}</span>
+      <nav className="flex flex-col space-y-4">
+        {policies.map((policy) => {
+          const isActive = pathname === policy.path;
+          return (
+            <Link
+              key={policy.path}
+              to={policy.path}
+              className={`relative py-1 font-body text-[14px] transition-all duration-300 ${
+                isActive
+                  ? "text-on-surface font-semibold"
+                  : "text-on-surface-variant hover:text-on-surface"
+              }`}
+            >
               {isActive && (
-                <motion.span
-                  layoutId="active-policy"
-                  className="material-symbols-outlined text-sm"
-                >
-                  chevron_right
-                </motion.span>
+                <motion.div
+                  layoutId="sidebar-active"
+                  className="absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-on-surface"
+                />
               )}
-            </div>
-          </Link>
-        );
-      })}
+              {policy.title}
+            </Link>
+          );
+        })}
+      </nav>
     </aside>
   );
 }
@@ -57,21 +55,27 @@ export function MobilePolicyNav() {
   ];
 
   return (
-    <div className="lg:hidden mb-10 overflow-x-auto no-scrollbar pb-2 border-b border-outline-variant/20">
-      <div className="flex gap-2">
+    <div className="lg:hidden mb-12 overflow-x-auto no-scrollbar border-b border-outline-variant/30">
+      <div className="flex px-4 md:px-0 min-w-max">
         {policies.map((policy) => {
           const isActive = pathname === policy.path;
           return (
             <Link
               key={policy.path}
               to={policy.path}
-              className={`px-4 py-2 rounded-full whitespace-nowrap font-label-sm text-[10px] uppercase tracking-widest border transition-all ${
+              className={`relative px-6 py-4 text-[12px] uppercase tracking-widest transition-all duration-300 font-label-sm ${
                 isActive
-                  ? "bg-primary text-surface border-primary font-bold"
-                  : "bg-surface-bright text-secondary border-outline-variant/30 font-medium"
+                  ? "text-on-surface font-bold"
+                  : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
               {policy.title}
+              {isActive && (
+                <motion.div
+                  layoutId="mobile-policy-active"
+                  className="absolute bottom-0 left-0 w-full h-[2px] bg-on-surface"
+                />
+              )}
             </Link>
           );
         })}

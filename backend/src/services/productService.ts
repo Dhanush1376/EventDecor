@@ -29,7 +29,21 @@ class ProductService {
       if (collections.length > 0) filter.category = { $in: collections.map((item) => new RegExp(`^${item}$`, 'i')) };
     }
     if (search) {
-      filter.$text = { $search: search };
+      const searchTerms = String(search).split(/\s+/).filter(Boolean);
+      if (searchTerms.length > 0) {
+        // Use regex for partial, case-insensitive match across multiple fields
+        // Must match ALL terms (AND logic across terms, OR logic across fields)
+        filter.$and = searchTerms.map(term => ({
+          $or: [
+            { title: { $regex: term, $options: 'i' } },
+            { category: { $regex: term, $options: 'i' } },
+            { material: { $regex: term, $options: 'i' } },
+            { tags: { $regex: term, $options: 'i' } },
+            { teluguTitle: { $regex: term, $options: 'i' } },
+            { description: { $regex: term, $options: 'i' } }
+          ]
+        }));
+      }
     }
 
     let sortOptions: any = { createdAt: -1 };

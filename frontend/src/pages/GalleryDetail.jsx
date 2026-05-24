@@ -19,8 +19,10 @@ export function GalleryDetail() {
   const [moreLikeThis, setMoreLikeThis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pageUrl, setPageUrl] = useState('');
 
   useEffect(() => {
+    setPageUrl(window.location.href);
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -167,7 +169,7 @@ export function GalleryDetail() {
             </motion.span>
           </button>
           <ShareButton 
-            url={typeof window !== 'undefined' ? window.location.href : ''} 
+            url={pageUrl} 
             title={`${item.title} - Siri Arts & Crafts Gallery`}
             description={item.description}
             variant="custom"
@@ -242,7 +244,7 @@ export function GalleryDetail() {
                     </motion.span>
                   </button>
                   <ShareButton 
-                    url={typeof window !== 'undefined' ? window.location.href : ''} 
+                    url={pageUrl} 
                     title={`${item.title} - Siri Arts & Crafts Gallery`}
                     description={item.description}
                     variant="custom"
@@ -327,7 +329,7 @@ export function GalleryDetail() {
             <div className="grid grid-cols-2 gap-4">
               {moreLikeThis.map((sim) => (
                 <Link
-                  key={sim.id}
+                  key={sim._id || sim.id}
                   to={`/gallery/${sim.id}`}
                   className="block group mb-4"
                 >
@@ -377,45 +379,32 @@ export function GalleryDetail() {
       </main>
 
       {/* Mobile Floating Bottom Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[120] p-4 bg-gradient-to-t from-[#efefef] via-[#efefef]/95 to-transparent">
-        <div className="max-w-md mx-auto bg-black rounded-[28px] p-2 flex items-center gap-2 shadow-2xl border border-white/5">
-          <button
-            onClick={handleWishlistLook}
-            className={`w-14 h-14 rounded-[22px] flex items-center justify-center transition-all active:scale-90 ${linkedProdId && isWishlisted(linkedProdId) ? "bg-primary/20 text-white" : "bg-white/10 text-white"}`}
+      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[150] bg-white/95 backdrop-blur-3xl border border-black/5 p-1.5 flex items-center gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full select-none">
+        <button
+          onClick={handleWishlistLook}
+          className={`w-[60px] h-full rounded-full flex items-center justify-center transition-all active:scale-90 shrink-0 ${linkedProdId && isWishlisted(linkedProdId) ? "bg-primary/10 text-primary" : "bg-black/5 text-black hover:bg-black/10"}`}
+        >
+          <motion.span
+            animate={{
+              scale: linkedProdId && isWishlisted(linkedProdId) ? [1, 1.3, 1] : 1,
+              color: linkedProdId && isWishlisted(linkedProdId) ? "#ff2d55" : "#1a1817",
+            }}
+            transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+            className="material-symbols-outlined text-[20px]"
+            style={{ fontVariationSettings: linkedProdId && isWishlisted(linkedProdId) ? "'FILL' 1" : "'FILL' 0" }}
           >
-            <motion.span
-              animate={{
-                scale:
-                  linkedProdId && isWishlisted(linkedProdId)
-                    ? [1, 1.3, 1]
-                    : 1,
-                color:
-                  linkedProdId && isWishlisted(linkedProdId)
-                    ? "#ff2d55"
-                    : "#ffffff",
-              }}
-              transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-              className="material-symbols-outlined text-[24px]"
-              style={{
-                fontVariationSettings:
-                  linkedProdId && isWishlisted(linkedProdId)
-                    ? "'FILL' 1"
-                    : "'FILL' 0",
-              }}
-            >
-              favorite
-            </motion.span>
-          </button>
-          <button
-            onClick={handleShopLook}
-            className="flex-1 bg-primary text-white h-14 rounded-[22px] font-label text-[11px] uppercase tracking-[0.3em] font-bold flex items-center justify-center gap-3 active:scale-95 transition-transform"
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              shopping_bag
-            </span>
-            Shop Look
-          </button>
-        </div>
+            favorite
+          </motion.span>
+        </button>
+        <button
+          onClick={handleShopLook}
+          className="flex-1 bg-primary text-white h-full rounded-full font-label-sm text-[10px] uppercase tracking-[0.2em] font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md"
+        >
+          <span className="material-symbols-outlined text-[16px]">
+            shopping_bag
+          </span>
+          Shop Look
+        </button>
       </div>
 
       <div className="fixed inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay z-[400] bg-marble" />

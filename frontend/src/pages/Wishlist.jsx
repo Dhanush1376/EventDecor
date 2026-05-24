@@ -50,6 +50,7 @@ export function Wishlist() {
       imageSrc:
         item.imageSrc ||
         item.image ||
+        item.images?.[0] ||
         "",
     }));
   }, [items]);
@@ -165,16 +166,6 @@ export function Wishlist() {
                   )}
                 </div>
 
-                {/* Refined Sort Selector */}
-                <div className="w-full sm:w-52 h-[46px]">
-                  <CustomDropdown
-                    options={sortOptions}
-                    value={sortBy}
-                    onChange={setSortBy}
-                    className="w-full h-full"
-                    buttonClassName="!rounded-full border !border-black/5 shadow-sm !bg-white/50 backdrop-blur-xl !py-0 !px-6 text-[12px] font-bold tracking-wider !h-full"
-                  />
-                </div>
               </div>
             </div>
           </>

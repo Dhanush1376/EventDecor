@@ -1,16 +1,32 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { CloudinaryImage } from "./CloudinaryImage";
 import { handleImageError } from "../../utils/imageUtils";
 import { useWishlist } from "../../context/WishlistContext";
 import { ShareButton } from "./ShareButton";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function ProductGallery({ images = [], product }) {
   const { toggleItem, isWishlisted } = useWishlist();
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const scrollRef = useRef(null);
+  const lightboxScrollRef = useRef(null);
   const navigate = useNavigate();
+
+  const openLightbox = (idx) => {
+    setSelectedIdx(idx);
+    setIsLightboxOpen(true);
+    setTimeout(() => {
+      if (lightboxScrollRef.current) {
+        lightboxScrollRef.current.scrollTo({
+          left: idx * lightboxScrollRef.current.clientWidth,
+          behavior: "instant"
+        });
+      }
+    }, 10);
+  };
 
   const handleBack = () => {
     if (window.history.state && window.history.state.idx > 0) {
@@ -84,13 +100,14 @@ export function ProductGallery({ images = [], product }) {
           {images.map((img, idx) => (
             <div
               key={idx}
-              className="w-full h-full shrink-0 snap-center relative overflow-hidden bg-white flex items-center justify-center"
+              onClick={() => openLightbox(idx)}
+              className="w-full h-full shrink-0 snap-center relative overflow-hidden bg-white flex items-center justify-center cursor-zoom-in"
             >
               <CloudinaryImage
                 src={img}
                 alt={`Product Primary View ${idx + 1}`}
                 className="w-full h-full object-cover origin-center select-none transition-transform duration-500"
-                containerClassName="w-full h-full"
+                containerClassName="w-full h-full pointer-events-none"
                 width={800}
                 height={800}
               />
@@ -151,6 +168,92 @@ export function ProductGallery({ images = [], product }) {
         {/* Shimmer Effect on hover */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-white/5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
       </div>
+
+      {/* Fullscreen Swipeable Lightbox (Rendered at root to escape stacking context) */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {isLightboxOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[99999] bg-white/98 flex flex-col touch-none backdrop-blur-md"
+            >
+              {/* Prominent Close Button */}
+              <button
+                onClick={() => setIsLightboxOpen(false)}
+                className="fixed top-8 right-6 z-[100000] w-12 h-12 flex items-center justify-center rounded-full bg-white text-black shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-black/10 active:scale-90 transition-transform pointer-events-auto hover:bg-gray-50"
+                aria-label="Close lightbox"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+
+              {/* Image Counter */}
+              <div className="fixed top-10 left-6 z-[100000] pointer-events-none">
+                <span className="bg-white/80 px-4 py-1.5 rounded-full text-black font-label tracking-widest text-[12px] font-bold shadow-sm backdrop-blur-md">
+                  {selectedIdx + 1} / {images.length}
+                </span>
+              </div>
+
+              {/* Lightbox Swipeable Viewport */}
+              <div 
+                ref={lightboxScrollRef}
+                onScroll={handleScroll}
+                className="flex-1 w-full h-full flex overflow-x-auto snap-x snap-mandatory items-center mt-12"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {images.map((img, idx) => (
+                  <div key={idx} className="w-full h-full shrink-0 snap-center flex items-center justify-center p-2 md:p-8 relative">
+                    <CloudinaryImage
+                      src={img}
+                      alt={`Lightbox view ${idx + 1}`}
+                      className="max-w-full max-h-full object-contain select-none"
+                      width={1200}
+                      height={1200}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Lightbox Thumbnail Strip */}
+              <div className="w-full pb-8 pt-4 px-4 flex gap-3 overflow-x-auto no-scrollbar justify-center items-center pointer-events-auto shrink-0 z-20">
+                {images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setSelectedIdx(idx);
+                      if (lightboxScrollRef.current) {
+                        lightboxScrollRef.current.scrollTo({
+                          left: idx * lightboxScrollRef.current.clientWidth,
+                          behavior: "smooth"
+                        });
+                      }
+                    }}
+                    className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                      selectedIdx === idx
+                        ? "border-black shadow-lg scale-110"
+                        : "border-transparent opacity-50 hover:opacity-100"
+                    }`}
+                  >
+                    <CloudinaryImage
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover pointer-events-none"
+                      width={100}
+                      height={100}
+                    />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

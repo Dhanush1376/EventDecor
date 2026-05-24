@@ -276,11 +276,17 @@ export function ProductCard({
           </div>
         </div>
 
-        <Link to={`/product/${productId}`} className="mb-2 md:mb-3 group/link">
+        <Link to={`/product/${productId}`} className="mb-2 md:mb-3 group/link block">
           {(teluguTitle || nameTE || teluguName) && (
-            <span className="block font-label text-[9px] md:text-[11px] text-black/60 mb-0.5 tracking-wider truncate leading-[1.8]">
-              {teluguTitle || nameTE || teluguName}
-            </span>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="block font-display text-[13px] md:text-[15px] text-black/85 font-medium tracking-wide truncate leading-none">
+                {teluguTitle || nameTE || teluguName}
+              </span>
+              <span className="w-6 sm:w-8 h-[1px] bg-black/15 shrink-0"></span>
+              <span className="material-symbols-outlined text-[10px] md:text-[12px] text-primary/80 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
+                favorite
+              </span>
+            </div>
           )}
           <h3 className="font-display text-[14px] md:text-[19px] text-black group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-1">
             {title}

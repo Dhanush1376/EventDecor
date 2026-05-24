@@ -229,7 +229,13 @@ export function Gallery() {
 
               {/* Mobile Gallery Mode Toggle */}
               <button
-                onClick={() => setIsGalleryMode(!isGalleryMode)}
+                onClick={() => {
+                  const newMode = !isGalleryMode;
+                  setIsGalleryMode(newMode);
+                  if (newMode && filteredItems.length > 0) {
+                    setSlideshowIndex(0);
+                  }
+                }}
                 aria-label="Toggle gallery mode"
                 className={`lg:hidden flex items-center justify-center w-11 h-11 rounded-full shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none ${
                   isGalleryMode ? "bg-primary text-white text-surface" : "bg-white text-black/50 border border-black/10"
@@ -269,7 +275,13 @@ export function Gallery() {
 
                 {/* Gallery Mode Toggle */}
                 <button
-                  onClick={() => setIsGalleryMode(!isGalleryMode)}
+                  onClick={() => {
+                    const newMode = !isGalleryMode;
+                    setIsGalleryMode(newMode);
+                    if (newMode && filteredItems.length > 0) {
+                      setSlideshowIndex(0);
+                    }
+                  }}
                   className={`flex shrink-0 items-center gap-2 h-11 px-5 rounded-full border transition-all duration-300 font-bold text-[10px] uppercase tracking-widest outline-none focus:outline-none focus-visible:outline-none ${
                     isGalleryMode
                       ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
@@ -337,21 +349,7 @@ export function Gallery() {
         )}
       </main>
 
-      {/* Floating Exit Button for Immersive Mode */}
-      <AnimatePresence>
-        {isGalleryMode && showFloatingExit && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            onClick={() => setIsGalleryMode(false)}
-            className="fixed top-6 right-6 z-[200] bg-primary text-white px-6 py-3 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
-          >
-            <span className="material-symbols-outlined text-[18px]">close</span>
-            Exit Gallery Mode
-          </motion.button>
-        )}
-      </AnimatePresence>
+
 
       <AnimatePresence>
         {slideshowIndex !== -1 && (
@@ -369,6 +367,7 @@ export function Gallery() {
                 prev < filteredItems.length - 1 ? prev + 1 : 0,
               )
             }
+            onSelect={setSlideshowIndex}
           />
         )}
       </AnimatePresence>

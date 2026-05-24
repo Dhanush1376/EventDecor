@@ -117,19 +117,6 @@ export function ShowcaseCard({
           </div>
         </div>
 
-        {/* Mobile & Tablet Quick Add Button */}
-        <div className="xl:hidden absolute bottom-2 right-2 sm:bottom-3 sm:right-3 z-20">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenShowcase?.();
-            }}
-            className="w-7 h-7 sm:w-9 sm:h-9 min-h-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all cursor-pointer"
-            aria-label="Reserve Crate"
-          >
-            <span className="material-symbols-outlined text-[14px] sm:text-[18px]">add_shopping_cart</span>
-          </button>
-        </div>
       </div>
 
       {/* 2. REFINED INFO SECTION */}

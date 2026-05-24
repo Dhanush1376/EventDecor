@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { SEO } from "../components/seo/SEO";
 import { useWishlist } from "../context/WishlistContext";
@@ -39,7 +40,22 @@ export function EventDetail() {
   const navigate = useNavigate();
   const { isAuthenticated, runProtectedAction } = useAuth();
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const lightboxScrollRef = useRef(null);
   const { toggleItem, isWishlisted } = useWishlist();
+
+  const openLightbox = (idx) => {
+    setActiveGalleryIndex(idx);
+    setIsLightboxOpen(true);
+    setTimeout(() => {
+      if (lightboxScrollRef.current) {
+        lightboxScrollRef.current.scrollTo({
+          left: idx * lightboxScrollRef.current.clientWidth,
+          behavior: "instant"
+        });
+      }
+    }, 10);
+  };
 
   const [event, setEvent] = useState(null);
   const [relatedEvents, setRelatedEvents] = useState([]);
@@ -516,7 +532,8 @@ export function EventDetail() {
                 {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, i) => (
                   <div
                     key={i}
-                    className="flex-shrink-0 w-full h-full snap-center"
+                    onClick={() => openLightbox(i)}
+                    className="flex-shrink-0 w-full h-full snap-center cursor-zoom-in"
                   >
                     <img
                       src={img}
@@ -538,7 +555,8 @@ export function EventDetail() {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.6 }}
                     src={event.gallery?.[activeGalleryIndex] || event.image}
-                    className="w-full h-full object-cover"
+                    onClick={() => openLightbox(activeGalleryIndex)}
+                    className="w-full h-full object-cover cursor-zoom-in"
                     alt={event.title}
                     onError={handleImageError}
                   />
@@ -1179,7 +1197,7 @@ export function EventDetail() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 150, opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 220 }}
-            className="fixed left-3 right-3 bottom-20 z-[110] md:hidden bg-white/95 backdrop-blur-3xl border border-[#C4A87C]/20 px-4 py-2.5 flex items-center justify-between gap-3 shadow-[0_12px_36px_rgba(115,92,0,0.10)] rounded-[28px] select-none overflow-hidden"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[150] md:hidden bg-white/95 backdrop-blur-3xl border border-[#C4A87C]/20 px-6 flex items-center justify-between gap-3 shadow-[0_20px_60px_rgba(115,92,0,0.10)] rounded-full select-none overflow-hidden"
           >
             {/* Elegant Floral Mandala Watermark backdrop */}
             <div className="absolute right-0 top-0 bottom-0 w-20 overflow-hidden pointer-events-none rounded-r-[28px] flex items-center justify-end z-0">
@@ -1223,6 +1241,96 @@ export function EventDetail() {
         onLocationSelect={(details) => setVenueDetails(details)}
         initialLocation={venueDetails}
       />
+
+      {/* Fullscreen Swipeable Lightbox (Rendered at root to escape stacking context) */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {isLightboxOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[99999] bg-white/98 flex flex-col touch-none backdrop-blur-md"
+            >
+              {/* Prominent Close Button */}
+              <button
+                onClick={() => setIsLightboxOpen(false)}
+                className="fixed top-8 right-6 z-[100000] w-12 h-12 flex items-center justify-center rounded-full bg-white text-black shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-black/10 active:scale-90 transition-transform pointer-events-auto hover:bg-gray-50"
+                aria-label="Close lightbox"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+
+              {/* Image Counter */}
+              <div className="fixed top-10 left-6 z-[100000] pointer-events-none">
+                <span className="bg-white/80 px-4 py-1.5 rounded-full text-black font-label tracking-widest text-[12px] font-bold shadow-sm backdrop-blur-md">
+                  {activeGalleryIndex + 1} / {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).length}
+                </span>
+              </div>
+
+              {/* Lightbox Swipeable Viewport */}
+              <div 
+                ref={lightboxScrollRef}
+                onScroll={(e) => {
+                  const width = e.currentTarget.clientWidth;
+                  if (!width) return;
+                  const currentSlide = Math.round(e.currentTarget.scrollLeft / width);
+                  const images = event.gallery && event.gallery.length > 0 ? event.gallery : [event.image];
+                  if (currentSlide !== activeGalleryIndex && currentSlide >= 0 && currentSlide < images.length) {
+                    setActiveGalleryIndex(currentSlide);
+                  }
+                }}
+                className="flex-1 w-full h-full flex overflow-x-auto snap-x snap-mandatory items-center mt-12"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, idx) => (
+                  <div key={idx} className="w-full h-full shrink-0 snap-center flex items-center justify-center p-2 md:p-8 relative">
+                    <img
+                      src={img}
+                      alt={`Lightbox view ${idx + 1}`}
+                      className="max-w-full max-h-full object-contain select-none"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Lightbox Thumbnail Strip */}
+              <div className="w-full pb-8 pt-4 px-4 flex gap-3 overflow-x-auto no-scrollbar justify-center items-center pointer-events-auto shrink-0 z-20">
+                {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setActiveGalleryIndex(idx);
+                      if (lightboxScrollRef.current) {
+                        lightboxScrollRef.current.scrollTo({
+                          left: idx * lightboxScrollRef.current.clientWidth,
+                          behavior: "smooth"
+                        });
+                      }
+                    }}
+                    className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                      activeGalleryIndex === idx
+                        ? "border-black shadow-lg scale-110"
+                        : "border-transparent opacity-50 hover:opacity-100"
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover pointer-events-none"
+                    />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

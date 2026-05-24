@@ -85,7 +85,10 @@ if (typeof requestIdleCallback === 'function') {
 const rootEl = document.getElementById("root");
 const shellEl = document.getElementById("app-shell");
 
-if (rootEl.hasChildNodes()) {
+// The raw index.html has an app-shell inside #root. If it's still there, we haven't been pre-rendered by react-snap.
+const isPrerendered = rootEl.hasChildNodes() && (!shellEl || shellEl.parentElement !== rootEl);
+
+if (isPrerendered) {
   hydrateRoot(
     rootEl,
     <StrictMode>

@@ -106,6 +106,11 @@ const queryClient = new QueryClient({
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => !safeSessionStorage.getItem("siri_splash_shown"));
+  const [isMounted, setIsMounted] = useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -120,15 +125,17 @@ function App() {
           <AuthProvider>
             <CartProvider>
               <WishlistProvider>
-                <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff', fontSize: '14px' } }} />
+                {isMounted && <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff', fontSize: '14px' } }} />}
 
                 <AnimatePresence>
                   {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
                 </AnimatePresence>
-                <Suspense fallback={null}>
-                  <AuthModal />
-                </Suspense>
-                <AdminInviteModal />
+                {isMounted && (
+                  <Suspense fallback={null}>
+                    <AuthModal />
+                  </Suspense>
+                )}
+                {isMounted && <AdminInviteModal />}
                 <Router>
                   <RouteDiagnostics />
                   <PwaUpdatePrompt />
