@@ -304,20 +304,6 @@ class AuthService {
 
     const cleanEmail = canonicalizeEmail(email);
 
-    // Block admin accounts from using the normal OTP login portal early
-    const adminEmails = getAdminEmails();
-    const isAdminEmail = adminEmails.some(addr => isSameEmail(cleanEmail, addr));
-    let isAdminRole = false;
-
-    const existingUser = await User.findOne({ email: cleanEmail });
-    if (existingUser) {
-      isAdminRole = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin'].includes(existingUser.role);
-    }
-
-    if (isAdminRole || isAdminEmail) {
-      throw new ApiError(403, 'Administrative accounts must use the secure admin portal to log in.');
-    }
-
     // Enforce brute-force admin lockout check before generating OTP
     const lockoutRecord = await FailedLoginAttempt.findOne({ email: cleanEmail });
     if (lockoutRecord && lockoutRecord.lockoutUntil && lockoutRecord.lockoutUntil > new Date()) {
@@ -629,14 +615,6 @@ class AuthService {
         }
       })();
     } else {
-      const adminEmails = getAdminEmails();
-      const isAdminRole = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin'].includes(user.role);
-      const isAdminEmail = adminEmails.some(addr => isSameEmail(cleanEmail, addr));
-
-      if (isAdminRole || isAdminEmail) {
-        throw new ApiError(403, 'Administrative accounts must use the secure admin portal to log in.');
-      }
-
       user.isVerified = true;
     }
 
