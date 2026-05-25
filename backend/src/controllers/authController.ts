@@ -74,24 +74,13 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   logger.info(`[AUTH] Session created for user ${result.user._id}`);
   await invalidateUserSessionCaches(String(result.user._id));
 
-  const adminEmails = getAdminEmails();
-  const staffRoles = ['admin', 'super_admin', 'main_admin', 'manager', 'coordinator'];
-  if (
-    adminEmails.some((addr) => isSameEmail(result.user.email, addr)) &&
-    !staffRoles.includes(result.user.role)
-  ) {
-    result.user.role = 'admin';
-    await result.user.save();
-    logger.info(`[AUTH] Auto-upgraded ${result.user.email} to admin role`);
-  }
+
 
   setCustomerRefreshCookie(res, result.refreshToken);
 
   const payload: Record<string, unknown> = {
     user: result.user,
     accessToken: result.accessToken,
-    token: result.accessToken,
-    refreshToken: result.refreshToken,
   };
 
   res.status(200).json(new ApiResponse(true, 'Authenticated successfully', payload));
@@ -118,8 +107,6 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
     new ApiResponse(true, 'Session refreshed', {
       user: result.user,
       accessToken: result.accessToken,
-      token: result.accessToken,
-      refreshToken: result.refreshToken,
     })
   );
 });
@@ -157,7 +144,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const user = await User.findById(userId)
-    .select('name email phone role avatar walletBalance loyaltyPoints loyaltyTier referralCode createdAt')
+    .select('name email phone role avatar walletBalance siriCoins loyaltyTier referralCode createdAt')
     .lean();
   if (!user) {
     throw new ApiError(404, 'User session not found in database');

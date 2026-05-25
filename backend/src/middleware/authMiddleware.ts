@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import ApiError from '../utils/ApiError';
 import asyncHandler from '../utils/asyncHandler';
@@ -9,6 +10,7 @@ import { updateRequestContext } from './requestTracker';
 import { getAdminEmails, ADMIN_ROLES } from '../config/adminConfig';
 import { isSameEmail } from '../utils/emailHelper';
 import { getSafetyLockDocument } from '../utils/safetyLockCache';
+import { getCachedSessionJson, setCachedSessionJson, sessionKeys } from '../utils/userSessionCache';
 
 interface JwtPayload {
   id: string;
@@ -100,7 +102,31 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
 
   try {
     const decoded = jwt.verify(token, secret) as JwtPayload;
-    const user = await User.findById(decoded.id).select('role email isVerified passwordChangedAt');
+    
+    // Check Redis Session Cache first to avoid MongoDB lookup on every request
+    const cacheKey = sessionKeys.profile(decoded.id);
+    let user: any = await getCachedSessionJson(cacheKey);
+
+    if (!user) {
+      // Promise.race to enforce a strict timeout (3 seconds) if MongoDB is hanging
+      const mongoQuery = User.findById(decoded.id).select('role email isVerified passwordChangedAt').lean().exec();
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('MongoDB Auth Lookup Timeout')), 3000));
+      
+      try {
+        user = await Promise.race([mongoQuery, timeout]);
+      } catch (dbErr: any) {
+        if (dbErr.message === 'MongoDB Auth Lookup Timeout') {
+          throw new ApiError(503, 'Authentication service temporarily unavailable');
+        }
+        throw dbErr;
+      }
+
+      if (user) {
+        // Cache user profile in Redis for 60 seconds
+        await setCachedSessionJson(cacheKey, user, 60);
+      }
+    }
+
     if (!user || !user.isVerified) {
       throw new ApiError(401, 'Not authorized to access this route');
     }
@@ -108,7 +134,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     if (
       user.passwordChangedAt &&
       decoded.iat != null &&
-      decoded.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)
+      decoded.iat < Math.floor(new Date(user.passwordChangedAt).getTime() / 1000)
     ) {
       throw new ApiError(401, 'Password changed. Please log in again.');
     }
@@ -127,15 +153,88 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
   }
 });
 
+export const optionalAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+  if (!token) return next();
+
+  const secret = JWT_SECRET;
+  if (!secret) return next();
+
+  try {
+    const decoded = jwt.verify(token, secret) as JwtPayload;
+    const user = await User.findById(decoded.id).select('role email isVerified passwordChangedAt');
+    if (user && user.isVerified) {
+      if (!(user.passwordChangedAt && decoded.iat != null && decoded.iat < Math.floor(user.passwordChangedAt.getTime() / 1000))) {
+        decoded.role = user.role;
+        decoded.email = user.email;
+        req.user = decoded;
+        updateRequestContext({ userId: decoded.id });
+      }
+    }
+  } catch (err) {
+    // Ignored: auth is optional
+  }
+  next();
+});
+
+export const publicTrackingAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const { logisticsToken } = req.body;
+  const trackingToken = String(req.query.token || req.body.token || '').trim();
+  const orderId = req.params.id;
+
+  const Order = require('../models/Order').default || require('../models/Order');
+  const orderDoc = await Order.findById(orderId).select('+publicTrackingToken');
+  if (!orderDoc) throw new ApiError(404, 'Order not found');
+
+  let isAuthorized = false;
+  let isLogisticsToken = false;
+
+  // 1. Privileged staff Check
+  if (req.user && ['admin', 'manager', 'coordinator'].includes(req.user.role)) {
+    isAuthorized = true;
+  }
+  // 2. Validate using public tracking token
+  else if (trackingToken) {
+    const storedToken = orderDoc.publicTrackingToken || '';
+    const provided = Buffer.from(trackingToken, 'hex');
+    const expected = Buffer.from(storedToken, 'hex');
+    isAuthorized =
+      storedToken.length > 0 &&
+      provided.length === expected.length &&
+      crypto.timingSafeEqual(provided, expected);
+  }
+  // 3. Validate using JWT logistics token
+  else if (logisticsToken) {
+    const secret = process.env.JWT_SECRET || '';
+    try {
+      const decoded = jwt.verify(logisticsToken, secret) as any;
+      if (decoded && decoded.orderId === orderId && decoded.purpose === 'logistics') {
+        isAuthorized = true;
+        isLogisticsToken = true;
+      }
+    } catch (err) {
+      // Token invalid or expired
+    }
+  }
+
+  if (!isAuthorized) {
+    throw new ApiError(403, 'Unauthorized. Invalid tracking credentials or logistics token.');
+  }
+
+  // Pass verification info via req
+  (req as any).isLogisticsToken = isLogisticsToken;
+  next();
+});
+
 export const requireAdmin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   if (!req.user) {
     throw new ApiError(401, 'Authentication required');
   }
 
-  const adminEmails = getAdminEmails();
-  const userEmail = req.user.email?.trim()?.toLowerCase();
-  
-  if (ADMIN_ROLES.includes(req.user.role as any) || (userEmail && adminEmails.some(addr => isSameEmail(userEmail, addr)))) {
+  if (ADMIN_ROLES.includes(req.user.role as any)) {
     // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
     await checkSafetyLock(req);
 
@@ -151,12 +250,8 @@ export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response
     throw new ApiError(401, 'Authentication required');
   }
 
-  const userEmail = req.user.email?.trim()?.toLowerCase();
-  
-  // Super admin is identified by role OR by matching any email in the admin config's super admin entries
   const isSuperAdminRole = req.user.role === 'super_admin';
-  const isSuperAdminEmail = userEmail && getAdminEmails().some(addr => isSameEmail(userEmail, addr));
-  if (isSuperAdminRole || isSuperAdminEmail) {
+  if (isSuperAdminRole) {
     // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
     await checkSafetyLock(req);
 
@@ -172,12 +267,10 @@ export const requireSuperAdminOrOwner = asyncHandler(async (req: Request, res: R
     throw new ApiError(401, 'Authentication required');
   }
 
-  const userEmail = req.user.email?.trim()?.toLowerCase();
   const isOwner = req.user.role === 'owner';
   const isSuperAdmin = req.user.role === 'super_admin';
-  const isPrivilegedEmail = userEmail && getAdminEmails().some(addr => isSameEmail(userEmail, addr));
 
-  if (isOwner || isSuperAdmin || isPrivilegedEmail) {
+  if (isOwner || isSuperAdmin) {
     await checkSafetyLock(req);
     logAdminAudit(req, res);
     next();
@@ -195,10 +288,12 @@ export const requireRole = (allowedRoles: string[]) => {
       throw new ApiError(401, 'Authentication required');
     }
 
-    const userEmail = req.user.email?.trim()?.toLowerCase();
+    if (allowedRoles.length === 0) {
+      return next();
+    }
 
     // Super Admin always gets access
-    const isSuperAdmin = req.user.role === 'super_admin' || (userEmail && getAdminEmails().some(addr => isSameEmail(userEmail, addr)));
+    const isSuperAdmin = req.user.role === 'super_admin';
     if (isSuperAdmin || allowedRoles.includes(req.user.role)) {
       // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
       await checkSafetyLock(req);

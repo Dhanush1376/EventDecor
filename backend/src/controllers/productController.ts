@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import ProductService from '../services/productService';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -7,6 +9,7 @@ import logger from '../config/logger';
 
 export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const result = await ProductService.getAllProducts(req.query);
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
   res.status(200).json(new ApiResponse(true, 'Products fetched successfully', result));
 });
 
@@ -15,6 +18,7 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
   res.status(200).json(new ApiResponse(true, 'Product fetched successfully', product));
 });
 
@@ -49,6 +53,7 @@ export const toggleFeatured = asyncHandler(async (req: Request, res: Response) =
 
 export const getCategories = asyncHandler(async (req: Request, res: Response) => {
   const categories = await ProductService.getDistinctCategories();
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
   res.status(200).json(new ApiResponse(true, 'Categories fetched successfully', categories));
 });
 
@@ -69,8 +74,6 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
   if (imageSrc) {
     try {
       if (imageSrc.startsWith('/')) {
-        const fs = require('fs');
-        const path = require('path');
         const absolutePath = path.resolve(process.cwd(), 'public', imageSrc.substring(1));
         if (fs.existsSync(absolutePath)) {
           const buffer = fs.readFileSync(absolutePath);
@@ -102,10 +105,10 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
         const response = await fetch(imageSrc, { signal: controller.signal });
         clearTimeout(timeout);
         
-        // Validate content length (max 10MB)
+        // Validate content length (max 2MB)
         const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
-        if (contentLength > 10 * 1024 * 1024) {
-          throw new ApiError(400, 'Image too large for AI analysis (max 10MB)');
+        if (contentLength > 2 * 1024 * 1024) {
+          throw new ApiError(400, 'Image too large for AI analysis (max 2MB)');
         }
         
         const arrayBuffer = await response.arrayBuffer();

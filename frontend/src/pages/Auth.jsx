@@ -253,6 +253,7 @@ export function Auth() {
       <SEO
         title="Secure Access | Siri Arts & Crafts"
         description="Experience luxury e-commerce and passwordless entry. Verify your session securely via email."
+        noindex={true}
       />
 
       {/* Left Panel: Immersive Cinematic Storytelling */}
@@ -448,7 +449,7 @@ export function Auth() {
 
                         <button
                           disabled={!email || isLoading}
-                          className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20 cursor-pointer"
+                          className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20 cursor-pointer active:scale-[0.98]"
                         >
                           {isLoading ? (
                             <div className="w-5 h-5 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
@@ -489,7 +490,7 @@ export function Auth() {
                         <button
                           type="submit"
                           disabled={totpCode.length < 6 || isLoading}
-                          className="w-full h-14 bg-primary text-surface rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold disabled:opacity-30"
+                          className="w-full h-14 bg-primary text-surface rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold disabled:opacity-30 hover:bg-on-surface-variant hover:text-surface transition-all duration-300 shadow-lg shadow-primary/20 cursor-pointer active:scale-[0.98]"
                         >
                           {isLoading ? "Verifying…" : "Verify Authenticator"}
                         </button>
@@ -545,6 +546,7 @@ export function Auth() {
                               maxLength={1}
                               autoComplete="one-time-code"
                               value={digit}
+                              aria-invalid={error}
                               onChange={(e) => handleOtpChange(e.target.value, idx)}
                               onKeyDown={(e) => handleKeyDown(e, idx)}
                               onPaste={handlePaste}
@@ -558,6 +560,10 @@ export function Auth() {
                             />
                           ))}
                         </motion.div>
+
+                        <div role="alert" aria-live="polite" className="sr-only">
+                          {error ? "Invalid verification code entered. Please try again." : ""}
+                        </div>
 
                         {import.meta.env.DEV && devOtp && (
                           <div className="text-center mt-4">
@@ -576,7 +582,7 @@ export function Auth() {
                         <div className="space-y-6 pt-2">
                           <button
                             disabled={otp.join("").length < 6 || isLoading}
-                            className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20"
+                            className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20 cursor-pointer active:scale-[0.98]"
                           >
                             {isLoading ? (
                               <div className="w-5 h-5 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />

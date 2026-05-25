@@ -56,7 +56,7 @@ export function ShowcaseCard({
         <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 min-h-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-95"
+            className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 min-h-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
             aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <motion.span
@@ -100,7 +100,7 @@ export function ShowcaseCard({
                 e.stopPropagation();
                 onOpenShowcase?.();
               }}
-              className="w-full py-3 bg-[#e0d6b8] hover:bg-white text-[#1a1c1a] rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3 bg-[#e0d6b8] hover:bg-white text-[#1a1c1a] rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
             >
               <span className="material-symbols-outlined text-[14px]">featured_play_list</span>
               Reserve Crate

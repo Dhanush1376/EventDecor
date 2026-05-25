@@ -38,7 +38,7 @@ export function Footer() {
               <div className="w-1 h-1 rounded-full bg-primary-container animate-pulse" />
             </div>
           </Link>
-          <p className="font-body text-black/40 max-w-sm leading-relaxed font-light text-[11px] md:px-0">
+          <p className="font-body text-on-surface-variant/80 max-w-sm leading-relaxed font-light text-[11px] md:px-0">
             {footer?.description || "Ancient craftsmanship meets modern elegance."}
           </p>
         </div>
@@ -52,19 +52,19 @@ export function Footer() {
               </h4>
               <nav className="flex flex-col space-y-2">
                 <Link
-                  className="text-[10px] md:text-[11px] text-black/50 hover:text-primary transition-colors"
+                  className="text-[10px] md:text-[11px] text-on-surface-variant/70 hover:text-primary transition-colors"
                   to="/collections"
                 >
                   Collections
                 </Link>
                 <Link
-                  className="text-[10px] md:text-[11px] text-black/50 hover:text-primary transition-colors"
+                  className="text-[10px] md:text-[11px] text-on-surface-variant/70 hover:text-primary transition-colors"
                   to="/events"
                 >
                   Events
                 </Link>
                 <Link
-                  className="text-[10px] md:text-[11px] text-black/50 hover:text-primary transition-colors"
+                  className="text-[10px] md:text-[11px] text-on-surface-variant/70 hover:text-primary transition-colors"
                   to="/gallery"
                 >
                   Gallery
@@ -77,19 +77,19 @@ export function Footer() {
               </h4>
               <nav className="flex flex-col space-y-2">
                 <Link
-                  className="text-[10px] md:text-[11px] text-black/50 hover:text-primary transition-colors"
+                  className="text-[10px] md:text-[11px] text-on-surface-variant/70 hover:text-primary transition-colors"
                   to="/about"
                 >
                   Our Story
                 </Link>
                 <Link
-                  className="text-[10px] md:text-[11px] text-black/50 hover:text-primary transition-colors"
+                  className="text-[10px] md:text-[11px] text-on-surface-variant/70 hover:text-primary transition-colors"
                   to="/custom-orders"
                 >
                   Bespoke
                 </Link>
                 <Link
-                  className="text-[10px] md:text-[11px] text-black/50 hover:text-primary transition-colors"
+                  className="text-[10px] md:text-[11px] text-on-surface-variant/70 hover:text-primary transition-colors"
                   to="/contact"
                 >
                   Contact
@@ -100,7 +100,7 @@ export function Footer() {
               <h4 className="font-label-sm text-primary uppercase tracking-[0.1em] font-bold text-[10px]">
                 Support
               </h4>
-              <div className="flex flex-col space-y-2 text-[10px] text-black/40 leading-relaxed font-medium">
+              <div className="flex flex-col space-y-2 text-[10px] text-on-surface-variant/70 leading-relaxed font-medium">
                 <div className="flex flex-col">
                   <a
                     href={`tel:${phone}`}
@@ -125,7 +125,7 @@ export function Footer() {
               {instagramLink && (
               <a
                 aria-label="Instagram"
-                className="text-black/30 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
+                className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
                 href={instagramLink}
                 target="_blank"
                 rel="noreferrer"
@@ -141,7 +141,7 @@ export function Footer() {
               {pinterestLink && (
               <a
                 aria-label="Pinterest"
-                className="text-black/30 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
+                className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
                 href={pinterestLink}
                 target="_blank"
                 rel="noreferrer"
@@ -156,7 +156,7 @@ export function Footer() {
               )}
               <a
                 aria-label="Email"
-                className="text-black/30 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
+                className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
                 href={`mailto:${email}`}
               >
                 <span className="material-symbols-outlined font-light text-[16px]">
@@ -171,32 +171,32 @@ export function Footer() {
         </div>
 
         {/* Bottom Editorial Bar */}
-        <div className="mt-6 pt-4 border-t border-black/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-left">
-          <p className="font-label-sm text-black/20 tracking-[0.1em] text-[11px] uppercase font-bold">
+        <div className="mt-6 pt-4 border-t border-black/5 flex flex-wrap justify-between items-start md:items-center gap-3 text-left">
+          <p className="font-label-sm text-on-surface-variant/50 tracking-[0.1em] text-[11px] uppercase font-bold">
             © {currentYear} Siri Arts & Crafts.
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center flex-wrap gap-4">
             <Link
               to="/privacy"
-              className="font-label-sm text-black/20 text-[11px] uppercase tracking-widest hover:text-black"
+              className="font-label-sm text-on-surface-variant/50 text-[11px] uppercase tracking-widest hover:text-on-surface"
             >
               Privacy
             </Link>
             <Link
               to="/returns"
-              className="font-label-sm text-black/20 text-[11px] uppercase tracking-widest hover:text-black"
+              className="font-label-sm text-on-surface-variant/50 text-[11px] uppercase tracking-widest hover:text-on-surface"
             >
               Returns
             </Link>
             <Link
               to="/shipping"
-              className="font-label-sm text-black/20 text-[11px] uppercase tracking-widest hover:text-black"
+              className="font-label-sm text-on-surface-variant/50 text-[11px] uppercase tracking-widest hover:text-on-surface"
             >
               Shipping
             </Link>
             <Link
               to="/terms"
-              className="font-label-sm text-black/20 text-[11px] uppercase tracking-widest hover:text-black"
+              className="font-label-sm text-on-surface-variant/50 text-[11px] uppercase tracking-widest hover:text-on-surface"
             >
               Terms
             </Link>

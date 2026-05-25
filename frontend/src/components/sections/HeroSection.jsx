@@ -72,10 +72,12 @@ export function HeroSection() {
               containerClassName="absolute inset-0 w-full h-full"
               loading="eager"
               fetchPriority="high"
+              width={600}
+              height={1200}
             />
             {/* Soft dark radial & linear gradients to ensure premium contrast, fading on the right */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0F0E0C]/90 via-[#0F0E0C]/50 to-transparent mix-blend-multiply" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0F0E0C] via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0F0E0C]/95 via-[#0F0E0C]/60 to-transparent mix-blend-multiply" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0F0E0C] via-[#0F0E0C]/60 to-transparent" />
             
             {/* Subtle grain/texture overlay */}
             <div
@@ -118,23 +120,23 @@ export function HeroSection() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col gap-5 items-start w-full">
+            <div className="flex flex-col gap-4 items-start w-full mt-2">
               {hero.ctaPrimary && (
                 <Link
                   to={hero.ctaPrimary.link || "/collections"}
-                  className="bg-[#d4af37] text-[#0f0e0c] font-bold text-[10px] uppercase tracking-[0.2em] px-7 py-3.5 rounded-full inline-flex items-center gap-2.5 active:scale-95 transition-all shadow-lg hover:bg-[#c4a030]"
+                  className="w-full justify-center bg-[#d4af37] text-[#0f0e0c] font-bold text-[12px] uppercase tracking-[0.2em] px-7 py-4 rounded-full inline-flex items-center gap-2.5 active:scale-95 transition-all shadow-lg hover:bg-[#c4a030]"
                 >
                   {hero.ctaPrimary.text?.toUpperCase() || "EXPLORE COLLECTIONS"}
-                  <span className="material-symbols-outlined text-[13px] font-bold">arrow_forward</span>
+                  <span className="material-symbols-outlined text-[15px] font-bold">arrow_forward</span>
                 </Link>
               )}
 
               {hero.ctaSecondary && (
                 <Link
                   to={hero.ctaSecondary.link || "/about"}
-                  className="inline-flex items-center gap-3.5 text-white/90 font-bold text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all py-1.5"
+                  className="inline-flex items-center justify-center w-full gap-3.5 text-white/90 font-bold text-[11px] uppercase tracking-[0.2em] active:scale-95 transition-all py-3"
                 >
-                  <div className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-md">
+                  <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-md">
                     <span className="material-symbols-outlined text-[15px] text-white fill-current">
                       {(hero.ctaSecondary.link?.includes("about") || hero.ctaSecondary.link?.includes("story") || hero.ctaSecondary.text?.toLowerCase().includes("story") || hero.ctaSecondary.text?.toLowerCase().includes("watch")) ? "play_arrow" : "arrow_forward"}
                     </span>
@@ -348,7 +350,7 @@ export function HeroSection() {
           className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center z-20 pointer-events-none"
         >
           <span className="font-label-sm text-[12px] uppercase tracking-[0.3em] mb-2">
-            Scroll
+            {hero.scrollText || "Scroll"}
           </span>
           <div className="w-[1px] h-12 bg-gradient-to-b from-primary to-transparent"></div>
         </motion.div>

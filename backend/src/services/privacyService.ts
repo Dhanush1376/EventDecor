@@ -13,13 +13,14 @@ export class PrivacyService {
     const user = await User.findById(userId).lean();
     if (!user) throw new ApiError(404, 'User not found');
 
-    const [orders, reviews] = await Promise.all([
+    const [orders, reviews, addresses] = await Promise.all([
       Order.find({ user: userId })
         .select('-razorpaySignature')
         .sort({ createdAt: -1 })
         .limit(500)
         .lean(),
       Review.find({ customer: userId }).sort({ createdAt: -1 }).limit(200).lean(),
+      require('../models/Address').default.find({ user: userId }).lean(),
     ]);
 
     return {
@@ -30,7 +31,7 @@ export class PrivacyService {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        addresses: user.addresses,
+        addresses: addresses,
         wishlist: user.wishlist,
         cart: user.cart,
         notificationPreferences: user.notificationPreferences,
@@ -76,13 +77,13 @@ export class PrivacyService {
     await Promise.all([
       RefreshToken.deleteMany({ userId: new mongoose.Types.ObjectId(userId) }),
       UsedRefreshToken.deleteMany({ userId: new mongoose.Types.ObjectId(userId) }),
+      require('../models/Address').default.deleteMany({ user: userId }),
     ]);
 
     user.name = 'Deleted User';
     user.email = anonymizedEmail;
     user.phone = undefined;
     user.avatar = undefined;
-    user.addresses = [];
     user.wishlist = [];
     user.cart = [];
     user.recentlyViewed = [];

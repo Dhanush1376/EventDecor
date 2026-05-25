@@ -24,8 +24,9 @@ export function AdminInviteModal() {
           setIsOpen(true);
         }
       } catch (err) {
-        // Silent error to prevent UI disturbance
-        logger.error("Failed to check pending admin invitations:", err);
+        if (err?.response?.status !== 401 && err?.code !== 'ERR_NO_SESSION') {
+          logger.error("Failed to check pending admin invitations:", err);
+        }
       }
     };
 

@@ -22,7 +22,7 @@ export function SectionWrapper({
     <section
       ref={ref}
       id={id}
-      className={`relative w-full py-8 md:py-16 lg:py-20 overflow-hidden ${bgClasses[variant]} ${className}`}
+      className={`relative w-full py-12 md:py-20 lg:py-24 overflow-hidden ${bgClasses[variant]} ${className}`}
     >
       <motion.div
         variants={noAnimation ? {} : fadeUp}

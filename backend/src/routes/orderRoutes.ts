@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { createOrder, verifyPayment, getMyOrders, getAllOrders, updateOrderStatus, validateTotals, getOrderById, getOrderPublicTrack, updateOrderPublicStatus, sendCodOtp, verifyCodOtp, updateOrderNotes } from '../controllers/orderController';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
+import { requireAuth, requireAdmin, optionalAuth, publicTrackingAuth } from '../middleware/authMiddleware';
 import {
   createOrderValidator,
   updateStatusValidator,
@@ -25,7 +25,7 @@ const trackingLimiter = rateLimit({
 
 // Public Logistics Tracking Scan Routes (token required)
 router.get('/:id/public-track', trackingLimiter, getOrderPublicTrack);
-router.patch('/:id/public-status', ...updateStatusValidator, validate, updateOrderPublicStatus);
+router.patch('/:id/public-status', optionalAuth, publicTrackingAuth, ...updateStatusValidator, validate, updateOrderPublicStatus);
 
 
 

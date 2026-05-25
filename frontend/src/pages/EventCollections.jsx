@@ -222,7 +222,7 @@ export function EventCollections() {
     return () => document.body.classList.remove("filters-open");
   }, [isFilterOpen]);
 
-  const toggleFilter = (type, value) => {
+  const toggleFilter = React.useCallback((type, value) => {
     setFilters((prev) => {
       const current = prev[type];
       const next = current.includes(value)
@@ -231,15 +231,15 @@ export function EventCollections() {
       return { ...prev, [type]: next };
     });
     setCurrentPage(1);
-  };
+  }, []);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = React.useCallback(() => {
     setFilters({ price: [], occasion: [], style: [] });
     setActiveCategory("All Occasions");
     setSearchQuery("");
     setSearchParams({});
     setCurrentPage(1);
-  };
+  }, [setSearchParams]);
 
   const filteredEvents = useMemo(() => {
     let result = [...masterEvents];
@@ -303,7 +303,7 @@ export function EventCollections() {
     }
 
     return result;
-  }, [activeCategory, searchQuery, sortBy, filters]);
+  }, [activeCategory, searchQuery, sortBy, filters, masterEvents]);
 
   const ITEMS_PER_PAGE = 12;
   const totalPages = Math.max(
@@ -315,10 +315,14 @@ export function EventCollections() {
     return filteredEvents.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredEvents, currentPage]);
 
-  const handleOpenQuickView = (product) => {
+  const handleOpenQuickView = React.useCallback((e, product) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setQuickViewProduct(product);
     setIsQuickViewOpen(true);
-  };
+  }, []);
 
   const handleCategorySelect = (cat) => {
     setSearchParams(prev => {
@@ -721,7 +725,7 @@ export function EventCollections() {
                 key={prod._id || prod.id}
                 {...prod}
                 id={prod._id || prod.id}
-                onQuickView={() => handleOpenQuickView(prod)}
+                onQuickView={handleOpenQuickView}
               />
             ))}
           </div>

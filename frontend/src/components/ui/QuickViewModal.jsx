@@ -53,7 +53,32 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
       }
 
       const handleKeyDown = (e) => {
-        if (e.key === "Escape") onClose();
+        if (e.key === "Escape") {
+          onClose();
+          return;
+        }
+        
+        if (e.key === "Tab") {
+          const focusableElements = modalRef.current?.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          );
+          if (focusableElements && focusableElements.length > 0) {
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (e.shiftKey) {
+              if (document.activeElement === firstElement) {
+                lastElement.focus();
+                e.preventDefault();
+              }
+            } else {
+              if (document.activeElement === lastElement) {
+                firstElement.focus();
+                e.preventDefault();
+              }
+            }
+          }
+        }
       };
       window.addEventListener("keydown", handleKeyDown);
       return () => {
@@ -95,12 +120,21 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: "100%", scale: 1 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-6xl bg-surface rounded-t-[32px] md:rounded-[48px] overflow-hidden shadow-2xl flex flex-col md:flex-row h-auto max-h-[95vh] md:h-full md:max-h-[800px] border border-outline-variant/10"
+            drag="y"
+            dragDirectionLock
+            dragConstraints={{ top: 0, bottom: 150 }}
+            dragElastic={0.1}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (offset.y > 100 || velocity.y > 400) {
+                onClose();
+              }
+            }}
+            className="relative w-full max-w-6xl bg-surface rounded-t-[32px] md:rounded-[48px] overflow-hidden shadow-2xl flex flex-col md:flex-row h-auto max-h-[95vh] md:h-full md:max-h-[800px] border border-outline-variant/10 touch-pan-x"
           >
             {/* Close Button - Fixed in Modal Container */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 rounded-full border border-outline-variant/30 bg-surface/80 backdrop-blur-md flex items-center justify-center hover:bg-surface-container-low transition-colors cursor-pointer z-[60] shadow-sm"
+              className="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 rounded-full border border-outline-variant/30 bg-surface/80 backdrop-blur-md flex items-center justify-center hover:bg-surface-container-low transition-colors cursor-pointer z-[60] shadow-sm icon-button-touch-target"
               aria-label="Close product quick view"
             >
               <span className="material-symbols-outlined text-[20px] md:text-[24px]">

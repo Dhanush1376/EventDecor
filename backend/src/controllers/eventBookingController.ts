@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import EventBooking from '../models/EventBooking';
 import Event from '../models/Event';
 import User from '../models/User';
 import { EventBookingMailService } from '../services/eventBookingMailService';
-import { createAdminNotification } from '../services/notificationService';
+import { sendDirectEmail, createAdminNotification } from '../services/notificationService';
+import BookingMessage from '../models/BookingMessage';
+import { emitUserEvent } from '../socket';
 import logger from '../config/logger';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -13,138 +16,12 @@ import { generateUniqueBookingId } from '../utils/bookingId';
 import { ADMIN_ROLES } from '../config/adminConfig';
 import razorpay from '../config/razorpay';
 import crypto from 'crypto';
+import { EventBookingService } from '../services/eventBookingService';
 
 // 1. Submit Event Booking Inquiry (Customer)
 export const submitEventBooking = asyncHandler(async (req: any, res: Response) => {
-  const {
-    eventPackageId,
-    title,
-    eventType,
-    date,
-    timing,
-    guestCount,
-    venue,
-    customization,
-    selectedAddons,
-    inspirationImages,
-  } = req.body;
-
   const userId = req.user?.id;
-  if (!userId) {
-    throw new ApiError(401, 'Authentication credentials missing or invalid.');
-  }
-
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ApiError(404, 'Authorized customer account not found.');
-  }
-
-  const bookingDate = new Date(date);
-  if (isNaN(bookingDate.getTime())) {
-    throw new ApiError(400, 'Invalid event date format.');
-  }
-  
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-
-  if (bookingDate < startOfToday) {
-    throw new ApiError(400, 'Event date must be in the future.');
-  }
-
-  // 1. Double Booking Check (same venue address, same date)
-  if (venue?.address && venue.address.trim() && venue.address.toUpperCase() !== 'TBD') {
-    const bookingDate = new Date(date);
-    const startOfDay = new Date(bookingDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(bookingDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const duplicate = await EventBooking.findOne({
-      date: { $gte: startOfDay, $lte: endOfDay },
-      'venue.address': { $regex: new RegExp(`^${venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
-      status: { $nin: ['completed'] }
-    });
-
-    if (duplicate) {
-      throw new ApiError(409, 'This venue is already booked for the selected date.');
-    }
-  }
-
-  const bookingId = await generateUniqueBookingId();
-
-  let rentalFee = 0;
-
-  // If client selected an existing package from our catalog, calculate base fee
-  if (eventPackageId) {
-    const pkg = await Event.findById(eventPackageId);
-    if (pkg) {
-      // Use the structured basePrice instead of parsing freetext strings
-      rentalFee = pkg.basePrice || 35000;
-    }
-  } else {
-    rentalFee = 25000; // base customization fee if guest didn't select package
-  }
-
-  const addOnCharges = (selectedAddons || []).reduce((acc: number, item: any) => acc + (Number(item.price) || 0), 0);
-  const totalPrice = rentalFee + addOnCharges; // initial estimate, setup/transport added later by admin
-
-  const booking = await EventBooking.create({
-    bookingId,
-    user: userId,
-    eventPackage: eventPackageId || null,
-    title: title || `${eventType || 'Special'} Celebration`,
-    eventType: eventType || 'Wedding',
-    date: new Date(date),
-    timing: timing || { start: '10:00 AM', end: '10:00 PM' },
-    guestCount: parseInt(guestCount) || 100,
-    venue: venue || { address: 'TBD', isOutdoor: false },
-    customization: customization || {},
-    selectedAddons: selectedAddons || [],
-    inspirationImages: inspirationImages || [],
-    pricing: {
-      rentalFee,
-      setupCharges: 0,
-      transportationCost: 0,
-      addOnCharges,
-      depositAmount: Math.round(totalPrice * 0.25), // 25% initial milestone deposit
-      totalPrice,
-      pendingBalance: totalPrice,
-      paymentStatus: 'unpaid' as const,
-    },
-    payments: [],
-    status: 'draft' as const,
-    assignedTeam: [],
-    rentedInventory: [],
-    clientApproved: false,
-    chatHistory: [
-      {
-        sender: 'admin' as const,
-        message: 'Welcome to your premium Siri Arts Event Studio! Our designers are actively reviewing your floorplans, venue, and Pinterest visual boards.',
-        timestamp: new Date(),
-      },
-    ],
-  });
-
-  const eventDateStr = new Date(date).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  } as const);
-
-  // 3. Dispatch persistent real-time admin notification
-  createAdminNotification({
-    title: 'New Luxury Event Booking Inquiry',
-    message: `${user.name || 'A customer'} submitted a new event booking inquiry ("${booking.title}") for ${eventDateStr}.`,
-    type: 'custom_request',
-    actionLink: `/admin/bookings`,
-    metadata: { bookingId: booking._id.toString() }
-  }).catch((err: any) => logger.error('Failed to create admin notification for booking:', err));
-
-  // 4. Send elegant emails in background
-  EventBookingMailService.sendSubmissionEmails(booking, user).catch((err: any) =>
-    logger.error('Failed to dispatch booking emails:', err)
-  );
-
+  const { booking } = await EventBookingService.createBooking(userId, req.body);
   res.status(201).json(new ApiResponse(true, 'Your luxury event design has been submitted!', booking));
 });
 
@@ -161,33 +38,11 @@ export const initializeBookingCheckout = asyncHandler(async (req: any, res: Resp
     throw new ApiError(503, 'Payment gateway configuration is missing.');
   }
 
-  // Double Booking Check
-  if (venue?.address && venue.address.trim() && venue.address.toUpperCase() !== 'TBD') {
-    const bookingDate = new Date(date);
-    const startOfDay = new Date(bookingDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(bookingDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const duplicate = await EventBooking.findOne({
-      date: { $gte: startOfDay, $lte: endOfDay },
-      'venue.address': { $regex: new RegExp(`^${venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
-      status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] }
-    });
-
-    if (duplicate) {
-      throw new ApiError(409, 'This venue is already locked for the selected date. Please choose another date or contact support.');
-    }
-  }
-
   // Calculate strict backend price
   let basePrice = 25000;
-  let pkgObj = null;
   if (eventPackageId) {
-    pkgObj = await Event.findById(eventPackageId);
-    if (pkgObj) {
-      basePrice = pkgObj.basePrice || 35000;
-    }
+    const pkgObj = await Event.findById(eventPackageId);
+    if (pkgObj) basePrice = pkgObj.basePrice || 35000;
   }
 
   const durationDays = Number(rentalDurationDays) || 1;
@@ -207,41 +62,74 @@ export const initializeBookingCheckout = asyncHandler(async (req: any, res: Resp
   };
 
   const order = await razorpay.orders.create(options);
-
-  // Create Pending Booking
   const bookingId = await generateUniqueBookingId();
-  const booking = await EventBooking.create({
-    bookingId,
-    user: userId,
-    eventPackage: eventPackageId || null,
-    title: title || `${eventType || 'Special'} Celebration`,
-    eventType: eventType || 'Wedding',
-    date: new Date(date),
-    rentalDurationDays: durationDays,
-    timing: timing || { start: '10:00 AM', end: '10:00 PM' },
-    guestCount: parseInt(guestCount) || 100,
-    venue: venue || { address: 'TBD', isOutdoor: false },
-    customization: customization || {},
-    selectedAddons: selectedAddons || [],
-    inspirationImages: inspirationImages || [],
-    pricing: {
-      rentalFee: basePrice,
-      setupCharges: 0,
-      transportationCost: 0,
-      addOnCharges,
-      depositAmount,
-      totalPrice,
-      pendingBalance: totalPrice,
-      paymentStatus: 'unpaid',
-    },
-    payments: [],
-    status: 'pending_payment',
-    razorpayOrderId: order.id,
-    assignedTeam: [],
-    rentedInventory: [],
-    clientApproved: false,
-    chatHistory: [],
-  });
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  let booking;
+
+  try {
+    // Double Booking Check
+    if (venue?.address && venue.address.trim() && venue.address.toUpperCase() !== 'TBD') {
+      const bDate = new Date(date);
+      const startOfDay = new Date(bDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(bDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const duplicate = await EventBooking.findOne({
+        date: { $gte: startOfDay, $lte: endOfDay },
+        'venue.address': { $regex: new RegExp(`^${venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+        status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] }
+      }).session(session);
+
+      if (duplicate) {
+        await session.abortTransaction();
+        throw new ApiError(409, 'This venue is already locked for the selected date. Please choose another date or contact support.');
+      }
+    }
+
+    const bookings = await EventBooking.create([{
+      bookingId,
+      user: userId,
+      eventPackage: eventPackageId || null,
+      title: title || `${eventType || 'Special'} Celebration`,
+      eventType: eventType || 'Wedding',
+      date: new Date(date),
+      rentalDurationDays: durationDays,
+      timing: timing || { start: '10:00 AM', end: '10:00 PM' },
+      guestCount: parseInt(guestCount) || 100,
+      venue: venue || { address: 'TBD', isOutdoor: false },
+      customization: customization || {},
+      selectedAddons: selectedAddons || [],
+      inspirationImages: inspirationImages || [],
+      pricing: {
+        rentalFee: basePrice,
+        setupCharges: 0,
+        transportationCost: 0,
+        addOnCharges,
+        depositAmount,
+        totalPrice,
+        pendingBalance: totalPrice,
+        paymentStatus: 'unpaid',
+      },
+      payments: [],
+      status: 'pending_payment',
+      razorpayOrderId: order.id,
+      assignedTeam: [],
+      rentedInventory: [],
+      clientApproved: false,
+    }], { session });
+    
+    booking = bookings[0];
+    await session.commitTransaction();
+  } catch (err: any) {
+    await session.abortTransaction();
+    if (err.code === 11000) throw new ApiError(409, 'This venue is already locked for the selected date. Please choose another date or contact support.');
+    throw err;
+  } finally {
+    session.endSession();
+  }
 
   res.status(200).json(new ApiResponse(true, 'Booking checkout initialized', {
     bookingId: booking._id,
@@ -290,29 +178,74 @@ export const verifyBookingCheckout = asyncHandler(async (req: any, res: Response
     throw new ApiError(400, 'Payment signature verification failed. Booking marked as failed.');
   }
 
-  // Update booking as confirmed
-  booking.status = 'confirmed';
-  booking.razorpayPaymentId = razorpayPaymentId;
-  booking.razorpaySignature = razorpaySignature;
-  booking.clientApproved = true;
-  booking.pricing.paymentStatus = 'partial';
-  booking.pricing.pendingBalance = booking.pricing.totalPrice - booking.pricing.depositAmount;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  booking.payments?.push({
-    amount: booking.pricing.depositAmount,
-    date: new Date(),
-    transactionId: razorpayPaymentId,
-    status: 'success',
-    note: 'Initial 50% deposit via Razorpay'
-  });
+  try {
+    if (booking.venue?.address && booking.venue.address.trim() && booking.venue.address.toUpperCase() !== 'TBD') {
+      const bDate = new Date(booking.date);
+      const startOfDay = new Date(bDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(bDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-  booking.chatHistory?.push({
-    sender: 'admin',
-    message: 'Payment verified! Your luxury event design is now CONFIRMED. Our artisans will review your floorplans.',
-    timestamp: new Date(),
-  });
+      const duplicate = await EventBooking.findOne({
+        _id: { $ne: booking._id },
+        date: { $gte: startOfDay, $lte: endOfDay },
+        'venue.address': { $regex: new RegExp(`^${booking.venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+        status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] }
+      }).session(session);
 
-  await booking.save();
+      if (duplicate) {
+        await EventBooking.findByIdAndUpdate(booking._id, {
+          status: 'failed',
+          $push: {
+            payments: {
+              amount: booking.pricing.depositAmount,
+              date: new Date(),
+              transactionId: razorpayPaymentId,
+              status: 'failed',
+              note: 'Payment successful but venue was already booked concurrently. Refund required.'
+            }
+          }
+        }, { session });
+        await session.commitTransaction();
+        throw new ApiError(409, 'Payment was successful, but the venue was just booked by someone else. A full refund will be processed within 5-7 business days.');
+      }
+    }
+
+    // Update booking as confirmed
+    booking.status = 'confirmed';
+    booking.razorpayPaymentId = razorpayPaymentId;
+    booking.razorpaySignature = razorpaySignature;
+    booking.clientApproved = true;
+    booking.pricing.paymentStatus = 'partial';
+    booking.pricing.pendingBalance = booking.pricing.totalPrice - booking.pricing.depositAmount;
+
+    booking.payments?.push({
+      amount: booking.pricing.depositAmount,
+      date: new Date(),
+      transactionId: razorpayPaymentId,
+      status: 'success',
+      note: 'Initial 50% deposit via Razorpay'
+    });
+
+    await BookingMessage.create([{
+      bookingId: booking._id,
+      sender: 'admin',
+      message: 'Payment verified! Your luxury event design is now CONFIRMED. Our artisans will review your floorplans.',
+      timestamp: new Date(),
+    }], { session });
+
+    await booking.save({ session });
+    await session.commitTransaction();
+  } catch (err: any) {
+    await session.abortTransaction();
+    if (err instanceof ApiError) throw err;
+    throw new ApiError(500, 'An error occurred during booking confirmation');
+  } finally {
+    session.endSession();
+  }
 
   // Send Notifications
   const eventDateStr = new Date(booking.date).toLocaleDateString('en-IN', {
@@ -325,9 +258,9 @@ export const verifyBookingCheckout = asyncHandler(async (req: any, res: Response
     type: 'payment',
     actionLink: `/admin/bookings`,
     metadata: { bookingId: booking._id.toString() }
-  }).catch(err => logger.error('Failed admin notification', err));
+  }).catch((err: any) => logger.error('Failed admin notification', err));
 
-  EventBookingMailService.sendSubmissionEmails(booking, booking.user as any).catch(err =>
+  EventBookingMailService.sendSubmissionEmails(booking, booking.user as any).catch((err: any) =>
     logger.error('Failed to dispatch booking emails', err)
   );
 
@@ -360,6 +293,10 @@ export const getSingleEventBooking = asyncHandler(async (req: any, res: Response
     throw new ApiError(403, 'Access denied to this secure design workspace.');
   }
 
+    // Notify customer using the imported BookingMessage
+  const messages = await BookingMessage.find({ bookingId: booking._id }).sort({ timestamp: 1 }).lean();
+  (booking as any).chatHistory = messages;
+
   res.status(200).json(new ApiResponse(true, 'Event workspace fetched', booking));
 });
 
@@ -376,18 +313,21 @@ export const customerApproveQuote = asyncHandler(async (req: any, res: Response)
     throw new ApiError(403, 'Only the client can execute quote responses.');
   }
 
+  // Auto-generate studio welcome note using imported BookingMessage
   booking.clientApproved = approved;
   if (approved) {
     booking.status = 'confirmed';
-    booking.chatHistory?.push({
-      sender: 'client' as const,
+    await BookingMessage.create({
+      bookingId: booking._id,
+      sender: 'client',
       message: 'I have approved the custom quotation and setup scope. Let us finalize schedules and milestone deposits!',
       timestamp: new Date(),
     });
   } else {
     booking.status = 'draft' as const;
-    booking.chatHistory?.push({
-      sender: 'client' as const,
+    await BookingMessage.create({
+      bookingId: booking._id,
+      sender: 'client',
       message: 'I have requested modifications on the quotation items. Let us discuss color palette adjustments.',
       timestamp: new Date(),
     });
@@ -436,7 +376,9 @@ export const customerSubmitPayment = asyncHandler(async (req: any, res: Response
     booking.pricing.paymentStatus = 'unpaid';
   }
 
-  booking.chatHistory?.push({
+  // Add a system log note using imported BookingMessage
+  await BookingMessage.create({
+    bookingId: booking._id,
     sender: 'client',
     message: `LODGED TRANSACTION REF: ${transactionId || 'STUDIO'}. Logged milestone payment of ₹${paymentAmt.toLocaleString('en-IN')}.`,
     timestamp: new Date(),
@@ -461,25 +403,24 @@ export const postChatMessage = asyncHandler(async (req: any, res: Response) => {
     throw new ApiError(403, 'Restricted messaging permission.');
   }
 
-  const newMessage = {
+  // imported BookingMessage already used
+  const msgCount = await BookingMessage.countDocuments({ bookingId: booking._id });
+  const MAX_CHAT_MESSAGES = 200;
+  if (msgCount >= MAX_CHAT_MESSAGES) {
+    throw new ApiError(429, 'Chat history limit reached. Please contact support.');
+  }
+
+  await BookingMessage.create({
+    bookingId: booking._id,
     sender: isAdmin ? 'admin' : 'client',
     message: message || '',
     timestamp: new Date(),
     attachments: attachments || [],
-  };
+  });
 
-  const updatedBooking = await EventBooking.findByIdAndUpdate(
-    booking._id,
-    {
-      $push: {
-        chatHistory: {
-          $each: [newMessage],
-          $slice: -500 // Cap history to last 500 messages
-        }
-      }
-    },
-    { new: true }
-  );
+  const updatedBooking = await EventBooking.findById(booking._id).populate('user').lean();
+  const messages = await BookingMessage.find({ bookingId: booking._id }).sort({ timestamp: 1 }).lean();
+  (updatedBooking as any).chatHistory = messages;
 
   res.status(200).json(new ApiResponse(true, 'Message sent successfully', updatedBooking));
 });
@@ -518,7 +459,7 @@ export const adminGetAllBookings = asyncHandler(async (req: Request, res: Respon
   );
 });
 
-// 8. Admin Timeline Status Shifter
+  // 8. Admin Timeline Status Shifter
 export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) => {
   const { status } = req.body;
   const booking = await EventBooking.findById(req.params.id).populate('user');
@@ -528,9 +469,24 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
   }
 
   const oldStatus = booking.status;
+  
+  // State Machine Validation
+  const validTransitions: Record<string, string[]> = {
+    draft: ['pending_payment', 'cancelled'],
+    pending_payment: ['confirmed', 'cancelled'],
+    confirmed: ['completed', 'cancelled'],
+    completed: [],
+    cancelled: []
+  };
+
+  if (!validTransitions[oldStatus]?.includes(status)) {
+    throw new ApiError(400, `Invalid state transition from ${oldStatus} to ${status}`);
+  }
+
   booking.status = status;
 
-  booking.chatHistory?.push({
+  await BookingMessage.create({
+    bookingId: booking._id,
     sender: 'admin',
     message: `STUDIO LOG: Event status transitioned from "${oldStatus.toUpperCase()}" to "${status.toUpperCase()}".`,
     timestamp: new Date(),
@@ -541,7 +497,6 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
   try {
     const userId = (booking.user as any)?._id?.toString() || booking.user?.toString();
     if (userId) {
-      const { emitUserEvent } = require('../socket');
       emitUserEvent(userId, 'booking_status_updated', {
         bookingId: booking._id,
         bookingRef: booking.bookingId,
@@ -588,7 +543,9 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
   };
 
   booking.status = 'pending_payment';
-  booking.chatHistory?.push({
+  // imported BookingMessage used here
+  await BookingMessage.create({
+    bookingId: booking._id,
     sender: 'admin',
     message: `STUDIO PROPOSAL: A refined luxury estimate totaling ₹${total.toLocaleString('en-IN')} has been calculated and dispatched for your final approval.`,
     timestamp: new Date(),

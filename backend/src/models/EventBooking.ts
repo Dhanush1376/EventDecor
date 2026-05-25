@@ -48,6 +48,7 @@ export interface IEventBooking extends Document {
   title: string;
   eventType: string;
   date: Date;
+  bookingDateStr?: string;
   rentalDurationDays?: number;
   timing: {
     start: string;
@@ -100,7 +101,6 @@ export interface IEventBooking extends Document {
   rentedInventory?: IRentedInventory[];
   adminNotes?: string;
   clientApproved: boolean;
-  chatHistory?: IBookingChat[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -111,13 +111,6 @@ const BookingPaymentSchema = new Schema({
   transactionId: { type: String },
   status: { type: String, enum: ['pending', 'success', 'failed'], default: 'success' },
   note: { type: String },
-});
-
-const BookingChatSchema = new Schema({
-  sender: { type: String, enum: ['client', 'admin'], required: true },
-  message: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now },
-  attachments: [{ type: String }],
 });
 
 const BookingAddonSchema = new Schema({
@@ -154,6 +147,7 @@ const EventBookingSchema: Schema = new Schema(
     title: { type: String, required: true },
     eventType: { type: String, required: true },
     date: { type: Date, required: true },
+    bookingDateStr: { type: String },
     rentalDurationDays: { type: Number, default: 1 },
     timing: {
       start: { type: String, required: true },
@@ -211,7 +205,6 @@ const EventBookingSchema: Schema = new Schema(
     rentedInventory: [RentedInventorySchema],
     adminNotes: { type: String },
     clientApproved: { type: Boolean, default: false },
-    chatHistory: [BookingChatSchema],
   },
   { timestamps: true }
 );
@@ -219,6 +212,26 @@ const EventBookingSchema: Schema = new Schema(
 EventBookingSchema.index({ user: 1 });
 EventBookingSchema.index({ date: 1 });
 EventBookingSchema.index({ status: 1 });
+
+// Double Booking Prevention
+EventBookingSchema.index(
+  { bookingDateStr: 1, 'venue.address': 1 },
+  { 
+    unique: true, 
+    partialFilterExpression: { 
+      status: { $in: ['confirmed', 'payment_processing', 'setup_in_progress'] } 
+    }
+  }
+);
+
+EventBookingSchema.pre('save', function () {
+  const doc = this as unknown as IEventBooking;
+  if (doc.isModified('date') || !doc.bookingDateStr) {
+    if (doc.date) {
+      doc.bookingDateStr = new Date(doc.date).toISOString().split('T')[0];
+    }
+  }
+});
 
 // High-Performance Production Compound Indexes for User and Admin Paginated Pipelines
 EventBookingSchema.index({ user: 1, createdAt: -1 });

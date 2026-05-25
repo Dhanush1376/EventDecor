@@ -106,7 +106,7 @@ export function StorySection() {
                 className="bg-surface/90 backdrop-blur-md lg:bg-surface p-4 lg:p-9 rounded-[20px] lg:rounded-[36px] flex flex-col items-center min-w-[100px] lg:min-w-[162px] shadow-2xl border border-black/5"
               >
                 <span className="font-label-sm text-[7px] lg:text-[9px] uppercase tracking-[0.3em] text-primary mb-1.5 lg:mb-2.5 font-bold">
-                  Heritage
+                  {storyTeaser.badgeLabel || "Heritage"}
                 </span>
                 <span className="font-display text-on-surface text-[20px] lg:text-[36px] leading-none italic">
                   {storyTeaser.establishedYear}

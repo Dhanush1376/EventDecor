@@ -10,25 +10,6 @@ export interface IUser extends Document {
   avatar?: string;
   gender?: string;
   dateOfBirth?: string;
-  addresses: Array<{
-    id: string;
-    name: string;
-    phone: string;
-    alternatePhone?: string;
-    email: string;
-    pincode: string;
-    locality: string;
-    addressString: string;
-    landmark?: string;
-    city: string;
-    state: string;
-    country: string;
-    tag: string;
-    isDefault: boolean;
-    deliveryInstructions?: string;
-    latitude?: number;
-    longitude?: number;
-  }>;
   wishlist: mongoose.Types.ObjectId[];
   cart: Array<{
     product: mongoose.Types.ObjectId;
@@ -80,26 +61,6 @@ const UserSchema: Schema = new Schema(
     avatar: { type: String, default: '' },
     gender: { type: String, default: '', trim: true },
     dateOfBirth: { type: String, default: '', trim: true },
-    addresses: [
-      {
-        name: { type: String },
-        phone: { type: String },
-        alternatePhone: { type: String },
-        email: { type: String },
-        pincode: { type: String },
-        locality: { type: String },
-        addressString: { type: String },
-        landmark: { type: String },
-        city: { type: String },
-        state: { type: String },
-        country: { type: String, default: 'India' },
-        tag: { type: String, default: 'Home' },
-        isDefault: { type: Boolean, default: false },
-        deliveryInstructions: { type: String },
-        latitude: { type: Number },
-        longitude: { type: Number },
-      }
-    ],
     wishlist: [{ type: Schema.Types.ObjectId, ref: 'Product', default: [] }],
     cart: [
       {

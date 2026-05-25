@@ -64,7 +64,7 @@ export function AdminTopBar() {
       <div className="flex items-center justify-between h-14 px-4 sm:px-6 lg:px-8 gap-2 min-w-0">
         {/* Left */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <button
+          <button aria-label="menu"
             onClick={toggleMobileSidebar}
             className="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer transition-colors"
           >

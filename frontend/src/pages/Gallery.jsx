@@ -389,7 +389,7 @@ export function Gallery() {
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              transition={{ type: "spring", damping: 28, stiffness: 280 }}
               className="fixed bottom-0 left-0 right-0 bg-[#fcfbf9] rounded-t-3xl z-[201] p-6 pb-12 md:hidden max-h-[80vh] overflow-y-auto shadow-2xl"
             >
               <div className="flex items-center justify-between mb-8">

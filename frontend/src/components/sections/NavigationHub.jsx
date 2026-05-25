@@ -174,6 +174,8 @@ export function NavigationHub() {
                         alt={card.title}
                         className="w-full h-full object-cover select-none pointer-events-none"
                         containerClassName="absolute inset-0"
+                        width={400}
+                        height={500}
                       />
                       {/* Gradient Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
@@ -258,6 +260,8 @@ export function NavigationHub() {
                       alt={card.title}
                       className="w-full h-full object-cover transition-transform duration-[2s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
                       containerClassName="absolute inset-0"
+                      width={400}
+                      height={500}
                     />
                     {/* Subtle Depth Shadows & Premium Border Highlights */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/5 opacity-80 group-hover:opacity-90 transition-opacity duration-700" />

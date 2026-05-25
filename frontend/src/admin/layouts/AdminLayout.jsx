@@ -12,6 +12,8 @@ import { MandalaElement } from "../../components/ui/MandalaElement";
 import { AdminLoader } from "../../components/ui/PageLoader";
 import toast from "react-hot-toast";
 
+import "../../styles/admin.css";
+
 function AdminLayoutInner() {
   const {
     sidebarOpen,

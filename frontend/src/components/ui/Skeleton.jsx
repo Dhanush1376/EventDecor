@@ -38,44 +38,27 @@ export function ProductCardSkeleton() {
 
 // ─── Hero Section Skeleton ───
 export function HeroSkeleton() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 1024);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  if (isMobile) {
-    return (
-      <section className="relative w-full overflow-hidden bg-[#faf9f6]">
-        {/* Dark hero banner skeleton */}
+  return (
+    <>
+      <section className="relative w-full overflow-hidden bg-[#faf9f6] lg:hidden">
         <div className="relative text-white pt-32 pb-28 px-7 flex flex-col z-10 min-h-[480px] justify-center overflow-hidden bg-[#0F0E0C]">
           <div className="relative z-10 flex flex-col items-start max-w-[300px] space-y-4">
-            {/* Eyebrow badge */}
             <Skeleton className="h-4 w-32 !bg-white/10 !border-white/5" />
-            {/* Title lines */}
             <div className="space-y-2 w-full">
               <Skeleton className="h-9 w-48 !bg-white/10 !border-white/5" />
               <Skeleton className="h-9 w-40 !bg-white/10 !border-white/5" />
               <Skeleton className="h-9 w-44 !bg-white/10 !border-white/5" />
               <Skeleton className="h-9 w-52 !bg-white/10 !border-white/5" />
             </div>
-            {/* Divider */}
             <Skeleton className="h-[1px] w-12 !bg-[#d4af37]/30 !border-transparent" />
-            {/* Subtitle */}
             <Skeleton className="h-3 w-[270px] !bg-white/10 !border-white/5" />
-            {/* CTA buttons */}
             <div className="space-y-5 w-full pt-2">
               <Skeleton className="h-11 w-52 rounded-full !bg-[#d4af37]/20 !border-[#d4af37]/10" />
               <Skeleton className="h-9 w-44 rounded-full !bg-white/5 !border-white/5" />
             </div>
           </div>
-          {/* Wavy bottom mask placeholder */}
           <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#faf9f6] to-transparent z-10" />
         </div>
-        {/* Carousel circles skeleton */}
         <div className="w-full bg-[#faf9f6] pt-10 pb-10 flex flex-col items-center">
           <div className="flex gap-8 justify-center">
             {[...Array(3)].map((_, i) => (
@@ -85,63 +68,49 @@ export function HeroSkeleton() {
               </div>
             ))}
           </div>
-          {/* Scroll indicator */}
           <div className="mt-5">
             <Skeleton variant="circle" className="w-12 h-12" />
           </div>
         </div>
       </section>
-    );
-  }
 
-  // Desktop hero skeleton
-  return (
-    <section className="relative min-h-[720px] flex flex-col justify-center overflow-hidden bg-surface-bright py-0">
-      <div className="max-w-[1440px] mx-auto px-[clamp(22px,4.5vw,72px)] w-full grid grid-cols-12 gap-20 items-center relative z-10 flex-1">
-        {/* Left content */}
-        <div className="col-span-7 flex flex-col items-start text-left space-y-6 z-20">
-          {/* Badge */}
-          <Skeleton className="h-7 w-48 rounded-full" />
-          {/* Title */}
-          <div className="space-y-3 w-full">
-            <Skeleton className="h-16 w-[90%]" />
-            <Skeleton className="h-16 w-[75%]" />
+      <section className="relative min-h-[720px] hidden lg:flex flex-col justify-center overflow-hidden bg-surface-bright py-0">
+        <div className="max-w-[1440px] mx-auto px-[clamp(22px,4.5vw,72px)] w-full grid grid-cols-12 gap-20 items-center relative z-10 flex-1">
+          <div className="col-span-7 flex flex-col items-start text-left space-y-6 z-20">
+            <Skeleton className="h-7 w-48 rounded-full" />
+            <div className="space-y-3 w-full">
+              <Skeleton className="h-16 w-[90%]" />
+              <Skeleton className="h-16 w-[75%]" />
+            </div>
+            <div className="space-y-2 w-full max-w-lg">
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-5 w-3/4" />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Skeleton className="h-13 w-48 rounded-full" />
+              <Skeleton className="h-13 w-44 rounded-full" />
+            </div>
           </div>
-          {/* Subtitle */}
-          <div className="space-y-2 w-full max-w-lg">
-            <Skeleton className="h-5 w-full" />
-            <Skeleton className="h-5 w-3/4" />
-          </div>
-          {/* CTA buttons */}
-          <div className="flex gap-3 pt-4">
-            <Skeleton className="h-13 w-48 rounded-full" />
-            <Skeleton className="h-13 w-44 rounded-full" />
+          <div className="col-span-5 relative w-full h-[580px]">
+            <Skeleton className="absolute right-0 top-0 w-full h-full rounded-[43px]" />
+            <div className="absolute -left-10 bottom-10 w-[230px] bg-white border border-black/5 p-7 rounded-[28px] shadow-2xl">
+               <Skeleton className="h-6 w-3/4 mb-1.5" />
+               <Skeleton className="h-3 w-full mb-1" />
+               <Skeleton className="h-3 w-4/5 mb-5" />
+               <Skeleton className="h-3 w-1/2" />
+            </div>
           </div>
         </div>
-        {/* Right image */}
-        <div className="col-span-5 relative w-full h-[580px]">
-          <Skeleton className="absolute right-0 top-0 w-full h-full rounded-[43px]" />
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
 
 // ─── Navigation Hub / Featured Collections Skeleton ───
 export function NavigationHubSkeleton() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
   return (
     <section className="pt-2 pb-10 md:py-36 bg-[#FDFBF7] relative overflow-hidden">
       <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-16">
-        {/* Header */}
         <div className="text-center max-w-4xl mx-auto mb-8 md:mb-28">
           <Skeleton className="h-8 w-48 rounded-full mx-auto mb-4 md:mb-8" />
           <div className="space-y-3">
@@ -150,18 +119,14 @@ export function NavigationHubSkeleton() {
           </div>
           <Skeleton className="h-5 w-2/3 mx-auto mt-4 md:mt-8" />
         </div>
-        {/* Cards */}
-        {isMobile ? (
-          <div className="flex justify-center min-h-[440px] mt-2">
-            <Skeleton className="w-[300px] h-[380px] rounded-[32px]" />
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-8 xl:gap-10">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="aspect-[4/5] w-full rounded-[32px]" />
-            ))}
-          </div>
-        )}
+        <div className="flex md:hidden justify-center min-h-[440px] mt-2">
+          <Skeleton className="w-[300px] h-[380px] rounded-[32px]" />
+        </div>
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-8 xl:gap-10">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="aspect-[4/5] w-full rounded-[32px]" />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -169,19 +134,9 @@ export function NavigationHubSkeleton() {
 
 // ─── Bestseller / Featured Products Skeleton ───
 export function BestsellerSkeleton() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
   return (
     <div className="py-16 md:py-29 relative overflow-hidden bg-surface-bright">
       <div className="max-w-[1440px] mx-auto px-[clamp(22px,4.5vw,72px)]">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-7 mb-14 md:mb-22">
           <div className="max-w-2xl flex flex-col items-center md:items-start text-center md:text-left w-full">
             <Skeleton className="h-7 w-40 rounded-full mb-5" />
@@ -195,22 +150,18 @@ export function BestsellerSkeleton() {
             <Skeleton variant="circle" className="w-13 h-13" />
           </div>
         </div>
-        {/* Product cards */}
-        {isMobile ? (
-          <div className="flex items-center justify-center h-[520px]">
-            <div className="w-[75vw] sm:w-[65vw]">
+        <div className="flex md:hidden items-center justify-center h-[520px]">
+          <div className="w-[75vw] sm:w-[65vw]">
+            <ProductCardSkeleton />
+          </div>
+        </div>
+        <div className="hidden md:flex gap-9 overflow-hidden pb-11">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="min-w-[360px] xl:min-w-[405px]">
               <ProductCardSkeleton />
             </div>
-          </div>
-        ) : (
-          <div className="flex gap-9 overflow-hidden pb-11">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="min-w-[360px] xl:min-w-[405px]">
-                <ProductCardSkeleton />
-              </div>
-            ))}
-          </div>
-        )}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -227,7 +178,10 @@ export function StorySkeleton() {
             <Skeleton className="w-full aspect-[4/5] rounded-[28px] md:rounded-[43px]" />
             {/* Floating badge */}
             <div className="absolute top-6 lg:top-auto lg:-bottom-11 right-1 lg:right-auto lg:-left-11 z-20">
-              <Skeleton className="w-[100px] lg:w-[162px] h-[70px] lg:h-[120px] rounded-[20px] lg:rounded-[36px]" />
+              <div className="bg-surface p-4 lg:p-9 rounded-[20px] lg:rounded-[36px] flex flex-col items-center min-w-[100px] lg:min-w-[162px] shadow-2xl border border-black/5">
+                <Skeleton className="h-2 w-12 lg:h-3 lg:w-16 mb-2 lg:mb-3" />
+                <Skeleton className="h-5 w-16 lg:h-8 lg:w-24" />
+              </div>
             </div>
           </div>
           {/* Content */}

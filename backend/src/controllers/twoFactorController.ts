@@ -64,7 +64,6 @@ export const verifyTwoFactorLogin = asyncHandler(async (req: Request, res: Respo
       user: session.user,
       accessToken: session.accessToken,
       token: session.accessToken,
-      refreshToken: session.refreshToken,
     })
   );
 });

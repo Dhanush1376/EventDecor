@@ -141,7 +141,7 @@ export const customerBookingPaymentValidator = [
 
 export const bookingChatValidator = [
   ...eventBookingIdParam,
-  body('message').trim().notEmpty().isLength({ max: 5000 }).withMessage('Message is required'),
+  body('message').trim().notEmpty().withMessage('Message is required').isLength({ max: 2000 }).withMessage('Message must be at most 2000 characters'),
   body('attachments').optional().isArray(),
   body('attachments.*').optional().isURL(),
 ];

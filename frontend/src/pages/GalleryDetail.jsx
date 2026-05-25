@@ -143,7 +143,7 @@ export function GalleryDetail() {
         <div className="flex items-center gap-2 pointer-events-auto">
           <button
             onClick={handleWishlistLook}
-            className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-md transition-all active:scale-90"
+            className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-md transition-all active:scale-[0.96]"
           >
             <motion.span
               animate={{
@@ -382,7 +382,7 @@ export function GalleryDetail() {
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[150] bg-white/95 backdrop-blur-3xl border border-black/5 p-1.5 flex items-center gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full select-none">
         <button
           onClick={handleWishlistLook}
-          className={`w-[60px] h-full rounded-full flex items-center justify-center transition-all active:scale-90 shrink-0 ${linkedProdId && isWishlisted(linkedProdId) ? "bg-primary/10 text-primary" : "bg-black/5 text-black hover:bg-black/10"}`}
+          className={`w-[60px] h-full rounded-full flex items-center justify-center transition-all active:scale-[0.96] shrink-0 ${linkedProdId && isWishlisted(linkedProdId) ? "bg-primary/10 text-primary" : "bg-black/5 text-black hover:bg-black/10"}`}
         >
           <motion.span
             animate={{
@@ -398,7 +398,7 @@ export function GalleryDetail() {
         </button>
         <button
           onClick={handleShopLook}
-          className="flex-1 bg-primary text-white h-full rounded-full font-label-sm text-[10px] uppercase tracking-[0.2em] font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md"
+          className="flex-1 bg-primary text-white h-full rounded-full font-label-sm text-[10px] uppercase tracking-[0.2em] font-bold flex items-center justify-center gap-2 active:scale-[0.96] transition-transform shadow-md"
         >
           <span className="material-symbols-outlined text-[16px]">
             shopping_bag

@@ -474,7 +474,7 @@ export function EventBookingWizard() {
                           }
                           setCurrentStep(2);
                         }}
-                        className="bg-primary text-white px-6 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-md shadow-primary/20 hover:scale-105 transition-all"
+                        className="bg-primary text-white px-6 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-md shadow-primary/20 hover:scale-105 active:scale-[0.98] transition-all"
                       >
                         Proceed
                       </button>

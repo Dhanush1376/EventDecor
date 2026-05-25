@@ -431,7 +431,7 @@ export function Cart() {
                         <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-start gap-6 text-[11px] font-bold uppercase tracking-wider">
                           <motion.button
                             whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileTap={{ scale: 0.96 }}
                             onClick={() => {
                               removeItem(item.id, item.variant);
                               triggerNotification(`Removed "${item.title}"`);
@@ -443,7 +443,7 @@ export function Cart() {
                           <span className="text-outline-variant">|</span>
                           <motion.button
                             whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileTap={{ scale: 0.96 }}
                             onClick={() => handleSaveForLater(item)}
                             className="text-primary hover:underline transition-all cursor-pointer"
                           >
@@ -452,7 +452,7 @@ export function Cart() {
                           <span className="text-outline-variant">|</span>
                           <motion.button
                             whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileTap={{ scale: 0.96 }}
                             onClick={() => handleMoveToWishlist(item)}
                             className="text-secondary hover:text-primary transition-colors cursor-pointer"
                           >

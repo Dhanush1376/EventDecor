@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'siri-arts-backend',
       script: './dist/server.js',
-      instances: 'max', // Use all available CPUs in cluster mode
+      instances: 'max', // Enable cluster mode to maximize CPU utilization
       exec_mode: 'cluster',
       autorestart: true,
       watch: false, // Do not watch in production

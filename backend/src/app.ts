@@ -22,6 +22,7 @@ import * as Sentry from "@sentry/node";
 import { requestTrackerMiddleware } from './middleware/requestTracker';
 import { requestLogger } from './middleware/requestLogger';
 import { issueCsrfToken, validateCsrf } from './middleware/csrfMiddleware';
+import { isOriginAllowed, ALLOWED_VERCEL_PREVIEWS } from './config/corsConfig';
 
 
 // Use require for the inner xss-clean function
@@ -77,17 +78,17 @@ app.use((req, res, next) => {
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", "https://*.vercel.app"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", (req, res) => `'nonce-${(res as any).locals.nonce}'`, "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", "https://*.vercel.app", "https://checkout.razorpay.com", "https://*.razorpay.com", "https://www.googletagmanager.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", "https://*.vercel.app", "https://fonts.googleapis.com"],
+      defaultSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS)],
+      scriptSrc: ["'self'", (req, res) => `'nonce-${(res as any).locals.nonce}'`, "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS), "https://checkout.razorpay.com", "https://*.razorpay.com", "https://www.googletagmanager.com"],
+      styleSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS), "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-      connectSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", "https://*.vercel.app", "https://api.razorpay.com", "https://lux.razorpay.com", ...(process.env.SENTRY_DSN ? ["https://*.sentry.io"] : [])],
+      connectSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS), "https://api.razorpay.com", "https://lux.razorpay.com", ...(process.env.SENTRY_DSN ? ["https://*.sentry.io"] : [])],
       frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
-      manifestSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", "https://*.vercel.app"],
+      manifestSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS)],
       objectSrc: ["'none'"],
-      baseUri: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", "https://*.vercel.app"],
-      frameAncestors: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", "https://*.vercel.app"],
+      baseUri: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS)],
+      frameAncestors: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS)],
     },
   },
   crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -103,31 +104,6 @@ app.use((req, res, next) => {
 });
 
 // 2. CORS Configuration
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "https://siriartsandcrafts.com",
-  "https://www.siriartsandcrafts.com",
-  "https://siriarts-n-crafts.vercel.app",
-  "https://siri-artsandcrafts.vercel.app",
-  "https://siri-arts-n-crafts.onrender.com",
-  // Merge production origins from FRONTEND_URLS env var
-  ...(process.env.FRONTEND_URLS || '')
-    .split(',')
-    .map(u => u.trim())
-    .filter(Boolean)
-    .map(u => u.startsWith('http') ? u : `https://${u}`)
-    .filter(u => !['http://localhost:3000', 'http://localhost:5173'].includes(u)),
-];
-
-export const isOriginAllowed = (origin: string): boolean => {
-  // Allow all origins in development (for mobile LAN testing), but not in Jest tests
-  if (process.env.NODE_ENV === 'development' && !process.env.JEST_WORKER_ID) return true;
-  
-  // Allow any vercel domain containing 'siri-arts' or 'siriarts-' to cover all potential aliases
-  const vercelPreviewRegex = /^https:\/\/.*(siri-arts|siriarts-).*\.vercel\.app$/i;
-  return allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
-};
 
 app.use(
   cors({
@@ -198,8 +174,8 @@ app.post(
 );
 
 // 3. Request Parsing (MUST be before sanitization)
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 
 // CSRF double-submit cookie (required for cookie-credentialed mutating requests)
@@ -287,6 +263,13 @@ const rateLimitConfig = (options: any) => {
       }
       return redisLimiter(req, res, next);
     }
+    
+    // STRICT PRODUCTION ENFORCEMENT: Avoid cluster mode memory leak footgun
+    if (process.env.NODE_ENV === 'production' && process.env.REQUIRE_REDIS === 'true') {
+      logger.error('CRITICAL: Redis is disconnected but required for production rate-limiting! Failing request to prevent isolated memory store leaks in PM2 cluster mode.');
+      return res.status(503).json({ success: false, message: 'Service temporarily unavailable due to caching backend failure.' });
+    }
+
     return memoryLimiter(req, res, next);
   };
 };
@@ -429,11 +412,12 @@ app.get('/api/health', async (req: Request, res: Response) => {
   return res.status(200).json(healthData);
 });
 
-// Readiness Probe (returns 503 until DB is connected — use for orchestrators)
+// Readiness Probe (Tracks HTTP readiness, not DB readiness to prevent Render crash loops)
 app.get('/api/readiness', (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
-  const ready = mongoose.connection.readyState === 1;
-  res.status(ready ? 200 : 503).json({ ready, timestamp: new Date().toISOString() });
+  // Return 200 immediately if HTTP server is reachable.
+  // DB degradation should be handled via circuit breakers and bufferCommands: false, NOT pod restarts.
+  res.status(200).json({ ready: true, timestamp: new Date().toISOString() });
 });
 
 // Version endpoint — minimal public payload (no environment disclosure)
@@ -442,7 +426,7 @@ app.get('/api/version', (req: Request, res: Response) => {
   res.json({ version: process.env.npm_package_version || '1.0.0' });
 });
 
-// 7. API Routes — /api/v1 is the stable contract; /api is a legacy alias (see docs/API_VERSIONING.md)
+// 7. API Routes
 registerApiRoutes(app, '/api/v1', 'v1');
 registerApiRoutes(app, '/api', 'legacy');
 

@@ -11,8 +11,10 @@ import { MandalaElement } from "../components/ui/MandalaElement";
 import { WriteReviewModal } from "../components/sections/ProductReviews";
 import toast from "react-hot-toast";
 import Barcode from "react-barcode";
-import { InvoiceTemplate, ProductCard } from "../components/ui";
-import { LoyaltyPanel } from "../components/loyalty/LoyaltyPanel";
+
+const InvoiceTemplate = React.lazy(() => import("../components/ui").then(m => ({ default: m.InvoiceTemplate })));
+const ProductCard = React.lazy(() => import("../components/ui").then(m => ({ default: m.ProductCard })));
+const LoyaltyPanel = React.lazy(() => import("../components/loyalty/LoyaltyPanel").then(m => ({ default: m.LoyaltyPanel })));
 const EventCustomerDashboard = React.lazy(() => import("./EventCustomerDashboard").then(m => ({ default: m.EventCustomerDashboard })));
 
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
@@ -1005,7 +1007,7 @@ export function Dashboard() {
                                   ) : (
                                     <button
                                       onClick={() => handleSetDefaultAddress(addr._id || addr.id)}
-                                      className="text-[9px] text-primary uppercase font-bold hover:underline cursor-pointer"
+                                      className="text-[9px] text-primary uppercase font-bold hover:underline cursor-pointer active:scale-[0.98]"
                                     >
                                       Set as Default
                                     </button>
@@ -1036,14 +1038,14 @@ export function Dashboard() {
                               <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-end gap-3.5 font-bold text-[11px] uppercase tracking-wider">
                                 <button
                                   onClick={() => handleAddressEdit(addr)}
-                                  className="text-primary hover:underline cursor-pointer"
+                                  className="text-primary hover:underline cursor-pointer active:scale-[0.98]"
                                 >
                                   Modify
                                 </button>
                                 <span className="text-outline-variant">|</span>
                                 <button
                                   onClick={() => handleDeleteAddress(addr._id || addr.id)}
-                                  className="text-secondary hover:text-red-600 transition-colors cursor-pointer"
+                                  className="text-secondary hover:text-red-600 transition-colors cursor-pointer active:scale-[0.98]"
                                 >
                                   Remove
                                 </button>
@@ -1218,7 +1220,7 @@ export function Dashboard() {
                                       navigator.clipboard.writeText(order._id);
                                       toast.success("Order ID copied!");
                                     }}
-                                    className="material-symbols-outlined text-[13px] text-secondary hover:text-primary transition-colors cursor-pointer"
+                                    className="material-symbols-outlined text-[13px] text-secondary hover:text-primary transition-colors cursor-pointer active:scale-[0.95]"
                                     title="Copy ID Key"
                                   >
                                     content_copy
@@ -1274,7 +1276,7 @@ export function Dashboard() {
                                             productId: item.productId?._id || item.productId,
                                             productTitle: prodTitle
                                           })}
-                                          className="mt-2 text-[10px] text-primary hover:text-primary-dark font-bold uppercase tracking-widest flex items-center gap-1 transition-colors"
+                                          className="mt-2 text-[10px] text-primary hover:text-primary-dark font-bold uppercase tracking-widest flex items-center gap-1 transition-colors active:scale-[0.98]"
                                         >
                                           <span className="material-symbols-outlined text-[13px]">rate_review</span>
                                           Write a Review
@@ -1317,7 +1319,7 @@ export function Dashboard() {
                                 {order.invoiceNumber ? (
                                   <button
                                     onClick={() => downloadInvoice(order._id)}
-                                    className="text-primary hover:underline cursor-pointer flex items-center gap-1"
+                                    className="text-primary hover:underline cursor-pointer flex items-center gap-1 active:scale-[0.98]"
                                   >
                                     <span className="material-symbols-outlined text-[13px]">receipt_long</span>
                                     <span>Invoice: {order.invoiceNumber}</span>
@@ -1325,7 +1327,7 @@ export function Dashboard() {
                                 ) : (
                                   <button
                                     onClick={() => downloadInvoice(order._id)}
-                                    className="text-primary hover:underline cursor-pointer flex items-center gap-1"
+                                    className="text-primary hover:underline cursor-pointer flex items-center gap-1 active:scale-[0.98]"
                                   >
                                     <span className="material-symbols-outlined text-[13px]">download</span>
                                     <span>Get PDF Invoice</span>
@@ -1337,7 +1339,7 @@ export function Dashboard() {
                                     if(order.trackingNumber) window.open(`https://www.delhivery.com/tracking?id=${order.trackingNumber}`, "_blank");
                                     else toast.success("Opening live courier query feed...");
                                   }}
-                                  className="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center gap-1"
+                                  className="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center gap-1 active:scale-[0.98]"
                                 >
                                   <span className="material-symbols-outlined text-[13px]">local_shipping</span>
                                   <span>Track Dispatch</span>
@@ -1382,9 +1384,16 @@ export function Dashboard() {
                   {wishlistItems && wishlistItems.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       <AnimatePresence>
-                        {wishlistItems.map((prod) => (
-                          <ProductCard key={prod._id || prod.id} {...prod} imageSrc={prod.imageSrc || prod.images?.[0]} />
-                        ))}
+                        <React.Suspense fallback={<div className="animate-pulse h-32 bg-surface-bright rounded-lg"></div>}>
+                          {wishlistItems.map((item, idx) => (
+                            <ProductCard
+                              key={item._id || idx}
+                              product={item}
+                              isWishlistRoute={true}
+                              onRemove={() => removeFromWishlist(item._id)}
+                            />
+                          ))}
+                        </React.Suspense>
                       </AnimatePresence>
                     </div>
                   ) : (
@@ -1518,20 +1527,10 @@ export function Dashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-6"
                 >
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs">
-                    <div className="pb-4 border-b border-outline-variant/40 mb-6">
-                      <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
-                        Siri Coins & Rewards Wallet
-                      </h2>
-                      <span className="text-[11px] text-secondary font-light">
-                        Track your rewards credit, redeem siri coins, and invite friends to earn exclusive boutique vouchers.
-                      </span>
-                    </div>
-
+                  <React.Suspense fallback={<div className="animate-pulse h-32 bg-surface-bright rounded-lg"></div>}>
                     <LoyaltyPanel />
-                  </div>
+                  </React.Suspense>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1843,77 +1842,29 @@ export function Dashboard() {
 
       <AnimatePresence>
         {selectedInvoiceOrder && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedInvoiceOrder(null)}
-              className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] print:hidden"
-            />
-
-            {/* Modal Container */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm"
+            onClick={() => setSelectedInvoiceOrder(null)}
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="invoice-modal-container fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] md:w-full md:max-w-3xl max-h-[calc(100vh-2rem)] md:max-h-[90vh] bg-white rounded-2xl shadow-2xl z-[101] overflow-y-auto no-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
+              onClick={(e) => e.stopPropagation()}
+              className="bg-surface w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl"
             >
-              {/* PRINT STYLE SHEET DETACHED AND ISOLATED */}
-              <style type="text/css" media="print">
-                {`
-                  @page { size: A4 portrait; margin: 10mm; }
-                  html, body { 
-                    height: 100vh !important; 
-                    overflow: hidden !important; 
-                    margin: 0 !important; 
-                    padding: 0 !important;
-                  }
-                  body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white !important; }
-                  body * {
-                    visibility: hidden !important;
-                  }
-                  .invoice-modal-container {
-                    position: fixed !important;
-                    left: 0 !important;
-                    top: 0 !important;
-                    width: 100vw !important;
-                    height: 100vh !important;
-                    transform: none !important;
-                    overflow: hidden !important;
-                    background: transparent !important;
-                    box-shadow: none !important;
-                  }
-                  .print-invoice-area, .print-invoice-area * {
-                    visibility: visible !important;
-                  }
-                  .print-invoice-area {
-                    position: absolute !important;
-                    left: 0 !important;
-                    top: 0 !important;
-                    width: 100% !important;
-                    height: 100% !important;
-                    padding: 0 !important;
-                    margin: 0 !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                    background: white !important;
-                    overflow: hidden !important;
-                  }
-                  .no-print, .no-print * {
-                    display: none !important;
-                  }
-                `}
-              </style>
-
-              <InvoiceTemplate 
-                order={selectedInvoiceOrder} 
-                user={user} 
-                onClose={() => setSelectedInvoiceOrder(null)} 
-              />
+              <React.Suspense fallback={<div className="p-8 text-center">Loading Invoice Template...</div>}>
+                <InvoiceTemplate 
+                  order={selectedInvoiceOrder} 
+                  user={user} 
+                  onClose={() => setSelectedInvoiceOrder(null)} 
+                />
+              </React.Suspense>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>

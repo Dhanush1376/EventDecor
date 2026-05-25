@@ -12,7 +12,8 @@ import { useAuth } from "./AuthContext";
 import toast from "react-hot-toast";
 
 import logger from '../utils/logger';
-const WishlistContext = createContext(null);
+const WishlistStateContext = createContext(null);
+const WishlistDispatchContext = createContext(null);
 
 export function WishlistProvider({ children }) {
   const { user, isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
@@ -21,7 +22,6 @@ export function WishlistProvider({ children }) {
 
   const userId = user?._id || user?.id;
 
-  // Load wishlist from backend only for logged-in users with a valid token safeguard
   useEffect(() => {
     const controller = new AbortController();
     const loadWishlist = async () => {
@@ -34,7 +34,7 @@ export function WishlistProvider({ children }) {
             setItems(res.data || []);
           }
         } catch (error) {
-          if (error.name !== 'CanceledError') {
+          if (error.name !== 'CanceledError' && error?.code !== 'ERR_NO_SESSION' && error?.message !== 'Not authenticated') {
             logger.error("Failed to fetch wishlist:", error);
             toast.error("Failed to load wishlist items");
           }
@@ -54,7 +54,6 @@ export function WishlistProvider({ children }) {
       const isPresent = items.some(item => String(item._id || item.id) === String(product._id || product.id));
       const previousItems = [...items];
 
-      // Optimistic state change
       if (isPresent) {
         setItems(prev => prev.filter(item => String(item._id || item.id) !== String(product._id || product.id)));
       } else {
@@ -70,7 +69,7 @@ export function WishlistProvider({ children }) {
         }
       } catch (error) {
         logger.error("Failed to sync wishlist:", error);
-        setItems(previousItems); // Rollback to previous state on failure
+        setItems(previousItems);
         toast.error("Failed to update wishlist. Please try again.");
       }
     });
@@ -93,30 +92,51 @@ export function WishlistProvider({ children }) {
     [items],
   );
 
-  const value = useMemo(
+  const stateValue = useMemo(
     () => ({
       items,
       loading,
+      count: items.length,
+      isWishlisted,
+    }),
+    [items, loading, isWishlisted],
+  );
+
+  const dispatchValue = useMemo(
+    () => ({
       addItem,
       removeItem,
       toggleItem,
-      isWishlisted,
-      count: items.length,
     }),
-    [items, loading, addItem, removeItem, toggleItem, isWishlisted],
+    [addItem, removeItem, toggleItem],
   );
 
   return (
-    <WishlistContext.Provider value={value}>
-      {children}
-    </WishlistContext.Provider>
+    <WishlistStateContext.Provider value={stateValue}>
+      <WishlistDispatchContext.Provider value={dispatchValue}>
+        {children}
+      </WishlistDispatchContext.Provider>
+    </WishlistStateContext.Provider>
   );
 }
 
 export function useWishlist() {
-  const context = useContext(WishlistContext);
-  if (!context) {
+  const state = useContext(WishlistStateContext);
+  const dispatch = useContext(WishlistDispatchContext);
+  if (!state || !dispatch) {
     throw new Error("useWishlist must be used within a WishlistProvider");
   }
+  return { ...state, ...dispatch };
+}
+
+export function useWishlistState() {
+  const context = useContext(WishlistStateContext);
+  if (!context) throw new Error("useWishlistState must be used within a WishlistProvider");
+  return context;
+}
+
+export function useWishlistDispatch() {
+  const context = useContext(WishlistDispatchContext);
+  if (!context) throw new Error("useWishlistDispatch must be used within a WishlistProvider");
   return context;
 }

@@ -26,7 +26,6 @@ const issueAdminSession = async (req: Request, res: Response, userId: string) =>
   return res.status(200).json(
     new ApiResponse(true, 'Admin authenticated successfully', {
       user: session.user,
-      token: session.accessToken,
       accessToken: session.accessToken,
     })
   );

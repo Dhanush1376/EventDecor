@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://siriartsandcrafts.com/sitemap.xml
+Sitemap: https://siri-arts-n-crafts.onrender.com/sitemap.xml

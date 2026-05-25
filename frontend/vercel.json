@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "https://siri-arts-n-crafts.onrender.com/sitemap.xml"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }

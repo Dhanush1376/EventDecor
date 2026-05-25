@@ -72,7 +72,6 @@ export interface IOrder extends Document {
   settledAmount?: number;
   courierCharges?: number;
   earnings?: number;
-  publicTrackingToken?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -167,16 +166,9 @@ const OrderSchema: Schema = new Schema(
     settledAmount: { type: Number, default: 0 },
     courierCharges: { type: Number, default: 0 },
     earnings: { type: Number, default: 0 },
-    publicTrackingToken: {
-      type: String,
-      select: false,
-      default: () => require('crypto').randomBytes(24).toString('hex'),
-    },
   },
   { timestamps: true }
 );
-
-OrderSchema.index({ publicTrackingToken: 1 }, { sparse: true });
 
 OrderSchema.index({ user: 1 });
 OrderSchema.index({ orderStatus: 1 });

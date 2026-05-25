@@ -14,6 +14,7 @@ import logger from '../../utils/logger';
 export function BestsellerSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [bestsellers, setBestsellers] = useState([]);
+  const [rawBestsellers, setRawBestsellers] = useState([]);
   const [fetchLoading, setFetchLoading] = useState(true);
   const scrollRef = useRef(null);
   const containerRef = useRef(null);
@@ -22,27 +23,9 @@ export function BestsellerSection() {
   useEffect(() => {
     const fetchBestsellers = async () => {
       try {
-        let products = [];
-        // If the CMS has specific IDs, we'd ideally have an API to fetch by IDs.
-        // For now, we fetch featured and filter or just show top featured.
-        const res = await productService.getAll({ limit: featuredProducts?.maxDisplay || 10, featured: true });
-        
+        const res = await productService.getAll({ limit: 10, featured: true });
         if (res.success && res.data) {
-          const fetched = res.data.data || res.data.products || [];
-          
-          if (featuredProducts?.productIds && featuredProducts.productIds.length > 0) {
-            // Sort or filter by the IDs in the CMS
-            products = fetched.filter(p => featuredProducts.productIds.includes(p._id));
-            // If we don't have enough from the specific IDs (e.g. some were deleted), fill with others
-            if (products.length < (featuredProducts.maxDisplay || 4)) {
-               const others = fetched.filter(p => !featuredProducts.productIds.includes(p._id));
-               products = [...products, ...others].slice(0, featuredProducts.maxDisplay || 4);
-            }
-          } else {
-            products = fetched.slice(0, featuredProducts.maxDisplay || 4);
-          }
-          
-          setBestsellers(products);
+          setRawBestsellers(res.data.data || res.data.products || []);
         }
       } catch (err) {
         logger.error("Failed to fetch bestsellers", err);
@@ -50,12 +33,26 @@ export function BestsellerSection() {
         setFetchLoading(false);
       }
     };
-    if (featuredProducts?.isVisible) {
-      fetchBestsellers();
-    }
-  }, [featuredProducts]);
+    fetchBestsellers();
+  }, []);
 
-  if (!featuredProducts?.isVisible) return null;
+  useEffect(() => {
+    if (rawBestsellers.length > 0) {
+      let products = [];
+      if (featuredProducts?.productIds && featuredProducts.productIds.length > 0) {
+        products = rawBestsellers.filter(p => featuredProducts.productIds.includes(p._id));
+        if (products.length < (featuredProducts.maxDisplay || 4)) {
+           const others = rawBestsellers.filter(p => !featuredProducts.productIds.includes(p._id));
+           products = [...products, ...others].slice(0, featuredProducts.maxDisplay || 4);
+        }
+      } else {
+        products = rawBestsellers.slice(0, featuredProducts?.maxDisplay || 4);
+      }
+      setBestsellers(products);
+    }
+  }, [rawBestsellers, featuredProducts]);
+
+  if (!cmsLoading && featuredProducts && !featuredProducts.isVisible) return null;
   if (cmsLoading || fetchLoading) return <BestsellerSkeleton />;
 
   const allItems = [...bestsellers, { id: "view-all", isViewAll: true }];

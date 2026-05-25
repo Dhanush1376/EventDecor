@@ -240,7 +240,7 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 bg-transparent text-[14px] text-slate-800 placeholder:text-slate-400 outline-none border-none ring-0 focus:ring-0 focus:border-none focus:outline-none w-full font-sans"
           />
-          <button 
+          <button aria-label="close" 
             onClick={onClose}
             className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center cursor-pointer active:scale-95 transition-transform hover:bg-slate-200"
           >

@@ -18,6 +18,7 @@ export const getEvents = asyncHandler(async (req: Request, res: Response) => {
     Event.countDocuments(filter),
   ]);
 
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
   res.status(200).json(
     new ApiResponse(true, 'Events fetched', formatPaginationResponse(events, totalCount, page, limit))
   );
@@ -26,6 +27,7 @@ export const getEvents = asyncHandler(async (req: Request, res: Response) => {
 export const getEventById = asyncHandler(async (req: Request, res: Response) => {
   const event = await Event.findById(req.params.id);
   if (!event) throw new ApiError(404, 'Event not found');
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
   res.status(200).json(new ApiResponse(true, 'Event details', event));
 });
 

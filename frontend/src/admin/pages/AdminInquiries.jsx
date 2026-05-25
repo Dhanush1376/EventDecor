@@ -601,7 +601,7 @@ export function AdminInquiries() {
                           placeholder="Type message to customer..."
                           className="flex-1 bg-[#F8F9FB] border border-black/15 rounded-full px-4 py-2.5 text-[12px] outline-none focus:border-[#000000] transition-all text-[#0F172A]"
                         />
-                        <button
+                        <button aria-label="send"
                           type="submit"
                           disabled={isSendingMessage || !adminMessageText.trim()}
                           className="w-10 h-10 rounded-full bg-[#0F172A] hover:bg-[#000000] text-white flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-40 disabled:pointer-events-none"

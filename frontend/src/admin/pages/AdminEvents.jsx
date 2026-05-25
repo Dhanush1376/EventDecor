@@ -1278,7 +1278,7 @@ export function AdminEvents() {
                       </div>
                       <div className="flex gap-2 pt-2">
                         <button onClick={() => handleEdit(ev)} className="flex-1 py-2 bg-stone-100 text-black hover:bg-slate-200 hover:text-black rounded-xl font-label text-[9px] uppercase tracking-widest font-bold flex items-center justify-center gap-1 transition-colors"><span className="material-symbols-outlined text-[13px]">edit</span> Edit</button>
-                        <button onClick={() => navigate(`/events/${ev._id || ev.id}`)} target="_blank" className="px-3.5 py-2 bg-stone-50 border border-black/5 rounded-xl hover:bg-stone-100 transition-colors"><span className="material-symbols-outlined text-[14px]">visibility</span></button>
+                        <button aria-label="View Event Details" onClick={() => navigate(`/events/${ev._id || ev.id}`)} target="_blank" className="px-3.5 py-2 bg-stone-50 border border-black/5 rounded-xl hover:bg-stone-100 transition-colors"><span className="material-symbols-outlined text-[14px]">visibility</span></button>
                       </div>
                     </div>
                   </div>
@@ -1738,7 +1738,7 @@ export function AdminEvents() {
                     <h3 className="font-display text-base text-black font-bold leading-tight">{selectedBooking.title}</h3>
                     <p className="font-body text-[10px] text-black/40 capitalize mt-0.5">Customer: {selectedBooking.user?.name} | {selectedBooking.user?.phone}</p>
                   </div>
-                  <button onClick={() => setIsDrawerOpen(false)} className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center active:scale-90"><span className="material-symbols-outlined text-[18px]">close</span></button>
+                  <button aria-label="Close Drawer" onClick={() => setIsDrawerOpen(false)} className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center active:scale-90"><span className="material-symbols-outlined text-[18px]">close</span></button>
                 </div>
 
                 {/* Timeline status dropdown */}
@@ -2067,7 +2067,7 @@ export function AdminEvents() {
                     className="flex-1 bg-white border border-black/5 px-4 py-2.5 rounded-full text-xs outline-none focus:border-slate-900 transition-colors"
                     required
                   />
-                  <button
+                  <button aria-label="send"
                     type="submit"
                     className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-black hover:text-black transition-all shrink-0 active:scale-95 cursor-pointer"
                   >

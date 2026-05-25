@@ -1,14 +1,10 @@
 import axios from 'axios';
 import logger from '../utils/logger';
-import { getApiUrl } from '../config/apiConfig';
+import { getApiUrl, getApiRootUrl } from '../config/apiConfig';
 import { normalizeApiError } from '../utils/apiErrors';
 import { getCachedGet, setCachedGet } from '../utils/apiCache';
 import {
   hasSessionMarker,
-  persistAccessToken,
-  getPersistedAccessToken,
-  persistRefreshToken,
-  getPersistedRefreshToken,
   setSessionMarker,
   clearAuthStorage,
 } from '../utils/authStorage';
@@ -26,7 +22,7 @@ const TRANSIENT_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 const MAX_GET_RETRIES = 4;
 const MAX_MUTATION_RETRIES = 2;
 
-let accessToken = getPersistedAccessToken() || null;
+let accessToken = null;
 let refreshPromise = null;
 let csrfToken = null;
 let csrfInitPromise = null;
@@ -44,7 +40,7 @@ export const ensureCsrfToken = async () => {
   if (csrfToken) return csrfToken;
   if (!csrfInitPromise) {
     csrfInitPromise = api
-      .get('/csrf-token', { _bypassOfflineQueue: true })
+      .get(`${getApiRootUrl()}/csrf-token`, { _bypassOfflineQueue: true })
       .then((res) => {
         csrfToken = res.data?.csrfToken || csrfToken;
         return csrfToken;
@@ -59,27 +55,21 @@ export const ensureCsrfToken = async () => {
 
 export const setAccessToken = (token) => {
   accessToken = token || null;
-  persistAccessToken(accessToken);
 };
 
 export const getAccessToken = () => accessToken;
 
 const applyRefreshPayload = (payload) => {
   const token = payload?.accessToken || payload?.token;
-  const refresh = payload?.refreshToken;
   if (token) {
     setAccessToken(token);
     setSessionMarker();
-  }
-  if (refresh) {
-    persistRefreshToken(refresh);
   }
   return token;
 };
 
 const buildRefreshBody = () => {
-  const stored = getPersistedRefreshToken();
-  return stored ? { refreshToken: stored } : {};
+  return {};
 };
 
 // Helper to identify queueable mutating requests
@@ -129,7 +119,7 @@ const dispatchUnauthorized = () => {
 };
 
 export const refreshAccessToken = async () => {
-  if (!hasLocalAuthMarker() && !getPersistedRefreshToken()) {
+  if (!hasLocalAuthMarker()) {
     return null;
   }
   if (!refreshPromise) {

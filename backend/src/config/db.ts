@@ -17,6 +17,7 @@ const connectDB = async (): Promise<void> => {
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
     family: 4, // Use IPv4
+    bufferCommands: false, // Fail fast on transient disconnects instead of hanging API endpoints
   };
 
   // Register connection event listeners to track DB health and connectivity states
@@ -36,33 +37,14 @@ const connectDB = async (): Promise<void> => {
     logger.info('🟢 [DATABASE] MongoDB reconnected successfully');
   });
 
-  let retryCount = 0;
-  const maxRetries = 10;
-  const baseDelay = 1000; // 1 second
-
-  return new Promise<void>((resolve, reject) => {
-    const connectWithRetry = async () => {
-      try {
-        await mongoose.connect(MONGO_URI, options);
-        logger.info('🚀 [DATABASE] Initial MongoDB Connection Succeeded');
-        resolve();
-      } catch (err: any) {
-        retryCount++;
-        if (retryCount > maxRetries) {
-          logger.error(`❌ [DATABASE] MongoDB connection failed after ${maxRetries} retries: ${err.message}`);
-          reject(err);
-          process.exit(1);
-        }
-
-        const delay = Math.min(baseDelay * Math.pow(2, retryCount), 30000); // Max 30s delay
-        logger.warn(`⚠️ [DATABASE] MongoDB connection attempt ${retryCount} failed: ${err.message}. Retrying in ${delay / 1000}s...`);
-        
-        setTimeout(connectWithRetry, delay);
-      }
-    };
-
-    connectWithRetry();
-  });
+  try {
+    await mongoose.connect(MONGO_URI, options);
+    logger.info('🚀 [DATABASE] Initial MongoDB Connection Succeeded');
+  } catch (err: any) {
+    // We log the error but DO NOT exit or reject if we want it to keep trying in the background
+    // Mongoose handles reconnections natively based on its options
+    logger.error(`❌ [DATABASE] Initial MongoDB connection failed: ${err.message}. Mongoose will keep retrying in the background.`);
+  }
 };
 
 export default connectDB;

@@ -14,7 +14,7 @@ import { cmsCache } from '../utils/MemoryCache';
 import { getAdminEmails } from '../config/adminConfig';
 import { bumpAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
-import { debitWalletBalance } from '../utils/walletMutations';
+import { debitWalletBalance, creditWalletBalance } from '../utils/walletMutations';
 import ContentSection from '../models/ContentSection';
 import WalletTransaction from '../models/WalletTransaction';
 import { createAdminNotification } from './notificationService';
@@ -22,6 +22,13 @@ import { compileTemplate } from '../utils/templateEngine';
 import { LoyaltyService } from './loyaltyService';
 import { emitUserEvent } from '../socket';
 import { redisClient } from '../utils/redis';
+import { LogisticsService } from './logisticsService';
+
+// DECOMPOSED SERVICES (Architecture Audit)
+// Methods are actively being migrated to these focused sub-modules to resolve God Object pattern.
+import { OrderCreationService, OrderPaymentService, OrderFulfillmentService } from './order';
+
+export { OrderCreationService, OrderPaymentService, OrderFulfillmentService };
 
 class OrderService {
   static async validateTotals(userId: string, data: any) {
@@ -217,12 +224,15 @@ class OrderService {
       }
     }
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     let subtotal = 0;
     const orderItems = [];
 
     // 1. Batch-query products at once to eliminate N+1 findById queries inside the loop
     const productIds = [...new Set(items.map((item: any) => String(item.productId)).filter(Boolean))] as any[];
-    const products = await Product.find({ _id: { $in: productIds } }).select('title price stock isActive imageSrc category');
+    const products = await Product.find({ _id: { $in: productIds } }).select('title price stock isActive imageSrc category').session(session);
     const productsById = new Map<string, any>(products.map((p: any) => [p._id.toString(), p]));
 
     // Pre-validate all items before doing any stock updates to maintain transactional integrity
@@ -243,11 +253,11 @@ class OrderService {
         const updatedProduct = await Product.findOneAndUpdate(
           { _id: item.productId, stock: { $gte: item.quantity }, isActive: true },
           { $inc: { stock: -item.quantity } },
-          { new: true }
+          { new: true, session }
         );
 
         if (!updatedProduct) {
-          throw new ApiError(400, `Insufficient stock or inactive product: ${product.title}`);
+          throw new ApiError(409, `"${product.title}" is out of stock.`);
         }
 
         // Post-check: ensure product remains active at reservation time
@@ -273,7 +283,7 @@ class OrderService {
     } catch (err) {
       // Rollback successfully reserved stock to prevent stock leaks
       for (const reserved of reservedItems) {
-        await Product.findByIdAndUpdate(reserved.productId, { $inc: { stock: reserved.quantity } });
+        await Product.findByIdAndUpdate(reserved.productId, { $inc: { stock: reserved.quantity } }, { session });
       }
       throw err;
     }
@@ -298,7 +308,7 @@ class OrderService {
             { usageLimit: null },
             { $expr: { $lt: ['$usedCount', '$usageLimit'] } }
           ]
-        });
+        }).session(session);
         if (coupon && new Date() <= coupon.expiryDate && subtotal >= coupon.minOrderAmount) {
           couponValid = true;
           if (coupon.discountType === 'percentage') {
@@ -330,13 +340,13 @@ class OrderService {
       }
 
       const shippingFee = subtotal > 2000 ? 0 : 100;
-      user = await User.findById(userId);
+      user = await User.findById(userId).session(session);
       const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
 
       if (useWallet && user) {
         const potentialWalletDeduction = Math.min(preliminaryTotal, user.walletBalance || 0);
         if (potentialWalletDeduction > 0) {
-          const updatedUser = await debitWalletBalance(userId, potentialWalletDeduction);
+          const updatedUser = await debitWalletBalance(userId, potentialWalletDeduction, session);
           if (updatedUser) {
             walletDeduction = potentialWalletDeduction;
             walletDeducted = true;
@@ -356,24 +366,23 @@ class OrderService {
           source: 'checkout_redeem',
           description: `Redeemed Siri Cash at checkout`,
           status: 'active'
-        }]);
+        }], { session });
       }
 
-      // Auto-generate enterprise logistics fields using cryptographically random ID
       const randomSeq = crypto.randomBytes(3).toString('hex').toUpperCase();
       const invoiceNumber = `INV-${new Date().getFullYear()}-${randomSeq}`;
       const trackingNumber = `TRK${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-      const publicTrackingToken = crypto.randomBytes(24).toString('hex');
       const courierPartner = 'Delhivery';
       const barcodeData = invoiceNumber;
       const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'http://localhost:5173';
-      const qrCodeData = `${frontendUrl}/track/${encodeURIComponent('pending')}`;
+      
+      const pendingOrderId = new mongoose.Types.ObjectId();
+      const publicTrackingToken = LogisticsService.generateTrackingToken(pendingOrderId.toString());
+      const qrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
 
       if (isCod) {
         // Pre-assign tracking URL synchronously (order._id is generated on instantiation)
-        const pendingOrderId = new mongoose.Types.ObjectId();
-        const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
-
+        
         order = new Order({
           _id: pendingOrderId,
           user: userId,
@@ -397,8 +406,7 @@ class OrderService {
           dimensions: { length: 30, width: 20, height: 15 },
           packageType: 'Standard Box',
           barcodeData,
-          qrCodeData: finalQrCodeData,
-          publicTrackingToken,
+          qrCodeData,
           notes,
           needByDate,
           codCollected: false,
@@ -408,12 +416,12 @@ class OrderService {
           earnings: 0,
         });
 
-        await order.save();
-        await User.findByIdAndUpdate(userId, { $push: { orders: order._id } });
+        await order.save({ session });
+        await User.findByIdAndUpdate(userId, { $push: { orders: order._id } }, { session });
         AnalyticsService.clearCache();
 
         // Clear the user's cart in database immediately
-        await User.findByIdAndUpdate(userId, { $set: { cart: [] } });
+        await User.findByIdAndUpdate(userId, { $set: { cart: [] } }, { session });
 
         const resultCod = {
           order,
@@ -430,7 +438,7 @@ class OrderService {
 
         // Trigger Admin Alert, Invoice PDF, and Dispatch Email
         try {
-          const user = await User.findById(userId);
+          const user = await User.findById(userId).session(session);
 
           // 1. Send Admin Real-time Notification
           await createAdminNotification({
@@ -512,6 +520,7 @@ class OrderService {
           logger.error('Failed to dispatch COD confirmation email/PDF:', emailErr);
         }
 
+        await session.commitTransaction();
         return resultCod;
       } else {
         // 3b. Handle online Razorpay payment
@@ -532,9 +541,6 @@ class OrderService {
           logger.error('Razorpay order creation failed:', err);
           throw new ApiError(500, 'Payment initialization failed');
         }
-
-        const pendingOrderId = new mongoose.Types.ObjectId();
-        const finalQrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
 
         // 4. Save pending order with Razorpay details
         order = new Order({
@@ -560,14 +566,13 @@ class OrderService {
           dimensions: { length: 30, width: 20, height: 15 },
           packageType: 'Standard Box',
           barcodeData,
-          qrCodeData: finalQrCodeData,
-          publicTrackingToken,
+          qrCodeData,
           notes,
           needByDate,
         });
 
-        await order.save();
-        await User.findByIdAndUpdate(userId, { $push: { orders: order._id } });
+        await order.save({ session });
+        await User.findByIdAndUpdate(userId, { $push: { orders: order._id } }, { session });
 
         const result = {
           order,
@@ -587,42 +592,14 @@ class OrderService {
           }
         }
 
+        await session.commitTransaction();
         return result;
       }
     } catch (err) {
-      // 1. Rollback reserved stock
-      for (const reserved of reservedItems) {
-        await Product.findByIdAndUpdate(reserved.productId, { $inc: { stock: reserved.quantity } });
-      }
-
-      // 2. Rollback wallet deduction
-      if (walletDeducted && user) {
-        await User.findByIdAndUpdate(userId, { $inc: { walletBalance: walletDeduction } });
-        try {
-          await WalletTransaction.create({
-            userId: user._id,
-            type: 'credit',
-            amount: walletDeduction,
-            source: 'refund',
-            description: `Reversed Siri Cash redemption due to checkout failure`,
-            status: 'active'
-          });
-        } catch (txErr) {
-          logger.error('Failed to log wallet refund transaction:', txErr);
-        }
-      }
-
-      // 3. Rollback User orders push and remove aborted order from DB
-      if (order && order._id) {
-        try {
-          await User.findByIdAndUpdate(userId, { $pull: { orders: order._id } });
-          await Order.findByIdAndDelete(order._id);
-        } catch (cleanupErr) {
-          logger.error('Failed to roll back saved order document:', cleanupErr);
-        }
-      }
-
+      await session.abortTransaction();
       throw err;
+    } finally {
+      session.endSession();
     }
   }
 
@@ -687,8 +664,20 @@ class OrderService {
           }, { session });
         }
 
+        if (order.walletDeduction && order.walletDeduction > 0) {
+          await creditWalletBalance(order.user, order.walletDeduction, session);
+          await WalletTransaction.create([{
+            userId: order.user,
+            type: 'credit',
+            amount: order.walletDeduction,
+            source: 'refund',
+            description: 'Refund for failed Razorpay payment verification',
+            status: 'active'
+          }], { session });
+        }
+
         order.paymentStatus = 'failed';
-        order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Signature Mismatch) - Stock Released' });
+        order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Signature Mismatch) - Stock Released & Wallet Refunded' });
         await order.save({ session });
         await session.commitTransaction();
         session.endSession();
@@ -856,6 +845,23 @@ class OrderService {
     else if (status === 'cancelled') finalStatus = 'Cancelled';
     else if (status === 'settled') finalStatus = 'Settled';
 
+    // State Machine Validation
+    const oldStatus = order.orderStatus;
+    const validTransitions: Record<string, string[]> = {
+      'Pending': ['Confirmed', 'Cancelled'],
+      'Confirmed': ['Packed', 'Cancelled'],
+      'Packed': ['Shipped', 'Cancelled'],
+      'Shipped': ['Delivered', 'Cancelled', 'Returned'],
+      'Delivered': ['Returned'],
+      'Cancelled': [],
+      'Returned': [],
+      'Settled': []
+    };
+
+    if (oldStatus !== finalStatus && !validTransitions[oldStatus]?.includes(finalStatus)) {
+      throw new ApiError(400, `Invalid state transition from ${oldStatus} to ${finalStatus}`);
+    }
+
     order.orderStatus = finalStatus as any;
 
     if (courierCharges !== undefined && courierCharges !== null) {
@@ -924,6 +930,23 @@ class OrderService {
         await LoyaltyService.reversePurchaseRewards(order._id.toString());
       } catch (reversalErr) {
         logger.error('Failed to reverse purchase rewards on status transition:', reversalErr);
+      }
+
+      // Wallet Refund Logic
+      if (order.walletDeduction && order.walletDeduction > 0) {
+        try {
+          await creditWalletBalance(order.user, order.walletDeduction);
+          await WalletTransaction.create({
+            userId: order.user,
+            type: 'credit',
+            amount: order.walletDeduction,
+            source: 'refund',
+            description: `Refund for ${finalStatus.toLowerCase()} order`,
+            status: 'active'
+          });
+        } catch (walletErr) {
+          logger.error('Failed to refund wallet balance on status transition:', walletErr);
+        }
       }
 
       // Automated Razorpay refund integration for online paid orders
@@ -1183,7 +1206,6 @@ class OrderService {
       const paymentEntity = body.payload?.payment?.entity;
       const razorpay_order_id = paymentEntity?.order_id;
       const errorDescription = paymentEntity?.error_description || 'Unknown transaction error';
-
       if (razorpay_order_id) {
         const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
         if (order && order.paymentStatus === 'pending') {
@@ -1198,11 +1220,23 @@ class OrderService {
               );
             }
 
+            if (order.walletDeduction && order.walletDeduction > 0) {
+              await creditWalletBalance(order.user, order.walletDeduction, session);
+              await WalletTransaction.create([{
+                userId: order.user,
+                type: 'credit',
+                amount: order.walletDeduction,
+                source: 'refund',
+                description: 'Refund for failed Razorpay payment via Webhook',
+                status: 'active'
+              }], { session });
+            }
+
             order.paymentStatus = 'failed';
             order.statusHistory.push({
               status: 'Pending' as any,
               timestamp: new Date(),
-              note: `Razorpay Transaction Failed: ${errorDescription}. Reserved stock returned.`,
+              note: `Razorpay Transaction Failed: ${errorDescription}. Reserved stock returned & Wallet Refunded.`,
             });
             await order.save({ session });
             await session.commitTransaction();

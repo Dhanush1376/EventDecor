@@ -240,14 +240,14 @@ export function ProductListing() {
 
   const products = productsData?.data || productsData?.products || [];
 
-  const openQuickView = (e, product) => {
+  const openQuickView = React.useCallback((e, product) => {
     e.preventDefault();
     e.stopPropagation();
     setActiveProduct(product);
     setIsQuickViewOpen(true);
-  };
+  }, []);
 
-  const handleCategorySelect = (cat) => {
+  const handleCategorySelect = React.useCallback((cat) => {
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
       if (cat === "All") {
@@ -268,9 +268,9 @@ export function ProductListing() {
         window.scrollTo({ top: y, behavior: "smooth" });
       }
     }, 50);
-  };
+  }, [setSearchParams]);
 
-  const toggleFilter = (type, value) => {
+  const toggleFilter = React.useCallback((type, value) => {
     setFilters((prev) => {
       const current = prev[type];
       const next = current.includes(value)
@@ -278,14 +278,14 @@ export function ProductListing() {
         : [...current, value];
       return { ...prev, [type]: next };
     });
-  };
+  }, []);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = React.useCallback(() => {
     setFilters({ price: [], material: [], collection: [] });
     setActiveCategory("All");
     setSearchQuery("");
     setSearchParams({});
-  };
+  }, [setSearchParams]);
 
   const { cartCount, setIsCartOpen } = useCart();
 
@@ -518,7 +518,7 @@ export function ProductListing() {
                       key={product.id || product._id}
                       {...product}
                       eager={index < 4}
-                      onQuickView={(e) => openQuickView(e, product)}
+                      onQuickView={openQuickView}
                     />
                   ))}
                 </div>

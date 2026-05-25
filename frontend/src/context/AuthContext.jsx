@@ -6,15 +6,11 @@ import {
   refreshAccessToken,
   setAuthBootstrapActive,
 } from '../services/api';
-import toast from 'react-hot-toast';
 import { loadCachedProfile, saveCachedProfile, clearCachedProfile } from '../utils/authSessionCache';
 import {
   hasSessionMarker,
   setSessionMarker,
   clearAuthStorage,
-  persistRefreshToken,
-  getPersistedRefreshToken,
-  getPersistedAccessToken,
 } from '../utils/authStorage';
 
 import logger from '../utils/logger';
@@ -22,12 +18,11 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const cachedProfile = loadCachedProfile();
-  const hasStoredSession =
-    hasSessionMarker() || !!getPersistedRefreshToken() || !!getPersistedAccessToken();
+  const hasStoredSession = hasSessionMarker();
   const [user, setUser] = useState(cachedProfile);
-  const [loading, setLoading] = useState(hasStoredSession || !!cachedProfile);
+  const [loading, setLoading] = useState(hasStoredSession && !cachedProfile);
   const [isAuthenticated, setIsAuthenticated] = useState(!!cachedProfile || hasStoredSession);
-  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(!!cachedProfile || (!hasStoredSession && !cachedProfile));
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [intendedAction, setIntendedAction] = useState(null);
@@ -144,8 +139,10 @@ export function AuthProvider({ children }) {
 
     const safetyTimeout = setTimeout(() => {
       logger.warn('[Auth] Session restoration timeout reached — forcing loader to turn off');
-      setLoading(false);
-      setIsAuthInitialized(true);
+      if (hasStoredSession && !cachedProfile) {
+         setLoading(false);
+         setIsAuthInitialized(true);
+      }
     }, 12000);
 
     (async () => {
@@ -208,9 +205,6 @@ export function AuthProvider({ children }) {
 
     setAccessToken(accessToken);
     setSessionMarker();
-    if (refreshToken) {
-      persistRefreshToken(refreshToken);
-    }
 
     setUser(userData);
     setIsAuthenticated(true);

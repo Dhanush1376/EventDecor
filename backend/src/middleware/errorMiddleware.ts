@@ -67,14 +67,18 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
   }
 
   // Log error with request correlation context
-  logger.error(`[API Exception] ${req.method} ${req.originalUrl} - Status ${statusCode} - ${message}`, {
-    error: {
-      name: err.name || 'Error',
-      message: err.message || message,
-      stack: err.stack,
-      errors,
-    }
-  });
+  if (statusCode < 500) {
+    logger.warn(`[API Client Error] ${req.method} ${req.originalUrl} - Status ${statusCode} - ${message}`);
+  } else {
+    logger.error(`[API Exception] ${req.method} ${req.originalUrl} - Status ${statusCode} - ${message}`, {
+      error: {
+        name: err.name || 'Error',
+        message: err.message || message,
+        stack: err.stack,
+        errors,
+      }
+    });
+  }
 
   // Report unhandled 500 errors to Sentry if integration is configured
   if (statusCode === 500 && process.env.SENTRY_DSN) {

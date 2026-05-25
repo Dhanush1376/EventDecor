@@ -44,7 +44,7 @@ export function BottomNav() {
               <button
                 onClick={() => setIsCartOpen(true)}
                 aria-label="Open shopping bag"
-                className="relative flex flex-col items-center group cursor-pointer"
+                className="relative flex flex-col items-center justify-center w-12 h-12 group cursor-pointer active:scale-[0.96] transition-transform"
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
                 {cartCount > 0 && <CartBadge count={cartCount} />}
@@ -53,7 +53,7 @@ export function BottomNav() {
               <button
                 onClick={openAuthModal}
                 aria-label="Sign in to your account"
-                className="flex flex-col items-center group cursor-pointer"
+                className="flex flex-col items-center justify-center w-12 h-12 group cursor-pointer active:scale-[0.96] transition-transform"
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
               </button>
@@ -61,7 +61,7 @@ export function BottomNav() {
               <Link
                 to={item.path}
                 aria-label={`Navigate to ${item.label}`}
-                className="flex flex-col items-center group"
+                className="flex flex-col items-center justify-center w-12 h-12 group active:scale-[0.96] transition-transform cursor-pointer"
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
               </Link>

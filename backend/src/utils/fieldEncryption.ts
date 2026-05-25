@@ -4,11 +4,9 @@ const ALGORITHM = 'aes-256-gcm';
 const PREFIX = 'enc:v1:';
 
 const deriveKey = (): Buffer => {
-  const raw = process.env.FIELD_ENCRYPTION_KEY || process.env.JWT_SECRET;
+  const raw = process.env.FIELD_ENCRYPTION_KEY;
   if (!raw || raw.length < 32) {
-    throw new Error(
-      'FIELD_ENCRYPTION_KEY (or JWT_SECRET ≥32 chars) is required to encrypt sensitive fields at rest'
-    );
+    throw new Error('FIELD_ENCRYPTION_KEY must be set (min 32 chars) and distinct from JWT_SECRET');
   }
   return crypto.createHash('sha256').update(raw).digest();
 };

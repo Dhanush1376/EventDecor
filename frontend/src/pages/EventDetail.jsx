@@ -450,12 +450,44 @@ export function EventDetail() {
     { label: "Master Category", value: formattedCategory, icon: "verified" },
   ];
 
+  const eventSchema = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": event.title,
+    "description": event.description,
+    "image": event.image,
+    "startDate": bookingDate || new Date().toISOString().split('T')[0],
+    "endDate": bookingDate || new Date().toISOString().split('T')[0],
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "location": {
+      "@type": "Place",
+      "name": venueDetails?.name || "Client Venue",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": venueDetails?.address || "",
+        "addressLocality": venueDetails?.city || "",
+        "addressRegion": venueDetails?.state || "",
+        "postalCode": venueDetails?.pincode || "",
+        "addressCountry": "IN"
+      }
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": typeof window !== "undefined" ? window.location.href : "",
+      "price": event.basePrice || event.rentalPrice || 35000,
+      "priceCurrency": "INR",
+      "availability": "https://schema.org/InStock"
+    }
+  };
+
   return (
     <div className="bg-[#fbf9f6] min-h-screen text-on-surface selection:bg-primary/20 relative font-body">
       <SEO
         title={event.seoTitle || `${event.title} | Event Masteries`}
         description={event.seoDescription || event.description}
         ogImage={event.image}
+        schema={eventSchema}
       />
 
       {/* 1. BREADCRUMBS HEADER (Preserved for Desktop) */}

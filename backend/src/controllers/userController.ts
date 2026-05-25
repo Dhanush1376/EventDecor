@@ -132,56 +132,62 @@ export const updateProfile = asyncHandler(async (req: any, res: Response) => {
 
 // Address Management
 export const getAddresses = asyncHandler(async (req: any, res: Response) => {
-  const user = await User.findById(req.user.id);
-  if (!user) throw new ApiError(404, 'User not found');
-  res.status(200).json(new ApiResponse(true, 'Addresses fetched', user.addresses));
+  const Address = require('../models/Address').default;
+  const addresses = await Address.find({ user: req.user.id });
+  res.status(200).json(new ApiResponse(true, 'Addresses fetched', addresses));
 });
 
 export const addAddress = asyncHandler(async (req: any, res: Response) => {
-  const user = await User.findById(req.user.id);
-  if (!user) throw new ApiError(404, 'User not found');
+  const Address = require('../models/Address').default;
+  const existingAddressesCount = await Address.countDocuments({ user: req.user.id });
+  
+  await Address.create({
+    ...req.body,
+    user: req.user.id,
+    isDefault: existingAddressesCount === 0
+  });
 
-  const newAddress = { ...req.body, isDefault: user.addresses.length === 0 };
-  user.addresses.push(newAddress);
-  await user.save();
-
-  res.status(201).json(new ApiResponse(true, 'Address added', user.addresses));
+  const addresses = await Address.find({ user: req.user.id });
+  res.status(201).json(new ApiResponse(true, 'Address added', addresses));
 });
 
 export const updateAddress = asyncHandler(async (req: any, res: Response) => {
-  const user = await User.findById(req.user.id);
-  if (!user) throw new ApiError(404, 'User not found');
+  const Address = require('../models/Address').default;
+  const address = await Address.findOneAndUpdate(
+    { _id: req.params.addressId, user: req.user.id },
+    req.body,
+    { new: true }
+  );
 
-  const addressIndex = user.addresses.findIndex((addr: any) => addr._id.toString() === req.params.addressId);
-  if (addressIndex === -1) throw new ApiError(404, 'Address not found');
+  if (!address) throw new ApiError(404, 'Address not found');
 
-  user.addresses[addressIndex] = { ...user.addresses[addressIndex], ...req.body };
-  await user.save();
-
-  res.status(200).json(new ApiResponse(true, 'Address updated', user.addresses));
+  const addresses = await Address.find({ user: req.user.id });
+  res.status(200).json(new ApiResponse(true, 'Address updated', addresses));
 });
 
 export const deleteAddress = asyncHandler(async (req: any, res: Response) => {
-  const user = await User.findById(req.user.id);
-  if (!user) throw new ApiError(404, 'User not found');
+  const Address = require('../models/Address').default;
+  await Address.findOneAndDelete({ _id: req.params.addressId, user: req.user.id });
 
-  user.addresses = user.addresses.filter((addr: any) => addr._id.toString() !== req.params.addressId);
-  await user.save();
-
-  res.status(200).json(new ApiResponse(true, 'Address deleted', user.addresses));
+  const addresses = await Address.find({ user: req.user.id });
+  res.status(200).json(new ApiResponse(true, 'Address deleted', addresses));
 });
 
 export const setDefaultAddress = asyncHandler(async (req: any, res: Response) => {
-  const user = await User.findById(req.user.id);
-  if (!user) throw new ApiError(404, 'User not found');
+  const Address = require('../models/Address').default;
+  
+  await Address.updateMany({ user: req.user.id }, { isDefault: false });
+  
+  const address = await Address.findOneAndUpdate(
+    { _id: req.params.addressId, user: req.user.id },
+    { isDefault: true },
+    { new: true }
+  );
 
-  user.addresses = user.addresses.map((addr: any) => {
-    addr.isDefault = addr._id.toString() === req.params.addressId;
-    return addr;
-  });
+  if (!address) throw new ApiError(404, 'Address not found');
 
-  await user.save();
-  res.status(200).json(new ApiResponse(true, 'Default address updated', user.addresses));
+  const addresses = await Address.find({ user: req.user.id });
+  res.status(200).json(new ApiResponse(true, 'Default address updated', addresses));
 });
 
 // Wishlist Management
@@ -304,26 +310,39 @@ export const getCart = asyncHandler(async (req: any, res: Response) => {
 
 export const addToCart = asyncHandler(async (req: any, res: Response) => {
   const { productId, quantity } = req.body;
-  const user = await User.findById(req.user.id);
-  if (!user) throw new ApiError(404, 'User not found');
+  const qty = Number(quantity);
+  
+  const userHasItem = await User.findOne({ _id: req.user.id, 'cart.product': productId });
 
-  const cartItemIndex = user.cart.findIndex(
-    (item: any) => item.product && item.product.toString() === productId
-  );
-
-  if (cartItemIndex > -1) {
-    if (quantity <= 0) {
-      user.cart.splice(cartItemIndex, 1);
+  let updatedUser;
+  if (userHasItem) {
+    if (qty <= 0) {
+      updatedUser = await User.findOneAndUpdate(
+        { _id: req.user.id },
+        { $pull: { cart: { product: productId } } },
+        { new: true }
+      );
     } else {
-      user.cart[cartItemIndex].quantity = quantity;
+      updatedUser = await User.findOneAndUpdate(
+        { _id: req.user.id, 'cart.product': productId },
+        { $set: { 'cart.$.quantity': qty } },
+        { new: true }
+      );
     }
-  } else if (quantity > 0) {
-    user.cart.push({ product: productId as any, quantity, variant: 'Default' });
+  } else if (qty > 0) {
+    updatedUser = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      { $push: { cart: { product: productId, quantity: qty, variant: 'Default' } } },
+      { new: true }
+    );
+  } else {
+    updatedUser = await User.findById(req.user.id);
   }
 
-  await user.save();
+  if (!updatedUser) throw new ApiError(404, 'User not found');
+
   await invalidateUserSessionCaches(String(req.user.id));
-  const cartDetails = await computeAndValidateCart(user);
+  const cartDetails = await computeAndValidateCart(updatedUser);
   res.status(200).json(new ApiResponse(true, 'Cart updated', cartDetails));
 });
 
@@ -355,13 +374,15 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
 
 export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
   const { productId } = req.params;
-  const user = await User.findById(req.user.id);
+  const user = await User.findOneAndUpdate(
+    { _id: req.user.id },
+    { $pull: { cart: { product: productId } } },
+    { new: true }
+  );
+  
   if (!user) throw new ApiError(404, 'User not found');
 
-  user.cart = user.cart.filter((item: any) => item.product && item.product.toString() !== productId);
-  await user.save();
   await invalidateUserSessionCaches(String(req.user.id));
-
   const cartDetails = await computeAndValidateCart(user);
   res.status(200).json(new ApiResponse(true, 'Removed from cart', cartDetails));
 });

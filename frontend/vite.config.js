@@ -29,6 +29,9 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) {
             if (id.includes('/src/admin/')) return 'admin';
+            if (id.includes('/src/components/dashboard/')) return 'dashboard-tabs';
+            if (id.includes('/src/pages/CustomOrders')) return 'custom-orders';
+            if (id.includes('/src/pages/EventDetail')) return 'event-detail';
             return undefined;
           }
 
@@ -87,7 +90,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false,
       },

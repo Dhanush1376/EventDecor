@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useWishlist } from "../../context/WishlistContext";
-import { useCart } from "../../context/CartContext";
+import { useWishlistState, useWishlistDispatch } from "../../context/WishlistContext";
+import { useCartDispatch } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { CloudinaryImage } from "./CloudinaryImage";
 
-export function ProductCard({
+export const ProductCard = React.memo(function ProductCard({
   id,
   _id,
   title,
@@ -27,8 +27,9 @@ export function ProductCard({
   sizes = "(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 25vw",
 }) {
   const navigate = useNavigate();
-  const { toggleItem, isWishlisted } = useWishlist();
-  const { addItem } = useCart();
+  const { isWishlisted } = useWishlistState();
+  const { toggleItem } = useWishlistDispatch();
+  const { addItem } = useCartDispatch();
   const { runProtectedAction } = useAuth();
   const [added, setAdded] = useState(false);
 
@@ -144,7 +145,7 @@ export function ProductCard({
         <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className="w-8 h-8 md:w-10 md:h-10 min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-95"
+            className="w-10 h-10 md:w-11 md:h-11 min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
             aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <motion.span
@@ -227,7 +228,7 @@ export function ProductCard({
               )}
             </button>
             <button
-              onClick={onQuickView}
+              onClick={(e) => onQuickView(e, { id, _id, title, teluguTitle, nameTE, teluguName, price, oldPrice, rating, imageSrc, hoverImage, category, badges })}
               className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
             >
               Quick View
@@ -239,7 +240,7 @@ export function ProductCard({
         <div className="xl:hidden absolute bottom-2 right-2 z-20">
           <button
             onClick={handleAddToCart}
-            className={`w-8 h-8 md:w-10 md:h-10 min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer ${
+            className={`w-11 h-11 md:w-12 md:h-12 min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer ${
               added
                 ? "bg-[#e0d6b8] text-[#1a1c1a]"
                 : "bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a]"
@@ -306,4 +307,4 @@ export function ProductCard({
       </div>
     </motion.div>
   );
-}
+});

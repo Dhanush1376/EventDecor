@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { isOriginAllowed } from '../config/corsConfig';
 
 export const CSRF_COOKIE_NAME = 'siri_csrf';
 export const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -65,15 +66,7 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   // If third-party cookies (SameSite=None) are blocked by the browser, cookieToken will be empty.
   // In this case, we securely validate the request using the browser-enforced Origin header.
   const origin = req.headers.origin;
-  const vercelPreviewRegex = /^https:\/\/.*(siri-arts|siriarts-).*\.vercel\.app$/i;
-  const isTrustedOrigin = origin && (
-    origin === 'https://siriartsandcrafts.com' ||
-    origin === 'https://www.siriartsandcrafts.com' ||
-    origin === 'https://siriarts-n-crafts.vercel.app' ||
-    origin === 'http://localhost:5173' ||
-    (process.env.NODE_ENV === 'development' && !process.env.JEST_WORKER_ID) ||
-    vercelPreviewRegex.test(origin)
-  );
+  const isTrustedOrigin = origin ? isOriginAllowed(origin) : false;
 
   if (!cookieToken || !headerToken || cookieToken.length !== headerToken.length) {
     if (isTrustedOrigin) {

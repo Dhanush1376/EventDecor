@@ -5,13 +5,15 @@ import React, {
   useMemo,
   useEffect,
   useRef,
+  useCallback,
 } from "react";
 import { userService } from "../services/domainServices";
 import { useAuth } from "./AuthContext";
 import toast from "react-hot-toast";
 
 import logger from '../utils/logger';
-const CartContext = createContext(null);
+const CartStateContext = createContext(null);
+const CartDispatchContext = createContext(null);
 
 const CART_STORAGE_KEY = "siri_arts_cart";
 
@@ -33,8 +35,7 @@ export function CartProvider({ children }) {
     total: 0,
   });
 
-  // Helper to map DB cart shape to uniform frontend cart shape
-  const transformDbCart = (dbCart) => {
+  const transformDbCart = useCallback((dbCart) => {
     if (!dbCart || !Array.isArray(dbCart)) return [];
     return dbCart
       .filter((item) => item.product) // filter out orphaned products
@@ -48,7 +49,7 @@ export function CartProvider({ children }) {
         quantity: item.quantity,
         variant: item.variant || "Default",
       }));
-  };
+  }, []);
 
   // 1. Initial Load and Synchronization on Auth State Changes
   useEffect(() => {
@@ -68,7 +69,7 @@ export function CartProvider({ children }) {
           setSummary({ subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 });
         }
       } catch (err) {
-        if (err.name !== 'CanceledError') {
+        if (err.name !== 'CanceledError' && err?.code !== 'ERR_NO_SESSION' && err?.message !== 'Not authenticated') {
           logger.error("Cart synchronization failed:", err);
         }
       } finally {
@@ -78,29 +79,27 @@ export function CartProvider({ children }) {
 
     initializeCart();
     return () => controller.abort();
-  }, [isAuthenticated, isAuthInitialized]);
+  }, [isAuthenticated, isAuthInitialized, transformDbCart]);
 
-  const addItem = async (product) => {
+  const addItem = useCallback(async (product) => {
     const qty = product.quantity || 1;
     
     const action = async () => {
       // Optimistic UI update
       setItems((prev) => {
-        const existing = prev.find(
-          (item) => item.id === (product._id || product.id)
-        );
-        if (existing) {
-          return prev.map((item) =>
-            item.id === (product._id || product.id)
-              ? { ...item, quantity: item.quantity + qty }
-              : item
-          );
+        const itemKey = product._id || product.id;
+        const existingIndex = prev.findIndex((item) => item.id === itemKey);
+        
+        if (existingIndex >= 0) {
+          const newItems = [...prev];
+          newItems[existingIndex] = { ...newItems[existingIndex], quantity: newItems[existingIndex].quantity + qty };
+          return newItems;
         }
         return [
           ...prev,
           {
-            id: product._id || product.id,
-            _id: product._id || product.id,
+            id: itemKey,
+            _id: itemKey,
             title: product.title,
             price: product.price,
             imageSrc: product.imageSrc,
@@ -124,9 +123,9 @@ export function CartProvider({ children }) {
     };
 
     runProtectedAction(action);
-  };
+  }, [runProtectedAction, transformDbCart]);
 
-  const removeItem = async (id, variant) => {
+  const removeItem = useCallback(async (id, variant) => {
     const action = async () => {
       // Optimistic UI update
       setItems((prev) => prev.filter((item) => item.id !== id));
@@ -142,9 +141,9 @@ export function CartProvider({ children }) {
     };
 
     runProtectedAction(action);
-  };
+  }, [runProtectedAction, transformDbCart]);
 
-  const updateQuantity = async (id, variantOrQuantity, maybeQuantity) => {
+  const updateQuantity = useCallback(async (id, variantOrQuantity, maybeQuantity) => {
     const action = async () => {
       // Support both (id, quantity) and (id, variant, quantity) signatures
       const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
@@ -178,9 +177,9 @@ export function CartProvider({ children }) {
     };
 
     runProtectedAction(action);
-  };
+  }, [removeItem, runProtectedAction, transformDbCart]);
 
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     const action = async () => {
       setItems([]);
       setSummary({ subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 });
@@ -194,7 +193,7 @@ export function CartProvider({ children }) {
     if (isAuthenticated) {
       action();
     }
-  };
+  }, [isAuthenticated]);
 
   const cartCount = useMemo(
     () => items.reduce((acc, item) => acc + item.quantity, 0),
@@ -203,37 +202,71 @@ export function CartProvider({ children }) {
 
   const subtotal = useMemo(() => summary.subtotal, [summary.subtotal]);
 
-  const isInCart = (id) => {
-    return items.some((item) => item.id === id);
-  };
+  // O(1) lookup map derived from items array to prevent O(n) scans
+  const itemsMap = useMemo(() => {
+    const map = new Map();
+    items.forEach(item => map.set(item.id, item));
+    return map;
+  }, [items]);
 
-  const value = useMemo(
+  const isInCart = useCallback((id) => {
+    return itemsMap.has(id);
+  }, [itemsMap]);
+
+  const stateValue = useMemo(
     () => ({
       items,
-      addItem,
-      removeItem,
-      updateQuantity,
-      clearCart,
       cartCount,
       subtotal,
       summary,
       isCartOpen,
-      setIsCartOpen,
-      isInCart,
       loading,
       claimedCoupon,
-      setClaimedCoupon,
+      isInCart,
     }),
-    [items, cartCount, subtotal, summary, isCartOpen, loading, claimedCoupon]
+    [items, cartCount, subtotal, summary, isCartOpen, loading, claimedCoupon, isInCart]
   );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  const dispatchValue = useMemo(
+    () => ({
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      setIsCartOpen,
+      setClaimedCoupon,
+    }),
+    [addItem, removeItem, updateQuantity, clearCart, setIsCartOpen, setClaimedCoupon]
+  );
+
+  return (
+    <CartStateContext.Provider value={stateValue}>
+      <CartDispatchContext.Provider value={dispatchValue}>
+        {children}
+      </CartDispatchContext.Provider>
+    </CartStateContext.Provider>
+  );
 }
 
+// Backward compatible hook (triggers re-renders on any state change)
 export function useCart() {
-  const context = useContext(CartContext);
-  if (!context) {
+  const state = useContext(CartStateContext);
+  const dispatch = useContext(CartDispatchContext);
+  if (!state || !dispatch) {
     throw new Error("useCart must be used within a CartProvider");
   }
+  return { ...state, ...dispatch };
+}
+
+// Optimized hooks
+export function useCartState() {
+  const context = useContext(CartStateContext);
+  if (!context) throw new Error("useCartState must be used within CartProvider");
+  return context;
+}
+
+export function useCartDispatch() {
+  const context = useContext(CartDispatchContext);
+  if (!context) throw new Error("useCartDispatch must be used within CartProvider");
   return context;
 }

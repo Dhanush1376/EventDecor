@@ -481,7 +481,7 @@ export function TopNavbar() {
               <div className="flex items-center gap-1 md:gap-1.5">
                 <button
                   onClick={() => setIsSearchOpen(true)}
-                  className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0"
+                  className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
                   aria-label="Search Catalog"
                 >
                   <span className="material-symbols-outlined text-[18px]">
@@ -491,7 +491,7 @@ export function TopNavbar() {
 
                 <Link
                   to="/wishlist"
-                  className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold"
+                  className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold icon-button-touch-target"
                   aria-label="View Wishlist"
                 >
                   <span
@@ -505,7 +505,7 @@ export function TopNavbar() {
                 <button
                   id="cart-trigger-desktop"
                   onClick={() => setIsCartOpen(true)}
-                  className="text-on-surface hover:text-[#d4af37] transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#d4af37]/10 relative group font-bold cursor-pointer min-h-0"
+                  className="text-on-surface hover:text-[#d4af37] transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#d4af37]/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
                   aria-label="View Shopping Bag"
                 >
                   <span
@@ -529,7 +529,7 @@ export function TopNavbar() {
                 {!isAuthenticated ? (
                   <button
                     onClick={openAuthModal}
-                    className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0"
+                    className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
                     aria-label="User Account"
                   >
                     <span className="material-symbols-outlined text-[18px]">
@@ -540,7 +540,7 @@ export function TopNavbar() {
                   <div className="relative hidden md:block">
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                      className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative"
+                      className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative icon-button-touch-target"
                       aria-label="User Dropdown"
                     >
                       <span className="text-[10px] text-primary uppercase font-bold tracking-wider">
@@ -638,7 +638,7 @@ export function TopNavbar() {
 
               <button
                 onClick={() => setIsOpen(true)}
-                className="md:hidden flex flex-col items-center justify-center gap-[4.5px] w-9 h-9 rounded-full hover:bg-primary-container/10 hover:text-primary transition-all duration-300 hover:scale-110 cursor-pointer text-on-surface min-h-0"
+                className="md:hidden flex flex-col items-center justify-center gap-[4.5px] w-9 h-9 rounded-full hover:bg-primary-container/10 hover:text-primary transition-all duration-300 hover:scale-110 cursor-pointer text-on-surface min-h-0 icon-button-touch-target"
                 aria-label="Open navigation menu"
                 aria-expanded={isOpen}
                 aria-controls="mobile-menu-drawer"
@@ -673,7 +673,7 @@ export function TopNavbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="fixed right-0 top-0 h-full w-[80%] max-w-sm bg-surface-bright z-[120] lg:hidden p-6 md:p-8 flex flex-col shadow-2xl border-l border-outline-variant/10 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-[80%] max-w-sm bg-surface-bright z-[120] lg:hidden p-6 md:p-8 flex flex-col shadow-2xl border-l border-outline-variant/10 rounded-l-[2rem] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-5 pb-3 border-b border-outline-variant/10">
                 <div className="flex items-center">
@@ -707,7 +707,7 @@ export function TopNavbar() {
                     <li key={idx}>
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className={`flex items-center justify-between font-display text-[14px] md:text-[17px] py-1.5 rounded-lg px-3 transition-all font-bold ${
+                        className={`flex items-center justify-between font-display text-[15px] md:text-[17px] py-3 rounded-xl px-4 transition-all font-bold ${
                           active
                             ? "text-primary bg-primary-container/10 font-bold translate-x-2"
                             : "text-on-surface hover:text-primary hover:bg-surface/50 font-bold"
@@ -732,7 +732,7 @@ export function TopNavbar() {
                   <Link
                     to="/wishlist"
                     onClick={() => setIsOpen(false)}
-                    className="flex flex-col items-center justify-center py-2 bg-surface rounded-lg hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold"
+                    className="flex flex-col items-center justify-center py-3.5 bg-surface rounded-xl hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold"
                   >
                     <span className="material-symbols-outlined text-[15px] mb-0.5 font-bold">
                       favorite
@@ -747,7 +747,7 @@ export function TopNavbar() {
                       setIsOpen(false);
                       setIsCartOpen(true);
                     }}
-                    className="flex flex-col items-center justify-center py-2 bg-surface rounded-lg hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold relative cursor-pointer"
+                    className="flex flex-col items-center justify-center py-3.5 bg-surface rounded-xl hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold relative cursor-pointer"
                   >
                     <div className="relative p-0.5">
                       <span className="material-symbols-outlined text-[16px] block font-bold">
@@ -813,7 +813,7 @@ export function TopNavbar() {
                         setIsOpen(false);
                         openAuthModal();
                       }}
-                      className="flex flex-col items-center justify-center py-2.5 bg-surface rounded-lg hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold col-span-2 cursor-pointer"
+                      className="flex flex-col items-center justify-center py-3.5 bg-surface rounded-xl hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold col-span-2 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[15px] mb-0.5 font-bold">
                         login
@@ -897,7 +897,7 @@ export function TopNavbar() {
                             setIsSearchOpen(false);
                             setSearchQuery("");
                           }}
-                          className={`flex items-center justify-between p-3 rounded-2xl border transition-all group ${
+                          className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all group ${
                             focusedIndex === idx
                               ? "bg-primary/10 border-primary/40 ring-2 ring-primary"
                               : "bg-surface-bright border-outline-variant/10 hover:border-primary/20 hover:bg-primary/10"
@@ -975,3 +975,4 @@ export function TopNavbar() {
     </>
   );
 }
+ 

@@ -23,6 +23,7 @@ const createRedisConfig = () => {
     // Override with REDIS_REJECT_UNAUTHORIZED=false only for self-signed dev certs.
     rejectUnauthorized: process.env.REDIS_REJECT_UNAUTHORIZED !== 'false',
     connectTimeout: 10000,
+    family: 4, // Fix for Node 18+ ENOTFOUND IPv6 resolution issues with Upstash
     reconnectStrategy: (retries: number) => {
       const delay = Math.min(50 * Math.pow(2, retries), 10000);
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
@@ -65,10 +66,14 @@ export const initRedis = async (): Promise<void> => {
     subClient.setMaxListeners(30);
 
     const setupListeners = (client: RedisClientType, name: string) => {
-      client.on('error', (err) => {
-        logger.error(`[REDIS ${name}] Error:`, err);
-        if (process.env.SENTRY_DSN) {
-          Sentry.captureException(err, { tags: { subsystem: 'redis' }, level: 'error' });
+      client.on('error', (err: any) => {
+        if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+          logger.warn(`[REDIS ${name}] Transient network issue (${err.code}).`);
+        } else {
+          logger.error(`[REDIS ${name}] Error: ${err.message}`);
+          if (process.env.SENTRY_DSN) {
+            Sentry.captureException(err, { tags: { subsystem: 'redis' }, level: 'error' });
+          }
         }
       });
       client.on('ready', () => logger.info(`[REDIS ${name}] ready`));

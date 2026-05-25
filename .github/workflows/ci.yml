@@ -22,7 +22,7 @@ env:
   VITE_RAZORPAY_KEY_ID: rzptest_ci_placeholder
   VITE_SITE_NAME: Siri Arts & Crafts
   VITE_CONTACT_PHONE: "+91-9866006648"
-  VITE_MARBLE_TEXTURE_URL: https://res.cloudinary.com/drxgnnzeb/image/upload/q_auto,f_webp,w_1920/v1/event_decor_ecommerce/assets/event_decor_marble-texture
+  VITE_MARBLE_TEXTURE_URL: https://dummyimage.com/1920x1080/ccc/000.webp&text=ci_placeholder_texture
 
 jobs:
   build:
@@ -46,9 +46,21 @@ jobs:
             backend/package-lock.json
             frontend/package-lock.json
 
+      - name: TruffleHog Secret Scanner
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
       - name: Install Backend Dependencies
         working-directory: backend
         run: npm ci
+
+      - name: Audit Backend Dependencies
+        working-directory: backend
+        run: npm audit --audit-level=high --omit=dev || true
 
       - name: Validate Backend Environment
         working-directory: backend
@@ -75,6 +87,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Audit Frontend Dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high --omit=dev || true
+
       - name: Validate Frontend Environment
         working-directory: frontend
         run: npm run check-env
@@ -86,3 +102,17 @@ jobs:
       - name: Build Frontend
         working-directory: frontend
         run: npm run build
+
+  deploy:
+    name: Deploy to Render
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger Render Deploy Hook
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret is not set, skipping automatic deployment."
+            exit 0
+          fi
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

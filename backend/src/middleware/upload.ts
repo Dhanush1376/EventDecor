@@ -25,7 +25,6 @@ const allowedMimeTypes = new Set([
   "image/bmp",
   "image/tiff",
   "image/x-icon",
-  "image/svg+xml",
   "video/mp4",
   "video/webm",
   "video/ogg",
@@ -45,7 +44,6 @@ const allowedExtensions = new Set([
   ".tiff",
   ".tif",
   ".ico",
-  ".svg",
   ".mp4",
   ".webm",
   ".ogg",
@@ -63,7 +61,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
   if (isAllowedExt && isAllowedMime) {
     cb(null, true);
   } else {
-    cb(new ApiError(400, "Invalid file format. Supported formats: JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF, GIF, BMP, TIFF, ICO, SVG for images; MP4, WEBM, OGG, MOV for videos."));
+    cb(new ApiError(400, "Invalid file format. Supported formats: JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF, GIF, BMP, TIFF, ICO for images; MP4, WEBM, OGG, MOV for videos."));
   }
 };
 
@@ -224,14 +222,6 @@ export const verifyImageSignature = (buffer: Buffer): string | null => {
       return "video/mp4";
     }
   }
-  // SVG / XML: Starts with '<' (hex: 3C)
-  if (hex.startsWith("3C")) {
-    const content = buffer.toString("utf8", 0, Math.min(buffer.length, 120)).toLowerCase();
-    if (content.includes("<svg") || content.includes("<?xml")) {
-      return "image/svg+xml";
-    }
-  }
-
   return null;
 };
 

@@ -89,6 +89,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 function RouteDiagnostics() {
   const location = useLocation();
   React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     logRouteDiagnostic(location.pathname);
   }, [location.pathname]);
   return null;
@@ -120,12 +121,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <NetworkProvider>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-surface focus:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary">
+          Skip to main content
+        </a>
         <SlowConnectionBanner />
         <HelmetProvider>
           <AuthProvider>
             <CartProvider>
               <WishlistProvider>
-                {isMounted && <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff', fontSize: '14px' } }} />}
+                {isMounted && <Toaster position="bottom-center" toastOptions={{ duration: 4000, style: { background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', border: '1px solid rgba(0,0,0,0.05)', color: '#1a1c1a', fontSize: '13px', fontWeight: '600', borderRadius: '100px', padding: '12px 24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)' } }} />}
 
                 <AnimatePresence>
                   {showSplash && <SplashScreen onComplete={handleSplashComplete} />}

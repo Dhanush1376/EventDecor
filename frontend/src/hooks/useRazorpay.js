@@ -3,15 +3,27 @@ import toast from 'react-hot-toast';
 import { orderService } from '../services/domainServices';
 
 import logger from '../utils/logger';
+let razorpayPromise = null;
+
 export const useRazorpay = () => {
   const loadScript = (src) => {
-    return new Promise((resolve) => {
+    if (razorpayPromise) return razorpayPromise;
+
+    razorpayPromise = new Promise((resolve) => {
+      if (document.querySelector(`script[src="${src}"]`)) {
+        if (window.Razorpay) return resolve(true);
+      }
       const script = document.createElement('script');
       script.src = src;
       script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
+      script.onerror = () => {
+        razorpayPromise = null;
+        resolve(false);
+      };
       document.body.appendChild(script);
     });
+
+    return razorpayPromise;
   };
 
   const processPayment = useCallback(async (orderData, onSuccess, onError) => {
@@ -39,7 +51,7 @@ export const useRazorpay = () => {
         currency: razorpayOrder.currency,
         name: 'Siri Arts & Crafts',
         description: 'Luxury Event Decor Order',
-        image: '/SiriLogo.png',
+        image: 'https://res.cloudinary.com/your-cloud-name/image/upload/v1/SiriLogo.webp',
         order_id: razorpayOrder.id,
         handler: async (response) => {
           try {

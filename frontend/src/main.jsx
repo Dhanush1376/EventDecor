@@ -57,8 +57,8 @@ window.addEventListener('error', (event) => {
 const warmBackend = () => {
   const root = getApiRootUrl();
   const healthUrl = root.startsWith('/')
-    ? `${root}/health`
-    : `${root}/health`;
+    ? `${root}/readiness`
+    : `${root}/readiness`;
     
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout

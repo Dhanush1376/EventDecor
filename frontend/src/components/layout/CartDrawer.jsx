@@ -72,7 +72,16 @@ export function CartDrawer({ isOpen, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 w-full max-w-[calc(100vw-48px)] sm:max-w-md h-[100dvh] bg-white z-[210] flex flex-col shadow-2xl"
+            drag="x"
+            dragDirectionLock
+            dragConstraints={{ left: 0, right: 100 }}
+            dragElastic={0.1}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (offset.x > 80 || velocity.x > 400) {
+                onClose();
+              }
+            }}
+            className="fixed right-0 top-0 w-full max-w-[calc(100vw-48px)] sm:max-w-md h-[100dvh] bg-white z-[210] flex flex-col shadow-2xl touch-pan-y"
           >
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-outline-variant/10">
@@ -86,7 +95,7 @@ export function CartDrawer({ isOpen, onClose }) {
               </div>
               <button
                 onClick={onClose}
-                className="touch-target text-secondary hover:text-on-surface transition-colors"
+                className="icon-button-touch-target text-secondary hover:text-on-surface transition-colors"
                 aria-label="Close shopping bag"
               >
                 <span className="material-symbols-outlined">close</span>
@@ -165,7 +174,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                     item.quantity - 1,
                                   )
                                 }
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container hover:text-primary transition-all"
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
                                 aria-label="Decrease quantity"
                               >
                                 <span className="material-symbols-outlined text-[18px]">
@@ -181,7 +190,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                       variant: item.variant,
                                     })
                                   }
-                                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${confirmingRemove?.id === item.id ? "bg-error text-white scale-110 shadow-lg" : "text-error/60 hover:bg-error/10 hover:text-error"}`}
+                                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${confirmingRemove?.id === item.id ? "bg-error text-white scale-110 shadow-lg" : "text-error/60 hover:bg-error/10 hover:text-error"}`}
                                   aria-label="Confirm remove"
                                 >
                                   <span className="material-symbols-outlined text-[18px]">
@@ -212,7 +221,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                   item.quantity + 1,
                                 )
                               }
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container hover:text-primary transition-all"
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
                               aria-label="Increase quantity"
                             >
                               <span className="material-symbols-outlined text-[18px]">
@@ -264,7 +273,7 @@ export function CartDrawer({ isOpen, onClose }) {
                 <Link
                   to="/checkout"
                   onClick={onClose}
-                  className="block w-full bg-primary text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-primary/95 transition-all shadow-xl shadow-primary/10"
+                  className="block w-full bg-primary text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-primary/95 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/10"
                 >
                   Proceed to Checkout
                 </Link>

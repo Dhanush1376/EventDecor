@@ -15,28 +15,15 @@ export function GallerySection() {
   const { galleryPreview, loading: cmsLoading } = useWebsiteContent();
 
   const [galleryItems, setGalleryItems] = useState([]);
+  const [rawGalleryItems, setRawGalleryItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchGallery = async () => {
-      if (!galleryPreview?.galleryIds || galleryPreview.galleryIds.length === 0) {
-        // Fallback or empty state
-        setLoading(false);
-        return;
-      }
-
       try {
-        // Fetch all gallery items by their IDs
-        // For simplicity, we can fetch all and filter, or add an API to fetch multiple by IDs
         const res = await galleryService.getAll({ limit: 12 });
         if (res.success) {
-          // If galleryPreview has specific IDs, filter them. If not, just show recent.
-          if (galleryPreview.galleryIds && galleryPreview.galleryIds.length > 0) {
-             const filtered = res.data.data.filter(item => galleryPreview.galleryIds.includes(item._id));
-             setGalleryItems(filtered.length > 0 ? filtered : res.data.data.slice(0, galleryPreview.maxDisplay || 6));
-          } else {
-             setGalleryItems(res.data.data.slice(0, galleryPreview.maxDisplay || 6));
-          }
+          setRawGalleryItems(res.data.data || []);
         }
       } catch (err) {
         logger.error("Failed to fetch gallery preview", err);
@@ -44,11 +31,19 @@ export function GallerySection() {
         setLoading(false);
       }
     };
+    fetchGallery();
+  }, []);
 
-    if (galleryPreview?.isVisible) {
-      fetchGallery();
+  useEffect(() => {
+    if (rawGalleryItems.length > 0) {
+      if (galleryPreview?.galleryIds && galleryPreview.galleryIds.length > 0) {
+         const filtered = rawGalleryItems.filter(item => galleryPreview.galleryIds.includes(item._id));
+         setGalleryItems(filtered.length > 0 ? filtered : rawGalleryItems.slice(0, galleryPreview.maxDisplay || 6));
+      } else {
+         setGalleryItems(rawGalleryItems.slice(0, galleryPreview?.maxDisplay || 6));
+      }
     }
-  }, [galleryPreview]);
+  }, [rawGalleryItems, galleryPreview]);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,

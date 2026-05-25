@@ -3,7 +3,7 @@ import { Server, Socket, Namespace } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import logger from './config/logger';
 import User from './models/User';
-import { isOriginAllowed } from './app';
+import { isOriginAllowed } from './config/corsConfig';
 import { ADMIN_ROLES } from './config/adminConfig';
 import { setSocketAdapterMode } from './config/socketState';
 import { createAdapter } from '@socket.io/redis-adapter';
@@ -43,19 +43,21 @@ const assertRedisForSocket = (hasRedisAdapter: boolean): void => {
 
   if (requireRedis || (isProduction && multiInstance)) {
     logger.error(
-      '[SOCKET CRITICAL] REDIS_URL is required for Socket.io when REQUIRE_REDIS=true or when running multiple instances. ' +
+      '[SOCKET CRITICAL] Redis adapter is required when REQUIRE_REDIS=true or when running multiple instances. ' +
         'Aborting startup to prevent split-brain real-time delivery.'
     );
     process.exit(1);
   }
 
+  const isConfigured = !!process.env.REDIS_URL?.trim();
+
   if (isProduction) {
     logger.warn(
-      '[SOCKET] REDIS_URL not set — using in-memory Socket.io adapter. ' +
-        'Real-time alerts only reach clients on the same instance. Set REDIS_URL before horizontal scaling.'
+      `[SOCKET] ${isConfigured ? 'Redis connection unavailable' : 'REDIS_URL not set'} — using in-memory Socket.io adapter. ` +
+        'Real-time alerts only reach clients on the same instance.'
     );
   } else {
-    logger.warn('[SOCKET] REDIS_URL not set — in-memory adapter (OK for local single-instance dev).');
+    logger.warn(`[SOCKET] ${isConfigured ? 'Redis unavailable' : 'REDIS_URL not set'} — using in-memory adapter (OK for local single-instance dev).`);
   }
 };
 

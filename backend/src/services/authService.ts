@@ -558,9 +558,8 @@ class AuthService {
       const namePart = cleanEmail.split('@')[0];
       const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
       
-      // Check if email matches the designated ADMIN_EMAIL from env
-      const adminEmails = getAdminEmails();
-      const role = adminEmails.some(addr => isSameEmail(cleanEmail, addr)) ? 'admin' : 'customer';
+      // Always default public registration to customer role
+      const role = 'customer';
 
       // Perform a smart-autofill using Gravatar profile endpoints asynchronously in the background
       const hash = crypto.createHash('md5').update(cleanEmail).digest('hex');
@@ -616,11 +615,15 @@ class AuthService {
         }
       })();
     } else {
-      user.isVerified = true;
       const adminEmails = getAdminEmails();
-      if (adminEmails.some(addr => isSameEmail(cleanEmail, addr))) {
-        user.role = 'admin';
+      const isAdminRole = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin'].includes(user.role);
+      const isAdminEmail = adminEmails.some(addr => isSameEmail(cleanEmail, addr));
+
+      if (isAdminRole || isAdminEmail) {
+        throw new ApiError(403, 'Administrative accounts must use the secure admin portal to log in.');
       }
+
+      user.isVerified = true;
     }
 
     user.lastLogin = new Date();

@@ -1,9 +1,9 @@
 import api, { refreshAccessToken } from './api';
-import { hasSessionMarker, getPersistedRefreshToken } from '../utils/authStorage';
+import { hasSessionMarker } from '../utils/authStorage';
 
 import logger from '../utils/logger';
 
-const checkAuthLocal = () => hasSessionMarker() || !!getPersistedRefreshToken();
+const checkAuthLocal = () => hasSessionMarker();
 
 export const authService = {
   login: async (email, password) => {
