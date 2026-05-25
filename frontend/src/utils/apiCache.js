@@ -27,6 +27,7 @@ const NO_CACHE_PATHS = [
   '/orders',
   '/notifications',
   '/health',
+  '/admin',
 ];
 
 const resolveTtl = (url = '') => {
