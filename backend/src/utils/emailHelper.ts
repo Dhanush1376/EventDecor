@@ -12,16 +12,16 @@ export const canonicalizeEmail = (email: string): string => {
 
   let [username, domain] = parts;
 
-  // Gmail and Googlemail ignore dots and everything after '+' for routing
+  // Gmail and Googlemail ignore everything after '+' for routing
   if (domain === 'gmail.com' || domain === 'googlemail.com') {
-    // Remove dots
-    username = username.replace(/\./g, '');
-    
     // Remove sub-addressing (plus tags)
     const plusIndex = username.indexOf('+');
     if (plusIndex !== -1) {
       username = username.substring(0, plusIndex);
     }
+    // We intentionally DO NOT remove dots from the username.
+    // While Gmail ignores dots, removing them causes mismatches with existing 
+    // database entries that were registered with dots.
   }
 
   return `${username}@${domain}`;
