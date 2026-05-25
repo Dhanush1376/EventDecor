@@ -18,6 +18,8 @@ import {
   setCustomerRefreshCookie,
   clearCustomerRefreshCookie,
   CUSTOMER_REFRESH_COOKIE,
+  ADMIN_REFRESH_COOKIE,
+  clearAdminRefreshCookie,
 } from '../utils/authCookies';
 
 export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
@@ -89,6 +91,7 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(
     req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
+      req.cookies?.[ADMIN_REFRESH_COOKIE] ||
       req.body?.refreshToken ||
       req.headers['x-refresh-token'] ||
       ''
@@ -115,6 +118,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(
     req.body?.refreshToken ||
       req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
+      req.cookies?.[ADMIN_REFRESH_COOKIE] ||
       req.headers['x-refresh-token'] ||
       ''
   ).trim();
@@ -128,6 +132,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
     await invalidateUserSessionCaches(String(userId));
   }
   clearCustomerRefreshCookie(res);
+  clearAdminRefreshCookie(res);
 
   res.status(200).json(new ApiResponse(true, 'Logged out successfully'));
 });
