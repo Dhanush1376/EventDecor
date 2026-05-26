@@ -16,6 +16,7 @@ env:
   ADMIN_EMAIL: admin@ci.example.com
   BREVO_API_KEY: ci_brevo_placeholder_key
   SMTP_FROM_EMAIL: no-reply@ci.example.com
+  FIELD_ENCRYPTION_KEY: ci_field_encryption_key_must_be_at_least_32_chars_long
   # Frontend build-time variables
   VITE_API_URL: https://api.ci.example.com/api
   VITE_SITE_URL: https://siriartsandcrafts.com
