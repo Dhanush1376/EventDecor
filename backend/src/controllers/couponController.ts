@@ -5,9 +5,10 @@ import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { setPaginationHeaders } from '../utils/paginationHeaders';
+import { ADMIN_ROLES } from '../config/adminConfig';
 
 export const getCoupons = asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = (req as any).user?.role === 'admin';
+  const isAdmin = ADMIN_ROLES.includes((req as any).user?.role);
   const { page, limit, skip } = getPaginationOptions(req.query);
 
   const filter = isAdmin ? {} : { isActive: true, expiryDate: { $gt: new Date() } };

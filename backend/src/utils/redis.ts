@@ -3,10 +3,11 @@ export type RedisClientType = ReturnType<typeof createClient>;
 import * as Sentry from '@sentry/node';
 import logger from '../config/logger';
 
-const redisUrl = process.env.REDIS_URL?.trim();
-
-// Ensure TLS configuration applies for rediss:// protocols
-const isTlsRedis = Boolean(redisUrl && (redisUrl.startsWith('rediss://') || redisUrl.includes('upstash.io')));
+const getRedisUrl = () => process.env.REDIS_URL?.trim();
+const isTlsRedis = () => {
+  const url = getRedisUrl();
+  return Boolean(url && (url.startsWith('rediss://') || url.includes('upstash.io')));
+};
 
 export let redisClient: RedisClientType | null = null;
 export let pubClient: RedisClientType | null = null;
@@ -38,18 +39,18 @@ const createRedisConfig = () => {
     }
   };
 
-  if (isTlsRedis) {
+  if (isTlsRedis()) {
     socketOpts.tls = true;
   }
 
   return {
-    url: redisUrl,
+    url: getRedisUrl(),
     socket: socketOpts
   };
 };
 
 export const initRedis = async (): Promise<void> => {
-  if (!redisUrl) {
+  if (!getRedisUrl()) {
     logger.warn('⚠️ REDIS_URL not provided. Running without Redis (Not recommended for multi-instance production).');
     return;
   }
@@ -93,7 +94,7 @@ export const initRedis = async (): Promise<void> => {
       subClient.connect(),
     ]);
 
-    logger.info(`✅ Redis Clients Connected successfully${isTlsRedis ? ' (TLS)' : ''}`);
+    logger.info(`✅ Redis Clients Connected successfully${isTlsRedis() ? ' (TLS)' : ''}`);
 
   } catch (err: any) {
     logger.error(`🚨 [REDIS CRITICAL] Failed to connect on startup: ${err.message}`);

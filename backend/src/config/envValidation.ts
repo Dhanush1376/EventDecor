@@ -39,10 +39,15 @@ export const collectMissingEnvVars = (options?: { ciMode?: boolean }): string[] 
 
   const encKey = process.env.FIELD_ENCRYPTION_KEY;
   if (!encKey || encKey.length < 32) {
-    missingVars.push('FIELD_ENCRYPTION_KEY (must be min 32 chars)');
+    missingVars.push('FIELD_ENCRYPTION_KEY (must be min 32 chars/bytes for secure AES-256 entropy)');
   }
   if (encKey && encKey === process.env.JWT_SECRET) {
     missingVars.push('FIELD_ENCRYPTION_KEY (must be distinct from JWT_SECRET)');
+  }
+
+  const redisUrl = process.env.REDIS_URL;
+  if (redisUrl && !redisUrl.startsWith('redis://') && !redisUrl.startsWith('rediss://')) {
+    missingVars.push('REDIS_URL (must start with redis:// or rediss:// for secure connections)');
   }
 
   if (isProduction) {

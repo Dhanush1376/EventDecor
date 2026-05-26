@@ -5,7 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
-import xss from 'xss-clean';
+const xss = require('xss-clean');
 import { handleRazorpayWebhook } from './controllers/orderController';
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
@@ -23,6 +23,10 @@ import { requestTrackerMiddleware } from './middleware/requestTracker';
 import { requestLogger } from './middleware/requestLogger';
 import { issueCsrfToken, validateCsrf } from './middleware/csrfMiddleware';
 import { isOriginAllowed, ALLOWED_VERCEL_PREVIEWS } from './config/corsConfig';
+import { dbReadinessGuard } from './middleware/dbReadinessGuard';
+import { requireAuth, requireAdmin } from './middleware/authMiddleware';
+import { getMetricsReport, metricsTrackerMiddleware } from './utils/metricsTracker';
+import { getIO } from './socket';
 
 
 // Use require for the inner xss-clean function
@@ -58,6 +62,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Boot Request Tracker AsyncLocalStorage context as early as possible
 app.use(requestTrackerMiddleware);
+app.use(metricsTrackerMiddleware);
 
 
 // 0. Initialize Sentry
@@ -99,7 +104,7 @@ app.use(helmet({
 
 // Permissions-Policy: restrict sensitive browser APIs
 app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), interest-cohort=()');
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(self), interest-cohort=()');
   next();
 });
 
@@ -182,6 +187,7 @@ app.use(cookieParser());
 app.get('/api/csrf-token', issueCsrfToken);
 app.get('/api/v1/csrf-token', issueCsrfToken); // Fallback for frontend base URLs pointing to /api/v1
 app.use('/api', validateCsrf);
+app.use(dbReadinessGuard);
 
 // Enable production-safe structured request logging and execution telemetry
 app.use(requestLogger);
@@ -275,6 +281,13 @@ const rateLimitConfig = (options: any) => {
 };
 
 const skipRateLimit = (req: Request) => {
+  if (process.env.NODE_ENV === 'development') {
+    const ip = req.ip || req.socket.remoteAddress || '';
+    if (ip.includes('127.0.0.1') || ip.includes('::1') || ip === 'localhost') {
+      return true;
+    }
+  }
+
   const path = (req.originalUrl || req.url || '').split('?')[0];
   return (
     path === '/api/health' ||
@@ -300,6 +313,7 @@ const authLimiter = rateLimitConfig({
   message: { message: 'Too many login attempts, please try again after 15 minutes' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipRateLimit,
 });
 
 const otpSendLimiter = rateLimitConfig({
@@ -308,6 +322,7 @@ const otpSendLimiter = rateLimitConfig({
   message: { message: 'Too many OTP requests from this IP. Please try again after 10 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipRateLimit,
 });
 
 const otpVerifyLimiter = rateLimitConfig({
@@ -316,6 +331,7 @@ const otpVerifyLimiter = rateLimitConfig({
   message: { message: 'Too many OTP verification attempts from this IP. Please try again after 10 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipRateLimit,
 });
 
 const testRateLimitEnabled = process.env.TEST_RATE_LIMIT === 'true';
@@ -346,6 +362,7 @@ if (process.env.NODE_ENV === 'production' || testRateLimitEnabled) {
     max: 1000,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: skipRateLimit,
   });
   app.use('/api/', devLimiter);
 }
@@ -424,6 +441,56 @@ app.get('/api/readiness', (req: Request, res: Response) => {
 app.get('/api/version', (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json({ version: process.env.npm_package_version || '1.0.0' });
+});
+
+// Telemetry & Metrics endpoint - protected, admin-only
+app.get('/api/metrics', requireAuth, requireAdmin, async (req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = dbState === 1 ? 'UP' : 'DOWN';
+  
+  let activeSockets = 0;
+  try {
+    const io = getIO();
+    if (io) {
+      activeSockets = io.engine.clientsCount;
+    }
+  } catch {
+    // Socket.io not yet initialized
+  }
+
+  const pingRedis = require('./utils/redis').pingRedis;
+  const redisStatus = await pingRedis();
+
+  const report = getMetricsReport();
+
+  res.status(200).json({
+    success: true,
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    database: {
+      status: dbStatus,
+      state: dbState,
+    },
+    redis: {
+      status: redisStatus,
+    },
+    realtime: {
+      activeConnections: activeSockets,
+      adapter: getSocketAdapterMode(),
+    },
+    system: {
+      memory: {
+        free: os.freemem(),
+        total: os.totalmem(),
+        usage: `${Math.round((1 - os.freemem() / os.totalmem()) * 100)}%`,
+        processUsage: process.memoryUsage(),
+      },
+      cpuLoad: os.loadavg(),
+    },
+    telemetry: report,
+  });
 });
 
 // 7. API Routes

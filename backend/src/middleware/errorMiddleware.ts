@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
+import { requestContextStorage } from './requestTracker';
 
 const errorMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
   let statusCode = err.statusCode || 500;
@@ -11,6 +12,34 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
   if (typeof err.message === 'string' && err.message.startsWith('Not allowed by CORS')) {
     statusCode = 403;
     message = 'CORS Policy Violation: Request from origin is not allowed.';
+  }
+
+  // Handle Mongoose Connection / MongoDB offline errors
+  else if (
+    err.name === 'MongoNotConnectedError' ||
+    err.name === 'MongoNetworkError' ||
+    err.name === 'MongoServerError' ||
+    err.message?.includes('not connected') ||
+    err.message?.includes('topology destroyed')
+  ) {
+    statusCode = 503;
+    message = 'Database connection is temporarily unavailable. Please try again in a few seconds.';
+  }
+
+  // Handle JSON SyntaxError (malformed payload from body-parser)
+  else if (err instanceof SyntaxError && 'body' in err && (err as any).status === 400) {
+    statusCode = 400;
+    message = 'Malformed JSON payload. Please verify your request body.';
+  }
+
+  // Handle Request/Payload Too Large (body-parser or multer limit)
+  else if (
+    err.type === 'entity.too.large' ||
+    err.status === 413 ||
+    err.code === 'LIMIT_FILE_SIZE'
+  ) {
+    statusCode = 413;
+    message = 'Request payload is too large. Please reduce the size of your upload.';
   }
 
   // Mongoose bad ObjectId
@@ -46,12 +75,6 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
   else if (err.name === 'TokenExpiredError') {
     statusCode = 401;
     message = 'Session expired. Please log in again.';
-  }
-
-  // Multer upload errors
-  else if (err.code === 'LIMIT_FILE_SIZE') {
-    statusCode = 400;
-    message = 'File size is too large. Please upload a smaller image.';
   }
 
   // Handle custom ApiError instances
@@ -90,10 +113,14 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
     }
   }
 
+  const store = requestContextStorage.getStore();
+  const requestId = store?.requestId;
+
   res.status(statusCode).json({
     success: false,
     message,
     errors,
+    requestId,
     stack: !isProduction ? err.stack : undefined,
   });
 };

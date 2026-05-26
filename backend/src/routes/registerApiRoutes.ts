@@ -19,6 +19,13 @@ import eventBookingRoutes from './eventBookingRoutes';
 import showcaseRoutes from './showcaseRoutes';
 import adminSystemRoutes from './adminSystemRoutes';
 import adminInviteRoutes from './adminInviteRoutes';
+import recommendationRoutes from './recommendationRoutes';
+import trackingRoutes from './trackingRoutes';
+import recommendationAnalyticsRoutes from './recommendationAnalyticsRoutes';
+import appConfigRoutes from './appConfigRoutes';
+import categoryRoutes from './categoryRoutes';
+import pageLayoutRoutes from './pageLayoutRoutes';
+import searchRoutes from './searchRoutes';
 
 /**
  * Mount all API routers under a prefix.
@@ -51,6 +58,15 @@ export const registerApiRoutes = (
   apiRouter.use('/showcases', showcaseRoutes);
   apiRouter.use('/admin', adminSystemRoutes);
   apiRouter.use('/admin/invites', adminInviteRoutes);
+  apiRouter.use('/recommendations', recommendationRoutes);
+  apiRouter.use('/tracking', trackingRoutes);
+  apiRouter.use('/analytics/recommendations', recommendationAnalyticsRoutes);
+  
+  // Dynamic Configuration & Architecture Routes
+  apiRouter.use('/config', appConfigRoutes);
+  apiRouter.use('/categories', categoryRoutes);
+  apiRouter.use('/layouts', pageLayoutRoutes);
+  apiRouter.use('/search', searchRoutes);
 
   app.use(prefix, apiRouter);
 };

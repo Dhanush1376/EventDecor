@@ -17,8 +17,72 @@ const requestContextFormat = winston.format((info) => {
   return info;
 });
 
+const sensitiveKeys = [
+  /password/i,
+  /secret/i,
+  /key/i,
+  /token/i,
+  /authorization/i,
+  /signature/i,
+  /otp/i,
+  /twoFactor/i
+];
+
+const maskValue = (value: any): any => {
+  if (typeof value === 'string') {
+    if (value.startsWith('Bearer ')) return 'Bearer [REDACTED]';
+    return '[REDACTED]';
+  }
+  return value;
+};
+
+const standardKeys = new Set(['level', 'message', 'timestamp', 'service', 'requestId', 'userId', 'ip', 'stack']);
+
+const maskObject = (obj: any): any => {
+  if (obj === null || obj === undefined) return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(maskObject);
+  }
+  
+  if (typeof obj === 'object') {
+    if (obj instanceof Error) {
+      return obj;
+    }
+    
+    const masked: any = {};
+    for (const key of Object.keys(obj)) {
+      if (standardKeys.has(key)) {
+        masked[key] = obj[key];
+        continue;
+      }
+      
+      const isSensitive = sensitiveKeys.some(regex => regex.test(key));
+      if (isSensitive) {
+        masked[key] = maskValue(obj[key]);
+      } else {
+        masked[key] = maskObject(obj[key]);
+      }
+    }
+    
+    const symbols = Object.getOwnPropertySymbols(obj);
+    for (const sym of symbols) {
+      masked[sym] = obj[sym];
+    }
+    
+    return masked;
+  }
+  
+  return obj;
+};
+
+const secretMaskingFormat = winston.format((info) => {
+  return maskObject(info);
+});
+
 const logFormat = winston.format.combine(
   requestContextFormat(),
+  secretMaskingFormat(),
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
@@ -60,6 +124,7 @@ logger.add(new winston.transports.Console({
   format: process.env.NODE_ENV === 'production'
     ? winston.format.combine(
         requestContextFormat(),
+        secretMaskingFormat(),
         winston.format.timestamp(),
         winston.format.json()
       )

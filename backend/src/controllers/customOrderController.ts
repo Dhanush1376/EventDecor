@@ -5,6 +5,7 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import { CustomOrderMailService } from '../services/customOrderMailService';
 import logger from '../config/logger';
+import { ADMIN_ROLES } from '../config/adminConfig';
 
 // DEFAULT CONFIG OPTIONS
 const DEFAULT_CONFIG = {
@@ -120,7 +121,7 @@ export const getSingleCustomOrder = asyncHandler(async (req: any, res: Response)
   }
 
   // Ensure security boundaries
-  if (req.user.role !== 'admin' && order.customerEmail !== req.user.email) {
+  if (!ADMIN_ROLES.includes(req.user.role as any) && order.customerEmail !== req.user.email) {
     res.status(403).json(new ApiResponse(false, 'Unauthorized view access restricted'));
     return;
   }
@@ -329,7 +330,7 @@ export const postMessage = asyncHandler(async (req: any, res: Response) => {
     return;
   }
 
-  const isSenderAdmin = req.user.role === 'admin';
+  const isSenderAdmin = ADMIN_ROLES.includes(req.user.role as any);
 
   if (!isSenderAdmin && order.customerEmail !== req.user.email) {
     res.status(403).json(new ApiResponse(false, 'Unauthorized message dispatch restricted'));

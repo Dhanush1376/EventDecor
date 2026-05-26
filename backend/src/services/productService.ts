@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Product, { IProduct } from '../models/Product';
 import Gallery from '../models/Gallery';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
@@ -5,6 +6,7 @@ import logger from '../config/logger';
 import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 import { categoryCache } from '../utils/MemoryCache';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
+import { analyzeQueryWithAI, escapeRegex } from './searchService';
 
 class ProductService {
   static async getAllProducts(queryParams: any) {
@@ -28,21 +30,51 @@ class ProductService {
       const collections = String(collection).split(',').map((item) => item.trim()).filter(Boolean);
       if (collections.length > 0) filter.category = { $in: collections.map((item) => new RegExp(`^${item}$`, 'i')) };
     }
+
+    let correctedQuery: string | undefined;
+
     if (search) {
-      const searchTerms = String(search).split(/\s+/).filter(Boolean);
-      if (searchTerms.length > 0) {
-        // Use regex for partial, case-insensitive match across multiple fields
-        // Must match ALL terms (AND logic across terms, OR logic across fields)
-        filter.$and = searchTerms.map(term => ({
-          $or: [
-            { title: { $regex: term, $options: 'i' } },
-            { category: { $regex: term, $options: 'i' } },
-            { material: { $regex: term, $options: 'i' } },
-            { tags: { $regex: term, $options: 'i' } },
-            { teluguTitle: { $regex: term, $options: 'i' } },
-            { description: { $regex: term, $options: 'i' } }
-          ]
-        }));
+      const aiAnalysis = await analyzeQueryWithAI(search);
+      
+      if (aiAnalysis.correctedQuery && aiAnalysis.correctedQuery.toLowerCase() !== search.toLowerCase()) {
+        correctedQuery = aiAnalysis.correctedQuery;
+      }
+
+      // Apply price filter from AI budget analysis if not manually set
+      if (aiAnalysis.priceMax && !maxPrice) {
+        filter.price = filter.price || {};
+        filter.price.$lte = aiAnalysis.priceMax;
+      }
+      if (aiAnalysis.priceMin && !minPrice) {
+        filter.price = filter.price || {};
+        filter.price.$gte = aiAnalysis.priceMin;
+      }
+
+      // Apply category from AI if not manually set
+      if (aiAnalysis.category && !category) {
+        filter.category = new RegExp(`^${aiAnalysis.category}$`, 'i');
+      }
+
+      const allSearchTerms = [
+        search,
+        aiAnalysis.correctedQuery,
+        ...aiAnalysis.expandedTerms
+      ];
+      const uniqueSearchTerms = [...new Set(allSearchTerms.filter(Boolean))];
+      const regexPatterns = uniqueSearchTerms.map(t => new RegExp(escapeRegex(t), 'i'));
+
+      filter.$or = [
+        { title: { $in: regexPatterns } },
+        { teluguTitle: { $in: regexPatterns } },
+        { category: { $in: regexPatterns } },
+        { material: { $in: regexPatterns } },
+        { tags: { $in: regexPatterns } },
+        { description: { $in: regexPatterns } }
+      ];
+
+      // Match colors if detected
+      if (aiAnalysis.colors.length > 0) {
+        filter.$or.push({ tags: { $in: aiAnalysis.colors.map(c => new RegExp(escapeRegex(c), 'i')) } });
       }
     }
 
@@ -59,12 +91,18 @@ class ProductService {
       Product.countDocuments(filter),
     ]);
 
-    const response = formatPaginationResponse(products, totalCount, page, limit);
+    const response: any = formatPaginationResponse(products, totalCount, page, limit);
+    response.correctedQuery = correctedQuery;
     return response;
   }
 
-  static async getProductById(id: string) {
-    const product = await Product.findById(id).lean();
+  static async getProductById(idOrSlug: string) {
+    let product;
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      product = await Product.findById(idOrSlug).lean();
+    } else {
+      product = await Product.findOne({ slug: idOrSlug.toLowerCase() }).lean();
+    }
     if (!product || !product.isActive) return null;
     return product;
   }

@@ -21,30 +21,49 @@ const connectDB = async (): Promise<void> => {
   };
 
   // Register connection event listeners to track DB health and connectivity states
-  mongoose.connection.on('connected', () => {
-    logger.info('🟢 [DATABASE] MongoDB connection established');
-  });
+  if (mongoose.connection.listeners('connected').length === 0) {
+    mongoose.connection.on('connected', () => {
+      logger.info('🟢 [DATABASE] MongoDB connection established');
+    });
 
-  mongoose.connection.on('error', (err) => {
-    logger.error(`🔴 [DATABASE] MongoDB connection error: ${err.message}`);
-  });
+    mongoose.connection.on('error', (err) => {
+      logger.error(`🔴 [DATABASE] MongoDB connection error: ${err.message}`);
+    });
 
-  mongoose.connection.on('disconnected', () => {
-    logger.warn('🟡 [DATABASE] MongoDB disconnected. Mongoose will automatically attempt to reconnect...');
-  });
+    mongoose.connection.on('disconnected', () => {
+      logger.warn('🟡 [DATABASE] MongoDB disconnected. Mongoose will automatically attempt to reconnect...');
+    });
 
-  mongoose.connection.on('reconnected', () => {
-    logger.info('🟢 [DATABASE] MongoDB reconnected successfully');
-  });
-
-  try {
-    await mongoose.connect(MONGO_URI, options);
-    logger.info('🚀 [DATABASE] Initial MongoDB Connection Succeeded');
-  } catch (err: any) {
-    // We log the error but DO NOT exit or reject if we want it to keep trying in the background
-    // Mongoose handles reconnections natively based on its options
-    logger.error(`❌ [DATABASE] Initial MongoDB connection failed: ${err.message}. Mongoose will keep retrying in the background.`);
+    mongoose.connection.on('reconnected', () => {
+      logger.info('🟢 [DATABASE] MongoDB reconnected successfully');
+    });
   }
+
+  const maxRetries = 5;
+  let attempt = 1;
+  let delay = 1000; // start with 1s delay
+
+  while (attempt <= maxRetries) {
+    try {
+      logger.info(`🔄 [DATABASE] Connecting to MongoDB (Attempt ${attempt}/${maxRetries})...`);
+      await mongoose.connect(MONGO_URI, options);
+      logger.info('🚀 [DATABASE] Initial MongoDB Connection Succeeded');
+      return;
+    } catch (err: any) {
+      logger.error(`❌ [DATABASE] MongoDB connection attempt ${attempt} failed: ${err.message}`);
+      if (attempt === maxRetries) {
+        throw new Error(`Failed to connect to MongoDB after ${maxRetries} attempts.`);
+      }
+      attempt++;
+      logger.info(`🔄 [DATABASE] Retrying MongoDB connection in ${delay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      delay *= 2; // exponential backoff
+    }
+  }
+};
+
+export const isDbReady = (): boolean => {
+  return mongoose.connection.readyState === 1;
 };
 
 export default connectDB;

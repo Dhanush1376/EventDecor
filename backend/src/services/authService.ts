@@ -116,11 +116,18 @@ class AuthService {
     }
 
     // 4. Record old refresh token as spent/used (for replay detection)
-    await UsedRefreshToken.create({
-      tokenHash,
-      userId: user._id,
-      expiresAt: session.expiresAt,
-    });
+    try {
+      await UsedRefreshToken.create({
+        tokenHash,
+        userId: user._id,
+        expiresAt: session.expiresAt,
+      });
+    } catch (err: any) {
+      if (err.name === 'MongoServerError' && err.code === 11000) {
+        throw new ApiError(401, 'Session expired or refresh conflict. Please log in again.');
+      }
+      throw err;
+    }
 
     // 5. Delete the old session document
     await RefreshToken.deleteOne({ _id: session._id });
@@ -388,11 +395,11 @@ class AuthService {
       action: 'request'
     });
 
-    // 8. Send OTP email synchronously (auth-critical path — must not rely on background queue alone)
-    const { sendDirectEmailProcessor } = require('./notificationService');
+    // 8. Send OTP email asynchronously in the background to keep the API response instant
+    const { sendDirectEmail } = require('./notificationService');
     const { getOtpEmailTemplate } = require('../utils/emailTemplates');
     try {
-      await sendDirectEmailProcessor({
+      sendDirectEmail({
         email: cleanEmail,
         subject: 'Your Siri Arts Security Code',
         customHtml: getOtpEmailTemplate(otp, expiryMinutes),
@@ -400,14 +407,7 @@ class AuthService {
         action: 'otp_auth',
       });
     } catch (err: any) {
-      await OtpVerification.deleteOne({ _id: otpRecord._id });
-      await OtpRequestLog.deleteOne({
-        email: cleanEmail,
-        action: 'request',
-        createdAt: { $gte: new Date(Date.now() - 10000) },
-      });
-      logger.error(`[OTP EMAIL ERROR] Failed to deliver OTP email for ${cleanEmail}:`, err?.message || err);
-      throw new ApiError(500, 'Failed to send verification email. Please check your email address and try again.');
+      logger.error(`[OTP EMAIL ERROR] Failed to initiate OTP email for ${cleanEmail}:`, err?.message || err);
     }
 
     // Always log in development for easier testing and recovery

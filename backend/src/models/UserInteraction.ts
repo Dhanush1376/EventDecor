@@ -1,0 +1,95 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export type InteractionEventType =
+  | 'product_view'
+  | 'product_click'
+  | 'gallery_view'
+  | 'gallery_click'
+  | 'event_view'
+  | 'event_click'
+  | 'showcase_view'
+  | 'wishlist_add'
+  | 'wishlist_remove'
+  | 'cart_add'
+  | 'cart_remove'
+  | 'purchase'
+  | 'booking'
+  | 'search'
+  | 'category_explore'
+  | 'review_read'
+  | 'review_submit';
+
+export type TargetType = 'product' | 'event' | 'gallery' | 'showcase';
+
+export interface IUserInteraction extends Document {
+  userId?: mongoose.Types.ObjectId;
+  sessionId: string;
+  eventType: InteractionEventType;
+  targetType: TargetType;
+  targetId: mongoose.Types.ObjectId;
+  metadata: {
+    category?: string;
+    style?: string;
+    tags?: string[];
+    priceRange?: string;
+    searchQuery?: string;
+    dwellTimeMs?: number;
+    scrollDepth?: number;
+    source?: string;
+  };
+  timestamp: Date;
+  createdAt: Date;
+}
+
+const UserInteractionSchema: Schema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+    sessionId: { type: String, required: true },
+    eventType: {
+      type: String,
+      required: true,
+      enum: [
+        'product_view', 'product_click', 'gallery_view', 'gallery_click',
+        'event_view', 'event_click', 'showcase_view',
+        'wishlist_add', 'wishlist_remove',
+        'cart_add', 'cart_remove',
+        'purchase', 'booking',
+        'search', 'category_explore',
+        'review_read', 'review_submit',
+      ],
+    },
+    targetType: {
+      type: String,
+      required: true,
+      enum: ['product', 'event', 'gallery', 'showcase'],
+    },
+    targetId: { type: Schema.Types.ObjectId, required: true },
+    metadata: {
+      category: { type: String },
+      style: { type: String },
+      tags: [{ type: String }],
+      priceRange: { type: String, enum: ['budget', 'mid', 'premium', 'luxury'] },
+      searchQuery: { type: String },
+      dwellTimeMs: { type: Number },
+      scrollDepth: { type: Number, min: 0, max: 100 },
+      source: { type: String },
+    },
+    timestamp: { type: Date, default: Date.now, required: true },
+  },
+  {
+    timestamps: { createdAt: true, updatedAt: false },
+  }
+);
+
+// ── Performance Indexes ──
+UserInteractionSchema.index({ userId: 1, timestamp: -1 });
+UserInteractionSchema.index({ sessionId: 1, timestamp: -1 });
+UserInteractionSchema.index({ targetId: 1, eventType: 1 });
+UserInteractionSchema.index({ eventType: 1, timestamp: -1 });
+UserInteractionSchema.index({ 'metadata.category': 1, eventType: 1, timestamp: -1 });
+
+// TTL Index — auto-delete interactions older than 90 days
+UserInteractionSchema.index({ timestamp: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+
+const UserInteraction = mongoose.model<IUserInteraction>('UserInteraction', UserInteractionSchema);
+export default UserInteraction;

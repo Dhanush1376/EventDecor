@@ -92,6 +92,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
   }
 
   if (!token) {
+    // Silently throw 401 to prevent log spam for unauthenticated users
     throw new ApiError(401, 'Not authorized to access this route');
   }
 
@@ -110,7 +111,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     if (!user) {
       // Promise.race to enforce a strict timeout (3 seconds) if MongoDB is hanging
       const mongoQuery = User.findById(decoded.id).select('role email isVerified passwordChangedAt').lean().exec();
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('MongoDB Auth Lookup Timeout')), 3000));
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('MongoDB Auth Lookup Timeout')), 10000));
       
       try {
         user = await Promise.race([mongoQuery, timeout]);
@@ -128,6 +129,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     }
 
     if (!user || !user.isVerified) {
+      logger.warn(`requireAuth failed: User not found or not verified for ID ${decoded.id}`);
       throw new ApiError(401, 'Not authorized to access this route');
     }
 
@@ -136,6 +138,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
       decoded.iat != null &&
       decoded.iat < Math.floor(new Date(user.passwordChangedAt).getTime() / 1000)
     ) {
+      logger.warn(`requireAuth failed: Password changed since token issue for user ID ${decoded.id}`);
       throw new ApiError(401, 'Password changed. Please log in again.');
     }
 
@@ -148,6 +151,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     
     next();
   } catch (err) {
+    logger.warn(`requireAuth failed with error for route ${req.originalUrl}: ${err}`);
     if (err instanceof ApiError) throw err;
     throw new ApiError(401, 'Not authorized to access this route');
   }
@@ -231,16 +235,16 @@ export const publicTrackingAuth = asyncHandler(async (req: Request, res: Respons
 
 export const requireAdmin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   if (!req.user) {
+    logger.warn(`requireAdmin failed: No req.user for path ${req.originalUrl}`);
     throw new ApiError(401, 'Authentication required');
   }
 
   if (ADMIN_ROLES.includes(req.user.role as any)) {
-    // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
     await checkSafetyLock(req);
-
     logAdminAudit(req, res);
     next();
   } else {
+    logger.warn(`requireAdmin failed: role ${req.user.role} not in ADMIN_ROLES for user ID ${req.user.id}`);
     throw new ApiError(403, 'Admin resource! Access denied');
   }
 });

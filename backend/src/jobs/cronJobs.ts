@@ -8,8 +8,14 @@ import { releaseStalePendingOrders } from './staleOrderCleanup';
 import { PaymentReconciliationService } from '../services/paymentReconciliationService';
 import { checkCloudinaryCdn } from '../utils/cdnHealth';
 import { getAdminEmails } from '../config/adminConfig';
+import { recommendationQueue, isQueuesReady } from './queues';
 
 export const initJobs = () => {
+  if (process.env.ENABLE_CRON === 'false') {
+    logger.info('? Background cron jobs are disabled locally (ENABLE_CRON=false)');
+    return;
+  }
+
   // 1. Cleanup Draft Revisions every Sunday at midnight
   cron.schedule('0 0 * * 0', async () => {
     await withCronLock('cms-revision-cleanup', 3600, async () => {
@@ -115,6 +121,58 @@ export const initJobs = () => {
         }
       } catch (err) {
         logger.error('[BACKUP] Failed to send weekly backup reminder email:', err);
+      }
+    });
+  });
+
+  // 9. Recommendation: Update trending rankings every 15 minutes
+  cron.schedule('*/15 * * * *', async () => {
+    if (!isQueuesReady()) return;
+    await withCronLock('reco-trending-update', 14 * 60, async () => {
+      try {
+        await recommendationQueue.add('update-trending', { type: 'update-trending' }, { priority: 3 });
+        logger.info('[CRON] Enqueued recommendation trending update');
+      } catch (err: any) {
+        logger.error(`[CRON] Failed to enqueue trending update: ${err.message}`);
+      }
+    });
+  });
+
+  // 10. Recommendation: Rebuild stale user profiles every 6 hours
+  cron.schedule('0 */6 * * *', async () => {
+    if (!isQueuesReady()) return;
+    await withCronLock('reco-profile-rebuild', 5 * 60 * 60, async () => {
+      try {
+        await recommendationQueue.add('rebuild-stale-profiles', { type: 'rebuild-stale-profiles' }, { priority: 5 });
+        logger.info('[CRON] Enqueued stale profile rebuild');
+      } catch (err: any) {
+        logger.error(`[CRON] Failed to enqueue profile rebuild: ${err.message}`);
+      }
+    });
+  });
+
+  // 11. Recommendation: Seasonal context check (daily at midnight IST = 18:30 UTC)
+  cron.schedule('30 18 * * *', async () => {
+    if (!isQueuesReady()) return;
+    await withCronLock('reco-seasonal-update', 3600, async () => {
+      try {
+        await recommendationQueue.add('update-seasonal-context', { type: 'update-seasonal-context' }, { priority: 5 });
+        logger.info('[CRON] Enqueued seasonal context update');
+      } catch (err: any) {
+        logger.error(`[CRON] Failed to enqueue seasonal update: ${err.message}`);
+      }
+    });
+  });
+
+  // 12. Recommendation: Take trending snapshot (hourly)
+  cron.schedule('0 * * * *', async () => {
+    if (!isQueuesReady()) return;
+    await withCronLock('reco-trending-snapshot', 55 * 60, async () => {
+      try {
+        await recommendationQueue.add('snapshot-trending', { type: 'snapshot-trending' }, { priority: 8 });
+        logger.info('[CRON] Enqueued trending snapshot');
+      } catch (err: any) {
+        logger.error(`[CRON] Failed to enqueue trending snapshot: ${err.message}`);
       }
     });
   });

@@ -1,3 +1,4 @@
+import '../config/loadEnv';
 import { Queue, QueueOptions } from 'bullmq';
 import IORedis from 'ioredis';
 import logger from '../config/logger';
@@ -6,7 +7,10 @@ const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
 // Configure IORedis for BullMQ (reusing the same Redis server)
 export const connection = new IORedis(redisUrl, {
-  maxRetriesPerRequest: null,
+  maxRetriesPerRequest: 3,
+  enableReadyCheck: false,
+  connectTimeout: 10000,
+  lazyConnect: true,
   tls: redisUrl.startsWith('rediss://') || redisUrl.includes('upstash.io') ? { rejectUnauthorized: process.env.REDIS_REJECT_UNAUTHORIZED !== 'false' } : undefined
 });
 
@@ -31,14 +35,51 @@ const defaultQueueOptions: QueueOptions = {
   },
 };
 
-// Define core application queues
-export const emailQueue = new Queue('emailQueue', defaultQueueOptions);
-export const notificationQueue = new Queue('notificationQueue', defaultQueueOptions);
-export const loyaltyQueue = new Queue('loyaltyQueue', defaultQueueOptions);
+// Declare core application queues as let (live bindings)
+export let emailQueue: Queue;
+export let notificationQueue: Queue;
+export let loyaltyQueue: Queue;
+export let recommendationQueue: Queue;
+
+let queuesInitialized = false;
+
+export const initQueues = async () => {
+  if (queuesInitialized) return;
+  
+  const requireRedis = process.env.REQUIRE_REDIS === 'true';
+  try {
+    logger.info('🔄 [BULLMQ] Connecting and initializing queues...');
+    
+    // Explicitly trigger connection since lazyConnect: true is set
+    await connection.connect();
+    
+    emailQueue = new Queue('emailQueue', defaultQueueOptions);
+    notificationQueue = new Queue('notificationQueue', defaultQueueOptions);
+    loyaltyQueue = new Queue('loyaltyQueue', defaultQueueOptions);
+    recommendationQueue = new Queue('recommendationQueue', defaultQueueOptions);
+    
+    queuesInitialized = true;
+    logger.info('🟢 [BULLMQ] Queues initialized successfully');
+  } catch (err: any) {
+    logger.error(`🔴 [BULLMQ] Failed to initialize queues: ${err.message}`);
+    if (requireRedis) {
+      throw err;
+    } else {
+      logger.warn('🟡 [BULLMQ] Continuing without queues due to REQUIRE_REDIS=false');
+    }
+  }
+};
+
+export const isQueuesReady = (): boolean => {
+  return queuesInitialized && connection.status === 'ready';
+};
 
 export const closeQueues = async () => {
-  await emailQueue.close();
-  await notificationQueue.close();
-  await loyaltyQueue.close();
+  if (queuesInitialized) {
+    if (emailQueue) await emailQueue.close();
+    if (notificationQueue) await notificationQueue.close();
+    if (loyaltyQueue) await loyaltyQueue.close();
+    if (recommendationQueue) await recommendationQueue.close();
+  }
   connection.disconnect();
 };
