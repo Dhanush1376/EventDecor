@@ -34,6 +34,7 @@ export function EventCollections() {
   const [sortBy, setSortBy] = useState("Popularity");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
+  const sentinelRef = React.useRef(null);
   const [currentPage, setCurrentPage] = useState(pageParam);
 
 
@@ -208,8 +209,16 @@ export function EventCollections() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setIsSticky(window.scrollY > 400);
+    const handleScroll = () => {
+      if (sentinelRef.current) {
+        const rect = sentinelRef.current.getBoundingClientRect();
+        const isMobile = window.innerWidth < 768;
+        const negativeMargin = isMobile ? 24 : 32;
+        setIsSticky(rect.top <= 60 + negativeMargin);
+      }
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -421,13 +430,20 @@ export function EventCollections() {
       </section>
 
       {/* Sticky Discovery Bar */}
+      {/* Sentinel for sticky trigger */}
+      <div ref={sentinelRef} />
+
       {/* Floating / Sticky Navigation Bar Wrapper to prevent layout shift and glitching */}
       <div className={isSticky ? "h-[68px] lg:h-[76px] mb-8 md:mb-12" : ""}>
         <nav
-          className={`z-50 border-b transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full bg-white/95 backdrop-blur-xl border-black/5 py-3 shadow-md" : "border-transparent relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"}`}
+          className={`z-50 transition-all duration-500 ${
+            isSticky 
+              ? "fixed top-[60px] left-0 w-full bg-transparent border-transparent py-2 px-margin-mobile md:px-margin-desktop pointer-events-none" 
+              : "border-transparent relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"
+          }`}
         >
           <div
-            className={`transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 ${!isSticky ? "bg-white/80 backdrop-blur-lg border-black/5 shadow-luxury/5 rounded-[2rem] p-3 md:p-4" : "border-transparent max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop w-full"}`}
+            className="transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 bg-white/90 backdrop-blur-xl border-black/5 shadow-md rounded-[2rem] p-3 md:p-4 w-full pointer-events-auto max-w-max-width mx-auto"
           >
             {/* Search Bar & Mobile Filter Toggle */}
             <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">

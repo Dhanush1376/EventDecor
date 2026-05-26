@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { GalleryCard } from "../components/gallery/GalleryCard";
+import { VirtualizedMasonry } from "../components/gallery/VirtualizedMasonry";
 import { galleryService, productService } from "../services/domainServices";
 import { ProductCard, QuickViewModal, SearchBar, CategoryTabs, CustomDropdown } from "../components/ui";
 import { SEO } from "../components/seo/SEO";
@@ -9,6 +10,7 @@ import { MandalaElement } from "../components/ui/MandalaElement";
 import { GallerySlideshow } from "../components/gallery/GallerySlideshow";
 import { GallerySkeleton } from "../components/ui/Skeleton";
 import { useQuery } from "@tanstack/react-query";
+import { useInfiniteGallery } from "../hooks/useInfiniteGallery";
 import toast from "react-hot-toast";
 
 import logger from '../utils/logger';
@@ -24,14 +26,22 @@ export function Gallery() {
   const [slideshowIndex, setSlideshowIndex] = useState(-1);
   const [showFloatingExit, setShowFloatingExit] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
+  const sentinelRef = React.useRef(null);
 
-  const { data: galleryItems = [], isLoading: isGalleryLoading, isError: isGalleryError } = useQuery({
-    queryKey: ['gallery'],
-    queryFn: async () => {
-      const res = await galleryService.getAll();
-      return res.success ? (res.data.data || res.data.items || res.data || []) : [];
-    },
-    staleTime: 5 * 60 * 1000,
+  const {
+    items: filteredItems,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    isLoading: isGalleryLoading,
+    isError: isGalleryError
+  } = useInfiniteGallery({
+    category: activeCategory,
+    event: activeEvent,
+    style: activeStyle,
+    type: filterType,
+    search: searchQuery,
   });
 
   const { data: categories = ["All"], isLoading: isCategoriesLoading, isError: isCategoriesError } = useQuery({
@@ -74,8 +84,16 @@ export function Gallery() {
   };
 
   useEffect(() => {
-    const handleScroll = () => setIsSticky(window.scrollY > 300);
+    const handleScroll = () => {
+      if (sentinelRef.current) {
+        const rect = sentinelRef.current.getBoundingClientRect();
+        const isMobile = window.innerWidth < 768;
+        const negativeMargin = isMobile ? 24 : 32;
+        setIsSticky(rect.top <= 60 + negativeMargin);
+      }
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -99,47 +117,21 @@ export function Gallery() {
     }
   }, [isGalleryMode]);
 
-  const filteredItems = useMemo(() => {
-    return galleryItems
-      .filter((item) => {
-        const matchType =
-          filterType === "all" ||
-          item.type === filterType ||
-          (filterType === "inspiration" && !item.type);
+  useEffect(() => {
+    if (isFilterDrawerOpen) {
+      document.body.classList.add("filters-open");
+    } else {
+      document.body.classList.remove("filters-open");
+    }
+    return () => document.body.classList.remove("filters-open");
+  }, [isFilterDrawerOpen]);
 
-        const matchCat =
-          activeCategory === "All" ||
-          item.category === activeCategory;
-        const matchEvt =
-          activeEvent === "All" || item.event === activeEvent;
-        const matchStl = activeStyle === "All" || item.style === activeStyle;
-        const matchSearch =
-          searchQuery === "" ||
-          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (item.tags && item.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())));
+  // filteredItems is now directly sourced from useInfiniteGallery which handles both remote querying and local mapping
 
-        return matchType && matchCat && matchEvt && matchStl && matchSearch;
-      })
-      .map((item, idx) => ({
-        ...item,
-        id: item._id || item.id,
-        height:
-          (!item.height || item.height === "aspect-square")
-            ? (idx % 4 === 0
-              ? "aspect-[2/3]"
-              : idx % 4 === 1
-                ? "aspect-square"
-                : idx % 4 === 2
-                  ? "aspect-[4/5]"
-                  : "aspect-[3/4]")
-            : item.height,
-      }));
-  }, [galleryItems, activeCategory, activeEvent, activeStyle, searchQuery, filterType]);
 
   return (
     <div
-      className={`bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative ${isGalleryMode ? "pt-8" : "pt-20 md:pt-28"} pb-32 md:pb-20 overflow-hidden transition-all duration-300`}
+      className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-20 md:pt-28 pb-32 md:pb-20 overflow-hidden transition-all duration-300"
     >
       <SEO
         title="Inspiration Gallery"
@@ -193,20 +185,23 @@ export function Gallery() {
         </div>
       </section>
 
+      {/* Sentinel for sticky trigger */}
+      <div ref={sentinelRef} />
+
       {/* Floating / Sticky Navigation Bar Wrapper to prevent layout shift and glitching */}
       <div className={isSticky ? "h-[68px] lg:h-[76px] mb-8 md:mb-12" : ""}>
         <nav
-          className={`z-40 border-b transition-all duration-500 ${
-            isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full bg-white/95 backdrop-blur-xl py-3 border-black/5 shadow-md" : "border-transparent relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"
+          className={`z-40 transition-all duration-500 ${
+            isSticky 
+              ? "fixed top-[60px] left-0 w-full bg-transparent border-transparent py-2 px-margin-mobile md:px-margin-desktop pointer-events-none" 
+              : "border-transparent relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"
           }`}
         >
           <div
-            className={`transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 ${
-              !isSticky ? "bg-white/80 backdrop-blur-lg border-black/5 shadow-luxury/5 rounded-[2rem] p-3 md:p-4" : "border-transparent max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop w-full"
-            }`}
+            className="transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 bg-white/90 backdrop-blur-xl border-black/5 shadow-md rounded-[2rem] p-3 md:p-4 w-full pointer-events-auto max-w-max-width mx-auto"
           >
             {/* Search Bar & Mobile / Tablet Actions */}
-            <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
+            <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
               <div className="flex-1 h-11">
                 <SearchBar
                   value={searchQuery}
@@ -222,7 +217,7 @@ export function Gallery() {
               <button
                 onClick={() => setIsFilterDrawerOpen(true)}
                 aria-label="Open filters"
-                className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
+                className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-[0.98] active:opacity-90 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
               >
                 <span className="material-symbols-outlined text-[20px]">tune</span>
               </button>
@@ -237,7 +232,7 @@ export function Gallery() {
                   }
                 }}
                 aria-label="Toggle gallery mode"
-                className={`lg:hidden flex items-center justify-center w-11 h-11 rounded-full shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none ${
+                className={`lg:hidden flex items-center justify-center w-11 h-11 rounded-full shadow-md transition-all active:scale-[0.98] active:opacity-90 shrink-0 outline-none focus:outline-none focus-visible:outline-none ${
                   isGalleryMode ? "bg-primary text-white text-surface" : "bg-white text-black/50 border border-black/10"
                 }`}
               >
@@ -304,30 +299,25 @@ export function Gallery() {
           <GallerySkeleton />
         ) : (
           <>
-            {/* Pinterest Masonry Grid */}
-            <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-6">
-              <AnimatePresence mode="popLayout">
-                {filteredItems.map((item, index) => (
-                  <motion.div
-                    key={`${item.type}-${item.id}`}
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.5 }}
-                    className="break-inside-avoid mb-6"
-                  >
-                    <GalleryCard
-                      item={item}
-                      eager={index < 4}
-                      onImageClick={
-                        isGalleryMode ? () => setSlideshowIndex(index) : undefined
-                      }
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
+            {/* Pinterest Masonry Grid — Virtualized for 10k+ items */}
+            <VirtualizedMasonry
+              items={filteredItems}
+              loadMore={fetchNextPage}
+              hasMore={hasNextPage}
+              isLoading={isFetchingNextPage}
+              renderItem={(item, index) => (
+                <GalleryCard
+                  item={item}
+                  eager={index < 4}
+                  onImageClick={
+                    isGalleryMode ? () => setSlideshowIndex(index) : undefined
+                  }
+                />
+              )}
+              columns={{ sm: 2, md: 2, lg: 3, xl: 4 }}
+              gap="gap-4 sm:gap-6"
+              batchSize={20}
+            />
 
             {filteredItems.length === 0 && (
               <div className="py-32 text-center">

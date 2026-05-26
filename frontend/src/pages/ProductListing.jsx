@@ -36,6 +36,7 @@ export function ProductListing() {
   const [sortBy, setSortBy] = useState("Popularity");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
+  const sentinelRef = React.useRef(null);
   const [activeProduct, setActiveProduct] = useState(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(pageParam);
@@ -128,7 +129,7 @@ export function ProductListing() {
       backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204",
     },
     promo: {
-      title: "Seasonal Decor —",
+      title: "",
       highlightText: "Up to 40% Off",
       description: "Bring home heritage-inspired elegance with our exclusive handcrafted seasonal collections. Limited stock available for high-fidelity pieces.",
       backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w",
@@ -220,8 +221,16 @@ export function ProductListing() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setIsSticky(window.scrollY > 400);
+    const handleScroll = () => {
+      if (sentinelRef.current) {
+        const rect = sentinelRef.current.getBoundingClientRect();
+        const isMobile = window.innerWidth < 768;
+        const negativeMargin = isMobile ? 24 : 32;
+        setIsSticky(rect.top <= 60 + negativeMargin);
+      }
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -355,16 +364,23 @@ export function ProductListing() {
         </div>
       </section>
 
+      {/* Sentinel for sticky trigger */}
+      <div ref={sentinelRef} />
+
       {/* Floating / Sticky Navigation Bar Wrapper to prevent layout shift and glitching */}
       <div className={isSticky ? "h-[68px] lg:h-[76px] mb-8 md:mb-12" : ""}>
         <nav
-          className={`z-40 border-b transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full bg-white/95 backdrop-blur-xl border-black/5 py-3 shadow-md" : "border-transparent relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"}`}
+          className={`z-40 transition-all duration-500 ${
+            isSticky 
+              ? "fixed top-[60px] left-0 w-full bg-transparent border-transparent py-2 px-margin-mobile md:px-margin-desktop pointer-events-none" 
+              : "relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"
+          }`}
         >
           <div
-            className={`transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 ${!isSticky ? "bg-white/80 backdrop-blur-lg border-black/5 shadow-luxury/5 rounded-[2rem] p-3 md:p-4" : "border-transparent max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop w-full"}`}
+            className="transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 bg-white/90 backdrop-blur-xl border-black/5 shadow-md rounded-[2rem] p-3 md:p-4 w-full pointer-events-auto max-w-max-width mx-auto"
           >
             {/* Search Bar & Mobile Filter Toggle */}
-            <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
+            <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
               <div className="flex-1 h-11">
                 <SearchBar
                   value={searchQuery}
@@ -377,7 +393,7 @@ export function ProductListing() {
               <button
                 onClick={() => setIsFilterOpen(true)}
                 aria-label="Open filters"
-                className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
+                className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-[0.98] active:opacity-90 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
               >
                 <span className="material-symbols-outlined text-[20px]">
                   tune
@@ -503,6 +519,28 @@ export function ProductListing() {
                 onCategoryChange={handleCategorySelect}
               />
             </div>
+
+            {productsData?.correctedQuery && (
+              <div className="mb-8 px-6 py-4 bg-primary/5 text-primary rounded-[20px] border border-primary/10 text-[14px] font-medium flex items-center gap-2.5 shadow-sm">
+                <span className="material-symbols-outlined text-[20px] text-primary">lightbulb</span>
+                <span>
+                  Showing results for{" "}
+                  <Link
+                    to={`/collections?search=${encodeURIComponent(productsData.correctedQuery)}`}
+                    className="font-bold underline hover:text-primary-dark"
+                  >
+                    {productsData.correctedQuery}
+                  </Link>
+                  . Search instead for{" "}
+                  <Link
+                    to={`/collections?search=${encodeURIComponent(searchQuery)}`}
+                    className="underline text-on-surface-variant/80 hover:text-on-surface"
+                  >
+                    {searchQuery}
+                  </Link>
+                </span>
+              </div>
+            )}
 
             {loading ? (
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">

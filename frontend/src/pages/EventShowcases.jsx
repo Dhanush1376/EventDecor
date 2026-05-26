@@ -5,7 +5,7 @@ import { SEO } from "../components/seo/SEO";
 import { showcaseService, bookingService } from "../services/domainServices";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { MandalaElement } from "../components/ui/MandalaElement";
-import { SearchBar, CategoryTabs, CustomDropdown, Pagination, Skeleton, ShowcaseCard } from "../components/ui";
+import { SearchBar, CategoryTabs, CustomDropdown, Pagination, Skeleton, ShowcaseCard, EventShowcaseFilterPanel } from "../components/ui";
 import { handleImageError } from "../utils/imageUtils";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -56,6 +56,7 @@ export function EventShowcases() {
   const [sortBy, setSortBy] = useState("Popularity");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
+  const sentinelRef = React.useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
 
@@ -98,8 +99,16 @@ export function EventShowcases() {
   }, [searchQuery]);
 
   useEffect(() => {
-    const handleScroll = () => setIsSticky(window.scrollY > 380);
+    const handleScroll = () => {
+      if (sentinelRef.current) {
+        const rect = sentinelRef.current.getBoundingClientRect();
+        const isMobile = window.innerWidth < 768;
+        const negativeMargin = isMobile ? 32 : 48; // -mt-8 is 32px, -mt-12 is 48px
+        setIsSticky(rect.top <= 60 + negativeMargin);
+      }
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -281,84 +290,7 @@ export function EventShowcases() {
     }
   };
 
-  // Dedicated Showcase Filter Accordion
-  const renderFilterSection = (title, key, options) => {
-    return (
-      <div className="mb-8 border-b border-outline-variant/10 pb-6 last:border-0 last:pb-0">
-        <div className="flex justify-between items-center py-2 text-left font-label text-xs text-on-surface uppercase tracking-[0.2em] font-bold">
-          <span>{title}</span>
-        </div>
-        <div className="mt-4 space-y-3 pl-1">
-          {options.map((opt) => {
-            const isChecked = filters[key]?.includes(opt.label);
-            return (
-              <label key={opt.label} className="flex items-center justify-between cursor-pointer group">
-                <div className="flex items-center gap-3">
-                  <div className="relative flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => toggleFilter(key, opt.label)}
-                      className="peer appearance-none h-4.5 w-4.5 border border-outline-variant/50 rounded-sm bg-transparent checked:bg-primary checked:border-primary transition-all cursor-pointer focus:ring-2 focus:ring-primary/20"
-                    />
-                    <span className="absolute material-symbols-outlined text-white text-[14px] opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-                      check
-                    </span>
-                  </div>
-                  <span className={`font-body text-sm transition-colors ${isChecked ? "text-primary font-semibold" : "text-on-surface/60 group-hover:text-on-surface"}`}>
-                    {opt.label}
-                  </span>
-                </div>
-                {opt.count !== undefined && (
-                  <span className="font-label text-[10px] text-secondary/40 font-bold">{opt.count}</span>
-                )}
-              </label>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
-  const filterDrawerContent = (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-outline-variant/30">
-        <div>
-          <h2 className="font-headline-sm text-on-surface font-bold text-lg">Showcase Filters</h2>
-          <span className="font-label text-[10px] text-primary uppercase tracking-[0.3em] mt-1 block">Refine Arrangements</span>
-        </div>
-        <button
-          onClick={clearAllFilters}
-          className="font-label text-[10px] uppercase tracking-widest text-secondary hover:text-primary transition-colors font-bold cursor-pointer underline underline-offset-4"
-        >
-          Clear All
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto no-scrollbar pr-2">
-        {renderFilterSection("Rental Rate Range", "price", [
-          { label: "Under ₹10,000" },
-          { label: "₹10,000 - ₹20,000" },
-          { label: "₹20,000 - ₹35,000" },
-          { label: "Over ₹35,000" },
-        ])}
-
-        {renderFilterSection("Estimated Setup Time", "setupTime", [
-          { label: "Quick (< 2 Hours)" },
-          { label: "Standard (2-4 Hours)" },
-          { label: "Intricate (> 4 Hours)" },
-        ])}
-
-        {renderFilterSection("Curated Accents", "accents", [
-          { label: "Carved Wooden Trays" },
-          { label: "Mogra Garlands" },
-          { label: "Brass Urlis" },
-          { label: "Beaded Shagun Boxes" },
-          { label: "Silk Runners" },
-        ])}
-      </div>
-    </div>
-  );
 
   return (
     <div className="bg-surface min-h-screen font-body">
@@ -411,12 +343,24 @@ export function EventShowcases() {
         </div>
       </section>
 
-      {/* Floating / Sticky Navigation Bar */}
-      <nav className={`z-50 transition-all duration-500 ${isSticky ? "fixed top-[53px] md:top-[57px] left-0 w-full glass py-2 shadow-xl" : "relative -mt-8 md:-mt-12 mb-10 md:mb-12"}`}>
-        <div className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 ${isSticky ? "" : "transition-all duration-500"}`}>
+      {/* Sentinel for sticky trigger */}
+      <div ref={sentinelRef} />
+
+      {/* Floating / Sticky Navigation Bar Wrapper to prevent layout shift and glitching */}
+      <div className={isSticky ? "h-[68px] lg:h-[76px] mb-10 md:mb-12" : ""}>
+        <nav
+          className={`z-50 transition-all duration-500 ${
+            isSticky 
+              ? "fixed top-[60px] left-0 w-full bg-transparent border-transparent py-2 px-margin-mobile md:px-margin-desktop pointer-events-none" 
+              : "relative -mt-8 md:-mt-12 mb-10 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"
+          }`}
+        >
+          <div
+            className="transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 bg-white/90 backdrop-blur-xl border-black/5 shadow-md rounded-[2rem] p-3 md:p-4 w-full pointer-events-auto max-w-max-width mx-auto"
+          >
           
           {/* Search Bar & Mobile Filter Toggle */}
-          <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
+          <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
             <div className="flex-1 h-11">
               <SearchBar
                 value={searchQuery}
@@ -427,7 +371,7 @@ export function EventShowcases() {
             </div>
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-[0.96] shrink-0 cursor-pointer outline-none focus:outline-none focus-visible:outline-none"
+              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-[0.98] active:opacity-90 shrink-0 cursor-pointer outline-none focus:outline-none focus-visible:outline-none"
             >
               <span className="material-symbols-outlined text-[20px]">tune</span>
             </button>
@@ -471,6 +415,7 @@ export function EventShowcases() {
           </div>
         </div>
       </nav>
+      </div>
 
       {/* Main Grid Section */}
       <main id="showcase-collection" className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-24 md:pb-40">
@@ -478,51 +423,19 @@ export function EventShowcases() {
         
         <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
           
-          {/* Desktop Sticky Filter Panel */}
-          <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 h-fit hidden lg:block">
-            {filterDrawerContent}
+          {/* Sidebar Filter - Handles both Desktop Sidebar and Mobile Drawer */}
+          <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 h-fit">
+            <EventShowcaseFilterPanel
+              currentFilters={filters}
+              onToggleFilter={toggleFilter}
+              onClearAll={clearAllFilters}
+              isOpen={isFilterOpen}
+              onClose={() => setIsFilterOpen(false)}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              totalCount={totalCount}
+            />
           </aside>
-
-          {/* Mobile Filter Bottom Sheet */}
-          <AnimatePresence>
-            {isFilterOpen && (
-              <div className="fixed inset-0 z-[1000] lg:hidden flex flex-col justify-end">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setIsFilterOpen(false)}
-                  className="absolute inset-0 bg-black/60 backdrop-blur-md"
-                />
-                <motion.div
-                  initial={{ y: "100%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: "100%" }}
-                  transition={{ type: "spring", damping: 32, stiffness: 300 }}
-                  className="relative w-full bg-surface rounded-t-[40px] p-8 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10 z-10"
-                >
-                  <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-6 shrink-0" />
-                  <button
-                    onClick={() => setIsFilterOpen(false)}
-                    className="absolute top-8 right-8 w-10 h-10 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10 cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">close</span>
-                  </button>
-                  <div className="flex-1 overflow-y-auto no-scrollbar pt-2">
-                    {filterDrawerContent}
-                  </div>
-                  <div className="mt-6 pt-6 border-t border-outline-variant/20">
-                    <button
-                      onClick={() => setIsFilterOpen(false)}
-                      className="w-full bg-on-surface-variant text-surface py-4 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all cursor-pointer"
-                    >
-                      Apply Filters ({totalCount} themes)
-                    </button>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-10">
@@ -822,7 +735,7 @@ export function EventShowcases() {
                   <button
                     type="button"
                     onClick={handleBookRental}
-                    className="flex-1 md:flex-none bg-gradient-to-r from-[#d4af37] to-[#735c00] hover:opacity-95 text-white px-8 py-4 rounded-full font-label uppercase text-xs tracking-widest font-bold shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 md:flex-none bg-gradient-to-r from-[var(--color-gold)] to-[var(--color-gold-dark)] hover:opacity-95 text-white px-8 py-4 rounded-full font-label uppercase text-xs tracking-widest font-bold shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     Rent & Dispatch Showcase
                     <span className="material-symbols-outlined text-[18px]">featured_play_list</span>
