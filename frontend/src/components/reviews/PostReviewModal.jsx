@@ -125,12 +125,12 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
         className="relative w-full max-w-2xl my-8 bg-[#FAF9F6] border border-[#D4AF37]/30 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Top Gold Bar */}
-        <div className="h-2 bg-gradient-to-r from-[#735C00] via-[#D4AF37] to-[#C4A87C]" />
+        <div className="h-2 bg-gradient-to-r from-[var(--color-gold-dark)] via-[#D4AF37] to-[#C4A87C]" />
 
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-6 border-b border-[#D4AF37]/20 bg-white/60 backdrop-blur-xs shrink-0">
           <div>
-            <span className="font-label text-[10px] uppercase tracking-[0.3em] text-[#735C00] font-bold">
+            <span className="font-label text-[10px] uppercase tracking-[0.3em] text-[var(--color-gold-dark)] font-bold">
               Premium Client Stories
             </span>
             <h2 className="text-xl md:text-2xl font-display font-bold text-[#2D2B29] mt-0.5">
@@ -139,7 +139,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-[#FAF9F6] border border-[#D4AF37]/30 flex items-center justify-center text-[#2D2B29] hover:bg-[#735C00] hover:text-white transition-all cursor-pointer"
+            className="w-10 h-10 rounded-full bg-[#FAF9F6] border border-[#D4AF37]/30 flex items-center justify-center text-[#2D2B29] hover:bg-[var(--color-gold-dark)] hover:text-white transition-all cursor-pointer"
           >
             <span className="material-symbols-outlined text-lg">close</span>
           </button>
@@ -153,7 +153,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] transition-all ${
                     step === st
-                      ? "bg-[#735C00] text-white ring-2 ring-[#D4AF37]/50"
+                      ? "bg-[var(--color-gold-dark)] text-white ring-2 ring-[#D4AF37]/50"
                       : step > st
                       ? "bg-[#D4AF37] text-white"
                       : "bg-[#EAE5DA] text-[#8C8270]"
@@ -165,7 +165,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
               </div>
             ))}
           </div>
-          <span className="font-label uppercase text-[10px] font-bold text-[#735C00]">
+          <span className="font-label uppercase text-[10px] font-bold text-[var(--color-gold-dark)]">
             Step {step} of 5: {
               step === 1 ? "Experience Type" :
               step === 2 ? "Multi-Dimension Rating" :
@@ -200,13 +200,13 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                       onClick={() => setExperienceType(exp.id)}
                       className={`p-5 rounded-3xl border transition-all cursor-pointer flex flex-col justify-between ${
                         experienceType === exp.id
-                          ? "bg-gradient-to-br from-[#735C00] to-[#594700] border-[#D4AF37] text-white shadow-xl scale-[1.02]"
+                          ? "bg-gradient-to-br from-[var(--color-gold-dark)] to-[var(--color-gold-darker)] border-[#D4AF37] text-white shadow-xl scale-[1.02]"
                           : "bg-white border-[#D4AF37]/20 hover:border-[#D4AF37]/60 text-[#2D2B29]"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                          experienceType === exp.id ? "bg-white/10 text-[#D4AF37]" : "bg-[#F8F5F0] text-[#735C00]"
+                          experienceType === exp.id ? "bg-white/10 text-[#D4AF37]" : "bg-[#F8F5F0] text-[var(--color-gold-dark)]"
                         }`}>
                           <span className="material-symbols-outlined text-2xl">{exp.icon}</span>
                         </div>
@@ -246,7 +246,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                 <div className="bg-white border border-[#D4AF37]/20 rounded-3xl p-6 space-y-5">
                   {/* Overall Star Rating Banner */}
                   <div className="pb-5 border-b border-[#D4AF37]/10 text-center">
-                    <span className="text-xs uppercase tracking-widest text-[#735C00] font-bold block mb-2">Overall Satisfaction</span>
+                    <span className="text-xs uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-2">Overall Satisfaction</span>
                     <div className="flex justify-center gap-2 text-[#D4AF37]">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <span
@@ -280,7 +280,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     ].map((cat) => (
                       <div key={cat.key} className="flex items-center justify-between p-3.5 bg-[#FAF9F6] rounded-2xl border border-black/5">
                         <div className="flex items-center gap-2.5">
-                          <span className="material-symbols-outlined text-base text-[#735C00]">{cat.icon}</span>
+                          <span className="material-symbols-outlined text-base text-[var(--color-gold-dark)]">{cat.icon}</span>
                           <span className="text-xs font-semibold text-[#2D2B29]">{cat.label}</span>
                         </div>
                         <div className="flex gap-1">
@@ -293,7 +293,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                               className="material-symbols-outlined text-base cursor-pointer hover:scale-125 transition-transform"
                               style={{
                                 fontVariationSettings: "'FILL' " + (st <= (hoverRatings[cat.key] || ratings[cat.key]) ? "1" : "0"),
-                                color: st <= (hoverRatings[cat.key] || ratings[cat.key]) ? "#735C00" : "#E2DACB"
+                                color: st <= (hoverRatings[cat.key] || ratings[cat.key]) ? "var(--color-gold-dark)" : "#E2DACB"
                               }}
                             >
                               star
@@ -324,49 +324,49 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#735C00] block mb-1.5">Your Full Name</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">Your Full Name</label>
                     <input
                       type="text"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="e.g. Meera Kapoor"
-                      className="w-full bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[#735C00] font-medium"
+                      className="w-full bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[var(--color-gold-dark)] font-medium"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#735C00] block mb-1.5">Celebration Event</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">Celebration Event</label>
                     <input
                       type="text"
                       value={eventType}
                       onChange={(e) => setEventType(e.target.value)}
                       placeholder="e.g. Royal Haldi & Engagement"
-                      className="w-full bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[#735C00] font-medium"
+                      className="w-full bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[var(--color-gold-dark)] font-medium"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#735C00] block mb-1.5">Favorite Decor Piece</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">Favorite Decor Piece</label>
                     <input
                       type="text"
                       value={favoriteElement}
                       onChange={(e) => setFavoriteElement(e.target.value)}
                       placeholder="e.g. Antique Gold Mandap Arch"
-                      className="w-full bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[#735C00] font-medium"
+                      className="w-full bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[var(--color-gold-dark)] font-medium"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#735C00]">Your Detailed Review</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)]">Your Detailed Review</label>
                     <button
                       type="button"
                       onClick={triggerAiPolish}
                       disabled={isAiPolishing}
-                      className="flex items-center gap-1 text-[11px] font-bold text-[#735C00] bg-[#D4AF37]/10 px-3 py-1 rounded-full border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 transition-all cursor-pointer"
+                      className="flex items-center gap-1 text-[11px] font-bold text-[var(--color-gold-dark)] bg-[#D4AF37]/10 px-3 py-1 rounded-full border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 transition-all cursor-pointer"
                     >
                       {isAiPolishing ? (
                         <>
-                          <span className="w-2.5 h-2.5 border border-[#735C00] border-t-transparent rounded-full animate-spin" />
+                          <span className="w-2.5 h-2.5 border border-[var(--color-gold-dark)] border-t-transparent rounded-full animate-spin" />
                           Polishing with AI...
                         </>
                       ) : (
@@ -383,7 +383,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Describe the atmosphere, guest reactions, before & after venue transformation, and artisan care..."
-                    className="w-full bg-white border border-[#D4AF37]/30 rounded-2xl p-4 text-xs leading-relaxed outline-none focus:border-[#735C00] transition-colors"
+                    className="w-full bg-white border border-[#D4AF37]/30 rounded-2xl p-4 text-xs leading-relaxed outline-none focus:border-[var(--color-gold-dark)] transition-colors"
                   />
                 </div>
 
@@ -396,7 +396,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                         key={idx}
                         type="button"
                         onClick={() => setComment((prev) => (prev ? prev + " " : "") + prompt)}
-                        className="text-[11px] bg-white border border-[#D4AF37]/20 hover:border-[#735C00] text-[#2D2B29] px-3 py-1.5 rounded-full transition-all cursor-pointer"
+                        className="text-[11px] bg-white border border-[#D4AF37]/20 hover:border-[var(--color-gold-dark)] text-[#2D2B29] px-3 py-1.5 rounded-full transition-all cursor-pointer"
                       >
                         {prompt}
                       </button>
@@ -423,7 +423,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
 
                 {/* Sample Media Pre-Seeds */}
                 <div className="bg-[#FAF9F6] border border-[#D4AF37]/20 rounded-3xl p-5 space-y-3">
-                  <span className="text-[11px] uppercase tracking-wider text-[#735C00] font-bold block">
+                  <span className="text-[11px] uppercase tracking-wider text-[var(--color-gold-dark)] font-bold block">
                     ✨ Click pre-curated gorgeous event memories to test upload instantly:
                   </span>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -435,7 +435,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                       >
                         <img src={sample.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Sample" />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-[10px] text-white font-bold bg-[#735C00] px-2 py-1 rounded-md">＋ Attach</span>
+                          <span className="text-[10px] text-white font-bold bg-[var(--color-gold-dark)] px-2 py-1 rounded-md">＋ Attach</span>
                         </div>
                       </div>
                     ))}
@@ -449,11 +449,11 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     value={newMediaUrl}
                     onChange={(e) => setNewMediaUrl(e.target.value)}
                     placeholder="Paste an image or video URL here (e.g. from Google Photos / Unsplash)..."
-                    className="flex-1 bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[#735C00]"
+                    className="flex-1 bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[var(--color-gold-dark)]"
                   />
                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-[#735C00] text-white rounded-xl text-xs font-bold hover:bg-[#594700] transition-colors cursor-pointer shrink-0"
+                    className="px-5 py-2.5 bg-[var(--color-gold-dark)] text-white rounded-xl text-xs font-bold hover:bg-[var(--color-gold-darker)] transition-colors cursor-pointer shrink-0"
                   >
                     Attach Link
                   </button>
@@ -467,7 +467,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                       {mediaList.map((media, idx) => (
                         <div key={idx} className="relative w-20 h-20 rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-sm group">
                           {media.type === "video" ? (
-                            <div className="w-full h-full bg-[#735C00] flex items-center justify-center text-white">
+                            <div className="w-full h-full bg-[var(--color-gold-dark)] flex items-center justify-center text-white">
                               <span className="material-symbols-outlined text-2xl">play_circle</span>
                             </div>
                           ) : (
@@ -509,7 +509,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
 
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#735C00] to-[#D4AF37] text-white flex items-center justify-center font-display text-lg font-bold shadow-md">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[var(--color-gold-dark)] to-[#D4AF37] text-white flex items-center justify-center font-display text-lg font-bold shadow-md">
                         {customerName ? customerName.substring(0, 2).toUpperCase() : "SA"}
                       </div>
                       <div>
@@ -517,7 +517,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                           <h4 className="font-display font-bold text-base text-[#2D2B29]">{customerName || "Bespoke Patron"}</h4>
                           <span className="material-symbols-outlined text-sm text-emerald-600 font-bold" title="Verified Patron">verified</span>
                         </div>
-                        <p className="text-[11px] text-[#735C00] font-semibold">{eventType} · {favoriteElement}</p>
+                        <p className="text-[11px] text-[var(--color-gold-dark)] font-semibold">{eventType} · {favoriteElement}</p>
                       </div>
                     </div>
                     <div className="flex gap-0.5 text-[#D4AF37]">
@@ -537,7 +537,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                       {mediaList.map((m, idx) => (
                         <div key={idx} className="w-16 h-16 rounded-xl overflow-hidden border border-[#D4AF37]/30 shrink-0 shadow-xs">
                           {m.type === "video" ? (
-                            <div className="w-full h-full bg-[#735C00] flex items-center justify-center text-white text-xs font-bold">VIDEO</div>
+                            <div className="w-full h-full bg-[var(--color-gold-dark)] flex items-center justify-center text-white text-xs font-bold">VIDEO</div>
                           ) : (
                             <img src={m.url} className="w-full h-full object-cover" alt="Preview" />
                           )}
@@ -565,7 +565,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
             <button
               type="button"
               onClick={() => setStep((s) => s - 1)}
-              className="px-5 py-2.5 rounded-xl border border-[#D4AF37]/40 text-[#735C00] font-bold text-xs hover:bg-white transition-colors cursor-pointer"
+              className="px-5 py-2.5 rounded-xl border border-[#D4AF37]/40 text-[var(--color-gold-dark)] font-bold text-xs hover:bg-white transition-colors cursor-pointer"
             >
               ← Previous Step
             </button>
@@ -577,7 +577,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
             <button
               type="button"
               onClick={() => setStep((s) => s + 1)}
-              className="px-7 py-3 rounded-xl bg-[#735C00] text-white font-bold text-xs hover:bg-[#594700] shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-1.5 ml-auto"
+              className="px-7 py-3 rounded-xl bg-[var(--color-gold-dark)] text-white font-bold text-xs hover:bg-[var(--color-gold-darker)] shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-1.5 ml-auto"
             >
               Continue to Step {step + 1} →
             </button>
@@ -586,7 +586,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
               type="button"
               onClick={handleSubmitFinal}
               disabled={isSubmitting}
-              className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#735C00] via-[#A68500] to-[#735C00] text-white font-bold text-xs uppercase tracking-wider hover:brightness-110 shadow-xl transition-all cursor-pointer flex items-center gap-2 ml-auto"
+              className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[var(--color-gold-dark)] via-[#A68500] to-[var(--color-gold-dark)] text-white font-bold text-xs uppercase tracking-wider hover:brightness-110 shadow-xl transition-all cursor-pointer flex items-center gap-2 ml-auto"
             >
               {isSubmitting ? (
                 <>

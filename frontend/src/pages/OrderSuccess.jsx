@@ -114,7 +114,7 @@ export function OrderSuccess() {
     const defaults = {
       origin: { y: 0.7 },
       zIndex: 10000,
-      colors: ["#735c00", "#d4af37", "#ffe088", "#ffffff"],
+      colors: ["var(--color-gold-dark)", "#d4af37", "#ffe088", "#ffffff"],
     };
 
     function fire(particleRatio, opts) {
@@ -456,7 +456,7 @@ export function OrderSuccess() {
                   <span className="font-bold text-secondary uppercase tracking-wider">
                     Timeline Requested
                   </span>
-                  <span className="bg-[#735c00]/5 text-[#735c00] px-2.5 py-1 rounded-full font-bold border border-[#735c00]/25 uppercase text-[10px] flex items-center gap-1">
+                  <span className="bg-[var(--color-gold-dark)]/5 text-[var(--color-gold-dark)] px-2.5 py-1 rounded-full font-bold border border-[var(--color-gold-dark)]/25 uppercase text-[10px] flex items-center gap-1">
                     <span className="material-symbols-outlined text-[12px]">calendar_today</span>
                     Customer Request
                   </span>

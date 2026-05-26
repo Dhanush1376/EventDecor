@@ -1,5 +1,5 @@
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React from"react";
+import { motion, AnimatePresence } from"framer-motion";
 
 /**
  * Reusable confirmation dialog for destructive actions.
@@ -7,11 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
  */
 export function ConfirmDialog({
   open,
-  title = "Are you sure?",
-  description = "",
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
-  variant = "danger", // "danger" | "warning" | "info"
+  title ="Are you sure?",
+  description ="",
+  confirmLabel ="Confirm",
+  cancelLabel ="Cancel",
+  variant ="danger", //"danger" |"warning" |"info"
   icon,
   onConfirm,
   onCancel,
@@ -19,25 +19,25 @@ export function ConfirmDialog({
 }) {
   const variantConfig = {
     danger: {
-      iconBg: "bg-rose-50 border-rose-100",
-      iconColor: "text-rose-600",
-      defaultIcon: "delete_forever",
-      btnBg: "bg-rose-600 hover:bg-rose-700",
-      btnText: "text-white",
+      iconBg:"bg-rose-50 border-rose-100",
+      iconColor:"text-rose-600",
+      defaultIcon:"delete_forever",
+      btnBg:"bg-rose-600 hover:bg-rose-700",
+      btnText:"text-white",
     },
     warning: {
-      iconBg: "bg-amber-50 border-amber-100",
-      iconColor: "text-amber-600",
-      defaultIcon: "warning",
-      btnBg: "bg-amber-600 hover:bg-amber-700",
-      btnText: "text-white",
+      iconBg:"bg-amber-50 border-amber-100",
+      iconColor:"text-amber-600",
+      defaultIcon:"warning",
+      btnBg:"bg-amber-600 hover:bg-amber-700",
+      btnText:"text-white",
     },
     info: {
-      iconBg: "bg-slate-100 border-slate-200",
-      iconColor: "text-black",
-      defaultIcon: "info",
-      btnBg: "bg-black hover:bg-slate-900",
-      btnText: "text-white",
+      iconBg:"bg-slate-100 border-slate-200",
+      iconColor:"text-black",
+      defaultIcon:"info",
+      btnBg:"bg-black hover:bg-slate-900",
+      btnText:"text-white",
     },
   };
 
@@ -47,7 +47,7 @@ export function ConfirmDialog({
   React.useEffect(() => {
     if (!open) return;
     const handleKey = (e) => {
-      if (e.key === "Escape") onCancel?.();
+      if (e.key ==="Escape") onCancel?.();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -71,7 +71,7 @@ export function ConfirmDialog({
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            transition={{ type: "spring", damping: 25, stiffness: 350 }}
+            transition={{ type:"spring", damping: 25, stiffness: 350 }}
             className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[210] w-[90vw] max-w-[400px] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"
             role="alertdialog"
             aria-modal="true"

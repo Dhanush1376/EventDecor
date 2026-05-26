@@ -56,7 +56,8 @@ export function EventShowcases() {
   const [sortBy, setSortBy] = useState("Popularity");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
-  const sentinelRef = React.useRef(null);
+  const [navbarHeight, setNavbarHeight] = useState(0);
+  const navRef = React.useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
 
@@ -100,17 +101,25 @@ export function EventShowcases() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (sentinelRef.current) {
-        const rect = sentinelRef.current.getBoundingClientRect();
-        const isMobile = window.innerWidth < 768;
-        const negativeMargin = isMobile ? 32 : 48; // -mt-8 is 32px, -mt-12 is 48px
-        setIsSticky(rect.top <= 60 + negativeMargin);
+      const topNav = document.querySelector('.top-navbar');
+      let currentNavHeight = navbarHeight;
+      if (topNav) {
+        currentNavHeight = topNav.getBoundingClientRect().height;
+        setNavbarHeight(currentNavHeight);
+      }
+      if (navRef.current) {
+        const rect = navRef.current.getBoundingClientRect();
+        setIsSticky(rect.top <= currentNavHeight + 1);
       }
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [navbarHeight]);
 
   useEffect(() => {
     if (isFilterOpen) document.body.classList.add("filters-open");
@@ -343,20 +352,22 @@ export function EventShowcases() {
         </div>
       </section>
 
-      {/* Sentinel for sticky trigger */}
-      <div ref={sentinelRef} />
-
-      {/* Floating / Sticky Navigation Bar Wrapper to prevent layout shift and glitching */}
-      <div className={isSticky ? "h-[68px] lg:h-[76px] mb-10 md:mb-12" : ""}>
-        <nav
-          className={`z-50 transition-all duration-500 ${
-            isSticky 
-              ? "fixed top-[60px] left-0 w-full bg-transparent border-transparent py-2 px-margin-mobile md:px-margin-desktop pointer-events-none" 
-              : "relative -mt-8 md:-mt-12 mb-10 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"
-          }`}
-        >
+      {/* Sticky Navigation Bar */}
+      <nav
+        ref={navRef}
+        className={`sticky z-[49] -mt-8 md:-mt-12 mb-10 md:mb-12 transition-all duration-300 ${
+          isSticky 
+            ? "px-0" 
+            : "px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto"
+        }`}
+        style={{ top: `${navbarHeight}px` }}
+      >
           <div
-            className="transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 bg-white/90 backdrop-blur-xl border-black/5 shadow-md rounded-[2rem] p-3 md:p-4 w-full pointer-events-auto max-w-max-width mx-auto"
+            className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
+              isSticky 
+                ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 px-margin-mobile md:px-margin-desktop w-full max-w-none' 
+                : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 w-full max-w-max-width'
+            }`}
           >
           
           {/* Search Bar & Mobile Filter Toggle */}
@@ -415,7 +426,6 @@ export function EventShowcases() {
           </div>
         </div>
       </nav>
-      </div>
 
       {/* Main Grid Section */}
       <main id="showcase-collection" className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-24 md:pb-40">

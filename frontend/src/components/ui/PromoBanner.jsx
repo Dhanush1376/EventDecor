@@ -46,10 +46,10 @@ export function PromoBanner({
             </span>
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-4 min-w-0">
-            <h3 className="font-display text-[13px] md:text-[18px] lg:text-[22px] text-white font-medium leading-none truncate">
+          <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 min-w-0">
+            <h3 className="font-display text-[12px] sm:text-[14px] md:text-[18px] lg:text-[22px] text-white font-medium leading-tight">
               {title}{" "}
-              <span className="text-gold italic ml-1">{highlightText}</span>
+              <span className="text-gold italic ml-1 whitespace-nowrap">{highlightText}</span>
             </h3>
             {statusText && (
               <span className="text-white/40 font-label-sm text-[8px] md:text-[10px] uppercase tracking-[0.2em] flex items-center gap-1.5 font-bold whitespace-nowrap">

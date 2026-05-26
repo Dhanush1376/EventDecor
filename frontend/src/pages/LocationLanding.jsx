@@ -4,17 +4,21 @@ import { ArrowRight, MapPin, Star, CheckCircle } from 'lucide-react';
 import { SEO } from '../components/seo/SEO';
 import { LazyImage } from '../components/ui/LazyImage';
 import { FAQAccordion } from '../components/seo/FAQAccordion';
-import locationsData from '../content/locations.json';
+import fallbackLocationsData from '../content/locations.json';
+import { useWebsiteContent } from '../hooks/useWebsiteContent';
 
 export function LocationLanding() {
   const { city } = useParams();
   
+  const { locations } = useWebsiteContent();
+  const locationsData = locations || fallbackLocationsData;
+
   // Find location data based on the URL parameter
   const locationObj = useMemo(() => {
     if (!city) return null;
     // Handle both exact slugs (like "wedding-decorations-hyderabad") and plain city names ("hyderabad")
     return locationsData.find(loc => loc.slug === city || loc.city.toLowerCase() === city.toLowerCase());
-  }, [city]);
+  }, [city, locationsData]);
 
   if (!locationObj) {
     return <Navigate to="/" replace />;

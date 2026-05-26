@@ -1,7 +1,7 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAdmin } from "../context/AdminContext";
+import React from"react";
+import { motion } from"framer-motion";
+import { useParams, useNavigate } from"react-router-dom";
+import { useAdmin } from"../context/AdminContext";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
@@ -45,7 +45,7 @@ export function AdminCustomerProfile() {
             arrow_back
           </span>
         </button>
-        <h2 className="text-[24px] font-bold text-on-surface font-display">
+        <h2 className="text-[24px] font-bold text-on-surface">
           Customer Profile
         </h2>
       </motion.div>
@@ -58,9 +58,9 @@ export function AdminCustomerProfile() {
             className="bg-white rounded-3xl border border-surface-container-highest/60 p-6 text-center"
           >
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-container/20 to-primary/10 flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-lg">
-              <span className="text-[32px] font-bold text-black font-display">
+              <span className="text-[32px] font-bold text-black">
                 {customer.name
-                  .split(" ")
+                  .split("")
                   .map((n) => n[0])
                   .join("")}
               </span>
@@ -70,7 +70,7 @@ export function AdminCustomerProfile() {
             </h2>
             <p className="text-[13px] text-outline mb-4">{customer.city}</p>
             <span
-              className={`inline-flex px-3 py-1 rounded-full text-[11px] font-bold ${customer.segment === "VIP" ? "text-slate-800 bg-slate-100" : customer.segment === "New" ? "text-emerald-600 bg-emerald-50" : "text-black bg-slate-100"}`}
+              className={`inline-flex px-3 py-1 rounded-full text-[11px] sm:text-[11px] font-bold ${customer.segment ==="VIP" ?"text-slate-800 bg-slate-100" : customer.segment ==="New" ?"text-emerald-600 bg-emerald-50" :"text-black bg-slate-100"}`}
             >
               {customer.segment}
             </span>
@@ -83,7 +83,7 @@ export function AdminCustomerProfile() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-[10px] text-outline font-semibold uppercase tracking-wider">
+                  <p className="text-[11px] text-outline font-semibold uppercase tracking-wider">
                     Email
                   </p>
                   <p className="text-[13px] text-on-surface font-medium">
@@ -98,7 +98,7 @@ export function AdminCustomerProfile() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-[10px] text-outline font-semibold uppercase tracking-wider">
+                  <p className="text-[11px] text-outline font-semibold uppercase tracking-wider">
                     Phone
                   </p>
                   <p className="text-[13px] text-on-surface font-medium">
@@ -113,7 +113,7 @@ export function AdminCustomerProfile() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-[10px] text-outline font-semibold uppercase tracking-wider">
+                  <p className="text-[11px] text-outline font-semibold uppercase tracking-wider">
                     Joined
                   </p>
                   <p className="text-[13px] text-on-surface font-medium">
@@ -130,18 +130,18 @@ export function AdminCustomerProfile() {
               >
                 <span className="material-symbols-outlined text-[16px]">
                   mail
-                </span>{" "}
+                </span>{""}
                 Email
               </a>
               <a
-                href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, "")}`}
+                href={`https://wa.me/${customer.phone.replace(/[^0-9]/g,"")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[12px] font-bold text-white bg-green-600 hover:bg-green-700 shadow-md transition-all"
               >
                 <span className="material-symbols-outlined text-[16px]">
                   chat
-                </span>{" "}
+                </span>{""}
                 WhatsApp
               </a>
             </div>
@@ -154,19 +154,19 @@ export function AdminCustomerProfile() {
           <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4">
             {[
               {
-                label: "Total Spent",
+                label:"Total Spent",
                 value: `₹${customer.totalSpent.toLocaleString()}`,
-                icon: "payments",
+                icon:"payments",
               },
               {
-                label: "Total Orders",
+                label:"Total Orders",
                 value: customer.orders,
-                icon: "shopping_bag",
+                icon:"shopping_bag",
               },
               {
-                label: "Last Order",
+                label:"Last Order",
                 value: customer.lastOrder,
-                icon: "history",
+                icon:"history",
               },
             ].map((s, i) => (
               <div
@@ -225,7 +225,7 @@ export function AdminCustomerProfile() {
                         </td>
                         <td className="p-4">
                           <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${o.status === "Delivered" ? "text-green-700 bg-green-50" : o.status === "Cancelled" ? "text-red-600 bg-red-50" : "text-black bg-slate-100"}`}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${o.status ==="Delivered" ?"text-green-700 bg-green-50" : o.status ==="Cancelled" ?"text-red-600 bg-red-50" :"text-black bg-slate-100"}`}
                           >
                             {o.status}
                           </span>

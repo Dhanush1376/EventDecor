@@ -604,7 +604,7 @@ export function Dashboard() {
                   }`}
                 >
                   <span>My Event Bookings</span>
-                  <span className="material-symbols-outlined text-xs text-[#735c00]">
+                  <span className="material-symbols-outlined text-xs text-[var(--color-gold-dark)]">
                     calendar_month
                   </span>
                 </motion.button>
@@ -734,7 +734,7 @@ export function Dashboard() {
                   }`}
                 >
                   <span>Siri Coins & Wallet</span>
-                  <span className="material-symbols-outlined text-xs text-[#735c00]">
+                  <span className="material-symbols-outlined text-xs text-[var(--color-gold-dark)]">
                     stars
                   </span>
                 </motion.button>
@@ -790,7 +790,21 @@ export function Dashboard() {
                       Track your reserved setups, theme boards, milestone deposits, and site lead coordinates.
                     </span>
                   </div>
-                  <React.Suspense fallback={<div className="p-8 text-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div></div>}>
+                  <React.Suspense fallback={
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
+                      {[...Array(2)].map((_, i) => (
+                        <div key={i} className="p-5 rounded-2xl bg-white border border-outline-variant/10 space-y-4">
+                          <div className="flex justify-between items-center">
+                            <div className="h-4 w-24 bg-stone-100 rounded animate-pulse" />
+                            <div className="h-6 w-20 bg-stone-100 rounded-full animate-pulse" />
+                          </div>
+                          <div className="h-5 w-3/4 bg-stone-100 rounded animate-pulse" />
+                          <div className="h-4 w-full bg-stone-100 rounded animate-pulse" />
+                          <div className="h-4 w-2/3 bg-stone-100 rounded animate-pulse" />
+                        </div>
+                      ))}
+                    </div>
+                  }>
                     <EventCustomerDashboard isEmbedded={true} />
                   </React.Suspense>
                 </motion.div>

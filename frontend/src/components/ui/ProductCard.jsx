@@ -256,7 +256,7 @@ export const ProductCard = React.memo(function ProductCard({
 
       {/* 2. REFINED INFO SECTION */}
       <div
-        className={`py-3 md:py-4 flex flex-col flex-1 transition-opacity duration-500 ${hideDetails ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+        className={`py-3 md:py-4 px-3.5 md:px-4 flex flex-col flex-1 transition-opacity duration-500 ${hideDetails ? "opacity-0 pointer-events-none" : "opacity-100"}`}
       >
         <div className="flex items-center gap-1.5 mb-1.5 md:mb-2">
           <span className="text-black/60 font-label text-[8px] md:text-[9px] uppercase tracking-[0.15em] md:tracking-[0.2em] font-bold truncate flex-1 min-w-0">

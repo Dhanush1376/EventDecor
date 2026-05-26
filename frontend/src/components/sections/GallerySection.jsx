@@ -127,7 +127,7 @@ export function GallerySection() {
                   : item.height
               }`}
             >
-              <Link to={`/gallery/${item._id}`}>
+              <Link to={`/gallery/${item._id || item.id}`}>
                 <CloudinaryImage
                   src={item.image}
                   alt={item.title}

@@ -8,6 +8,7 @@ import { SEO } from "../components/seo/SEO";
 import { handleImageError } from "../utils/imageUtils";
 import { productService } from "../services/domainServices";
 import { useApi } from "../hooks/useApi";
+import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
 
 export function Wishlist() {
   const { items, removeItem, toggleItem, loading: wishlistLoading } = useWishlist();
@@ -17,6 +18,13 @@ export function Wishlist() {
   const [sortBy, setSortBy] = useState("latest");
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [notification, setNotification] = useState("");
+
+  // Track wishlist view
+  useRecommendationTracker({
+    targetType: 'page',
+    targetId: 'wishlist',
+    source: 'wishlist'
+  });
 
   const { data: trendingData, loading: trendingLoading, request: fetchTrending } = useApi(productService.getAll);
 

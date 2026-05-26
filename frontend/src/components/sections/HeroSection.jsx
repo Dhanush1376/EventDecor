@@ -8,7 +8,21 @@ import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
 import { HeroSkeleton } from "../ui/Skeleton";
 
-export function HeroSection() {
+export function HeroSection({
+  badgeText,
+  title,
+  subtitle,
+  ctaPrimary,
+  ctaSecondary,
+  backgroundImage,
+  mobileBackgroundImage,
+  floatingCardTitle,
+  floatingCardDesc,
+  floatingCardCtaText,
+  floatingCardCtaLink,
+  scrollText,
+  isVisible = true
+}) {
   const windowHeight = useWindowHeight();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -19,7 +33,24 @@ export function HeroSection() {
     return () => window.removeEventListener("resize", check);
   }, []);
   
-  const { hero, loading } = useWebsiteContent();
+  const { hero: cmsHero, loading } = useWebsiteContent();
+
+  // Merge dynamic PageLayout props with CMS fallback
+  const hero = {
+    badgeText: badgeText || cmsHero?.badgeText,
+    title: title || cmsHero?.title,
+    subtitle: subtitle || cmsHero?.subtitle,
+    ctaPrimary: ctaPrimary || cmsHero?.ctaPrimary,
+    ctaSecondary: ctaSecondary || cmsHero?.ctaSecondary,
+    backgroundImage: backgroundImage || cmsHero?.backgroundImage,
+    mobileBackgroundImage: mobileBackgroundImage || cmsHero?.mobileBackgroundImage,
+    floatingCardTitle: floatingCardTitle || cmsHero?.floatingCardTitle,
+    floatingCardDesc: floatingCardDesc || cmsHero?.floatingCardDesc,
+    floatingCardCtaText: floatingCardCtaText || cmsHero?.floatingCardCtaText,
+    floatingCardCtaLink: floatingCardCtaLink || cmsHero?.floatingCardCtaLink,
+    scrollText: scrollText || cmsHero?.scrollText,
+    isVisible: isVisible !== undefined ? isVisible : cmsHero?.isVisible
+  };
 
   const getBadgeParts = () => {
     if (!hero?.badgeText) return { top: "ARTISAN EXCELLENCE", bottom: "SINCE 2015" };

@@ -24,7 +24,7 @@ export function Footer() {
         <MandalaElement size={400} duration={180} variant={2} skipFade={true} />
       </div>
 
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-6 pb-32 md:pb-10 relative z-10">
+      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-6 pb-[calc(var(--bottom-nav-height)+24px)] md:pb-10 relative z-10">
         {/* Brand Soul - Left Aligned */}
         <div className="flex flex-col items-start text-left mb-5.5 md:mb-7">
           <Link to="/" className="group flex items-center mb-4">

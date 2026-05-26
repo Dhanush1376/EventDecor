@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
-import { motion } from "framer-motion";
-import { useAdmin } from "../context/AdminContext";
+import React, { useMemo } from"react";
+import { motion } from"framer-motion";
+import { useAdmin } from"../context/AdminContext";
 import {
   BarChart,
   Bar,
@@ -9,12 +9,12 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
+} from"recharts";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 const formatCurrency = (val) => {
-  if (!val) return "₹0";
+  if (!val) return"₹0";
   if (val >= 100000) {
     return `₹${(val / 100000).toFixed(2)}L`;
   }
@@ -25,7 +25,7 @@ function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white rounded-xl shadow-xl border border-surface-container-highest px-4 py-3">
-      <p className="text-[11px] font-semibold text-outline">{label}</p>
+      <p className="text-[11px] sm:text-[11px] font-semibold text-outline">{label}</p>
       <p className="text-[13px] font-bold text-black font-mono">
         ₹{payload[0].value.toLocaleString("en-IN")}
       </p>
@@ -46,7 +46,7 @@ export function AdminPayments() {
 
     // Initialize month labels dynamically based on past 6 months to avoid hardcoding
     const monthlyMap = {};
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     
     const currentMonthIndex = new Date().getMonth();
     for (let i = 5; i >= 0; i--) {
@@ -62,7 +62,7 @@ export function AdminPayments() {
       const orderDate = o.date ? new Date(o.date) : new Date();
       const monthLabel = monthNames[orderDate.getMonth()];
 
-      if (o.payment === "Paid") {
+      if (o.payment ==="Paid") {
         totalCollected += amount;
         
         // Add to monthly aggregates
@@ -76,7 +76,7 @@ export function AdminPayments() {
         if (monthLabel === currentMonthName) {
           thisMonth += amount;
         }
-      } else if (o.status === "Cancelled") {
+      } else if (o.status ==="Cancelled") {
         refunded += amount;
       } else {
         pending += amount;
@@ -92,13 +92,13 @@ export function AdminPayments() {
     // Create a transaction record list directly linked to storefront checkouts
     let transactions = orders.map((o) => {
       const orderNum = o.id && o.id.length > 8 ? o.id.slice(-6).toUpperCase() : o.id;
-      const paymentMethod = o.rawOrder?.paymentMethod || (o.payment === "COD" ? "COD" : "UPI");
-      const statusLabel = o.payment === "Paid" ? "Completed" : o.status === "Cancelled" ? "Refunded" : "Pending";
+      const paymentMethod = o.rawOrder?.paymentMethod || (o.payment ==="COD" ?"COD" :"UPI");
+      const statusLabel = o.payment ==="Paid" ?"Completed" : o.status ==="Cancelled" ?"Refunded" :"Pending";
 
       return {
         id: `TXN-${o.rawOrder?.paymentInfo?.razorpayPaymentId?.slice(-8).toUpperCase() || o.id.slice(-8).toUpperCase()}`,
         order: `ORD-${orderNum}`,
-        customer: o.customer || "Anonymous Buyer",
+        customer: o.customer ||"Anonymous Buyer",
         amount: o.total || 0,
         method: paymentMethod,
         status: statusLabel,
@@ -109,11 +109,11 @@ export function AdminPayments() {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       transactions = transactions.filter(t => 
-        (t.id || "").toLowerCase().includes(q) ||
-        (t.order || "").toLowerCase().includes(q) ||
-        (t.customer || "").toLowerCase().includes(q) ||
-        (t.method || "").toLowerCase().includes(q) ||
-        (t.status || "").toLowerCase().includes(q)
+        (t.id ||"").toLowerCase().includes(q) ||
+        (t.order ||"").toLowerCase().includes(q) ||
+        (t.customer ||"").toLowerCase().includes(q) ||
+        (t.method ||"").toLowerCase().includes(q) ||
+        (t.status ||"").toLowerCase().includes(q)
       );
     }
 
@@ -145,7 +145,7 @@ export function AdminPayments() {
     >
       {/* Header */}
       <motion.div variants={fadeUp}>
-        <h2 className="text-[24px] font-bold text-on-surface font-display">
+        <h2 className="text-[24px] font-bold text-on-surface">
           Payments
         </h2>
         <p className="text-[13px] text-outline">
@@ -160,28 +160,28 @@ export function AdminPayments() {
       >
         {[
           {
-            label: "Total Collected",
+            label:"Total Collected",
             value: formatCurrency(metrics.totalCollected),
-            icon: "account_balance",
-            bg: "bg-slate-50 text-black border-slate-250",
+            icon:"account_balance",
+            bg:"bg-slate-50 text-black border-slate-250",
           },
           { 
-            label: "This Month", 
+            label:"This Month", 
             value: formatCurrency(metrics.thisMonth), 
-            icon: "calendar_today",
-            bg: "bg-emerald-50 text-emerald-600 border-emerald-200",
+            icon:"calendar_today",
+            bg:"bg-emerald-50 text-emerald-600 border-emerald-200",
           },
           { 
-            label: "Pending Receivables", 
+            label:"Pending Receivables", 
             value: formatCurrency(metrics.pending), 
-            icon: "pending",
-            bg: "bg-amber-50 text-amber-600 border-amber-200",
+            icon:"pending",
+            bg:"bg-amber-50 text-amber-600 border-amber-200",
           },
           { 
-            label: "Refunded/Cancelled", 
+            label:"Refunded/Cancelled", 
             value: formatCurrency(metrics.refunded), 
-            icon: "undo",
-            bg: "bg-rose-50 text-rose-600 border-rose-200",
+            icon:"undo",
+            bg:"bg-rose-50 text-rose-600 border-rose-200",
           },
         ].map((s, i) => (
           <div
@@ -192,7 +192,7 @@ export function AdminPayments() {
               {s.icon}
             </span>
             <p className="text-[22px] font-bold tracking-tight text-on-surface font-mono">{s.value}</p>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-outline-variant">{s.label}</p>
+            <p className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-outline-variant">{s.label}</p>
           </div>
         ))}
       </motion.div>
@@ -214,12 +214,12 @@ export function AdminPayments() {
             />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 11, fill: "var(--color-outline)" }}
+              tick={{ fontSize: 11, fill:"var(--color-outline)" }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: "var(--color-outline)" }}
+              tick={{ fontSize: 11, fill:"var(--color-outline)" }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v) => `₹${v >= 100000 ? `${v / 100000}L` : `${v / 1000}K`}`}
@@ -245,9 +245,9 @@ export function AdminPayments() {
             <h3 className="text-[16px] font-bold text-on-surface">
               Recent Checkout Transactions
             </h3>
-            <p className="text-[11px] text-outline">Payments registered through credit/debit card, UPI, and net banking</p>
+            <p className="text-[11px] sm:text-[11px] text-outline">Payments registered through credit/debit card, UPI, and net banking</p>
           </div>
-          <span className="px-3 py-1 bg-surface-container-low text-outline text-[10px] font-bold uppercase tracking-wider rounded-lg">
+          <span className="px-3 py-1 bg-surface-container-low text-outline text-[11px] font-bold uppercase tracking-wider rounded-lg">
             {metrics.transactions.length} total
           </span>
         </div>
@@ -256,7 +256,7 @@ export function AdminPayments() {
             <div className="p-12 text-center text-outline flex flex-col items-center justify-center">
               <span className="material-symbols-outlined text-[48px] mb-2 block text-outline-variant">search_off</span>
               <p className="text-[14px] font-bold text-[#0F172A] mt-1">Data Not Found</p>
-              <p className="text-[11.5px] text-[#64748B] mt-1">No checkouts or transactions matched your search or filters.</p>
+              <p className="text-[11px] sm:text-[11px] text-[#64748B] mt-1">No checkouts or transactions matched your search or filters.</p>
             </div>
           ) : (
             <table className="w-full text-[12px]">
@@ -292,18 +292,18 @@ export function AdminPayments() {
                       ₹{p.amount.toLocaleString("en-IN")}
                     </td>
                     <td className="p-4 text-outline hidden sm:table-cell">
-                      <span className="px-2 py-1 bg-surface rounded-md text-[10px] font-bold font-mono">
+                      <span className="px-2 py-1 bg-surface rounded-md text-[11px] font-bold font-mono">
                         {p.method}
                       </span>
                     </td>
                     <td className="p-4">
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border ${
-                          p.status === "Completed" 
-                            ? "text-emerald-600 bg-emerald-50 border-emerald-200" 
-                            : p.status === "Refunded"
-                            ? "text-rose-600 bg-rose-50 border-rose-200"
-                            : "text-amber-600 bg-amber-50 border-amber-200"
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold border ${
+                          p.status ==="Completed" 
+                            ?"text-emerald-600 bg-emerald-50 border-emerald-200" 
+                            : p.status ==="Refunded"
+                            ?"text-rose-600 bg-rose-50 border-rose-200"
+                            :"text-amber-600 bg-amber-50 border-amber-200"
                         }`}
                       >
                         {p.status}

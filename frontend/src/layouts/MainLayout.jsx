@@ -40,7 +40,7 @@ export function MainLayout() {
   const isHighDensityPage = pathname === "/auth" || pathname === "/checkout";
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen flex flex-col relative">
+    <div className="bg-surface text-on-surface min-h-screen flex flex-col relative overflow-x-clip">
       <SEO />
       {/* Global Background Art - Performance Optimized Gradients & Mandalas */}
       {!isHighDensityPage && (
@@ -75,10 +75,13 @@ export function MainLayout() {
 
       <TopNavbar />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-      <main id="main-content" className="flex-1 relative pb-0" tabIndex={-1}>
+      <main id="main-content" className="flex-1 relative" tabIndex={-1}>
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
-            <Outlet />
+            {/* Page transition: animate-page-enter on route change */}
+            <div key={pathname} className="animate-page-enter">
+              <Outlet />
+            </div>
           </Suspense>
         </ErrorBoundary>
       </main>

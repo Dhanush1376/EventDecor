@@ -129,11 +129,11 @@ export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose })
               key={i}
               onClick={(e) => { e.stopPropagation(); setCurrentIndex(i); }}
               className={`w-14 h-14 rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
-                currentIndex === i ? "border-[#D4AF37] scale-110 shadow-lg ring-2 ring-[#735C00]" : "border-white/20 opacity-50 hover:opacity-100"
+                currentIndex === i ? "border-[#D4AF37] scale-110 shadow-lg ring-2 ring-[var(--color-gold-dark)]" : "border-white/20 opacity-50 hover:opacity-100"
               }`}
             >
               {itm.type === "video" ? (
-                <div className="w-full h-full bg-[#735C00] flex items-center justify-center text-white text-[10px] font-bold">
+                <div className="w-full h-full bg-[var(--color-gold-dark)] flex items-center justify-center text-white text-[10px] font-bold">
                   VID
                 </div>
               ) : (

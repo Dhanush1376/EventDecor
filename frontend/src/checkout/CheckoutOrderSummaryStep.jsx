@@ -77,7 +77,7 @@ export default function CheckoutOrderSummaryStep() {
                 </div>
 
                 {activeStep > 2 && (
-                  <span className="text-xs font-bold text-[#735c00] hover:underline">
+                  <span className="text-xs font-bold text-[var(--color-gold-dark)] hover:underline">
                     Change
                   </span>
                 )}
@@ -97,8 +97,8 @@ export default function CheckoutOrderSummaryStep() {
                     {/* Need By Date Selector (Moved to Top for High Visibility) */}
                     <div className="bg-[#fff9e6] p-4 rounded-xl border border-[#ffe0b2] text-xs">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="material-symbols-outlined text-[#735c00] text-sm">calendar_today</span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#735c00]">
+                        <span className="material-symbols-outlined text-[var(--color-gold-dark)] text-sm">calendar_today</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-gold-dark)]">
                           Required Timeline Request *
                         </span>
                       </div>
@@ -175,7 +175,7 @@ export default function CheckoutOrderSummaryStep() {
                           onChange={(e) =>
                             setSendUpdatesToWhatsApp(e.target.checked)
                           }
-                          className="mt-0.5 rounded text-[#735c00] focus:ring-0 cursor-pointer transition-all"
+                          className="mt-0.5 rounded text-[var(--color-gold-dark)] focus:ring-0 cursor-pointer transition-all"
                         />
                         <span className="text-secondary leading-normal">
                           Send dispatch alerts and scaper live credentials to

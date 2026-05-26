@@ -58,7 +58,8 @@
     "react-router-dom": "^7.15.0",
     "recharts": "^3.8.1",
     "socket.io-client": "^4.8.3",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

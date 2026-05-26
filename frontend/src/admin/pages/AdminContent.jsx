@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAdmin } from "../context/AdminContext";
+import React, { useState, useEffect, useRef } from"react";
+import { motion, AnimatePresence } from"framer-motion";
+import { useAdmin } from"../context/AdminContext";
 import {
   SectionHeader,
   AdminField,
@@ -8,15 +8,15 @@ import {
   AdminTextarea,
   AdminToggle,
   PublishBar
-} from "../components/AdminUIKit";
-import { ImageUpload } from "../components/ImageUpload";
-import toast from "react-hot-toast";
-import { cmsService } from "../../services/domainServices";
-import logger from "../../utils/logger";
-import { DEFAULT_SPECIALIZATIONS, PLACEHOLDER_IMAGES } from "../../constants/placeholderImages";
+} from"../components/AdminUIKit";
+import { ImageUpload } from"../components/ImageUpload";
+import toast from"react-hot-toast";
+import { cmsService } from"../../services/domainServices";
+import logger from"../../utils/logger";
+import { DEFAULT_SPECIALIZATIONS, PLACEHOLDER_IMAGES } from"../../constants/placeholderImages";
 
 const cleanSignatureImg = (imgUrl, founderName) => {
-  if (!imgUrl || imgUrl.includes("unsplash.com") || imgUrl === "" || imgUrl.includes("images.unsplash.com")) {
+  if (!imgUrl || imgUrl.includes("unsplash.com") || imgUrl ==="" || imgUrl.includes("images.unsplash.com")) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="250" height="80" viewBox="0 0 250 80"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&amp;display=swap');.sig { font-family: 'Alex Brush', cursive; font-size: 42px; fill: %231a1a1a; }</style></defs><text x="25" y="52" class="sig">${founderName}</text></svg>`;
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
@@ -34,40 +34,41 @@ const stagger = { show: { transition: { staggerChildren: 0.05 } } };
 // ═══════════════════════════════════════════════════════════
 const CMS_SIDEBAR = [
   {
-    title: "Storefront Layout",
+    title:"Storefront Layout",
     items: [
-      { id: "hero", label: "Hero Banner", icon: "aspect_ratio", desc: "Primary entrance visuals" },
-      { id: "collections", label: "Featured Collections", icon: "grid_view", desc: "Catalog category strips" },
-      { id: "story", label: "About Teaser", icon: "history_edu", desc: "Studio lineage details" },
-      { id: "bestsellers", label: "Bestsellers", icon: "stars", desc: "Featured product rows" },
-      { id: "testimonials", label: "Testimonials", icon: "chat_bubble", desc: "Client quotes list" },
-      { id: "homepageSections", label: "Section Order", icon: "reorder", desc: "Reorder homepage blocks" },
+      { id:"hero", label:"Hero Banner", icon:"aspect_ratio", desc:"Primary entrance visuals" },
+      { id:"collections", label:"Featured Collections", icon:"grid_view", desc:"Catalog category strips" },
+      { id:"story", label:"About Teaser", icon:"history_edu", desc:"Studio lineage details" },
+      { id:"bestsellers", label:"Bestsellers", icon:"stars", desc:"Featured product rows" },
+      { id:"testimonials", label:"Testimonials", icon:"chat_bubble", desc:"Client quotes list" },
+      { id:"homepageSections", label:"Section Order", icon:"reorder", desc:"Reorder homepage blocks" },
     ]
   },
   {
-    title: "Pages",
+    title:"Pages",
     items: [
-      { id: "gallery", label: "Gallery", icon: "photo_library", desc: "Pinterest grid tags" },
-      { id: "about", label: "About Page", icon: "info", desc: "Brand chronicler" },
-      { id: "events-page", label: "Events Page", icon: "celebration", desc: "Events page banner & promos" },
-      { id: "contact", label: "Contact Info", icon: "contact_page", desc: "Helpline routing" },
-      { id: "custom-orders", label: "Custom Orders", icon: "design_services", desc: "Digital intake forms" }
+      { id:"gallery", label:"Gallery", icon:"photo_library", desc:"Pinterest grid tags" },
+      { id:"about", label:"About Page", icon:"info", desc:"Brand chronicler" },
+      { id:"events-page", label:"Events Page", icon:"celebration", desc:"Events page banner & promos" },
+      { id:"contact", label:"Contact Info", icon:"contact_page", desc:"Helpline routing" },
+      { id:"custom-orders", label:"Custom Orders", icon:"design_services", desc:"Digital intake forms" },
+      { id:"faqs", label:"FAQs", icon:"help_center", desc:"Frequently Asked Questions" }
     ]
   },
   {
-    title: "SEO & Branding",
+    title:"SEO & Branding",
     items: [
-      { id: "seo-center", label: "SEO Settings", icon: "search", desc: "Search result metadata" },
-      { id: "announcement-bar", label: "Announcements", icon: "campaign", desc: "Header banner banners" },
-      { id: "navigation", label: "Header & Footer", icon: "menu", desc: "Logo tagline & bio" }
+      { id:"seo-center", label:"SEO Settings", icon:"search", desc:"Search result metadata" },
+      { id:"announcement-bar", label:"Announcements", icon:"campaign", desc:"Header banner banners" },
+      { id:"navigation", label:"Header & Footer", icon:"menu", desc:"Logo tagline & bio" }
     ]
   },
   {
-    title: "System Tools",
+    title:"System Tools",
     items: [
-      { id: "publish-controls", label: "History & Rollback", icon: "history", desc: "Checkpoints history" },
-      { id: "media-library", label: "Media Vault", icon: "image", desc: "Uploads asset vault" },
-      { id: "catalog", label: "Featured Catalog", icon: "inventory_2", desc: "Featured status flags" }
+      { id:"publish-controls", label:"History & Rollback", icon:"history", desc:"Checkpoints history" },
+      { id:"media-library", label:"Media Vault", icon:"image", desc:"Uploads asset vault" },
+      { id:"catalog", label:"Featured Catalog", icon:"inventory_2", desc:"Featured status flags" }
     ]
   }
 ];
@@ -80,11 +81,11 @@ function AISparkButton({ text, onApply }) {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const prompts = [
-    { label: "✨ South Indian Heritage", action: "heritage" },
-    { label: "👑 Luxury Rephrase", action: "luxury" },
-    { label: "🇮🇳 Telugu Vernacular", action: "traditional" },
-    { label: "🔍 Local SEO Optimization", action: "seo" },
-    { label: "🗣️ Translate to Telugu", action: "translate" }
+    { label:"✨ South Indian Heritage", action:"heritage" },
+    { label:"👑 Luxury Rephrase", action:"luxury" },
+    { label:"🇮🇳 Telugu Vernacular", action:"traditional" },
+    { label:"🔍 Local SEO Optimization", action:"seo" },
+    { label:"🗣️ Translate to Telugu", action:"translate" }
   ];
 
   const handleGenerate = async (style) => {
@@ -103,15 +104,15 @@ function AISparkButton({ text, onApply }) {
       if (res.success && res.data?.text) {
         onApply(res.data.text);
         toast.success("AI Content Crafted!", {
-          icon: "✨",
-          style: { background: "#1C1917", border: "1px solid #000000", color: "#F1F5F9", fontSize: "11px" }
+          icon:"✨",
+          style: { background:"#1C1917", border:"1px solid #000000", color:"#F1F5F9", fontSize:"11px" }
         });
       } else {
         toast.error("AI returned empty content. Try again.");
       }
     } catch (err) {
       logger.error("AI generation error:", err);
-      const errorMsg = err?.response?.data?.message || "AI service temporarily offline.";
+      const errorMsg = err?.response?.data?.message ||"AI service temporarily offline.";
       toast.error(errorMsg, { duration: 4000 });
     } finally {
       setLoading(false);
@@ -124,7 +125,7 @@ function AISparkButton({ text, onApply }) {
         type="button"
         onClick={() => setShowDropdown(!showDropdown)}
         className="flex items-center justify-center transition-all text-[#000000]/80 hover:text-[#000000] cursor-pointer h-7 w-7 rounded-full hover:bg-[#000000]/10 bg-transparent border-none"
-        style={{ minHeight: "0px" }}
+        style={{ minHeight:"0px" }}
         title="AI Copywriting Assistant"
         aria-label="Open AI Copywriting Assistant"
       >
@@ -138,9 +139,9 @@ function AISparkButton({ text, onApply }) {
       {showDropdown && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
-          <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 backdrop-blur-md border border-[#000000]/30 shadow-[0_12px_35px_rgba(115,92,0,0.12)] py-2 z-50 overflow-hidden text-[11px] animate-fade-in-up">
-            <div className="px-3.5 py-1.5 font-extrabold text-[#64748B] text-[8.5px] tracking-[0.18em] uppercase border-b border-[#000000]/10 pb-1.5 mb-1.5 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[11px] text-[#000000] font-bold">auto_awesome</span>
+          <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 backdrop-blur-md border border-[#000000]/30 shadow-[0_12px_35px_rgba(115,92,0,0.12)] py-2 z-50 overflow-hidden text-[11px] sm:text-[11px] animate-fade-in-up">
+            <div className="px-3.5 py-1.5 font-extrabold text-[#64748B] text-[11px] tracking-[0.18em] uppercase border-b border-[#000000]/10 pb-1.5 mb-1.5 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[11px] sm:text-[11px] text-[#000000] font-bold">auto_awesome</span>
               AI Copywriter
             </div>
             {prompts.map((p) => (
@@ -162,9 +163,6 @@ function AISparkButton({ text, onApply }) {
 }
 
 // ═══════════════════════════════════════════════════════════
-
-
-// ═══════════════════════════════════════════════════════════
 // MINIMAL FIRST-CLASS STOREFRONT LAYOUT EDITORS
 // ═══════════════════════════════════════════════════════════
 
@@ -183,7 +181,7 @@ function HeroSectionEditor({ content, onUpdate }) {
         <AdminField label="Primary Headline" description="The main premium bold text welcoming storefront patrons">
           <div className="relative flex items-center w-full shadow-2xs rounded-xl">
             <AdminInput
-              value={hero.title || ""}
+              value={hero.title ||""}
               onChange={(e) => onUpdate("hero", { title: e.target.value })}
               className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
@@ -196,7 +194,7 @@ function HeroSectionEditor({ content, onUpdate }) {
         <AdminField label="Subtext Paragraph" description="A descriptive sentence establishing the boutique curation context">
           <div className="relative flex items-start w-full shadow-2xs rounded-xl">
             <AdminTextarea
-              value={hero.subtitle || ""}
+              value={hero.subtitle ||""}
               onChange={(e) => onUpdate("hero", { subtitle: e.target.value })}
               rows={2}
               className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
@@ -210,16 +208,16 @@ function HeroSectionEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <AdminField label="Gold Badge Tagline" description="Main badge line (e.g. 'Artisan Excellence Since 2015')">
             <AdminInput
-              value={hero.badgeText || ""}
+              value={hero.badgeText ||""}
               onChange={(e) => onUpdate("hero", { badgeText: e.target.value })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <AdminField label="Rotating Seal Ring Text" description="Floating seal label (e.g. '• HANDCRAFTED LUXURY • HERITAGE ARTISTRY •')">
             <AdminInput
-              value={hero.rotatingSealText || ""}
+              value={hero.rotatingSealText ||""}
               onChange={(e) => onUpdate("hero", { rotatingSealText: e.target.value })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
         </div>
@@ -227,14 +225,14 @@ function HeroSectionEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <ImageUpload
             label="Lossless Background Image"
-            value={hero.backgroundImage || ""}
+            value={hero.backgroundImage ||""}
             onChange={(val) => onUpdate("hero", { backgroundImage: val })}
             folder="cms"
           />
 
           <ImageUpload
             label="Mobile Background Image"
-            value={hero.mobileBackgroundImage || ""}
+            value={hero.mobileBackgroundImage ||""}
             onChange={(val) => onUpdate("hero", { mobileBackgroundImage: val })}
             folder="cms"
           />
@@ -243,16 +241,16 @@ function HeroSectionEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#000000]/10">
           <AdminField label="Primary Action Button Text">
             <AdminInput
-              value={hero.ctaPrimary?.text || ""}
+              value={hero.ctaPrimary?.text ||""}
               onChange={(e) => onUpdate("hero", { ctaPrimary: { ...(hero.ctaPrimary || {}), text: e.target.value } })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <AdminField label="Primary Action Button Destination Link" description="Page path (e.g. '/collections')">
             <AdminInput
-              value={hero.ctaPrimary?.link || ""}
+              value={hero.ctaPrimary?.link ||""}
               onChange={(e) => onUpdate("hero", { ctaPrimary: { ...(hero.ctaPrimary || {}), link: e.target.value } })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
         </div>
@@ -260,51 +258,51 @@ function HeroSectionEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
           <AdminField label="Secondary Action Button Text">
             <AdminInput
-              value={hero.ctaSecondary?.text || ""}
+              value={hero.ctaSecondary?.text ||""}
               onChange={(e) => onUpdate("hero", { ctaSecondary: { ...(hero.ctaSecondary || {}), text: e.target.value } })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <AdminField label="Secondary Action Button Destination Link" description="Page path (e.g. '/about')">
             <AdminInput
-              value={hero.ctaSecondary?.link || ""}
+              value={hero.ctaSecondary?.link ||""}
               onChange={(e) => onUpdate("hero", { ctaSecondary: { ...(hero.ctaSecondary || {}), link: e.target.value } })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
         </div>
 
         <div className="pt-4 border-t border-[#000000]/10 space-y-4">
-          <h4 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#000000]">Floating Glass Card Settings (Desktop View)</h4>
+          <h4 className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#000000]">Floating Glass Card Settings (Desktop View)</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <AdminField label="Floating Card Title">
               <AdminInput
-                value={hero.floatingCardTitle || ""}
+                value={hero.floatingCardTitle ||""}
                 onChange={(e) => onUpdate("hero", { floatingCardTitle: e.target.value })}
-                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
               />
             </AdminField>
             <AdminField label="Floating Card Action Button Link">
               <AdminInput
-                value={hero.floatingCardCtaLink || ""}
+                value={hero.floatingCardCtaLink ||""}
                 onChange={(e) => onUpdate("hero", { floatingCardCtaLink: e.target.value })}
-                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
               />
             </AdminField>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <AdminField label="Floating Card Action Button Text">
               <AdminInput
-                value={hero.floatingCardCtaText || ""}
+                value={hero.floatingCardCtaText ||""}
                 onChange={(e) => onUpdate("hero", { floatingCardCtaText: e.target.value })}
-                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
               />
             </AdminField>
             <AdminField label="Floating Card Description Paragraph">
               <AdminInput
-                value={hero.floatingCardDesc || ""}
+                value={hero.floatingCardDesc ||""}
                 onChange={(e) => onUpdate("hero", { floatingCardDesc: e.target.value })}
-                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
               />
             </AdminField>
           </div>
@@ -331,14 +329,14 @@ function FeaturedCollectionsEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <AdminField label="Section Headline">
             <AdminInput
-              value={fCol.sectionTitle || ""}
+              value={fCol.sectionTitle ||""}
               onChange={(e) => onUpdate("featuredCollections", { sectionTitle: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <AdminField label="Pill Subtitle">
             <AdminInput
-              value={fCol.sectionSubtitle || ""}
+              value={fCol.sectionSubtitle ||""}
               onChange={(e) => onUpdate("featuredCollections", { sectionSubtitle: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
@@ -346,26 +344,26 @@ function FeaturedCollectionsEditor({ content, onUpdate }) {
         </div>
 
         <div className="space-y-4 pt-4 border-t border-[#000000]/10">
-          <label className="text-[9.5px] font-extrabold uppercase tracking-[0.18em] text-[#000000] block mb-1">Configure Category Nodes</label>
+          <label className="text-[11px] sm:text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#000000] block mb-1">Configure Category Nodes</label>
           <div className="grid grid-cols-1 gap-4.5">
             {fCol.items?.map((item, idx) => (
               <div key={item.id || idx} className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 flex flex-col md:flex-row items-stretch md:items-center gap-4.5 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
                 <div className="flex-1 space-y-1.5">
-                  <span className="text-[8px] text-stone-400 font-extrabold uppercase tracking-wider block font-sans">Node Name</span>
+                  <span className="text-[11px] text-stone-400 font-extrabold uppercase tracking-wider block font-sans">Node Name</span>
                   <AdminInput
-                    value={item.name || ""}
+                    value={item.name ||""}
                     onChange={(e) => {
                       const copy = [...fCol.items];
                       copy[idx] = { ...copy[idx], name: e.target.value };
                       onUpdate("featuredCollections", { items: copy });
                     }}
-                    className="!py-2 !text-[11.5px] bg-white border-stone-200/80"
+                    className="!py-2 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
                   />
                 </div>
                 <div className="shrink-0">
                   <ImageUpload
                     label=""
-                    value={item.image || ""}
+                    value={item.image ||""}
                     onChange={(val) => {
                       const copy = [...fCol.items];
                       copy[idx] = { ...copy[idx], image: val };
@@ -375,7 +373,7 @@ function FeaturedCollectionsEditor({ content, onUpdate }) {
                   />
                 </div>
                 <div className="flex items-center gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-[#000000]/5 justify-between md:justify-end">
-                  <span className="text-[9.5px] font-bold text-stone-500 uppercase tracking-wider">Visible</span>
+                  <span className="text-[11px] sm:text-[11px] font-bold text-stone-500 uppercase tracking-wider">Visible</span>
                   <AdminToggle
                     checked={item.isVisible}
                     onChange={() => {
@@ -409,14 +407,14 @@ function StoryTeaserEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <AdminField label="Editorial Gold Subtitle">
             <AdminInput
-              value={story.subtitle || ""}
+              value={story.subtitle ||""}
               onChange={(e) => onUpdate("storyTeaser", { subtitle: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <AdminField label="Editorial Bold Headline">
             <AdminInput
-              value={story.title || ""}
+              value={story.title ||""}
               onChange={(e) => onUpdate("storyTeaser", { title: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
@@ -426,7 +424,7 @@ function StoryTeaserEditor({ content, onUpdate }) {
         <AdminField label="Brand Chronology Paragraph" description="Write a compelling, culturally rich editorial narrative">
           <div className="relative flex items-start w-full shadow-2xs rounded-xl">
             <AdminTextarea
-              value={story.description || ""}
+              value={story.description ||""}
               onChange={(e) => onUpdate("storyTeaser", { description: e.target.value })}
               rows={4}
               className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
@@ -440,23 +438,23 @@ function StoryTeaserEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <ImageUpload
             label="Editorial Accent Graphic"
-            value={story.image || ""}
+            value={story.image ||""}
             onChange={(val) => onUpdate("storyTeaser", { image: val })}
             folder="cms"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <AdminField label="Call to Action Button Label">
               <AdminInput
-                value={story.ctaText || ""}
+                value={story.ctaText ||""}
                 onChange={(e) => onUpdate("storyTeaser", { ctaText: e.target.value })}
-                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
               />
             </AdminField>
             <AdminField label="Heritage Year Badge Text">
               <AdminInput
-                value={story.establishedYear || "Est. in 2003"}
+                value={story.establishedYear ||"Est. in 2003"}
                 onChange={(e) => onUpdate("storyTeaser", { establishedYear: e.target.value })}
-                className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
               />
             </AdminField>
           </div>
@@ -481,14 +479,14 @@ function BestsellerStripEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <AdminField label="Section Header Headline">
             <AdminInput
-              value={bs.sectionTitle || ""}
+              value={bs.sectionTitle ||""}
               onChange={(e) => onUpdate("featuredProducts", { sectionTitle: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <AdminField label="Shelf Subtitle Tag">
             <AdminInput
-              value={bs.sectionSubtitle || ""}
+              value={bs.sectionSubtitle ||""}
               onChange={(e) => onUpdate("featuredProducts", { sectionSubtitle: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
@@ -501,11 +499,11 @@ function BestsellerStripEditor({ content, onUpdate }) {
               type="number"
               value={bs.maxDisplay || 4}
               onChange={(e) => onUpdate("featuredProducts", { maxDisplay: parseInt(e.target.value) || 4 })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <div className="flex items-center justify-between border border-[#000000]/15 px-4.5 py-3 rounded-2xl bg-white/80 backdrop-blur-xs mt-5 h-[46px] shadow-2xs">
-            <span className="text-[10px] font-extrabold text-[#64748B] uppercase tracking-wider">Enable Section Shelf</span>
+            <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider">Enable Section Shelf</span>
             <AdminToggle
               checked={bs.isVisible}
               onChange={() => onUpdate("featuredProducts", { isVisible: !bs.isVisible })}
@@ -531,7 +529,7 @@ function TestimonialsEditor({ content, onUpdate }) {
       <div className="space-y-5">
         <AdminField label="Section Header Headline">
           <AdminInput
-            value={testm.sectionTitle || ""}
+            value={testm.sectionTitle ||""}
             onChange={(e) => onUpdate("testimonials", { sectionTitle: e.target.value })}
             className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
           />
@@ -539,16 +537,16 @@ function TestimonialsEditor({ content, onUpdate }) {
 
         <div className="space-y-4 pt-4 border-t border-[#000000]/10">
           <div className="flex justify-between items-center mb-1">
-            <label className="text-[9.5px] font-extrabold uppercase tracking-[0.18em] text-[#000000]">Patron Reviews</label>
+            <label className="text-[11px] sm:text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#000000]">Patron Reviews</label>
             <button
               type="button"
               onClick={() => {
                 const newId = Date.now().toString();
-                const copy = [...(testm.items || []), { id: newId, name: "New Client", text: "Luxury experience.", rating: 5, isVisible: true }];
+                const copy = [...(testm.items || []), { id: newId, name:"New Client", text:"Luxury experience.", rating: 5, isVisible: true }];
                 onUpdate("testimonials", { items: copy });
                 toast.success("New Review Node Added!");
               }}
-              className="text-[9.5px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
             >
               + Add Review
             </button>
@@ -559,15 +557,15 @@ function TestimonialsEditor({ content, onUpdate }) {
               <div key={item.id || idx} className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 space-y-3.5 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
                 <div className="flex justify-between items-center border-b border-[#000000]/5 pb-2">
                   <div className="flex items-center gap-3">
-                    <span className="text-[8px] text-stone-400 font-extrabold uppercase tracking-wider">Patron Name</span>
+                    <span className="text-[11px] text-stone-400 font-extrabold uppercase tracking-wider">Patron Name</span>
                     <AdminInput
-                      value={item.name || ""}
+                      value={item.name ||""}
                       onChange={(e) => {
                         const copy = [...testm.items];
                         copy[idx] = { ...copy[idx], name: e.target.value };
                         onUpdate("testimonials", { items: copy });
                       }}
-                      className="!py-1.5 font-bold !text-[11.5px] !w-48 bg-white border-stone-200/80 focus:border-[#000000]"
+                      className="!py-1.5 font-bold !text-[11px] sm:text-[11px] !w-48 bg-white border-stone-200/80 focus:border-[#000000]"
                     />
                   </div>
                   <button
@@ -585,13 +583,13 @@ function TestimonialsEditor({ content, onUpdate }) {
                 
                 <AdminField label="Review Content Statement">
                   <AdminTextarea
-                    value={item.text || ""}
+                    value={item.text ||""}
                     onChange={(e) => {
                       const copy = [...testm.items];
                       copy[idx] = { ...copy[idx], text: e.target.value };
                       onUpdate("testimonials", { items: copy });
                     }}
-                    className="!text-[11.5px] !py-2 bg-white border-stone-200/80 focus:border-[#000000]"
+                    className="!text-[11px] sm:text-[11px] !py-2 bg-white border-stone-200/80 focus:border-[#000000]"
                     rows={2}
                   />
                 </AdminField>
@@ -623,12 +621,12 @@ function SectionOrderEditor({ sections, onToggle, onReorder }) {
             key={section.id}
             className={`flex items-center gap-4.5 p-4 rounded-2xl border transition-all duration-300 shadow-2xs hover:shadow-xs ${
               section.isVisible
-                ? "bg-white border-[#000000]/15 hover:border-[#000000]/35"
-                : "bg-stone-50/50 border-transparent opacity-60"
+                ?"bg-white border-[#000000]/15 hover:border-[#000000]/35"
+                :"bg-stone-50/50 border-transparent opacity-60"
             }`}
           >
             {/* Position Badging */}
-            <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-serif font-extrabold text-[11px] shrink-0 shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-serif font-extrabold text-[11px] sm:text-[11px] shrink-0 shadow-sm">
               {idx + 1}
             </div>
 
@@ -637,8 +635,8 @@ function SectionOrderEditor({ sections, onToggle, onReorder }) {
               <span className="text-[12px] font-extrabold text-stone-900 block tracking-tight">
                 {section.label}
               </span>
-              <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest block mt-0.5 font-sans">
-                {section.id === "hero" ? "Intro Visuals" : section.id === "featuredCollections" ? "Catalog Category Strip" : section.id === "featuredProducts" ? "Bestselling Products Shelf" : section.id === "storyTeaser" ? "Linage Editorial Story" : "Patron Voices Reviews"}
+              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-stone-400 uppercase tracking-widest block mt-0.5 font-sans">
+                {section.id ==="hero" ?"Intro Visuals" : section.id ==="featuredCollections" ?"Catalog Category Strip" : section.id ==="featuredProducts" ?"Bestselling Products Shelf" : section.id ==="storyTeaser" ?"Linage Editorial Story" :"Patron Voices Reviews"}
               </span>
             </div>
 
@@ -670,7 +668,7 @@ function SectionOrderEditor({ sections, onToggle, onReorder }) {
 
             {/* Visibility Toggle */}
             <div className="flex items-center gap-2 border-l border-[#000000]/10 pl-4.5 shrink-0">
-              <span className="text-[9.5px] font-bold text-stone-400 uppercase tracking-wider hidden sm:inline">Visible</span>
+              <span className="text-[11px] sm:text-[11px] font-bold text-stone-400 uppercase tracking-wider hidden sm:inline">Visible</span>
               <AdminToggle
                 checked={section.isVisible}
                 onChange={() => onToggle(section.id)}
@@ -699,14 +697,14 @@ function GalleryPortfolioEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <AdminField label="Gallery Headline Tag" description="Primary bold title for inspiration portfolio">
             <AdminInput
-              value={gp.sectionTitle || ""}
+              value={gp.sectionTitle ||""}
               onChange={(e) => onUpdate("galleryPreview", { sectionTitle: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <AdminField label="Gallery Subtitle Tag" description="Gold elegant narrative label showing below heading">
             <AdminInput
-              value={gp.sectionSubtitle || ""}
+              value={gp.sectionSubtitle ||""}
               onChange={(e) => onUpdate("galleryPreview", { sectionSubtitle: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
@@ -719,11 +717,11 @@ function GalleryPortfolioEditor({ content, onUpdate }) {
               type="number"
               value={gp.maxDisplay || 6}
               onChange={(e) => onUpdate("galleryPreview", { maxDisplay: parseInt(e.target.value) || 6 })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <div className="flex items-center justify-between border border-[#000000]/15 px-4.5 py-3 rounded-2xl bg-white/80 backdrop-blur-xs mt-5 h-[46px] shadow-2xs">
-            <span className="text-[10px] font-extrabold text-[#64748B] uppercase tracking-wider">Show Grid on Homepage</span>
+            <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider">Show Grid on Homepage</span>
             <AdminToggle
               checked={gp.isVisible !== false}
               onChange={() => onUpdate("galleryPreview", { isVisible: gp.isVisible === false ? true : false })}
@@ -732,8 +730,8 @@ function GalleryPortfolioEditor({ content, onUpdate }) {
         </div>
 
         <div className="p-4.5 bg-[#F1F5F9] rounded-2xl border border-[#000000]/15 space-y-2.5 mt-4 shadow-3xs">
-          <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.15em] block">Masonry Filter Options</span>
-          <p className="text-[9.5px] text-stone-500 font-light leading-relaxed">
+          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.15em] block">Masonry Filter Options</span>
+          <p className="text-[11px] sm:text-[11px] text-stone-500 font-light leading-relaxed">
             Storefront visitors can seamlessly filter using categories like <em>Traditional Wedding Decor</em>, <em>Pooja Decoration Sets</em>, <em>Customized Gift Hampers</em>, and <em>Bangle Trays</em> dynamically populated from your catalog.
           </p>
         </div>
@@ -744,24 +742,24 @@ function GalleryPortfolioEditor({ content, onUpdate }) {
 
 const DEFAULT_FEATURES = [
   {
-    icon: "handyman",
-    title: "Handmade Artistry",
-    desc: "Every petal, every bead, and every fold is meticulously placed by hand.",
+    icon:"handyman",
+    title:"Handmade Artistry",
+    desc:"Every petal, every bead, and every fold is meticulously placed by hand.",
   },
   {
-    icon: "diamond",
-    title: "Premium Quality",
-    desc: "Sourcing only the finest materials globally to ensure unparalleled luxury.",
+    icon:"diamond",
+    title:"Premium Quality",
+    desc:"Sourcing only the finest materials globally to ensure unparalleled luxury.",
   },
   {
-    icon: "volunteer_activism",
-    title: "Cultural Roots",
-    desc: "Deeply embedded in authentic Telugu traditions and timeless heritage.",
+    icon:"volunteer_activism",
+    title:"Cultural Roots",
+    desc:"Deeply embedded in authentic Telugu traditions and timeless heritage.",
   },
   {
-    icon: "design_services",
-    title: "Bespoke Design",
-    desc: "Tailored to your specific event theme and personal storytelling.",
+    icon:"design_services",
+    title:"Bespoke Design",
+    desc:"Tailored to your specific event theme and personal storytelling.",
   },
 ];
 
@@ -781,67 +779,67 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
       <div className="space-y-6">
         {/* Cinematic Hero */}
         <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">1. Editorial Hero Showcase</span>
+          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">1. Editorial Hero Showcase</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
             <AdminField label="Cinematic Title Headline">
               <AdminInput
-                value={ab.heroTitle || ""}
-                onChange={(e) => onUpdate("aboutPage", { heroTitle: e.target.value })}
+                value={ab.heroTitle ||""}
+                onChange={(e) => onUpdate("about", { heroTitle: e.target.value })}
                 className="!py-2.5 !text-[12px] border-stone-200/85 focus:border-[#000000]"
               />
             </AdminField>
             <AdminField label="Cinematic Subtitle">
               <AdminInput
-                value={ab.heroSubtitle || ""}
-                onChange={(e) => onUpdate("aboutPage", { heroSubtitle: e.target.value })}
+                value={ab.heroSubtitle ||""}
+                onChange={(e) => onUpdate("about", { heroSubtitle: e.target.value })}
                 className="!py-2.5 !text-[12px] border-stone-200/85 focus:border-[#000000]"
               />
             </AdminField>
           </div>
           <ImageUpload
             label="Cinematic Backdrop Graphic"
-            value={ab.heroImage || ""}
-            onChange={(val) => onUpdate("aboutPage", { heroImage: val })}
+            value={ab.heroImage ||""}
+            onChange={(val) => onUpdate("about", { heroImage: val })}
             folder="cms"
           />
         </div>
 
         {/* Mission & Narrative */}
         <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">2. Narrative & Mission Statement</span>
+          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">2. Narrative & Mission Statement</span>
           <AdminField label="Brand Mission Block" description="Core statement emphasizing the Telugu craftsmanship legacy">
             <div className="relative flex items-start w-full shadow-3xs rounded-xl">
               <AdminTextarea
-                value={ab.missionStatement || ""}
-                onChange={(e) => onUpdate("aboutPage", { missionStatement: e.target.value })}
+                value={ab.missionStatement ||""}
+                onChange={(e) => onUpdate("about", { missionStatement: e.target.value })}
                 rows={3}
                 className="pr-10 !py-2.5 !text-[12px] border-stone-200/85 focus:border-[#000000]"
               />
               <div className="absolute right-2.5 top-2.5">
-                <AISparkButton text={ab.missionStatement} onApply={(val) => onUpdate("aboutPage", { missionStatement: val })} />
+                <AISparkButton text={ab.missionStatement} onApply={(val) => onUpdate("about", { missionStatement: val })} />
               </div>
             </div>
           </AdminField>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
             <ImageUpload
               label="Narrative Side Illustration Image"
-              value={ab.storyImage || ""}
-              onChange={(val) => onUpdate("aboutPage", { storyImage: val })}
+              value={ab.storyImage ||""}
+              onChange={(val) => onUpdate("about", { storyImage: val })}
               folder="cms"
             />
             <div className="space-y-3.5">
               <AdminField label="Primary Founder Name" description="Name showing inside leadership frames">
                 <AdminInput
-                  value={ab.founderName || "Sirisha Atmakuri"}
-                  onChange={(e) => onUpdate("aboutPage", { founderName: e.target.value })}
-                  className="!py-2.5 !text-[11.5px] border-stone-200/85 focus:border-[#000000]"
+                  value={ab.founderName ||"Sirisha Atmakuri"}
+                  onChange={(e) => onUpdate("about", { founderName: e.target.value })}
+                  className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/85 focus:border-[#000000]"
                 />
               </AdminField>
               <AdminField label="Leadership Role Title">
                 <AdminInput
-                  value={ab.founderRole || "Founder & Creative Head"}
-                  onChange={(e) => onUpdate("aboutPage", { founderRole: e.target.value })}
-                  className="!py-2.5 !text-[11.5px] border-stone-200/85 focus:border-[#000000]"
+                  value={ab.founderRole ||"Founder & Creative Head"}
+                  onChange={(e) => onUpdate("about", { founderRole: e.target.value })}
+                  className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/85 focus:border-[#000000]"
                 />
               </AdminField>
             </div>
@@ -851,55 +849,55 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
         {/* Dual Leadership */}
         {ab.founders && (
           <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-            <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2 font-sans">3. Studio Founders & Directors</span>
+            <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2 font-sans">3. Studio Founders & Directors</span>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
               {ab.founders.map((founder, idx) => (
                 <div key={idx} className="bg-gradient-to-b from-white to-[#F8F9FB] p-4.5 rounded-xl border border-[#000000]/15 space-y-3.5 shadow-3xs">
-                  <span className="text-[8.5px] font-extrabold text-stone-400 uppercase tracking-widest block font-sans">Founder {idx + 1}</span>
+                  <span className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest block font-sans">Founder {idx + 1}</span>
                   <div className="grid grid-cols-2 gap-2.5">
                     <AdminField label="Full Name">
                       <AdminInput
-                        value={founder.name || ""}
+                        value={founder.name ||""}
                         onChange={(e) => {
                           const copy = [...ab.founders];
                           copy[idx] = { ...copy[idx], name: e.target.value };
-                          onUpdate("aboutPage", { founders: copy });
+                          onUpdate("about", { founders: copy });
                         }}
-                        className="!py-2 !text-[11px]"
+                        className="!py-2 !text-[11px] sm:text-[11px]"
                       />
                     </AdminField>
                     <AdminField label="Executive Role">
                       <AdminInput
-                        value={founder.role || ""}
+                        value={founder.role ||""}
                         onChange={(e) => {
                           const copy = [...ab.founders];
                           copy[idx] = { ...copy[idx], role: e.target.value };
-                          onUpdate("aboutPage", { founders: copy });
+                          onUpdate("about", { founders: copy });
                         }}
-                        className="!py-2 !text-[11px]"
+                        className="!py-2 !text-[11px] sm:text-[11px]"
                       />
                     </AdminField>
                   </div>
                   <AdminField label="Intro Subtitle Text">
                     <AdminInput
-                      value={founder.subtitle || ""}
+                      value={founder.subtitle ||""}
                       onChange={(e) => {
                         const copy = [...ab.founders];
                         copy[idx] = { ...copy[idx], subtitle: e.target.value };
-                        onUpdate("aboutPage", { founders: copy });
+                        onUpdate("about", { founders: copy });
                       }}
-                      className="!py-2 !text-[11px]"
+                      className="!py-2 !text-[11px] sm:text-[11px]"
                     />
                   </AdminField>
                   <AdminField label="Artistic Bio Quote">
                     <AdminTextarea
-                      value={founder.quote || ""}
+                      value={founder.quote ||""}
                       onChange={(e) => {
                         const copy = [...ab.founders];
                         copy[idx] = { ...copy[idx], quote: e.target.value };
-                        onUpdate("aboutPage", { founders: copy });
+                        onUpdate("about", { founders: copy });
                       }}
-                      className="!py-1.5 !text-[11px]"
+                      className="!py-1.5 !text-[11px] sm:text-[11px]"
                       rows={3}
                     />
                   </AdminField>
@@ -909,7 +907,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                     onChange={(val) => {
                       const copy = [...ab.founders];
                       copy[idx] = { ...copy[idx], signatureImg: val };
-                      onUpdate("aboutPage", { founders: copy });
+                      onUpdate("about", { founders: copy });
                     }}
                     folder="cms"
                   />
@@ -922,16 +920,16 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
         {/* Signature Specializations */}
         <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
           <div className="flex justify-between items-center border-b border-[#000000]/10 pb-2">
-            <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block font-sans">4. Signature Specializations</span>
+            <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block font-sans">4. Signature Specializations</span>
             <button
               type="button"
               onClick={() => {
                 const copy = [...(ab.specializations || DEFAULT_SPECIALIZATIONS)];
-                copy.push({ title: "New Specialization", img: "" });
-                onUpdate("aboutPage", { specializations: copy });
+                copy.push({ title:"New Specialization", img:"" });
+                onUpdate("about", { specializations: copy });
                 toast.success("New Specialization Added!");
               }}
-              className="text-[9.5px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
             >
               + Add Specialization
             </button>
@@ -941,25 +939,25 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
             {(ab.specializations || DEFAULT_SPECIALIZATIONS).map((item, idx) => (
               <div key={idx} className="p-4 bg-white/85 backdrop-blur-md rounded-2xl border border-[#000000]/15 flex flex-col md:flex-row items-stretch md:items-center gap-4.5 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
                 <div className="flex-1 space-y-1.5">
-                  <span className="text-[8px] text-stone-400 font-extrabold uppercase tracking-wider block font-sans">Specialization Title</span>
+                  <span className="text-[11px] text-stone-400 font-extrabold uppercase tracking-wider block font-sans">Specialization Title</span>
                   <AdminInput
-                    value={item.title || ""}
+                    value={item.title ||""}
                     onChange={(e) => {
                       const copy = [...(ab.specializations || DEFAULT_SPECIALIZATIONS)];
                       copy[idx] = { ...copy[idx], title: e.target.value };
-                      onUpdate("aboutPage", { specializations: copy });
+                      onUpdate("about", { specializations: copy });
                     }}
-                    className="!py-2 !text-[11.5px] bg-white border-stone-200/80"
+                    className="!py-2 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
                   />
                 </div>
                 <div className="shrink-0">
                   <ImageUpload
                     label=""
-                    value={item.img || ""}
+                    value={item.img ||""}
                     onChange={(val) => {
                       const copy = [...(ab.specializations || DEFAULT_SPECIALIZATIONS)];
                       copy[idx] = { ...copy[idx], img: val };
-                      onUpdate("aboutPage", { specializations: copy });
+                      onUpdate("about", { specializations: copy });
                     }}
                     folder="cms"
                   />
@@ -968,7 +966,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                   type="button"
                   onClick={() => {
                     const copy = (ab.specializations || DEFAULT_SPECIALIZATIONS).filter((_, i) => i !== idx);
-                    onUpdate("aboutPage", { specializations: copy });
+                    onUpdate("about", { specializations: copy });
                     toast.success("Specialization Deleted");
                   }}
                   className="text-red-500 opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-1.5 hover:bg-red-50 rounded-lg shrink-0"
@@ -983,16 +981,16 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
         {/* Why Families Choose Us */}
         <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
           <div className="flex justify-between items-center border-b border-[#000000]/10 pb-2">
-            <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block font-sans">5. Why Families Choose Us</span>
+            <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block font-sans">5. Why Families Choose Us</span>
             <button
               type="button"
               onClick={() => {
                 const copy = [...(ab.features || DEFAULT_FEATURES)];
-                copy.push({ icon: "star", title: "New Feature", desc: "Feature description." });
-                onUpdate("aboutPage", { features: copy });
+                copy.push({ icon:"star", title:"New Feature", desc:"Feature description." });
+                onUpdate("about", { features: copy });
                 toast.success("New Feature Added!");
               }}
-              className="text-[9.5px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
             >
               + Add Feature
             </button>
@@ -1003,22 +1001,22 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
               <div key={idx} className="p-4 bg-white/85 backdrop-blur-md rounded-2xl border border-[#000000]/15 space-y-3.5 shadow-2xs hover:border-[#000000]/35 transition-all duration-300">
                 <div className="flex justify-between items-center border-b border-[#000000]/5 pb-2">
                   <div className="flex items-center gap-3">
-                    <span className="text-[8px] text-stone-400 font-extrabold uppercase tracking-wider">Feature Title</span>
+                    <span className="text-[11px] text-stone-400 font-extrabold uppercase tracking-wider">Feature Title</span>
                     <AdminInput
-                      value={item.title || ""}
+                      value={item.title ||""}
                       onChange={(e) => {
                         const copy = [...(ab.features || DEFAULT_FEATURES)];
                         copy[idx] = { ...copy[idx], title: e.target.value };
-                        onUpdate("aboutPage", { features: copy });
+                        onUpdate("about", { features: copy });
                       }}
-                      className="!py-1.5 font-bold !text-[11.5px] !w-48 bg-white border-stone-200/80 focus:border-[#000000]"
+                      className="!py-1.5 font-bold !text-[11px] sm:text-[11px] !w-48 bg-white border-stone-200/80 focus:border-[#000000]"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => {
                       const copy = (ab.features || DEFAULT_FEATURES).filter((_, i) => i !== idx);
-                      onUpdate("aboutPage", { features: copy });
+                      onUpdate("about", { features: copy });
                       toast.success("Feature Deleted");
                     }}
                     className="text-red-500 opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-1.5 hover:bg-red-50 rounded-lg"
@@ -1030,25 +1028,25 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <AdminField label="Material Symbol Icon Name" description="From Google Material Symbols, e.g. diamond, handyman, star">
                     <AdminInput
-                      value={item.icon || ""}
+                      value={item.icon ||""}
                       onChange={(e) => {
                         const copy = [...(ab.features || DEFAULT_FEATURES)];
                         copy[idx] = { ...copy[idx], icon: e.target.value };
-                        onUpdate("aboutPage", { features: copy });
+                        onUpdate("about", { features: copy });
                       }}
-                      className="!py-2 !text-[11px] bg-white border-stone-200/80"
+                      className="!py-2 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
                     />
                   </AdminField>
 
                   <AdminField label="Feature Description">
                     <AdminTextarea
-                      value={item.desc || ""}
+                      value={item.desc ||""}
                       onChange={(e) => {
                         const copy = [...(ab.features || DEFAULT_FEATURES)];
                         copy[idx] = { ...copy[idx], desc: e.target.value };
-                        onUpdate("aboutPage", { features: copy });
+                        onUpdate("about", { features: copy });
                       }}
-                      className="!py-1.5 !text-[11px] bg-white border-stone-200/80"
+                      className="!py-1.5 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
                       rows={2}
                     />
                   </AdminField>
@@ -1063,7 +1061,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
 }
 
 // 7.5. EVENTS PAGE BANNER & PROMOS
-function EventsPageDetailsEditor({ content, onUpdate }) {
+function EventsPageEditor({ content, onUpdate }) {
   const ep = content || {};
   const hero = ep.hero || {};
   const promo = ep.promo || {};
@@ -1079,17 +1077,17 @@ function EventsPageDetailsEditor({ content, onUpdate }) {
       <div className="space-y-6">
         {/* Hero Section Banner */}
         <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">1. Hero Section Banner</span>
+          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">1. Hero Section Banner</span>
           
           <AdminField label="Hero Title" description="The primary main headline of the events page">
             <div className="relative flex items-center w-full shadow-2xs rounded-xl">
               <AdminInput
-                value={hero.title || ""}
-                onChange={(e) => onUpdate("eventsPage", { hero: { ...hero, title: e.target.value } })}
+                value={hero.title ||""}
+                onChange={(e) => onUpdate("events-page", { hero: { ...hero, title: e.target.value } })}
                 className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
               />
               <div className="absolute right-2.5">
-                <AISparkButton text={hero.title} onApply={(val) => onUpdate("eventsPage", { hero: { ...hero, title: val } })} />
+                <AISparkButton text={hero.title} onApply={(val) => onUpdate("events-page", { hero: { ...hero, title: val } })} />
               </div>
             </div>
           </AdminField>
@@ -1097,12 +1095,12 @@ function EventsPageDetailsEditor({ content, onUpdate }) {
           <AdminField label="Hero Subtitle" description="A short tagline or category group text">
             <div className="relative flex items-center w-full shadow-2xs rounded-xl">
               <AdminInput
-                value={hero.subtitle || ""}
-                onChange={(e) => onUpdate("eventsPage", { hero: { ...hero, subtitle: e.target.value } })}
+                value={hero.subtitle ||""}
+                onChange={(e) => onUpdate("events-page", { hero: { ...hero, subtitle: e.target.value } })}
                 className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
               />
               <div className="absolute right-2.5">
-                <AISparkButton text={hero.subtitle} onApply={(val) => onUpdate("eventsPage", { hero: { ...hero, subtitle: val } })} />
+                <AISparkButton text={hero.subtitle} onApply={(val) => onUpdate("events-page", { hero: { ...hero, subtitle: val } })} />
               </div>
             </div>
           </AdminField>
@@ -1110,32 +1108,32 @@ function EventsPageDetailsEditor({ content, onUpdate }) {
           <AdminField label="Hero Description" description="Immersive description paragraph detailing our event services">
             <div className="relative flex items-start w-full shadow-2xs rounded-xl">
               <AdminTextarea
-                value={hero.description || ""}
-                onChange={(e) => onUpdate("eventsPage", { hero: { ...hero, description: e.target.value } })}
+                value={hero.description ||""}
+                onChange={(e) => onUpdate("events-page", { hero: { ...hero, description: e.target.value } })}
                 rows={3}
                 className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
               />
               <div className="absolute right-2.5 top-2.5">
-                <AISparkButton text={hero.description} onApply={(val) => onUpdate("eventsPage", { hero: { ...hero, description: val } })} />
+                <AISparkButton text={hero.description} onApply={(val) => onUpdate("events-page", { hero: { ...hero, description: val } })} />
               </div>
             </div>
           </AdminField>
 
           <ImageUpload
             label="Hero Background Image"
-            value={hero.backgroundImage || ""}
-            onChange={(val) => onUpdate("eventsPage", { hero: { ...hero, backgroundImage: val } })}
+            value={hero.backgroundImage ||""}
+            onChange={(val) => onUpdate("events-page", { hero: { ...hero, backgroundImage: val } })}
             folder="cms"
           />
         </div>
 
         {/* Promo Banner Settings */}
         <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">2. Promo Banner Settings</span>
+          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">2. Promo Banner Settings</span>
           <ImageUpload
             label="Promo Section Background Image"
-            value={promo.backgroundImage || ""}
-            onChange={(val) => onUpdate("eventsPage", { promo: { ...promo, backgroundImage: val } })}
+            value={promo.backgroundImage ||""}
+            onChange={(val) => onUpdate("events-page", { promo: { ...promo, backgroundImage: val } })}
             folder="cms"
           />
         </div>
@@ -1145,8 +1143,8 @@ function EventsPageDetailsEditor({ content, onUpdate }) {
 }
 
 // 8. HELPLINE & LOCATION
-function ContactInfoEditor({ contact, onUpdate }) {
-  const c = contact || {};
+function ContactInfoEditor({ content, onUpdate }) {
+  const c = content || {};
   
   return (
     <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
@@ -1162,21 +1160,21 @@ function ContactInfoEditor({ contact, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5">
           <AdminField label="Primary Consultation Helpline" description="Direct voice call link">
             <AdminInput
-              value={c.phone || ""}
+              value={c.phone ||""}
               onChange={(e) => onUpdate("contact", { phone: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
             />
           </AdminField>
           <AdminField label="WhatsApp Instant Link" description="Direct messaging URL">
             <AdminInput
-              value={c.whatsapp || ""}
+              value={c.whatsapp ||""}
               onChange={(e) => onUpdate("contact", { whatsapp: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
             />
           </AdminField>
           <AdminField label="Official Support Email" description="Digital studio inbox">
             <AdminInput
-              value={c.email || ""}
+              value={c.email ||""}
               onChange={(e) => onUpdate("contact", { email: e.target.value })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
             />
@@ -1187,35 +1185,35 @@ function ContactInfoEditor({ contact, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5 pt-4 border-t border-[#000000]/10">
           <AdminField label="Studio Physical Address" description="Location rendered on footer & contact pages">
             <AdminInput
-              value={c.address || ""}
+              value={c.address ||""}
               onChange={(e) => onUpdate("contact", { address: e.target.value })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000]"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000]"
             />
           </AdminField>
           <AdminField label="Google Maps Direction Link" description="Anchor link routing users to navigate">
             <AdminInput
-              value={c.mapEmbed || ""}
+              value={c.mapEmbed ||""}
               onChange={(e) => onUpdate("contact", { mapEmbed: e.target.value })}
               placeholder="e.g. https://maps.google.com/?q=..."
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000]"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000]"
             />
           </AdminField>
         </div>
 
         {/* Timings */}
         <div className="bg-white/80 backdrop-blur-md p-4.5 rounded-2xl border border-[#000000]/15 space-y-3 mt-4 shadow-3xs">
-          <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.15em] block font-sans">Studio Business Hours</span>
+          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.15em] block font-sans">Studio Business Hours</span>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
             <AdminField label="Weekdays opening schedule">
               <AdminInput
-                value={c.businessHours || "Mon - Sat: 10 AM - 7 PM"}
+                value={c.businessHours ||"Mon - Sat: 10 AM - 7 PM"}
                 onChange={(e) => onUpdate("contact", { businessHours: e.target.value })}
-                className="!py-2 !text-[11.5px] bg-white border-stone-200/80"
+                className="!py-2 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
               />
             </AdminField>
             <div className="p-3 bg-[#F1F5F9] rounded-xl border border-[#000000]/10 flex items-center justify-center text-center">
-              <span className="text-[10px] text-stone-500 font-light leading-normal">
+              <span className="text-[11px] text-stone-500 font-light leading-normal">
                 Rendered across the responsive helpline and custom booking panels.
               </span>
             </div>
@@ -1227,70 +1225,153 @@ function ContactInfoEditor({ contact, onUpdate }) {
 }
 
 // 9. CUSTOM INTAKE FORM
-function CustomOrdersCMSEditor({ content, onUpdate }) {
-  const studio = content.digitalStudio || {};
-  
+function CustomOrdersEditor({ content, onUpdate }) {
+  const co = content || {};
   return (
     <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
       <SectionHeader
         icon="design_services"
-        title="Custom Intake Form Modules"
-        description="Overhaul active consultation categories, base pricing structures, and dynamic intake modules"
+        title="Custom Orders Settings"
+        description="Configure titles and messages for the bespoke intake flow"
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <AdminField label="Intake Page Headline">
+          <AdminInput
+            value={co.pageTitle ||""}
+            onChange={(e) => onUpdate("custom-orders", { pageTitle: e.target.value })}
+            className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
+          />
+        </AdminField>
+        <AdminField label="Intake Form Notice Text">
+          <AdminInput
+            value={co.noticeText ||""}
+            onChange={(e) => onUpdate("custom-orders", { noticeText: e.target.value })}
+            className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
+          />
+        </AdminField>
+      </div>
+    </div>
+  );
+}
+
+// 11. FAQS
+function FAQEditor({ content, onUpdate }) {
+  const homepageFaqs = content.homepage || [];
+  const productsFaqs = content.products || [];
+
+  const handleUpdate = (category, idx, field, value) => {
+    const copy = category === 'homepage' ? [...homepageFaqs] : [...productsFaqs];
+    copy[idx] = { ...copy[idx], [field]: value };
+    onUpdate("faqs", { ...content, [category]: copy });
+  };
+
+  const handleAdd = (category) => {
+    const copy = category === 'homepage' ? [...homepageFaqs] : [...productsFaqs];
+    copy.push({ question: "New Question", answer: "Answer here" });
+    onUpdate("faqs", { ...content, [category]: copy });
+  };
+
+  const handleDelete = (category, idx) => {
+    const copy = category === 'homepage' ? [...homepageFaqs] : [...productsFaqs];
+    copy.splice(idx, 1);
+    onUpdate("faqs", { ...content, [category]: copy });
+  };
+
+  return (
+    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+      <SectionHeader
+        icon="help_center"
+        title="Frequently Asked Questions"
+        description="Manage the FAQs displayed on the Homepage and Product pages"
       />
       
-      <div className="space-y-5">
-        {/* Headers */}
-        <div className="p-4.5 bg-[#F1F5F9] rounded-2xl border border-[#000000]/15 space-y-2 shadow-3xs">
-          <span className="text-[9.5px] font-extrabold text-[#000000] uppercase tracking-[0.15em] block font-sans">Intake Form Welcome Setup</span>
-          <p className="text-[9.5px] text-stone-500 font-light leading-relaxed">
-            The Digital Studio intake page lets prospective couples specify their event type (Wedding, Pooja, Engagement, etc.), preferred visual style (Royal Palace, Minimalist, Kundan), venue scale capacity, and custom build modules.
-          </p>
-        </div>
-
-        {/* Modules Config */}
-        <div className="space-y-4 pt-4 border-t border-[#000000]/10">
-          <label className="text-[9.5px] font-extrabold uppercase tracking-[0.18em] text-[#000000] block mb-1">Configure Base Prices & Subsystems</label>
-          
-          <div className="grid grid-cols-1 gap-4">
-            {studio.packageModules?.map((mod, idx) => (
-              <div key={mod.id || idx} className="p-4.5 bg-white/80 backdrop-blur-md border border-[#000000]/15 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4.5 shadow-2xs hover:border-[#000000]/35 transition-all duration-300">
-                <div className="flex-1 space-y-1.5">
-                  <span className="text-[8.5px] text-stone-400 font-extrabold uppercase tracking-wider block font-sans">Module Label</span>
-                  <span className="text-[12px] font-bold text-stone-850 block leading-tight">{mod.label}</span>
-                  <span className="text-[10px] text-stone-450 block font-light leading-normal">{mod.desc}</span>
-                </div>
-                
-                <div className="flex items-center gap-3.5 shrink-0 pt-3 md:pt-0 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-[#000000]/5">
-                  <div className="space-y-1 w-28">
-                    <span className="text-[8px] text-stone-400 font-extrabold uppercase tracking-wider block text-right font-sans">Base Price</span>
+      <div className="space-y-6">
+        {/* Homepage FAQs */}
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-[12px] font-extrabold text-[#000000] uppercase tracking-[0.18em]">Homepage FAQs</span>
+            <button
+              onClick={() => handleAdd('homepage')}
+              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+            >
+              + Add FAQ
+            </button>
+          </div>
+          <div className="space-y-4">
+            {homepageFaqs.map((faq, idx) => (
+              <div key={idx} className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 space-y-3.5 shadow-2xs">
+                <div className="flex justify-between items-center border-b border-[#000000]/5 pb-2">
+                  <AdminField label={`Question ${idx + 1}`} className="w-full">
                     <AdminInput
-                      type="number"
-                      value={mod.basePrice || 0}
-                      onChange={(e) => {
-                        const copy = [...studio.packageModules];
-                        copy[idx] = { ...copy[idx], basePrice: parseInt(e.target.value) || 0 };
-                        onUpdate("digitalStudio", { packageModules: copy });
-                      }}
-                      className="!py-2 !text-[11.5px] bg-white text-right font-mono border-stone-200/80"
+                      value={faq.question}
+                      onChange={(e) => handleUpdate('homepage', idx, 'question', e.target.value)}
+                      className="!py-1.5 font-bold !text-[11px] bg-white border-stone-200/80 focus:border-[#000000]"
                     />
-                  </div>
-                  <div className="space-y-1 text-center shrink-0 ml-2.5">
-                    <span className="text-[8px] text-stone-400 font-extrabold uppercase tracking-wider block font-sans">Popular</span>
-                    <AdminToggle
-                      checked={mod.isPopular}
-                      onChange={() => {
-                        const copy = [...studio.packageModules];
-                        copy[idx] = { ...copy[idx], isPopular: !copy[idx].isPopular };
-                        onUpdate("digitalStudio", { packageModules: copy });
-                      }}
-                    />
-                  </div>
+                  </AdminField>
+                  <button
+                    onClick={() => handleDelete('homepage', idx)}
+                    className="text-red-500 opacity-60 hover:opacity-100 p-1.5 ml-2 hover:bg-red-50 rounded-lg cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
                 </div>
+                <AdminField label="Answer">
+                  <AdminTextarea
+                    value={faq.answer}
+                    onChange={(e) => handleUpdate('homepage', idx, 'answer', e.target.value)}
+                    rows={2}
+                    className="!py-2 !text-[11px] bg-white border-stone-200/80 focus:border-[#000000]"
+                  />
+                </AdminField>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Product FAQs */}
+        <div className="pt-6 border-t border-[#000000]/10">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-[12px] font-extrabold text-[#000000] uppercase tracking-[0.18em]">Products FAQs</span>
+            <button
+              onClick={() => handleAdd('products')}
+              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+            >
+              + Add FAQ
+            </button>
+          </div>
+          <div className="space-y-4">
+            {productsFaqs.map((faq, idx) => (
+              <div key={idx} className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 space-y-3.5 shadow-2xs">
+                <div className="flex justify-between items-center border-b border-[#000000]/5 pb-2">
+                  <AdminField label={`Question ${idx + 1}`} className="w-full">
+                    <AdminInput
+                      value={faq.question}
+                      onChange={(e) => handleUpdate('products', idx, 'question', e.target.value)}
+                      className="!py-1.5 font-bold !text-[11px] bg-white border-stone-200/80 focus:border-[#000000]"
+                    />
+                  </AdminField>
+                  <button
+                    onClick={() => handleDelete('products', idx)}
+                    className="text-red-500 opacity-60 hover:opacity-100 p-1.5 ml-2 hover:bg-red-50 rounded-lg cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                  </button>
+                </div>
+                <AdminField label="Answer">
+                  <AdminTextarea
+                    value={faq.answer}
+                    onChange={(e) => handleUpdate('products', idx, 'answer', e.target.value)}
+                    rows={2}
+                    className="!py-2 !text-[11px] bg-white border-stone-200/80 focus:border-[#000000]"
+                  />
+                </AdminField>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -1298,7 +1379,7 @@ function CustomOrdersCMSEditor({ content, onUpdate }) {
 
 // 10. SEO META CENTER
 function SEOCenterEditor({ content, onUpdate }) {
-  const seo = content.seo || {};
+  const seo = content || {};
   
   return (
     <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
@@ -1313,7 +1394,7 @@ function SEOCenterEditor({ content, onUpdate }) {
         {/* Title & Desc */}
         <AdminField label="Default Google Page Title Tag" description="Displayed on search results tabs (max 60 chars)">
           <AdminInput
-            value={seo.globalTitle || ""}
+            value={seo.globalTitle ||""}
             onChange={(e) => onUpdate("seo", { globalTitle: e.target.value })}
             className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
           />
@@ -1321,7 +1402,7 @@ function SEOCenterEditor({ content, onUpdate }) {
         
         <AdminField label="Meta Description Block" description="Text block crawled by Google for list snippets (max 160 chars)">
           <AdminTextarea
-            value={seo.globalDescription || ""}
+            value={seo.globalDescription ||""}
             onChange={(e) => onUpdate("seo", { globalDescription: e.target.value })}
             rows={3}
             className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
@@ -1332,14 +1413,14 @@ function SEOCenterEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#000000]/10">
           <AdminField label="Global Search Keywords Tag" description="Comma-separated crawling keywords">
             <AdminInput
-              value={seo.globalKeywords || ""}
+              value={seo.globalKeywords ||""}
               onChange={(e) => onUpdate("seo", { globalKeywords: e.target.value })}
-              className="!py-2.5 !text-[11.5px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <ImageUpload
             label="OpenGraph Social Share Thumbnail URL"
-            value={seo.ogImage || ""}
+            value={seo.ogImage ||""}
             onChange={(val) => onUpdate("seo", { ogImage: val })}
             folder="cms"
           />
@@ -1367,29 +1448,29 @@ function AnnouncementBarEditor({ banners, onUpdate }) {
             key={b.id}
             className={`p-4 rounded-2xl border flex items-center justify-between gap-3.5 transition-all duration-300 shadow-2xs hover:shadow-xs ${
               b.isActive 
-                ? "bg-white border-[#000000]" 
-                : "bg-white/80 border-stone-200/80 opacity-70 hover:opacity-100"
+                ?"bg-white border-[#000000]" 
+                :"bg-white/80 border-stone-200/80 opacity-70 hover:opacity-100"
             }`}
           >
             <div className="flex items-center gap-3 flex-1">
               <div className="w-7 h-7 rounded-lg bg-[#F1F5F9] border border-[#000000]/20 flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[14px] text-[#000000] font-semibold">{b.icon || "notifications"}</span>
+                <span className="material-symbols-outlined text-[14px] text-[#000000] font-semibold">{b.icon ||"notifications"}</span>
               </div>
               <AdminInput
                 value={b.text}
                 onChange={(e) => {
                   const copy = [...banners];
                   copy[idx] = { ...copy[idx], text: e.target.value };
-                  onUpdate("banners", copy);
+                  onUpdate("announcement", { banners: copy });
                 }}
-                className="!py-1.5 !text-[11.5px] bg-transparent flex-1 border-none focus:bg-transparent shadow-none"
+                className="!py-1.5 !text-[11px] sm:text-[11px] bg-transparent flex-1 border-none focus:bg-transparent shadow-none"
               />
             </div>
             <AdminToggle
               checked={b.isActive}
               onChange={() => {
                 const copy = banners.map(item => item.id === b.id ? { ...item, isActive: !item.isActive } : { ...item, isActive: false });
-                onUpdate("banners", copy);
+                onUpdate("announcement", { banners: copy });
               }}
             />
           </div>
@@ -1413,14 +1494,14 @@ function NavigationFooterEditor({ nav, footer, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <AdminField label="Navbar Brand Name">
             <AdminInput
-              value={nav.logo?.text || ""}
+              value={nav.logo?.text ||""}
               onChange={(e) => onUpdate("navigation", { logo: { ...nav.logo, text: e.target.value } })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
           </AdminField>
           <AdminField label="Subtext Tagline">
             <AdminInput
-              value={nav.logo?.tagline || ""}
+              value={nav.logo?.tagline ||""}
               onChange={(e) => onUpdate("navigation", { logo: { ...nav.logo, tagline: e.target.value } })}
               className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
             />
@@ -1437,7 +1518,7 @@ function NavigationFooterEditor({ nav, footer, onUpdate }) {
         />
         <AdminField label="Footer Brand Biography">
           <AdminTextarea
-            value={footer.description || ""}
+            value={footer.description ||""}
             onChange={(e) => onUpdate("footer", { description: e.target.value })}
             rows={3}
             className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
@@ -1451,8 +1532,8 @@ function NavigationFooterEditor({ nav, footer, onUpdate }) {
 // 14. VERSION ROLLBACK
 function PublisherVersionsEditor() {
   const versions = [
-    { id: 4, tag: "v2.4", desc: "Pre-Diwali Launch Curation - by Sirisha", time: "May 17, 2026 19:30" },
-    { id: 3, tag: "v2.3", desc: "Summer Wedding Collections - by Balaji", time: "May 10, 2026 14:15" }
+    { id: 4, tag:"v2.4", desc:"Pre-Diwali Launch Curation - by Sirisha", time:"May 17, 2026 19:30" },
+    { id: 3, tag:"v2.3", desc:"Summer Wedding Collections - by Balaji", time:"May 10, 2026 14:15" }
   ];
 
   return (
@@ -1469,11 +1550,11 @@ function PublisherVersionsEditor() {
             <div className="space-y-1">
               <span className="text-[7.5px] bg-[#000000]/15 text-[#000000] font-extrabold px-2.5 py-0.5 rounded-full font-mono w-fit block shadow-3xs">{v.tag}</span>
               <span className="text-[12px] font-bold text-stone-850 mt-2 block leading-none">{v.desc}</span>
-              <span className="text-[8px] text-stone-400 block mt-1">{v.time}</span>
+              <span className="text-[11px] text-stone-400 block mt-1">{v.time}</span>
             </div>
             <button
               onClick={() => toast.success(`Rolled back to ${v.tag}!`)}
-              className="px-4 py-2 rounded-xl text-[9px] font-extrabold border border-[#000000]/30 hover:border-[#000000] bg-white text-stone-700 hover:text-stone-900 cursor-pointer shadow-2xs transition-all active:scale-95"
+              className="px-4 py-2 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-extrabold border border-[#000000]/30 hover:border-[#000000] bg-white text-stone-700 hover:text-stone-900 cursor-pointer shadow-2xs transition-all active:scale-95"
             >
               Restore
             </button>
@@ -1487,8 +1568,8 @@ function PublisherVersionsEditor() {
 // 15. MEDIA VAULT
 function MediaLibraryEditor() {
   const mediaFiles = [
-    { id: 1, name: "temple_style_mandap.png", size: "1.4 MB", url: PLACEHOLDER_IMAGES.collectionWedding },
-    { id: 2, name: "luxury_royal_wedding.png", size: "2.1 MB", url: PLACEHOLDER_IMAGES.mandalaHero }
+    { id: 1, name:"temple_style_mandap.png", size:"1.4 MB", url: PLACEHOLDER_IMAGES.collectionWedding },
+    { id: 2, name:"luxury_royal_wedding.png", size:"2.1 MB", url: PLACEHOLDER_IMAGES.mandalaHero }
   ];
 
   return (
@@ -1505,8 +1586,8 @@ function MediaLibraryEditor() {
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-xl bg-cover bg-center shrink-0 border border-black/5 shadow-inner" style={{ backgroundImage: `url(${f.url})` }} />
               <div>
-                <span className="text-[11.5px] font-extrabold text-stone-850 block truncate max-w-[155px] leading-tight">{f.name}</span>
-                <span className="text-[8.5px] text-stone-400 uppercase tracking-widest font-extrabold mt-1 block">optimized png • {f.size}</span>
+                <span className="text-[11px] sm:text-[11px] font-extrabold text-stone-850 block truncate max-w-[155px] leading-tight">{f.name}</span>
+                <span className="text-[11px] text-stone-400 uppercase tracking-widest font-extrabold mt-1 block">optimized png • {f.size}</span>
               </div>
             </div>
             <button
@@ -1542,16 +1623,16 @@ function QuickCatalogControl() {
             <div className="flex items-center gap-3">
               <img src={prd.image} alt={prd.name} className="w-10 h-10 object-cover rounded-xl border border-black/5 shadow-2xs shrink-0" />
               <div>
-                <span className="text-[11.5px] font-bold text-stone-850 block line-clamp-1 leading-tight">{prd.name}</span>
-                <span className="text-[8px] text-[#000000] font-extrabold uppercase tracking-widest mt-1 block">{prd.category}</span>
+                <span className="text-[11px] sm:text-[11px] font-bold text-stone-850 block line-clamp-1 leading-tight">{prd.name}</span>
+                <span className="text-[11px] text-[#000000] font-extrabold uppercase tracking-widest mt-1 block">{prd.category}</span>
               </div>
             </div>
             <button
               onClick={() => toggleProductFeatured(prd.id)}
               className={`p-2 rounded-full border transition-all cursor-pointer flex items-center justify-center shadow-3xs active:scale-95 ${
                 prd.featured 
-                  ? "bg-[#000000]/15 border-[#000000]/40 text-[#000000] shadow-[0_2px_8px_rgba(196,168,124,0.2)]" 
-                  : "bg-white border-stone-200 text-neutral-300 hover:text-neutral-500"
+                  ?"bg-[#000000]/15 border-[#000000]/40 text-[#000000] shadow-[0_2px_8px_rgba(196,168,124,0.2)]" 
+                  :"bg-white border-stone-200 text-neutral-300 hover:text-neutral-500"
               }`}
             >
               <span className="material-symbols-outlined text-[13px] block font-bold">star</span>
@@ -1576,23 +1657,17 @@ export function AdminContent() {
     toggleHomepageSection,
     autoPublish,
     toggleAutoPublish,
+    auxContent,
+    handleUpdate
   } = useAdmin();
 
   const [activeSection, setActiveSection] = useState("hero");
   
-  const [expandedCategories, setExpandedCategories] = useState({
-    "Storefront Layout": true,
-    "Pages": true,
-    "SEO & Branding": true,
-    "System Tools": false
+  const [expandedCategories, setExpandedCategories] = useState({"Storefront Layout": true,"Pages": true,"SEO & Branding": true,"System Tools": false
   });
 
   const toggleCategory = (cat) => {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
-  };
-
-  const handleUpdate = (section, data) => {
-    updateContent(section, data);
   };
 
   return (
@@ -1611,40 +1686,40 @@ export function AdminContent() {
           <h2 className="text-[22px] font-serif font-extrabold text-neutral-900 tracking-wide">
             Storefront CMS Editor
           </h2>
-          <p className="text-[9.5px] text-[#64748B] uppercase tracking-[0.25em] font-extrabold mt-1 block">
+          <p className="text-[11px] sm:text-[11px] text-[#64748B] uppercase tracking-[0.25em] font-extrabold mt-1 block">
             Bespoke Website Layout & Theme Styling Studio
           </p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden sm:flex items-center gap-2 text-[9px] text-emerald-800 font-extrabold uppercase tracking-[0.18em] bg-emerald-50 border border-emerald-200/50 px-4 py-1.5 rounded-full shadow-2xs">
+          <div className="hidden sm:flex items-center gap-2 text-[11px] sm:text-[11px] sm:text-[11px] text-emerald-800 font-extrabold uppercase tracking-[0.18em] bg-emerald-50 border border-emerald-200/50 px-4 py-1.5 rounded-full shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
             Live Sync Mode
           </div>
 
           {/* Quick Auto-Publish Toggle Switch */}
           <div className="flex items-center gap-2 bg-stone-50 border border-stone-200/80 px-3 py-1.5 rounded-full shadow-2xs">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-600">Auto-Publish</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-stone-600">Auto-Publish</span>
             <button
               onClick={toggleAutoPublish}
               className={`w-11 h-6 rounded-full transition-colors duration-250 relative focus:outline-none cursor-pointer min-h-0 p-0 ${
-                autoPublish ? "bg-slate-900" : "bg-slate-300"
+                autoPublish ?"bg-slate-900" :"bg-slate-300"
               }`}
             >
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-250 shadow-sm ${
-                autoPublish ? "translate-x-5" : ""
+                autoPublish ?"translate-x-5" :""
               }`} />
             </button>
           </div>
           
           {autoPublish ? (
-            <div className="flex items-center gap-2 px-5 py-2.5 bg-emerald-950 text-emerald-300 border border-emerald-800/80 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] shadow-2xs">
+            <div className="flex items-center gap-2 px-5 py-2.5 bg-emerald-950 text-emerald-300 border border-emerald-800/80 rounded-full text-[11px] font-bold uppercase tracking-[0.2em] shadow-2xs">
               <span className="material-symbols-outlined text-[14px] font-bold animate-spin-slow">sync</span>
               <span>Auto-Publishing</span>
             </div>
           ) : (
             <button 
               onClick={publishAllContent} 
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#0F172A] text-[#F8F9FB] hover:bg-[#0F172A] rounded-full transition-all duration-300 text-[10px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[#000000]/40"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#0F172A] text-[#F8F9FB] hover:bg-[#0F172A] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[#000000]/40"
             >
               <span className="material-symbols-outlined text-[14px] font-bold">publish</span>
               <span>Publish</span>
@@ -1661,7 +1736,7 @@ export function AdminContent() {
           {/* Main Category Groups */}
           <div 
             className="flex items-center gap-1.5 overflow-x-auto pb-1.5 border-b border-[#000000]/10"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            style={{ scrollbarWidth:"none", msOverflowStyle:"none" }}
           >
             {CMS_SIDEBAR.map((cat) => {
               const isGroupActive = cat.items.some(item => item.id === activeSection);
@@ -1673,10 +1748,10 @@ export function AdminContent() {
                     // Instantly set active section to the first item under this category group
                     setActiveSection(cat.items[0].id);
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl text-[9px] font-extrabold uppercase tracking-[0.12em] transition-all duration-300 shrink-0 cursor-pointer border ${
+                  className={`px-3.5 py-1.5 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-extrabold uppercase tracking-[0.12em] transition-all duration-300 shrink-0 cursor-pointer border ${
                     isGroupActive
-                      ? "text-[#F8F9FB] bg-[#0F172A] border-[#0F172A] shadow-sm"
-                      : "text-[#64748B] bg-[#F8F9FB]/40 border-[#000000]/15 hover:bg-white hover:text-stone-850"
+                      ?"text-[#F8F9FB] bg-[#0F172A] border-[#0F172A] shadow-sm"
+                      :"text-[#64748B] bg-[#F8F9FB]/40 border-[#000000]/15 hover:bg-white hover:text-stone-850"
                   }`}
                 >
                   {cat.title}
@@ -1688,7 +1763,7 @@ export function AdminContent() {
           {/* Sub-item Nodes */}
           <div 
             className="flex items-center gap-2 overflow-x-auto py-0.5"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            style={{ scrollbarWidth:"none", msOverflowStyle:"none" }}
           >
             {CMS_SIDEBAR.map((cat) => {
               const isGroupActive = cat.items.some(item => item.id === activeSection);
@@ -1703,18 +1778,18 @@ export function AdminContent() {
                     onClick={() => setActiveSection(item.id)}
                     className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all duration-300 shrink-0 border ${
                       isActive
-                        ? "bg-white border-[#000000] text-[#000000] font-extrabold shadow-2xs scale-98"
-                        : "bg-white/60 border-stone-200/80 text-[#64748B] hover:bg-white hover:text-stone-850"
+                        ?"bg-white border-[#000000] text-[#000000] font-extrabold shadow-2xs scale-98"
+                        :"bg-white/60 border-stone-200/80 text-[#64748B] hover:bg-white hover:text-stone-850"
                     }`}
                   >
                     <span
                       className={`material-symbols-outlined text-[13px] block transition-colors duration-300 ${
-                        isActive ? "text-[#000000]" : "text-[#64748B]/60"
+                        isActive ?"text-[#000000]" :"text-[#64748B]/60"
                       }`}
                     >
                       {item.icon}
                     </span>
-                    <span className="text-[9.5px] font-extrabold uppercase tracking-wider">
+                    <span className="text-[11px] sm:text-[11px] font-extrabold uppercase tracking-wider">
                       {item.label}
                     </span>
                   </button>
@@ -1733,11 +1808,11 @@ export function AdminContent() {
             <div key={cat.title} className="space-y-1.5">
               <button
                 onClick={() => toggleCategory(cat.title)}
-                className="w-full text-left px-2.5 py-1 text-[8.5px] font-extrabold text-stone-400 hover:text-stone-700 tracking-[0.2em] uppercase flex items-center justify-between border-b border-[#000000]/5 pb-1.5 cursor-pointer transition-all"
+                className="w-full text-left px-2.5 py-1 text-[11px] font-extrabold text-stone-400 hover:text-stone-700 tracking-[0.2em] uppercase flex items-center justify-between border-b border-[#000000]/5 pb-1.5 cursor-pointer transition-all"
               >
                 <span>{cat.title}</span>
                 <span className="material-symbols-outlined text-[12px] font-bold">
-                  {expandedCategories[cat.title] ? "expand_less" : "expand_more"}
+                  {expandedCategories[cat.title] ?"expand_less" :"expand_more"}
                 </span>
               </button>
 
@@ -1745,7 +1820,7 @@ export function AdminContent() {
                 {expandedCategories[cat.title] && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
+                    animate={{ height:"auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden space-y-1 pt-1.5"
                   >
@@ -1759,18 +1834,18 @@ export function AdminContent() {
                           }}
                           className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left cursor-pointer transition-all duration-300 border ${
                             isActive 
-                              ? "bg-[#0F172A] border-[#0F172A] text-[#F8F9FB] font-bold shadow-[0_4px_14px_rgba(0,0,0,0.15)] -translate-y-0.5" 
-                              : "text-[#64748B] border-transparent hover:bg-white hover:border-stone-200 hover:text-[#0F172A] hover:shadow-2xs"
+                              ?"bg-[#0F172A] border-[#0F172A] text-[#F8F9FB] font-bold shadow-[0_4px_14px_rgba(0,0,0,0.15)] -translate-y-0.5" 
+                              :"text-[#64748B] border-transparent hover:bg-white hover:border-stone-200 hover:text-[#0F172A] hover:shadow-2xs"
                           }`}
                         >
                           <span
                             className={`material-symbols-outlined text-[16px] block transition-colors duration-300 ${
-                              isActive ? "text-[#000000] font-semibold" : "text-[#64748B]/70"
+                              isActive ?"text-[#000000] font-semibold" :"text-[#64748B]/70"
                             }`}
                           >
                             {item.icon}
                           </span>
-                          <span className="text-[11px] block truncate flex-1 font-bold uppercase tracking-wider">
+                          <span className="text-[11px] sm:text-[11px] block truncate flex-1 font-bold uppercase tracking-wider">
                             {item.label}
                           </span>
                         </button>
@@ -1793,60 +1868,60 @@ export function AdminContent() {
               exit={{ opacity: 0, y: -3 }}
               transition={{ duration: 0.15 }}
             >
-              {activeSection === "hero" && (
+              {activeSection ==="hero" && (
                 <HeroSectionEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
-              {activeSection === "collections" && (
+              {activeSection ==="collections" && (
                 <FeaturedCollectionsEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
-              {activeSection === "story" && (
+              {activeSection ==="story" && (
                 <StoryTeaserEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
-              {activeSection === "bestsellers" && (
+              {activeSection ==="bestsellers" && (
                 <BestsellerStripEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
-              {activeSection === "testimonials" && (
+              {activeSection ==="testimonials" && (
                 <TestimonialsEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
-              {activeSection === "homepageSections" && (
+              {activeSection ==="homepageSections" && (
                 <SectionOrderEditor
                   sections={websiteContent.homepageSections}
                   onToggle={toggleHomepageSection}
                   onReorder={reorderHomepageSections}
                 />
               )}
-              {activeSection === "gallery" && (
+              {activeSection ==="gallery" && (
                 <GalleryPortfolioEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
-              {activeSection === "about" && (
+              {activeSection ==="about" && (
                 <AboutPageDetailsEditor content={websiteContent.aboutPage} onUpdate={handleUpdate} />
               )}
-              {activeSection === "events-page" && (
+              {activeSection ==="events-page" && (
                 <EventsPageDetailsEditor content={websiteContent.eventsPage} onUpdate={handleUpdate} />
               )}
-              {activeSection === "contact" && (
+              {activeSection ==="contact" && (
                 <ContactInfoEditor contact={websiteContent.contact} onUpdate={handleUpdate} />
               )}
-              {activeSection === "custom-orders" && (
+              {activeSection ==="custom-orders" && (
                 <CustomOrdersCMSEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
-              {activeSection === "seo-center" && (
+              {activeSection ==="seo-center" && (
                 <SEOCenterEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
 
-              {activeSection === "announcement-bar" && (
+              {activeSection ==="announcement-bar" && (
                 <AnnouncementBarEditor banners={websiteContent.banners} onUpdate={handleUpdate} />
               )}
-              {activeSection === "navigation" && (
+              {activeSection ==="navigation" && (
                 <NavigationFooterEditor nav={websiteContent.navigation} footer={websiteContent.footer} onUpdate={handleUpdate} />
               )}
-              {activeSection === "publish-controls" && (
+              {activeSection ==="publish-controls" && (
                 <PublisherVersionsEditor />
               )}
-              {activeSection === "media-library" && (
+              {activeSection ==="media-library" && (
                 <MediaLibraryEditor />
               )}
-              {activeSection === "catalog" && (
+              {activeSection ==="catalog" && (
                 <QuickCatalogControl />
               )}
             </motion.div>

@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
-import { motion } from "framer-motion";
-import { useAdmin } from "../context/AdminContext";
+import React, { useMemo } from"react";
+import { motion } from"framer-motion";
+import { useAdmin } from"../context/AdminContext";
 import {
   AreaChart,
   Area,
@@ -13,8 +13,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
-import { Skeleton } from "../../components/ui/Skeleton";
+} from"recharts";
+import { Skeleton } from"../../components/ui/Skeleton";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
@@ -29,11 +29,11 @@ function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white rounded-xl shadow-xl border border-surface-container-highest px-4 py-3">
-      <p className="text-[11px] font-semibold text-outline mb-1">{label}</p>
+      <p className="text-[11px] sm:text-[11px] font-semibold text-outline mb-1">{label}</p>
       {payload.map((p, i) => (
         <p key={i} className="text-[13px] font-bold" style={{ color: p.color }}>
-          {p.name}:{" "}
-          {typeof p.value === "number" && p.value > 1000
+          {p.name}:{""}
+          {typeof p.value ==="number" && p.value > 1000
             ? formatCurrency(p.value)
             : p.value}
         </p>
@@ -85,7 +85,7 @@ export function AdminAnalytics() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h2 className="text-[24px] font-bold text-on-surface font-display">
+          <h2 className="text-[24px] font-bold text-on-surface">
             Business Analytics
           </h2>
           <p className="text-[13px] text-outline">
@@ -107,32 +107,32 @@ export function AdminAnalytics() {
       >
         {[
           {
-            label: "Total Revenue",
+            label:"Total Revenue",
             value: formatCurrency(stats.totalSales || 0),
-            change: "+15.4%",
-            icon: "payments",
-            color: "text-emerald-600"
+            change:"+15.4%",
+            icon:"payments",
+            color:"text-emerald-600"
           },
           {
-            label: "Total Orders",
+            label:"Total Orders",
             value: stats.totalOrders || 0,
-            change: "+8.2%",
-            icon: "shopping_bag",
-            color: "text-black"
+            change:"+8.2%",
+            icon:"shopping_bag",
+            color:"text-black"
           },
           {
-            label: "Active Customers",
+            label:"Active Customers",
             value: stats.totalCustomers || 0,
-            change: "+12.1%",
-            icon: "group",
-            color: "text-amber-600"
+            change:"+12.1%",
+            icon:"group",
+            color:"text-amber-600"
           },
           {
-            label: "Conversion",
+            label:"Conversion",
             value: `${(stats.conversionRate || 0).toFixed(1)}%`,
-            change: "+0.5%",
-            icon: "insights",
-            color: "text-purple-600"
+            change:"+0.5%",
+            icon:"insights",
+            color:"text-purple-600"
           },
         ].map((kpi, i) => (
           <div
@@ -143,7 +143,7 @@ export function AdminAnalytics() {
               <div className={`p-2 rounded-xl bg-surface-container-low ${kpi.color}`}>
                 <span className="material-symbols-outlined text-[20px]">{kpi.icon}</span>
               </div>
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
                 {kpi.change}
               </span>
             </div>
@@ -256,7 +256,7 @@ export function AdminAnalytics() {
                     <p className="text-[13px] text-on-surface leading-snug">
                       <span className="font-bold">{activity.user}</span> {activity.action}
                     </p>
-                    <p className="text-[11px] text-outline mt-1">
+                    <p className="text-[11px] sm:text-[11px] text-outline mt-1">
                       {new Date(activity.timestamp).toLocaleString()}
                     </p>
                   </div>

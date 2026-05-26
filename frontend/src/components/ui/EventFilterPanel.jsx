@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MandalaElement } from "./MandalaElement";
 
 const FilterSection = ({ title, id, isOpen, onToggle, children }) => (
-  <div className="mb-8 border-b border-outline-variant/10 pb-6 last:border-0 last:pb-0">
+  <div className="mb-5 border-b border-outline-variant/10 pb-4 last:border-0 last:pb-0">
     <button
       onClick={onToggle}
-      className="w-full flex justify-between items-center py-2 text-left font-label text-label-md text-on-surface hover:text-primary transition-colors group"
+      className="w-full flex justify-between items-center py-1 text-left font-label text-label-md text-on-surface hover:text-primary transition-colors group"
     >
       <span className="uppercase tracking-[0.2em] font-bold">{title}</span>
       <span
@@ -24,7 +25,7 @@ const FilterSection = ({ title, id, isOpen, onToggle, children }) => (
           transition={{ duration: 0.4, ease: [0.2, 1, 0.2, 1] }}
           className="overflow-hidden"
         >
-          <div className="mt-4 space-y-3.5 pl-1">{children}</div>
+          <div className="mt-2 space-y-1.5 pl-1">{children}</div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -81,13 +82,19 @@ export function EventFilterPanel({
     style: true,
   });
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
   const toggleSection = (section) => {
     setActiveSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const panelContent = (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-outline-variant/30">
+      <div className="flex items-center justify-between mb-6 pb-3 border-b border-outline-variant/30">
         <div className="flex flex-col">
           <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
             Filters
@@ -122,7 +129,7 @@ export function EventFilterPanel({
             <button
               key={opt.value}
               onClick={() => onSortChange(opt.value)}
-              className={`w-full flex items-center justify-between py-1 group ${sortBy === opt.value ? "text-primary" : "text-on-surface/60"}`}
+              className={`w-full flex items-center justify-between py-0.5 min-h-0 group ${sortBy === opt.value ? "text-primary" : "text-on-surface/60"}`}
             >
               <span
                 className={`font-body text-[14px] md:text-[15px] transition-colors ${sortBy === opt.value ? "font-semibold" : "group-hover:text-on-surface"}`}
@@ -214,60 +221,63 @@ export function EventFilterPanel({
   return (
     <>
       {/* Mobile Bottom Sheet Implementation */}
-      <AnimatePresence>
-        {isOpen && (
-          <div className="fixed inset-0 z-[1000] lg:hidden flex flex-col justify-end">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={onClose}
-              className="absolute inset-0 bg-black/60 backdrop-blur-md"
-            />
-
-            {/* Bottom Sheet Content */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{
-                type: "spring",
-                damping: 32,
-                stiffness: 300,
-                mass: 0.8,
-              }}
-              className="relative w-full bg-surface rounded-t-[40px] p-8 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10"
-            >
-              {/* Handlebar for bottom sheet feel */}
-              <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-6 shrink-0" />
-
-              <button
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <div className="fixed inset-0 z-[1000] lg:hidden flex flex-col justify-end">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 onClick={onClose}
-                className="absolute top-8 right-8 w-10 h-10 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
+                className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              />
+
+              {/* Bottom Sheet Content */}
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{
+                  type: "spring",
+                  damping: 32,
+                  stiffness: 300,
+                  mass: 0.8,
+                }}
+                className="relative w-full bg-surface rounded-t-[40px] p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10"
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  close
-                </span>
-              </button>
+                {/* Handlebar for bottom sheet feel */}
+                <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
 
-              <div className="flex-1 overflow-y-auto no-scrollbar pt-2">
-                {panelContent}
-              </div>
-
-              {/* Bottom Action Bar */}
-              <div className="mt-6 pt-6 border-t border-outline-variant/20">
                 <button
                   onClick={onClose}
-                  className="w-full bg-on-surface-variant text-surface py-4 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
+                  className="absolute top-6 right-6 w-10 h-10 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
                 >
-                  Apply Filters
+                  <span className="material-symbols-outlined text-[20px]">
+                    close
+                  </span>
                 </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
+                <div className="flex-1 overflow-y-auto no-scrollbar pt-2">
+                  {panelContent}
+                </div>
+
+                {/* Bottom Action Bar */}
+                <div className="mt-6 pt-6 border-t border-outline-variant/20">
+                  <button
+                    onClick={onClose}
+                    className="w-full bg-on-surface-variant text-surface py-4 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Desktop Sidebar */}
       <div className={`hidden lg:flex flex-col relative w-full ${className}`}>

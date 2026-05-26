@@ -11,6 +11,7 @@ const navSections = [
   {
     label: "Edit Website",
     items: [
+      { label: "Dynamic Layouts", icon: "view_carousel", path: "/admin/layouts", keywords: "layouts, sections, homepage" },
       { label: "Edit Web Pages", icon: "edit_note", path: "/admin/content", keywords: "cms, homepage, hero, pages, policy" },
       { label: "Photo Gallery", icon: "photo_library", path: "/admin/gallery", keywords: "photos, heritage, images" },
     ],
@@ -18,6 +19,7 @@ const navSections = [
   {
     label: "Products & Stock",
     items: [
+      { label: "Categories", icon: "category", path: "/admin/categories", keywords: "taxonomy, tags, labels" },
       { label: "Product List", icon: "inventory_2", path: "/admin/products", keywords: "items, stock, catalog" },
       { label: "Stock Levels", icon: "warehouse", path: "/admin/inventory", keywords: "alerts, stock count, storage" },
     ],
@@ -43,10 +45,12 @@ const navSections = [
     label: "Reports & Settings",
     items: [
       { label: "Sales Reports", icon: "analytics", path: "/admin/analytics", keywords: "trends, metrics, profits" },
+      { label: "AI Engine Analytics", icon: "psychology", path: "/admin/recommendations", keywords: "recommendations, trending, metrics" },
       { label: "Marketing Emails", icon: "campaign", path: "/admin/campaigns", keywords: "marketing, email, newsletters" },
       { label: "Manage Staff", icon: "groups", path: "/admin/team", keywords: "staff, employees, access, permissions" },
       { label: "System Users", icon: "admin_panel_settings", path: "/admin/system-users", keywords: "admins, super, security, access" },
       { label: "Settings", icon: "settings", path: "/admin/settings", keywords: "profile, backups, config" },
+      { label: "Global Config", icon: "settings_suggest", path: "/admin/config", keywords: "flags, variables, toggles" },
     ],
   },
 ];

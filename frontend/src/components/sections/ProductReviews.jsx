@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { reviewService } from "../../services/domainServices";
 import { useAuth } from "../../context/AuthContext";
@@ -117,12 +118,12 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
 
   const ratingLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
-  return (
+  const modalContent = (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[300] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[99999] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/50 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
@@ -196,11 +197,15 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
       </motion.div>
     </motion.div>
   );
+
+  return typeof document !== "undefined"
+    ? createPortal(modalContent, document.body)
+    : null;
 }
 
 // ─── Main ProductReviews Section ─────────────────────────────────────────────
 export function ProductReviews({ productId, productTitle }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, openAuthModal } = useAuth();
 
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -259,12 +264,35 @@ export function ProductReviews({ productId, productTitle }) {
 
   // ── CTA button logic ──────────────────────────────────────────────────────
   const renderCTA = () => {
-    if (!isAuthenticated) return null;
-    if (!eligibility) return null;
+    if (!isAuthenticated) {
+      return (
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={openAuthModal}
+          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full font-label text-[11px] uppercase tracking-wider font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all cursor-pointer animate-fade-in"
+        >
+          <span className="material-symbols-outlined text-[16px]">rate_review</span>
+          Write a Review
+        </motion.button>
+      );
+    }
+
+    if (!eligibility) {
+      return (
+        <button
+          disabled
+          className="flex items-center gap-2 bg-stone-100 text-stone-400 px-5 py-2.5 rounded-full font-label text-[11px] uppercase tracking-wider font-bold border border-black/5 opacity-75 animate-fade-in"
+        >
+          <span className="w-3.5 h-3.5 border-2 border-stone-300 border-t-stone-500 rounded-full animate-spin shrink-0" />
+          Loading...
+        </button>
+      );
+    }
 
     if (eligibility.alreadyReviewed) {
       return (
-        <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2.5 rounded-full border border-green-100 text-[11px] font-bold font-label uppercase tracking-wider">
+        <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2.5 rounded-full border border-green-100 text-[11px] font-bold font-label uppercase tracking-wider animate-fade-in">
           <span className="material-symbols-outlined text-[15px]">check_circle</span>
           You've reviewed this product
         </div>
@@ -277,7 +305,7 @@ export function ProductReviews({ productId, productTitle }) {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full font-label text-[11px] uppercase tracking-wider font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full font-label text-[11px] uppercase tracking-wider font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all cursor-pointer animate-fade-in"
         >
           <span className="material-symbols-outlined text-[16px]">rate_review</span>
           Write a Review
@@ -287,7 +315,7 @@ export function ProductReviews({ productId, productTitle }) {
 
     // reason === 'not_purchased'
     return (
-      <div className="flex items-center gap-2 bg-neutral-100 text-black/40 px-4 py-2.5 rounded-full text-[11px] font-label font-bold uppercase tracking-wider border border-black/5">
+      <div className="flex items-center gap-2 bg-neutral-100 text-black/40 px-4 py-2.5 rounded-full text-[11px] font-label font-bold uppercase tracking-wider border border-black/5 animate-fade-in">
         <span className="material-symbols-outlined text-[15px]">lock</span>
         Purchase to review
       </div>
@@ -303,7 +331,7 @@ export function ProductReviews({ productId, productTitle }) {
   }
 
   return (
-    <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16">
+    <section className="relative z-10 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16">
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 md:mb-10">
         <div>

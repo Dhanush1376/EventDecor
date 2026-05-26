@@ -1,7 +1,7 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { useAdmin } from "../context/AdminContext";
-import { handleImageError } from "../../utils/imageUtils";
+import React from"react";
+import { motion } from"framer-motion";
+import { useAdmin } from"../context/AdminContext";
+import { handleImageError } from"../../utils/imageUtils";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
@@ -20,7 +20,7 @@ export function AdminInventory() {
       className="max-w-[1440px] mx-auto space-y-6"
     >
       <motion.div variants={fadeUp}>
-        <h2 className="text-[24px] font-bold text-on-surface font-display">
+        <h2 className="text-[24px] font-bold text-on-surface">
           Inventory
         </h2>
         <p className="text-[13px] text-outline">
@@ -32,25 +32,25 @@ export function AdminInventory() {
       <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
           {
-            label: "Out of Stock",
+            label:"Out of Stock",
             count: outOfStock.length,
-            icon: "error",
-            color: "var(--color-error)",
-            bg: "bg-red-50",
+            icon:"error",
+            color:"var(--color-error)",
+            bg:"bg-red-50",
           },
           {
-            label: "Low Stock",
+            label:"Low Stock",
             count: lowStock.length,
-            icon: "warning",
-            color: "#d97706",
-            bg: "bg-amber-50",
+            icon:"warning",
+            color:"#d97706",
+            bg:"bg-amber-50",
           },
           {
-            label: "Healthy Stock",
+            label:"Healthy Stock",
             count: healthy.length,
-            icon: "check_circle",
-            color: "#059669",
-            bg: "bg-emerald-50",
+            icon:"check_circle",
+            color:"#059669",
+            bg:"bg-emerald-50",
           },
         ].map((s, i) => (
           <div
@@ -109,7 +109,7 @@ export function AdminInventory() {
                         <p className="font-semibold text-on-surface">
                           {p.name}
                         </p>
-                        <p className="text-[10px] text-outline-variant">
+                        <p className="text-[11px] text-outline-variant">
                           {p.id}
                         </p>
                       </div>
@@ -119,13 +119,13 @@ export function AdminInventory() {
                   <td className="p-4">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`font-bold ${p.stock === 0 ? "text-red-500" : p.stock <= 5 ? "text-amber-500" : "text-emerald-600"}`}
+                        className={`font-bold ${p.stock === 0 ?"text-red-500" : p.stock <= 5 ?"text-amber-500" :"text-emerald-600"}`}
                       >
                         {p.stock}
                       </span>
                       <div className="w-16 h-1.5 bg-surface-container-low rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${p.stock === 0 ? "bg-red-400" : p.stock <= 5 ? "bg-amber-400" : "bg-emerald-400"}`}
+                          className={`h-full rounded-full ${p.stock === 0 ?"bg-red-400" : p.stock <= 5 ?"bg-amber-400" :"bg-emerald-400"}`}
                           style={{
                             width: `${Math.min(100, (p.stock / 50) * 100)}%`,
                           }}
@@ -136,17 +136,17 @@ export function AdminInventory() {
                   <td className="p-4 text-outline">{p.sold}</td>
                   <td className="p-4">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p.stock === 0 ? "text-red-600 bg-red-50" : p.stock <= 5 ? "text-amber-600 bg-amber-50" : "text-emerald-600 bg-emerald-50"}`}
+                      className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${p.stock === 0 ?"text-red-600 bg-red-50" : p.stock <= 5 ?"text-amber-600 bg-amber-50" :"text-emerald-600 bg-emerald-50"}`}
                     >
                       {p.stock === 0
-                        ? "Out of Stock"
+                        ?"Out of Stock"
                         : p.stock <= 5
-                          ? "Low Stock"
-                          : "In Stock"}
+                          ?"Low Stock"
+                          :"In Stock"}
                     </span>
                   </td>
                   <td className="p-4 text-right">
-                    <button className="btn-minimal group !py-1.5 !px-3 !text-[11px]">
+                    <button className="btn-minimal group !py-1.5 !px-3 !text-[11px] sm:text-[11px]">
                       <span className="material-symbols-outlined text-[16px]">
                         add_box
                       </span>

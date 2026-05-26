@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAdmin } from "../context/AdminContext";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import React, { useState, useMemo, useEffect } from"react";
+import { motion, AnimatePresence } from"framer-motion";
+import { useAdmin } from"../context/AdminContext";
+import { useNavigate } from"react-router-dom";
+import toast from"react-hot-toast";
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const listContainer = {
@@ -14,21 +14,21 @@ const listContainer = {
 };
 
 const typeIcons = {
-  order: "shopping_bag",
-  booking: "event",
-  stock: "warning",
-  review: "star",
-  payment: "payments",
+  order:"shopping_bag",
+  booking:"event",
+  stock:"warning",
+  review:"star",
+  payment:"payments",
 };
 
 const typeColors = {
-  order: "bg-slate-100 text-black border-slate-200 hover:bg-blue-100/50",
-  booking: "bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100/50",
-  stock: "bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100/50",
-  review: "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100/50",
-  payment: "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100/50",
-  custom_request: "bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100/50",
-  inquiry: "bg-sky-50 text-sky-600 border-sky-100 hover:bg-sky-100/50",
+  order:"bg-slate-100 text-black border-slate-200 hover:bg-blue-100/50",
+  booking:"bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100/50",
+  stock:"bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100/50",
+  review:"bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100/50",
+  payment:"bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100/50",
+  custom_request:"bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100/50",
+  inquiry:"bg-sky-50 text-sky-600 border-sky-100 hover:bg-sky-100/50",
 };
 
 export function AdminNotifications() {
@@ -56,15 +56,15 @@ export function AdminNotifications() {
   // Filter list by tab
   const filteredNotifications = useMemo(() => {
     let list = notifications;
-    if (activeTab === "unread") {
+    if (activeTab ==="unread") {
       return list.filter(n => !n.read);
     }
-    if (activeTab === "all") {
+    if (activeTab ==="all") {
       return list;
     }
     // Map booking tab to include custom requests and inquiries
-    if (activeTab === "booking") {
-      return list.filter(n => n.type === "booking" || n.type === "custom_request" || n.type === "inquiry");
+    if (activeTab ==="booking") {
+      return list.filter(n => n.type ==="booking" || n.type ==="custom_request" || n.type ==="inquiry");
     }
     return list.filter(n => n.type === activeTab);
   }, [notifications, activeTab]);
@@ -79,7 +79,7 @@ export function AdminNotifications() {
       {/* Header Block */}
       <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-[26px] font-bold font-display text-on-surface">
+          <h2 className="text-[26px] font-bold  text-on-surface">
             Notification Center
           </h2>
           <p className="text-[13px] text-outline mt-0.5">
@@ -106,27 +106,27 @@ export function AdminNotifications() {
       {/* Tabs Filter Bar */}
       <motion.div variants={fadeUp} className="flex border-b border-surface-container-highest/60 overflow-x-auto gap-4 scrollbar-none">
         {[
-          { id: "all", label: "All Alerts", count: notifications.length },
-          { id: "unread", label: "Unread", count: unreadCount },
-          { id: "order", label: "Orders", count: notifications.filter(n => n.type === "order").length },
-          { id: "booking", label: "Consults", count: notifications.filter(n => n.type === "booking" || n.type === "custom_request" || n.type === "inquiry").length },
-          { id: "payment", label: "Payments", count: notifications.filter(n => n.type === "payment").length },
-          { id: "review", label: "Reviews", count: notifications.filter(n => n.type === "review" || n.type === "user").length },
-          { id: "system", label: "System", count: notifications.filter(n => n.type === "system").length },
+          { id:"all", label:"All Alerts", count: notifications.length },
+          { id:"unread", label:"Unread", count: unreadCount },
+          { id:"order", label:"Orders", count: notifications.filter(n => n.type ==="order").length },
+          { id:"booking", label:"Consults", count: notifications.filter(n => n.type ==="booking" || n.type ==="custom_request" || n.type ==="inquiry").length },
+          { id:"payment", label:"Payments", count: notifications.filter(n => n.type ==="payment").length },
+          { id:"review", label:"Reviews", count: notifications.filter(n => n.type ==="review" || n.type ==="user").length },
+          { id:"system", label:"System", count: notifications.filter(n => n.type ==="system").length },
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`pb-3 text-[13px] font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all shrink-0 relative ${
               activeTab === tab.id
-                ? "border-slate-900 text-black"
-                : "border-transparent text-outline hover:text-on-surface"
+                ?"border-slate-900 text-black"
+                :"border-transparent text-outline hover:text-on-surface"
             }`}
           >
             {tab.label}
             {tab.count > 0 && (
-              <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                activeTab === tab.id ? "bg-black text-white" : "bg-surface-container-highest text-outline"
+              <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold ${
+                activeTab === tab.id ?"bg-black text-white" :"bg-surface-container-highest text-outline"
               }`}>
                 {tab.count}
               </span>
@@ -156,12 +156,12 @@ export function AdminNotifications() {
             filteredNotifications.map(n => {
               const formattedDate = n.rawNotification?.createdAt 
                 ? new Date(n.rawNotification.createdAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "numeric",
-                    minute: "2-digit"
+                    day:"numeric",
+                    month:"short",
+                    hour:"numeric",
+                    minute:"2-digit"
                   })
-                : "Just now";
+                :"Just now";
 
               const actionLabel = n.type === 'order' ? 'Process Order' : 
                                   n.type === 'payment' ? 'Review Payment' : 
@@ -182,8 +182,8 @@ export function AdminNotifications() {
                   exit={{ opacity: 0, x: -50 }}
                   className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border transition-all ${
                     !n.read
-                      ? "bg-white border-slate-200 shadow-md shadow-primary/2"
-                      : "bg-[#F8F9FB] border-surface-container-highest/40 opacity-75 hover:opacity-100"
+                      ?"bg-white border-slate-200 shadow-md shadow-primary/2"
+                      :"bg-[#F8F9FB] border-surface-container-highest/40 opacity-75 hover:opacity-100"
                   }`}
                 >
                   <div className="flex items-start gap-4 flex-1 min-w-0">
@@ -195,7 +195,7 @@ export function AdminNotifications() {
                     {/* Details Column */}
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className={`text-[13px] font-bold ${!n.read ? "text-on-surface" : "text-outline"}`}>
+                        <span className={`text-[13px] font-bold ${!n.read ?"text-on-surface" :"text-outline"}`}>
                           {n.title}
                         </span>
                         {!n.read && (
@@ -208,7 +208,7 @@ export function AdminNotifications() {
                       <p className="text-[12px] text-on-surface-variant leading-relaxed font-medium">
                         {n.message}
                       </p>
-                      <p className="text-[10px] text-outline font-mono">{formattedDate} • {n.time}</p>
+                      <p className="text-[11px] text-outline font-mono">{formattedDate} • {n.time}</p>
                     </div>
                   </div>
 
@@ -217,7 +217,7 @@ export function AdminNotifications() {
                     {n.actionLink && (
                       <button
                         onClick={() => navigate(n.actionLink)}
-                        className="px-3.5 py-1.5 bg-surface hover:bg-surface-container-high border border-outline-variant/65 rounded-xl text-[11px] font-bold uppercase tracking-wider text-on-surface cursor-pointer transition-all flex items-center gap-1 shadow-sm"
+                        className="px-3.5 py-1.5 bg-surface hover:bg-surface-container-high border border-outline-variant/65 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-on-surface cursor-pointer transition-all flex items-center gap-1 shadow-sm"
                       >
                         {actionLabel}
                         <span className="material-symbols-outlined text-[13px]">arrow_forward</span>

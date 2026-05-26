@@ -57,7 +57,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
       <div className="print-invoice-area p-5 sm:p-6 md:p-8 text-black text-[9px] sm:text-xs md:text-sm bg-white font-sans relative shadow-sm print:shadow-none mx-auto w-full max-w-4xl">
         {/* Close Button / Controls (Hidden in print) */}
         <div className="no-print flex justify-between items-center pb-3 md:pb-4 mb-4 md:mb-6 border-b border-gray-100">
-          <h3 className="font-display text-sm md:text-md font-bold uppercase tracking-wider text-[#735c00]">
+          <h3 className="font-display text-sm md:text-md font-bold uppercase tracking-wider text-[var(--color-gold-dark)]">
             Tax Invoice
           </h3>
           <div className="flex items-center gap-2 md:gap-3">
@@ -82,7 +82,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
         {/* Tax Invoice Header */}
         <div className="flex justify-between items-start border-b-2 border-gray-900 pb-4 md:pb-6 mb-4 md:mb-6">
           <div className="w-[55%]">
-            <h2 className="text-[14px] sm:text-xl md:text-3xl font-display font-black uppercase tracking-widest text-[#735c00] leading-tight">Siri Arts & Crafts</h2>
+            <h2 className="text-[14px] sm:text-xl md:text-3xl font-display font-black uppercase tracking-widest text-[var(--color-gold-dark)] leading-tight">Siri Arts & Crafts</h2>
             <p className="text-[7px] sm:text-[9px] md:text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-0.5 md:mt-1">Premium Studio & Handicrafts</p>
             <div className="text-[8px] sm:text-[10px] md:text-[11px] text-gray-600 mt-1.5 md:mt-2 space-y-0.5 md:space-y-1 leading-snug font-light">
               <p>#28-1-92, South Street</p>
@@ -195,7 +195,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 <td className="text-right p-2 md:p-3 font-black text-gray-800 text-[8px] md:text-xs uppercase tracking-wider sm:hidden" colSpan="2">Grand Total (Inc. Taxes):</td>
                 <td className="text-right p-2 md:p-3 font-black text-gray-800 text-[8px] md:text-xs uppercase tracking-wider hidden sm:table-cell md:hidden" colSpan="3">Grand Total (Inc. Taxes):</td>
                 <td className="text-right p-2 md:p-3 font-black text-gray-800 text-[8px] md:text-xs uppercase tracking-wider hidden md:table-cell" colSpan="5">Grand Total (Inc. Taxes):</td>
-                <td className="text-right p-2 md:p-3 font-black font-mono text-[#735c00] text-[11px] md:text-[15px]">₹{total.toLocaleString()}</td>
+                <td className="text-right p-2 md:p-3 font-black font-mono text-[var(--color-gold-dark)] text-[11px] md:text-[15px]">₹{total.toLocaleString()}</td>
               </tr>
             </tfoot>
           </table>
@@ -223,7 +223,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 </tr>
                 <tr className="border-t border-dashed border-gray-300 font-bold font-mono">
                   <td className="pt-1 md:pt-2 text-gray-850">Total Taxes (Inclusive):</td>
-                  <td className="text-right pt-1 md:pt-2 text-[#735c00] font-black">₹{(total - total / 1.18).toFixed(2)}</td>
+                  <td className="text-right pt-1 md:pt-2 text-[var(--color-gold-dark)] font-black">₹{(total - total / 1.18).toFixed(2)}</td>
                 </tr>
               </tbody>
             </table>

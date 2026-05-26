@@ -291,14 +291,14 @@ export const VerifiedReviews = () => {
               animate={{ opacity: 1 }}
               className="py-24 text-center bg-white rounded-[2.5rem] border border-[#E8E2D5] shadow-xs p-8 max-w-lg mx-auto"
             >
-              <span className="material-symbols-outlined text-5xl text-[#735C00]/40 mb-4 block">auto_stories</span>
+              <span className="material-symbols-outlined text-5xl text-[var(--color-gold-dark)]/40 mb-4 block">auto_stories</span>
               <h4 className="text-lg font-display font-medium text-[#2D2B29]">No Stories in this Section Yet</h4>
               <p className="text-xs text-[#7F7663] max-w-sm mx-auto mt-2 mb-6 leading-relaxed font-body">
                 Be the first to share your milestone memory for this category and register your journey in our patron showcase.
               </p>
               <button
                 onClick={() => setIsPostModalOpen(true)}
-                className="px-6 py-3 bg-[#735C00] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md hover:bg-[#594700] transition-colors cursor-pointer"
+                className="px-6 py-3 bg-[var(--color-gold-dark)] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md hover:bg-[var(--color-gold-darker)] transition-colors cursor-pointer"
               >
                 Post First Testimonial
               </button>
@@ -354,7 +354,7 @@ export const VerifiedReviews = () => {
                         {rev.video && (
                           <div
                             onClick={() => !isDragging && openMediaLightbox([{ url: rev.video, type: "video", caption: rev.eventType, author: rev.user }], 0)}
-                            className="w-10 h-10 rounded-xl bg-[#735C00] text-white flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 shadow-2xs shrink-0"
+                            className="w-10 h-10 rounded-xl bg-[var(--color-gold-dark)] text-white flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 shadow-2xs shrink-0"
                             title="Watch Reel"
                           >
                             <span className="material-symbols-outlined text-sm">play_circle</span>
@@ -367,7 +367,7 @@ export const VerifiedReviews = () => {
                     <div className="flex items-center justify-between gap-4 mt-auto">
                       <div className="flex items-center gap-3.5">
                         <div className="w-11 h-11 rounded-full overflow-hidden border border-[#E2DACB] bg-[#FAF9F6] flex items-center justify-center shrink-0 shadow-2xs">
-                          <span className="font-serif text-[#735C00] text-sm font-bold">
+                          <span className="font-serif text-[var(--color-gold-dark)] text-sm font-bold">
                             {(rev.user || rev.name || "C")[0].toUpperCase()}
                           </span>
                         </div>
@@ -392,7 +392,7 @@ export const VerifiedReviews = () => {
                           onClick={() => !isDragging && handleHelpfulClick(rev.id)}
                           className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all cursor-pointer font-bold text-[8px] uppercase tracking-wider shrink-0 ${helpfulLiked[rev.id]
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-[#FAF9F6] text-[#685C57] border-[#E2DACB] hover:border-[#735C00] hover:text-[#2D2B29]"
+                              : "bg-[#FAF9F6] text-[#685C57] border-[#E2DACB] hover:border-[var(--color-gold-dark)] hover:text-[#2D2B29]"
                             }`}
                         >
                           <span className="material-symbols-outlined text-[10px]">{helpfulLiked[rev.id] ? "thumb_up" : "thumb_up_off"}</span>
@@ -409,14 +409,14 @@ export const VerifiedReviews = () => {
 
         {/* Bottom Invite Curation Block */}
         <div className="pt-10 pb-10 text-center bg-gradient-to-r from-[#FCFBF9] via-[#FAF6EE] to-[#FCFBF9] rounded-[2.5rem] border border-[#E8E2D5] p-8 shadow-inner max-w-4xl mx-auto space-y-6">
-          <span className="material-symbols-outlined text-3xl text-[#735C00] animate-pulse">workspace_premium</span>
+          <span className="material-symbols-outlined text-3xl text-[var(--color-gold-dark)] animate-pulse">workspace_premium</span>
           <h4 className="text-xl font-display font-medium text-[#2D2B29] tracking-tight">Have You Celebrated with Siri Arts & Crafts?</h4>
           <p className="text-xs md:text-sm text-[#685C57] font-light leading-relaxed max-w-xl mx-auto font-body">
             Share your authentic setup photos, traditional styling memories, and artisan feedback. Join our registry of discerning families and inspire milestone events across the nation.
           </p>
           <button
             onClick={() => setIsPostModalOpen(true)}
-            className="px-8 py-3.5 rounded-full bg-[#735C00] text-white font-bold text-[10px] uppercase tracking-widest hover:bg-[#594700] shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer inline-flex items-center gap-2 group active:scale-95"
+            className="px-8 py-3.5 rounded-full bg-[var(--color-gold-dark)] text-white font-bold text-[10px] uppercase tracking-widest hover:bg-[var(--color-gold-darker)] shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer inline-flex items-center gap-2 group active:scale-95"
           >
             Share Your Experience
           </button>

@@ -427,7 +427,7 @@ export function LoyaltyPanel() {
                           })}
                         </span>
                         {tx.orderId && (
-                          <span className="font-mono text-[#735c00]/80 font-medium">
+                          <span className="font-mono text-[var(--color-gold-dark)]/80 font-medium">
                             Linked Order: {tx.orderId.invoiceNumber || tx.orderId._id || 'INV-999'}
                           </span>
                         )}

@@ -37,9 +37,9 @@ export function SearchBar({
 
   return (
     <div
-      className={`relative group w-full md:flex-1 bg-surface-bright/90 backdrop-blur-md border border-outline-variant/30 rounded-full focus-within:bg-white focus-within:border-primary/30 focus-within:shadow-luxury-sm transition-all duration-300 overflow-hidden ${className}`}
+      className={`relative group w-full md:flex-1 bg-surface-bright/90 backdrop-blur-md border border-outline-variant/30 rounded-full transition-all duration-300 overflow-hidden ${className}`}
     >
-      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 group-focus-within:text-primary transition-colors select-none pointer-events-none font-bold">
+      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 transition-colors select-none pointer-events-none font-bold">
         search
       </span>
       <input
@@ -47,7 +47,7 @@ export function SearchBar({
         value={localValue}
         onChange={handleInputChange}
         placeholder={placeholder}
-        className="w-full pl-12 pr-12 py-3 bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50"
+        className="w-full pl-12 pr-12 py-3 bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50 search-portal-input"
         aria-label="Search"
       />
       {localValue && (

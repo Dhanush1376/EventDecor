@@ -30,14 +30,14 @@ export function EventBookingSuccess() {
           angle: 60,
           spread: 55,
           origin: { x: 0 },
-          colors: ['#735c00', '#C4A87C', '#FFD700', '#8B0000']
+          colors: ['var(--color-gold-dark)', '#C4A87C', '#FFD700', '#8B0000']
         });
         confetti({
           particleCount: 5,
           angle: 120,
           spread: 55,
           origin: { x: 1 },
-          colors: ['#735c00', '#C4A87C', '#FFD700', '#8B0000']
+          colors: ['var(--color-gold-dark)', '#C4A87C', '#FFD700', '#8B0000']
         });
 
         if (Date.now() < end) {

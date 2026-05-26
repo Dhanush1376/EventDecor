@@ -145,12 +145,14 @@ export function BestsellerSection() {
           </div>
           <h2
             className="font-headline text-[32px] sm:text-[42px] md:text-[65px] text-on-surface leading-[1.1] tracking-tight"
-            dangerouslySetInnerHTML={{
-              __html:
-                featuredProducts.sectionTitle.replace(/\n/g, "<br/>") ||
-                'The Signature <br className="hidden sm:block" /><span className="italic font-light text-primary">Collection.</span>',
-            }}
-          ></h2>
+          >
+            {(featuredProducts.sectionTitle || "The Signature Collection.").split(/\n/).map((line, i, arr) => (
+              <React.Fragment key={i}>
+                {line}
+                {i < arr.length - 1 && <br />}
+              </React.Fragment>
+            ))}
+          </h2>
         </motion.div>
 
         <div className="flex items-center gap-3.5 hidden md:flex">

@@ -6,12 +6,15 @@ import { SEO } from "../components/seo/SEO";
 import { useWishlist } from "../context/WishlistContext";
 import { handleImageError } from "../utils/imageUtils";
 import { MandalaElement } from "../components/ui/MandalaElement";
+import { EventDetailSkeleton } from "../components/ui/Skeleton";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { ShareButton } from "../components/ui/ShareButton";
 import { eventService, showcaseService, bookingService } from "../services/domainServices";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { LocationSelectorModal } from "../components/ui/LocationSelectorModal";
+import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
+import { RecommendationSystem } from "../components/sections/RecommendationSystem";
 
 import logger from '../utils/logger';
 
@@ -43,6 +46,20 @@ export function EventDetail() {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const lightboxScrollRef = useRef(null);
   const { toggleItem, isWishlisted } = useWishlist();
+
+  useEffect(() => {
+    if (isLightboxOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("slideshow-active");
+    } else {
+      document.body.style.overflow = "";
+      document.body.classList.remove("slideshow-active");
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.classList.remove("slideshow-active");
+    };
+  }, [isLightboxOpen]);
 
   const openLightbox = (idx) => {
     setActiveGalleryIndex(idx);
@@ -87,6 +104,15 @@ export function EventDetail() {
   const [customOccasion, setCustomOccasion] = useState("");
   const customizerCardRef = useRef(null);
 
+  // Track event view
+  useRecommendationTracker({
+    targetType: 'event',
+    targetId: event?._id || event?.id,
+    category: event?.category,
+    price: event?.basePrice || event?.rentalPrice,
+    style: event?.style,
+  });
+
   useEffect(() => {
     if (venueDetails) {
       setManualVenueName(venueDetails.name || "");
@@ -122,6 +148,25 @@ export function EventDetail() {
 
   const reserveButtonRef = useRef(null);
   const [showMobileSticky, setShowMobileSticky] = useState(false);
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (Math.abs(currentScrollY - lastScrollY.current) > 10) {
+        if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+          setIsScrollingDown(true);
+        } else {
+          setIsScrollingDown(false);
+        }
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (!reserveButtonRef.current) {
@@ -401,7 +446,7 @@ export function EventDetail() {
           email: "customer@example.com",
         },
         theme: {
-          color: "#735c00",
+          color: "var(--color-gold-dark)",
         },
       };
 
@@ -419,11 +464,7 @@ export function EventDetail() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <EventDetailSkeleton />;
   }
 
   if (!event) {
@@ -659,7 +700,7 @@ export function EventDetail() {
             {/* Signature Masterpieces Included Highlights Panel */}
             {event.features && event.features.length > 0 && (
               <div className="bg-[#FAF6F0] p-6 rounded-[2rem] border border-[#C4A87C]/20 space-y-3">
-                <span className="font-label-sm text-[10px] uppercase tracking-[0.3em] text-[#735c00] font-bold flex items-center gap-1.5">
+                <span className="font-label-sm text-[10px] uppercase tracking-[0.3em] text-[var(--color-gold-dark)] font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px] text-primary">verified</span>
                   Signature Masterpieces Included
                 </span>
@@ -874,7 +915,7 @@ export function EventDetail() {
                 <div className="space-y-4 pt-2">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <label className="font-label text-[9px] uppercase tracking-widest text-[#735c00] font-bold block">Select Event Venue *</label>
+                      <label className="font-label text-[9px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">Select Event Venue *</label>
                       {venueDetails && (
                         <span className="text-[10px] text-green-600 font-bold flex items-center gap-0.5 animate-pulse">
                           <span className="material-symbols-outlined text-[12px]">check_circle</span> Verified
@@ -908,7 +949,7 @@ export function EventDetail() {
                     {isManualLocationInput && (
                       <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/20 space-y-3">
                         <div className="space-y-1">
-                          <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Venue Name *</label>
+                          <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">Venue Name *</label>
                           <input
                             type="text"
                             placeholder="e.g. Grand Palace Hall, Temple Flanks"
@@ -922,7 +963,7 @@ export function EventDetail() {
                         </div>
 
                         <div className="space-y-1">
-                          <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Full Address *</label>
+                          <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">Full Address *</label>
                           <input
                             type="text"
                             placeholder="e.g. 123 Heritage Lane, Near Old Circle"
@@ -937,7 +978,7 @@ export function EventDetail() {
 
                         <div className="grid grid-cols-3 gap-2">
                           <div className="space-y-1">
-                            <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">City *</label>
+                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">City *</label>
                             <input
                               type="text"
                               placeholder="e.g. Bengaluru"
@@ -950,7 +991,7 @@ export function EventDetail() {
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">State *</label>
+                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">State *</label>
                             <input
                               type="text"
                               placeholder="e.g. Karnataka"
@@ -963,7 +1004,7 @@ export function EventDetail() {
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block">Pincode *</label>
+                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">Pincode *</label>
                             <input
                               type="text"
                               placeholder="e.g. 560001"
@@ -1164,7 +1205,7 @@ export function EventDetail() {
 
 
       {/* 4. FURTHER DISCOVERY JOURNEYS */}
-      <section className="pt-12 pb-12 md:py-32">
+      <section className="pt-12 pb-0 md:pt-24 md:pb-8">
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
           <div className="flex items-end justify-between mb-12 md:mb-16">
             <h2 className="font-display text-[28px] md:text-[48px] text-black font-normal leading-none">
@@ -1221,9 +1262,12 @@ export function EventDetail() {
         />
       </section>
 
+      {/* Smart Recommendations */}
+      <RecommendationSystem category={event.category} currentProductId={event._id || event.id} targetType="event" />
+
       {/* 4. STICKY MOBILE PRICE CARD (Floats above mobile bottom navigation) */}
       <AnimatePresence>
-        {showMobileSticky && (
+        {showMobileSticky && !isScrollingDown && (
           <motion.div
             initial={{ y: 150, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -1283,80 +1327,84 @@ export function EventDetail() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[99999] bg-white/98 flex flex-col touch-none backdrop-blur-md"
+              className="fixed inset-0 z-[99999] bg-white flex items-center justify-center touch-none"
+              onClick={() => setIsLightboxOpen(false)}
             >
-              {/* Prominent Close Button */}
-              <button
-                onClick={() => setIsLightboxOpen(false)}
-                className="fixed top-8 right-6 z-[100000] w-12 h-12 flex items-center justify-center rounded-full bg-white text-black shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-black/10 active:scale-90 transition-transform pointer-events-auto hover:bg-gray-50"
-                aria-label="Close lightbox"
+              <div
+                className="w-full h-full flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-
-              {/* Image Counter */}
-              <div className="fixed top-10 left-6 z-[100000] pointer-events-none">
-                <span className="bg-white/80 px-4 py-1.5 rounded-full text-black font-label tracking-widest text-[12px] font-bold shadow-sm backdrop-blur-md">
-                  {activeGalleryIndex + 1} / {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).length}
-                </span>
-              </div>
-
-              {/* Lightbox Swipeable Viewport */}
-              <div 
-                ref={lightboxScrollRef}
-                onScroll={(e) => {
-                  const width = e.currentTarget.clientWidth;
-                  if (!width) return;
-                  const currentSlide = Math.round(e.currentTarget.scrollLeft / width);
-                  const images = event.gallery && event.gallery.length > 0 ? event.gallery : [event.image];
-                  if (currentSlide !== activeGalleryIndex && currentSlide >= 0 && currentSlide < images.length) {
-                    setActiveGalleryIndex(currentSlide);
-                  }
-                }}
-                className="flex-1 w-full h-full flex overflow-x-auto snap-x snap-mandatory items-center mt-12"
-                style={{ scrollbarWidth: "none" }}
-              >
-                {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, idx) => (
-                  <div key={idx} className="w-full h-full shrink-0 snap-center flex items-center justify-center p-2 md:p-8 relative">
-                    <img
-                      src={img}
-                      alt={`Lightbox view ${idx + 1}`}
-                      className="max-w-full max-h-full object-contain select-none"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Lightbox Thumbnail Strip */}
-              <div className="w-full pb-8 pt-4 px-4 flex gap-3 overflow-x-auto no-scrollbar justify-center items-center pointer-events-auto shrink-0 z-20">
-                {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, idx) => (
+                {/* Header Controls */}
+                <div className="w-full flex justify-between items-center px-4 pt-2 shrink-0 z-10">
+                  <span className="text-black/40 font-label-sm text-[10px] md:text-[12px] uppercase tracking-[0.4em] font-bold">
+                    {activeGalleryIndex + 1} / {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).length}
+                  </span>
                   <button
-                    key={idx}
-                    onClick={() => {
-                      setActiveGalleryIndex(idx);
-                      if (lightboxScrollRef.current) {
-                        lightboxScrollRef.current.scrollTo({
-                          left: idx * lightboxScrollRef.current.clientWidth,
-                          behavior: "smooth"
-                        });
-                      }
-                    }}
-                    className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                      activeGalleryIndex === idx
-                        ? "border-black shadow-lg scale-110"
-                        : "border-transparent opacity-50 hover:opacity-100"
-                    }`}
+                    onClick={() => setIsLightboxOpen(false)}
+                    className="w-10 h-10 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors"
+                    aria-label="Close lightbox"
                   >
-                    <img
-                      src={img}
-                      alt={`Thumbnail ${idx + 1}`}
-                      className="w-full h-full object-cover pointer-events-none"
-                    />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                   </button>
-                ))}
+                </div>
+
+                {/* Lightbox Swipeable Viewport */}
+                <div 
+                  ref={lightboxScrollRef}
+                  onScroll={(e) => {
+                    const width = e.currentTarget.clientWidth;
+                    if (!width) return;
+                    const currentSlide = Math.round(e.currentTarget.scrollLeft / width);
+                    const images = event.gallery && event.gallery.length > 0 ? event.gallery : [event.image];
+                    if (currentSlide !== activeGalleryIndex && currentSlide >= 0 && currentSlide < images.length) {
+                      setActiveGalleryIndex(currentSlide);
+                    }
+                  }}
+                  className="flex-1 w-full flex overflow-x-auto snap-x snap-mandatory items-center my-3 overflow-hidden min-h-0"
+                  style={{ scrollbarWidth: "none" }}
+                >
+                  {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, idx) => (
+                    <div key={idx} className="w-full h-full shrink-0 snap-center flex items-center justify-center p-4 relative">
+                      <img
+                        src={img}
+                        alt={`Lightbox view ${idx + 1}`}
+                        className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lightbox Thumbnail Strip */}
+                <div className="w-full pb-2 pt-2 px-4 flex gap-2.5 overflow-x-auto no-scrollbar justify-center items-center shrink-0 border-t border-black/5 mt-1 z-10">
+                  {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setActiveGalleryIndex(idx);
+                        if (lightboxScrollRef.current) {
+                          lightboxScrollRef.current.scrollTo({
+                            left: idx * lightboxScrollRef.current.clientWidth,
+                            behavior: "smooth"
+                          });
+                        }
+                      }}
+                      className={`shrink-0 w-11 h-11 rounded-lg overflow-hidden border-2 transition-all duration-300 snap-center ${
+                        activeGalleryIndex === idx
+                          ? "border-[#C4A87C] scale-105 shadow-sm"
+                          : "border-transparent opacity-50 hover:opacity-100"
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Thumbnail ${idx + 1}`}
+                        className="w-full h-full object-cover pointer-events-none"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}

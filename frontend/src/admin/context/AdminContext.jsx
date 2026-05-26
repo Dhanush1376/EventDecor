@@ -5,8 +5,8 @@ import React, {
   useCallback,
   useEffect,
   useRef,
-} from "react";
-import { initialWebsiteContent } from "../data/websiteContentData";
+} from"react";
+import { initialWebsiteContent } from"../data/websiteContentData";
 import {
   productService,
   orderService,
@@ -17,14 +17,14 @@ import {
   galleryService,
   eventService,
   notificationService,
-} from "../../services/domainServices";
-import toast from "react-hot-toast";
-import { useAuth } from "../../context/AuthContext";
-import { refreshWebsiteContent } from "../../hooks/useWebsiteContent";
-import { io as socketIO } from "socket.io-client";
-import { getAccessToken } from "../../services/api";
-import { getApiUrl } from "../../utils/apiUrl";
-import logger from "../../utils/logger";
+} from"../../services/domainServices";
+import toast from"react-hot-toast";
+import { useAuth } from"../../context/AuthContext";
+import { refreshWebsiteContent } from"../../hooks/useWebsiteContent";
+import { io as socketIO } from"socket.io-client";
+import { getAccessToken } from"../../services/api";
+import { getApiUrl } from"../../utils/apiUrl";
+import logger from"../../utils/logger";
 
 const mapDbNotificationToFrontend = (n) => ({
   id: n._id || n.id,
@@ -52,25 +52,25 @@ const mapDbProductToFrontend = (p) => {
   if (!p) return null;
   if (p.id && p.name && p.image) return p;
   
-  let fStatus = "active";
-  if (p.stock === 0) fStatus = "out_of_stock";
-  else if (p.stock <= 5) fStatus = "low_stock";
-  else if (!p.isActive) fStatus = "draft";
+  let fStatus ="active";
+  if (p.stock === 0) fStatus ="out_of_stock";
+  else if (p.stock <= 5) fStatus ="low_stock";
+  else if (!p.isActive) fStatus ="draft";
   
   return {
-    id: p._id || p.id || "PRD-UNKNOWN",
-    name: p.title || p.name || "Handcrafted Decor Piece",
-    nameTE: p.teluguTitle || p.nameTE || "",
-    category: p.category || "Uncategorized",
+    id: p._id || p.id ||"PRD-UNKNOWN",
+    name: p.title || p.name ||"Handcrafted Decor Piece",
+    nameTE: p.teluguTitle || p.nameTE ||"",
+    category: p.category ||"Uncategorized",
     price: p.price || 0,
     stock: p.stock !== undefined ? p.stock : 10,
     status: fStatus,
     featured: p.featured !== undefined ? p.featured : false,
-    image: p.imageSrc || p.image || "",
+    image: p.imageSrc || p.image ||"",
     views: p.views !== undefined ? p.views : 120,
     sold: p.sold !== undefined ? p.sold : 5,
     rating: p.rating || 5.0,
-    description: p.description || "",
+    description: p.description ||"",
     rawProduct: p
   };
 };
@@ -82,32 +82,32 @@ const mapDbOrderToFrontend = (o) => {
   const dateStr = o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '';
   
   // Use capitalized statuses strictly
-  let fStatus = o.orderStatus || "Pending";
+  let fStatus = o.orderStatus ||"Pending";
   // fallback map for old dev artifacts
-  if (fStatus === "placed") fStatus = "Pending";
-  else if (fStatus === "confirmed") fStatus = "Confirmed";
-  else if (fStatus === "processing") fStatus = "Packed";
-  else if (fStatus === "shipped") fStatus = "Shipped";
-  else if (fStatus === "delivered") fStatus = "Delivered";
-  else if (fStatus === "cancelled") fStatus = "Cancelled";
+  if (fStatus ==="placed") fStatus ="Pending";
+  else if (fStatus ==="confirmed") fStatus ="Confirmed";
+  else if (fStatus ==="processing") fStatus ="Packed";
+  else if (fStatus ==="shipped") fStatus ="Shipped";
+  else if (fStatus ==="delivered") fStatus ="Delivered";
+  else if (fStatus ==="cancelled") fStatus ="Cancelled";
   
   const mappedItems = Array.isArray(o.items) ? o.items.map(item => ({
-    name: item.title || item.name || "Handcrafted Piece",
+    name: item.title || item.name ||"Handcrafted Piece",
     qty: item.quantity || item.qty || 1,
     price: item.price || 0
   })) : [];
   
   return {
-    id: o._id || o.id || "ORD-UNKNOWN",
-    customer: o.shippingAddress?.name || o.user?.name || "Store Customer",
-    email: o.shippingAddress?.email || o.user?.email || "customer@email.com",
-    phone: o.shippingAddress?.phone || o.user?.phone || "",
+    id: o._id || o.id ||"ORD-UNKNOWN",
+    customer: o.shippingAddress?.name || o.user?.name ||"Store Customer",
+    email: o.shippingAddress?.email || o.user?.email ||"customer@email.com",
+    phone: o.shippingAddress?.phone || o.user?.phone ||"",
     items: mappedItems,
     total: o.total || o.subtotal || 0,
     status: fStatus,
-    payment: o.paymentStatus === "paid" ? "Paid" : (o.paymentStatus === "COD Collected" ? "COD Collected" : (o.paymentMethod?.toLowerCase() === "cod" ? "COD Pending" : "Pending")),
+    payment: o.paymentStatus ==="paid" ?"Paid" : (o.paymentStatus ==="COD Collected" ?"COD Collected" : (o.paymentMethod?.toLowerCase() ==="cod" ?"COD Pending" :"Pending")),
     date: dateStr,
-    address: o.shippingAddress ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}` : "Ongole",
+    address: o.shippingAddress ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}` :"Ongole",
     rawOrder: o,
     // Enterprise logistics mapping
     invoiceNumber: o.invoiceNumber,
@@ -130,21 +130,21 @@ const mapDbCustomerToFrontend = (c) => {
   const totalSpent = Array.isArray(c.orders) ? c.orders.reduce((sum, order) => sum + (order.total || 0), 0) : 0;
   const orderCount = Array.isArray(c.orders) ? c.orders.length : 0;
   
-  let segment = "New";
+  let segment ="New";
   if (orderCount > 5 || totalSpent > 50000) {
-    segment = "VIP";
+    segment ="VIP";
   } else if (orderCount > 0) {
-    segment = "Regular";
+    segment ="Regular";
   }
   
-  const lastOrderDate = c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : "2026-05-15";
-  const city = c.addresses && c.addresses[0] ? c.addresses[0].city : "Ongole";
+  const lastOrderDate = c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] :"2026-05-15";
+  const city = c.addresses && c.addresses[0] ? c.addresses[0].city :"Ongole";
   
   return {
-    id: c._id || c.id || "CUS-UNKNOWN",
-    name: c.name || "Customer",
-    email: c.email || "",
-    phone: c.phone || "",
+    id: c._id || c.id ||"CUS-UNKNOWN",
+    name: c.name ||"Customer",
+    email: c.email ||"",
+    phone: c.phone ||"",
     orders: orderCount,
     totalSpent: totalSpent || 0,
     lastOrder: lastOrderDate,
@@ -161,18 +161,18 @@ const mapDbEventToFrontend = (e) => {
   if (!e) return null;
   if (e.id && e.eventType && e.customer) return e;
   
-  const dateStr = e.createdAt ? new Date(e.createdAt).toISOString().split('T')[0] : "2026-05-20";
+  const dateStr = e.createdAt ? new Date(e.createdAt).toISOString().split('T')[0] :"2026-05-20";
   
   return {
-    id: e._id || e.id || "EVT-UNKNOWN",
-    eventType: e.title || "Custom Consultation",
-    customer: e.category || "Consultation Request",
-    status: e.isActive ? "Confirmed" : "Pending",
+    id: e._id || e.id ||"EVT-UNKNOWN",
+    eventType: e.title ||"Custom Consultation",
+    customer: e.category ||"Consultation Request",
+    status: e.isActive ?"Confirmed" :"Pending",
     date: dateStr,
-    venue: e.venueType || "Ongole",
-    amount: e.pricing ? parseInt(e.pricing.replace(/[^0-9]/g, "")) || 45000 : 45000,
-    payment: "Paid",
-    staff: ["Siri", "Anji"],
+    venue: e.venueType ||"Ongole",
+    amount: e.pricing ? parseInt(e.pricing.replace(/[^0-9]/g,"")) || 45000 : 45000,
+    payment:"Paid",
+    staff: ["Siri","Anji"],
     rawEvent: e
   };
 };
@@ -195,7 +195,7 @@ export function AdminProvider({ children }) {
   const [showIdleWarning, setShowIdleWarning] = useState(false);
   const [idleSecondsLeft, setIdleSecondsLeft] = useState(30);
 
-  const logAdminAction = useCallback(async (action, details, status = "Success") => {
+  const logAdminAction = useCallback(async (action, details, status ="Success") => {
     const actorName = activeRole;
     try {
       const res = await analyticsService.createAuditLog(action, details, status);
@@ -248,7 +248,7 @@ export function AdminProvider({ children }) {
     try {
       await cmsService.updateSection('admin_safety_lock', { safetyLock: next });
       logAdminAction("TOGGLE_SAFETY_LOCK", `Global safety write override lock set to ${next}`);
-      toast.success(`Safety lock is now ${next ? "ACTIVE (Write Operations Blocked)" : "DISABLED"}`);
+      toast.success(`Safety lock is now ${next ?"ACTIVE (Write Operations Blocked)" :"DISABLED"}`);
     } catch (err) {
       logger.error("Failed to update backend safety lock:", err);
       // Revert on failure
@@ -264,7 +264,7 @@ export function AdminProvider({ children }) {
     try {
       await cmsService.updateSection('admin_maintenance_mode', { maintenanceMode: next });
       logAdminAction("TOGGLE_MAINTENANCE", `Global storefront maintenance mode set to ${next}`);
-      toast.success(`Maintenance mode is now ${next ? "ENABLED" : "DISABLED"}`);
+      toast.success(`Maintenance mode is now ${next ?"ENABLED" :"DISABLED"}`);
     } catch (err) {
       logger.error("Failed to update backend maintenance mode:", err);
       // Revert on failure
@@ -279,7 +279,7 @@ export function AdminProvider({ children }) {
     try {
       await cmsService.updateSection('admin_auto_publish', { autoPublish: next });
       logAdminAction("TOGGLE_AUTO_PUBLISH", `Global auto publish CMS setting set to ${next}`);
-      toast.success(`Auto-Publish mode is now ${next ? "ENABLED" : "DISABLED"}`);
+      toast.success(`Auto-Publish mode is now ${next ?"ENABLED" :"DISABLED"}`);
     } catch (err) {
       logger.error("Failed to update backend auto publish setting:", err);
       setAutoPublish(!next);
@@ -331,10 +331,10 @@ export function AdminProvider({ children }) {
 
       if (elapsedSecs >= totalTimeoutSecs) {
         clearInterval(interval);
-        logAdminAction("SESSION_EXPIRED", "Inactivity timeout threshold exceeded, logging out");
+        logAdminAction("SESSION_EXPIRED","Inactivity timeout threshold exceeded, logging out");
         logout();
         toast.error("Session expired due to inactivity.", { duration: 8000 });
-        window.location.href = "/auth";
+        window.location.href ="/auth";
       } else if (elapsedSecs >= warningStartSecs) {
         setShowIdleWarning(true);
         setIdleSecondsLeft(totalTimeoutSecs - elapsedSecs);
@@ -353,7 +353,7 @@ export function AdminProvider({ children }) {
   }, [idleTimeoutMinutes, showIdleWarning, logout, logAdminAction]);
 
   // ─── Theme Mode (Light only — dark mode removed) ───
-  const themeMode = "light";
+  const themeMode ="light";
 
   // ─── Backend-Connected State ───
   const [products, setProducts] = useState([]);
@@ -371,7 +371,7 @@ export function AdminProvider({ children }) {
   const [customCategories, setCustomCategories] = useState(loadCustomCategories);
 
   const addCustomCategory = useCallback((type, data) => {
-    if (activeRole === "viewer") {
+    if (activeRole ==="viewer") {
       toast.error("Viewer Role: Write operations are restricted!");
       return;
     }
@@ -386,9 +386,9 @@ export function AdminProvider({ children }) {
         id: `${type[0]}-${Date.now()}`,
         name: data.name,
         count: data.count || 0,
-        image: data.image || "",
+        image: data.image ||"",
         active: data.active !== undefined ? data.active : true,
-        description: data.description || ""
+        description: data.description ||""
       };
       next[type] = [newCat, ...list];
       cmsService.updateSection('custom_categories', next).catch(e => logger.error("Failed to save category:", e));
@@ -399,7 +399,7 @@ export function AdminProvider({ children }) {
   }, [activeRole, safetyLock, logAdminAction]);
 
   const updateCustomCategory = useCallback((type, id, data) => {
-    if (activeRole === "viewer") {
+    if (activeRole ==="viewer") {
       toast.error("Viewer Role: Write operations are restricted!");
       return;
     }
@@ -419,7 +419,7 @@ export function AdminProvider({ children }) {
   }, [activeRole, safetyLock, logAdminAction]);
 
   const deleteCustomCategory = useCallback((type, id) => {
-    if (activeRole === "viewer") {
+    if (activeRole ==="viewer") {
       toast.error("Viewer Role: Write operations are restricted!");
       return;
     }
@@ -454,7 +454,7 @@ export function AdminProvider({ children }) {
           await Promise.allSettled([
             productService.getAll({ limit: 100 }),
             orderService.getAll({ limit: 50 }),
-            userService.getAll({ limit: 50, role: "user" }),
+            userService.getAll({ limit: 50, role:"user" }),
             reviewService.getAll({ limit: 50 }),
             analyticsService.getDashboardStats(),
             eventService.getAll({ limit: 50 }),
@@ -462,30 +462,30 @@ export function AdminProvider({ children }) {
             notificationService.getAdminAlerts(),
           ]);
 
-        if (productsRes.status === "fulfilled" && productsRes.value?.success) {
+        if (productsRes.status ==="fulfilled" && productsRes.value?.success) {
           const list = productsRes.value.data?.data || [];
           setProducts(list.map(mapDbProductToFrontend));
         }
-        if (ordersRes.status === "fulfilled" && ordersRes.value?.success) {
+        if (ordersRes.status ==="fulfilled" && ordersRes.value?.success) {
           const list = ordersRes.value.data?.data || [];
           setOrders(list.map(mapDbOrderToFrontend));
         }
-        if (customersRes.status === "fulfilled" && customersRes.value?.success) {
+        if (customersRes.status ==="fulfilled" && customersRes.value?.success) {
           const list = customersRes.value.data?.data || [];
           setCustomers(list.map(mapDbCustomerToFrontend));
         }
-        if (reviewsRes.status === "fulfilled" && reviewsRes.value?.success) {
+        if (reviewsRes.status ==="fulfilled" && reviewsRes.value?.success) {
           setReviews(reviewsRes.value.data?.data || []);
         }
-        if (statsRes.status === "fulfilled" && statsRes.value?.success) {
+        if (statsRes.status ==="fulfilled" && statsRes.value?.success) {
           setDashboardStats(statsRes.value.data);
         }
-        if (eventsRes.status === "fulfilled" && eventsRes.value?.success) {
+        if (eventsRes.status ==="fulfilled" && eventsRes.value?.success) {
           const evData = eventsRes.value.data;
           const list = evData?.data || evData?.items || (Array.isArray(evData) ? evData : []);
           setEventBookings(list.map(mapDbEventToFrontend));
         }
-        if (auditLogsRes.status === "fulfilled" && auditLogsRes.value?.success) {
+        if (auditLogsRes.status ==="fulfilled" && auditLogsRes.value?.success) {
           const rawLogs = auditLogsRes.value.data?.data || auditLogsRes.value.data || [];
           setAuditLogs(rawLogs.map(log => ({
             id: log._id || log.id,
@@ -498,12 +498,13 @@ export function AdminProvider({ children }) {
             status: log.statusCode < 400 ? 'Success' : 'Failure'
           })));
         }
-        if (alertsRes.status === "fulfilled" && alertsRes.value?.success) {
-          const list = alertsRes.value.data || [];
+        if (alertsRes.status ==="fulfilled" && alertsRes.value?.success) {
+          const list = alertsRes.value.data?.notifications || (Array.isArray(alertsRes.value.data) ? alertsRes.value.data : []);
           setNotifications(list.map(mapDbNotificationToFrontend));
         }
       } catch (err) {
         logger.error("Failed to load admin data:", err);
+        toast.error("Failed to load admin data: " + (err.message || "Unknown error"));
       } finally {
         setDataLoading(false);
       }
@@ -542,7 +543,7 @@ export function AdminProvider({ children }) {
             }
             // Preserve local unsaved draft sections (marked as 'modified')
             Object.keys(prev).forEach((key) => {
-              if (prev[key]?.status === "modified") {
+              if (prev[key]?.status ==="modified") {
                 merged[key] = prev[key];
               }
             });
@@ -615,11 +616,11 @@ export function AdminProvider({ children }) {
 
   // ─── Product Actions (Backend-Connected) ───
   const deleteProduct = useCallback(async (productId) => {
-    if (activeRole === "viewer") {
+    if (activeRole ==="viewer") {
       toast.error("Viewer Role: Write operations are restricted!");
       return;
     }
-    if (activeRole === "editor") {
+    if (activeRole ==="editor") {
       toast.error("Editor Role: Deleting catalog items is restricted!");
       return;
     }
@@ -640,7 +641,7 @@ export function AdminProvider({ children }) {
   }, [activeRole, safetyLock, logAdminAction]);
 
   const toggleProductFeatured = useCallback(async (productId) => {
-    if (activeRole === "viewer") {
+    if (activeRole ==="viewer") {
       toast.error("Viewer Role: Write operations are restricted!");
       return;
     }
@@ -666,7 +667,7 @@ export function AdminProvider({ children }) {
 
   // ─── Order Actions (Backend-Connected) ───
   const updateOrderStatus = useCallback(async (orderId, newStatus, note, courierCharges) => {
-    if (activeRole === "viewer") {
+    if (activeRole ==="viewer") {
       toast.error("Viewer Role: Write operations are restricted!");
       return;
     }
@@ -695,7 +696,7 @@ export function AdminProvider({ children }) {
   }, [activeRole, safetyLock, logAdminAction]);
 
   const updateOrderNotes = useCallback(async (orderId, notes) => {
-    if (activeRole === "viewer") {
+    if (activeRole ==="viewer") {
       toast.error("Viewer Role: Write operations are restricted!");
       return;
     }
@@ -724,11 +725,11 @@ export function AdminProvider({ children }) {
 
   // ─── Review Actions (Backend-Connected) ───
   const approveReview = useCallback(async (reviewId) => {
-    if (activeRole === "viewer") {
+    if (activeRole ==="viewer") {
       toast.error("Viewer Role: Write operations are restricted!");
       return;
     }
-    if (activeRole === "editor") {
+    if (activeRole ==="editor") {
       toast.error("Editor Role: Moderating customer reviews is restricted!");
       return;
     }
@@ -737,10 +738,10 @@ export function AdminProvider({ children }) {
       return;
     }
     try {
-      const res = await reviewService.updateStatus(reviewId, "approved");
+      const res = await reviewService.updateStatus(reviewId,"approved");
       if (res.success) {
         setReviews((prev) =>
-          prev.map((r) => ((r._id || r.id) === reviewId ? { ...r, status: "approved" } : r)),
+          prev.map((r) => ((r._id || r.id) === reviewId ? { ...r, status:"approved" } : r)),
         );
         logAdminAction("APPROVE_REVIEW", `Approved Review ID: ${reviewId}`);
         toast.success("Review approved");
@@ -827,7 +828,7 @@ export function AdminProvider({ children }) {
             <span className="material-symbols-outlined text-[15px] text-slate-800 shrink-0">notifications_active</span>
             {mapped.title}
           </strong>
-          <span className="text-[11px] text-slate-500 mt-1 leading-normal font-normal">{mapped.message}</span>
+          <span className="text-[11px] sm:text-[11px] text-slate-500 mt-1 leading-normal font-normal">{mapped.message}</span>
         </div>
       ), {
         duration: 8000,
@@ -863,7 +864,7 @@ export function AdminProvider({ children }) {
       setWebsiteContent((prev) => {
         const next = {
           ...prev,
-          [section]: { ...prev[section], ...(customData || {}), status: "published" },
+          [section]: { ...prev[section], ...(customData || {}), status:"published" },
         };
         return next;
       });
@@ -885,7 +886,7 @@ export function AdminProvider({ children }) {
     setWebsiteContent((prev) => {
       const newContent = {
         ...prev,
-        [section]: { ...prev[section], ...data, status: "modified" },
+        [section]: { ...prev[section], ...data, status:"modified" },
       };
       setContentHistory((h) => [
         ...h.slice(-19),
@@ -895,7 +896,7 @@ export function AdminProvider({ children }) {
 
       // Auto-publish support
       if (autoPublish) {
-        const publishData = { ...prev[section], ...data, status: "published" };
+        const publishData = { ...prev[section], ...data, status:"published" };
         Promise.resolve().then(() => {
           publishContent(section, publishData);
         });
@@ -914,13 +915,13 @@ export function AdminProvider({ children }) {
         obj = obj[keys[i]];
       }
       obj[keys[keys.length - 1]] = value;
-      newContent[section].status = "modified";
+      newContent[section].status ="modified";
       setHasUnsavedContent(true);
 
       // Auto-publish support
       if (autoPublish) {
         const publishData = structuredClone(newContent[section]);
-        publishData.status = "published";
+        publishData.status ="published";
         Promise.resolve().then(() => {
           publishContent(section, publishData);
         });
@@ -934,7 +935,7 @@ export function AdminProvider({ children }) {
   const publishAllContent = useCallback(async () => {
     try {
       const sectionsToPublish = Object.entries(websiteContent).filter(
-        ([, val]) => val?.status === "modified"
+        ([, val]) => val?.status ==="modified"
       );
 
       // Publish sections in parallel with error tracking
@@ -956,7 +957,7 @@ export function AdminProvider({ children }) {
         const updated = { ...prev };
         Object.keys(updated).forEach((key) => {
           if (updated[key]?.status && !failedSections.includes(key)) {
-            updated[key].status = "published";
+            updated[key].status ="published";
           }
         });
         return updated;
@@ -967,7 +968,7 @@ export function AdminProvider({ children }) {
       await refreshWebsiteContent();
 
       if (failedSections.length > 0) {
-        toast.error(`Failed to publish: ${failedSections.join(", ")}`);
+        toast.error(`Failed to publish: ${failedSections.join(",")}`);
       } else {
         setPublishToast("All content published successfully!");
         toast.success("All content published successfully!");

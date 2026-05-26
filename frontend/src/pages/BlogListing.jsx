@@ -3,17 +3,21 @@ import { motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { SEO } from '../components/seo/SEO';
 import { BlogCard } from '../components/blog/BlogCard';
-import blogsData from '../content/blogs.json';
+import fallbackBlogsData from '../content/blogs.json';
+import { useWebsiteContent } from '../hooks/useWebsiteContent';
 
 export function BlogListing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
 
+  const { blogs } = useWebsiteContent();
+  const blogsData = blogs || fallbackBlogsData;
+
   // Extract unique categories
   const categories = useMemo(() => {
     const cats = new Set(blogsData.map(blog => blog.category));
     return ['All', ...Array.from(cats)];
-  }, []);
+  }, [blogsData]);
 
   // Filter posts based on search and category
   const filteredPosts = useMemo(() => {
@@ -23,7 +27,7 @@ export function BlogListing() {
       const matchesCategory = activeCategory === 'All' || post.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, activeCategory]);
+  }, [searchTerm, activeCategory, blogsData]);
 
   const featuredPost = blogsData[0]; // First post is featured
   const regularPosts = filteredPosts.filter(p => p.id !== featuredPost.id);

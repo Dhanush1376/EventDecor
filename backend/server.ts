@@ -7,8 +7,8 @@ import { generateSitemap } from './src/utils/sitemapGenerator';
 import { initSocket, getIO } from './src/socket';
 import { initJobs } from './src/jobs/cronJobs';
 import { initRedis, closeRedisConnections } from './src/utils/redis';
-import { closeWorkers } from './src/jobs/workers';
-import { closeQueues } from './src/jobs/queues';
+import { initWorkers, closeWorkers } from './src/jobs/workers';
+import { initQueues, closeQueues } from './src/jobs/queues';
 
 import * as Sentry from '@sentry/node';
 import mongoose from 'mongoose';
@@ -67,51 +67,81 @@ const PORT = parseInt(process.env.PORT || '5000', 10);
 
 const startServer = async () => {
   try {
-    // 1. Start Express Server FIRST so health checks pass immediately
-    server = app.listen(PORT, '0.0.0.0', () => {
-        logger.info(
-          `[STARTUP] Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`
-        );
-        if (typeof process.send === 'function') {
-          process.send('ready');
-        }
-      });
-
-    // 4. Initialize Redis Connection BEFORE Sockets (otherwise pub/sub clients are null)
-    logger.info('Initializing Redis...');
-    await initRedis().catch(err => logger.error(`[REDIS] Initialization error: ${err.message}`));
-
-    // Initialize Socket.io after server is listening and Redis is ready
-    initSocket(server);
-
-    // Prevent BYPASS_OTP_CODE in production
+    // Prevent BYPASS_OTP_CODE in production (Checked early)
     if (process.env.NODE_ENV === 'production' && process.env.BYPASS_OTP_CODE) {
       logger.error('CRITICAL: BYPASS_OTP_CODE must not be set in production');
       process.exit(1);
     }
 
-    // 2. Connect to Database asynchronously in the background
-    connectDB().then(() => {
-      if (process.env.SKIP_INDEX_BUILD !== 'true') {
-        ensureIndexes()
-          .then(() => logger.info('[DATABASE] Background index verification finished'))
-          .catch((err) => {
-            logger.error('[DATABASE] CRITICAL ALERT: Background index verification failed! Database performance will degrade to full collection scans:', err);
-            if (process.env.SENTRY_DSN) Sentry.captureException(err);
-          });
-      } else {
-        logger.warn('[DATABASE] SKIP_INDEX_BUILD=true — skipping background index build');
+    // 1. Connect to Database (block, retry internally, throw if fails)
+    logger.info('[STARTUP] Connecting to MongoDB...');
+    await connectDB();
+
+    // 2. Build indexes in background
+    if (process.env.SKIP_INDEX_BUILD !== 'true') {
+      ensureIndexes()
+        .then(() => logger.info('[DATABASE] Background index verification finished'))
+        .catch((err) => {
+          logger.error('[DATABASE] CRITICAL ALERT: Background index verification failed! Database performance will degrade to full collection scans:', err);
+          if (process.env.SENTRY_DSN) Sentry.captureException(err);
+        });
+    } else {
+      logger.warn('[DATABASE] SKIP_INDEX_BUILD=true — skipping background index build');
+    }
+
+    // 3. Initialize Redis (graceful fallback if REQUIRE_REDIS=false)
+    logger.info('[STARTUP] Initializing Redis...');
+    let redisReady = false;
+    try {
+      await initRedis();
+      redisReady = true;
+      logger.info('🟢 [STARTUP] Redis initialized successfully');
+    } catch (err: any) {
+      logger.error(`❌ [REDIS] Initialization error: ${err.message}`);
+      if (process.env.REQUIRE_REDIS === 'true') {
+        throw new Error(`CRITICAL: Redis is required but failed to initialize: ${err.message}`);
       }
+    }
 
-      // 3. Initialize Background Jobs AFTER DB is connected
-      initJobs();
+    // 4. Initialize BullMQ Queues and Workers (only if Redis is ready or REQUIRE_REDIS=false)
+    if (redisReady || process.env.REQUIRE_REDIS !== 'true') {
+      try {
+        await initQueues();
+        await initWorkers();
+      } catch (err: any) {
+        logger.error(`❌ [BULLMQ] Initialization error: ${err.message}`);
+        if (process.env.REQUIRE_REDIS === 'true') {
+          throw err;
+        }
+      }
+    }
 
-      // Auto-generate sitemap AFTER DB is connected
-      generateSitemap().catch((err: any) => logger.error(`[BOOT SITEMAP] Initial generation failed: ${err.message}`));
-      
-    }).catch((err) => {
-      logger.error(`[DATABASE] Unrecoverable connection error during startup: ${err.message}`);
+    // 4b. Initialize Recommendation System (warm caches — non-blocking, non-fatal)
+    try {
+      const { initRecommendationSystem } = require('./src/services/recommendation/recommendationEngine');
+      await initRecommendationSystem();
+    } catch (err: any) {
+      logger.warn(`⚠️ [RECO] Recommendation system init skipped: ${err.message}`);
+    }
+
+    // 5. Start Express Server
+    server = app.listen(PORT, '0.0.0.0', () => {
+      logger.info(
+        `🚀 [STARTUP] Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`
+      );
+      if (typeof process.send === 'function') {
+        process.send('ready');
+      }
     });
+
+    // 6. Initialize Socket.io (which binds to server)
+    initSocket(server);
+
+    // 7. Initialize Background Cron/Jobs
+    initJobs();
+
+    // 8. Auto-generate sitemap
+    generateSitemap().catch((err: any) => logger.error(`[BOOT SITEMAP] Initial sitemap generation failed: ${err.message}`));
 
 
 

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { userService, cmsService, notificationService } from "../../services/domainServices";
-import { useAuth } from "../../context/AuthContext";
-import { useAdmin } from "../context/AdminContext";
-import toast from "react-hot-toast";
+import React, { useState, useEffect } from"react";
+import { motion } from"framer-motion";
+import { userService, cmsService, notificationService } from"../../services/domainServices";
+import { useAuth } from"../../context/AuthContext";
+import { useAdmin } from"../context/AdminContext";
+import toast from"react-hot-toast";
 
 import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
@@ -62,14 +62,14 @@ export function AdminSettings() {
         toast.error("SMTP Diagnostic failed. Check stack trace.", { id: testToast });
         setSmtpTestResult({
           success: false,
-          message: res.message || "Connection refused.",
-          errorMessage: res.errorMessage || "Unknown transport error.",
+          message: res.message ||"Connection refused.",
+          errorMessage: res.errorMessage ||"Unknown transport error.",
           details: res.details
         });
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message || "Diagnostic request timed out.";
-      const errorStack = error.response?.data?.errorMessage || error.response?.data?.errorStack || error.stack || "";
+      const errorMsg = error.response?.data?.message || error.message ||"Diagnostic request timed out.";
+      const errorStack = error.response?.data?.errorMessage || error.response?.data?.errorStack || error.stack ||"";
       toast.error(`SMTP Verification Failed: ${errorMsg}`, { id: testToast });
       setSmtpTestResult({
         success: false,
@@ -87,37 +87,37 @@ export function AdminSettings() {
 
   // Dynamic Profile State
   const [profileForm, setProfileForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    role: "manager",
+    name:"",
+    email:"",
+    phone:"",
+    role:"manager",
   });
 
   // Dynamic Business & Portal Settings State
   const [settings, setSettings] = useState({
-    businessName: "Siri Arts & Crafts",
-    tagline: "",
-    businessEmail: "Sirisha.atmakuri@gmail.com",
-    phoneNumber: "+91 98660 06648",
-    gstNumber: "GSTIN123456789",
-    address: "#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
-    primaryColor: "#735c00",
-    secondaryColor: "#F8F9FB",
-    fontFamily: "Playfair Display + Inter",
-    freeShippingThreshold: "2000",
-    standardShippingFee: "99",
-    expressShippingFee: "249",
-    codFee: "90",
-    deliveryEstimate: "5-7",
-    razorpayKeyId: "",
-    upiId: "siriarts@upi",
-    whatsappNumber: "+91 98660 06648",
-    whatsappMessage: "Hello! Thank you for reaching Siri Arts & Crafts.",
+    businessName:"Siri Arts & Crafts",
+    tagline:"",
+    businessEmail:"Sirisha.atmakuri@gmail.com",
+    phoneNumber:"+91 98660 06648",
+    gstNumber:"GSTIN123456789",
+    address:"#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
+    primaryColor:"var(--color-gold-dark)",
+    secondaryColor:"#F8F9FB",
+    fontFamily:"Playfair Display + Inter",
+    freeShippingThreshold:"2000",
+    standardShippingFee:"99",
+    expressShippingFee:"249",
+    codFee:"90",
+    deliveryEstimate:"5-7",
+    razorpayKeyId:"",
+    upiId:"siriarts@upi",
+    whatsappNumber:"+91 98660 06648",
+    whatsappMessage:"Hello! Thank you for reaching Siri Arts & Crafts.",
   });
 
   const handleBackupDownload = () => {
     try {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(
+      const dataStr ="data:text/json;charset=utf-8," + encodeURIComponent(
         JSON.stringify({
           exportedBy: activeRole.toUpperCase(),
           exportTimestamp: new Date().toISOString(),
@@ -131,7 +131,7 @@ export function AdminSettings() {
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      logAdminAction("BACKUP_DOWNLOAD", "Catalog database local backup JSON exported successfully");
+      logAdminAction("BACKUP_DOWNLOAD","Catalog database local backup JSON exported successfully");
       toast.success("Database catalog backup exported successfully!");
     } catch {
       toast.error("Failed to generate export file.");
@@ -144,15 +144,15 @@ export function AdminSettings() {
       toast.error("Wipe Protection: All three safeguard checkmarks must be acknowledged!");
       return;
     }
-    if (resetCodePhrase !== "CONFIRM HARD RESET") {
+    if (resetCodePhrase !=="CONFIRM HARD RESET") {
       toast.error("Wipe Protection: Passphrase matches failed!");
       return;
     }
-    if (activeRole === "viewer") {
+    if (activeRole ==="viewer") {
       toast.error("Viewer Role: Access denied for hard wipe!");
       return;
     }
-    if (activeRole === "editor" || activeRole === "manager") {
+    if (activeRole ==="editor" || activeRole ==="manager") {
       toast.error("Access Denied: Only Owner class admins can reset database.");
       return;
     }
@@ -165,7 +165,7 @@ export function AdminSettings() {
     const wipeToast = toast.loading("Executing administrative wipe operations...");
     try {
       await new Promise((r) => setTimeout(r, 2000));
-      logAdminAction("HARD_RESET_EXECUTED", "Database purged and reset to system defaults", "Success");
+      logAdminAction("HARD_RESET_EXECUTED","Database purged and reset to system defaults","Success");
       toast.success("Database purged and reset to system defaults successfully!", { id: wipeToast });
       
       setResetCheck1(false);
@@ -188,25 +188,25 @@ export function AdminSettings() {
         const profRes = await userService.getProfile();
         if (profRes?.success && profRes?.data) {
           setProfileForm({
-            name: profRes.data.name || authUser?.name || "Siri Master Admin",
-            email: profRes.data.email || authUser?.email || "admin@siriartsandcrafts.com",
-            phone: profRes.data.phone || authUser?.phone || "+91 98660 06648",
-            role: profRes.data.role || authUser?.role || "admin",
+            name: profRes.data.name || authUser?.name ||"Siri Master Admin",
+            email: profRes.data.email || authUser?.email ||"admin@siriartsandcrafts.com",
+            phone: profRes.data.phone || authUser?.phone ||"+91 98660 06648",
+            role: profRes.data.role || authUser?.role ||"admin",
           });
         } else {
           setProfileForm({
-            name: authUser?.name || "Siri Master Admin",
-            email: authUser?.email || "admin@siriartsandcrafts.com",
-            phone: authUser?.phone || "+91 98660 06648",
-            role: authUser?.role || "admin",
+            name: authUser?.name ||"Siri Master Admin",
+            email: authUser?.email ||"admin@siriartsandcrafts.com",
+            phone: authUser?.phone ||"+91 98660 06648",
+            role: authUser?.role ||"admin",
           });
         }
       } catch {
         setProfileForm({
-          name: authUser?.name || "Siri Master Admin",
-          email: authUser?.email || "admin@siriartsandcrafts.com",
-          phone: authUser?.phone || "+91 98660 06648",
-          role: authUser?.role || "admin",
+          name: authUser?.name ||"Siri Master Admin",
+          email: authUser?.email ||"admin@siriartsandcrafts.com",
+          phone: authUser?.phone ||"+91 98660 06648",
+          role: authUser?.role ||"admin",
         });
       }
 
@@ -215,7 +215,7 @@ export function AdminSettings() {
         const cmsRes = await cmsService.getSection("studio_settings");
         const rawSection = cmsRes?.data ?? cmsRes;
         const sectionData = rawSection?.data ?? rawSection;
-        if (sectionData && typeof sectionData === "object" && !Array.isArray(sectionData)) {
+        if (sectionData && typeof sectionData ==="object" && !Array.isArray(sectionData)) {
           const { razorpaySecret: _removed, razorpayKeySecret: _removedKey, ...safeSettings } = sectionData;
           setSettings((prev) => ({
             ...prev,
@@ -245,21 +245,18 @@ export function AdminSettings() {
     try {
       const res = await userService.updateProfile({
         name: profileForm.name,
-        email: profileForm.email,
-        phone: profileForm.phone,
+        phone: profileForm.phone
       });
-
       if (res.success) {
         toast.success("Administrator Profile updated successfully!", {
-          icon: "👤",
+          icon:"👤",
         });
-        // Sync context to keep navbar headers updated
         if (setAuthUser && res.data) {
           setAuthUser(res.data);
         }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update profile details.");
+      toast.error(err.response?.data?.message ||"Failed to update profile details.");
     } finally {
       setSaving(false);
     }
@@ -274,7 +271,7 @@ export function AdminSettings() {
       const res = await cmsService.updateSection("studio_settings", settingsToSave);
       if (res) {
         toast.success("Global configurations saved successfully in database!", {
-          icon: "⚙️",
+          icon:"⚙️",
         });
       }
     } catch (err) {
@@ -288,7 +285,7 @@ export function AdminSettings() {
     return (
       <div className="flex flex-col items-center justify-center py-28 space-y-4 font-body">
         <div className="w-10 h-10 border-3 border-slate-900 border-t-transparent rounded-full animate-spin" />
-        <p className="text-[12px] text-outline font-medium uppercase tracking-widest">
+        <p className="text-[11px] sm:text-[11px] text-outline font-medium uppercase tracking-widest">
           Syncing profile & configurations...
         </p>
       </div>
@@ -297,14 +294,14 @@ export function AdminSettings() {
 
   // Settings structural layout
   const sectionsList = [
-    { id: "profile", title: "Profile & Account", icon: "person" },
-    { id: "business", title: "Business Information", icon: "store" },
-    { id: "shipping", title: "Shipping & Fulfillment", icon: "local_shipping" },
-    { id: "branding", title: "Portal Visual Branding", icon: "palette" },
-    { id: "payments", title: "Payment Integrations", icon: "payments" },
-    { id: "whatsapp", title: "WhatsApp Automations", icon: "chat" },
-    { id: "security", title: "Security & Operations", icon: "shield" },
-    { id: "email", title: "Email & SMTP Diagnostics", icon: "mail" },
+    { id:"profile", title:"Profile & Account", icon:"person" },
+    { id:"business", title:"Business Information", icon:"store" },
+    { id:"shipping", title:"Shipping & Fulfillment", icon:"local_shipping" },
+    { id:"branding", title:"Portal Visual Branding", icon:"palette" },
+    { id:"payments", title:"Payment Integrations", icon:"payments" },
+    { id:"whatsapp", title:"WhatsApp Automations", icon:"chat" },
+    { id:"security", title:"Security & Operations", icon:"shield" },
+    { id:"email", title:"Email & SMTP Diagnostics", icon:"mail" },
   ];
 
   return (
@@ -315,10 +312,10 @@ export function AdminSettings() {
       className="max-w-[1440px] mx-auto space-y-6 font-body text-on-surface"
     >
       <motion.div variants={fadeUp}>
-        <h2 className="text-[24px] font-bold text-on-surface font-display tracking-tight">
+        <h2 className="text-[11px] sm:text-[11px] font-bold text-on-surface  tracking-tight">
           System Settings & Profile
         </h2>
-        <p className="text-[13px] text-outline mt-0.5">
+        <p className="text-[11px] sm:text-[11px] text-outline mt-1">
           Administer your contact profile, business models, and secure API gateways
         </p>
       </motion.div>
@@ -335,18 +332,18 @@ export function AdminSettings() {
               onClick={() => setActiveSection(i)}
               className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left cursor-pointer transition-all ${
                 activeSection === i
-                  ? "bg-slate-100 text-black font-bold"
-                  : "text-outline hover:bg-surface hover:text-on-surface"
+                  ?"bg-slate-100 text-black font-bold"
+                  :"text-outline hover:bg-surface hover:text-on-surface"
               }`}
             >
               <span
                 className={`material-symbols-outlined text-[20px] ${
-                  activeSection === i ? "text-black" : "text-outline"
+                  activeSection === i ?"text-black" :"text-outline"
                 }`}
               >
                 {sec.icon}
               </span>
-              <span className="text-[12.5px] font-semibold tracking-tight">
+              <span className="text-[11px] font-bold tracking-tight">
                 {sec.title}
               </span>
             </button>
@@ -366,17 +363,17 @@ export function AdminSettings() {
               </span>
             </div>
             <div>
-              <h2 className="text-[16px] font-bold text-on-surface font-display leading-tight">
+              <h2 className="text-[11px] sm:text-[11px] font-bold text-on-surface  leading-tight">
                 {sectionsList[activeSection].title}
               </h2>
-              <p className="text-[11px] text-outline font-light mt-0.5">
+              <p className="text-[11px] sm:text-[11px] text-outline font-light mt-1">
                 Update details for {sectionsList[activeSection].title} in database
               </p>
             </div>
           </div>
 
           {/* Form Actions router */}
-          {sectionsList[activeSection].id === "profile" && (
+          {sectionsList[activeSection].id ==="profile" && (
             <form onSubmit={handleProfileSave} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
@@ -390,7 +387,7 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setProfileForm({ ...profileForm, name: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -401,7 +398,7 @@ export function AdminSettings() {
                     type="text"
                     disabled
                     value={profileForm.role.toUpperCase()}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-[12px] text-zinc-500 font-bold tracking-wider cursor-not-allowed outline-none"
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] text-zinc-500 font-bold tracking-wider cursor-not-allowed outline-none"
                   />
                 </div>
               </div>
@@ -418,7 +415,7 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setProfileForm({ ...profileForm, email: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -432,7 +429,7 @@ export function AdminSettings() {
                       setProfileForm({ ...profileForm, phone: e.target.value })
                     }
                     placeholder="e.g. +91 98765 43210"
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
                   />
                 </div>
               </div>
@@ -441,7 +438,7 @@ export function AdminSettings() {
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[12px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
                 >
                   Discard
                 </button>
@@ -459,7 +456,7 @@ export function AdminSettings() {
             </form>
           )}
 
-          {sectionsList[activeSection].id === "business" && (
+          {sectionsList[activeSection].id ==="business" && (
             <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
@@ -473,7 +470,7 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setSettings({ ...settings, businessName: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -486,7 +483,7 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setSettings({ ...settings, tagline: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
                   />
                 </div>
               </div>
@@ -505,7 +502,7 @@ export function AdminSettings() {
                         businessEmail: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -518,7 +515,7 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setSettings({ ...settings, gstNumber: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono uppercase"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono uppercase"
                   />
                 </div>
               </div>
@@ -533,7 +530,7 @@ export function AdminSettings() {
                   onChange={(e) =>
                     setSettings({ ...settings, address: e.target.value })
                   }
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-medium"
+                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
                 />
               </div>
 
@@ -541,7 +538,7 @@ export function AdminSettings() {
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[12px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
                 >
                   Discard
                 </button>
@@ -559,7 +556,7 @@ export function AdminSettings() {
             </form>
           )}
 
-          {sectionsList[activeSection].id === "shipping" && (
+          {sectionsList[activeSection].id ==="shipping" && (
             <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
@@ -575,7 +572,7 @@ export function AdminSettings() {
                         freeShippingThreshold: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -591,7 +588,7 @@ export function AdminSettings() {
                         standardShippingFee: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                   />
                 </div>
               </div>
@@ -610,7 +607,7 @@ export function AdminSettings() {
                         expressShippingFee: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -620,14 +617,14 @@ export function AdminSettings() {
                   </label>
                   <input
                     type="number"
-                    value={settings.codFee || "90"}
+                    value={settings.codFee ||"90"}
                     onChange={(e) =>
                       setSettings({
                         ...settings,
                         codFee: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-[#000000] transition-all font-mono"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-[#000000] transition-all font-mono"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -644,7 +641,7 @@ export function AdminSettings() {
                       })
                     }
                     placeholder="e.g. 5-7 Days"
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
                   />
                 </div>
               </div>
@@ -653,7 +650,7 @@ export function AdminSettings() {
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[12px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
                 >
                   Discard
                 </button>
@@ -671,7 +668,7 @@ export function AdminSettings() {
             </form>
           )}
 
-          {sectionsList[activeSection].id === "branding" && (
+          {sectionsList[activeSection].id ==="branding" && (
             <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
@@ -693,7 +690,7 @@ export function AdminSettings() {
                       onChange={(e) =>
                         setSettings({ ...settings, primaryColor: e.target.value })
                       }
-                      className="flex-1 bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                      className="flex-1 bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                     />
                   </div>
                 </div>
@@ -723,7 +720,7 @@ export function AdminSettings() {
                           secondaryColor: e.target.value,
                         })
                       }
-                      className="flex-1 bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                      className="flex-1 bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                     />
                   </div>
                 </div>
@@ -739,7 +736,7 @@ export function AdminSettings() {
                   onChange={(e) =>
                     setSettings({ ...settings, fontFamily: e.target.value })
                   }
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-medium"
+                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
                 />
               </div>
 
@@ -747,7 +744,7 @@ export function AdminSettings() {
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[12px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
                 >
                   Discard
                 </button>
@@ -765,7 +762,7 @@ export function AdminSettings() {
             </form>
           )}
 
-          {sectionsList[activeSection].id === "payments" && (
+          {sectionsList[activeSection].id ==="payments" && (
             <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
@@ -779,15 +776,15 @@ export function AdminSettings() {
                       setSettings({ ...settings, razorpayKeyId: e.target.value })
                     }
                     placeholder="e.g. rzp_live_xxxxxxxxxxxx"
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                   />
                 </div>
               </div>
-              <p className="text-[11px] text-outline/80 leading-relaxed">
+              <p className="text-[11px] sm:text-[11px] text-outline/80 leading-relaxed">
                 Razorpay secret keys are configured only via server environment variables (
-                <code className="font-mono text-[10px]">RAZORPAY_KEY_SECRET</code>,{" "}
-                <code className="font-mono text-[10px]">RAZORPAY_WEBHOOK_SECRET</code>). Use{" "}
-                <code className="font-mono text-[10px]">VITE_RAZORPAY_KEY_ID</code> for the public checkout key.
+                <code className="font-mono text-[11px]">RAZORPAY_KEY_SECRET</code>,{""}
+                <code className="font-mono text-[11px]">RAZORPAY_WEBHOOK_SECRET</code>). Use{""}
+                <code className="font-mono text-[11px]">VITE_RAZORPAY_KEY_ID</code> for the public checkout key.
               </p>
 
               <div className="space-y-1.5">
@@ -800,7 +797,7 @@ export function AdminSettings() {
                   onChange={(e) =>
                     setSettings({ ...settings, upiId: e.target.value })
                   }
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                 />
               </div>
 
@@ -808,7 +805,7 @@ export function AdminSettings() {
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[12px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
                 >
                   Discard
                 </button>
@@ -826,7 +823,7 @@ export function AdminSettings() {
             </form>
           )}
 
-          {sectionsList[activeSection].id === "whatsapp" && (
+          {sectionsList[activeSection].id ==="whatsapp" && (
             <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
@@ -839,7 +836,7 @@ export function AdminSettings() {
                     setSettings({ ...settings, whatsappNumber: e.target.value })
                   }
                   placeholder="e.g. +91 98660 06648"
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-mono"
+                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
                 />
               </div>
 
@@ -853,7 +850,7 @@ export function AdminSettings() {
                   onChange={(e) =>
                     setSettings({ ...settings, whatsappMessage: e.target.value })
                   }
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3 text-[12.5px] outline-none focus:border-slate-900 transition-all font-medium"
+                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
                 />
               </div>
 
@@ -861,7 +858,7 @@ export function AdminSettings() {
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[12px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
                 >
                   Discard
                 </button>
@@ -879,7 +876,7 @@ export function AdminSettings() {
             </form>
           )}
 
-          {sectionsList[activeSection].id === "security" && (
+          {sectionsList[activeSection].id ==="security" && (
             <div className="space-y-8">
               {/* Operational Controls Card */}
               <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6">
@@ -892,46 +889,46 @@ export function AdminSettings() {
                   <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl">
                     <div>
                       <h4 className="text-[12.5px] font-bold text-slate-800">Global Safety Lock</h4>
-                      <p className="text-[10px] text-slate-400">Restricts all write operations (Add, Edit, Delete) across the database portal.</p>
+                      <p className="text-[11px] text-slate-400">Restricts all write operations (Add, Edit, Delete) across the database portal.</p>
                     </div>
                     <button
                       onClick={toggleSafetyLock}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${safetyLock ? "bg-slate-900" : "bg-slate-300"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${safetyLock ?"bg-slate-900" :"bg-slate-300"}`}
                     >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${safetyLock ? "translate-x-5" : ""}`} />
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${safetyLock ?"translate-x-5" :""}`} />
                     </button>
                   </div>
 
                   <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl">
                     <div>
                       <h4 className="text-[12.5px] font-bold text-slate-800">Storefront Maintenance Mode</h4>
-                      <p className="text-[10px] text-slate-400">Intercepts storefront traffic and displays a customizable maintenance mode screen.</p>
+                      <p className="text-[11px] text-slate-400">Intercepts storefront traffic and displays a customizable maintenance mode screen.</p>
                     </div>
                     <button
                       onClick={toggleMaintenanceMode}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${maintenanceMode ? "bg-slate-900" : "bg-slate-300"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${maintenanceMode ?"bg-slate-900" :"bg-slate-300"}`}
                     >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${maintenanceMode ? "translate-x-5" : ""}`} />
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${maintenanceMode ?"translate-x-5" :""}`} />
                     </button>
                   </div>
 
                   <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl">
                     <div>
                       <h4 className="text-[12.5px] font-bold text-slate-800">Auto-Publish CMS Changes</h4>
-                      <p className="text-[10px] text-slate-400">Instantly saves and publishes layout changes to the live database without manual staging.</p>
+                      <p className="text-[11px] text-slate-400">Instantly saves and publishes layout changes to the live database without manual staging.</p>
                     </div>
                     <button
                       onClick={toggleAutoPublish}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${autoPublish ? "bg-slate-900" : "bg-slate-300"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${autoPublish ?"bg-slate-900" :"bg-slate-300"}`}
                     >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${autoPublish ? "translate-x-5" : ""}`} />
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${autoPublish ?"translate-x-5" :""}`} />
                     </button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] items-center gap-4 p-3.5 bg-white border border-slate-200 rounded-xl">
                     <div>
                       <h4 className="text-[12.5px] font-bold text-slate-800">Session Idle Timeout Heartbeat</h4>
-                      <p className="text-[10px] text-slate-400">Auto log out administrators after a period of inactive mouse/keyboard activity.</p>
+                      <p className="text-[11px] text-slate-400">Auto log out administrators after a period of inactive mouse/keyboard activity.</p>
                     </div>
                     <select
                       value={idleTimeoutMinutes}
@@ -958,20 +955,20 @@ export function AdminSettings() {
                       <span className="material-symbols-outlined text-[16px] text-indigo-600">receipt_long</span>
                       Administrative Operations Trail
                     </h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Chronological record of system modifications and administrative acts</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Chronological record of system modifications and administrative acts</p>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleBackupDownload}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-black border border-slate-200 rounded-xl text-[11px] font-bold transition-all cursor-pointer"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-black border border-slate-200 rounded-xl text-[11px] sm:text-[11px] font-bold transition-all cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[13px]">download</span>
                       Backup JSON
                     </button>
                     <button
                       onClick={clearAuditLogs}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-rose-50 hover:bg-rose-100/80 text-rose-700 border border-rose-100 rounded-xl text-[11px] font-bold transition-all cursor-pointer"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-rose-50 hover:bg-rose-100/80 text-rose-700 border border-rose-100 rounded-xl text-[11px] sm:text-[11px] font-bold transition-all cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[13px]">delete_sweep</span>
                       Clear Logs
@@ -988,13 +985,13 @@ export function AdminSettings() {
                       placeholder="Search audit trail logs..."
                       value={auditSearchQuery}
                       onChange={(e) => setAuditSearchQuery(e.target.value)}
-                      className="w-full bg-[#F8F9FB] border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-[11.5px] outline-none focus:border-black font-medium"
+                      className="w-full bg-[#F8F9FB] border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-[11px] sm:text-[11px] outline-none focus:border-black font-medium"
                     />
                   </div>
                   <select
                     value={auditActorFilter}
                     onChange={(e) => setAuditActorFilter(e.target.value)}
-                    className="bg-[#F8F9FB] border border-slate-200 rounded-xl px-3 py-2 text-[11.5px] font-semibold text-slate-800 outline-none focus:border-black cursor-pointer"
+                    className="bg-[#F8F9FB] border border-slate-200 rounded-xl px-3 py-2 text-[11px] sm:text-[11px] font-semibold text-slate-800 outline-none focus:border-black cursor-pointer"
                   >
                     <option value="all">All Actors</option>
                     <option value="owner">Owner Actions</option>
@@ -1006,7 +1003,7 @@ export function AdminSettings() {
 
                 {/* Audit Logs Table */}
                 <div className="border border-slate-150 rounded-xl overflow-hidden max-h-[300px] overflow-y-auto custom-scrollbar">
-                  <table className="w-full text-left border-collapse text-[11px]">
+                  <table className="w-full text-left border-collapse text-[11px] sm:text-[11px]">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-150 text-slate-500 font-bold uppercase tracking-wider">
                         <th className="px-4 py-2.5">Timestamp</th>
@@ -1016,12 +1013,12 @@ export function AdminSettings() {
                         <th className="px-4 py-2.5">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-mono text-[10.5px]">
+                    <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
                       {auditLogs
                         .filter(log => {
                           const matchesSearch = log.details?.toLowerCase().includes(auditSearchQuery.toLowerCase()) || 
                                                 log.action?.toLowerCase().includes(auditSearchQuery.toLowerCase());
-                          const matchesActor = auditActorFilter === "all" || log.actor?.toLowerCase() === auditActorFilter.toLowerCase();
+                          const matchesActor = auditActorFilter ==="all" || log.actor?.toLowerCase() === auditActorFilter.toLowerCase();
                           return matchesSearch && matchesActor;
                         })
                         .map((log) => (
@@ -1039,7 +1036,7 @@ export function AdminSettings() {
                               {log.details}
                             </td>
                             <td className="px-4 py-2.5">
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-50 border border-emerald-100 text-emerald-700">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] sm:text-[11px] sm:text-[11px] font-bold bg-emerald-50 border border-emerald-100 text-emerald-700">
                                 {log.status}
                               </span>
                             </td>
@@ -1047,7 +1044,7 @@ export function AdminSettings() {
                         ))}
                       {auditLogs.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="py-8 text-center text-slate-400 font-sans text-[11px]">
+                          <td colSpan={5} className="py-8 text-center text-slate-400 font-sans text-[11px] sm:text-[11px]">
                             No administrative logs found.
                           </td>
                         </tr>
@@ -1067,7 +1064,7 @@ export function AdminSettings() {
                     <h3 className="text-[13px] font-bold text-rose-900 uppercase tracking-wider leading-tight">
                       Danger Zone: Database Hard Reset Gate
                     </h3>
-                    <p className="text-[10px] text-rose-600/80 mt-1 font-light">
+                    <p className="text-[11px] text-rose-600/80 mt-1 font-light">
                       Purges all website categories, coupon systems, administrative audit logs, and storefront catalog layouts back to raw system seed defaults.
                     </p>
                   </div>
@@ -1083,7 +1080,7 @@ export function AdminSettings() {
                         onChange={(e) => setResetCheck1(e.target.checked)}
                         className="mt-0.5 rounded border-rose-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                       />
-                      <span className="text-[11px] text-rose-800 font-medium leading-tight">
+                      <span className="text-[11px] sm:text-[11px] text-rose-800 font-medium leading-tight">
                         I understand that hard resetting database data is completely irreversible.
                       </span>
                     </label>
@@ -1096,7 +1093,7 @@ export function AdminSettings() {
                         onChange={(e) => setResetCheck2(e.target.checked)}
                         className="mt-0.5 rounded border-rose-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                       />
-                      <span className="text-[11px] text-rose-800 font-medium leading-tight">
+                      <span className="text-[11px] sm:text-[11px] text-rose-800 font-medium leading-tight">
                         I have downloaded a catalog backup configuration file to my local machine.
                       </span>
                     </label>
@@ -1109,15 +1106,15 @@ export function AdminSettings() {
                         onChange={(e) => setResetCheck3(e.target.checked)}
                         className="mt-0.5 rounded border-rose-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
                       />
-                      <span className="text-[11px] text-rose-800 font-medium leading-tight">
+                      <span className="text-[11px] sm:text-[11px] text-rose-800 font-medium leading-tight">
                         I confirm that my preview role credentials match Owner privileges.
                       </span>
                     </label>
                   </div>
 
                   <div className="space-y-1.5 pt-2">
-                    <label htmlFor="reset-passphrase-input" className="block text-[9.5px] uppercase tracking-wider text-rose-700 font-bold">
-                      Enter phrase "CONFIRM HARD RESET" to unlock
+                    <label htmlFor="reset-passphrase-input" className="block text-[11px] sm:text-[11px] uppercase tracking-wider text-rose-700 font-bold">
+                      Enter phrase"CONFIRM HARD RESET" to unlock
                     </label>
                     <input
                       id="reset-passphrase-input"
@@ -1132,7 +1129,7 @@ export function AdminSettings() {
                   <div className="flex justify-end pt-3">
                     <button
                       type="submit"
-                      disabled={resetExecuting || resetCodePhrase !== "CONFIRM HARD RESET" || !resetCheck1 || !resetCheck2 || !resetCheck3}
+                      disabled={resetExecuting || resetCodePhrase !=="CONFIRM HARD RESET" || !resetCheck1 || !resetCheck2 || !resetCheck3}
                       className="px-5 py-2.5 bg-rose-600 hover:bg-rose-750 disabled:bg-rose-100 disabled:text-rose-300 text-white rounded-xl text-[12px] font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
                     >
                       {resetExecuting ? (
@@ -1148,38 +1145,38 @@ export function AdminSettings() {
             </div>
           )}
 
-          {sectionsList[activeSection].id === "email" && (
+          {sectionsList[activeSection].id ==="email" && (
             <div className="space-y-6">
               <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-6">
-                <h3 className="text-[14px] font-bold text-slate-800 font-display">SMTP Configurations Check</h3>
-                <p className="text-[11.5px] text-slate-500 mt-1 font-light">
+                <h3 className="text-[14px] font-bold text-slate-800">SMTP Configurations Check</h3>
+                <p className="text-[11px] sm:text-[11px] text-slate-500 mt-1 font-light">
                   Inspect whether the mandatory environment variables for transactional mailing are correctly loaded on this platform.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
-                    <span className="text-[11.5px] font-medium text-slate-600">SMTP Host</span>
-                    <span className="text-[11.5px] font-semibold text-slate-900 font-mono">smtp.gmail.com</span>
+                    <span className="text-[11px] sm:text-[11px] font-medium text-slate-600">SMTP Host</span>
+                    <span className="text-[11px] sm:text-[11px] font-semibold text-slate-900 font-mono">smtp.gmail.com</span>
                   </div>
                   <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
-                    <span className="text-[11.5px] font-medium text-slate-600">SMTP Port</span>
-                    <span className="text-[11.5px] font-semibold text-slate-900 font-mono">587</span>
+                    <span className="text-[11px] sm:text-[11px] font-medium text-slate-600">SMTP Port</span>
+                    <span className="text-[11px] sm:text-[11px] font-semibold text-slate-900 font-mono">587</span>
                   </div>
                   <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
-                    <span className="text-[11.5px] font-medium text-slate-600">Transporter SSL/TLS Bypass</span>
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">rejectUnauthorized: false</span>
+                    <span className="text-[11px] sm:text-[11px] font-medium text-slate-600">Transporter SSL/TLS Bypass</span>
+                    <span className="text-[11px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">rejectUnauthorized: false</span>
                   </div>
                   <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
-                    <span className="text-[11.5px] font-medium text-slate-600">Encryption Layer</span>
-                    <span className="text-[11.5px] font-semibold text-slate-900 font-mono">STARTTLS</span>
+                    <span className="text-[11px] sm:text-[11px] font-medium text-slate-600">Encryption Layer</span>
+                    <span className="text-[11px] sm:text-[11px] font-semibold text-slate-900 font-mono">STARTTLS</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white border border-slate-200/60 rounded-2xl p-6 space-y-4">
                 <div>
-                  <h3 className="text-[14px] font-bold text-slate-800 font-display">Run Connection Verification</h3>
-                  <p className="text-[11.5px] text-slate-500 mt-1 font-light">
+                  <h3 className="text-[14px] font-bold text-slate-800">Run Connection Verification</h3>
+                  <p className="text-[11px] sm:text-[11px] text-slate-500 mt-1 font-light">
                     Send a premium luxury test email to verify correct SMTP handshake, domain signing (SPF/DKIM/DMARC), and server socket connectivity.
                   </p>
                 </div>
@@ -1222,37 +1219,37 @@ export function AdminSettings() {
                 {smtpTestResult && (
                   <div className={`rounded-xl border p-4 transition-all ${
                     smtpTestResult.success 
-                      ? "bg-emerald-50/50 border-emerald-200/60 text-emerald-800" 
-                      : "bg-rose-50/50 border-rose-200/60 text-rose-800"
+                      ?"bg-emerald-50/50 border-emerald-200/60 text-emerald-800" 
+                      :"bg-rose-50/50 border-rose-200/60 text-rose-800"
                   }`}>
                     <div className="flex items-start gap-3">
                       <span className={`material-symbols-outlined text-[20px] mt-0.5 ${
-                        smtpTestResult.success ? "text-emerald-600" : "text-rose-600"
+                        smtpTestResult.success ?"text-emerald-600" :"text-rose-600"
                       }`}>
-                        {smtpTestResult.success ? "check_circle" : "error"}
+                        {smtpTestResult.success ?"check_circle" :"error"}
                       </span>
                       <div className="space-y-2 w-full">
                         <div>
                           <h4 className="text-[12px] font-bold tracking-tight">
-                            {smtpTestResult.success ? "SMTP connection verified and test email sent successfully!" : "SMTP Connection Failed"}
+                            {smtpTestResult.success ?"SMTP connection verified and test email sent successfully!" :"SMTP Connection Failed"}
                           </h4>
-                          <p className="text-[11.5px] opacity-90 mt-0.5">
+                          <p className="text-[11px] sm:text-[11px] opacity-90 mt-0.5">
                             {smtpTestResult.message}
                           </p>
                         </div>
 
                         {!smtpTestResult.success && smtpTestResult.errorMessage && (
-                          <div className="bg-rose-100/50 border border-rose-200/40 rounded-lg p-3 font-mono text-[10.5px] leading-relaxed break-all text-rose-900">
+                          <div className="bg-rose-100/50 border border-rose-200/40 rounded-lg p-3 font-mono text-[11px] leading-relaxed break-all text-rose-900">
                             <strong>Diagnostic Stack:</strong> {smtpTestResult.errorMessage}
                           </div>
                         )}
 
                         {smtpTestResult.success && smtpTestResult.details && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1.5 text-[11px] font-light">
-                            <div><strong>Message ID:</strong> <span className="font-mono text-[10px] break-all">{smtpTestResult.messageId}</span></div>
-                            <div><strong>SMTP Account:</strong> <span className="font-mono text-[10px]">{smtpTestResult.details.user}</span></div>
-                            <div><strong>Target Host:</strong> <span className="font-mono text-[10px]">{smtpTestResult.details.host}:{smtpTestResult.details.port}</span></div>
-                            <div><strong>Recipient:</strong> <span className="font-mono text-[10px]">{smtpTestResult.details.recipient}</span></div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1.5 text-[11px] sm:text-[11px] font-light">
+                            <div><strong>Message ID:</strong> <span className="font-mono text-[11px] break-all">{smtpTestResult.messageId}</span></div>
+                            <div><strong>SMTP Account:</strong> <span className="font-mono text-[11px]">{smtpTestResult.details.user}</span></div>
+                            <div><strong>Target Host:</strong> <span className="font-mono text-[11px]">{smtpTestResult.details.host}:{smtpTestResult.details.port}</span></div>
+                            <div><strong>Recipient:</strong> <span className="font-mono text-[11px]">{smtpTestResult.details.recipient}</span></div>
                           </div>
                         )}
                       </div>

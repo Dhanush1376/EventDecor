@@ -26,7 +26,8 @@ export function Gallery() {
   const [slideshowIndex, setSlideshowIndex] = useState(-1);
   const [showFloatingExit, setShowFloatingExit] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
-  const sentinelRef = React.useRef(null);
+  const [navbarHeight, setNavbarHeight] = useState(0);
+  const navRef = React.useRef(null);
 
   const {
     items: filteredItems,
@@ -85,17 +86,25 @@ export function Gallery() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (sentinelRef.current) {
-        const rect = sentinelRef.current.getBoundingClientRect();
-        const isMobile = window.innerWidth < 768;
-        const negativeMargin = isMobile ? 24 : 32;
-        setIsSticky(rect.top <= 60 + negativeMargin);
+      const topNav = document.querySelector('.top-navbar');
+      let currentNavHeight = navbarHeight;
+      if (topNav) {
+        currentNavHeight = topNav.getBoundingClientRect().height;
+        setNavbarHeight(currentNavHeight);
+      }
+      if (navRef.current) {
+        const rect = navRef.current.getBoundingClientRect();
+        setIsSticky(rect.top <= currentNavHeight + 1);
       }
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [navbarHeight]);
 
   // Handle immersive gallery mode UI
   useEffect(() => {
@@ -131,7 +140,7 @@ export function Gallery() {
 
   return (
     <div
-      className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-20 md:pt-28 pb-32 md:pb-20 overflow-hidden transition-all duration-300"
+      className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-20 md:pt-28 pb-32 md:pb-20 transition-all duration-300"
     >
       <SEO
         title="Inspiration Gallery"
@@ -185,20 +194,22 @@ export function Gallery() {
         </div>
       </section>
 
-      {/* Sentinel for sticky trigger */}
-      <div ref={sentinelRef} />
-
-      {/* Floating / Sticky Navigation Bar Wrapper to prevent layout shift and glitching */}
-      <div className={isSticky ? "h-[68px] lg:h-[76px] mb-8 md:mb-12" : ""}>
-        <nav
-          className={`z-40 transition-all duration-500 ${
-            isSticky 
-              ? "fixed top-[60px] left-0 w-full bg-transparent border-transparent py-2 px-margin-mobile md:px-margin-desktop pointer-events-none" 
-              : "border-transparent relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"
-          }`}
-        >
+      {/* Sticky Navigation Bar */}
+      <nav
+        ref={navRef}
+        className={`sticky z-[49] -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${
+          isSticky 
+            ? "px-0" 
+            : "px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto"
+        }`}
+        style={{ top: `${navbarHeight}px` }}
+      >
           <div
-            className="transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 bg-white/90 backdrop-blur-xl border-black/5 shadow-md rounded-[2rem] p-3 md:p-4 w-full pointer-events-auto max-w-max-width mx-auto"
+            className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
+              isSticky 
+                ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 px-margin-mobile md:px-margin-desktop w-full max-w-none' 
+                : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 w-full max-w-max-width'
+            }`}
           >
             {/* Search Bar & Mobile / Tablet Actions */}
             <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
@@ -292,7 +303,6 @@ export function Gallery() {
             </div>
           </div>
         </nav>
-      </div>
 
       <main id="gallery-collection" className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-4 md:py-6 relative z-10">
         {isLoading ? (

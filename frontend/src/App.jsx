@@ -8,17 +8,19 @@ import { Toaster } from "react-hot-toast";
 
 import { SplashScreen } from "./components/ui/SplashScreen";
 import { PageLoader } from "./components/ui/PageLoader";
-import { CartProvider } from "./context/CartContext";
-import { WishlistProvider } from "./context/WishlistContext";
-import { AuthProvider } from "./context/AuthContext";
+import { CartProvider } from "./context/CartProvider";
+import { WishlistProvider } from "./context/WishlistProvider";
+import { AuthProvider } from "./context/AuthProvider";
 import { MainLayout, MinimalLayout } from "./layouts/MainLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { AdminInviteModal } from "./components/auth/AdminInviteModal";
-import { NetworkProvider } from "./context/NetworkContext";
+import { NetworkProvider } from "./context/NetworkProvider";
+import { ConfigProvider } from "./context/ConfigContext";
 import { PwaUpdatePrompt } from "./components/ui/PwaUpdatePrompt";
 import { SlowConnectionBanner } from "./components/ui/SlowConnectionBanner";
 import { safeSessionStorage } from "./utils/storage";
+import { GlobalTracker } from "./components/ui/GlobalTracker";
 
 // Lazy load heavy auth modal to remove it from initial load bundle
 const AuthModal = lazy(() => import("./components/auth/AuthModal").then((m) => ({ default: m.AuthModal })));
@@ -71,6 +73,7 @@ const AdminEvents = lazy(() => import("./admin/pages/AdminEvents").then((m) => (
 const AdminBookingDetail = lazy(() => import("./admin/pages/AdminBookingDetail").then((m) => ({ default: m.AdminBookingDetail })));
 const AdminReviews = lazy(() => import("./admin/pages/AdminReviews").then((m) => ({ default: m.AdminReviews })));
 const AdminAnalytics = lazy(() => import("./admin/pages/AdminAnalytics").then((m) => ({ default: m.AdminAnalytics })));
+const AdminRecommendationAnalytics = lazy(() => import("./admin/pages/AdminRecommendationAnalytics").then((m) => ({ default: m.AdminRecommendationAnalytics })));
 const AdminInventory = lazy(() => import("./admin/pages/AdminInventory").then((m) => ({ default: m.AdminInventory })));
 const AdminCoupons = lazy(() => import("./admin/pages/AdminCoupons").then((m) => ({ default: m.AdminCoupons })));
 const AdminCreateCoupon = lazy(() => import("./admin/pages/AdminCreateCoupon").then((m) => ({ default: m.AdminCreateCoupon })));
@@ -81,6 +84,9 @@ const AdminContent = lazy(() => import("./admin/pages/AdminContent").then((m) =>
 const AdminTeam = lazy(() => import("./admin/pages/AdminTeam").then((m) => ({ default: m.AdminTeam })));
 const AdminSettings = lazy(() => import("./admin/pages/AdminSettings").then((m) => ({ default: m.AdminSettings })));
 const AdminSystemUsers = lazy(() => import("./admin/pages/AdminSystemUsers").then((m) => ({ default: m.AdminSystemUsers })));
+const AdminCategories = lazy(() => import("./admin/pages/AdminCategories").then((m) => ({ default: m.AdminCategories })));
+const AdminConfig = lazy(() => import("./admin/pages/AdminConfig").then((m) => ({ default: m.AdminConfig })));
+const AdminLayouts = lazy(() => import("./admin/pages/AdminLayouts").then((m) => ({ default: m.AdminLayouts })));
 
 // All /admin/* pages are React.lazy() — not in the storefront initial JS bundle (see npm run build:report).
 
@@ -121,15 +127,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <NetworkProvider>
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-surface focus:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary">
-          Skip to main content
-        </a>
-        <SlowConnectionBanner />
-        <HelmetProvider>
-          <AuthProvider>
-            <CartProvider>
-              <WishlistProvider>
-                {isMounted && <Toaster position="bottom-center" toastOptions={{ duration: 4000, style: { background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', border: '1px solid rgba(0,0,0,0.05)', color: '#1a1c1a', fontSize: '13px', fontWeight: '600', borderRadius: '100px', padding: '12px 24px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)' } }} />}
+        <ConfigProvider>
+          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-surface focus:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary">
+            Skip to main content
+          </a>
+          <SlowConnectionBanner />
+          <HelmetProvider>
+            <AuthProvider>
+              <CartProvider>
+                <WishlistProvider>
+                {isMounted && <Toaster position="bottom-center" toastOptions={{ duration: 4000, style: { background: 'rgba(255, 255, 255, 0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(208, 197, 175, 0.15)', color: 'var(--color-on-surface)', fontSize: 'var(--font-size-sm)', fontFamily: 'var(--font-body)', fontWeight: '600', borderRadius: 'var(--radius-full)', padding: '12px 24px', boxShadow: 'var(--shadow-xl)' } }} />}
 
                 <AnimatePresence>
                   {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
@@ -142,6 +149,7 @@ function App() {
                 {isMounted && <AdminInviteModal />}
                 <Router>
                   <RouteDiagnostics />
+                  <GlobalTracker />
                   <PwaUpdatePrompt />
                   <ErrorBoundary>
                     <Suspense fallback={<PageLoader />}>
@@ -186,6 +194,9 @@ function App() {
                           <Route index element={<AdminDashboard />} />
                           <Route path="homepage" element={<AdminContent />} />
                           <Route path="products" element={<AdminProducts />} />
+                          <Route path="categories" element={<AdminCategories />} />
+                          <Route path="config" element={<AdminConfig />} />
+                          <Route path="layouts" element={<AdminLayouts />} />
                           <Route path="products/add" element={<AdminAddProduct />} />
                           <Route path="products/edit/:id" element={<AdminAddProduct />} />
                           <Route path="orders" element={<AdminOrders />} />
@@ -198,6 +209,7 @@ function App() {
                           <Route path="events/:bookingId" element={<AdminBookingDetail />} />
                           <Route path="reviews" element={<AdminReviews />} />
                           <Route path="analytics" element={<AdminAnalytics />} />
+                          <Route path="recommendations" element={<AdminRecommendationAnalytics />} />
                           <Route path="inventory" element={<AdminInventory />} />
                           <Route path="coupons" element={<AdminCoupons />} />
                           <Route path="coupons/create" element={<AdminCreateCoupon />} />
@@ -218,6 +230,7 @@ function App() {
             </CartProvider>
           </AuthProvider>
         </HelmetProvider>
+        </ConfigProvider>
       </NetworkProvider>
     </QueryClientProvider>
   );

@@ -5,15 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
-import { productService, adminInviteService } from "../../services/domainServices";
+import { adminInviteService } from "../../services/domainServices";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
-
-// ─── CACHING SEARCH SEEDS AT MODULE LEVEL ───
-let cachedTrendingSearches = null;
-let cachedPopularCategories = null;
-let isFetchingSeeds = false;
-let seedFetchPromise = null;
-const searchCache = new Map();
+import { useSearchOverlay } from "../../hooks/useSearchOverlay";
+import { IntelligentSearchOverlay } from "../search/IntelligentSearchOverlay";
+// Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {
   const { navigation } = useWebsiteContent();
@@ -55,189 +51,8 @@ export function TopNavbar() {
     };
   }, [isAuthenticated, user]);
 
-  // ─── SIRI PREDICTIVE SEARCH STATE ───
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [trendingSearches, setTrendingSearches] = useState([]);
-  const [popularCategories, setPopularCategories] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(-1);
-
-  // Reset focus index when suggestions update
-  useEffect(() => {
-    setFocusedIndex(-1);
-  }, [suggestions]);
-
-  useEffect(() => {
-    let active = true;
-    const trimmedQuery = searchQuery.trim().toLowerCase();
-
-    if (!trimmedQuery) {
-      setSuggestions([]);
-      return;
-    }
-
-    // Serve instantly from cache if hit
-    if (searchCache.has(trimmedQuery)) {
-      setSuggestions(searchCache.get(trimmedQuery));
-      setSearchLoading(false);
-      return;
-    }
-
-    setSearchLoading(true);
-    const timeout = setTimeout(async () => {
-      try {
-        const response = await productService.getAll({ search: searchQuery.trim(), limit: 6 });
-        const data = response?.data || response;
-        const products = Array.isArray(data?.items)
-          ? data.items
-          : Array.isArray(data?.products)
-            ? data.products
-            : Array.isArray(data?.data)
-              ? data.data
-              : Array.isArray(data)
-                ? data
-                : [];
-
-        const formattedSuggestions = products.map((product) => ({
-          id: product._id || product.id,
-          text: product.title,
-          cat: product.category,
-          image: product.image || product.imageSrc || (product.images && product.images[0]),
-        }));
-
-        searchCache.set(trimmedQuery, formattedSuggestions);
-
-        if (active) {
-          setSuggestions(formattedSuggestions);
-        }
-      } catch {
-        if (active) setSuggestions([]);
-      } finally {
-        if (active) setSearchLoading(false);
-      }
-    }, 250);
-
-    return () => {
-      active = false;
-      clearTimeout(timeout);
-    };
-  }, [searchQuery]);
-
-  useEffect(() => {
-    let active = true;
-
-    const loadSearchSeeds = async () => {
-      if (cachedTrendingSearches && cachedPopularCategories) {
-        setTrendingSearches(cachedTrendingSearches);
-        setPopularCategories(cachedPopularCategories);
-        return;
-      }
-
-      if (isFetchingSeeds && seedFetchPromise) {
-        try {
-          const result = await seedFetchPromise;
-          if (active && result) {
-            setTrendingSearches(result.trending);
-            setPopularCategories(result.categories);
-          }
-        } catch {
-          // ignore
-        }
-        return;
-      }
-
-      isFetchingSeeds = true;
-      seedFetchPromise = (async () => {
-        try {
-          const [featuredResponse, categoriesResponse] = await Promise.all([
-            productService.getAll({ featured: "true", limit: 4 }),
-            productService.getCategories(),
-          ]);
-          const featuredData = featuredResponse?.data || featuredResponse;
-          const featuredProducts = Array.isArray(featuredData?.items)
-            ? featuredData.items
-            : Array.isArray(featuredData?.data)
-              ? featuredData.data
-              : [];
-          const categories = categoriesResponse?.data || categoriesResponse || [];
-
-          const trending = featuredProducts.map((product) => product.title).filter(Boolean).slice(0, 4);
-          const cats = categories.filter((category) => category !== "All").slice(0, 4);
-          
-          cachedTrendingSearches = trending;
-          cachedPopularCategories = cats;
-          return { trending, categories: cats };
-        } catch {
-          cachedTrendingSearches = [];
-          cachedPopularCategories = [];
-          return { trending: [], categories: [] };
-        } finally {
-          isFetchingSeeds = false;
-        }
-      })();
-
-      try {
-        const result = await seedFetchPromise;
-        if (active && result) {
-          setTrendingSearches(result.trending);
-          setPopularCategories(result.categories);
-        }
-      } catch {
-        if (active) {
-          setTrendingSearches([]);
-          setPopularCategories([]);
-        }
-      }
-    };
-
-    loadSearchSeeds();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Handle escape key to close search overlay
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      if (e.key === "Escape" && isSearchOpen) {
-        setIsSearchOpen(false);
-        setSearchQuery("");
-      }
-    };
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [isSearchOpen]);
-
-  const handleSearchKeyDown = (e) => {
-    if (e.key === "Enter") {
-      if (focusedIndex >= 0 && focusedIndex < suggestions.length) {
-        e.preventDefault();
-        const selectedItem = suggestions[focusedIndex];
-        setIsSearchOpen(false);
-        setSearchQuery("");
-        navigate(selectedItem.id ? `/product/${selectedItem.id}` : `/collections?search=${encodeURIComponent(selectedItem.text)}`);
-      } else if (searchQuery.trim()) {
-        e.preventDefault();
-        const query = searchQuery.trim();
-        setIsSearchOpen(false);
-        setSearchQuery("");
-        navigate(`/collections?search=${encodeURIComponent(query)}`);
-      }
-    } else if (e.key === "ArrowDown") {
-      if (suggestions.length > 0) {
-        e.preventDefault();
-        setFocusedIndex((prev) => (prev + 1) % suggestions.length);
-      }
-    } else if (e.key === "ArrowUp") {
-      if (suggestions.length > 0) {
-        e.preventDefault();
-        setFocusedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
-      }
-    }
-  };
+  // ─── INTELLIGENT SEARCH OVERLAY (Powered by useSearchOverlay hook) ───
+  const search = useSearchOverlay();
 
   const mobileMenuRef = React.useRef(null);
   const mobileTriggerRef = React.useRef(null);
@@ -292,41 +107,28 @@ export function TopNavbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Purely dynamic, CMS-driven links. No hardcoded fallbacks.
   const dbLinks = navigation?.mainLinks?.filter(link => link.isVisible).map(link => ({
     label: link.label,
     href: link.href || link.link
   })) || [];
 
-  const hasOurStory = dbLinks.some(link => link.label.toLowerCase() === "our story" || link.href === "/about");
-  if (!hasOurStory && dbLinks.length > 0) {
-    dbLinks.unshift({ label: "Our Story", href: "/about" });
-  }
-
   const navLinks = [
     { label: "Home", href: "/", mobileOnly: true },
-    ...(dbLinks.length > 0 ? dbLinks : [
-      { label: "Our Story", href: "/about" },
-      { label: "Shop", href: "/collections" },
-      { label: "Events", href: "/events" },
-      { label: "Gallery", href: "/gallery" },
-      { label: "Custom Orders", href: "/custom-orders" },
-    ])
+    ...dbLinks
   ];
 
   const isActive = (href) => location.pathname === href;
 
-  const isImmersive = false;
-
   return (
     <>
       <nav
-        className={`top-navbar fixed top-0 w-full z-50 transition-all duration-500 ${
+        className={`top-navbar fixed top-0 w-full transition-all duration-500 ${
           scrolled
-            ? "bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-3 shadow-md shadow-black/5"
-            : isImmersive
-              ? "bg-white/10 backdrop-blur-md py-4 border border-white/20 mt-3.5 mx-auto max-w-[95%] lg:max-w-[720px] rounded-full text-white shadow-2xl"
-: "bg-surface/90 backdrop-blur-md py-4 border-b border-outline-variant/10 shadow-2xs"
+            ? "bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-3"
+            : "bg-surface/90 backdrop-blur-md py-4 border-b border-outline-variant/10"
         }`}
+        style={{ zIndex: 'var(--z-sticky)', boxShadow: scrolled ? 'var(--shadow-md)' : 'var(--shadow-xs)' }}
       >
         <h1 className="sr-only">Siri Arts & Crafts</h1>
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
@@ -373,12 +175,8 @@ export function TopNavbar() {
                         <Link
                           className={`relative font-label-sm text-[10px] lg:text-[11px] uppercase tracking-[0.2em] lg:tracking-[0.25em] px-2.5 lg:px-3.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold whitespace-nowrap ${
                             active
-                              ? isImmersive && !scrolled
-                                ? "text-white bg-white/10"
-                                : "text-primary bg-primary-container/10"
-                              : isImmersive && !scrolled
-                                ? "text-white/80 hover:text-white hover:bg-white/5"
-                                : "text-on-surface hover:text-primary hover:bg-surface-container-low"
+                              ? "text-primary bg-primary-container/10"
+                              : "text-on-surface hover:text-primary hover:bg-surface-container-low"
                           }`}
                           to={link.href}
                         >
@@ -405,12 +203,8 @@ export function TopNavbar() {
                       key={idx}
                       className={`relative font-label-sm text-[10px] uppercase tracking-[0.15em] px-2.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold whitespace-nowrap ${
                         active
-                          ? isImmersive && !scrolled
-                            ? "text-white bg-white/10"
-                            : "text-primary bg-primary-container/10"
-                          : isImmersive && !scrolled
-                            ? "text-white/80 hover:text-white"
-                            : "text-on-surface hover:text-primary"
+                          ? "text-primary bg-primary-container/10"
+                          : "text-on-surface hover:text-primary"
                       }`}
                       to={link.href}
                     >
@@ -430,12 +224,8 @@ export function TopNavbar() {
                       onClick={() => setIsMoreOpen(!isMoreOpen)}
                       className={`font-label-sm text-[10px] uppercase tracking-[0.15em] px-2.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold cursor-pointer ${
                         isMoreActive
-                          ? isImmersive && !scrolled
-                            ? "text-white bg-white/10"
-                            : "text-primary bg-primary-container/10"
-                          : isImmersive && !scrolled
-                            ? "text-white/80 hover:text-white"
-                            : "text-on-surface hover:text-primary"
+                          ? "text-primary bg-primary-container/10"
+                          : "text-on-surface hover:text-primary"
                       }`}
                     >
                       More
@@ -480,9 +270,9 @@ export function TopNavbar() {
               {/* Trailing Luxury Icons */}
               <div className="flex items-center gap-1 md:gap-1.5">
                 <button
-                  onClick={() => setIsSearchOpen(true)}
+                  onClick={search.handleOpen}
                   className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
-                  aria-label="Search Catalog"
+                  aria-label="Search Catalog (⌘K)"
                 >
                   <span className="material-symbols-outlined text-[18px]">
                     search
@@ -540,7 +330,7 @@ export function TopNavbar() {
                   <div className="relative hidden md:block">
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                      className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative icon-button-touch-target"
+                      className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square"
                       aria-label="User Dropdown"
                     >
                       <span className="text-[10px] text-primary uppercase font-bold tracking-wider">
@@ -673,7 +463,7 @@ export function TopNavbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="fixed right-0 top-0 h-full w-[80%] max-w-sm bg-surface-bright z-[120] lg:hidden p-6 md:p-8 flex flex-col shadow-2xl border-l border-outline-variant/10 rounded-l-[2rem] overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-[80%] max-w-sm bg-surface-bright z-[120] lg:hidden p-6 md:p-8 flex flex-col shadow-2xl border-l border-outline-variant/10 rounded-l-2xl overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-5 pb-3 border-b border-outline-variant/10">
                 <div className="flex items-center">
@@ -696,48 +486,52 @@ export function TopNavbar() {
                 </button>
               </div>
 
-              <span className="font-label-sm text-[9px] uppercase tracking-[0.3em] text-primary mb-3 block font-bold">
+              <span className="font-label text-[9px] uppercase tracking-[0.25em] text-on-surface-variant/40 font-bold block mb-4">
                 Navigation
               </span>
 
-              <ul className="space-y-1.5 mb-6">
+              <ul className="space-y-0.5 mb-8">
                 {navLinks.map((link, idx) => {
                   const active = isActive(link.href);
                   return (
                     <li key={idx}>
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className={`flex items-center justify-between font-display text-[15px] md:text-[17px] py-3 rounded-xl px-4 transition-all font-bold ${
+                        className={`group flex items-center justify-between py-3.5 border-b border-outline-variant/10 text-[11px] uppercase tracking-[0.2em] font-semibold transition-all duration-300 ${
                           active
-                            ? "text-primary bg-primary-container/10 font-bold translate-x-2"
-                            : "text-on-surface hover:text-primary hover:bg-surface/50 font-bold"
+                            ? "text-primary pl-2"
+                            : "text-on-surface hover:text-primary hover:pl-2"
                         }`}
                         to={link.href}
                       >
-                        {link.label}
-                        <span className="material-symbols-outlined text-[13px] text-on-surface/50 font-bold">
-                          chevron_right
-                        </span>
+                        <span>{link.label}</span>
+                        {active ? (
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary" style={{ boxShadow: "0 0 8px var(--color-primary)" }} />
+                        ) : (
+                          <span className="material-symbols-outlined text-[14px] text-on-surface/20 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300">
+                            east
+                          </span>
+                        )}
                       </Link>
                     </li>
                   );
                 })}
               </ul>
 
-              <div className="mt-auto pt-4 border-t border-outline-variant/10">
-                <span className="font-label-sm text-[9px] uppercase tracking-[0.3em] text-on-surface mb-2.5 block font-bold">
+              <div className="mt-auto pt-6 border-t border-outline-variant/10">
+                <span className="font-label text-[9px] uppercase tracking-[0.25em] text-on-surface-variant/40 font-bold block mb-4">
                   Account & Collections
                 </span>
-                <div className="grid grid-cols-2 gap-2 pb-4">
+                <div className="grid grid-cols-2 gap-2.5 pb-2">
                   <Link
                     to="/wishlist"
                     onClick={() => setIsOpen(false)}
-                    className="flex flex-col items-center justify-center py-3.5 bg-surface rounded-xl hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold"
+                    className="flex flex-col items-center justify-center py-4 bg-surface-bright border border-outline-variant/20 rounded-xl hover:border-primary text-on-surface hover:text-primary transition-all duration-300 group"
                   >
-                    <span className="material-symbols-outlined text-[15px] mb-0.5 font-bold">
+                    <span className="material-symbols-outlined text-[16px] mb-1 text-on-surface-variant/70 group-hover:text-primary transition-colors">
                       favorite
                     </span>
-                    <span className="font-label-sm text-[9px] uppercase tracking-wider font-bold">
+                    <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold">
                       Wishlist
                     </span>
                   </Link>
@@ -747,48 +541,34 @@ export function TopNavbar() {
                       setIsOpen(false);
                       setIsCartOpen(true);
                     }}
-                    className="flex flex-col items-center justify-center py-3.5 bg-surface rounded-xl hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold relative cursor-pointer"
+                    className="flex flex-col items-center justify-center py-4 bg-surface-bright border border-outline-variant/20 rounded-xl hover:border-primary text-on-surface hover:text-primary transition-all duration-300 group relative cursor-pointer"
                   >
                     <div className="relative p-0.5">
-                      <span className="material-symbols-outlined text-[16px] block font-bold">
+                      <span className="material-symbols-outlined text-[16px] block text-on-surface-variant/70 group-hover:text-primary transition-colors">
                         shopping_bag
                       </span>
                       {cartCount > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 w-[14px] h-[14px] bg-primary text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-md border border-surface">
+                        <span className="absolute -top-1 -right-1.5 w-[14px] h-[14px] bg-primary text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-md">
                           {cartCount}
                         </span>
                       )}
                     </div>
-                    <span className="font-label-sm text-[9px] uppercase tracking-wider font-bold">
+                    <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold mt-1">
                       Bag
                     </span>
                   </button>
 
                   {isAuthenticated ? (
                     <>
-                      {adminRoles.includes(user?.role) && (
-                        <Link
-                          to="/admin"
-                          onClick={() => setIsOpen(false)}
-                          className="flex items-center justify-center gap-2 py-2.5 bg-primary/10 border border-primary/25 rounded-lg text-primary hover:bg-primary/20 transition-all shadow-2xs font-bold col-span-2 animate-pulse-subtle"
-                        >
-                          <span className="material-symbols-outlined text-[15px] font-bold">
-                            shield_person
-                          </span>
-                          <span className="font-label-sm text-[9px] uppercase tracking-wider font-bold">
-                            Admin Portal
-                          </span>
-                        </Link>
-                      )}
                       <Link
                         to="/dashboard"
                         onClick={() => setIsOpen(false)}
-                        className="flex flex-col items-center justify-center py-2 bg-surface rounded-lg hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold"
+                        className="flex flex-col items-center justify-center py-3 bg-surface-bright border border-outline-variant/20 rounded-xl hover:border-primary text-on-surface hover:text-primary transition-all group"
                       >
-                        <span className="material-symbols-outlined text-[15px] mb-0.5 font-bold">
+                        <span className="material-symbols-outlined text-[16px] mb-1 text-on-surface-variant/70 group-hover:text-primary transition-colors">
                           person
                         </span>
-                        <span className="font-label-sm text-[9px] uppercase tracking-wider font-bold">
+                        <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold">
                           Profile
                         </span>
                       </Link>
@@ -797,15 +577,29 @@ export function TopNavbar() {
                           setIsOpen(false);
                           logout();
                         }}
-                        className="flex flex-col items-center justify-center py-2 bg-surface rounded-lg hover:bg-error/5 text-error transition-all shadow-2xs font-bold cursor-pointer"
+                        className="flex flex-col items-center justify-center py-3 bg-surface-bright border border-outline-variant/20 rounded-xl hover:border-error/20 hover:bg-error/5 text-on-surface hover:text-error transition-all group cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[15px] mb-0.5 font-bold">
+                        <span className="material-symbols-outlined text-[16px] mb-1 text-on-surface-variant/70 group-hover:text-error transition-colors">
                           logout
                         </span>
-                        <span className="font-label-sm text-[9px] uppercase tracking-wider font-bold">
+                        <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold">
                           Sign Out
                         </span>
                       </button>
+                      {adminRoles.includes(user?.role) && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center justify-center gap-2 py-3 bg-primary/5 border border-primary/20 rounded-xl text-primary hover:bg-primary/10 transition-all font-bold col-span-2"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">
+                            shield_person
+                          </span>
+                          <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold">
+                            Admin Portal
+                          </span>
+                        </Link>
+                      )}
                     </>
                   ) : (
                     <button
@@ -813,12 +607,12 @@ export function TopNavbar() {
                         setIsOpen(false);
                         openAuthModal();
                       }}
-                      className="flex flex-col items-center justify-center py-3.5 bg-surface rounded-xl hover:bg-primary-container/10 text-on-surface hover:text-primary transition-all shadow-2xs font-bold col-span-2 cursor-pointer"
+                      className="flex items-center justify-center gap-2 py-3.5 bg-on-surface text-surface hover:bg-primary hover:text-white rounded-xl transition-all duration-300 col-span-2 cursor-pointer font-bold"
                     >
-                      <span className="material-symbols-outlined text-[15px] mb-0.5 font-bold">
+                      <span className="material-symbols-outlined text-[16px]">
                         login
                       </span>
-                      <span className="font-label-sm text-[9px] uppercase tracking-wider font-bold">
+                      <span className="font-label text-[9px] uppercase tracking-[0.2em] font-bold">
                         Sign In
                       </span>
                     </button>
@@ -830,147 +624,26 @@ export function TopNavbar() {
         )}
       </AnimatePresence>
 
-      {/* ─── PREMIUM GLASSMORPHIC SEARCH OVERLAY ─── */}
-      <AnimatePresence>
-        {isSearchOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-md flex flex-col justify-start pt-16 md:pt-24 px-4"
-          >
-            <div className="max-w-2xl w-full mx-auto bg-white/95 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-primary/30 overflow-hidden p-6 md:p-8 flex flex-col">
-              {/* Search Bar Input */}
-              <div className="flex items-center justify-between gap-3 border-b border-outline-variant/10 pb-4">
-                <div className="flex items-center gap-2 md:gap-3 flex-1 bg-surface-bright border border-outline-variant/30 rounded-full px-4 md:px-5 py-2 md:py-2.5">
-                  <span className="material-symbols-outlined text-primary text-[18px] md:text-[20px] shrink-0">search</span>
-                  <input
-                    id="predictive-search-input"
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={handleSearchKeyDown}
-                    placeholder="Search collections..."
-                    aria-label="Search catalog items"
-                    className="flex-1 bg-transparent border-none outline-none focus:ring-0 focus:outline-none focus:border-none text-[13px] md:text-[14px] text-on-surface placeholder-on-surface-variant/40 min-w-0"
-                    autoFocus
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      aria-label="Clear search query"
-                      className="text-on-surface-variant/60 hover:text-primary text-[14px] px-1 font-mono cursor-pointer shrink-0"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    setIsSearchOpen(false);
-                    setSearchQuery("");
-                  }}
-                  aria-label="Close search overlay"
-                  className="w-9 h-9 md:w-10 md:h-10 shrink-0 aspect-square bg-on-surface hover:bg-primary text-surface rounded-full flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
-                >
-                  <span className="material-symbols-outlined text-[16px] md:text-[18px] font-bold">close</span>
-                </button>
-              </div>
-
-              {/* Suggestions list & trending */}
-              <div className="flex-1 mt-6 overflow-y-auto space-y-6 min-h-[220px] scrollbar-none">
-                {searchLoading ? (
-                  <div className="space-y-2.5">
-                    {Array.from({ length: 3 }).map((_, idx) => (
-                      <div key={idx} className="h-14 rounded-2xl bg-surface-bright animate-pulse" />
-                    ))}
-                  </div>
-                ) : suggestions.length > 0 ? (
-                  <div className="space-y-2.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/80">Matching Masterpieces:</span>
-                    <div className="flex flex-col gap-2">
-                      {suggestions.map((item, idx) => (
-                        <Link
-                          key={item.id || idx}
-                          to={item.id ? `/product/${item.id}` : `/collections?search=${encodeURIComponent(item.text)}`}
-                          onClick={() => {
-                            setIsSearchOpen(false);
-                            setSearchQuery("");
-                          }}
-                          className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all group ${
-                            focusedIndex === idx
-                              ? "bg-primary/10 border-primary/40 ring-2 ring-primary"
-                              : "bg-surface-bright border-outline-variant/10 hover:border-primary/20 hover:bg-primary/10"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            {item.image ? (
-                              <img src={item.image} alt={item.text} className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-cover border border-outline-variant/20 shadow-sm bg-surface shrink-0" />
-                            ) : (
-                              <span className="material-symbols-outlined text-primary text-[18px]">verified</span>
-                            )}
-                            <span className="text-[12.5px] font-bold text-on-surface group-hover:text-primary transition-colors line-clamp-1">{item.text}</span>
-                          </div>
-                          <span className="text-[9.5px] font-bold uppercase tracking-wider text-on-surface-variant/60 bg-white border border-outline-variant/10 px-2 py-0.5 rounded-full">{item.cat}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ) : searchQuery.trim() ? (
-                  <div className="text-center py-8 text-on-surface-variant space-y-2">
-                    <span className="material-symbols-outlined text-[32px] text-on-surface/20 block mb-1">search_off</span>
-                    <p className="text-[13px] font-bold text-on-surface">No Match Found</p>
-                    <p className="text-[11px] text-on-surface-variant/70">Try searching for "Backdrop", "Haldi", "Tray" or "Pooja".</p>
-                  </div>
-                ) : (
-                  <>
-                    {trendingSearches.length > 0 && (
-                      <div className="space-y-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5 font-medium">
-                          <span className="material-symbols-outlined text-[15px] text-primary">trending_up</span>
-                          Trending Custom Curations
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {trendingSearches.map((item, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => setSearchQuery(item)}
-                              className="px-3.5 py-1.5 bg-surface-bright border border-outline-variant/20 hover:border-primary hover:text-primary text-on-surface text-[11px] rounded-full transition-all cursor-pointer font-bold"
-                            >
-                              {item}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Popular Categories Grid */}
-                    {popularCategories.length > 0 && <div className="space-y-3 pt-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant block font-medium">Popular Collections</span>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {popularCategories.map((category, idx) => (
-                          <Link
-                            key={idx}
-                            to={`/collections?category=${encodeURIComponent(category)}`}
-                            onClick={() => {
-                              setIsSearchOpen(false);
-                              setSearchQuery("");
-                            }}
-                            className="p-3.5 bg-surface-bright border border-outline-variant/20 hover:border-primary rounded-2xl text-center flex flex-col items-center gap-1.5 transition-all group"
-                          >
-                            <span className="material-symbols-outlined text-primary text-[22px] group-hover:scale-110 transition-transform">category</span>
-                            <span className="text-[10.5px] font-bold uppercase tracking-wider text-on-surface">{category}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>}
-                  </>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ─── INTELLIGENT AI-POWERED SEARCH OVERLAY ─── */}
+      <IntelligentSearchOverlay
+        isOpen={search.isOpen}
+        query={search.query}
+        setQuery={search.setQuery}
+        suggestions={search.suggestions}
+        predictedCategories={search.predictedCategories}
+        trendingSearches={search.trendingSearches}
+        recentSearches={search.recentSearches}
+        loading={search.loading}
+        activeIndex={search.activeIndex}
+        setActiveIndex={search.setActiveIndex}
+        onClose={search.handleClose}
+        onKeyDown={search.handleKeyDown}
+        onSelectSuggestion={search.selectSuggestion}
+        onExecuteSearch={search.executeSearch}
+        onRemoveRecent={search.removeRecentSearch}
+        onClearRecent={search.clearRecentSearches}
+        correctedQuery={search.correctedQuery}
+      />
 
     </>
   );

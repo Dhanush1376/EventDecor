@@ -1,4 +1,4 @@
-import React from "react";
+import React from"react";
 
 import logger from '../../utils/logger';
 /**
@@ -43,10 +43,10 @@ export class AdminErrorBoundary extends React.Component {
           </p>
           {this.state.error && (
             <details className="text-left bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 max-w-lg w-full">
-              <summary className="text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none outline-none">
+              <summary className="text-[11px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer select-none outline-none">
                 Error Details
               </summary>
-              <pre className="text-[10px] text-rose-600 mt-2 whitespace-pre-wrap overflow-auto max-h-[200px] font-mono leading-normal">
+              <pre className="text-[11px] text-rose-600 mt-2 whitespace-pre-wrap overflow-auto max-h-[200px] font-mono leading-normal">
                 {this.state.error.toString()}
                 {this.state.errorInfo?.componentStack}
               </pre>
@@ -55,14 +55,14 @@ export class AdminErrorBoundary extends React.Component {
           <div className="flex items-center gap-3">
             <button
               onClick={this.handleReset}
-              className="px-4 py-2 bg-black hover:bg-slate-900 text-white rounded-lg text-[11.5px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="px-4 py-2 bg-black hover:bg-slate-900 text-white rounded-lg text-[11px] sm:text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
               <span className="material-symbols-outlined text-[15px]">refresh</span>
               Try Again
             </button>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-905 hover:bg-slate-50 rounded-lg text-[11.5px] font-semibold transition-colors cursor-pointer shadow-xs"
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:text-slate-905 hover:bg-slate-50 rounded-lg text-[11px] sm:text-[11px] font-semibold transition-colors cursor-pointer shadow-xs"
             >
               Reload Page
             </button>

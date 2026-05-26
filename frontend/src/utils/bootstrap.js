@@ -5,10 +5,12 @@ import { cmsService } from '../services/domainServices';
 import { getApiUrl, getApiOrigin } from '../config/apiConfig';
 import logger from './logger';
 import { purgeLegacyClientStorage } from './purgeLegacyStorage';
+import { isPrerendering } from './prerender';
 
 let bootstrapStarted = false;
 
 const preconnectApi = () => {
+  if (isPrerendering()) return;
   try {
     const origin = getApiOrigin();
     if (!origin || document.querySelector(`link[rel="preconnect"][href="${origin}"]`)) return;
@@ -23,6 +25,7 @@ const preconnectApi = () => {
 };
 
 export const prefetchCriticalData = () => {
+  if (isPrerendering()) return;
   preconnectApi();
   cmsService.getPublished().catch((err) => {
     logger.dev('[Bootstrap] CMS prefetch skipped:', err?.message);

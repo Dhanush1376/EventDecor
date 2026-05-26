@@ -5,12 +5,16 @@ import { SEO } from '../components/seo/SEO';
 import { LazyImage } from '../components/ui/LazyImage';
 import { FAQAccordion } from '../components/seo/FAQAccordion';
 import { BlogCard } from '../components/blog/BlogCard';
-import blogsData from '../content/blogs.json';
+import fallbackBlogsData from '../content/blogs.json';
+import { useWebsiteContent } from '../hooks/useWebsiteContent';
 
 export function BlogPost() {
   const { slug } = useParams();
   
-  const post = useMemo(() => blogsData.find(b => b.slug === slug), [slug]);
+  const { blogs } = useWebsiteContent();
+  const blogsData = blogs || fallbackBlogsData;
+
+  const post = useMemo(() => blogsData.find(b => b.slug === slug), [slug, blogsData]);
   
   // Find related posts (same category, excluding current)
   const relatedPosts = useMemo(() => {
@@ -18,7 +22,7 @@ export function BlogPost() {
     return blogsData
       .filter(b => b.category === post.category && b.slug !== post.slug)
       .slice(0, 3);
-  }, [post]);
+  }, [post, blogsData]);
 
   if (!post) {
     return <Navigate to="/blog" replace />;

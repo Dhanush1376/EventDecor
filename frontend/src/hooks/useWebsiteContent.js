@@ -3,6 +3,7 @@ import { cmsService } from "../services/domainServices";
 import { emptyWebsiteContent } from "../constants/emptyWebsiteContent";
 import { initialWebsiteContent } from "../admin/data/websiteContentData";
 import { invalidateApiCache } from "../utils/apiCache";
+import { isPrerendering } from "../utils/prerender";
 
 import logger from '../utils/logger';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — stale-while-revalidate in background
@@ -74,10 +75,12 @@ export const refreshWebsiteContent = async () => {
 };
 
 export function useWebsiteContent() {
+  const isPrerender = isPrerendering();
   const [content, setContent] = useState(() => globalCache);
-  const [loading, setLoading] = useState(!globalCache || globalCache === emptyWebsiteContent);
+  const [loading, setLoading] = useState(isPrerender ? false : (!globalCache || globalCache === emptyWebsiteContent));
 
   useEffect(() => {
+    if (isPrerender) return;
     const handleUpdate = (newContent) => {
       setContent(newContent);
       setLoading(false);

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { galleryService, productService } from "../../services/domainServices";
-import { ImageUpload } from "../components/ImageUpload";
-import { VideoUpload } from "../components/VideoUpload";
-import { handleImageError } from "../../utils/imageUtils";
-import toast from "react-hot-toast";
-import { useAdmin } from "../context/AdminContext";
+import React, { useState, useEffect } from"react";
+import { motion, AnimatePresence } from"framer-motion";
+import { galleryService, productService } from"../../services/domainServices";
+import { ImageUpload } from"../components/ImageUpload";
+import { VideoUpload } from"../components/VideoUpload";
+import { handleImageError } from"../../utils/imageUtils";
+import toast from"react-hot-toast";
+import { useAdmin } from"../context/AdminContext";
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
@@ -17,17 +17,17 @@ export function AdminGallery() {
   const [isLoading, setIsLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [newItem, setNewItem] = useState({
-    title: "",
-    teluguTitle: "",
-    category: "",
-    event: "",
-    style: "",
-    image: "",
-    video: "",
-    tags: "",
-    description: "",
-    story: "",
-    type: "inspiration", // 'inspiration' or 'real-event'
+    title:"",
+    teluguTitle:"",
+    category:"",
+    event:"",
+    style:"",
+    image:"",
+    video:"",
+    tags:"",
+    description:"",
+    story:"",
+    type:"inspiration", // 'inspiration' or 'real-event'
     linkedProducts: [],
   });
   const [products, setProducts] = useState([]);
@@ -62,17 +62,17 @@ export function AdminGallery() {
     setShowUpload(false);
     setEditingId(null);
     setNewItem({
-      title: "",
-      teluguTitle: "",
-      category: "",
-      event: "",
-      style: "",
-      image: "",
-      video: "",
-      tags: "",
-      description: "",
-      story: "",
-      type: "inspiration",
+      title:"",
+      teluguTitle:"",
+      category:"",
+      event:"",
+      style:"",
+      image:"",
+      video:"",
+      tags:"",
+      description:"",
+      story:"",
+      type:"inspiration",
       linkedProducts: [],
     });
   };
@@ -80,21 +80,21 @@ export function AdminGallery() {
   const handleEdit = (item) => {
     setEditingId(item._id || item.id);
     setNewItem({
-      title: item.title || "",
-      teluguTitle: item.teluguTitle || "",
-      category: item.category || "",
-      event: item.event || "",
-      style: item.style || "",
-      image: item.image || "",
-      video: item.video || "",
-      type: item.type || "inspiration",
-      tags: Array.isArray(item.tags) ? item.tags.join(", ") : (item.tags || ""),
-      description: item.description || "",
-      story: item.story || "",
+      title: item.title ||"",
+      teluguTitle: item.teluguTitle ||"",
+      category: item.category ||"",
+      event: item.event ||"",
+      style: item.style ||"",
+      image: item.image ||"",
+      video: item.video ||"",
+      type: item.type ||"inspiration",
+      tags: Array.isArray(item.tags) ? item.tags.join(",") : (item.tags ||""),
+      description: item.description ||"",
+      story: item.story ||"",
       linkedProducts: Array.isArray(item.linkedProducts) ? item.linkedProducts.map(p => p._id || p.id || p) : [],
     });
     setShowUpload(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior:"smooth" });
   };
 
   const handleAiAutofill = () => {
@@ -108,14 +108,14 @@ export function AdminGallery() {
       toast.dismiss(loadId);
       setNewItem(prev => ({
         ...prev,
-        title: prev.title || "Royal Jasmine Backdrop",
-        teluguTitle: prev.teluguTitle || "స్వర్ణ మల్లె పందిరి",
-        category: prev.category || "Traditional",
-        event: prev.event || "Wedding",
-        style: prev.style || "Temple Heritage",
-        tags: prev.tags || "wedding, jasmine, traditional, gold, backdrop, mandap",
-        description: prev.description || "A clean, elegant stage backdrop adorned with fresh marigold and jasmine garlands, set against a classic gold border frame.",
-        story: prev.story || "Inspired by traditional South Indian temple architecture, handcrafted using locally sourced fresh flowers and premium drapes."
+        title: prev.title ||"Royal Jasmine Backdrop",
+        teluguTitle: prev.teluguTitle ||"స్వర్ణ మల్లె పందిరి",
+        category: prev.category ||"Traditional",
+        event: prev.event ||"Wedding",
+        style: prev.style ||"Temple Heritage",
+        tags: prev.tags ||"wedding, jasmine, traditional, gold, backdrop, mandap",
+        description: prev.description ||"A clean, elegant stage backdrop adorned with fresh marigold and jasmine garlands, set against a classic gold border frame.",
+        story: prev.story ||"Inspired by traditional South Indian temple architecture, handcrafted using locally sourced fresh flowers and premium drapes."
       }));
       toast.success("✨ AI successfully populated gallery specifications!");
     }, 1200);
@@ -129,7 +129,7 @@ export function AdminGallery() {
 
     const payload = {
       ...newItem,
-      tags: typeof newItem.tags === "string" 
+      tags: typeof newItem.tags ==="string" 
         ? newItem.tags.split(",").map(t => t.trim()).filter(Boolean)
         : newItem.tags
     };
@@ -151,7 +151,7 @@ export function AdminGallery() {
         }
       }
     } catch (err) {
-      toast.error(editingId ? "Failed to update gallery item" : "Failed to create gallery item");
+      toast.error(editingId ?"Failed to update gallery item" :"Failed to create gallery item");
     }
   };
 
@@ -159,7 +159,7 @@ export function AdminGallery() {
 
   // Category Modal States
   const [showCatModal, setShowCatModal] = useState(false);
-  const [catForm, setCatForm] = useState({ name: "", description: "", image: "" });
+  const [catForm, setCatForm] = useState({ name:"", description:"", image:"" });
   const [editingCatId, setEditingCatId] = useState(null);
 
   const handleSaveCat = (e) => {
@@ -170,13 +170,13 @@ export function AdminGallery() {
     } else {
       addCustomCategory("events", catForm);
     }
-    setCatForm({ name: "", description: "", image: "" });
+    setCatForm({ name:"", description:"", image:"" });
     setEditingCatId(null);
   };
 
   const handleEditCat = (cat) => {
     setEditingCatId(cat.id);
-    setCatForm({ name: cat.name, description: cat.description || "", image: cat.image || "" });
+    setCatForm({ name: cat.name, description: cat.description ||"", image: cat.image ||"" });
   };
 
   const handleDelete = async (id) => {
@@ -193,12 +193,12 @@ export function AdminGallery() {
   };
 
   const filtered = items.filter(g => {
-    const matchesFilter = filter === "All" || g.category === filter;
-    const matchesType = typeFilter === "All" || g.type === typeFilter;
+    const matchesFilter = filter ==="All" || g.category === filter;
+    const matchesType = typeFilter ==="All" || g.type === typeFilter;
     const matchesSearch = !searchQuery || 
-      (g.title || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (g.category || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (g.event || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (g.title ||"").toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (g.category ||"").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (g.event ||"").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (g.tags || []).some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesFilter && matchesType && matchesSearch;
   });
@@ -216,7 +216,7 @@ export function AdminGallery() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-5"
       >
         <div>
-          <h2 className="text-[26px] font-bold text-stone-850 font-display tracking-tight">
+          <h2 className="text-[26px] font-bold text-stone-850  tracking-tight">
             Gallery Curation Studio
           </h2>
           <p className="text-[12.5px] text-stone-400 font-light mt-0.5">
@@ -231,12 +231,12 @@ export function AdminGallery() {
               setShowUpload(true);
             }
           }}
-          className="h-11 px-6 rounded-full border border-neutral-250 bg-stone-900 text-white font-bold text-[11px] uppercase tracking-widest shadow-xs hover:bg-[#000000] active:scale-95 transition-all duration-300 flex items-center gap-2"
+          className="h-11 px-6 rounded-full border border-neutral-250 bg-stone-900 text-white font-bold text-[11px] sm:text-[11px] uppercase tracking-widest shadow-xs hover:bg-[#000000] active:scale-95 transition-all duration-300 flex items-center gap-2"
         >
           <span className="material-symbols-outlined text-[18px]">
-            {showUpload ? "close" : "add_photo_alternate"}
+            {showUpload ?"close" :"add_photo_alternate"}
           </span>
-          {showUpload ? "Cancel Editor" : (editingId ? "Edit Mode Active" : "Add Gallery Item")}
+          {showUpload ?"Cancel Editor" : (editingId ?"Edit Mode Active" :"Add Gallery Item")}
         </button>
       </motion.div>
 
@@ -245,7 +245,7 @@ export function AdminGallery() {
         {showUpload && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
+            animate={{ opacity: 1, height:"auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="bg-white rounded-[2rem] border border-neutral-200/50 p-6 lg:p-8 shadow-[0_4px_25px_rgba(0,0,0,0.015)] overflow-hidden"
           >
@@ -254,11 +254,11 @@ export function AdminGallery() {
               <div className="lg:col-span-5 space-y-6">
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
-                    <label className="text-[10px] font-extrabold text-[#000000] uppercase tracking-widest block font-sans">
+                    <label className="text-[11px] font-extrabold text-[#000000] uppercase tracking-widest block font-sans">
                       Image Asset Curation
                     </label>
                     {newItem.image && (
-                      <span className="bg-emerald-100 text-emerald-800 text-[8.5px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-2xs">✓ Photo Active</span>
+                      <span className="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-2xs">✓ Photo Active</span>
                     )}
                   </div>
                   <ImageUpload
@@ -273,11 +273,11 @@ export function AdminGallery() {
 
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
-                    <label className="text-[10px] font-extrabold text-[#000000] uppercase tracking-widest block font-sans">
+                    <label className="text-[11px] font-extrabold text-[#000000] uppercase tracking-widest block font-sans">
                       Video Asset Curation (Optional)
                     </label>
                     {newItem.video && (
-                      <span className="bg-amber-100 text-amber-800 text-[8.5px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-2xs">✓ Video Active</span>
+                      <span className="bg-amber-100 text-amber-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-2xs">✓ Video Active</span>
                     )}
                   </div>
                   <VideoUpload
@@ -294,7 +294,7 @@ export function AdminGallery() {
                   <button
                     type="button"
                     onClick={handleAiAutofill}
-                    className="px-5 py-2.5 rounded-full bg-black hover:bg-stone-900 text-white font-label text-[10px] uppercase tracking-widest font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 select-none animate-fade-in"
+                    className="px-5 py-2.5 rounded-full bg-black hover:bg-stone-900 text-white font-medium tracking-wide text-[11px] uppercase tracking-widest font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 select-none animate-fade-in"
                   >
                     <span className="material-symbols-outlined text-[15px] animate-pulse">auto_awesome</span>
                     AI Autofill from Photo
@@ -302,20 +302,20 @@ export function AdminGallery() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-extrabold text-[#000000] uppercase tracking-widest block font-sans">
+                  <label className="text-[11px] font-extrabold text-[#000000] uppercase tracking-widest block font-sans">
                     Link Storefront Products
                   </label>
-                  <p className="text-[9.5px] text-stone-400 font-light leading-relaxed mb-2">
+                  <p className="text-[11px] sm:text-[11px] text-stone-400 font-light leading-relaxed mb-2">
                     Tag catalog items directly onto this image to let visitors instantly view and shop them from the inspiration drawer.
                   </p>
                   <div className="bg-[#F8F9FB]/50 rounded-2xl p-4 border border-neutral-105 max-h-[220px] overflow-y-auto space-y-1.5 shadow-2xs">
                     {products.length === 0 ? (
-                      <p className="text-[11px] text-stone-400 italic font-light">No products seeded in store</p>
+                      <p className="text-[11px] sm:text-[11px] text-stone-400 italic font-light">No products seeded in store</p>
                     ) : (
                       products.map((p) => {
                         const isChecked = newItem.linkedProducts?.includes(p._id || p.id);
                         return (
-                          <label key={p._id || p.id} className="flex items-center gap-2.5 p-2 hover:bg-white border border-transparent hover:border-black/5 rounded-xl cursor-pointer transition-all text-[11.5px] font-medium text-stone-700">
+                          <label key={p._id || p.id} className="flex items-center gap-2.5 p-2 hover:bg-white border border-transparent hover:border-black/5 rounded-xl cursor-pointer transition-all text-[11px] sm:text-[11px] font-medium text-stone-700">
                             <input
                               type="checkbox"
                               checked={isChecked}
@@ -343,17 +343,17 @@ export function AdminGallery() {
               <div className="lg:col-span-7 space-y-5">
                 {/* Segment: Curation Classification Type */}
                 <div className="p-4 bg-[#F8F9FB] border border-neutral-200/50 rounded-2xl space-y-2.5 shadow-3xs">
-                  <label className="text-[10px] font-extrabold text-[#000000] uppercase tracking-widest block font-sans">
+                  <label className="text-[11px] font-extrabold text-[#000000] uppercase tracking-widest block font-sans">
                     Classification Type
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      onClick={() => setNewItem({ ...newItem, type: "inspiration" })}
-                      className={`py-3 px-4 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all flex flex-col items-center justify-center gap-1.5 shadow-2xs ${
-                        newItem.type === "inspiration"
-                          ? "bg-stone-900 text-white border-stone-900"
-                          : "bg-white text-stone-500 border-neutral-200 hover:border-[#000000]/30"
+                      onClick={() => setNewItem({ ...newItem, type:"inspiration" })}
+                      className={`py-3 px-4 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider border transition-all flex flex-col items-center justify-center gap-1.5 shadow-2xs ${
+                        newItem.type ==="inspiration"
+                          ?"bg-stone-900 text-white border-stone-900"
+                          :"bg-white text-stone-500 border-neutral-200 hover:border-[#000000]/30"
                       }`}
                     >
                       <span className="material-symbols-outlined text-[18px]">palette</span>
@@ -361,11 +361,11 @@ export function AdminGallery() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setNewItem({ ...newItem, type: "real-event" })}
-                      className={`py-3 px-4 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all flex flex-col items-center justify-center gap-1.5 shadow-2xs ${
-                        newItem.type === "real-event"
-                          ? "bg-[#000000] text-white border-[#000000]"
-                          : "bg-white text-stone-500 border-neutral-200 hover:border-[#000000]/30"
+                      onClick={() => setNewItem({ ...newItem, type:"real-event" })}
+                      className={`py-3 px-4 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider border transition-all flex flex-col items-center justify-center gap-1.5 shadow-2xs ${
+                        newItem.type ==="real-event"
+                          ?"bg-[#000000] text-white border-[#000000]"
+                          :"bg-white text-stone-500 border-neutral-200 hover:border-[#000000]/30"
                       }`}
                     >
                       <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
@@ -376,7 +376,7 @@ export function AdminGallery() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-stone-600">Title</label>
+                    <label className="text-[11px] sm:text-[11px] font-bold text-stone-600">Title</label>
                     <input
                       type="text"
                       required
@@ -387,7 +387,7 @@ export function AdminGallery() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-stone-600">Telugu Title (Optional)</label>
+                    <label className="text-[11px] sm:text-[11px] font-bold text-stone-600">Telugu Title (Optional)</label>
                     <input
                       type="text"
                       value={newItem.teluguTitle}
@@ -401,11 +401,11 @@ export function AdminGallery() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-bold text-stone-600">Category *</label>
+                      <label className="text-[11px] sm:text-[11px] font-bold text-stone-600">Category *</label>
                       <button
                         type="button"
                         onClick={() => setShowCatModal(true)}
-                        className="font-label text-[9px] text-black hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                        className="font-medium tracking-wide text-[11px] sm:text-[11px] sm:text-[11px] text-black hover:underline font-bold flex items-center gap-1 cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[12px]">add_circle</span> Manage Themes
                       </button>
@@ -431,7 +431,7 @@ export function AdminGallery() {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-stone-600">Event Framework</label>
+                    <label className="text-[11px] sm:text-[11px] font-bold text-stone-600">Event Framework</label>
                     <input
                       type="text"
                       value={newItem.event}
@@ -441,7 +441,7 @@ export function AdminGallery() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-stone-600">Style Variant</label>
+                    <label className="text-[11px] sm:text-[11px] font-bold text-stone-600">Style Variant</label>
                     <input
                       type="text"
                       value={newItem.style}
@@ -453,7 +453,7 @@ export function AdminGallery() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-stone-600">Search Tags (Comma separated)</label>
+                  <label className="text-[11px] sm:text-[11px] font-bold text-stone-600">Search Tags (Comma separated)</label>
                   <input
                     type="text"
                     value={newItem.tags}
@@ -464,7 +464,7 @@ export function AdminGallery() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-stone-600">Short Editorial Description</label>
+                  <label className="text-[11px] sm:text-[11px] font-bold text-stone-600">Short Editorial Description</label>
                   <textarea
                     value={newItem.description}
                     onChange={(e) => setNewItem({...newItem, description: e.target.value})}
@@ -474,7 +474,7 @@ export function AdminGallery() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-stone-600">Artisanal Story (Optional)</label>
+                  <label className="text-[11px] sm:text-[11px] font-bold text-stone-600">Artisanal Story (Optional)</label>
                   <textarea
                     value={newItem.story}
                     onChange={(e) => setNewItem({...newItem, story: e.target.value})}
@@ -488,16 +488,16 @@ export function AdminGallery() {
                     <button 
                       type="button"
                       onClick={handleCancel}
-                      className="flex-1 py-3 bg-[#F8F9FB] border border-neutral-250 text-stone-600 rounded-full text-[11px] font-extrabold uppercase tracking-wider transition-colors hover:bg-neutral-100 shadow-2xs"
+                      className="flex-1 py-3 bg-[#F8F9FB] border border-neutral-250 text-stone-600 rounded-full text-[11px] sm:text-[11px] font-extrabold uppercase tracking-wider transition-colors hover:bg-neutral-100 shadow-2xs"
                     >
                       Cancel Edit
                     </button>
                   )}
                   <button 
                     type="submit"
-                    className="flex-[2] py-3 bg-stone-900 hover:bg-[#000000] text-white rounded-full text-[11px] font-extrabold uppercase tracking-widest shadow-md transition-colors"
+                    className="flex-[2] py-3 bg-stone-900 hover:bg-[#000000] text-white rounded-full text-[11px] sm:text-[11px] font-extrabold uppercase tracking-widest shadow-md transition-colors"
                   >
-                    {editingId ? "Save Changes" : "Confirm Curation"}
+                    {editingId ?"Save Changes" :"Confirm Curation"}
                   </button>
                 </div>
               </div>
@@ -512,17 +512,17 @@ export function AdminGallery() {
         <div className="flex items-center justify-between flex-wrap gap-4 border-b border-neutral-100 pb-3">
           <div className="flex h-10 p-0.5 bg-[#F8F9FB] rounded-full border border-neutral-200 shrink-0">
             {[
-              { id: "All", label: "All Items" },
-              { id: "inspiration", label: "Design Inspirations" },
-              { id: "real-event", label: "Real Celebrations" },
+              { id:"All", label:"All Items" },
+              { id:"inspiration", label:"Design Inspirations" },
+              { id:"real-event", label:"Real Celebrations" },
             ].map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTypeFilter(t.id)}
-                className={`px-5 h-full rounded-full text-[9.5px] uppercase tracking-widest font-bold transition-all duration-300 flex items-center justify-center ${
+                className={`px-5 h-full rounded-full text-[11px] sm:text-[11px] uppercase tracking-widest font-bold transition-all duration-300 flex items-center justify-center ${
                   typeFilter === t.id
-                    ? "bg-stone-900 text-white shadow-xs"
-                    : "text-stone-400 hover:text-stone-600"
+                    ?"bg-stone-900 text-white shadow-xs"
+                    :"text-stone-400 hover:text-stone-600"
                 }`}
               >
                 {t.label}
@@ -530,7 +530,7 @@ export function AdminGallery() {
             ))}
           </div>
           
-          <div className="text-[11px] text-stone-400 font-light italic">
+          <div className="text-[11px] sm:text-[11px] text-stone-400 font-light italic">
             Showing {filtered.length} curated images matching filters
           </div>
         </div>
@@ -541,10 +541,10 @@ export function AdminGallery() {
             <button
               key={c}
               onClick={() => setFilter(c)}
-              className={`px-4.5 py-2 rounded-full text-[10.5px] font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+              className={`px-4.5 py-2 rounded-full text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
                 filter === c 
-                  ? "bg-[#000000] text-white border-[#000000] shadow-2xs" 
-                  : "bg-white text-stone-500 border border-neutral-200/80 hover:border-[#000000]/30"
+                  ?"bg-[#000000] text-white border-[#000000] shadow-2xs" 
+                  :"bg-white text-stone-500 border border-neutral-200/80 hover:border-[#000000]/30"
               }`}
             >
               {c}
@@ -571,16 +571,16 @@ export function AdminGallery() {
           >
             {/* Classification Type Ribbon Badge */}
             <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
-              <span className={`text-[8.5px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm block ${
-                item.type === "real-event" 
-                  ? "bg-[#000000] text-white" 
-                  : "bg-stone-900 text-white"
+              <span className={`text-[11px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm block ${
+                item.type ==="real-event" 
+                  ?"bg-[#000000] text-white" 
+                  :"bg-stone-900 text-white"
               }`}>
-                {item.type === "real-event" ? "Real Event" : "Inspiration"}
+                {item.type ==="real-event" ?"Real Event" :"Inspiration"}
               </span>
               {item.video && (
-                <span className="bg-amber-600 text-white text-[8.5px] font-extrabold px-2 py-1 rounded-full uppercase tracking-widest shadow-sm flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[10px]">play_circle</span>
+                <span className="bg-amber-600 text-white text-[11px] font-extrabold px-2 py-1 rounded-full uppercase tracking-widest shadow-sm flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[11px]">play_circle</span>
                   Video
                 </span>
               )}
@@ -617,7 +617,7 @@ export function AdminGallery() {
             {/* Card Metadata Details */}
             <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
               <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5 text-[9px] font-bold text-[#000000] uppercase tracking-widest">
+                <div className="flex items-center gap-1.5 text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-[#000000] uppercase tracking-widest">
                   <span>{item.category}</span>
                   {item.event && (
                     <>
@@ -632,26 +632,25 @@ export function AdminGallery() {
                 </h3>
                 
                 {item.teluguTitle && (
-                  <p className="text-[11px] text-[#000000] font-semibold italic leading-none">
+                  <p className="text-[11px] sm:text-[11px] text-[#000000] font-semibold italic leading-none">
                     {item.teluguTitle}
                   </p>
                 )}
 
                 {item.style && (
-                  <span className="inline-block text-[9.5px] bg-[#F8F9FB] text-stone-500 px-2 py-0.5 rounded-md border border-neutral-150 italic mt-1.5">
+                  <span className="inline-block text-[11px] sm:text-[11px] bg-[#F8F9FB] text-stone-500 px-2 py-0.5 rounded-md border border-neutral-150 italic mt-1.5">
                     {item.style}
                   </span>
                 )}
               </div>
 
               {item.description && (
-                <p className="text-[11px] text-stone-500/85 leading-relaxed line-clamp-2 pl-2 border-l border-[#000000]/30 italic">
-                  "{item.description}"
+                <p className="text-[11px] sm:text-[11px] text-stone-500/85 leading-relaxed line-clamp-2 pl-2 border-l border-[#000000]/30 italic">"{item.description}"
                 </p>
               )}
 
               {/* Stats & Products Footer */}
-              <div className="pt-3 border-t border-neutral-100 flex items-center justify-between flex-wrap gap-2 text-[10px] text-stone-400">
+              <div className="pt-3 border-t border-neutral-100 flex items-center justify-between flex-wrap gap-2 text-[11px] text-stone-400">
                 {/* Reactions (Likes & Views) */}
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
@@ -659,7 +658,7 @@ export function AdminGallery() {
                     <span>{item.views || 0}</span>
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px] text-rose-400" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                    <span className="material-symbols-outlined text-[12px] text-rose-400" style={{ fontVariationSettings:"'FILL' 1" }}>favorite</span>
                     <span>{item.likes || 0}</span>
                   </span>
                 </div>
@@ -704,8 +703,8 @@ export function AdminGallery() {
             >
               <div className="flex justify-between items-center border-b border-black/5 pb-4 mb-6">
                 <div>
-                  <span className="font-label text-[9px] text-black uppercase tracking-widest font-bold">STUDIO THEMES</span>
-                  <h3 className="font-display text-xl text-black font-bold">Showcase Theme Categories</h3>
+                  <span className="font-medium tracking-wide text-[11px] sm:text-[11px] sm:text-[11px] text-black uppercase tracking-widest font-bold">STUDIO THEMES</span>
+                  <h3 className="text-[11px] text-black font-bold">Showcase Theme Categories</h3>
                 </div>
                 <button
                   onClick={() => setShowCatModal(false)}
@@ -717,60 +716,60 @@ export function AdminGallery() {
 
               {/* Add/Edit Category Form */}
               <form onSubmit={handleSaveCat} className="bg-stone-50 p-4 rounded-2xl border border-black/5 mb-6 space-y-4">
-                <h4 className="font-label text-[10px] text-stone-800 uppercase tracking-widest font-bold">
-                  {editingCatId ? "✏️ Edit Theme Category" : "✨ Create New Showcase Theme"}
+                <h4 className="font-medium tracking-wide text-[11px] text-stone-800 uppercase tracking-widest font-bold">
+                  {editingCatId ?"✏️ Edit Theme Category" :"✨ Create New Showcase Theme"}
                 </h4>
                 <div className="space-y-1">
-                  <label className="font-label text-[9px] uppercase tracking-wider text-black/50 font-bold block">Theme Name *</label>
+                  <label className="font-medium tracking-wide text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider text-black/50 font-bold block">Theme Name *</label>
                   <input
                     type="text"
                     placeholder="e.g. Traditional Haldi Tray Decor"
                     value={catForm.name}
                     onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
-                    className="w-full px-4 py-2 bg-white rounded-xl border border-black/10 text-xs focus:border-slate-900 outline-none font-medium"
+                    className="w-full px-4 py-2 bg-white rounded-xl border border-black/10 text-[11px] focus:border-slate-900 outline-none font-medium"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-label text-[9px] uppercase tracking-wider text-black/50 font-bold block">Theme Narrative Description</label>
+                  <label className="font-medium tracking-wide text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider text-black/50 font-bold block">Theme Narrative Description</label>
                   <input
                     type="text"
                     placeholder="e.g. Handcrafted floral trays and brass elements"
                     value={catForm.description}
                     onChange={(e) => setCatForm({ ...catForm, description: e.target.value })}
-                    className="w-full px-4 py-2 bg-white rounded-xl border border-black/10 text-xs focus:border-slate-900 outline-none"
+                    className="w-full px-4 py-2 bg-white rounded-xl border border-black/10 text-[11px] focus:border-slate-900 outline-none"
                   />
                 </div>
                 <div className="flex items-center justify-end gap-2 pt-2">
                   {editingCatId && (
                     <button
                       type="button"
-                      onClick={() => { setEditingCatId(null); setCatForm({ name: "", description: "", image: "" }); }}
-                      className="px-4 py-2 rounded-xl text-xs font-label uppercase font-bold text-stone-600 hover:bg-stone-200 transition-all cursor-pointer"
+                      onClick={() => { setEditingCatId(null); setCatForm({ name:"", description:"", image:"" }); }}
+                      className="px-4 py-2 rounded-xl text-[11px] font-medium tracking-wide uppercase font-bold text-stone-600 hover:bg-stone-200 transition-all cursor-pointer"
                     >
                       Cancel
                     </button>
                   )}
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-xl text-xs font-label uppercase font-bold bg-black text-white shadow-md hover:bg-stone-900 transition-all cursor-pointer"
+                    className="px-6 py-2 rounded-xl text-[11px] font-medium tracking-wide uppercase font-bold bg-black text-white shadow-md hover:bg-stone-900 transition-all cursor-pointer"
                   >
-                    {editingCatId ? "Save Changes" : "+ Add Theme Category"}
+                    {editingCatId ?"Save Changes" :"+ Add Theme Category"}
                   </button>
                 </div>
               </form>
 
               {/* List of current themes */}
               <div className="space-y-3">
-                <h4 className="font-label text-[10px] text-stone-800 uppercase tracking-widest font-bold block mb-2">
+                <h4 className="font-medium tracking-wide text-[11px] text-stone-800 uppercase tracking-widest font-bold block mb-2">
                   Active Showcase Themes ({customCategories?.events?.length || 0})
                 </h4>
                 {customCategories?.events?.map((cat) => (
                   <div key={cat.id} className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-stone-200 shadow-2xs group">
                     <div className="min-w-0 flex-1 pr-4">
-                      <span className="font-display text-sm text-black font-bold block truncate">{cat.name}</span>
+                      <span className="text-[11px] text-black font-bold block truncate">{cat.name}</span>
                       {cat.description && (
-                        <span className="font-body text-[11px] text-stone-500 block truncate font-light">{cat.description}</span>
+                        <span className="font-body text-[11px] sm:text-[11px] text-stone-500 block truncate font-light">{cat.description}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">

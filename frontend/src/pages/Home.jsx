@@ -1,16 +1,11 @@
 import React from "react";
-import { HeroSection } from "../components/sections/HeroSection";
-import { NavigationHub } from "../components/sections/NavigationHub";
 import { StackedSectionWrapper } from "../components/layout/StackedSectionWrapper";
-
-import { BestsellerSection } from "../components/sections/BestsellerSection";
-import { StorySection } from "../components/sections/StorySection";
-import { VerifiedReviews } from "../components/sections/VerifiedReviews";
-import { GallerySection } from "../components/sections/GallerySection";
+import { DynamicSectionRenderer } from "../components/layout/DynamicSectionRenderer";
+import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
 
 import { SEO } from "../components/seo/SEO";
 import { FAQAccordion } from "../components/seo/FAQAccordion";
-import faqsData from "../content/faqs.json";
+import fallbackFaqsData from "../content/faqs.json";
 
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { SITE_URL, OG_IMAGE_URL, buildSameAsLinks } from "../constants/brandEnv";
@@ -23,17 +18,14 @@ import {
   ReviewsSkeleton,
 } from "../components/ui";
 
-const sectionComponents = {
-  hero: HeroSection,
-  featuredCollections: NavigationHub,
-  featuredProducts: BestsellerSection,
-  storyTeaser: StorySection,
-  galleryPreview: GallerySection,
-  testimonials: VerifiedReviews,
-};
+
 
 export function Home() {
-  const { homepageSections, seo, contact, footer, loading } = useWebsiteContent();
+  // Track page view
+  useRecommendationTracker({ targetType: 'page', targetId: 'home', source: 'homepage' });
+
+  const { homepageSections, seo, contact, footer, faqs, loading } = useWebsiteContent();
+  const faqsData = faqs || fallbackFaqsData;
   const siteUrl = SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
   const sameAs = buildSameAsLinks(footer?.socialLinks);
 
@@ -97,28 +89,8 @@ export function Home() {
         schema={homeSchema}
         faq={faqsData.homepage}
       />
-      {visibleSections.map((section, index) => {
-        const Component = sectionComponents[section.id];
-        if (!Component) return null;
+      <DynamicSectionRenderer pagePath="/" />
 
-        const isEager = ["hero", "featuredCollections"].includes(section.id);
-        const isLast = index === visibleSections.length - 1;
-
-        if (isEager) {
-          return (
-            <StackedSectionWrapper key={section.id} index={index} isLast={isLast}>
-              <Component />
-            </StackedSectionWrapper>
-          );
-        }
-
-        return (
-          <StackedSectionWrapper key={section.id} index={index} isLast={isLast}>
-            <Component />
-          </StackedSectionWrapper>
-        );
-      })}
-      
       <div className="bg-surface relative z-10 w-full pt-12 pb-24 rounded-b-[40px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] border-x border-b border-outline-variant/10 max-w-[1920px] mx-auto">
         <FAQAccordion faqs={faqsData.homepage} title="Frequently Asked Questions" />
       </div>

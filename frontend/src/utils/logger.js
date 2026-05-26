@@ -10,9 +10,14 @@ const noop = () => {};
 const reportToSentry = (message, ...args) => {
   try {
     if (typeof window !== 'undefined' && window.__SENTRY_INITIALIZED__) {
-      const Sentry = require('@sentry/react');
-      const error = args[0] instanceof Error ? args[0] : new Error(String(message));
-      Sentry.captureException(error);
+      import('@sentry/react')
+        .then((Sentry) => {
+          const error = args[0] instanceof Error ? args[0] : new Error(String(message));
+          Sentry.captureException(error);
+        })
+        .catch(() => {
+          // Sentry not loaded
+        });
     }
   } catch {
     // Sentry not available

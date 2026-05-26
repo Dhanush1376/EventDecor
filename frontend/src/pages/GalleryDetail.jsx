@@ -7,6 +7,7 @@ import { handleImageError } from "../utils/imageUtils";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { ShareButton } from "../components/ui/ShareButton";
 import { galleryService, productService } from "../services/domainServices";
+import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
 
 import logger from '../utils/logger';
 export function GalleryDetail() {
@@ -20,6 +21,33 @@ export function GalleryDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pageUrl, setPageUrl] = useState('');
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const lastScrollY = React.useRef(0);
+
+  // Track gallery view
+  useRecommendationTracker({
+    targetType: 'gallery',
+    targetId: item?._id || item?.id,
+    category: item?.category,
+    style: item?.style,
+  });
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (Math.abs(currentScrollY - lastScrollY.current) > 10) {
+        if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+          setIsScrollingDown(true);
+        } else {
+          setIsScrollingDown(false);
+        }
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     setPageUrl(window.location.href);
@@ -330,7 +358,7 @@ export function GalleryDetail() {
               {moreLikeThis.map((sim) => (
                 <Link
                   key={sim._id || sim.id}
-                  to={`/gallery/${sim.id}`}
+                  to={`/gallery/${sim._id || sim.id}`}
                   className="block group mb-4"
                 >
                   <div className="relative rounded-[20px] overflow-hidden bg-white shadow-lg aspect-[3/4]">
@@ -379,33 +407,43 @@ export function GalleryDetail() {
       </main>
 
       {/* Mobile Floating Bottom Bar */}
-      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[150] bg-white/95 backdrop-blur-3xl border border-black/5 p-1.5 flex items-center gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full select-none">
-        <button
-          onClick={handleWishlistLook}
-          className={`w-[60px] h-full rounded-full flex items-center justify-center transition-all active:scale-[0.96] shrink-0 ${linkedProdId && isWishlisted(linkedProdId) ? "bg-primary/10 text-primary" : "bg-black/5 text-black hover:bg-black/10"}`}
-        >
-          <motion.span
-            animate={{
-              scale: linkedProdId && isWishlisted(linkedProdId) ? [1, 1.3, 1] : 1,
-              color: linkedProdId && isWishlisted(linkedProdId) ? "#ff2d55" : "#1a1817",
-            }}
-            transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-            className="material-symbols-outlined text-[20px]"
-            style={{ fontVariationSettings: linkedProdId && isWishlisted(linkedProdId) ? "'FILL' 1" : "'FILL' 0" }}
+      <AnimatePresence>
+        {!isScrollingDown && (
+          <motion.div
+            initial={{ y: 150, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 150, opacity: 0 }}
+            transition={{ type: "spring", damping: 28, stiffness: 220 }}
+            className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[150] bg-white/95 backdrop-blur-3xl border border-black/5 p-1.5 flex items-center gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full select-none"
           >
-            favorite
-          </motion.span>
-        </button>
-        <button
-          onClick={handleShopLook}
-          className="flex-1 bg-primary text-white h-full rounded-full font-label-sm text-[10px] uppercase tracking-[0.2em] font-bold flex items-center justify-center gap-2 active:scale-[0.96] transition-transform shadow-md"
-        >
-          <span className="material-symbols-outlined text-[16px]">
-            shopping_bag
-          </span>
-          Shop Look
-        </button>
-      </div>
+            <button
+              onClick={handleWishlistLook}
+              className={`w-[60px] h-full rounded-full flex items-center justify-center transition-all active:scale-[0.96] shrink-0 ${linkedProdId && isWishlisted(linkedProdId) ? "bg-primary/10 text-primary" : "bg-black/5 text-black hover:bg-black/10"}`}
+            >
+              <motion.span
+                animate={{
+                  scale: linkedProdId && isWishlisted(linkedProdId) ? [1, 1.3, 1] : 1,
+                  color: linkedProdId && isWishlisted(linkedProdId) ? "#ff2d55" : "#1a1817",
+                }}
+                transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+                className="material-symbols-outlined text-[20px]"
+                style={{ fontVariationSettings: linkedProdId && isWishlisted(linkedProdId) ? "'FILL' 1" : "'FILL' 0" }}
+              >
+                favorite
+              </motion.span>
+            </button>
+            <button
+              onClick={handleShopLook}
+              className="flex-1 bg-primary text-white h-full rounded-full font-label-sm text-[10px] uppercase tracking-[0.2em] font-bold flex items-center justify-center gap-2 active:scale-[0.96] transition-transform shadow-md"
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                shopping_bag
+              </span>
+              Shop Look
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="fixed inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay z-[400] bg-marble" />
     </div>

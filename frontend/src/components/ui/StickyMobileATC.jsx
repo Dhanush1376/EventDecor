@@ -7,6 +7,27 @@ export function StickyMobileATC({ product, triggerRef }) {
   const { addItem, setIsCartOpen } = useCart();
   const { runProtectedAction } = useAuth();
   const [isVisible, setIsVisible] = React.useState(false);
+  const [isScrollingDown, setIsScrollingDown] = React.useState(false);
+  const lastScrollY = React.useRef(0);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Use 10px threshold to avoid tiny jitter or bounce triggers
+      if (Math.abs(currentScrollY - lastScrollY.current) > 10) {
+        if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+          setIsScrollingDown(true);
+        } else {
+          setIsScrollingDown(false);
+        }
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   React.useEffect(() => {
     if (!triggerRef?.current) {
@@ -42,13 +63,13 @@ export function StickyMobileATC({ product, triggerRef }) {
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {isVisible && !isScrollingDown && (
         <motion.div
           initial={{ y: 150, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 150, opacity: 0 }}
           transition={{ type: "spring", damping: 28, stiffness: 220 }}
-          className="sticky-mobile-atc fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[150] md:hidden bg-white/95 backdrop-blur-3xl border border-outline-variant/10 px-6 flex items-center justify-between gap-3 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full select-none"
+          className="sticky-mobile-atc fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] md:h-[80px] z-[150] md:hidden bg-white border border-outline-variant/15 px-6 flex items-center justify-between gap-3 shadow-[0_20px_60px_rgba(0,0,0,0.18)] rounded-full select-none"
         >
           <div className="flex flex-col truncate">
             <span className="font-label text-[8px] uppercase tracking-[0.25em] text-on-surface-variant/45 font-bold leading-none">

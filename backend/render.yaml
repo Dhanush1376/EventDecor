@@ -71,6 +71,14 @@ services:
         value: "Siri Arts Studio"
       - key: GROQ_API_KEY
         fromConfig: true
+      - key: FIELD_ENCRYPTION_KEY
+        fromConfig: true
+      - key: ADMIN_PHONE
+        fromConfig: true
+      - key: ENABLE_WORKERS
+        value: "true"
+      - key: ENABLE_CRON
+        value: "true"
 
   # Staging — validate changes before production (separate MongoDB + Redis recommended in Render config)
   - type: web
@@ -116,3 +124,11 @@ services:
         fromConfig: true
       - key: GROQ_API_KEY
         fromConfig: true
+      - key: FIELD_ENCRYPTION_KEY
+        fromConfig: true
+      - key: ADMIN_PHONE
+        fromConfig: true
+      - key: ENABLE_WORKERS
+        value: "true"
+      - key: ENABLE_CRON
+        value: "true"

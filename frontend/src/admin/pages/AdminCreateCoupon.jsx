@@ -1,32 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom";
-import { couponService, productService } from "../../services/domainServices";
-import toast from "react-hot-toast";
-import { AdminToggle } from "../components/AdminUIKit";
+import React, { useState, useEffect } from"react";
+import { motion } from"framer-motion";
+import { useNavigate, useParams } from"react-router-dom";
+import { couponService, productService } from"../../services/domainServices";
+import toast from"react-hot-toast";
+import { AdminToggle } from"../components/AdminUIKit";
 
 import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
-const AVAILABLE_CATEGORIES = [
-  "Wedding Curation",
-  "Flower Decor",
-  "Mandap Props",
-  "Backdrops",
-  "Lights & Candles",
-  "Table Settings",
-  "Festive Decor",
-  "Luxury Scapes"
+const AVAILABLE_CATEGORIES = ["Wedding Curation","Flower Decor","Mandap Props","Backdrops","Lights & Candles","Table Settings","Festive Decor","Luxury Scapes"
 ];
 
-const AVAILABLE_TIERS = ["Bronze", "Silver", "Gold", "Platinum"];
+const AVAILABLE_TIERS = ["Bronze","Silver","Gold","Platinum"];
 
 const DISPLAY_LOCATIONS = [
-  { value: "checkout", label: "Checkout Coupon Choice Tray" },
-  { value: "cart", label: "Cart Drawer Promotions Panel" },
-  { value: "banner", label: "Homepage Countdown Banner" },
-  { value: "floating", label: "Floating App Offer Card" },
-  { value: "wallet", label: "Loyalty Wallet Dashboard" }
+  { value:"checkout", label:"Checkout Coupon Choice Tray" },
+  { value:"cart", label:"Cart Drawer Promotions Panel" },
+  { value:"banner", label:"Homepage Countdown Banner" },
+  { value:"floating", label:"Floating App Offer Card" },
+  { value:"wallet", label:"Loyalty Wallet Dashboard" }
 ];
 
 export function AdminCreateCoupon() {
@@ -38,27 +30,27 @@ export function AdminCreateCoupon() {
   const [saving, setSaving] = useState(false);
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState({
-    code: "",
-    discountType: "percentage",
-    discountValue: "",
-    minOrderAmount: "",
-    maxDiscount: "",
+    code:"",
+    discountType:"percentage",
+    discountValue:"",
+    minOrderAmount:"",
+    maxDiscount:"",
     startDate: new Date().toISOString().split("T")[0],
-    expiryDate: "",
-    usageLimit: "",
+    expiryDate:"",
+    usageLimit:"",
     isActive: true,
     // Enterprise Extensions
-    targetType: "all",
+    targetType:"all",
     targetProductIds: [],
     targetCategories: [],
     targetUserTiers: [],
     displayLocations: ["checkout"],
     isFeatured: false,
     isAutoApply: false,
-    cashbackPercentage: "",
-    cashbackFixed: "",
-    stackingRule: "exclusive",
-    priority: "1",
+    cashbackPercentage:"",
+    cashbackFixed:"",
+    stackingRule:"exclusive",
+    priority:"1",
   });
 
   // Fetch active products on mount to allow granular targeting
@@ -84,27 +76,27 @@ export function AdminCreateCoupon() {
             const coupon = list.find((c) => (c._id || c.id) === id);
             if (coupon) {
               setFormData({
-                code: coupon.code || "",
-                discountType: coupon.discountType || "percentage",
-                discountValue: coupon.discountValue || "",
-                minOrderAmount: coupon.minOrderAmount || "",
-                maxDiscount: coupon.maxDiscount || "",
+                code: coupon.code ||"",
+                discountType: coupon.discountType ||"percentage",
+                discountValue: coupon.discountValue ||"",
+                minOrderAmount: coupon.minOrderAmount ||"",
+                maxDiscount: coupon.maxDiscount ||"",
                 startDate: coupon.startDate ? new Date(coupon.startDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-                expiryDate: coupon.expiryDate ? new Date(coupon.expiryDate).toISOString().split("T")[0] : "",
-                usageLimit: coupon.usageLimit || "",
+                expiryDate: coupon.expiryDate ? new Date(coupon.expiryDate).toISOString().split("T")[0] :"",
+                usageLimit: coupon.usageLimit ||"",
                 isActive: coupon.isActive !== undefined ? coupon.isActive : true,
                 // Enterprise properties load
-                targetType: coupon.targetType || "all",
+                targetType: coupon.targetType ||"all",
                 targetProductIds: coupon.targetProductIds || [],
                 targetCategories: coupon.targetCategories || [],
                 targetUserTiers: coupon.targetUserTiers || [],
                 displayLocations: coupon.displayLocations || ["checkout"],
                 isFeatured: coupon.isFeatured || false,
                 isAutoApply: coupon.isAutoApply || false,
-                cashbackPercentage: coupon.cashbackPercentage || "",
-                cashbackFixed: coupon.cashbackFixed || "",
-                stackingRule: coupon.stackingRule || "exclusive",
-                priority: String(coupon.priority || "1"),
+                cashbackPercentage: coupon.cashbackPercentage ||"",
+                cashbackFixed: coupon.cashbackFixed ||"",
+                stackingRule: coupon.stackingRule ||"exclusive",
+                priority: String(coupon.priority ||"1"),
               });
             } else {
               toast.error("Coupon not found in catalog");
@@ -193,9 +185,9 @@ export function AdminCreateCoupon() {
         isActive: formData.isActive,
         // Enterprise setting options
         targetType: formData.targetType,
-        targetProductIds: formData.targetType === "products" ? formData.targetProductIds : [],
-        targetCategories: formData.targetType === "categories" ? formData.targetCategories : [],
-        targetUserTiers: formData.targetType === "tiers" ? formData.targetUserTiers : [],
+        targetProductIds: formData.targetType ==="products" ? formData.targetProductIds : [],
+        targetCategories: formData.targetType ==="categories" ? formData.targetCategories : [],
+        targetUserTiers: formData.targetType ==="tiers" ? formData.targetUserTiers : [],
         displayLocations: formData.displayLocations,
         isFeatured: formData.isFeatured,
         isAutoApply: formData.isAutoApply,
@@ -210,11 +202,11 @@ export function AdminCreateCoupon() {
         : await couponService.create(payload);
 
       if (res.success) {
-        toast.success(isEdit ? "Coupon configuration updated successfully" : "Promo campaign generated and published!");
+        toast.success(isEdit ?"Coupon configuration updated successfully" :"Promo campaign generated and published!");
         navigate("/admin/coupons");
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to save coupon campaign");
+      toast.error(err.response?.data?.message ||"Failed to save coupon campaign");
     } finally {
       setSaving(false);
     }
@@ -245,11 +237,11 @@ export function AdminCreateCoupon() {
           <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         </button>
         <div>
-          <h2 className="text-[24px] font-bold text-on-surface font-display">
-            {isEdit ? "Edit Premium Promo Campaign" : "Configure Advanced Promotion Code"}
+          <h2 className="text-[24px] font-bold text-on-surface">
+            {isEdit ?"Edit Premium Promo Campaign" :"Configure Advanced Promotion Code"}
           </h2>
           <p className="text-[13px] text-outline">
-            {isEdit ? "Refine segmentation rules, wallet loyalty parameters, and exclusions" : "Set up high-fidelity checkout coupons with custom targeting models"}
+            {isEdit ?"Refine segmentation rules, wallet loyalty parameters, and exclusions" :"Set up high-fidelity checkout coupons with custom targeting models"}
           </p>
         </div>
       </motion.div>
@@ -328,9 +320,9 @@ export function AdminCreateCoupon() {
             <input
               type="number"
               value={formData.maxDiscount}
-              disabled={formData.discountType === "fixed"}
+              disabled={formData.discountType ==="fixed"}
               onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
-              placeholder={formData.discountType === "fixed" ? "N/A (Flat Discount)" : "Unlimited"}
+              placeholder={formData.discountType ==="fixed" ?"N/A (Flat Discount)" :"Unlimited"}
               className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all disabled:opacity-40"
             />
           </div>
@@ -359,9 +351,9 @@ export function AdminCreateCoupon() {
           </div>
 
           {/* Targeted Products Checklist */}
-          {formData.targetType === "products" && (
+          {formData.targetType ==="products" && (
             <div className="p-4 bg-surface-container-low rounded-2xl border border-surface-container-highest/60 space-y-3">
-              <label className="text-[11px] font-bold text-outline uppercase tracking-widest block">
+              <label className="text-[11px] sm:text-[11px] font-bold text-outline uppercase tracking-widest block">
                 Select Eligible Catalog Products ({formData.targetProductIds.length} Selected)
               </label>
               <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
@@ -389,7 +381,7 @@ export function AdminCreateCoupon() {
                           />
                           <div>
                             <span className="font-bold text-on-surface">{p.title}</span>
-                            <span className="text-[10px] text-outline ml-2">₹{p.price}</span>
+                            <span className="text-[11px] text-outline ml-2">₹{p.price}</span>
                           </div>
                         </div>
                       </label>
@@ -401,9 +393,9 @@ export function AdminCreateCoupon() {
           )}
 
           {/* Targeted Categories Checklist */}
-          {formData.targetType === "categories" && (
+          {formData.targetType ==="categories" && (
             <div className="p-4 bg-surface-container-low rounded-2xl border border-surface-container-highest/60 space-y-3">
-              <label className="text-[11px] font-bold text-outline uppercase tracking-widest block">
+              <label className="text-[11px] sm:text-[11px] font-bold text-outline uppercase tracking-widest block">
                 Select Eligible Storefront Categories ({formData.targetCategories.length} Selected)
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -429,9 +421,9 @@ export function AdminCreateCoupon() {
           )}
 
           {/* Targeted Loyalty Tiers Checklist */}
-          {formData.targetType === "tiers" && (
+          {formData.targetType ==="tiers" && (
             <div className="p-4 bg-surface-container-low rounded-2xl border border-surface-container-highest/60 space-y-3">
-              <label className="text-[11px] font-bold text-outline uppercase tracking-widest block">
+              <label className="text-[11px] sm:text-[11px] font-bold text-outline uppercase tracking-widest block">
                 Select Eligible Loyalty Membership Tiers ({formData.targetUserTiers.length} Selected)
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -466,7 +458,7 @@ export function AdminCreateCoupon() {
             3. Storefront Visibility & Auto-Apply Settings
           </h2>
           <div className="p-4 bg-surface-container-low rounded-2xl border border-surface-container-highest/60 space-y-4">
-            <label className="text-[11px] font-bold text-outline uppercase tracking-widest block">
+            <label className="text-[11px] sm:text-[11px] font-bold text-outline uppercase tracking-widest block">
               Where should this coupon be displayed?
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -499,7 +491,7 @@ export function AdminCreateCoupon() {
               />
               <div>
                 <p className="text-[13px] font-bold text-on-surface">Mark as Featured Offer</p>
-                <p className="text-[10px] text-outline">Highlighted on promotion banners</p>
+                <p className="text-[11px] text-outline">Highlighted on promotion banners</p>
               </div>
             </label>
             <label className="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl cursor-pointer">
@@ -511,7 +503,7 @@ export function AdminCreateCoupon() {
               />
               <div>
                 <p className="text-[13px] font-bold text-on-surface">Auto-Apply at Checkout</p>
-                <p className="text-[10px] text-outline">Applies automatically if conditions match</p>
+                <p className="text-[11px] text-outline">Applies automatically if conditions match</p>
               </div>
             </label>
           </div>
@@ -523,7 +515,7 @@ export function AdminCreateCoupon() {
             <span className="material-symbols-outlined text-[20px] text-black">payments</span>
             4. Loyalty Wallet Cashback Perks
           </h2>
-          <p className="text-[11.5px] text-outline">
+          <p className="text-[11px] sm:text-[11px] text-outline">
             Give customers promotional Siri Cash directly in their store wallets upon placing their orders. Admins can configure percentages, fixed credits, or hybrid reward perks!
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -631,7 +623,7 @@ export function AdminCreateCoupon() {
         <div className="flex items-center justify-between gap-6 p-4 bg-surface-container-low rounded-2xl max-w-sm border border-surface-container-highest/20">
           <div>
             <p className="text-[13px] font-bold text-on-surface">Publishing Campaign Status</p>
-            <p className="text-[10px] text-outline mt-0.5">Enable to activate this promotional offer in production</p>
+            <p className="text-[11px] text-outline mt-0.5">Enable to activate this promotional offer in production</p>
           </div>
           <AdminToggle
             checked={formData.isActive}
@@ -653,7 +645,7 @@ export function AdminCreateCoupon() {
             disabled={saving}
             className="px-8 py-3.5 bg-black text-white rounded-full text-[12px] font-bold uppercase tracking-widest hover:shadow-lg disabled:opacity-50 transition-all cursor-pointer"
           >
-            {saving ? "Saving..." : isEdit ? "Update Campaign Selection" : "Launch Premium Promotion Campaign"}
+            {saving ?"Saving..." : isEdit ?"Update Campaign Selection" :"Launch Premium Promotion Campaign"}
           </button>
         </div>
       </motion.form>

@@ -32,9 +32,13 @@ export function AdminInviteModal() {
 
     checkPendingInvitation();
 
+    // Poll every 30 seconds to show new invitations instantly
+    const intervalId = setInterval(checkPendingInvitation, 30000);
+
     // Check again when user logging state changes
     return () => {
       active = false;
+      clearInterval(intervalId);
     };
   }, [isAuthenticated, user]);
 

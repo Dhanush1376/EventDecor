@@ -1,55 +1,22 @@
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAdmin } from "../context/AdminContext";
-import Barcode from "react-barcode";
-import { QRCodeSVG } from "qrcode.react";
-import { InvoiceTemplate } from "../../components/ui";
-import { playSuccessBeep, playErrorBeep } from "../../utils/audioUtils";
-import toast from "react-hot-toast";
+import React from"react";
+import { motion, AnimatePresence } from"framer-motion";
+import { useParams, useNavigate } from"react-router-dom";
+import { useAdmin } from"../context/AdminContext";
+import Barcode from"react-barcode";
+import { QRCodeSVG } from"qrcode.react";
+import { InvoiceTemplate } from"../../components/ui";
+import { playSuccessBeep, playErrorBeep } from"../../utils/audioUtils";
+import toast from"react-hot-toast";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
-const allStatuses = [
-  "Pending",
-  "Confirmed",
-  "Packed",
-  "Ready to Ship",
-  "Shipped",
-  "Out for Delivery",
-  "Delivered",
-  "Settled",
-  "Cancelled",
-  "Returned",
-  "Refunded",
+const allStatuses = ["Pending","Confirmed","Packed","Ready to Ship","Shipped","Out for Delivery","Delivered","Settled","Cancelled","Returned","Refunded",
 ];
 
-const statusColors = {
-  "Pending": "text-amber-600 bg-amber-50 border-amber-200",
-  "Confirmed": "text-black bg-slate-100 border-slate-300",
-  "Packed": "text-purple-600 bg-purple-50 border-purple-200",
-  "Ready to Ship": "text-black bg-slate-100 border-slate-300",
-  "Shipped": "text-cyan-600 bg-cyan-50 border-cyan-200",
-  "Out for Delivery": "text-teal-600 bg-teal-50 border-teal-200",
-  "Delivered": "text-emerald-700 bg-emerald-50 border-emerald-200",
-  "Settled": "text-green-700 bg-green-50 border-green-200",
-  "Cancelled": "text-red-600 bg-red-50 border-red-200",
-  "Returned": "text-orange-600 bg-orange-50 border-orange-200",
-  "Refunded": "text-gray-600 bg-gray-50 border-gray-200",
+const statusColors = {"Pending":"text-amber-600 bg-amber-50 border-amber-200","Confirmed":"text-black bg-slate-100 border-slate-300","Packed":"text-purple-600 bg-purple-50 border-purple-200","Ready to Ship":"text-black bg-slate-100 border-slate-300","Shipped":"text-cyan-600 bg-cyan-50 border-cyan-200","Out for Delivery":"text-teal-600 bg-teal-50 border-teal-200","Delivered":"text-emerald-700 bg-emerald-50 border-emerald-200","Settled":"text-green-700 bg-green-50 border-green-200","Cancelled":"text-red-600 bg-red-50 border-red-200","Returned":"text-orange-600 bg-orange-50 border-orange-200","Refunded":"text-gray-600 bg-gray-50 border-gray-200",
 };
 
-const statusIcons = {
-  "Pending": "schedule",
-  "Confirmed": "thumb_up",
-  "Packed": "inventory_2",
-  "Ready to Ship": "conveyor_belt",
-  "Shipped": "local_shipping",
-  "Out for Delivery": "directions_run",
-  "Delivered": "check_circle",
-  "Settled": "payments",
-  "Cancelled": "cancel",
-  "Returned": "keyboard_return",
-  "Refunded": "payments",
+const statusIcons = {"Pending":"schedule","Confirmed":"thumb_up","Packed":"inventory_2","Ready to Ship":"conveyor_belt","Shipped":"local_shipping","Out for Delivery":"directions_run","Delivered":"check_circle","Settled":"payments","Cancelled":"cancel","Returned":"keyboard_return","Refunded":"payments",
 };
 
 export function AdminOrderDetail() {
@@ -74,8 +41,7 @@ export function AdminOrderDetail() {
   const handleReconcileCOD = async () => {
     try {
       await updateOrderStatus(
-        order.id, 
-        "Settled", 
+        order.id,"Settled", 
         `COD Remittance Reconciled. Courier Charges: ₹${settlementCharges}`, 
         Number(settlementCharges)
       );
@@ -90,7 +56,7 @@ export function AdminOrderDetail() {
   // Capture physical barcode scanner keyboard inputs
   React.useEffect(() => {
     if (!order) return;
-    let buffer = "";
+    let buffer ="";
     let lastKeyTime = Date.now();
 
     const handleKeyPress = (e) => {
@@ -98,23 +64,23 @@ export function AdminOrderDetail() {
       
       // Scanners input extremely quickly (< 50ms)
       if (currentTime - lastKeyTime > 50) {
-        buffer = "";
+        buffer ="";
       }
       lastKeyTime = currentTime;
 
-      if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") {
+      if (e.key ==="Shift" || e.key ==="Control" || e.key ==="Alt" || e.key ==="Meta") {
         return;
       }
 
-      if (e.key === "Enter") {
+      if (e.key ==="Enter") {
         if (buffer.length >= 3) {
           const scannedCode = buffer.trim().toUpperCase();
-          buffer = "";
+          buffer ="";
           
           const cleanOrderId = order.id.toUpperCase();
-          const cleanAWB = (order.trackingNumber || "").toUpperCase();
+          const cleanAWB = (order.trackingNumber ||"").toUpperCase();
           const customBarcode = `SR-${order.id.substring(order.id.length - 8).toUpperCase()}-IN`;
-          const invoiceNum = (order.invoiceNumber || "").toUpperCase();
+          const invoiceNum = (order.invoiceNumber ||"").toUpperCase();
 
           if (
             scannedCode === cleanOrderId ||
@@ -128,7 +94,7 @@ export function AdminOrderDetail() {
             const currentIdx = allStatuses.indexOf(order.status);
             if (currentIdx !== -1 && currentIdx < allStatuses.length - 1) {
               const nextStatus = allStatuses[currentIdx + 1];
-              if (["Cancelled", "Returned", "Refunded"].includes(nextStatus)) {
+              if (["Cancelled","Returned","Refunded"].includes(nextStatus)) {
                 toast.success(`Package is already at final state: ${order.status}`);
               } else {
                 updateOrderStatus(order.id, nextStatus, `Physical scan verification transition to ${nextStatus}`);
@@ -137,7 +103,7 @@ export function AdminOrderDetail() {
             }
           } else {
             playErrorBeep();
-            toast.error(`Scan mismatch! Code "${scannedCode}" does not match this order.`);
+            toast.error(`Scan mismatch! Code"${scannedCode}" does not match this order.`);
           }
         }
         return;
@@ -175,7 +141,7 @@ export function AdminOrderDetail() {
     <>
       <style type="text/css" media="print">
         {`
-          @page { size: ${printStickerOnly ? "auto" : "A4 portrait"}; margin: ${printStickerOnly ? "0" : "15mm"}; }
+          @page { size: ${printStickerOnly ?"auto" :"A4 portrait"}; margin: ${printStickerOnly ?"0" :"15mm"}; }
           body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white; }
           
           body * {
@@ -187,14 +153,14 @@ export function AdminOrderDetail() {
           
           /* Force only our printable layouts to print */
           .print-only {
-            display: ${printStickerOnly ? "none" : "block"} !important;
+            display: ${printStickerOnly ?"none" :"block"} !important;
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
           }
           .sticker-print-only {
-            display: ${printStickerOnly ? "block" : "none"} !important;
+            display: ${printStickerOnly ?"block" :"none"} !important;
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
@@ -206,7 +172,7 @@ export function AdminOrderDetail() {
       </style>
 
       {/* PRINT-ONLY INVOICE LAYOUT */}
-      <div className="hidden print-only bg-white text-black text-sm p-0 w-full h-full relative">
+      <div className="hidden print-only bg-white text-black text-[11px] p-0 w-full h-full relative">
         <InvoiceTemplate order={order} />
       </div>
 
@@ -233,10 +199,10 @@ export function AdminOrderDetail() {
             </button>
             <div>
               <div className="flex items-center gap-3">
-                <h2 className="text-[24px] font-bold text-on-surface font-display">
+                <h2 className="text-[24px] font-bold text-on-surface">
                   {order.id}
                 </h2>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${order.payment === "Paid" ? "bg-emerald-100 text-emerald-700" : order.payment === "COD" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
+                <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${order.payment ==="Paid" ?"bg-emerald-100 text-emerald-700" : order.payment ==="COD" ?"bg-amber-100 text-amber-700" :"bg-red-100 text-red-700"}`}>
                   {order.payment}
                 </span>
               </div>
@@ -264,7 +230,7 @@ export function AdminOrderDetail() {
               View Invoice
             </button>
             <a
-              href={`https://wa.me/${order.phone.replace(/[^0-9]/g, "")}`}
+              href={`https://wa.me/${order.phone.replace(/[^0-9]/g,"")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-2xl text-[12px] font-bold hover:bg-green-700 hover:shadow-lg transition-all active:scale-[0.98]"
@@ -291,7 +257,7 @@ export function AdminOrderDetail() {
                   <button
                     key={s}
                     onClick={() => updateOrderStatus(order.id, s)}
-                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-[12px] font-bold cursor-pointer transition-all border-2 active:scale-[0.96] ${order.status === s ? statusColors[s] + " shadow-sm" : "border-surface-container-highest/60 text-outline hover:border-slate-900-container/30 hover:text-black"}`}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-[12px] font-bold cursor-pointer transition-all border-2 active:scale-[0.96] ${order.status === s ? statusColors[s] +" shadow-sm" :"border-surface-container-highest/60 text-outline hover:border-slate-900-container/30 hover:text-black"}`}
                   >
                     <span className="material-symbols-outlined text-[16px]">
                       {statusIcons[s]}
@@ -303,27 +269,21 @@ export function AdminOrderDetail() {
               
               {/* Progress Track */}
               <div className="mt-8 pt-6 border-t border-surface-container-highest/60 flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
-                {[
-                  "Pending",
-                  "Confirmed",
-                  "Packed",
-                  "Shipped",
-                  "Out for Delivery",
-                  "Delivered",
+                {["Pending","Confirmed","Packed","Shipped","Out for Delivery","Delivered",
                 ].map((s, i, arr) => {
                   const idx = arr.indexOf(order.status);
-                  const active = i <= idx && order.status !== "Cancelled" && order.status !== "Returned" && order.status !== "Refunded";
+                  const active = i <= idx && order.status !=="Cancelled" && order.status !=="Returned" && order.status !=="Refunded";
                   return (
                     <React.Fragment key={s}>
                       <div
                         title={s}
-                        className={`w-10 h-10 rounded-full flex flex-col items-center justify-center text-[18px] shrink-0 transition-colors ${active ? "bg-slate-100 text-black" : "bg-surface-container-low text-outline-variant"}`}
+                        className={`w-10 h-10 rounded-full flex flex-col items-center justify-center text-[18px] shrink-0 transition-colors ${active ?"bg-slate-100 text-black" :"bg-surface-container-low text-outline-variant"}`}
                       >
                         <span className="material-symbols-outlined text-[18px]">{statusIcons[s]}</span>
                       </div>
                       {i < arr.length - 1 && (
                         <div
-                          className={`flex-1 min-w-[20px] h-1 ${i < idx && active ? "bg-slate-100" : "bg-surface-container-highest"}`}
+                          className={`flex-1 min-w-[20px] h-1 ${i < idx && active ?"bg-slate-100" :"bg-surface-container-highest"}`}
                         />
                       )}
                     </React.Fragment>
@@ -345,7 +305,7 @@ export function AdminOrderDetail() {
                     <span className="material-symbols-outlined text-[20px] text-amber-600">account_balance_wallet</span>
                     <h2 className="text-[15px] font-bold text-on-surface">COD Reconciliation & Settlement</h2>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                  <span className={`text-[11px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
                     order.rawOrder?.settlementStatus === 'Settled' 
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-amber-100 text-amber-700'
@@ -356,15 +316,15 @@ export function AdminOrderDetail() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div className="bg-surface p-3.5 rounded-xl border border-outline-variant/20">
-                    <span className="block text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Total COD Volume</span>
+                    <span className="block text-[11px] text-outline font-bold uppercase tracking-wider mb-1">Total COD Volume</span>
                     <span className="text-[14px] font-bold text-on-surface">₹{order.total.toLocaleString()}</span>
                   </div>
                   <div className="bg-surface p-3.5 rounded-xl border border-outline-variant/20">
-                    <span className="block text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Courier Deductions</span>
+                    <span className="block text-[11px] text-outline font-bold uppercase tracking-wider mb-1">Courier Deductions</span>
                     <span className="text-[14px] font-bold text-amber-700">₹{order.rawOrder?.courierCharges || settlementCharges}</span>
                   </div>
                   <div className="bg-surface p-3.5 rounded-xl border border-outline-variant/20">
-                    <span className="block text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Bank Payout Amount</span>
+                    <span className="block text-[11px] text-outline font-bold uppercase tracking-wider mb-1">Bank Payout Amount</span>
                     <span className="text-[14px] font-bold text-green-700">
                       ₹{order.rawOrder?.settlementStatus === 'Settled' 
                         ? (order.rawOrder?.settledAmount || (order.total - (order.rawOrder?.courierCharges || 150))).toLocaleString()
@@ -376,23 +336,23 @@ export function AdminOrderDetail() {
 
                 {order.rawOrder?.settlementStatus !== 'Settled' ? (
                   <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100 space-y-3">
-                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                    <p className="text-[11px] sm:text-[11px] text-amber-800 leading-relaxed">
                       This order is marked as <strong>{order.payment}</strong>. The courier partner ({order.courierPartner || 'Delhivery'}) has collected the cash. Adjust and enter the actual shipping + COD handling fees below to reconcile the remittance to our bank.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 items-end">
                       <div className="w-full sm:w-1/2 text-left">
-                        <label className="block text-[9px] uppercase font-bold text-secondary mb-1">Adjust Courier Fee (₹)</label>
+                        <label className="block text-[11px] sm:text-[11px] sm:text-[11px] uppercase font-bold text-secondary mb-1">Adjust Courier Fee (₹)</label>
                         <input
                           type="number"
                           value={settlementCharges}
                           onChange={(e) => setSettlementCharges(Math.max(0, Number(e.target.value)))}
-                          className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-amber-500 transition-colors"
+                          className="w-full bg-white border border-outline-variant rounded p-2 text-[11px] outline-none focus:border-amber-500 transition-colors"
                         />
                       </div>
                       <button
                         onClick={handleReconcileCOD}
                         disabled={order.status !== 'Delivered'}
-                        className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-all ${
+                        className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-all ${
                           order.status === 'Delivered'
                             ? 'bg-amber-500 hover:bg-amber-600 text-white active:scale-[0.98]'
                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -403,8 +363,8 @@ export function AdminOrderDetail() {
                       </button>
                     </div>
                     {order.status !== 'Delivered' && (
-                      <p className="text-[9px] text-red-500">
-                        * Reconciliation can only be executed once status is updated to "Delivered" via agent scan or manual override.
+                      <p className="text-[11px] sm:text-[11px] sm:text-[11px] text-red-500">
+                        * Reconciliation can only be executed once status is updated to"Delivered" via agent scan or manual override.
                       </p>
                     )}
                   </div>
@@ -413,7 +373,7 @@ export function AdminOrderDetail() {
                     <span className="material-symbols-outlined text-[18px] text-green-700 mt-0.5">check_circle</span>
                     <div className="space-y-1">
                       <p className="text-[12px] font-bold text-green-800">Remittance Fully Settled</p>
-                      <p className="text-[11px] text-green-700/80 leading-relaxed">
+                      <p className="text-[11px] sm:text-[11px] text-green-700/80 leading-relaxed">
                         Reconciled successfully! Net payout of <strong>₹{order.rawOrder?.settledAmount || (order.total - order.rawOrder?.courierCharges)}</strong> was received in the studio's bank account after deducting courier fees of <strong>₹{order.rawOrder?.courierCharges}</strong>.
                       </p>
                     </div>
@@ -465,7 +425,7 @@ export function AdminOrderDetail() {
                 <span className="text-[16px] font-bold text-on-surface">
                   Grand Total
                 </span>
-                <span className="text-[24px] font-bold text-black font-display">
+                <span className="text-[24px] font-bold text-black">
                   ₹{order.total.toLocaleString()}
                 </span>
               </div>
@@ -485,21 +445,21 @@ export function AdminOrderDetail() {
               
               <h2 className="text-[15px] font-bold text-on-surface mb-4 flex items-center justify-between">
                 <span>Enterprise Logistics</span>
-                <span className="text-[10px] bg-slate-100 text-black px-2 py-0.5 rounded font-bold uppercase tracking-wider">{order.courierPartner || "Delhivery"}</span>
+                <span className="text-[11px] bg-slate-100 text-black px-2 py-0.5 rounded font-bold uppercase tracking-wider">{order.courierPartner ||"Delhivery"}</span>
               </h2>
               
               <div className="space-y-2.5 mb-5 bg-surface p-4 rounded-xl">
                 <div className="flex justify-between items-center text-[12px]">
                   <span className="text-outline font-medium">Tracking AWB</span>
-                  <span className="font-bold text-on-surface">{order.trackingNumber || "N/A"}</span>
+                  <span className="font-bold text-on-surface">{order.trackingNumber ||"N/A"}</span>
                 </div>
                 <div className="flex justify-between items-center text-[12px]">
                   <span className="text-outline font-medium">Invoice No</span>
-                  <span className="font-bold text-on-surface">{order.invoiceNumber || "N/A"}</span>
+                  <span className="font-bold text-on-surface">{order.invoiceNumber ||"N/A"}</span>
                 </div>
                 <div className="flex justify-between items-center text-[12px]">
                   <span className="text-outline font-medium">Package</span>
-                  <span className="font-bold text-on-surface">{order.packageType || "Box"} ({order.weight || "1.0"}kg)</span>
+                  <span className="font-bold text-on-surface">{order.packageType ||"Box"} ({order.weight ||"1.0"}kg)</span>
                 </div>
               </div>
 
@@ -510,7 +470,7 @@ export function AdminOrderDetail() {
               )}
               
               <div className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-outline-variant/50 rounded-xl bg-white">
-                <span className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-2">Scan to Track</span>
+                <span className="text-[11px] font-bold text-outline-variant uppercase tracking-widest mb-2">Scan to Track</span>
                 <QRCodeSVG value={trackingQR} size={110} level="M" />
               </div>
             </motion.div>
@@ -525,9 +485,9 @@ export function AdminOrderDetail() {
               </h2>
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-container/30 to-primary/10 flex items-center justify-center border border-slate-900-container/40">
-                  <span className="text-[14px] font-bold text-black font-display">
+                  <span className="text-[14px] font-bold text-black">
                     {order.customer
-                      .split(" ")
+                      .split("")
                       .map((n) => n[0])
                       .join("")}
                   </span>
@@ -536,7 +496,7 @@ export function AdminOrderDetail() {
                   <p className="text-[14px] font-bold text-on-surface">
                     {order.customer}
                   </p>
-                  <p className="text-[11px] text-outline font-medium">{order.email}</p>
+                  <p className="text-[11px] sm:text-[11px] text-outline font-medium">{order.email}</p>
                 </div>
               </div>
               <div className="space-y-3.5 bg-surface p-4 rounded-xl border border-surface-container-highest/40">
@@ -546,7 +506,7 @@ export function AdminOrderDetail() {
                   </span>
                   <div>
                     <span className="block font-medium text-on-surface">{order.phone}</span>
-                    {order.shippingAddress?.alternatePhone && <span className="block text-[11px] mt-0.5">Alt: {order.shippingAddress.alternatePhone}</span>}
+                    {order.shippingAddress?.alternatePhone && <span className="block text-[11px] sm:text-[11px] mt-0.5">Alt: {order.shippingAddress.alternatePhone}</span>}
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5 text-[12px] text-outline">
@@ -555,7 +515,7 @@ export function AdminOrderDetail() {
                   </span>
                   <div className="leading-relaxed">
                     <span className="block text-on-surface">{order.address}</span>
-                    {order.shippingAddress?.landmark && <span className="block text-[11px] font-medium mt-1 text-black">Landmark: {order.shippingAddress.landmark}</span>}
+                    {order.shippingAddress?.landmark && <span className="block text-[11px] sm:text-[11px] font-medium mt-1 text-black">Landmark: {order.shippingAddress.landmark}</span>}
                   </div>
                 </div>
                 {order.needByDate && (
@@ -567,9 +527,9 @@ export function AdminOrderDetail() {
                       <span className="block font-bold text-emerald-800">Required Need-By Date</span>
                       <span className="block font-medium text-emerald-700 mt-0.5">
                         {new Date(order.needByDate).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
+                          day:"numeric",
+                          month:"short",
+                          year:"numeric",
                         })}
                       </span>
                     </div>
@@ -588,9 +548,9 @@ export function AdminOrderDetail() {
 
             {/* Actions */}
             <motion.div variants={fadeUp} className="space-y-3">
-              {order.status !== "Cancelled" && order.status !== "Delivered" && order.status !== "Refunded" && (
+              {order.status !=="Cancelled" && order.status !=="Delivered" && order.status !=="Refunded" && (
                 <button
-                  onClick={() => updateOrderStatus(order.id, "Cancelled")}
+                  onClick={() => updateOrderStatus(order.id,"Cancelled")}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-red-200 text-red-600 bg-red-50/50 rounded-2xl text-[12px] font-bold hover:bg-red-100 cursor-pointer transition-all active:scale-[0.98]"
                 >
                   <span className="material-symbols-outlined text-[16px]">

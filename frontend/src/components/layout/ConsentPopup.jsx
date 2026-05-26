@@ -67,7 +67,7 @@ export function ConsentPopup() {
             icon: "✦",
             style: {
               background: "#faf9f6",
-              color: "#735c00",
+              color: "var(--color-gold-dark)",
               border: "1px solid #d0c5af",
               fontFamily: "'Playfair Display', serif",
             },
@@ -119,16 +119,16 @@ export function ConsentPopup() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 80, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 260, damping: 26 }}
-          className="pointer-events-auto w-full max-w-xl md:max-w-2xl bg-white/80 backdrop-blur-xl border border-[#735c00]/15 shadow-[0_20px_50px_rgba(115,92,0,0.1)] rounded-2xl p-5 sm:p-6 text-on-surface"
+          className="pointer-events-auto w-full max-w-xl md:max-w-2xl bg-white/80 backdrop-blur-xl border border-[var(--color-gold-dark)]/15 shadow-[0_20px_50px_rgba(115,92,0,0.1)] rounded-2xl p-5 sm:p-6 text-on-surface"
         >
           {view === "banner" ? (
             <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-5">
               <div className="flex-1 text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-2.5 mb-2.5">
-                  <span className="material-symbols-outlined text-[#735c00] text-xl animate-pulse">
+                  <span className="material-symbols-outlined text-[var(--color-gold-dark)] text-xl animate-pulse">
                     verified_user
                   </span>
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-[#735c00] font-sans">
+                  <h3 className="font-bold text-xs uppercase tracking-widest text-[var(--color-gold-dark)] font-sans">
                     Artistry & Privacy Choices
                   </h3>
                 </div>
@@ -149,7 +149,7 @@ export function ConsentPopup() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleAcceptAll}
-                  className="bg-[#735c00] text-white rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest hover:bg-zinc-900 transition-colors shadow-md cursor-pointer text-center"
+                  className="bg-[var(--color-gold-dark)] text-white rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest hover:bg-zinc-900 transition-colors shadow-md cursor-pointer text-center"
                 >
                   Accept All
                 </motion.button>
@@ -158,7 +158,7 @@ export function ConsentPopup() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setView("details")}
-                  className="border border-[#735c00]/30 hover:border-[#735c00] text-[#735c00] rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest transition-colors cursor-pointer text-center"
+                  className="border border-[var(--color-gold-dark)]/30 hover:border-[var(--color-gold-dark)] text-[var(--color-gold-dark)] rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest transition-colors cursor-pointer text-center"
                 >
                   Configure
                 </motion.button>
@@ -173,15 +173,15 @@ export function ConsentPopup() {
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="flex items-center justify-between border-b border-[#735c00]/10 pb-3">
+              <div className="flex items-center justify-between border-b border-[var(--color-gold-dark)]/10 pb-3">
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => setView("banner")} 
-                    className="material-symbols-outlined text-zinc-400 hover:text-[#735c00] text-lg cursor-pointer"
+                    className="material-symbols-outlined text-zinc-400 hover:text-[var(--color-gold-dark)] text-lg cursor-pointer"
                   >
                     arrow_back
                   </button>
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-[#735c00] font-sans">
+                  <h3 className="font-bold text-xs uppercase tracking-widest text-[var(--color-gold-dark)] font-sans">
                     Detailed Consent Settings
                   </h3>
                 </div>
@@ -199,7 +199,7 @@ export function ConsentPopup() {
                       disabled
                       checked
                       aria-label="Core Platform Operations (Always Active)"
-                      className="w-4 h-4 rounded text-[#735c00] border-zinc-300 focus:ring-[#735c00] cursor-not-allowed accent-[#735c00]"
+                      className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-not-allowed accent-[var(--color-gold-dark)]"
                     />
                   </div>
                   <div className="flex-1">
@@ -214,14 +214,14 @@ export function ConsentPopup() {
                 </div>
 
                 {/* Preference 2: Personalized Recommendations */}
-                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl hover:border-[#735c00]/25 transition-colors">
+                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl hover:border-[var(--color-gold-dark)]/25 transition-colors">
                   <div className="mt-1">
                     <input
                       type="checkbox"
                       id="consent-recs"
                       checked={preferences.personalizedRecommendations}
                       onChange={(e) => setPreferences({ ...preferences, personalizedRecommendations: e.target.checked })}
-                      className="w-4 h-4 rounded text-[#735c00] border-zinc-300 focus:ring-[#735c00] cursor-pointer accent-[#735c00]"
+                      className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-pointer accent-[var(--color-gold-dark)]"
                     />
                   </div>
                   <label htmlFor="consent-recs" className="flex-1 cursor-pointer">
@@ -233,14 +233,14 @@ export function ConsentPopup() {
                 </div>
 
                 {/* Preference 3: Marketing Emails */}
-                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl hover:border-[#735c00]/25 transition-colors">
+                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl hover:border-[var(--color-gold-dark)]/25 transition-colors">
                   <div className="mt-1">
                     <input
                       type="checkbox"
                       id="consent-marketing"
                       checked={preferences.marketingEmails}
                       onChange={(e) => setPreferences({ ...preferences, marketingEmails: e.target.checked })}
-                      className="w-4 h-4 rounded text-[#735c00] border-zinc-300 focus:ring-[#735c00] cursor-pointer accent-[#735c00]"
+                      className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-pointer accent-[var(--color-gold-dark)]"
                     />
                   </div>
                   <label htmlFor="consent-marketing" className="flex-1 cursor-pointer">
@@ -252,14 +252,14 @@ export function ConsentPopup() {
                 </div>
 
                 {/* Preference 4: Update Notifications */}
-                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl hover:border-[#735c00]/25 transition-colors">
+                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl hover:border-[var(--color-gold-dark)]/25 transition-colors">
                   <div className="mt-1">
                     <input
                       type="checkbox"
                       id="consent-updates"
                       checked={preferences.updateNotifications}
                       onChange={(e) => setPreferences({ ...preferences, updateNotifications: e.target.checked })}
-                      className="w-4 h-4 rounded text-[#735c00] border-zinc-300 focus:ring-[#735c00] cursor-pointer accent-[#735c00]"
+                      className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-pointer accent-[var(--color-gold-dark)]"
                     />
                   </div>
                   <label htmlFor="consent-updates" className="flex-1 cursor-pointer">
@@ -273,7 +273,7 @@ export function ConsentPopup() {
               </div>
 
               {/* Preferences Footer Actions */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#735c00]/10 pt-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[var(--color-gold-dark)]/10 pt-4">
                 <button
                   onClick={handleDeclineAll}
                   className="text-[10px] text-zinc-400 hover:text-zinc-950 font-medium cursor-pointer font-sans"
@@ -286,7 +286,7 @@ export function ConsentPopup() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleCustomSave}
-                    className="bg-[#735c00] text-white rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest hover:bg-zinc-900 transition-colors shadow-sm cursor-pointer text-center flex-1 sm:flex-none"
+                    className="bg-[var(--color-gold-dark)] text-white rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest hover:bg-zinc-900 transition-colors shadow-sm cursor-pointer text-center flex-1 sm:flex-none"
                   >
                     Commit My Preferences
                   </motion.button>

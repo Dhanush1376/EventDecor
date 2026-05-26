@@ -10,6 +10,8 @@ import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { couponService, cmsService } from "../services/domainServices";
 import { useAuth } from "../context/AuthContext";
 import { useApi } from "../hooks/useApi";
+import { CartSkeleton } from "../components/ui/Skeleton";
+import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
 
 export function Cart() {
   const { items, removeItem, updateQuantity, subtotal, cartCount, addItem } =
@@ -18,8 +20,19 @@ export function Cart() {
   const { runProtectedAction } = useAuth();
   const navigate = useNavigate();
 
+  // Track cart page view
+  useRecommendationTracker({
+    targetType: 'page',
+    targetId: 'cart',
+    source: 'cart'
+  });
+
   const { data: settingsData, loading: settingsLoading } = useApi(cmsService.getSection, "storeSettings");
   const settings = settingsData?.data || {};
+
+  if (settingsLoading) {
+    return <CartSkeleton />;
+  }
 
   // Standard eCommerce features: Coupon input, Gift packaging toggle, Saved for Later array
   const [couponInput, setCouponInput] = useState("");

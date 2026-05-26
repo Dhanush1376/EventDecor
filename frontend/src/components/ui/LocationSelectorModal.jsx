@@ -499,7 +499,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
                   className="bg-[#FAF6F0] p-4.5 rounded-[1.5rem] border border-[#C4A87C]/20 flex flex-col sm:flex-row gap-3 items-start justify-between relative overflow-hidden"
                 >
                   <div className="space-y-1 z-10 flex-1">
-                    <span className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block mb-1">Selected Destination Blueprint</span>
+                    <span className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-1">Selected Destination Blueprint</span>
                     <h4 className="text-sm font-semibold text-black leading-tight flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-primary text-[18px]">storefront</span>
                       {selectedLocation.name}

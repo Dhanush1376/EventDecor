@@ -35,8 +35,9 @@ export function ProductListing() {
   const [activeCategory, setActiveCategory] = useState(categoryParam);
   const [sortBy, setSortBy] = useState("Popularity");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isSticky, setIsSticky] = useState(false);
-  const sentinelRef = React.useRef(null);
+  const [navbarHeight, setNavbarHeight] = useState(0);
+  const [isStuck, setIsStuck] = useState(false);
+  const navRef = React.useRef(null);
   const [activeProduct, setActiveProduct] = useState(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(pageParam);
@@ -221,18 +222,27 @@ export function ProductListing() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (sentinelRef.current) {
-        const rect = sentinelRef.current.getBoundingClientRect();
-        const isMobile = window.innerWidth < 768;
-        const negativeMargin = isMobile ? 24 : 32;
-        setIsSticky(rect.top <= 60 + negativeMargin);
+    const measure = () => {
+      const topNav = document.querySelector('.top-navbar');
+      let currentNavHeight = navbarHeight;
+      if (topNav) {
+        currentNavHeight = topNav.getBoundingClientRect().height;
+        setNavbarHeight(currentNavHeight);
+      }
+      
+      if (navRef.current) {
+        const rect = navRef.current.getBoundingClientRect();
+        setIsStuck(rect.top <= currentNavHeight + 1);
       }
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    window.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure, { passive: true });
+    measure();
+    return () => {
+      window.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, [navbarHeight]);
 
   useEffect(() => {
     if (isFilterOpen) {
@@ -364,20 +374,18 @@ export function ProductListing() {
         </div>
       </section>
 
-      {/* Sentinel for sticky trigger */}
-      <div ref={sentinelRef} />
-
-      {/* Floating / Sticky Navigation Bar Wrapper to prevent layout shift and glitching */}
-      <div className={isSticky ? "h-[68px] lg:h-[76px] mb-8 md:mb-12" : ""}>
-        <nav
-          className={`z-40 transition-all duration-500 ${
-            isSticky 
-              ? "fixed top-[60px] left-0 w-full bg-transparent border-transparent py-2 px-margin-mobile md:px-margin-desktop pointer-events-none" 
-              : "relative -mt-6 md:-mt-8 mb-8 md:mb-12 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop"
-          }`}
-        >
+      {/* Sticky Search / Filter / Category Navigation Bar */}
+      <nav
+        ref={navRef}
+        className={`sticky -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${isStuck ? 'px-0' : 'px-margin-mobile md:px-margin-desktop'}`}
+        style={{ top: `${navbarHeight}px`, zIndex: 49 }}
+      >
           <div
-            className="transition-all duration-500 border flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 bg-white/90 backdrop-blur-xl border-black/5 shadow-md rounded-[2rem] p-3 md:p-4 w-full pointer-events-auto max-w-max-width mx-auto"
+            className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
+              isStuck 
+                ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 px-margin-mobile md:px-margin-desktop w-full max-w-none' 
+                : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 w-full max-w-max-width'
+            }`}
           >
             {/* Search Bar & Mobile Filter Toggle */}
             <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
@@ -438,7 +446,6 @@ export function ProductListing() {
             </div>
           </div>
         </nav>
-      </div>
 
       {/* Flash Sale Banner - Cinematic Luxury Redesign */}
       {promoCoupon && (

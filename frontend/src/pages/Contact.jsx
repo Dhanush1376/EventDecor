@@ -5,11 +5,15 @@ import { SEO } from "../components/seo/SEO";
 import { Link } from "react-router-dom";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { inquiryService } from "../services/domainServices";
+import { FormField } from "../components/ui/FormField";
+import { ContactSkeleton } from "../components/ui/Skeleton";
 import toast from "react-hot-toast";
+import { MOTION_PRESETS, EASE, DURATION } from "../constants/design-tokens";
 
 import logger from '../utils/logger';
+
 export function Contact() {
-  const { contact } = useWebsiteContent();
+  const { contact, loading } = useWebsiteContent();
   const [formState, setFormState] = useState("idle"); // idle, sending, success
   const [formData, setFormData] = useState({
     name: "",
@@ -49,8 +53,10 @@ export function Contact() {
   const contactMethods = contact?.contactMethods || [];
   const studioHours = contact?.studioHours || [];
 
+  if (loading) return <ContactSkeleton />;
+
   return (
-    <div className="bg-[#fcfbf9] min-h-screen pt-24 md:pt-32 pb-20 relative overflow-hidden selection:bg-primary/20">
+    <div className="bg-[var(--color-surface-ivory)] min-h-screen pt-24 md:pt-32 pb-20 relative overflow-hidden selection:bg-primary/20">
       <SEO
         title="Concierge | Siri Arts"
         description="Connect with our design studio for bespoke heritage decor consultations and curated event masteries."
@@ -84,24 +90,22 @@ export function Contact() {
           <div className="space-y-12">
             <div className="space-y-6">
               <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                {...MOTION_PRESETS.fadeIn}
                 className="font-label-sm text-[12px] text-primary uppercase tracking-[0.4em] font-bold block"
               >
                 Connect with our Studio
               </motion.span>
               <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                {...MOTION_PRESETS.fadeInUp}
                 className="font-display text-4xl md:text-6xl text-on-surface leading-[1.1]"
               >
                 Let's Curate Your <br />
-                <span className="italic">Masterpiece.</span>
+                <span>Masterpiece.</span>
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+                transition={{ delay: 0.1, duration: DURATION.slow, ease: EASE.smooth }}
                 className="font-body text-on-surface-variant/70 text-lg leading-relaxed max-w-lg"
               >
                 Whether you're planning a grand royal wedding or a sacred
@@ -118,14 +122,14 @@ export function Contact() {
                   href={method.link}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + idx * 0.1 }}
+                  transition={{ delay: 0.2 + idx * 0.1, duration: DURATION.slow, ease: EASE.smooth }}
                   className="group block space-y-3"
                 >
                   <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-primary text-[20px] group-hover:scale-110 transition-transform">
                       {method.icon}
                     </span>
-                    <span className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/40 font-bold">
+                    <span className="form-label !mb-0 !ml-0">
                       {method.title}
                     </span>
                   </div>
@@ -136,58 +140,42 @@ export function Contact() {
               ))}
             </div>
 
-            {/* Studio Hours */}
-            <div className="p-8 bg-surface-container-low rounded-[2rem] border border-outline-variant/30">
-              <span className="font-label-sm text-[10px] uppercase tracking-widest text-primary font-bold block mb-4">
-                Studio Availability
-              </span>
-              <div className="space-y-2">
-                {studioHours.map((hour, idx) => (
-                  <div key={idx} className="flex justify-between font-body text-[14px]">
-                    <span className="text-on-surface-variant">
-                      {hour.days}
-                    </span>
-                    <span className="text-on-surface font-medium">
-                      {hour.hours}
-                    </span>
-                  </div>
-                ))}
-                <div className="pt-2 text-[12px] text-on-surface-variant/50 italic">
-                  *Sunday by prior appointment only.
-                </div>
-              </div>
-            </div>
+
           </div>
 
-          {/* Right Side: Contact Form Card */}
+          {/* Right Side: Redesigned Luxury Minimalistic Form Card */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-luxury border border-outline-variant/20 relative overflow-hidden"
+            transition={{ duration: DURATION.slow, ease: EASE.smooth }}
+            className="bg-gradient-to-b from-[#fcfbf9]/95 to-[#f4f1ea]/90 backdrop-blur-xl border border-[#d0c5af]/30 p-8 md:p-12 relative overflow-hidden rounded-[32px] shadow-[0_32px_80px_-10px_rgba(27,24,20,0.12)]"
           >
+            {/* Top gold accent line */}
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-primary/30 via-primary to-primary/30" />
+
             {/* Success Overlay */}
             <AnimatePresence>
               {formState === "success" && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center text-center p-8"
+                  className="absolute inset-0 bg-white/95 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center p-8 rounded-[32px]"
                 >
-                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                    <span className="material-symbols-outlined text-primary text-4xl">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                    <span className="material-symbols-outlined text-primary text-3xl">
                       check_circle
                     </span>
                   </div>
-                  <h2 className="font-display text-3xl text-on-surface mb-4">
-                    Message Received.
+                  <h2 className="font-display text-2xl text-on-surface mb-3 tracking-tight">
+                    Message Received
                   </h2>
-                  <p className="font-body text-on-surface-variant/70 mb-8 max-w-xs">
+                  <p className="font-body text-on-surface-variant/70 text-xs mb-8 max-w-[260px] leading-relaxed">
                     Our design concierge will review your inquiry and respond
                     within 24 business hours.
                   </p>
                   <button
                     onClick={() => setFormState("idle")}
-                    className="btn-minimal"
+                    className="btn-minimal text-[10px] tracking-widest uppercase font-bold"
                   >
                     Send Another Message
                   </button>
@@ -195,47 +183,49 @@ export function Contact() {
               )}
             </AnimatePresence>
 
+            <div className="flex items-center gap-2 mb-8 select-none">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="font-label text-[9px] uppercase tracking-[0.25em] text-primary font-bold">Studio Concierge</span>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="contact-name" className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
-                    Your Name
+                <div className="relative group">
+                  <label htmlFor="contact-name" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
+                    Your Name <span className="text-error font-normal">*</span>
                   </label>
                   <input
                     id="contact-name"
-                    required
                     type="text"
+                    required
                     autoComplete="name"
                     placeholder="Full Name"
-                    className="w-full bg-[#f8f7f4] border-none rounded-2xl px-6 py-4 font-body text-[15px] focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-white/50 text-[13px] text-stone-900 placeholder:text-stone-400 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="contact-email" className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
-                    Digital Mail
+
+                <div className="relative group">
+                  <label htmlFor="contact-email" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
+                    Digital Mail <span className="text-error font-normal">*</span>
                   </label>
                   <input
                     id="contact-email"
-                    required
                     type="email"
+                    required
                     autoComplete="email"
                     placeholder="email@example.com"
-                    className="w-full bg-[#f8f7f4] border-none rounded-2xl px-6 py-4 font-body text-[15px] focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full bg-white/50 text-[13px] text-stone-900 placeholder:text-stone-400 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="contact-phone" className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
+                <div className="relative group">
+                  <label htmlFor="contact-phone" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
                     Phone (Optional)
                   </label>
                   <input
@@ -243,71 +233,72 @@ export function Contact() {
                     type="tel"
                     autoComplete="tel"
                     placeholder="+91"
-                    className="w-full bg-[#f8f7f4] border-none rounded-2xl px-6 py-4 font-body text-[15px] focus:ring-2 focus:ring-primary/20 transition-all"
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full bg-white/50 text-[13px] text-stone-900 placeholder:text-stone-400 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
+
+                <div className="relative group">
+                  <label htmlFor="contact-subject" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
                     Inquiry Nature
                   </label>
-                  <select
-                    className="w-full bg-[#f8f7f4] border-none rounded-2xl px-6 py-4 font-body text-[15px] focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
-                    value={formData.subject}
-                    onChange={(e) =>
-                      setFormData({ ...formData, subject: e.target.value })
-                    }
-                  >
-                    <option>General Inquiry</option>
-                    <option>Wedding Decoration</option>
-                    <option>Pooja Setup</option>
-                    <option>Custom Product Order</option>
-                    <option>Collaboration</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="contact-subject"
+                      value={formData.subject}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      className="w-full bg-white/50 text-[13px] text-stone-900 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs appearance-none cursor-pointer"
+                    >
+                      <option value="General Inquiry">General Inquiry</option>
+                      <option value="Wedding Decoration">Wedding Decoration</option>
+                      <option value="Pooja Setup">Pooja Setup</option>
+                      <option value="Custom Product Order">Custom Product Order</option>
+                      <option value="Collaboration">Collaboration</option>
+                    </select>
+                    <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#735c00]/60 text-[16px]">
+                      unfold_more
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="font-label-sm text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold ml-4">
-                  Your Vision
+              <div className="relative group">
+                <label htmlFor="contact-message" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
+                  Your Vision <span className="text-error font-normal">*</span>
                 </label>
                 <textarea
+                  id="contact-message"
                   required
-                  rows="4"
+                  rows={4}
                   placeholder="Tell us about your event or project..."
-                  className="w-full bg-[#f8f7f4] border-none rounded-2xl px-6 py-4 font-body text-[15px] focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                   value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                ></textarea>
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  className="w-full bg-white/50 text-[13px] text-stone-900 placeholder:text-stone-400 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs resize-none"
+                />
               </div>
 
               <button
                 type="submit"
                 disabled={formState === "sending"}
-                className="w-full bg-on-surface-variant text-surface py-5 rounded-2xl font-label text-[12px] uppercase tracking-[0.3em] shadow-luxury hover:bg-primary transition-all flex items-center justify-center gap-3 disabled:opacity-50 group"
+                className="w-full py-4.5 bg-black hover:bg-[#735c00] text-white rounded-xl font-label text-[10px] uppercase tracking-[0.25em] font-bold flex items-center justify-center gap-3 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 group cursor-pointer"
               >
                 {formState === "sending" ? (
                   <>
-                    <span className="w-4 h-4 border-2 border-surface/30 border-t-surface rounded-full animate-spin"></span>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                     Transmitting...
                   </>
                 ) : (
                   <>
                     Submit Inquiry
-                    <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
+                    <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
                       trending_flat
                     </span>
                   </>
                 )}
               </button>
-              <p className="text-center font-body text-[11px] text-on-surface-variant/40 italic">
-                By submitting, you agree to our privacy policy and boutique
-                terms.
+              <p className="text-center font-body text-[10px] text-on-surface-variant/40 italic">
+                By submitting, you agree to our privacy policy and boutique terms.
               </p>
             </form>
           </motion.div>

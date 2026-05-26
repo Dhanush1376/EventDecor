@@ -1,54 +1,24 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useAdmin } from "../context/AdminContext";
-import { playSuccessBeep, playErrorBeep } from "../../utils/audioUtils";
-import toast from "react-hot-toast";
+import React, { useState, useMemo, useEffect } from"react";
+import { motion, AnimatePresence } from"framer-motion";
+import { useNavigate } from"react-router-dom";
+import { useAdmin } from"../context/AdminContext";
+import { playSuccessBeep, playErrorBeep } from"../../utils/audioUtils";
+import toast from"react-hot-toast";
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideDrawer = {
-  hidden: { x: "100%" },
+  hidden: { x:"100%" },
   show: { x: 0 },
-  exit: { x: "100%" },
+  exit: { x:"100%" },
 };
 
-const statusColors = {
-  "Pending": "text-amber-700 bg-amber-50 border-amber-200",
-  "Confirmed": "text-slate-900 bg-slate-100 border-slate-300",
-  "Packed": "text-purple-700 bg-purple-50 border-purple-200",
-  "Ready to Ship": "text-sky-700 bg-sky-50 border-sky-200",
-  "Shipped": "text-blue-700 bg-slate-100 border-slate-300",
-  "Out for Delivery": "text-teal-700 bg-teal-50 border-teal-200",
-  "Delivered": "text-emerald-700 bg-emerald-50 border-emerald-250",
-  "Cancelled": "text-rose-700 bg-rose-50 border-rose-200",
-  "Returned": "text-slate-650 bg-slate-50 border-slate-200",
-  "Refunded": "text-slate-500 bg-slate-50 border-slate-200",
+const statusColors = {"Pending":"text-amber-700 bg-amber-50 border-amber-200","Confirmed":"text-slate-900 bg-slate-100 border-slate-300","Packed":"text-purple-700 bg-purple-50 border-purple-200","Ready to Ship":"text-sky-700 bg-sky-50 border-sky-200","Shipped":"text-blue-700 bg-slate-100 border-slate-300","Out for Delivery":"text-teal-700 bg-teal-50 border-teal-200","Delivered":"text-emerald-700 bg-emerald-50 border-emerald-250","Cancelled":"text-rose-700 bg-rose-50 border-rose-200","Returned":"text-slate-650 bg-slate-50 border-slate-200","Refunded":"text-slate-500 bg-slate-50 border-slate-200",
 };
 
-const statusIcons = {
-  "Pending": "schedule",
-  "Confirmed": "thumb_up",
-  "Packed": "inventory_2",
-  "Ready to Ship": "conveyor_belt",
-  "Shipped": "local_shipping",
-  "Out for Delivery": "directions_run",
-  "Delivered": "verified",
-  "Cancelled": "cancel",
-  "Returned": "keyboard_return",
-  "Refunded": "payments",
+const statusIcons = {"Pending":"schedule","Confirmed":"thumb_up","Packed":"inventory_2","Ready to Ship":"conveyor_belt","Shipped":"local_shipping","Out for Delivery":"directions_run","Delivered":"verified","Cancelled":"cancel","Returned":"keyboard_return","Refunded":"payments",
 };
 
-const allStatuses = [
-  "Pending",
-  "Confirmed",
-  "Packed",
-  "Ready to Ship",
-  "Shipped",
-  "Out for Delivery",
-  "Delivered",
-  "Cancelled",
-  "Returned",
-  "Refunded",
+const allStatuses = ["Pending","Confirmed","Packed","Ready to Ship","Shipped","Out for Delivery","Delivered","Cancelled","Returned","Refunded",
 ];
 
 export function AdminOrders() {
@@ -86,7 +56,7 @@ export function AdminOrders() {
 
   // Capture physical barcode scanner keyboard inputs
   useEffect(() => {
-    let buffer = "";
+    let buffer ="";
     let lastKeyTime = Date.now();
 
     const handleKeyPress = (e) => {
@@ -94,24 +64,24 @@ export function AdminOrders() {
       
       // Fast barcode keyboard sweeps (< 50ms)
       if (currentTime - lastKeyTime > 50) {
-        buffer = "";
+        buffer ="";
       }
       lastKeyTime = currentTime;
 
-      if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") {
+      if (e.key ==="Shift" || e.key ==="Control" || e.key ==="Alt" || e.key ==="Meta") {
         return;
       }
 
-      if (e.key === "Enter") {
+      if (e.key ==="Enter") {
         if (buffer.length >= 3) {
           const scannedCode = buffer.trim().toUpperCase();
-          buffer = "";
+          buffer ="";
           
           const matchedOrder = orders.find((o) => {
             const cleanId = o.id.toUpperCase();
-            const cleanAWB = (o.trackingNumber || "").toUpperCase();
+            const cleanAWB = (o.trackingNumber ||"").toUpperCase();
             const customBarcode = `SR-${o.id.substring(o.id.length - 8).toUpperCase()}-IN`;
-            const invoiceNum = (o.invoiceNumber || "").toUpperCase();
+            const invoiceNum = (o.invoiceNumber ||"").toUpperCase();
             return (
               scannedCode === cleanId ||
               scannedCode === cleanAWB ||
@@ -127,7 +97,7 @@ export function AdminOrders() {
             navigate(`/admin/orders/${matchedOrder.id}`);
           } else {
             playErrorBeep();
-            toast.error(`Scan mismatch! Code "${scannedCode}" not found in orders list.`);
+            toast.error(`Scan mismatch! Code"${scannedCode}" not found in orders list.`);
           }
         }
         return;
@@ -151,7 +121,7 @@ export function AdminOrders() {
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
-      const matchStatus = filterStatus === "All" || o.status === filterStatus;
+      const matchStatus = filterStatus ==="All" || o.status === filterStatus;
       const matchSearch =
         !searchQuery ||
         o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -175,15 +145,15 @@ export function AdminOrders() {
       return toast.error("No orders found to export");
     }
 
-    const headers = "Order ID,Customer,Phone,Items Summary,Total Amount,Payment Type,Status,Order Date\n";
+    const headers ="Order ID,Customer,Phone,Items Summary,Total Amount,Payment Type,Status,Order Date\n";
     const rows = filteredOrders
       .map((o) => {
-        const itemsList = o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(" | ");
+        const itemsList = o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(" |");
         return `"${o.id}","${o.customer}","${o.phone}","${itemsList}",${o.total},"${o.payment}","${o.status}","${o.date}"`;
       })
       .join("\n");
 
-    const blob = new Blob([headers + rows], { type: "text/csv" });
+    const blob = new Blob([headers + rows], { type:"text/csv" });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
@@ -202,10 +172,10 @@ export function AdminOrders() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="text-left">
-          <h2 className="text-[22px] font-bold text-slate-900 tracking-tight">
+          <h2 className="text-[11px] sm:text-[11px] font-bold text-slate-900 tracking-tight">
             Inquiry & Order Hub
           </h2>
-          <p className="text-[12px] text-slate-500 mt-0.5">
+          <p className="text-[11px] sm:text-[11px] text-slate-500 mt-1">
             {orders.length} transactions managing handcrafted traditional setups
           </p>
         </div>
@@ -215,8 +185,8 @@ export function AdminOrders() {
           <div className="flex bg-slate-100 border border-slate-200/60 rounded-xl p-0.5 shadow-xs">
             <button
               onClick={() => setViewMode("table")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider cursor-pointer transition-all ${
-                viewMode === "table" ? "bg-white text-slate-900 shadow-xs border border-slate-200/30" : "text-slate-500 hover:text-slate-800"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+                viewMode ==="table" ?"bg-white text-slate-900 shadow-xs border border-slate-200/30" :"text-slate-500 hover:text-slate-800"
               }`}
             >
               <span className="material-symbols-outlined text-[15px]">view_list</span>
@@ -224,8 +194,8 @@ export function AdminOrders() {
             </button>
             <button
               onClick={() => setViewMode("kanban")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider cursor-pointer transition-all ${
-                viewMode === "kanban" ? "bg-white text-slate-900 shadow-xs border border-slate-200/30" : "text-slate-500 hover:text-slate-800"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+                viewMode ==="kanban" ?"bg-white text-slate-900 shadow-xs border border-slate-200/30" :"text-slate-500 hover:text-slate-800"
               }`}
             >
               <span className="material-symbols-outlined text-[15px]">dashboard</span>
@@ -233,7 +203,7 @@ export function AdminOrders() {
             </button>
           </div>
 
-          <button onClick={handleExportCSV} className="px-4 py-2 text-[11.5px] font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-black rounded-lg shadow-xs flex items-center gap-1.5 transition-all">
+          <button onClick={handleExportCSV} className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-black rounded-lg shadow-xs flex items-center gap-1.5 transition-all">
             <span className="material-symbols-outlined text-[16px]">
               download
             </span>
@@ -246,47 +216,47 @@ export function AdminOrders() {
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 p-5 rounded-2xl bg-white border border-slate-200 shadow-xs relative overflow-hidden text-left">
         <div className="absolute top-0 left-0 w-full h-[3px] bg-slate-200"></div>
         <div className="space-y-1">
-          <span className="block text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">COD Order Volume</span>
-          <p className="text-[18px] font-semibold text-slate-900">₹{codStats.totalVolume.toLocaleString()}</p>
-          <span className="text-[9.5px] text-slate-450">Total cash-delivery orders initiated</span>
+          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wider">COD Order Volume</span>
+          <p className="text-[11px] sm:text-[11px] font-bold text-slate-900">₹{codStats.totalVolume.toLocaleString()}</p>
+          <span className="text-[11px] text-slate-450 mt-1 block">Total cash-delivery orders initiated</span>
         </div>
         <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-slate-100 pt-3 sm:pt-0 sm:pl-5">
-          <span className="block text-[9.5px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
             Courier Collections Pending
           </span>
-          <p className="text-[18px] font-semibold text-amber-600">₹{codStats.pendingRemittance.toLocaleString()}</p>
-          <span className="text-[9.5px] text-slate-450">Cash held by agents, awaiting bank transfer</span>
+          <p className="text-[11px] sm:text-[11px] font-bold text-amber-600">₹{codStats.pendingRemittance.toLocaleString()}</p>
+          <span className="text-[11px] text-slate-450 mt-1 block">Cash held by agents, awaiting bank transfer</span>
         </div>
         <div className="space-y-1 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-5">
-          <span className="block text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">Courier Shipping Deductions</span>
-          <p className="text-[18px] font-semibold text-rose-600">₹{codStats.courierDeductions.toLocaleString()}</p>
-          <span className="text-[9.5px] text-slate-455">Aggregated logistics & COD partner fees</span>
+          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wider">Courier Shipping Deductions</span>
+          <p className="text-[11px] sm:text-[11px] font-bold text-rose-600">₹{codStats.courierDeductions.toLocaleString()}</p>
+          <span className="text-[11px] sm:text-[11px] text-slate-455">Aggregated logistics & COD partner fees</span>
         </div>
         <div className="space-y-1 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-5 bg-emerald-50/15 p-2 rounded-xl border border-emerald-100/50">
-          <span className="block text-[9.5px] text-emerald-800 font-bold uppercase tracking-wider">Net Bank Payouts</span>
-          <p className="text-[18px] font-semibold text-emerald-600">₹{codStats.settledPayouts.toLocaleString()}</p>
-          <span className="text-[9.5px] text-emerald-600/80">Reconciled remittance successfully credited</span>
+          <span className="block text-[11px] text-emerald-800 font-bold uppercase tracking-wider uppercase tracking-wider">Net Bank Payouts</span>
+          <p className="text-[11px] sm:text-[11px] font-bold text-emerald-600">₹{codStats.settledPayouts.toLocaleString()}</p>
+          <span className="text-[11px] sm:text-[11px] text-emerald-600/80">Reconciled remittance successfully credited</span>
         </div>
       </div>
 
       {/* Table Filters Tab */}
-      {viewMode === "table" && (
+      {viewMode ==="table" && (
         <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar scroll-smooth">
           {["All", ...allStatuses].map((s) => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[11.5px] font-semibold whitespace-nowrap cursor-pointer transition-all border ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider whitespace-nowrap cursor-pointer transition-all border ${
                 filterStatus === s
-                  ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                  : "bg-white text-slate-500 border-slate-200 hover:text-slate-800 hover:border-slate-350"
+                  ?"bg-slate-900 text-white border-slate-900 shadow-xs"
+                  :"bg-white text-slate-500 border-slate-200 hover:text-slate-800 hover:border-slate-350"
               }`}
             >
-              {s}{" "}
+              {s}{""}
               <span
-                className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                  filterStatus === s ? "bg-white/20 text-white" : "bg-slate-100 text-slate-450"
+                className={`px-1.5 py-0.5 rounded text-[11px] sm:text-[11px] sm:text-[11px] font-bold ${
+                  filterStatus === s ?"bg-white/20 text-white" :"bg-slate-100 text-slate-450"
                 }`}
               >
                 {statusCounts[s]}
@@ -298,7 +268,7 @@ export function AdminOrders() {
 
       {/* CONTENT SWITCHER */}
       <AnimatePresence mode="wait">
-        {viewMode === "table" ? (
+        {viewMode ==="table" ? (
           /* TABLE VIEW */
           <motion.div
             key="table"
@@ -308,18 +278,18 @@ export function AdminOrders() {
             className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs"
           >
             <div className="overflow-x-auto">
-              <table className="w-full text-[12px] border-collapse min-w-[900px]">
+              <table className="w-full text-[11px] border-collapse min-w-[900px]">
                 <thead>
                   <tr className="bg-slate-50 text-left text-slate-450 border-b border-slate-200 select-none">
-                    <th className="p-4 font-bold tracking-wider uppercase text-[9px] w-28 text-left">Order ID</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[9px] text-left">Client Info</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[9px] hidden md:table-cell text-left">Details Curation</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[9px] text-left">Total Cost</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[9px] hidden sm:table-cell text-left">Payment</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[9px] text-left">Status Indicator</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[9px] hidden lg:table-cell text-left">Curation Date</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[9px] text-left">Required Date</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[9px] text-right">Actions</th>
+                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] w-32 text-left">Order ID</th>
+                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-left">Client Info</th>
+                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] hidden md:table-cell text-left">Details Curation</th>
+                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-left">Total Cost</th>
+                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] hidden sm:table-cell text-left">Payment</th>
+                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-left">Status Indicator</th>
+                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] hidden lg:table-cell text-left">Curation Date</th>
+                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-left">Required Date</th>
+                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -343,15 +313,15 @@ export function AdminOrders() {
                         </td>
                         <td className="p-4 text-left">
                           <div className="flex flex-col">
-                            <span className="font-semibold text-slate-800 text-[12.5px]">{o.customer}</span>
-                            <span className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                            <span className="font-semibold text-slate-800 text-[11px]">{o.customer}</span>
+                            <span className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                               <span className="material-symbols-outlined text-[12px] text-slate-400">call</span>
                               {o.phone}
                             </span>
                           </div>
                         </td>
                         <td className="p-4 text-slate-500 hidden md:table-cell max-w-[200px] truncate text-left">
-                          {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(", ")}
+                          {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(",")}
                         </td>
                         <td className="p-4 font-bold text-slate-800 text-left">
                           <div className="flex flex-col">
@@ -365,12 +335,12 @@ export function AdminOrders() {
                         </td>
                         <td className="p-4 hidden sm:table-cell text-left">
                           <span
-                            className={`px-2 py-0.5 rounded border text-[9.5px] font-semibold uppercase tracking-wider ${
-                              o.payment === "Paid"
-                                ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-                                : o.payment === "COD"
-                                ? "text-amber-700 bg-amber-50 border-amber-200"
-                                : "text-rose-600 bg-rose-50 border-rose-200"
+                            className={`px-2 py-0.5 rounded border text-[11px] sm:text-[11px] font-semibold uppercase tracking-wider ${
+                              o.payment ==="Paid"
+                                ?"text-emerald-700 bg-emerald-50 border-emerald-200"
+                                : o.payment ==="COD"
+                                ?"text-amber-700 bg-amber-50 border-amber-200"
+                                :"text-rose-600 bg-rose-50 border-rose-200"
                             }`}
                           >
                             {o.payment}
@@ -378,7 +348,7 @@ export function AdminOrders() {
                         </td>
                         <td className="p-4 text-left">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded border text-[10px] font-semibold ${statusColors[o.status]}`}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded border text-[11px] font-semibold ${statusColors[o.status]}`}
                           >
                             <span className="material-symbols-outlined text-[13px]">{statusIcons[o.status]}</span>
                             {o.status}
@@ -387,15 +357,15 @@ export function AdminOrders() {
                         <td className="p-4 text-slate-450 hidden lg:table-cell text-left">{o.date}</td>
                         <td className="p-4 text-left">
                           {o.needByDate ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-250 text-[10px] font-bold">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-250 text-[11px] font-bold">
                               <span className="material-symbols-outlined text-[12px]">calendar_today</span>
                               {new Date(o.needByDate).toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
+                                day:"numeric",
+                                month:"short",
                               })}
                             </span>
                           ) : (
-                            <span className="text-slate-400 text-[10px]">—</span>
+                            <span className="text-slate-400 text-[11px]">—</span>
                           )}
                         </td>
                         <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
@@ -415,7 +385,7 @@ export function AdminOrders() {
                               <span className="material-symbols-outlined text-[15px]">receipt_long</span>
                             </button>
                             <a
-                              href={`https://wa.me/${o.phone.replace(/[^0-9]/g, "")}`}
+                              href={`https://wa.me/${o.phone.replace(/[^0-9]/g,"")}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1.5 rounded-lg text-slate-450 hover:bg-emerald-50 hover:text-emerald-600 border border-transparent hover:border-emerald-250 flex items-center justify-center"
@@ -435,7 +405,7 @@ export function AdminOrders() {
               <div className="py-20 text-center text-slate-400">
                 <span className="material-symbols-outlined text-[36px] text-slate-300">search_off</span>
                 <p className="text-[12px] font-bold mt-2 text-slate-700">Data Not Found</p>
-                <p className="text-[11px] mt-0.5 text-slate-450">Try adjusting filters or search queries</p>
+                <p className="text-[11px] sm:text-[11px] mt-0.5 text-slate-450">Try adjusting filters or search queries</p>
               </div>
             )}
           </motion.div>
@@ -452,7 +422,7 @@ export function AdminOrders() {
               <div className="py-20 text-center text-slate-400 bg-white rounded-xl border border-slate-200 w-full col-span-full flex flex-col items-center justify-center">
                 <span className="material-symbols-outlined text-[36px] text-slate-300">search_off</span>
                 <p className="text-[12px] font-bold mt-2 text-slate-700">Data Not Found</p>
-                <p className="text-[11px] mt-0.5 text-slate-450">Try adjusting your active search keywords or status tabs.</p>
+                <p className="text-[11px] sm:text-[11px] mt-0.5 text-slate-450">Try adjusting your active search keywords or status tabs.</p>
               </div>
             ) : (
               allStatuses.slice(0, 5).map((status) => {
@@ -463,12 +433,12 @@ export function AdminOrders() {
                     {/* Column Header */}
                     <div className="flex items-center justify-between border-b border-slate-200 pb-2 shrink-0 select-none">
                       <div className="flex items-center gap-1.5 text-left">
-                        <span className={`material-symbols-outlined text-[15px] ${statusColors[status].split(" ")[0]}`}>
+                        <span className={`material-symbols-outlined text-[15px] ${statusColors[status].split("")[0]}`}>
                           {statusIcons[status]}
                         </span>
-                        <span className="text-[11.5px] font-bold text-slate-700">{status}</span>
+                        <span className="text-[11px] sm:text-[11px] font-bold text-slate-700">{status}</span>
                       </div>
-                      <span className="text-[9.5px] font-bold bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">
+                      <span className="text-[11px] sm:text-[11px] font-bold bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">
                         {statusOrders.length}
                       </span>
                     </div>
@@ -485,10 +455,10 @@ export function AdminOrders() {
                             className="bg-white rounded-lg p-3.5 border border-slate-200 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-black hover:shadow-xs transition-all duration-200 cursor-pointer group text-left"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-semibold text-slate-800 group-hover:text-black transition-colors">
+                              <span className="text-[11px] sm:text-[11px] font-semibold text-slate-800 group-hover:text-black transition-colors">
                                 #{o.id.substring(o.id.length - 8).toUpperCase()}
                               </span>
-                              <span className="text-[10px] font-bold text-slate-900">
+                              <span className="text-[11px] font-bold text-slate-900">
                                 ₹{o.total.toLocaleString()}
                               </span>
                             </div>
@@ -497,8 +467,8 @@ export function AdminOrders() {
                               {o.customer}
                             </p>
 
-                            <p className="text-[10px] text-slate-400 truncate mt-1">
-                              {o.items.map((i) => i.name).join(", ")}
+                            <p className="text-[11px] text-slate-400 truncate mt-1">
+                              {o.items.map((i) => i.name).join(",")}
                             </p>
 
                             {/* Interactive status selector dropdown */}
@@ -509,7 +479,7 @@ export function AdminOrders() {
                                   updateOrderStatus(o.id, e.target.value);
                                   toast.success(`Moved #${o.id.substring(o.id.length - 6).toUpperCase()} to ${e.target.value}`);
                                 }}
-                                className="text-[9px] font-bold uppercase tracking-wider bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 cursor-pointer outline-none max-w-[100px]"
+                                className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 cursor-pointer outline-none max-w-[100px]"
                               >
                                 {allStatuses.map((st) => (
                                   <option key={st} value={st}>
@@ -525,12 +495,12 @@ export function AdminOrders() {
                                   </span>
                                 )}
                                 <a
-                                  href={`https://wa.me/${o.phone.replace(/[^0-9]/g, "")}`}
+                                  href={`https://wa.me/${o.phone.replace(/[^0-9]/g,"")}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="w-5 h-5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-colors"
                                 >
-                                  <span className="material-symbols-outlined text-[11px] font-bold">chat</span>
+                                  <span className="material-symbols-outlined text-[11px] sm:text-[11px] font-bold">chat</span>
                                 </a>
                               </div>
                             </div>
@@ -541,7 +511,7 @@ export function AdminOrders() {
                       {statusOrders.length === 0 && (
                         <div className="py-10 text-center text-slate-300 border border-dashed border-slate-200 rounded-lg select-none flex flex-col items-center justify-center">
                           <span className="material-symbols-outlined text-[18px] mb-1">inbox</span>
-                          <span className="text-[9px] uppercase font-bold tracking-wider">Empty</span>
+                          <span className="text-[11px] sm:text-[11px] sm:text-[11px] uppercase font-bold tracking-wider">Empty</span>
                         </div>
                       )}
                     </div>
@@ -572,16 +542,16 @@ export function AdminOrders() {
               animate="show"
               exit="exit"
               variants={slideDrawer}
-              transition={{ type: "spring", damping: 30, stiffness: 350 }}
+              transition={{ type:"spring", damping: 30, stiffness: 350 }}
               className="fixed right-0 top-0 h-screen w-full sm:w-[480px] bg-white z-[1000] shadow-xl flex flex-col overflow-hidden border-l border-slate-200"
             >
               {/* Drawer Header */}
               <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0 text-left">
                 <div>
-                  <h3 className="text-[14px] font-bold text-slate-800">
+                  <h3 className="text-[11px] font-bold text-slate-800">
                     Order Details Panel
                   </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-slate-400 mt-1">
                     #{selectedOrder.id.toUpperCase()}
                   </p>
                 </div>
@@ -599,21 +569,21 @@ export function AdminOrders() {
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">Customer Profile</p>
-                      <h4 className="text-[13px] font-bold text-slate-800 mt-0.5">{selectedOrder.customer}</h4>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Customer Profile</p>
+                      <h4 className="text-[11px] font-bold text-slate-800 mt-1">{selectedOrder.customer}</h4>
                     </div>
                     <a
-                      href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g, "")}`}
+                      href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g,"")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white rounded-lg text-[9.5px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
+                      className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white rounded-lg text-[11px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                     >
                       <span className="material-symbols-outlined text-[12px] font-bold">chat</span>
                       WhatsApp
                     </a>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-y-2 text-[11.5px] pt-2 border-t border-slate-200/50">
+                  <div className="grid grid-cols-2 gap-y-2 text-[11px] pt-3 border-t border-slate-200/50">
                     <p className="text-slate-450 font-medium">Phone:</p> <p className="font-semibold text-slate-700">{selectedOrder.phone}</p>
                     <p className="text-slate-455 font-medium">Payment Mode:</p> <p className="font-semibold text-slate-700">{selectedOrder.payment}</p>
                     <p className="text-slate-455 font-medium">Invoice Date:</p> <p className="font-semibold text-slate-700">{selectedOrder.date}</p>
@@ -623,9 +593,9 @@ export function AdminOrders() {
                         <p className="font-bold text-emerald-800 flex items-center gap-1">
                           <span className="material-symbols-outlined text-[13px]">calendar_today</span>
                           {new Date(selectedOrder.needByDate).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
+                            day:"numeric",
+                            month:"short",
+                            year:"numeric",
                           })}
                         </p>
                       </>
@@ -635,7 +605,7 @@ export function AdminOrders() {
 
                 {/* 2. Items List */}
                 <div className="space-y-3">
-                  <h4 className="text-[11.5px] font-bold uppercase tracking-wider text-slate-700">Curated Items</h4>
+                  <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700">Curated Items</h4>
                   <div className="space-y-2">
                     {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
@@ -645,10 +615,10 @@ export function AdminOrders() {
                           )}
                           <div>
                             <p className="text-[12px] font-bold text-slate-800">{item.name}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">Quantity: {item.quantity || 1}</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">Quantity: {item.quantity || 1}</p>
                           </div>
                         </div>
-                        <span className="text-[11.5px] font-bold text-slate-700">
+                        <span className="text-[11px] sm:text-[11px] font-bold text-slate-700">
                           ₹{Number(item.price * (item.quantity || 1)).toLocaleString()}
                         </span>
                       </div>
@@ -657,13 +627,13 @@ export function AdminOrders() {
 
                   <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold">
                     <span className="text-[12px] text-slate-700">Order Grand Total:</span>
-                    <span className="text-[13.5px] text-black font-bold">₹{selectedOrder.total.toLocaleString()}</span>
+                    <span className="text-[11px] text-black font-bold">₹{selectedOrder.total.toLocaleString()}</span>
                   </div>
                 </div>
 
                 {/* 3. Transaction Timeline */}
                 <div className="space-y-4">
-                  <h4 className="text-[11.5px] font-bold uppercase tracking-wider text-slate-700">Delivery Timeline</h4>
+                  <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700">Delivery Timeline</h4>
                   <div className="relative pl-6 space-y-4 border-l-2 border-slate-200 ml-3">
                     {allStatuses.slice(0, 5).map((st, sidx) => {
                       const isDone = allStatuses.indexOf(selectedOrder.status) >= sidx;
@@ -673,18 +643,18 @@ export function AdminOrders() {
                         <div key={st} className="relative flex items-center justify-between">
                           <span
                             className={`absolute -left-[30.5px] w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center transition-all ${
-                              isDone ? "border-black" : "border-slate-200"
+                              isDone ?"border-black" :"border-slate-200"
                             }`}
                           >
                             {isDone && <span className="w-1.5 h-1.5 rounded-full bg-black" />}
                           </span>
                           <div>
-                            <p className={`text-[12px] font-bold ${isCurrent ? "text-black" : "text-slate-600"}`}>
+                            <p className={`text-[12px] font-bold ${isCurrent ?"text-black" :"text-slate-600"}`}>
                               {st}
                             </p>
                           </div>
                           {isCurrent && (
-                            <span className="text-[9px] uppercase font-bold tracking-widest text-black bg-slate-100 px-2 py-0.5 rounded-full animate-pulse border border-slate-200">
+                            <span className="text-[11px] sm:text-[11px] sm:text-[11px] uppercase font-bold tracking-widest text-black bg-slate-100 px-2 py-0.5 rounded-full animate-pulse border border-slate-200">
                               Active State
                             </span>
                           )}
@@ -696,17 +666,17 @@ export function AdminOrders() {
 
                 {/* 4. Staff Notes Form */}
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                  <label className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                     Internal Staff Notes
                   </label>
                   <textarea
                     rows={3}
                     placeholder="Type logistics references, customer specifications, or event notes..."
-                    defaultValue={selectedOrderData?.notes || ""}
+                    defaultValue={selectedOrderData?.notes ||""}
                     onBlur={(e) => handleSaveNote(selectedOrder.id, e.target.value)}
                     className="w-full bg-white rounded-lg border border-slate-200 p-3 text-[12px] text-slate-700 outline-none focus:border-black resize-none font-sans"
                   />
-                  <p className="text-[9px] text-slate-400 leading-normal block">
+                  <p className="text-[11px] sm:text-[11px] sm:text-[11px] text-slate-400 leading-normal block">
                     * Note auto-saves when you click out of the box. Saved notes are only visible to logged-in studio staff.
                   </p>
                 </div>
@@ -715,7 +685,7 @@ export function AdminOrders() {
               {/* Drawer Footer Controls */}
               <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 shrink-0 flex items-center gap-3 text-left">
                 <div className="flex-1">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  <label className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                     Direct Status Override
                   </label>
                   <select
@@ -724,7 +694,7 @@ export function AdminOrders() {
                       updateOrderStatus(selectedOrder.id, e.target.value);
                       toast.success(`Updated order status to ${e.target.value}`);
                     }}
-                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11.5px] font-bold text-slate-800 cursor-pointer outline-none shadow-xs"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] sm:text-[11px] font-bold text-slate-800 cursor-pointer outline-none shadow-xs"
                   >
                     {allStatuses.map((st) => (
                       <option key={st} value={st}>
@@ -739,7 +709,7 @@ export function AdminOrders() {
                     setIsDrawerOpen(false);
                     navigate(`/admin/orders/${selectedOrder.id}`);
                   }}
-                  className="px-3.5 py-2 bg-white border border-slate-200 text-slate-700 hover:text-black hover:bg-slate-50 rounded-lg text-[11.5px] font-semibold cursor-pointer self-end flex items-center gap-1.5 transition-all shadow-xs"
+                  className="px-3.5 py-2 bg-white border border-slate-200 text-slate-700 hover:text-black hover:bg-slate-50 rounded-lg text-[11px] font-bold uppercase tracking-wider cursor-pointer self-end flex items-center gap-1.5 transition-all shadow-xs"
                 >
                   <span className="material-symbols-outlined text-[14px]">receipt_long</span>
                   Full Details
@@ -747,7 +717,7 @@ export function AdminOrders() {
                 <button
                   type="button"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="px-4 py-2 bg-black text-white rounded-lg text-[11.5px] font-semibold hover:bg-slate-900 cursor-pointer shadow-xs self-end"
+                  className="px-4 py-2 bg-black text-white rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-slate-900 cursor-pointer shadow-xs self-end"
                 >
                   Done
                 </button>

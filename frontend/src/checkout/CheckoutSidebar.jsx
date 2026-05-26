@@ -28,7 +28,7 @@ export default function CheckoutSidebar() {
                       id="checkout-use-wallet-checkbox"
                       checked={useWallet}
                       onChange={(e) => setUseWallet(e.target.checked)}
-                      className="mt-1 rounded text-[#735c00] focus:ring-0 cursor-pointer h-4 w-4"
+                      className="mt-1 rounded text-[var(--color-gold-dark)] focus:ring-0 cursor-pointer h-4 w-4"
                     />
                     <label htmlFor="checkout-use-wallet-checkbox" className="cursor-pointer select-none">
                       <span className="text-xs font-bold text-on-surface block uppercase tracking-wider">
@@ -39,7 +39,7 @@ export default function CheckoutSidebar() {
                       </span>
                     </label>
                   </div>
-                  <span className="material-symbols-outlined text-[#735c00] text-sm animate-pulse">stars</span>
+                  <span className="material-symbols-outlined text-[var(--color-gold-dark)] text-sm animate-pulse">stars</span>
                 </div>
 
                 {useWallet && backendTotals && backendTotals.walletDeduction > 0 && (

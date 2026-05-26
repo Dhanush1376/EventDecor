@@ -1,29 +1,29 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useAdmin } from "../context/AdminContext";
+import React, { useState, useEffect, useRef } from"react";
+import { useNavigate } from"react-router-dom";
+import { motion } from"framer-motion";
+import { useAdmin } from"../context/AdminContext";
 
 // Navigation keywords for fuzzy search matching
 const NAV_ITEMS = [
-  { label: "Dashboard Overview", path: "/admin", category: "Navigation", icon: "dashboard", keywords: "stats, home, sales, analytics, revenues" },
-  { label: "Homepage Hero Curation", path: "/admin/homepage", category: "Navigation", icon: "home", keywords: "banners, hero, slides, showcase, carousel" },
-  { label: "Website Content CMS", path: "/admin/content", category: "Navigation", icon: "edit_note", keywords: "cms, policy, settings, shipping, footer, headers" },
-  { label: "Heritage Photo Gallery", path: "/admin/gallery", category: "Navigation", icon: "photo_library", keywords: "gallery, media, designs, blueprint, curations" },
-  { label: "Catalog Products", path: "/admin/products", category: "Navigation", icon: "inventory_2", keywords: "products, items, stock, edit products, catalog" },
-  { label: "Add New Product", path: "/admin/products/add", category: "Navigation", icon: "add_circle", keywords: "create product, new item, catalog add" },
-  { label: "Product Categories", path: "/admin/categories", category: "Navigation", icon: "category", keywords: "tags, collections, categorisation" },
-  { label: "Warehouse Inventory", path: "/admin/inventory", category: "Navigation", icon: "warehouse", keywords: "stock, catalog, alerts, threshold" },
-  { label: "Sales Orders", path: "/admin/orders", category: "Navigation", icon: "shopping_bag", keywords: "orders, sales, shipping, packages, deliveries" },
-  { label: "Custom Blueprints & Inquiries", path: "/admin/custom-orders", category: "Navigation", icon: "architecture", keywords: "blueprints, custom, consultations, requests, event decor" },
-  { label: "Customer Relationship CRM", path: "/admin/customers", category: "Navigation", icon: "group", keywords: "users, customers, profile, vip, list" },
-  { label: "Coupons & Discounts", path: "/admin/coupons", category: "Navigation", icon: "sell", keywords: "discounts, offers, coupons, voucher, active offers" },
-  { label: "Payments & Invoices", path: "/admin/payments", category: "Navigation", icon: "payments", keywords: "invoices, razorpay, cod, transaction history" },
-  { label: "Event Bookings & Themes", path: "/admin/events", category: "Navigation", icon: "event", keywords: "events, setups, venue, active bookings" },
-  { label: "Customer Reviews", path: "/admin/reviews", category: "Navigation", icon: "rate_review", keywords: "testimonials, reviews, ratings, moderate" },
-  { label: "Platform Analytics", path: "/admin/analytics", category: "Navigation", icon: "analytics", keywords: "revenues, insights, views, sales graphs" },
-  { label: "Marketing Campaigns", path: "/admin/campaigns", category: "Navigation", icon: "campaign", keywords: "emails, subscribers, newsletters, push notifications" },
-  { label: "Staff Team Management", path: "/admin/team", category: "Navigation", icon: "groups", keywords: "employees, access, roles, permissions" },
-  { label: "System settings", path: "/admin/settings", category: "Navigation", icon: "settings", keywords: "profile, credentials, reset, backup" },
+  { label:"Dashboard Overview", path:"/admin", category:"Navigation", icon:"dashboard", keywords:"stats, home, sales, analytics, revenues" },
+  { label:"Homepage Hero Curation", path:"/admin/homepage", category:"Navigation", icon:"home", keywords:"banners, hero, slides, showcase, carousel" },
+  { label:"Website Content CMS", path:"/admin/content", category:"Navigation", icon:"edit_note", keywords:"cms, policy, settings, shipping, footer, headers" },
+  { label:"Heritage Photo Gallery", path:"/admin/gallery", category:"Navigation", icon:"photo_library", keywords:"gallery, media, designs, blueprint, curations" },
+  { label:"Catalog Products", path:"/admin/products", category:"Navigation", icon:"inventory_2", keywords:"products, items, stock, edit products, catalog" },
+  { label:"Add New Product", path:"/admin/products/add", category:"Navigation", icon:"add_circle", keywords:"create product, new item, catalog add" },
+  { label:"Product Categories", path:"/admin/categories", category:"Navigation", icon:"category", keywords:"tags, collections, categorisation" },
+  { label:"Warehouse Inventory", path:"/admin/inventory", category:"Navigation", icon:"warehouse", keywords:"stock, catalog, alerts, threshold" },
+  { label:"Sales Orders", path:"/admin/orders", category:"Navigation", icon:"shopping_bag", keywords:"orders, sales, shipping, packages, deliveries" },
+  { label:"Custom Blueprints & Inquiries", path:"/admin/custom-orders", category:"Navigation", icon:"architecture", keywords:"blueprints, custom, consultations, requests, event decor" },
+  { label:"Customer Relationship CRM", path:"/admin/customers", category:"Navigation", icon:"group", keywords:"users, customers, profile, vip, list" },
+  { label:"Coupons & Discounts", path:"/admin/coupons", category:"Navigation", icon:"sell", keywords:"discounts, offers, coupons, voucher, active offers" },
+  { label:"Payments & Invoices", path:"/admin/payments", category:"Navigation", icon:"payments", keywords:"invoices, razorpay, cod, transaction history" },
+  { label:"Event Bookings & Themes", path:"/admin/events", category:"Navigation", icon:"event", keywords:"events, setups, venue, active bookings" },
+  { label:"Customer Reviews", path:"/admin/reviews", category:"Navigation", icon:"rate_review", keywords:"testimonials, reviews, ratings, moderate" },
+  { label:"Platform Analytics", path:"/admin/analytics", category:"Navigation", icon:"analytics", keywords:"revenues, insights, views, sales graphs" },
+  { label:"Marketing Campaigns", path:"/admin/campaigns", category:"Navigation", icon:"campaign", keywords:"emails, subscribers, newsletters, push notifications" },
+  { label:"Staff Team Management", path:"/admin/team", category:"Navigation", icon:"groups", keywords:"employees, access, roles, permissions" },
+  { label:"System settings", path:"/admin/settings", category:"Navigation", icon:"settings", keywords:"profile, credentials, reset, backup" },
 ];
 
 export function GlobalSearchPalette({ isOpen, onClose }) {
@@ -50,7 +50,7 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
   // Global escape & hotkeys listener
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
+      if (e.key ==="Escape") {
         onClose();
       }
     };
@@ -95,8 +95,8 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
               id: `prod-${p.id}`,
               label: p.name,
               sub: `Product • Category: ${p.category} • Price: ₹${p.price.toLocaleString()} • Stock: ${p.stock}`,
-              category: "Products",
-              icon: "inventory_2",
+              category:"Products",
+              icon:"inventory_2",
               path: `/admin/products`,
               action: () => {
                 // Set context search query to highlight or filter
@@ -120,8 +120,8 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
               id: `ord-${o.id}`,
               label: `Order #${o.id.substring(o.id.length - 8).toUpperCase()}`,
               sub: `Order • Customer: ${o.customer} • Total: ₹${o.total.toLocaleString()} • Status: ${o.status}`,
-              category: "Orders",
-              icon: "shopping_bag",
+              category:"Orders",
+              icon:"shopping_bag",
               path: `/admin/orders/${o.id}`,
             });
           }
@@ -140,8 +140,8 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
               id: `cus-${c.id}`,
               label: c.name,
               sub: `CRM Customer • ${c.email} • City: ${c.city} • Tier: ${c.segment}`,
-              category: "Customers",
-              icon: "group",
+              category:"Customers",
+              icon:"group",
               path: `/admin/customers/${c.id}`,
             });
           }
@@ -160,8 +160,8 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
               id: `evt-${e.id}`,
               label: e.eventType,
               sub: `Event Setup • Client: ${e.customer} • Venue: ${e.venue} • Status: ${e.status}`,
-              category: "Events",
-              icon: "celebration",
+              category:"Events",
+              icon:"celebration",
               path: `/admin/events`,
             });
           }
@@ -183,19 +183,19 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
     if (listRef.current) {
       const activeEl = listRef.current.children[activeIndex];
       if (activeEl) {
-        activeEl.scrollIntoView({ block: "nearest" });
+        activeEl.scrollIntoView({ block:"nearest" });
       }
     }
   }, [activeIndex]);
 
   const handleKeyDown = (e) => {
-    if (e.key === "ArrowDown") {
+    if (e.key ==="ArrowDown") {
       e.preventDefault();
       setActiveIndex((prev) => (prev + 1) % results.length);
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key ==="ArrowUp") {
       e.preventDefault();
       setActiveIndex((prev) => (prev - 1 + results.length) % results.length);
-    } else if (e.key === "Enter") {
+    } else if (e.key ==="Enter") {
       e.preventDefault();
       if (results[activeIndex]) {
         handleSelect(results[activeIndex]);
@@ -257,7 +257,7 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
             <div className="flex flex-col items-center justify-center py-14 text-center text-slate-400">
               <span className="material-symbols-outlined text-[36px] mb-2 text-slate-300">search_off</span>
               <p className="text-[12px] font-bold text-slate-700">No records found</p>
-              <p className="text-[10px] max-w-[280px] mt-0.5">We couldn't find any products, orders, categories, or pages matching your search query.</p>
+              <p className="text-[11px] max-w-[280px] mt-0.5">We couldn't find any products, orders, categories, or pages matching your search query.</p>
             </div>
           ) : (
             results.map((item, index) => {
@@ -269,22 +269,22 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
                   onMouseEnter={() => setActiveIndex(index)}
                   className={`flex items-start gap-3.5 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
                     isActive 
-                      ? "bg-black text-white shadow-md shadow-slate-950/10 translate-x-1" 
-                      : "hover:bg-slate-50 text-slate-800"
+                      ?"bg-black text-white shadow-md shadow-slate-950/10 translate-x-1" 
+                      :"hover:bg-slate-50 text-slate-800"
                   }`}
                 >
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                    isActive ? "bg-white/20 text-white" : "bg-slate-100 border border-slate-200 text-black"
+                    isActive ?"bg-white/20 text-white" :"bg-slate-100 border border-slate-200 text-black"
                   }`}>
                     <span className="material-symbols-outlined text-[18px]">
                       {item.icon}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-[12px] font-semibold truncate ${isActive ? "text-white" : "text-slate-800"}`}>
+                    <p className={`text-[12px] font-semibold truncate ${isActive ?"text-white" :"text-slate-800"}`}>
                       {item.label}
                     </p>
-                    <p className={`text-[10.5px] mt-0.5 truncate ${isActive ? "text-white/85" : "text-slate-400"}`}>
+                    <p className={`text-[11px] mt-0.5 truncate ${isActive ?"text-white/85" :"text-slate-400"}`}>
                       {item.sub || `${item.category} section`}
                     </p>
                   </div>
@@ -300,16 +300,16 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
         </div>
 
         {/* command keyboard guide */}
-        <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-[9px] uppercase tracking-wider text-slate-400 font-semibold select-none shrink-0">
+        <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-semibold select-none shrink-0">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px]">▲▼</kbd> Navigate
+              <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] sm:text-[11px] sm:text-[11px]">▲▼</kbd> Navigate
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px]">↵</kbd> Select
+              <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] sm:text-[11px] sm:text-[11px]">↵</kbd> Select
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px]">ESC</kbd> Close
+              <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] sm:text-[11px] sm:text-[11px]">ESC</kbd> Close
             </span>
           </div>
           <div>Siri Arts & Crafts Admin</div>

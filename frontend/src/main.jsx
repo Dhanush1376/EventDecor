@@ -6,6 +6,7 @@ import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { runAppBootstrap } from "./utils/bootstrap";
 import { getApiRootUrl } from "./config/apiConfig";
 import { logStartupDiagnostics } from "./utils/diagnostics";
+import { isPrerendering } from "./utils/prerender";
 
 import logger from './utils/logger';
 
@@ -13,6 +14,7 @@ import logger from './utils/logger';
 
 // Defer non-critical monitoring and analytics until after first paint
 const deferNonCriticalInit = () => {
+  if (isPrerendering()) return; // skip analytics when pre-rendering
   import('./utils/observability').then(({ initObservability }) => initObservability()).catch(() => {});
   import('./utils/analytics').then(({ initAnalytics }) => initAnalytics()).catch(() => {});
 };
@@ -23,8 +25,10 @@ if (typeof requestIdleCallback === 'function') {
   setTimeout(deferNonCriticalInit, 1);
 }
 
-runAppBootstrap();
-logStartupDiagnostics();
+if (!isPrerendering()) {
+  runAppBootstrap();
+  logStartupDiagnostics();
+}
 
 // ─── Global Error Handler for Outdated Bundles (Chunk Loading Errors) ───
 window.addEventListener('error', (event) => {
@@ -76,10 +80,12 @@ const warmBackend = () => {
     }
   });
 };
-if (typeof requestIdleCallback === 'function') {
-  requestIdleCallback(warmBackend, { timeout: 3000 });
-} else {
-  setTimeout(warmBackend, 100);
+if (!isPrerendering()) {
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(warmBackend, { timeout: 3000 });
+  } else {
+    setTimeout(warmBackend, 100);
+  }
 }
 
 const rootEl = document.getElementById("root");

@@ -1,11 +1,11 @@
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { couponService } from "../../services/domainServices";
-import { useAdmin } from "../context/AdminContext";
-import toast from "react-hot-toast";
-import { AdminToggle } from "../components/AdminUIKit";
+import React from"react";
+import { motion, AnimatePresence } from"framer-motion";
+import { useNavigate } from"react-router-dom";
+import { useQuery, useMutation, useQueryClient } from"@tanstack/react-query";
+import { couponService } from"../../services/domainServices";
+import { useAdmin } from"../context/AdminContext";
+import toast from"react-hot-toast";
+import { AdminToggle } from"../components/AdminUIKit";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
@@ -29,14 +29,14 @@ export function AdminCoupons() {
       !searchQuery ||
       c.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.discountType?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+      (c.description ||"").toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, isActive }) => couponService.update(id, { isActive }),
     onSuccess: (_, variables) => {
-      toast.success(`Coupon ${variables.isActive ? "activated" : "deactivated"}`);
+      toast.success(`Coupon ${variables.isActive ?"activated" :"deactivated"}`);
       queryClient.invalidateQueries({ queryKey: ["adminCoupons"] });
     },
     onError: () => toast.error("Failed to update coupon status"),
@@ -73,7 +73,7 @@ export function AdminCoupons() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h2 className="text-[24px] font-bold text-on-surface font-display">
+          <h2 className="text-[24px] font-bold text-on-surface">
             Coupons & Offers
           </h2>
           <p className="text-[13px] text-outline">
@@ -128,7 +128,7 @@ export function AdminCoupons() {
         >
           {filteredCoupons.map((c) => {
             const hasLimit = c.usageLimit && c.usageLimit > 0;
-            const remaining = hasLimit ? Math.max(0, c.usageLimit - c.usedCount) : "∞";
+            const remaining = hasLimit ? Math.max(0, c.usageLimit - c.usedCount) :"∞";
             const percentUsed = hasLimit ? Math.round((c.usedCount / c.usageLimit) * 100) : 0;
             const isExpired = new Date() > new Date(c.expiryDate);
 
@@ -138,15 +138,15 @@ export function AdminCoupons() {
                 whileHover={{ y: -2 }}
                 className={`bg-white rounded-2xl p-5 border transition-all ${
                   c.isActive && !isExpired 
-                    ? "border-surface-container-highest/60" 
-                    : "border-surface-container-highest/30 opacity-60 bg-surface-container-low/20"
+                    ?"border-surface-container-highest/60" 
+                    :"border-surface-container-highest/30 opacity-60 bg-surface-container-low/20"
                 }`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                        c.isActive && !isExpired ? "bg-slate-100 text-black" : "bg-surface-container-low text-outline"
+                        c.isActive && !isExpired ?"bg-slate-100 text-black" :"bg-surface-container-low text-outline"
                       }`}
                     >
                       <span className="material-symbols-outlined text-[24px]">
@@ -160,9 +160,9 @@ export function AdminCoupons() {
                         </span>
                       </div>
                       <p className="text-[12px] text-outline">
-                        {c.discountType === "percentage"
+                        {c.discountType ==="percentage"
                           ? `${c.discountValue}% off`
-                          : `₹${c.discountValue} off`}{" "}
+                          : `₹${c.discountValue} off`}{""}
                         · Min order ₹{c.minOrderAmount?.toLocaleString() || 0}
                       </p>
                     </div>
@@ -174,15 +174,15 @@ export function AdminCoupons() {
                       disabled={isExpired}
                     />
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border shrink-0 ${
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold border shrink-0 ${
                         isExpired 
-                          ? "text-red-600 bg-red-50 border-red-200"
+                          ?"text-red-600 bg-red-50 border-red-200"
                           : c.isActive 
-                          ? "text-emerald-600 bg-emerald-50 border-emerald-200" 
-                          : "text-amber-600 bg-amber-50 border-amber-200"
+                          ?"text-emerald-600 bg-emerald-50 border-emerald-200" 
+                          :"text-amber-600 bg-amber-50 border-amber-200"
                       }`}
                     >
-                      {isExpired ? "Expired" : c.isActive ? "Active" : "Disabled"}
+                      {isExpired ?"Expired" : c.isActive ?"Active" :"Disabled"}
                     </span>
                   </div>
                 </div>
@@ -190,25 +190,25 @@ export function AdminCoupons() {
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   <div className="text-center p-2 bg-surface-container-low/40 rounded-xl border border-surface-container-highest/20">
                     <p className="text-[14px] font-bold text-black">{c.usedCount || 0}</p>
-                    <p className="text-[10px] text-outline">Used</p>
+                    <p className="text-[11px] text-outline">Used</p>
                   </div>
                   <div className="text-center p-2 bg-surface-container-low/40 rounded-xl border border-surface-container-highest/20">
                     <p className="text-[14px] font-bold text-on-surface">
                       {remaining}
                     </p>
-                    <p className="text-[10px] text-outline">Remaining</p>
+                    <p className="text-[11px] text-outline">Remaining</p>
                   </div>
                   <div className="text-center p-2 bg-surface-container-low/40 rounded-xl border border-surface-container-highest/20">
                     <p className="text-[14px] font-bold text-on-surface">
-                      {c.maxDiscount ? `₹${c.maxDiscount}` : "∞"}
+                      {c.maxDiscount ? `₹${c.maxDiscount}` :"∞"}
                     </p>
-                    <p className="text-[10px] text-outline">Max Off</p>
+                    <p className="text-[11px] text-outline">Max Off</p>
                   </div>
                 </div>
 
                 {hasLimit && (
                   <div className="mb-3">
-                    <div className="flex justify-between text-[10px] text-outline mb-1 font-medium">
+                    <div className="flex justify-between text-[11px] text-outline mb-1 font-medium">
                       <span>
                         Usage: {c.usedCount}/{c.usageLimit}
                       </span>
@@ -224,7 +224,7 @@ export function AdminCoupons() {
                 )}
 
                 <div className="flex items-center justify-between pt-3 border-t border-surface-container-low">
-                  <span className="text-[10px] text-outline">
+                  <span className="text-[11px] text-outline">
                     Valid: {new Date(c.startDate).toLocaleDateString()} to {new Date(c.expiryDate).toLocaleDateString()}
                   </span>
                   <div className="flex gap-1.5">

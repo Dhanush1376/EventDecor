@@ -130,20 +130,20 @@ export function CustomOrders() {
         const occasion = wizardDraft.occasion || "Event";
         
         let style = "Traditional Dravidian Heritage";
-        let palette = ["#D4AF37", "#A6192E", "#FAF9F6"]; // Gold, Heritage Red, Cream
+        let palette = ["var(--color-gold)", "#A6192E", "var(--color-surface-ivory)"]; // Gold, Heritage Red, Cream
         let colorDesc = "Gilded Royal Gold, Sacred Kumkum Crimson, and Pristine Cream";
         let materials = "Carved teak pillars, hanging brass bells, hand-strung marigold swags, and jasmine runners";
         let suggestedBudget = "₹1,50,000 - ₹2,50,000";
         
         if (category.toLowerCase().includes("pooja") || occasion.toLowerCase().includes("pooja")) {
           style = "Tranquil Vedic Devotional";
-          palette = ["#FAF9F6", "#D4AF37", "#2E8B57"]; // Cream, Gold, Green
+          palette = ["var(--color-surface-ivory)", "var(--color-gold)", "#2E8B57"]; // Cream, Gold, Green
           colorDesc = "Sacred Coconut Green, Gilded Bell Gold, and Sandalwood Cream";
           materials = "Brass deepams, floating lotus bowls (urlis), mango leaves, and rose petal garlands";
           suggestedBudget = "₹25,000 - ₹50,000";
         } else if (category.toLowerCase().includes("tray") || category.toLowerCase().includes("hamper") || occasion.toLowerCase().includes("engagement")) {
           style = "Contemporary Kundan Filigree";
-          palette = ["#FFE4E1", "#D4AF37", "#E8D8C8"]; // Rose, Gold, Beige
+          palette = ["#FFE4E1", "var(--color-gold)", "#E8D8C8"]; // Rose, Gold, Beige
           colorDesc = "Royal Rose Pink, Shimmering Gold beads, and Pearl White borders";
           materials = "Velvet fabrics, kundan stonework borders, customized wood cuts, and baby's breath floral sprays";
           suggestedBudget = "₹5,000 - ₹12,000";
@@ -500,7 +500,7 @@ export function CustomOrders() {
   ];
 
   return (
-    <div className="relative selection:bg-primary/20 bg-[#FAF9F6] min-h-screen text-[#2D2B29] font-body pt-20 md:pt-32">
+    <div className="relative selection:bg-primary/20 bg-[var(--color-surface-ivory)] min-h-screen text-[var(--color-on-surface)] font-body pt-20 md:pt-32">
       <SEO
         title="Custom Decor Studio & Consultancy | Siri Arts"
         description="Design your dream Indian ceremony with Siri's interactive digital planning studio. Consult with our Telugu heritage master artisans for bespoke backdrops, floral canopies, and custom pooja trays."
@@ -512,9 +512,9 @@ export function CustomOrders() {
       <main className="max-w-[1440px] mx-auto px-4 md:px-8 pb-20 relative z-10 space-y-6 md:space-y-8">
         
         {/* Simple & Luxury Header & Workspace Toggle */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#2D2B29]/5 pb-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[var(--color-on-surface)]/5 pb-5">
           <div>
-            <h2 className="text-[24px] md:text-[36px] font-light text-[#2D2B29] font-display leading-tight">
+            <h2 className="text-[24px] md:text-[36px] font-light text-[var(--color-on-surface)] font-display leading-tight">
               Custom Event Decor Studio
             </h2>
             <p className="text-[12px] md:text-[13px] text-[#685C57] mt-1 font-light tracking-wide max-w-lg">
@@ -530,8 +530,8 @@ export function CustomOrders() {
               onClick={() => setActiveTab("wizard")}
               className={`flex-1 sm:flex-initial text-center px-4 md:px-5 py-2.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap ${
                 activeTab === "wizard"
-                  ? "bg-[#2D2B29] text-white shadow-md"
-                  : "text-[#685C57] hover:text-[#2D2B29]"
+                  ? "bg-[var(--color-on-surface)] text-white shadow-md"
+                  : "text-[#685C57] hover:text-[var(--color-on-surface)]"
               }`}
             >
               <span className="hidden sm:inline">Start Custom Request</span>
@@ -545,14 +545,14 @@ export function CustomOrders() {
               }}
               className={`flex-1 sm:flex-initial text-center px-4 md:px-5 py-2.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 relative cursor-pointer whitespace-nowrap ${
                 activeTab === "tracker"
-                  ? "bg-[#2D2B29] text-white shadow-md"
-                  : "text-[#685C57] hover:text-[#2D2B29]"
+                  ? "bg-[var(--color-on-surface)] text-white shadow-md"
+                  : "text-[#685C57] hover:text-[var(--color-on-surface)]"
               }`}
             >
               <span className="hidden sm:inline">Track My Custom Orders</span>
               <span className="inline sm:hidden">Track Orders</span>
               {myOrders.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#D4AF37] text-white text-[8px] flex items-center justify-center font-bold font-mono">
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[var(--color-gold)] text-white text-[8px] flex items-center justify-center font-bold font-mono">
                   {myOrders.length}
                 </span>
               )}
@@ -565,17 +565,17 @@ export function CustomOrders() {
           <div className="space-y-4 w-full">
             {/* Elegant Luxury Guest Acknowledgment */}
             {!isAuthenticated && (
-              <div className="bg-white border border-[#D4AF37]/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[12px] shadow-sm">
+              <div className="bg-white border border-[var(--color-gold)]/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[12px] shadow-sm">
                 <div className="flex items-center gap-2.5">
-                  <span className="material-symbols-outlined text-[#D4AF37] text-[20px]">info</span>
+                  <span className="material-symbols-outlined text-[var(--color-gold)] text-[20px]">info</span>
                   <p className="text-[#685C57] font-light">
-                    <strong className="text-[#2D2B29] font-medium">Bespoke Guest Session:</strong> You can draft your decor request offline. Sign in to seamlessly submit your details and track quotes in real time.
+                    <strong className="text-[var(--color-on-surface)] font-medium">Bespoke Guest Session:</strong> You can draft your decor request offline. Sign in to seamlessly submit your details and track quotes in real time.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => runProtectedAction(() => {})}
-                  className="px-4 py-1.5 bg-[#2D2B29] text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-[#D4AF37] transition-all cursor-pointer text-center shrink-0 self-start sm:self-auto"
+                  className="px-4 py-1.5 bg-[var(--color-on-surface)] text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-[var(--color-gold)] transition-all cursor-pointer text-center shrink-0 self-start sm:self-auto"
                 >
                   Sign In / Register
                 </button>
@@ -586,10 +586,10 @@ export function CustomOrders() {
             
             {/* Left Box: Step progress navigator (Desktop Only) */}
             <div className="hidden lg:block lg:col-span-4 bg-white/70 backdrop-blur-md rounded-[2.5rem] border border-black/5 p-8 shadow-sm space-y-6">
-              <span className="font-label-sm text-[10px] text-[#D4AF37] uppercase tracking-[0.25em] block font-bold">
+              <span className="font-label-sm text-[10px] text-[var(--color-gold)] uppercase tracking-[0.25em] block font-bold">
                 custom form
               </span>
-              <h3 className="font-display text-[22px] text-[#2D2B29] font-normal leading-snug">
+              <h3 className="font-display text-[22px] text-[var(--color-on-surface)] font-normal leading-snug">
                 Decor Design Form
               </h3>
 
@@ -604,18 +604,18 @@ export function CustomOrders() {
                       }}
                       className={`flex items-center gap-3 transition-all duration-300 cursor-pointer ${
                         currentStep === stepNum
-                          ? "text-[#D4AF37]"
+                          ? "text-[var(--color-gold)]"
                           : stepNum < currentStep
-                          ? "text-[#2D2B29] hover:text-[#D4AF37]"
-                          : "text-[#2D2B29]/30 pointer-events-none"
+                          ? "text-[var(--color-on-surface)] hover:text-[var(--color-gold)]"
+                          : "text-[var(--color-on-surface)]/30 pointer-events-none"
                       }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-full text-[10px] font-bold font-mono flex items-center justify-center border transition-all ${
                           currentStep === stepNum
-                            ? "bg-[#D4AF37] text-white border-[#D4AF37]"
+                            ? "bg-[var(--color-gold)] text-white border-[var(--color-gold)]"
                             : stepNum < currentStep
-                            ? "bg-[#2D2B29] text-white border-[#2D2B29]"
+                            ? "bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)]"
                             : "border-black/10"
                         }`}
                       >
@@ -637,12 +637,12 @@ export function CustomOrders() {
               <div className="lg:hidden mb-6 space-y-2 border-b border-black/5 pb-4">
                 <div className="flex justify-between items-center text-[9px] md:text-[10px] font-bold text-[#685C57] uppercase tracking-wider">
                   <span>Decor Design Form</span>
-                  <span className="font-mono text-[#D4AF37]">Step {currentStep} of 8</span>
+                  <span className="font-mono text-[var(--color-gold)]">Step {currentStep} of 8</span>
                 </div>
                 <div className="w-full bg-black/5 h-1 rounded-full overflow-hidden">
-                  <div className="bg-[#D4AF37] h-full shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-all duration-300" style={{ width: `${(currentStep / 8) * 100}%` }} />
+                  <div className="bg-[var(--color-gold)] h-full shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-all duration-300" style={{ width: `${(currentStep / 8) * 100}%` }} />
                 </div>
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-[#2D2B29]">{stepsList[currentStep - 1]}</span>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-[var(--color-on-surface)]">{stepsList[currentStep - 1]}</span>
               </div>
 
               <AnimatePresence mode="wait">
@@ -658,8 +658,8 @@ export function CustomOrders() {
                   {currentStep === 1 && (
                     <div className="space-y-5">
                       <div>
-                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[#D4AF37] tracking-widest block mb-0.5">step 01</span>
-                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[#2D2B29]">Select the Occasion</h2>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">step 01</span>
+                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">Select the Occasion</h2>
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">What event or celebration are we designing decor for?</p>
                       </div>
 
@@ -680,12 +680,12 @@ export function CustomOrders() {
                                 }}
                                 className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
                                   isSelected
-                                    ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
-                                    : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
+                                    ? "bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-md"
+                                    : "bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/15"
                                 }`}
                               >
                                 <div className="flex justify-between items-start w-full">
-                                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? "border-[#D4AF37] bg-[#D4AF37]" : "border-black/15"}`}>
+                                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? "border-[var(--color-gold)] bg-[var(--color-gold)]" : "border-black/15"}`}>
                                     {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                                   </span>
                                 </div>
@@ -705,12 +705,12 @@ export function CustomOrders() {
                           }}
                           className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
                             showCustomOccasion
-                              ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
-                              : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
+                              ? "bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-md"
+                              : "bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/15"
                           }`}
                         >
                           <div className="flex justify-between items-start w-full">
-                            <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${showCustomOccasion ? "border-[#D4AF37] bg-[#D4AF37]" : "border-black/15"}`}>
+                            <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${showCustomOccasion ? "border-[var(--color-gold)] bg-[var(--color-gold)]" : "border-black/15"}`}>
                               {showCustomOccasion && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                             </span>
                           </div>
@@ -725,7 +725,7 @@ export function CustomOrders() {
                           animate={{ opacity: 1, y: 0 }}
                           className="space-y-1.5 pt-1"
                         >
-                          <label className="text-[10px] font-bold uppercase text-[#D4AF37] tracking-wider block">Specify Your Occasion</label>
+                          <label className="text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-wider block">Specify Your Occasion</label>
                           <input
                             type="text"
                             value={customOccasionText}
@@ -735,7 +735,7 @@ export function CustomOrders() {
                               updateDraft({ occasion: val || "Other" });
                             }}
                             placeholder="E.g., Corporate Anniversary, Graduation Curation"
-                            className="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-2.5 md:py-3 text-[13px] outline-none focus:border-[#D4AF37] text-[#2D2B29] transition-all"
+                            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 md:py-3 text-[13px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
                           />
                         </motion.div>
                       )}
@@ -746,8 +746,8 @@ export function CustomOrders() {
                   {currentStep === 2 && (
                     <div className="space-y-5">
                       <div>
-                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[#D4AF37] tracking-widest block mb-0.5">step 02</span>
-                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[#2D2B29]">Choose Product Type</h2>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">step 02</span>
+                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">Choose Product Type</h2>
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">Which items or setups do you want to custom order?</p>
                       </div>
 
@@ -768,12 +768,12 @@ export function CustomOrders() {
                                 }}
                                 className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
                                   isSelected
-                                    ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
-                                    : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
+                                    ? "bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-md"
+                                    : "bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/15"
                                 }`}
                               >
                                 <div className="flex justify-between items-start w-full">
-                                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? "border-[#D4AF37] bg-[#D4AF37]" : "border-black/15"}`}>
+                                  <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? "border-[var(--color-gold)] bg-[var(--color-gold)]" : "border-black/15"}`}>
                                     {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                                   </span>
                                 </div>
@@ -793,12 +793,12 @@ export function CustomOrders() {
                           }}
                           className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
                             showCustomProductType
-                              ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-md"
-                              : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/15"
+                              ? "bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-md"
+                              : "bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/15"
                           }`}
                         >
                           <div className="flex justify-between items-start w-full">
-                            <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${showCustomProductType ? "border-[#D4AF37] bg-[#D4AF37]" : "border-black/15"}`}>
+                            <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${showCustomProductType ? "border-[var(--color-gold)] bg-[var(--color-gold)]" : "border-black/15"}`}>
                               {showCustomProductType && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                             </span>
                           </div>
@@ -813,7 +813,7 @@ export function CustomOrders() {
                           animate={{ opacity: 1, y: 0 }}
                           className="space-y-1.5 pt-1"
                         >
-                          <label className="text-[10px] font-bold uppercase text-[#D4AF37] tracking-wider block">Specify Your Product Category</label>
+                          <label className="text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-wider block">Specify Your Product Category</label>
                           <input
                             type="text"
                             value={customProductTypeText}
@@ -823,7 +823,7 @@ export function CustomOrders() {
                               updateDraft({ productType: val || "Other" });
                             }}
                             placeholder="E.g., Floral Backdrop, Entrance Archway"
-                            className="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-2.5 md:py-3 text-[13px] outline-none focus:border-[#D4AF37] text-[#2D2B29] transition-all"
+                            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 md:py-3 text-[13px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
                           />
                         </motion.div>
                       )}
@@ -834,8 +834,8 @@ export function CustomOrders() {
                   {currentStep === 3 && (
                     <div className="space-y-6">
                       <div>
-                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[#D4AF37] tracking-widest block mb-0.5">step 03</span>
-                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[#2D2B29]">Upload Inspiration Photos</h2>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">step 03</span>
+                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">Upload Inspiration Photos</h2>
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">Upload reference photos, venue drawings, or choose from our beautiful signature curation presets.</p>
                       </div>
 
@@ -844,13 +844,13 @@ export function CustomOrders() {
                       {/* FILE UPLOAD DRAG & DROP AREA */}
                       <div className="border-t border-black/5 pt-5 space-y-3">
                         <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#D4AF37]">cloud_upload</span>
-                          <h3 className="text-[13.5px] font-bold text-[#2D2B29]">Or, Upload Custom References</h3>
+                          <span className="material-symbols-outlined text-[18px] text-[var(--color-gold)]">cloud_upload</span>
+                          <h3 className="text-[13.5px] font-bold text-[var(--color-on-surface)]">Or, Upload Custom References</h3>
                         </div>
                         
                         <div
                           onClick={() => fileInputRef.current?.click()}
-                          className="border-2 border-dashed border-black/10 hover:border-[#D4AF37] rounded-2xl p-6 md:p-8 text-center bg-[#FAF9F6]/50 cursor-pointer transition-all duration-300 group flex flex-col items-center justify-center min-h-[120px]"
+                          className="border-2 border-dashed border-black/10 hover:border-[var(--color-gold)] rounded-2xl p-6 md:p-8 text-center bg-[var(--color-surface-ivory)]/50 cursor-pointer transition-all duration-300 group flex flex-col items-center justify-center min-h-[120px]"
                         >
                           <input
                             ref={fileInputRef}
@@ -860,23 +860,23 @@ export function CustomOrders() {
                             className="hidden"
                             onChange={handleMoodUpload}
                           />
-                          <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                          <div className="w-10 h-10 rounded-full bg-[var(--color-gold)]/10 text-[var(--color-gold)] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                             <span className="material-symbols-outlined text-[20px]">cloud_upload</span>
                           </div>
-                          <p className="text-[12px] font-bold uppercase tracking-wider text-[#2D2B29] mb-0.5">Drag & Drop your photos here</p>
+                          <p className="text-[12px] font-bold uppercase tracking-wider text-[var(--color-on-surface)] mb-0.5">Drag & Drop your photos here</p>
                           <p className="text-[9.5px] text-[#685C57]/60">You can upload multiple files (JPG, PNG, HEIC).</p>
                         </div>
                       </div>
 
                       {/* Upload loader */}
                       {isUploading && (
-                        <div className="space-y-2 bg-[#FAF9F6] p-3 rounded-xl border border-black/5 animate-pulse">
-                          <div className="flex justify-between items-center text-[9px] font-bold text-[#D4AF37] uppercase tracking-wider">
+                        <div className="space-y-2 bg-[var(--color-surface-ivory)] p-3 rounded-xl border border-black/5 animate-pulse">
+                          <div className="flex justify-between items-center text-[9px] font-bold text-[var(--color-gold)] uppercase tracking-wider">
                             <span>Uploading your photos...</span>
                             <span>{uploadProgress}%</span>
                           </div>
                           <div className="w-full bg-[#f2efe9] h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-[#D4AF37] h-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                            <div className="bg-[var(--color-gold)] h-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
                           </div>
                         </div>
                       )}
@@ -887,7 +887,7 @@ export function CustomOrders() {
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[#685C57] block font-medium">Uploaded Photos ({directImages.length}):</span>
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
                             {directImages.map((img, i) => (
-                              <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-black/5 bg-[#FAF9F6] group">
+                              <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-black/5 bg-[var(--color-surface-ivory)] group">
                                 <img src={img} alt="Inspiration preview" className="w-full h-full object-cover" />
                                 <button
                                   type="button"
@@ -901,14 +901,14 @@ export function CustomOrders() {
                           </div>
 
                           {/* ─── INTERACTIVE SIRI AI DESIGN INTELLIGENCE ANALYZER ─── */}
-                          <div className="mt-4 bg-[#FAF9F6] border border-[#D4AF37]/30 rounded-2xl p-4 md:p-5 space-y-4 shadow-sm relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-[#D4AF37]/5 rounded-full -mr-6 -mt-6 pointer-events-none" />
+                          <div className="mt-4 bg-[var(--color-surface-ivory)] border border-[var(--color-gold)]/30 rounded-2xl p-4 md:p-5 space-y-4 shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--color-gold)]/5 rounded-full -mr-6 -mt-6 pointer-events-none" />
                             <div className="flex items-start gap-3">
-                              <span className="material-symbols-outlined text-[#D4AF37] text-[24px] shrink-0">insights</span>
+                              <span className="material-symbols-outlined text-[var(--color-gold)] text-[24px] shrink-0">insights</span>
                               <div className="space-y-1">
-                                <h4 className="text-[13px] font-bold text-[#2D2B29] flex items-center gap-1.5">
+                                <h4 className="text-[13px] font-bold text-[var(--color-on-surface)] flex items-center gap-1.5">
                                   Siri AI Design Intelligence
-                                  <span className="bg-[#D4AF37]/10 text-[#D4AF37] text-[7.5px] uppercase tracking-widest font-extrabold px-1.5 py-0.5 rounded">Expert Vision</span>
+                                  <span className="bg-[var(--color-gold)]/10 text-[var(--color-gold)] text-[7.5px] uppercase tracking-widest font-extrabold px-1.5 py-0.5 rounded">Expert Vision</span>
                                 </h4>
                                 <p className="text-[10.5px] text-[#685C57] font-light leading-normal">Let our neural design system scan your inspiration image, extract the Telugu/traditional color palettes, recommend heritage materials, and estimate the budget range!</p>
                               </div>
@@ -917,7 +917,7 @@ export function CustomOrders() {
                             {/* Scanning Animation Progress */}
                             {isAnalyzing && (
                               <div className="bg-white/80 backdrop-blur-sm border border-black/5 rounded-xl p-4 space-y-3">
-                                <div className="flex justify-between items-center text-[9.5px] font-bold uppercase tracking-wider text-[#D4AF37]">
+                                <div className="flex justify-between items-center text-[9.5px] font-bold uppercase tracking-wider text-[var(--color-gold)]">
                                   <span className="flex items-center gap-1.5">
                                     <span className="animate-spin text-[12px] material-symbols-outlined">sync</span>
                                     Siri AI scanning design motifs...
@@ -925,7 +925,7 @@ export function CustomOrders() {
                                   <span>{aiStep * 20}%</span>
                                 </div>
                                 <div className="w-full bg-black/5 h-1.5 rounded-full overflow-hidden">
-                                  <div className="bg-[#D4AF37] h-full transition-all duration-300" style={{ width: `${aiStep * 20}%` }} />
+                                  <div className="bg-[var(--color-gold)] h-full transition-all duration-300" style={{ width: `${aiStep * 20}%` }} />
                                 </div>
                                 <p className="text-[9.5px] text-[#685C57] italic">
                                   {aiStep === 1 && "Decomposing image color spectrum..."}
@@ -942,25 +942,25 @@ export function CustomOrders() {
                               <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-white border border-[#D4AF37]/35 rounded-xl p-4 space-y-3.5 shadow-inner"
+                                className="bg-white border border-[var(--color-gold)]/35 rounded-xl p-4 space-y-3.5 shadow-inner"
                               >
                                 <div className="border-b border-black/5 pb-2.5 flex items-center justify-between">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#D4AF37]">AI Analysis Summary</span>
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-gold)]">AI Analysis Summary</span>
                                   <span className="text-[9.5px] font-light text-[#685C57]">Reference: Image 01</span>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
                                   <div className="space-y-0.5">
                                     <span className="text-[8.5px] uppercase tracking-wider text-[#685C57] font-bold">Style Classification</span>
-                                    <p className="font-bold text-[#2D2B29]">{aiAnalysisResult.style}</p>
+                                    <p className="font-bold text-[var(--color-on-surface)]">{aiAnalysisResult.style}</p>
                                   </div>
                                   <div className="space-y-1">
                                     <span className="text-[8.5px] uppercase tracking-wider text-[#685C57] font-bold">Extracted Palette</span>
                                     <div className="flex items-center gap-1.5">
                                       {aiAnalysisResult.palette.map((hex, index) => (
-                                        <div key={index} className="flex items-center gap-1 bg-[#FAF9F6] border border-black/5 px-1.5 py-0.5 rounded-md">
+                                        <div key={index} className="flex items-center gap-1 bg-[var(--color-surface-ivory)] border border-black/5 px-1.5 py-0.5 rounded-md">
                                           <span className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0" style={{ backgroundColor: hex }} />
-                                          <span className="font-mono text-[8px] text-[#2D2B29]">{hex}</span>
+                                          <span className="font-mono text-[8px] text-[var(--color-on-surface)]">{hex}</span>
                                         </div>
                                       ))}
                                     </div>
@@ -969,7 +969,7 @@ export function CustomOrders() {
 
                                 <div className="space-y-0.5 text-[11px]">
                                   <span className="text-[8.5px] uppercase tracking-wider text-[#685C57] font-bold">Extracted Color Nuance</span>
-                                  <p className="text-[#2D2B29] font-medium">{aiAnalysisResult.colorDesc}</p>
+                                  <p className="text-[var(--color-on-surface)] font-medium">{aiAnalysisResult.colorDesc}</p>
                                 </div>
 
                                 <div className="space-y-0.5 text-[11px]">
@@ -980,13 +980,13 @@ export function CustomOrders() {
                                 <div className="border-t border-black/5 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                   <div className="text-[11px]">
                                     <span className="text-[8.5px] uppercase tracking-wider text-[#685C57] font-bold block">Estimated Budget Range</span>
-                                    <span className="font-mono text-[#D4AF37] font-bold text-[12px]">{aiAnalysisResult.suggestedBudget}</span>
+                                    <span className="font-mono text-[var(--color-gold)] font-bold text-[12px]">{aiAnalysisResult.suggestedBudget}</span>
                                   </div>
 
                                   <button
                                     type="button"
                                     onClick={handleApplyAiSuggestions}
-                                    className="px-4 py-2 bg-[#2D2B29] text-white hover:bg-[#D4AF37] rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                                    className="px-4 py-2 bg-[var(--color-on-surface)] text-white hover:bg-[var(--color-gold)] rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
                                   >
                                     Inject Suggestions Into Request Form
                                     <span className="material-symbols-outlined text-[13px]">add_circle</span>
@@ -999,7 +999,7 @@ export function CustomOrders() {
                               <button
                                 type="button"
                                 onClick={handleAIAnalysis}
-                                className="w-full py-2.5 border-2 border-[#D4AF37] hover:bg-[#D4AF37] hover:text-white text-[#D4AF37] rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm bg-white"
+                                className="w-full py-2.5 border-2 border-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-white text-[var(--color-gold)] rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm bg-white"
                               >
                                 <span className="material-symbols-outlined text-[16px]">insights</span>
                                 {aiAnalysisResult ? "Scan Again with Siri AI" : "Analyze Inspiration Photo with Siri AI"}
@@ -1012,8 +1012,8 @@ export function CustomOrders() {
                       {/* Paste custom links tool */}
                       <div className="border-t border-black/5 pt-5 space-y-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#D4AF37]">link</span>
-                          <h3 className="text-[13.5px] font-bold text-[#2D2B29]">Or, Add Inspiration Links</h3>
+                          <span className="material-symbols-outlined text-[18px] text-[var(--color-gold)]">link</span>
+                          <h3 className="text-[13.5px] font-bold text-[var(--color-on-surface)]">Or, Add Inspiration Links</h3>
                         </div>
                         <p className="text-[11px] text-[#685C57] font-light">Share your Pinterest board, Instagram post, or Google Drive folder with us:</p>
                         
@@ -1023,7 +1023,7 @@ export function CustomOrders() {
                             value={pastedLink}
                             onChange={(e) => setPastedLink(e.target.value)}
                             placeholder="Paste Pinterest, Instagram or Drive link here..."
-                            className="flex-1 bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[#D4AF37] text-[#2D2B29] transition-all"
+                            className="flex-1 bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
                           />
                           <button
                             type="button"
@@ -1038,7 +1038,7 @@ export function CustomOrders() {
                               setPastedLink("");
                               toast.success("Link added successfully!");
                             }}
-                            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#2D2B29] text-white hover:bg-[#D4AF37] transition-all text-[10px] md:text-[11px] font-bold uppercase tracking-wider shrink-0 cursor-pointer text-center"
+                            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[var(--color-on-surface)] text-white hover:bg-[var(--color-gold)] transition-all text-[10px] md:text-[11px] font-bold uppercase tracking-wider shrink-0 cursor-pointer text-center"
                           >
                             Add Link
                           </button>
@@ -1051,10 +1051,10 @@ export function CustomOrders() {
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[#685C57]">Added Inspiration Links ({externalLinks.length}):</span>
                           <div className="flex flex-col gap-2">
                             {externalLinks.map((link, idx) => (
-                              <div key={idx} className="flex items-center justify-between bg-[#FAF9F6] border border-black/5 rounded-xl px-3 py-2 shadow-sm min-w-0">
+                              <div key={idx} className="flex items-center justify-between bg-[var(--color-surface-ivory)] border border-black/5 rounded-xl px-3 py-2 shadow-sm min-w-0">
                                 <div className="flex items-center gap-2 text-[11.5px] min-w-0 pr-2">
-                                  <span className="material-symbols-outlined text-[15px] text-[#D4AF37] shrink-0">link</span>
-                                  <a href={link} target="_blank" rel="noopener noreferrer" className="text-[#2D2B29] font-bold hover:underline truncate">
+                                  <span className="material-symbols-outlined text-[15px] text-[var(--color-gold)] shrink-0">link</span>
+                                  <a href={link} target="_blank" rel="noopener noreferrer" className="text-[var(--color-on-surface)] font-bold hover:underline truncate">
                                     {link}
                                   </a>
                                 </div>
@@ -1081,8 +1081,8 @@ export function CustomOrders() {
                   {currentStep === 4 && (
                     <div className="space-y-5">
                       <div>
-                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[#D4AF37] tracking-widest block mb-0.5">step 04</span>
-                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[#2D2B29]">Describe Your Requirements</h2>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">step 04</span>
+                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">Describe Your Requirements</h2>
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">Describe what you want (e.g. colors, flowers, backdrop styles, or fabric preferences).</p>
                       </div>
 
@@ -1091,7 +1091,7 @@ export function CustomOrders() {
                           value={wizardDraft.customRequirements}
                           onChange={(e) => updateDraft({ customRequirements: e.target.value })}
                           placeholder="Example: We want a traditional gold and red stage background with fresh orange marigold flowers. Please include hanging brass lamps and dynamic lighting..."
-                          className="w-full bg-[#FAF9F6] border border-black/10 rounded-2xl p-4 font-body text-[13px] outline-none focus:border-[#D4AF37] min-h-[140px] text-[#2D2B29] transition-all resize-none shadow-inner"
+                          className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-2xl p-4 font-body text-[13px] outline-none focus:border-[var(--color-gold)] min-h-[140px] text-[var(--color-on-surface)] transition-all resize-none shadow-inner"
                         />
                       </div>
                     </div>
@@ -1101,19 +1101,19 @@ export function CustomOrders() {
                   {currentStep === 5 && (
                     <div className="space-y-5">
                       <div>
-                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[#D4AF37] tracking-widest block mb-0.5">step 05</span>
-                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[#2D2B29]">Quantity & Budget</h2>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">step 05</span>
+                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">Quantity & Budget</h2>
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">Select the number of setups and your approximate budget range.</p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold uppercase text-[#685C57] tracking-wider block">Number of Setups</label>
-                          <div className="flex items-center bg-[#FAF9F6] rounded-xl border border-black/10 p-1.5 max-w-[150px]">
+                          <div className="flex items-center bg-[var(--color-surface-ivory)] rounded-xl border border-black/10 p-1.5 max-w-[150px]">
                             <button
                               type="button"
                               onClick={() => updateDraft({ quantity: Math.max(1, wizardDraft.quantity - 1) })}
-                              className="w-9 h-9 rounded-lg bg-white hover:bg-black/5 text-[#2D2B29] font-bold flex items-center justify-center text-[15px] cursor-pointer shadow-sm"
+                              className="w-9 h-9 rounded-lg bg-white hover:bg-black/5 text-[var(--color-on-surface)] font-bold flex items-center justify-center text-[15px] cursor-pointer shadow-sm"
                             >
                               -
                             </button>
@@ -1121,7 +1121,7 @@ export function CustomOrders() {
                             <button
                               type="button"
                               onClick={() => updateDraft({ quantity: wizardDraft.quantity + 1 })}
-                              className="w-9 h-9 rounded-lg bg-white hover:bg-black/5 text-[#2D2B29] font-bold flex items-center justify-center text-[15px] cursor-pointer shadow-sm"
+                              className="w-9 h-9 rounded-lg bg-white hover:bg-black/5 text-[var(--color-on-surface)] font-bold flex items-center justify-center text-[15px] cursor-pointer shadow-sm"
                             >
                               +
                             </button>
@@ -1133,7 +1133,7 @@ export function CustomOrders() {
                           <select
                             value={wizardDraft.budget}
                             onChange={(e) => updateDraft({ budget: e.target.value })}
-                            className="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[#D4AF37] text-[#2D2B29] cursor-pointer transition-all"
+                            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] cursor-pointer transition-all"
                           >
                             <option value="">Select Budget Range...</option>
                             {budgetList.map(b => (
@@ -1149,8 +1149,8 @@ export function CustomOrders() {
                   {currentStep === 6 && (
                     <div className="space-y-5">
                       <div>
-                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[#D4AF37] tracking-widest block mb-0.5">step 06</span>
-                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[#2D2B29]">Delivery & Event Details</h2>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">step 06</span>
+                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">Delivery & Event Details</h2>
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">Where and when is the main event taking place?</p>
                       </div>
 
@@ -1161,7 +1161,7 @@ export function CustomOrders() {
                             type="date"
                             value={wizardDraft.eventDate}
                             onChange={(e) => updateDraft({ eventDate: e.target.value })}
-                            className="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[#D4AF37] text-[#2D2B29] cursor-pointer transition-all"
+                            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] cursor-pointer transition-all"
                           />
                         </div>
 
@@ -1172,7 +1172,7 @@ export function CustomOrders() {
                             value={wizardDraft.city}
                             onChange={(e) => updateDraft({ city: e.target.value })}
                             placeholder="E.g., Bangalore, Ongole"
-                            className="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[#D4AF37] text-[#2D2B29] transition-all"
+                            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
                           />
                         </div>
                       </div>
@@ -1187,8 +1187,8 @@ export function CustomOrders() {
                               onClick={() => updateDraft({ bookingType: b.label })}
                               className={`p-2.5 rounded-xl border text-[10px] font-bold text-center transition-all cursor-pointer uppercase tracking-wider ${
                                 wizardDraft.bookingType === b.label
-                                  ? "bg-[#2D2B29] text-white border-[#2D2B29] shadow-sm"
-                                  : "bg-[#FAF9F6] text-[#2D2B29] border-black/5 hover:border-black/20"
+                                  ? "bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-sm"
+                                  : "bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/20"
                               }`}
                             >
                               {b.label}
@@ -1203,8 +1203,8 @@ export function CustomOrders() {
                   {currentStep === 7 && (
                     <div className="space-y-5">
                       <div>
-                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[#D4AF37] tracking-widest block mb-0.5">step 07</span>
-                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[#2D2B29]">Contact Information</h2>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">step 07</span>
+                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">Contact Information</h2>
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">Fill in your contact details so our team can reach you easily.</p>
                       </div>
 
@@ -1216,7 +1216,7 @@ export function CustomOrders() {
                             value={wizardDraft.customerName}
                             onChange={(e) => updateDraft({ customerName: e.target.value })}
                             placeholder="E.g., Ananya Sharma"
-                            className="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[#D4AF37] text-[#2D2B29] transition-all"
+                            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
                           />
                         </div>
 
@@ -1227,7 +1227,7 @@ export function CustomOrders() {
                             value={wizardDraft.customerPhone}
                             onChange={(e) => updateDraft({ customerPhone: e.target.value })}
                             placeholder="E.g., +91 98765 43210"
-                            className="w-full bg-[#FAF9F6] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[#D4AF37] text-[#2D2B29] transition-all"
+                            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
                           />
                         </div>
                       </div>
@@ -1238,54 +1238,54 @@ export function CustomOrders() {
                   {currentStep === 8 && (
                     <div className="space-y-5">
                       <div>
-                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[#D4AF37] tracking-widest block mb-0.5">step 08</span>
-                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[#2D2B29]">Review Your Selections</h2>
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">step 08</span>
+                        <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">Review Your Selections</h2>
                         <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">Please review all the details of your request before submitting.</p>
                       </div>
 
-                      <div className="bg-[#FAF9F6] rounded-2xl border border-black/5 p-4 md:p-5 space-y-3.5">
+                      <div className="bg-[var(--color-surface-ivory)] rounded-2xl border border-black/5 p-4 md:p-5 space-y-3.5">
                         <div className="grid grid-cols-2 gap-3 text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
                           <div>
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Occasion</span>
-                            <p className="font-bold text-[#2D2B29] mt-0.5">{wizardDraft.occasion || "Not Selected"}</p>
+                            <p className="font-bold text-[var(--color-on-surface)] mt-0.5">{wizardDraft.occasion || "Not Selected"}</p>
                           </div>
                           <div>
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Product Category</span>
-                            <p className="font-bold text-[#2D2B29] mt-0.5">{wizardDraft.productType || "Not Selected"}</p>
+                            <p className="font-bold text-[var(--color-on-surface)] mt-0.5">{wizardDraft.productType || "Not Selected"}</p>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
                           <div>
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Number of Setups</span>
-                            <p className="font-bold text-[#2D2B29] mt-0.5">{wizardDraft.quantity} active</p>
+                            <p className="font-bold text-[var(--color-on-surface)] mt-0.5">{wizardDraft.quantity} active</p>
                           </div>
                           <div>
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Budget</span>
-                            <p className="font-bold text-[#2D2B29] mt-0.5">{wizardDraft.budget || "Get Quote"}</p>
+                            <p className="font-bold text-[var(--color-on-surface)] mt-0.5">{wizardDraft.budget || "Get Quote"}</p>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
                           <div>
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Event Date & Location</span>
-                            <p className="font-bold text-[#2D2B29] mt-0.5">{wizardDraft.eventDate || "TBD"} ({wizardDraft.city || "Any City"})</p>
+                            <p className="font-bold text-[var(--color-on-surface)] mt-0.5">{wizardDraft.eventDate || "TBD"} ({wizardDraft.city || "Any City"})</p>
                           </div>
                           <div>
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Consultation Type</span>
-                            <p className="font-bold text-[#2D2B29] mt-0.5">{wizardDraft.bookingType}</p>
+                            <p className="font-bold text-[var(--color-on-surface)] mt-0.5">{wizardDraft.bookingType}</p>
                           </div>
                         </div>
 
                         <div className="text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
                           <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Contact Details</span>
-                          <p className="font-bold text-[#2D2B29] mt-0.5">{wizardDraft.customerName} ({wizardDraft.customerPhone})</p>
+                          <p className="font-bold text-[var(--color-on-surface)] mt-0.5">{wizardDraft.customerName} ({wizardDraft.customerPhone})</p>
                         </div>
 
                         {wizardDraft.customRequirements && (
                           <div className="text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Your Special Requirements</span>
-                            <p className="text-[#2D2B29] italic leading-relaxed mt-0.5">"{wizardDraft.customRequirements}"</p>
+                            <p className="text-[var(--color-on-surface)] italic leading-relaxed mt-0.5">"{wizardDraft.customRequirements}"</p>
                           </div>
                         )}
 
@@ -1305,7 +1305,7 @@ export function CustomOrders() {
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Inspiration Links ({externalLinks.length})</span>
                             <div className="flex flex-col gap-1.5">
                               {externalLinks.map((link, i) => (
-                                <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-[#D4AF37] hover:underline flex items-center gap-1.5 min-w-0">
+                                <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-[var(--color-gold)] hover:underline flex items-center gap-1.5 min-w-0">
                                   <span className="material-symbols-outlined text-[14px] shrink-0">link</span>
                                   <span className="truncate">{link}</span>
                                 </a>
@@ -1323,7 +1323,7 @@ export function CustomOrders() {
                       type="button"
                       disabled={currentStep === 1}
                       onClick={() => setCurrentStep(prev => prev - 1)}
-                      className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full border border-black/10 text-[11px] font-bold uppercase tracking-wider text-[#2D2B29] hover:bg-[#2D2B29] hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full border border-black/10 text-[11px] font-bold uppercase tracking-wider text-[var(--color-on-surface)] hover:bg-[var(--color-on-surface)] hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                     >
                       Back
                     </button>
@@ -1332,7 +1332,7 @@ export function CustomOrders() {
                       <button
                         type="button"
                         onClick={handleNextStep}
-                        className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full bg-[#2D2B29] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#D4AF37] transition-all cursor-pointer"
+                        className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full bg-[var(--color-on-surface)] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[var(--color-gold)] transition-all cursor-pointer"
                       >
                         Next Step
                       </button>
@@ -1350,7 +1350,7 @@ export function CustomOrders() {
                         <button
                           type="button"
                           onClick={handleWizardSubmit}
-                          className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full bg-[#D4AF37] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#2D2B29] transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full bg-[var(--color-gold)] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[var(--color-on-surface)] transition-all flex items-center justify-center gap-1 cursor-pointer"
                         >
                           Submit Custom Order Request
                           <span className="material-symbols-outlined text-[16px]">done</span>
@@ -1375,7 +1375,7 @@ export function CustomOrders() {
               {myOrders.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-black/5 p-8 text-center text-[#685C57] flex flex-col items-center justify-center">
                   <span className="material-symbols-outlined text-[36px] text-black/20 mb-2">search_off</span>
-                  <p className="text-[13px] font-bold text-[#2D2B29]">No Custom Orders Found</p>
+                  <p className="text-[13px] font-bold text-[var(--color-on-surface)]">No Custom Orders Found</p>
                   <p className="text-[11px] text-[#685C57] mt-1 max-w-[200px] mx-auto">Use the request form to submit your custom order request today.</p>
                 </div>
               ) : (
@@ -1390,7 +1390,7 @@ export function CustomOrders() {
                       onClick={() => setSelectedOrder(order)}
                       className={`p-5 rounded-[2rem] border transition-all duration-300 cursor-pointer shadow-sm ${
                         selectedOrder?._id === order._id
-                          ? "bg-white border-[#D4AF37] ring-1 ring-[#D4AF37]"
+                          ? "bg-white border-[var(--color-gold)] ring-1 ring-[var(--color-gold)]"
                           : "bg-white border-black/5 hover:border-black/15"
                       }`}
                     >
@@ -1406,13 +1406,13 @@ export function CustomOrders() {
                         <span className="text-[9px] font-mono text-[#685C57]">{dateVal}</span>
                       </div>
 
-                      <h4 className="text-[14px] font-bold text-[#2D2B29] line-clamp-1">{order.occasion} Setup</h4>
+                      <h4 className="text-[14px] font-bold text-[var(--color-on-surface)] line-clamp-1">{order.occasion} Setup</h4>
                       <p className="text-[11px] text-[#685C57] mt-0.5">{order.productType} • {order.city || "Any Location"}</p>
                       
                       {order.quotation?.total > 0 && (
                         <div className="mt-3 pt-3 border-t border-black/5 flex items-center justify-between text-[11px]">
                           <span className="text-[#685C57]">Estimated Price:</span>
-                          <span className="font-bold font-mono text-[#D4AF37]">₹{order.quotation.total.toLocaleString("en-IN")}</span>
+                          <span className="font-bold font-mono text-[var(--color-gold)]">₹{order.quotation.total.toLocaleString("en-IN")}</span>
                         </div>
                       )}
                     </div>
@@ -1426,7 +1426,7 @@ export function CustomOrders() {
               {!selectedOrder ? (
                 <div className="flex flex-col items-center justify-center flex-1 py-12 md:py-20 text-center text-[#685C57]">
                   <span className="material-symbols-outlined text-[40px] md:text-[48px] text-black/10 mb-2">forum</span>
-                  <p className="text-[14px] font-bold text-[#2D2B29]">Custom Order Tracking</p>
+                  <p className="text-[14px] font-bold text-[var(--color-on-surface)]">Custom Order Tracking</p>
                   <p className="text-[11.5px] max-w-[280px] mx-auto mt-1 leading-relaxed px-4">Select one of your custom orders from the left list to view status updates, pricing, and chat with our team.</p>
                 </div>
               ) : (
@@ -1436,7 +1436,7 @@ export function CustomOrders() {
                   <button
                     type="button"
                     onClick={() => setSelectedOrder(null)}
-                    className="lg:hidden flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#D4AF37] hover:text-[#2D2B29] transition-colors pb-1.5 self-start cursor-pointer bg-transparent border-none p-0"
+                    className="lg:hidden flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold)] hover:text-[var(--color-on-surface)] transition-colors pb-1.5 self-start cursor-pointer bg-transparent border-none p-0"
                   >
                     <span className="material-symbols-outlined text-[16px]">arrow_back</span>
                     Back to All Orders
@@ -1445,28 +1445,28 @@ export function CustomOrders() {
                   {/* Workspace top profile header */}
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between border-b border-black/5 pb-4 gap-3">
                     <div>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#D4AF37]">Custom Order Tracking</span>
-                      <h3 className="text-[16px] md:text-[18px] font-bold text-[#2D2B29] mt-0.5">{selectedOrder.occasion} Custom Order Details</h3>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-gold)]">Custom Order Tracking</span>
+                      <h3 className="text-[16px] md:text-[18px] font-bold text-[var(--color-on-surface)] mt-0.5">{selectedOrder.occasion} Custom Order Details</h3>
                       <p className="text-[11px] text-[#685C57] mt-0.5">Category: {selectedOrder.productType} • Number of Setups: {selectedOrder.quantity}</p>
                     </div>
 
                     <div className="self-start sm:self-auto text-left sm:text-right">
                       <span className="text-[9px] uppercase tracking-wider text-outline-variant block sm:inline-block">Status</span>
-                      <span className="inline-block sm:block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#2D2B29] text-white mt-1">
+                      <span className="inline-block sm:block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[var(--color-on-surface)] text-white mt-1">
                         {selectedOrder.status}
                       </span>
                     </div>
                   </div>
 
                   {/* Mobile-only Workspace Sub-tabs */}
-                  <div className="flex lg:hidden bg-[#FAF9F6] p-1 rounded-xl border border-black/5 mb-1 shrink-0">
+                  <div className="flex lg:hidden bg-[var(--color-surface-ivory)] p-1 rounded-xl border border-black/5 mb-1 shrink-0">
                     <button
                       type="button"
                       onClick={() => setMobileSubTab("chat")}
                       className={`flex-1 text-center py-2 rounded-lg text-[10.5px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                         mobileSubTab === "chat"
-                          ? "bg-[#2D2B29] text-white shadow-sm"
-                          : "text-[#685C57] hover:text-[#2D2B29]"
+                          ? "bg-[var(--color-on-surface)] text-white shadow-sm"
+                          : "text-[#685C57] hover:text-[var(--color-on-surface)]"
                       }`}
                     >
                       Chat & Updates
@@ -1476,8 +1476,8 @@ export function CustomOrders() {
                       onClick={() => setMobileSubTab("summary")}
                       className={`flex-1 text-center py-2 rounded-lg text-[10.5px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                         mobileSubTab === "summary"
-                          ? "bg-[#2D2B29] text-white shadow-sm"
-                          : "text-[#685C57] hover:text-[#2D2B29]"
+                          ? "bg-[var(--color-on-surface)] text-white shadow-sm"
+                          : "text-[#685C57] hover:text-[var(--color-on-surface)]"
                       }`}
                     >
                       Summary & Pricing
@@ -1491,7 +1491,7 @@ export function CustomOrders() {
                     <div className={`lg:col-span-5 space-y-4 pr-0 lg:pr-4 lg:border-r border-black/5 ${mobileSubTab === "summary" ? "block" : "hidden lg:block"}`}>
                       
                       {/* Timeline status track */}
-                      <div className="bg-[#FAF9F6] p-4 rounded-2xl border border-black/5 space-y-2">
+                      <div className="bg-[var(--color-surface-ivory)] p-4 rounded-2xl border border-black/5 space-y-2">
                         <span className="text-[9px] font-bold uppercase tracking-wider text-[#685C57] block">Order Progress</span>
                         <div className="relative pl-4 border-l border-black/10 space-y-3.5 pt-1 text-[11px]">
                           {[
@@ -1504,8 +1504,8 @@ export function CustomOrders() {
                             const isPast = ["Pending", "Reviewing", "Quote Sent", "Approved", "In Progress", "Ready", "Delivered"].indexOf(selectedOrder.status) >= ["Pending", "Reviewing", "Quote Sent", "Approved", "In Progress", "Ready", "Delivered"].indexOf(stage.st);
                             return (
                               <div key={idx} className="relative">
-                                <div className={`absolute -left-[20.5px] top-0.5 w-3 h-3 rounded-full border-2 bg-white transition-all ${isPast ? "border-[#D4AF37] bg-[#D4AF37]" : "border-black/15"}`} />
-                                <span className={`font-bold ${isPast ? "text-[#2D2B29]" : "text-black/35"}`}>{stage.st}</span>
+                                <div className={`absolute -left-[20.5px] top-0.5 w-3 h-3 rounded-full border-2 bg-white transition-all ${isPast ? "border-[var(--color-gold)] bg-[var(--color-gold)]" : "border-black/15"}`} />
+                                <span className={`font-bold ${isPast ? "text-[var(--color-on-surface)]" : "text-black/35"}`}>{stage.st}</span>
                                 <p className="text-[10px] text-[#685C57]/70 font-light mt-0.5 leading-tight">{stage.d}</p>
                               </div>
                             );
@@ -1515,9 +1515,9 @@ export function CustomOrders() {
 
                       {/* Interactive Quotation Estimate Card */}
                       {selectedOrder.quotation?.items?.length > 0 ? (
-                        <div className="bg-white rounded-2xl border-2 border-[#D4AF37] p-4 space-y-3 shadow-md">
+                        <div className="bg-white rounded-2xl border-2 border-[var(--color-gold)] p-4 space-y-3 shadow-md">
                           <div className="flex items-center justify-between border-b border-black/5 pb-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#D4AF37]">Your Quotation</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-gold)]">Your Quotation</span>
                             <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
                               selectedOrder.quotation.status === "approved" ? "bg-emerald-100 text-emerald-700" :
                               selectedOrder.quotation.status === "rejected" ? "bg-red-100 text-red-700" :
@@ -1529,7 +1529,7 @@ export function CustomOrders() {
 
                           <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
                             {selectedOrder.quotation.items.map((it, i) => (
-                              <div key={i} className="flex justify-between text-[11px] text-[#2D2B29]/80 font-light">
+                              <div key={i} className="flex justify-between text-[11px] text-[var(--color-on-surface)]/80 font-light">
                                 <span className="truncate pr-2">{it.description}</span>
                                 <span className="font-mono font-medium shrink-0">₹{it.amount.toLocaleString("en-IN")}</span>
                               </div>
@@ -1547,7 +1547,7 @@ export function CustomOrders() {
                             </div>
                             <div className="flex justify-between font-bold text-[12px] pt-1.5 border-t border-dashed border-black/10">
                               <span>Grand Total:</span>
-                              <span className="font-mono text-[#D4AF37]">₹{selectedOrder.quotation.total?.toLocaleString("en-IN")}</span>
+                              <span className="font-mono text-[var(--color-gold)]">₹{selectedOrder.quotation.total?.toLocaleString("en-IN")}</span>
                             </div>
                           </div>
 
@@ -1556,7 +1556,7 @@ export function CustomOrders() {
                             <div className="flex gap-2 pt-2">
                               <button
                                 onClick={() => handleQuotationDecision("approved")}
-                                className="flex-1 bg-[#2D2B29] hover:bg-[#D4AF37] text-white py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer text-center animate-pulse"
+                                className="flex-1 bg-[var(--color-on-surface)] hover:bg-[var(--color-gold)] text-white py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer text-center animate-pulse"
                               >
                                 Approve Quote
                               </button>
@@ -1570,7 +1570,7 @@ export function CustomOrders() {
                           )}
                         </div>
                       ) : (
-                        <div className="bg-[#FAF9F6] p-4 rounded-2xl border border-black/5 text-center py-6">
+                        <div className="bg-[var(--color-surface-ivory)] p-4 rounded-2xl border border-black/5 text-center py-6">
                           <span className="material-symbols-outlined text-[24px] text-black/20 block mb-1">payments</span>
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[#685C57]">Preparing Quotation</span>
                           <p className="text-[10px] text-[#685C57]/60 mt-1">Our team is checking your design requirements to prepare your custom pricing.</p>
@@ -1589,7 +1589,7 @@ export function CustomOrders() {
 
                       {/* Display inspiration images in client active order details tracking card */}
                       {selectedOrder.inspirationImages?.length > 0 && (
-                        <div className="bg-[#FAF9F6] p-4 rounded-2xl border border-black/5 space-y-3">
+                        <div className="bg-[var(--color-surface-ivory)] p-4 rounded-2xl border border-black/5 space-y-3">
                           <span className="text-[9px] font-bold uppercase tracking-wider text-[#685C57] block">My Inspirations ({selectedOrder.inspirationImages.length}):</span>
                           
                           {/* Direct photos previews */}
@@ -1607,7 +1607,7 @@ export function CustomOrders() {
                           {selectedOrder.inspirationImages.filter(url => !isDirectImageUrl(url)).length > 0 && (
                             <div className="flex flex-col gap-1.5 pt-1 border-t border-black/5">
                               {selectedOrder.inspirationImages.filter(url => !isDirectImageUrl(url)).map((link, i) => (
-                                <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-[10.5px] font-bold text-[#D4AF37] hover:underline flex items-center gap-1 min-w-0">
+                                <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-[10.5px] font-bold text-[var(--color-gold)] hover:underline flex items-center gap-1 min-w-0">
                                   <span className="material-symbols-outlined text-[13px] shrink-0">link</span>
                                   <span className="truncate">{link}</span>
                                 </a>
@@ -1622,7 +1622,7 @@ export function CustomOrders() {
                     <div className={`lg:col-span-7 flex flex-col min-h-[300px] ${mobileSubTab === "chat" ? "flex" : "hidden lg:flex"}`}>
                       
                       {/* Chat messages viewport */}
-                      <div className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[260px] pb-4 bg-[#FAF9F6]/30 p-2.5 rounded-2xl border border-black/5 shadow-inner">
+                      <div className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[260px] pb-4 bg-[var(--color-surface-ivory)]/30 p-2.5 rounded-2xl border border-black/5 shadow-inner">
                         {selectedOrder.messages?.map((msg, i) => {
                           const isAdmin = msg.sender === "admin";
                           const isLog = msg.senderName === "System";
@@ -1641,8 +1641,8 @@ export function CustomOrders() {
                               <span className="text-[8px] font-bold text-[#685C57] mb-0.5 px-1">{msg.senderName} ({dateVal})</span>
                               <div className={`p-3.5 rounded-2xl text-[12px] leading-relaxed shadow-sm ${
                                 isAdmin
-                                  ? "bg-white text-[#2D2B29] border border-black/5 rounded-tl-none"
-                                  : "bg-[#2D2B29] text-white rounded-tr-none"
+                                  ? "bg-white text-[var(--color-on-surface)] border border-black/5 rounded-tl-none"
+                                  : "bg-[var(--color-on-surface)] text-white rounded-tr-none"
                               }`}>
                                 <p>{msg.text}</p>
                               </div>
@@ -1659,12 +1659,12 @@ export function CustomOrders() {
                           value={chatMessage}
                           onChange={(e) => setChatMessage(e.target.value)}
                           placeholder="Type your message here..."
-                          className="flex-1 bg-[#FAF9F6] border border-black/10 rounded-full px-4 py-2.5 text-[12.5px] outline-none focus:border-[#D4AF37] transition-all text-[#2D2B29]"
+                          className="flex-1 bg-[var(--color-surface-ivory)] border border-black/10 rounded-full px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] transition-all text-[var(--color-on-surface)]"
                         />
                         <button
                           type="submit"
                           disabled={isSendingMessage || !chatMessage.trim()}
-                          className="w-10 h-10 rounded-full bg-[#2D2B29] hover:bg-[#D4AF37] text-white flex items-center justify-center shadow-md cursor-pointer transition-all shrink-0 active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                          className="w-10 h-10 rounded-full bg-[var(--color-on-surface)] hover:bg-[var(--color-gold)] text-white flex items-center justify-center shadow-md cursor-pointer transition-all shrink-0 active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                         >
                           <span className="material-symbols-outlined text-[18px]">send</span>
                         </button>

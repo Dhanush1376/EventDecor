@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SEO } from "../components/seo/SEO";
 import { bookingService } from "../services/domainServices";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
+import { DashboardSkeleton } from "../components/ui/Skeleton";
 import toast from "react-hot-toast";
 
 import logger from '../utils/logger';
@@ -200,9 +201,23 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
         )}
 
         {loading && bookings.length === 0 ? (
-          <div className="min-h-[400px] flex items-center justify-center">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
+          isEmbedded ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="p-5 rounded-2xl bg-white border border-outline-variant/10 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 w-24 bg-stone-100 rounded" />
+                    <div className="h-6 w-20 bg-stone-100 rounded-full" />
+                  </div>
+                  <div className="h-5 w-3/4 bg-stone-100 rounded" />
+                  <div className="h-4 w-full bg-stone-100 rounded" />
+                  <div className="h-4 w-2/3 bg-stone-100 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <DashboardSkeleton />
+          )
         ) : bookings.length === 0 ? (
           /* Empty Curation Workspace state */
           <div className="text-center py-20 bg-white rounded-3xl border border-black/5 shadow-xl max-w-xl mx-auto px-6 space-y-6">
@@ -312,7 +327,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                         </span>
                       </div>
                       <div className="space-y-1.5 col-span-2 sm:col-span-3 lg:col-span-2 bg-[#FAF6F0] p-4 md:p-5 rounded-2xl border border-[#C4A87C]/15 relative overflow-hidden">
-                        <span className="font-label text-[8px] uppercase tracking-widest text-[#735c00] font-bold block mb-1">Setup Destination Address</span>
+                        <span className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-1">Setup Destination Address</span>
                         {selectedBooking.venue?.name && (
                           <span className="font-display text-xs text-black font-bold flex items-center gap-1.5 leading-none">
                             <span className="material-symbols-outlined text-primary text-[16px]">storefront</span>

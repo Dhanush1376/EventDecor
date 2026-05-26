@@ -19,7 +19,7 @@ export function WhatsAppWidget() {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0, x: 100 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed bottom-28 right-6 md:bottom-10 md:right-10 z-[40]"
+          className="whatsapp-widget fixed bottom-28 right-6 md:bottom-10 md:right-10 z-[40]"
         >
           {/* Symmetrical Close Button */}
           <button

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SEO } from "../components/seo/SEO";
 import { eventService, bookingService, uploadService } from "../services/domainServices";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
+import { BookingWizardSkeleton } from "../components/ui/Skeleton";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 
@@ -43,6 +44,10 @@ export function EventBookingWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  if (loading) {
+    return <BookingWizardSkeleton />;
+  }
 
   // Form State
   const [formData, setFormData] = useState(() => {
@@ -339,7 +344,7 @@ export function EventBookingWizard() {
           email: "customer@example.com",
         },
         theme: {
-          color: "#735c00", // Brand Primary
+          color: "var(--color-gold-dark)", // Brand Primary
         },
       };
 

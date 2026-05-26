@@ -8,10 +8,11 @@ import {
   setSessionMarker,
   clearAuthStorage,
 } from '../utils/authStorage';
+import { clearCachedProfile } from '../utils/authSessionCache';
 
 const api = axios.create({
+  timeout: 30000, // 30s timeout to prevent hanging connections
   withCredentials: true,
-  timeout: 45000,
   headers: {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-cache',
@@ -40,7 +41,7 @@ export const ensureCsrfToken = async () => {
   if (csrfToken) return csrfToken;
   if (!csrfInitPromise) {
     csrfInitPromise = api
-      .get(`${getApiRootUrl()}/csrf-token`, { _bypassOfflineQueue: true })
+      .get('/csrf-token', { _bypassOfflineQueue: true })
       .then((res) => {
         csrfToken = res.data?.csrfToken || csrfToken;
         return csrfToken;
@@ -115,6 +116,7 @@ const dispatchUnauthorized = () => {
   }
   setAccessToken(null);
   clearAuthStorage();
+  clearCachedProfile();
   window.dispatchEvent(new Event('auth-unauthorized'));
 };
 
@@ -142,22 +144,44 @@ api.interceptors.request.use(
     config.baseURL = getApiUrl();
     const path = (config.url || '').toLowerCase();
 
-    // Prevent protected profile/cart/wishlist calls before a session marker exists
-    if (
-      !accessToken &&
-      !hasLocalAuthMarker() &&
-      (path.includes('/auth/profile') ||
-        path.includes('/users/cart') ||
-        path.includes('/users/wishlist') ||
-        path.includes('/users/profile'))
-    ) {
+    const isProtectedRoute =
+      path.includes('/auth/profile') ||
+      path.includes('/users/cart') ||
+      path.includes('/users/wishlist') ||
+      path.includes('/users/profile') ||
+      path.includes('/admin/') ||
+      path.includes('/recommendations/for-you');
+
+    const isAuthLifecycleRequest =
+      path.includes('/auth/refresh') ||
+      path.includes('/auth/login') ||
+      path.includes('/auth/register') ||
+      path.includes('/auth/logout') ||
+      config._skipAuthRetry === true;
+
+    // Prevent protected calls before a session marker exists
+    if (!accessToken && !hasLocalAuthMarker() && isProtectedRoute) {
       const err = new axios.AxiosError('Not authenticated', 'ERR_NO_SESSION', config);
       return Promise.reject(err);
     }
 
-    // ─── AUTH TOKEN INTEGRATION ───
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    // ─── AUTH TOKEN INTEGRATION & QUEUEING ───
+    if (!isAuthLifecycleRequest) {
+      if (isProtectedRoute && !accessToken && hasLocalAuthMarker()) {
+        try {
+          const token = await refreshAccessToken();
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          } else {
+            const err = new axios.AxiosError('Session expired', 'ERR_NO_SESSION', config);
+            return Promise.reject(err);
+          }
+        } catch (err) {
+          return Promise.reject(err);
+        }
+      } else if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
     }
 
     const method = (config.method || 'get').toLowerCase();
@@ -168,19 +192,39 @@ api.interceptors.request.use(
       }
     }
 
-    // ─── OFFLINE INTEGRATION ───
-    const isOffline = window.__networkState === 'offline';
+    // ─── OFFLINE & RECONNECTING INTEGRATION ───
+    const isOfflineOrReconnecting =
+      window.__networkState === 'offline' ||
+      window.__networkState === 'reconnecting';
     const isBypass = config._bypassOfflineQueue === true;
 
-    if (isOffline && !isBypass) {
+    if (isOfflineOrReconnecting && !isBypass) {
       const method = config.method ? config.method.toLowerCase() : 'get';
-      
-      // We no longer aggressively block GET requests here.
-      // We let the browser's fetch attempt it, as network conditions might have recovered
-      // without navigator.onLine updating yet.
+
+      if (method === 'get') {
+        const cached = getCachedGet(config.url, config);
+        if (cached) {
+          logger.dev(`[API] Serving offline cached GET for: ${config.url}`);
+          return Promise.resolve({
+            data: cached.data,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config,
+            fromCache: true,
+            stale: true,
+          });
+        }
+        const error = new axios.AxiosError(
+          "Service is currently offline or reconnecting.",
+          "ERR_OFFLINE",
+          config
+        );
+        return Promise.reject(error);
+      }
 
       // Mutating requests: Check if queueable
-      if (method !== 'get' && isQueueable(config.url, config.method)) {
+      if (isQueueable(config.url, config.method)) {
         if (typeof window.__queueRequest === 'function') {
           const queueItem = window.__queueRequest({
             url: config.url,
@@ -201,15 +245,13 @@ api.interceptors.request.use(
         }
       }
 
-      // Non-queueable mutations (e.g. login, payment checkout) while explicitly offline
-      if (method !== 'get') {
-        const error = new axios.AxiosError(
-          "Action unavailable while offline.",
-          "ERR_OFFLINE",
-          config
-        );
-        return Promise.reject(error);
-      }
+      // Non-queueable mutations (e.g. login, payment checkout) while offline/reconnecting
+      const error = new axios.AxiosError(
+        "Action unavailable while connection is offline or reconnecting.",
+        "ERR_OFFLINE",
+        config
+      );
+      return Promise.reject(error);
     }
 
     config.metadata = { startTime: Date.now() };
@@ -297,12 +339,17 @@ api.interceptors.response.use(
       logger.dev('[API] 401 Unauthorized - Attempting token refresh for:', originalRequest.url);
 
       try {
-        const token = await refreshAccessToken();
-        if (token) {
-          logger.dev('[API] Token refresh successful. Retrying original request.');
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        }
+          const token = await refreshAccessToken();
+          if (token) {
+            logger.dev('[API] Token refresh successful. Retrying original request.');
+            if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
+              originalRequest.headers.set('Authorization', `Bearer ${token}`);
+            } else {
+              originalRequest.headers = originalRequest.headers || {};
+              originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            }
+            return api(originalRequest);
+          }
       } catch (refreshErr) {
         if (refreshErr.response) {
           logger.error('[API] Token refresh rejected by server.');

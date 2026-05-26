@@ -208,7 +208,7 @@ export function AdminTeam() {
     return (
       <div className="flex flex-col items-center justify-center py-24 space-y-4 font-body">
         <div className="w-10 h-10 border-3 border-slate-900 border-t-transparent rounded-full animate-spin" />
-        <p className="text-[12px] text-outline font-medium uppercase tracking-widest">
+        <p className="text-xs sm:text-sm text-outline font-medium uppercase tracking-widest">
           Syncing active team roster...
         </p>
       </div>
@@ -228,10 +228,10 @@ export function AdminTeam() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h2 className="text-[24px] font-bold text-on-surface font-display tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold text-on-surface font-display tracking-tight">
             Team Workspace & Authorization
           </h2>
-          <p className="text-[13px] text-outline mt-0.5">
+          <p className="text-sm sm:text-base text-outline mt-1">
             Manage administrative access rights, role hierarchies, and active invitations
           </p>
         </div>
@@ -248,7 +248,7 @@ export function AdminTeam() {
       <div className="flex border-b border-surface-container-low gap-6">
         <button
           onClick={() => setActiveTab("roster")}
-          className={`pb-3 text-[12px] uppercase tracking-widest font-bold border-b-2 cursor-pointer transition-all ${
+          className={`pb-3 text-xs sm:text-sm uppercase tracking-widest font-bold border-b-2 cursor-pointer transition-all ${
             activeTab === "roster" ? "border-primary text-primary" : "border-transparent text-outline hover:text-on-surface"
           }`}
         >
@@ -256,7 +256,7 @@ export function AdminTeam() {
         </button>
         <button
           onClick={() => setActiveTab("pending")}
-          className={`pb-3 text-[12px] uppercase tracking-widest font-bold border-b-2 cursor-pointer transition-all ${
+          className={`pb-3 text-xs sm:text-sm uppercase tracking-widest font-bold border-b-2 cursor-pointer transition-all ${
             activeTab === "pending" ? "border-primary text-primary" : "border-transparent text-outline hover:text-on-surface"
           }`}
         >
@@ -264,7 +264,7 @@ export function AdminTeam() {
         </button>
         <button
           onClick={() => setActiveTab("history")}
-          className={`pb-3 text-[12px] uppercase tracking-widest font-bold border-b-2 cursor-pointer transition-all ${
+          className={`pb-3 text-xs sm:text-sm uppercase tracking-widest font-bold border-b-2 cursor-pointer transition-all ${
             activeTab === "history" ? "border-primary text-primary" : "border-transparent text-outline hover:text-on-surface"
           }`}
         >
@@ -282,8 +282,8 @@ export function AdminTeam() {
             {members.length === 0 ? (
               <div className="py-16 text-center bg-white rounded-[2rem] border border-surface-container-highest/60 flex flex-col items-center justify-center p-6 shadow-sm col-span-full">
                 <span className="material-symbols-outlined text-[48px] text-[#64748B]/40 mb-2 block">search_off</span>
-                <p className="text-[14px] font-bold text-[#0F172A] mt-1">Data Not Found</p>
-                <p className="text-[12px] text-[#64748B] max-w-[280px]">No active team members found in the database.</p>
+                <p className="text-base sm:text-lg font-bold text-[#0F172A] mt-1">Data Not Found</p>
+                <p className="text-sm text-[#64748B] max-w-[280px]">No active team members found in the database.</p>
               </div>
             ) : (
               members.map((m) => {
@@ -322,14 +322,14 @@ export function AdminTeam() {
 
                         <div className="flex-1 pt-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-[16px] font-bold text-on-surface font-display leading-tight">
+                            <h3 className="text-lg font-bold text-on-surface font-display leading-tight">
                               {m.name || "Curator"}
                             </h3>
                           </div>
-                          <p className="text-[11px] text-primary font-bold tracking-tight uppercase">
+                          <p className="text-xs text-primary font-bold tracking-tight uppercase">
                             {m.role}
                           </p>
-                          <p className="text-[11px] text-outline font-medium mt-1 font-mono break-all">
+                          <p className="text-sm text-outline font-medium mt-1 font-mono break-all">
                             {m.email}
                           </p>
                         </div>
@@ -338,13 +338,13 @@ export function AdminTeam() {
                       {/* Controls Area */}
                       <div className="pt-5 border-t border-surface-container-low flex flex-col gap-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-[9px] text-outline-variant uppercase tracking-[0.2em] font-bold">
+                          <span className="text-xs text-outline-variant uppercase tracking-[0.2em] font-bold">
                             Administrative Controls
                           </span>
                           {canManage && (
                             <button
                               onClick={() => handleRemoveAdmin(m._id || m.id, m.email, m.role)}
-                              className="px-3 py-1 text-[10px] text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100/60 rounded-lg font-bold transition-colors cursor-pointer"
+                              className="px-3 py-1 text-xs text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100/60 rounded-lg font-bold transition-colors cursor-pointer"
                             >
                               Revoke Access
                             </button>
@@ -353,11 +353,11 @@ export function AdminTeam() {
 
                         {canManage ? (
                           <div className="space-y-1.5">
-                            <label className="text-[10px] text-outline font-bold">Update Role Level</label>
+                            <label className="text-xs text-outline font-bold">Update Role Level</label>
                             <select
                               value={m.role}
                               onChange={(e) => handleUpdateRole(m._id || m.id, m.email, m.role, e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-on-surface outline-none focus:border-slate-900 transition-all font-semibold"
+                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs sm:text-sm text-on-surface outline-none focus:border-slate-900 transition-all font-semibold"
                             >
                               {Object.keys(ROLE_WEIGHTS)
                                 .filter((role) => !['user', 'customer'].includes(role) && canAssignRole(role))
@@ -369,7 +369,7 @@ export function AdminTeam() {
                             </select>
                           </div>
                         ) : (
-                          <div className="text-[10.5px] text-slate-400 font-medium bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-2">
+                          <div className="text-xs text-slate-400 font-medium bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-2">
                             <span className="material-symbols-outlined text-[14px]">lock</span>
                             <span>Managed by Root Account/Hierarchy Rules</span>
                           </div>
@@ -394,8 +394,8 @@ export function AdminTeam() {
             {invites.length === 0 ? (
               <div className="py-16 text-center bg-white rounded-[2rem] border border-surface-container-highest/60 flex flex-col items-center justify-center p-6 shadow-sm col-span-full">
                 <span className="material-symbols-outlined text-[48px] text-[#64748B]/40 mb-2 block">mail_lock</span>
-                <p className="text-[14px] font-bold text-[#0F172A] mt-1">No Pending Invites</p>
-                <p className="text-[12px] text-[#64748B] max-w-[280px]">All invitations have been processed or expired.</p>
+                <p className="text-base sm:text-lg font-bold text-[#0F172A] mt-1">No Pending Invites</p>
+                <p className="text-sm text-[#64748B] max-w-[280px]">All invitations have been processed or expired.</p>
               </div>
             ) : (
               invites.map((inv) => (
@@ -412,10 +412,10 @@ export function AdminTeam() {
                           </span>
                         </div>
                         <div>
-                          <p className="text-[13px] font-bold text-on-surface font-mono break-all">
+                          <p className="text-sm sm:text-base font-bold text-on-surface font-mono break-all">
                             {inv.email}
                           </p>
-                          <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold border uppercase mt-1 inline-block text-amber-600 bg-amber-50 border-amber-200">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs sm:text-xs font-bold border uppercase mt-1 inline-block text-amber-600 bg-amber-50 border-amber-200">
                             {inv.status}
                           </span>
                         </div>
@@ -431,14 +431,14 @@ export function AdminTeam() {
                       )}
                     </div>
 
-                    <div className="pt-3 border-t border-surface-container-low text-[11.5px] text-outline space-y-1">
+                    <div className="pt-3 border-t border-surface-container-low text-sm text-outline space-y-1">
                       <p>
                         Role Level: <strong className="text-on-surface uppercase">{inv.roleAssigned}</strong>
                       </p>
                       <p>
                         Permissions: <strong className="text-on-surface">"{inv.permissionsSummary}"</strong>
                       </p>
-                      <p className="text-[9.5px] text-outline-variant font-mono">
+                      <p className="text-xs text-outline-variant font-mono mt-1">
                         Invited By: {inv.invitedBy?.name || inv.invitedBy?.email} <br />
                         Date: {new Date(inv.createdAt).toLocaleString()}
                       </p>
@@ -455,7 +455,7 @@ export function AdminTeam() {
       {activeTab === "history" && (
         <div className="bg-white rounded-[2rem] border border-surface-container-highest/60 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-[12px]">
+            <table className="w-full text-left border-collapse text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-surface-container-low text-outline font-bold uppercase tracking-wider">
                   <th className="px-6 py-4">Invited Email</th>
@@ -479,11 +479,11 @@ export function AdminTeam() {
                     return (
                       <tr key={h._id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4 font-mono font-medium text-[#0F172A]">{h.email}</td>
-                        <td className="px-6 py-4 text-primary font-bold uppercase text-[10px]">{h.roleAssigned}</td>
+                        <td className="px-6 py-4 text-primary font-bold uppercase text-xs">{h.roleAssigned}</td>
                         <td className="px-6 py-4 text-outline font-medium">{h.invitedBy?.name || h.invitedBy?.email}</td>
                         <td className="px-6 py-4">
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border uppercase ${
+                            className={`px-2.5 py-0.5 rounded-full text-xs sm:text-xs font-bold border uppercase ${
                               h.status === "accepted"
                                 ? "text-emerald-600 bg-emerald-50 border-emerald-200"
                                 : h.status === "rejected"
@@ -537,7 +537,7 @@ export function AdminTeam() {
                     <h3 className="text-[18px] font-bold text-on-surface font-display">
                       Invite Member Access
                     </h3>
-                    <p className="text-[11px] text-outline">
+                    <p className="text-xs sm:text-sm text-outline">
                       Grants admin access to an existing user email. A popup will show up on their next login.
                     </p>
                   </div>
@@ -551,7 +551,7 @@ export function AdminTeam() {
 
                 <form onSubmit={handleSendInvite} className="space-y-5">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] text-outline uppercase tracking-wider font-bold">
+                    <label className="text-xs sm:text-sm text-outline uppercase tracking-wider font-bold">
                       Member Registered Email
                     </label>
                     <input
@@ -560,18 +560,18 @@ export function AdminTeam() {
                       placeholder="e.g. team.member@gmail.com"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
-                      className="w-full px-4 py-3.5 bg-[#F8F9FB] border border-surface-container-highest rounded-xl text-[12px] text-on-surface outline-none focus:border-slate-900 font-mono transition-all"
+                      className="w-full px-4 py-3.5 bg-[#F8F9FB] border border-surface-container-highest rounded-xl text-sm text-on-surface outline-none focus:border-slate-900 font-mono transition-all"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] text-outline uppercase tracking-wider font-bold">
+                    <label className="text-xs sm:text-sm text-outline uppercase tracking-wider font-bold">
                       Team Role Designation
                     </label>
                     <select
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
-                      className="w-full px-4 py-3.5 bg-[#F8F9FB] border border-surface-container-highest rounded-xl text-[12px] text-on-surface outline-none focus:border-slate-900 font-medium transition-all"
+                      className="w-full px-4 py-3.5 bg-[#F8F9FB] border border-surface-container-highest rounded-xl text-sm text-on-surface outline-none focus:border-slate-900 font-medium transition-all"
                     >
                       {assignableRoles.map((role) => (
                         <option key={role} value={role}>
@@ -582,7 +582,7 @@ export function AdminTeam() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] text-outline uppercase tracking-wider font-bold">
+                    <label className="text-xs sm:text-sm text-outline uppercase tracking-wider font-bold">
                       Access Scope Permissions
                     </label>
                     <input
@@ -590,14 +590,14 @@ export function AdminTeam() {
                       value={invitePermissions}
                       onChange={(e) => setInvitePermissions(e.target.value)}
                       placeholder="e.g. Products, Inventory, Custom Blueprints"
-                      className="w-full px-4 py-3.5 bg-[#F8F9FB] border border-surface-container-highest rounded-xl text-[12px] text-on-surface outline-none focus:border-slate-900 font-medium transition-all"
+                      className="w-full px-4 py-3.5 bg-[#F8F9FB] border border-surface-container-highest rounded-xl text-sm text-on-surface outline-none focus:border-slate-900 font-medium transition-all"
                     />
                   </div>
 
                   <button
                     disabled={submitting}
                     type="submit"
-                    className="w-full py-4 bg-black text-white hover:bg-slate-100 font-bold rounded-2xl text-[12px] uppercase tracking-wider shadow-lg shadow-slate-950/5 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+                    className="w-full py-4 bg-black text-white hover:bg-slate-100 font-bold rounded-2xl text-sm uppercase tracking-wider shadow-lg shadow-slate-950/5 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
                   >
                     {submitting && (
                       <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -607,7 +607,7 @@ export function AdminTeam() {
                 </form>
               </div>
 
-              <div className="border-t border-surface-container-low pt-4 text-[10px] text-outline leading-normal">
+              <div className="border-t border-surface-container-low pt-4 text-xs text-outline leading-normal">
                 <strong>SMTP Security Note:</strong> Members invited receive an explicit secure email.
                 Access rights to the studio panel are pending until the user logs into their account and clicks accept.
               </div>

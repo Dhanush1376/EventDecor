@@ -1,14 +1,14 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAdmin } from "../context/AdminContext";
+import React from"react";
+import { motion } from"framer-motion";
+import { useParams, useNavigate } from"react-router-dom";
+import { useAdmin } from"../context/AdminContext";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 const statusColors = {
-  Confirmed: "text-emerald-600 bg-emerald-50 border-emerald-200",
-  Pending: "text-amber-600 bg-amber-50 border-amber-200",
-  Processing: "text-black bg-slate-100 border-slate-300",
-  Cancelled: "text-red-600 bg-red-50 border-red-200",
+  Confirmed:"text-emerald-600 bg-emerald-50 border-emerald-200",
+  Pending:"text-amber-600 bg-amber-50 border-amber-200",
+  Processing:"text-black bg-slate-100 border-slate-300",
+  Cancelled:"text-red-600 bg-red-50 border-red-200",
 };
 
 export function AdminBookingDetail() {
@@ -51,7 +51,7 @@ export function AdminBookingDetail() {
           </span>
         </button>
         <div className="flex-1">
-          <h2 className="text-[24px] font-bold text-on-surface font-display">
+          <h2 className="text-[24px] font-bold text-on-surface">
             {booking.eventType}
           </h2>
           <p className="text-[13px] text-outline">
@@ -76,11 +76,11 @@ export function AdminBookingDetail() {
               Update Status
             </h2>
             <div className="flex flex-wrap gap-2">
-              {["Pending", "Processing", "Confirmed", "Cancelled"].map((s) => (
+              {["Pending","Processing","Confirmed","Cancelled"].map((s) => (
                 <button
                   key={s}
                   onClick={() => updateBookingStatus(booking.id, s)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-[12px] font-bold cursor-pointer transition-all border-2 active:scale-[0.96] ${booking.status === s ? statusColors[s] + " shadow-sm" : "border-surface-container-highest/60 text-outline hover:border-slate-900-container/30 hover:text-black"}`}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-[12px] font-bold cursor-pointer transition-all border-2 active:scale-[0.96] ${booking.status === s ? statusColors[s] +" shadow-sm" :"border-surface-container-highest/60 text-outline hover:border-slate-900-container/30 hover:text-black"}`}
                 >
                   {s}
                 </button>
@@ -99,26 +99,26 @@ export function AdminBookingDetail() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 {
-                  icon: "event",
-                  label: "Event Type",
+                  icon:"event",
+                  label:"Event Type",
                   value: booking.eventType,
                 },
-                { icon: "calendar_today", label: "Date", value: booking.date },
-                { icon: "location_on", label: "Venue", value: booking.venue },
+                { icon:"calendar_today", label:"Date", value: booking.date },
+                { icon:"location_on", label:"Venue", value: booking.venue },
                 {
-                  icon: "payments",
-                  label: "Amount",
+                  icon:"payments",
+                  label:"Amount",
                   value: `₹${booking.amount.toLocaleString()}`,
                 },
                 {
-                  icon: "credit_card",
-                  label: "Payment Status",
+                  icon:"credit_card",
+                  label:"Payment Status",
                   value: booking.payment,
                 },
                 {
-                  icon: "groups",
-                  label: "Assigned Staff",
-                  value: booking.staff.join(", ") || "Not assigned yet",
+                  icon:"groups",
+                  label:"Assigned Staff",
+                  value: booking.staff.join(",") ||"Not assigned yet",
                 },
               ].map((f, i) => (
                 <div key={i} className="bg-surface rounded-xl p-4">
@@ -126,7 +126,7 @@ export function AdminBookingDetail() {
                     <span className="material-symbols-outlined text-[16px] text-slate-800">
                       {f.icon}
                     </span>
-                    <span className="text-[10px] font-semibold text-outline uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-outline uppercase tracking-wider">
                       {f.label}
                     </span>
                   </div>
@@ -171,9 +171,9 @@ export function AdminBookingDetail() {
             </h2>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-container/20 to-primary/10 flex items-center justify-center">
-                <span className="text-[14px] font-bold text-black font-display">
+                <span className="text-[14px] font-bold text-black">
                   {booking.customer
-                    .split(" ")
+                    .split("")
                     .map((n) => n[0])
                     .join("")}
                 </span>
