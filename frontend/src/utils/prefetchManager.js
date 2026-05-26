@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import logger from './logger';
 
 /**
  * PrefetchManager handles intelligent background loading of data and assets
@@ -46,7 +47,7 @@ class PrefetchManager {
         }
       }
     } catch (e) {
-      console.warn(`Prefetch failed for ${route}`, e);
+      logger.warn(`Prefetch failed for ${route}`, e);
     }
   }
 

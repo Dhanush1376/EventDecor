@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "../../components/ui/Skeleton";
 import { useApi } from "../../hooks/useApi";
 import api from "../../services/api"; // generic axios instance or domainServices
+import logger from "../../utils/logger";
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
@@ -80,7 +81,7 @@ export function AdminRecommendationAnalytics() {
 
         setStats(aggregatedStats);
       } catch (err) {
-        console.error("Failed to fetch recommendation analytics", err);
+        logger.error("Failed to fetch recommendation analytics", err);
       } finally {
         setLoading(false);
       }

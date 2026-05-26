@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from"framer-motion";
 import { customOrderService } from"../../services/domainServices";
 import { useAdmin } from"../context/AdminContext";
 import toast from"react-hot-toast";
+import logger from "../../utils/logger";
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
@@ -50,7 +51,7 @@ export function AdminInquiries() {
         setCmsConfig(configRes);
       }
     } catch (err) {
-      console.error("AdminInquiries fetch error:", err);
+      logger.error("AdminInquiries fetch error:", err);
       toast.error("Failed to load custom orders list: " + err.message);
     } finally {
       setLoading(false);
