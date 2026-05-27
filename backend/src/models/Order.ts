@@ -145,7 +145,7 @@ const OrderSchema: Schema = new Schema(
     total: { type: Number, required: true },
     couponCode: { type: String },
     razorpayOrderId: { type: String },
-    razorpayPaymentId: { type: String },
+    razorpayPaymentId: { type: String, unique: true, sparse: true },
     razorpaySignature: { type: String },
     invoiceNumber: { type: String, unique: true, sparse: true },
     trackingNumber: { type: String },
@@ -178,7 +178,7 @@ OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, orderStatus: 1, createdAt: 1 });
 OrderSchema.index({ user: 1, orderStatus: 1 });
 OrderSchema.index({ user: 1, paymentStatus: 1, createdAt: -1 });
-OrderSchema.index({ razorpayPaymentId: 1 }, { unique: true, sparse: true });
+
 // Compound index for Razorpay webhook payment verification (hot path — prevents full collection scan)
 OrderSchema.index({ razorpayOrderId: 1, paymentStatus: 1 });
 OrderSchema.index({ user: 1, createdAt: -1 });

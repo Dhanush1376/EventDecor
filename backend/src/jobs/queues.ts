@@ -17,7 +17,7 @@ const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
 // Configure IORedis for BullMQ (reusing the same Redis server)
 export const connection = new IORedis(redisUrl, {
-  maxRetriesPerRequest: 3,
+  maxRetriesPerRequest: null,
   enableReadyCheck: false,
   connectTimeout: 10000,
   lazyConnect: true,
