@@ -2,7 +2,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
+
 import { handleImageError } from "../utils/imageUtils";
 import { useCheckout } from "./CheckoutProvider";
 
@@ -16,11 +16,7 @@ export default function CheckoutAddressStep() {
               layout
               className="bg-surface-bright border border-outline-variant/40 rounded-lg overflow-hidden shadow-xs relative group"
             >
-              <MandalaArtDecor
-                variant={2}
-                size={250}
-                className="absolute -bottom-10 -right-10 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity pointer-events-none"
-              />
+
 
               {/* Accordion Header */}
               <motion.button
@@ -82,11 +78,7 @@ export default function CheckoutAddressStep() {
                     transition={{ duration: 0.3 }}
                     className="p-4 sm:p-6 space-y-4 overflow-hidden relative"
                   >
-                    <MandalaArtDecor
-                      variant={1}
-                      size={300}
-                      className="-bottom-10 -left-10 opacity-[0.02]"
-                    />
+
 
                     {/* Render Saved Address Selection Radio stack */}
                     <div className="space-y-3">

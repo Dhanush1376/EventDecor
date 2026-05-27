@@ -2,7 +2,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
+
 import { handleImageError } from "../utils/imageUtils";
 import { useCheckout } from "./CheckoutProvider";
 
@@ -164,11 +164,7 @@ export default function CheckoutSidebar() {
 
             {/* Price Details Card */}
             <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs sticky top-28 relative overflow-hidden">
-              <MandalaArtDecor
-                variant={2}
-                size={250}
-                className="-bottom-10 -right-10 opacity-[0.03]"
-              />
+
               <h3 className="text-xs font-bold text-secondary uppercase tracking-wider pb-3 border-b border-outline-variant/40 mb-4 relative z-10">
                 Price Details ({activeItems.length} Items)
               </h3>

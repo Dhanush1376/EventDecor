@@ -2,7 +2,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
+
 import { handleImageError } from "../utils/imageUtils";
 import { useCheckout } from "./CheckoutProvider";
 
@@ -16,11 +16,7 @@ export default function CheckoutPaymentStep() {
               layout
               className="bg-white border border-[#d0c5af]/40 rounded-lg overflow-hidden shadow-xs relative group"
             >
-              <MandalaArtDecor
-                variant={1}
-                size={300}
-                className="absolute -bottom-10 -right-10 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity pointer-events-none"
-              />
+
 
               {/* Header */}
               <motion.button
