@@ -332,7 +332,7 @@ export function Gallery() {
                   }
                 />
               )}
-              columns={{ sm: 2, md: 2, lg: 3, xl: 4 }}
+              columns={{ sm: 2, md: 2, lg: 4, xl: 5 }}
               gap="gap-4 sm:gap-6"
               batchSize={20}
             />
