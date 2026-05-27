@@ -1,6 +1,6 @@
 import request from 'supertest';
 import app from '../app';
-import OrderService from '../services/orderService';
+import OrderService from '../features/orders/services/orderService';
 
 describe('Public API integration', () => {
   it('GET /api/version returns version payload', async () => {

@@ -1,5 +1,6 @@
 import request from 'supertest';
-import app, { isOriginAllowed } from '../app';
+import app from '../app';
+import { isOriginAllowed } from '../config/corsConfig';
 
 describe('CSRF protection', () => {
   const withOrigin = (req: request.Test) =>

@@ -36,6 +36,14 @@ jest.mock('../utils/safetyLockCache', () => ({
   invalidateSafetyLockCache: jest.fn(async () => {}),
 }));
 
+jest.mock('../middleware/csrfMiddleware', () => ({
+  __esModule: true,
+  validateCsrf: (req: any, res: any, next: any) => next(),
+  issueCsrfToken: (req: any, res: any) => res.status(200).json({ success: true, csrfToken: 'test-token' }),
+  clearCsrfCookie: jest.fn(),
+  regenerateCsrfToken: jest.fn(() => 'test-token'),
+}));
+
 import request from 'supertest';
 import app from '../app';
 import jwt from 'jsonwebtoken';

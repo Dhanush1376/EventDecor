@@ -6,6 +6,8 @@ import logger from '../config/logger';
 
 // Standard rate limit bypass for local development or health checks
 export const skipRateLimit = (req: Request) => {
+  if (process.env.TEST_RATE_LIMIT === 'true') return false;
+  
   if (process.env.NODE_ENV === 'development') {
     const ip = req.ip || req.socket.remoteAddress || '';
     if (ip.includes('127.0.0.1') || ip.includes('::1') || ip === 'localhost') {
@@ -63,7 +65,7 @@ export const createRateLimiter = (name: string, options: Partial<Options>) => {
 
   const limiterOptions = {
     windowMs: 15 * 60 * 1000,
-    limit: 100,
+    limit: process.env.TEST_RATE_LIMIT === 'true' ? 3 : 100,
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     handler: customHandler,
