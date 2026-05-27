@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import { handleImageError } from "../utils/imageUtils";
 import { useCheckout } from "./CheckoutProvider";
+import CheckoutRecommendations from "./CheckoutRecommendations";
 
 
 export default function CheckoutSidebar() {
@@ -286,6 +287,9 @@ export default function CheckoutSidebar() {
                 </div>
               )}
             </div>
+
+            {/* Recommendations specifically sized for the sidebar */}
+            <CheckoutRecommendations cardWidth="w-[140px]" containerClassName="mt-4" />
           </motion.div>
     </>
   );

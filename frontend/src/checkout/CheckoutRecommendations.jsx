@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { productService } from "../services/domainServices";
 import { ProductCard } from "../components/ui";
 
-export default function CheckoutRecommendations() {
+export default function CheckoutRecommendations({ cardWidth = "w-[200px]", containerClassName = "mb-4" }) {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['checkoutRecommendations'],
     queryFn: async () => {
@@ -18,13 +18,13 @@ export default function CheckoutRecommendations() {
   }
 
   return (
-    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg overflow-hidden shadow-xs p-4 sm:p-6 mb-4">
+    <div className={`bg-surface-bright border border-outline-variant/40 rounded-lg overflow-hidden shadow-xs p-4 sm:p-6 ${containerClassName}`}>
       <h3 className="text-xs font-bold text-secondary uppercase tracking-wider pb-3 border-b border-outline-variant/40 mb-4">
         Recommended For You
       </h3>
       <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar -mx-2 px-2">
         {products.map((product) => (
-          <div key={product.id || product._id} className="w-[200px] shrink-0">
+          <div key={product.id || product._id} className={`${cardWidth} shrink-0`}>
             <ProductCard {...product} />
           </div>
         ))}
