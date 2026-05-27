@@ -104,12 +104,8 @@ export const corsOptions = (req: any, callback: any) => {
   };
 
   if (!origin) {
-    const path = req.path || '';
-    const webhookPaths = ['/api/orders/webhook', '/api/readiness', '/api/v1/csrf-token'];
-    if (webhookPaths.some(p => path.startsWith(p))) {
-      return callback(null, { ...options, origin: true });
-    }
-    return callback(new Error('Not allowed by CORS: No origin header — request blocked'));
+    // Allow requests with no origin (like same-origin browser requests via Vite proxy, curl, or Postman)
+    return callback(null, { ...options, origin: true });
   }
 
   if (isOriginAllowed(origin)) {
