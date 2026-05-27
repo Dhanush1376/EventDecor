@@ -8,6 +8,7 @@ const CheckoutAddressStep = lazy(() => import("../checkout/CheckoutAddressStep")
 const CheckoutOrderSummaryStep = lazy(() => import("../checkout/CheckoutOrderSummaryStep"));
 const CheckoutPaymentStep = lazy(() => import("../checkout/CheckoutPaymentStep"));
 const CheckoutSidebar = lazy(() => import("../checkout/CheckoutSidebar"));
+const CheckoutRecommendations = lazy(() => import("../checkout/CheckoutRecommendations"));
 
 function StepFallback() {
   return (
@@ -74,6 +75,9 @@ function CheckoutContent() {
             </Suspense>
             <Suspense fallback={<StepFallback />}>
               <CheckoutOrderSummaryStep />
+            </Suspense>
+            <Suspense fallback={<StepFallback />}>
+              <CheckoutRecommendations />
             </Suspense>
             <Suspense fallback={<StepFallback />}>
               <CheckoutPaymentStep />
