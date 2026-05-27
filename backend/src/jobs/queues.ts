@@ -2,6 +2,16 @@ import '../config/loadEnv';
 import { Queue, QueueOptions } from 'bullmq';
 import IORedis from 'ioredis';
 import logger from '../config/logger';
+import { requestContextStorage } from '../middleware/requestTracker';
+
+const originalAdd = Queue.prototype.add;
+Queue.prototype.add = function (name: string, data: any, opts?: any) {
+  const ctx = requestContextStorage.getStore();
+  if (ctx && data && typeof data === 'object') {
+    data = { ...data, _trace: { requestId: ctx.requestId, userId: ctx.userId } };
+  }
+  return originalAdd.call(this, name, data, opts);
+};
 
 const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 

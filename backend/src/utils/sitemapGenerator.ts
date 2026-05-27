@@ -3,7 +3,7 @@ import path from 'path';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
 
-const SITE_URL = process.env.FRONTEND_URL || 'https://siriartsandcrafts.com';
+const SITE_URL = process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'https://siriartsandcrafts.com';
 
 /**
  * Enterprise dynamic sitemap generator.
@@ -19,15 +19,7 @@ export async function generateSitemap(): Promise<string> {
     const staticRoutes = [
       { loc: '', changefreq: 'daily', priority: '1.0' },
       { loc: '/collections', changefreq: 'daily', priority: '0.9' },
-      { loc: '/blog', changefreq: 'daily', priority: '0.9' },
-      { loc: '/blog/best-wedding-decoration-ideas', changefreq: 'monthly', priority: '0.8' },
-      { loc: '/blog/traditional-pooja-decoration-setup-guide', changefreq: 'monthly', priority: '0.8' },
-      { loc: '/blog/housewarming-decoration-ideas', changefreq: 'monthly', priority: '0.8' },
-      { loc: '/blog/floral-decoration-trends', changefreq: 'monthly', priority: '0.8' },
-      { loc: '/blog/handmade-return-gift-ideas', changefreq: 'monthly', priority: '0.8' },
-      { loc: '/blog/birthday-event-decoration-themes', changefreq: 'monthly', priority: '0.8' },
-      { loc: '/blog/engagement-stage-decoration-ideas', changefreq: 'monthly', priority: '0.8' },
-      { loc: '/blog/south-indian-wedding-decoration-guide', changefreq: 'monthly', priority: '0.8' },
+
       { loc: '/wedding-decorations-hyderabad', changefreq: 'monthly', priority: '0.9' },
       { loc: '/event-decorators-telangana', changefreq: 'monthly', priority: '0.9' },
       { loc: '/event-decorators-secunderabad', changefreq: 'monthly', priority: '0.9' },

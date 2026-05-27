@@ -105,7 +105,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-10">
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-10" role="dialog" aria-modal="true" aria-labelledby="quickview-title">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -177,7 +177,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                   {product.teluguTitle || product.nameTE || product.teluguName}
                 </span>
               )}
-              <h2 className="font-headline text-[24px] md:text-headline-lg text-on-surface mb-4 md:mb-6 font-bold leading-tight">
+              <h2 id="quickview-title" className="font-headline text-[24px] md:text-headline-lg text-on-surface mb-4 md:mb-6 font-bold leading-tight">
                 {product.title}
               </h2>
 

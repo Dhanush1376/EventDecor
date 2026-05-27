@@ -80,16 +80,6 @@ class AuthService {
     // 1. Detect if this token was already used (Replay attack detection)
     const isUsed = await UsedRefreshToken.findOne({ tokenHash });
     if (isUsed) {
-      // Allow a 60-second grace period for concurrent/retry refresh requests (e.g. multiple tabs or network retries)
-      const isWithinGracePeriod = (Date.now() - new Date((isUsed as any).createdAt).getTime()) < 60000;
-      if (isWithinGracePeriod) {
-        logger.info(`[REFRESH CONCURRENCY GRACE] Allow reuse of recently rotated refresh token for userId: ${isUsed.userId}`);
-        const user = await User.findOne({ _id: isUsed.userId, isVerified: true });
-        if (user) {
-          return this.createSession(user, userAgent);
-        }
-      }
-
       // Replay detected — revoke entire refresh-token family for this user (RFC 6749 rotation)
       logger.error(
         `[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Revoking all sessions. Potential token theft.`
@@ -122,6 +112,7 @@ class AuthService {
         tokenHash,
         userId: user._id,
         expiresAt: session.expiresAt,
+        userAgent: session.userAgent || userAgent,
       });
     } catch (err: any) {
       if (err.name === 'MongoServerError' && err.code === 11000) {
@@ -583,7 +574,6 @@ class AuthService {
         avatar,
         wishlist: [],
         cart: [],
-        orders: [],
         recentlyViewed: [],
         notificationPreferences: { email: true, marketing: true },
         accountPreferences: { theme: 'light', language: 'en' }

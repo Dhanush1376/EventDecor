@@ -38,7 +38,20 @@ export class EventBookingService {
       const pkg = await Event.findById(eventPackageId);
       if (pkg) rentalFee = pkg.basePrice || 35000;
     }
-    const addOnCharges = (selectedAddons || []).reduce((acc: number, item: any) => acc + (Number(item.price) || 0), 0);
+    const CANONICAL_ADDONS: Record<string, number> = {
+      "Artisanal Wooden Swings / Ooyala": 7500,
+      "Gilded Grand Arch Entry Archway": 12000,
+      "Live Nadaswaram Instrumental Stage": 15000,
+      "Grand Brass Diyas Canopy Set (8 Props)": 9500,
+      "Fresh Rose petals pathways carpet (50ft)": 5000,
+      "Traditional Handpainted Kolam/Rangoli": 3500,
+    };
+
+    const addOnCharges = (selectedAddons || []).reduce((acc: number, item: any) => {
+      const canonicalPrice = CANONICAL_ADDONS[item.name] || 0;
+      item.price = canonicalPrice;
+      return acc + canonicalPrice;
+    }, 0);
     const totalPrice = rentalFee + addOnCharges;
 
     const session = await mongoose.startSession();

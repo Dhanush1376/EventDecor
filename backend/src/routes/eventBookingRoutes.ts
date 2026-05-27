@@ -17,6 +17,8 @@ import {
 } from '../controllers/eventBookingController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 import { validate } from '../middleware/validateMiddleware';
+import { validateRequest } from '../middleware/zodValidationMiddleware';
+import { initializeCheckoutSchema } from '../validators/eventBookingSchemas';
 import {
   submitEventBookingValidator,
   eventBookingIdParam,
@@ -45,7 +47,7 @@ router.patch('/:id/logistics', requireAuth, requireAdmin, ...eventBookingIdParam
 router.patch('/:id/notes', requireAuth, requireAdmin, ...adminBookingNotesValidator, validate, adminUpdateNotes);
 
 // Client Endpoints
-router.post('/checkout/initialize', requireAuth, bookingSubmitLimiter, initializeBookingCheckout);
+router.post('/checkout/initialize', requireAuth, bookingSubmitLimiter, validateRequest(initializeCheckoutSchema), initializeBookingCheckout);
 router.post('/checkout/verify', requireAuth, verifyBookingCheckout);
 router.post('/', requireAuth, bookingSubmitLimiter, submitEventBookingValidator, validate, submitEventBooking);
 router.get('/my-bookings', requireAuth, getMyEventBookings);

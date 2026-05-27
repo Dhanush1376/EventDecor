@@ -45,21 +45,8 @@ export function EventBookingWizard() {
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  if (loading) {
-    return <BookingWizardSkeleton />;
-  }
-
   // Form State
-  const [formData, setFormData] = useState(() => {
-    const saved = localStorage.getItem("siri_arts_wizard_form_data");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // Ignore JSON parsing errors
-      }
-    }
-    return {
+  const [formData, setFormData] = useState({
       eventType: "wedding",
       customOccasion: "",
       eventPackageId: "",
@@ -77,11 +64,10 @@ export function EventBookingWizard() {
       },
       selectedAddons: [],
       inspirationImages: [],
-    };
-  });
+    });
 
   useEffect(() => {
-    localStorage.setItem("siri_arts_wizard_form_data", JSON.stringify(formData));
+    // Form persistence removed for PII security
   }, [formData]);
 
   // AI Design Assistant State
@@ -119,6 +105,10 @@ export function EventBookingWizard() {
       setLoading(false);
     });
   }, [location]);
+
+  if (loading) {
+    return <BookingWizardSkeleton />;
+  }
 
   const handleEventTypeSelect = (type) => {
     if (type === "other") {
@@ -327,9 +317,9 @@ export function EventBookingWizard() {
 
             toast.dismiss(verifyLoadId);
             if (verifyRes.success) {
+              // session storage cleanup removed
               toast.success("Payment successful! Your luxury event is confirmed.");
-              localStorage.removeItem("siri_arts_wizard_form_data");
-              navigate(`/booking-success/${bookingId}`); // Redirects to new success page
+              navigate(`/booking-success/${bookingId}`);  
             } else {
               toast.error(verifyRes.message || "Payment verification failed.");
             }
@@ -800,7 +790,7 @@ export function EventBookingWizard() {
                               <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">Theme Color Palette</span>
                               <div className="flex gap-1.5 mt-1">
                                 {aiAnalysisResult.palette.map((color, i) => (
-                                  <div key={i} className="flex items-center gap-1 group/color">
+                                  <div key={color} className="flex items-center gap-1 group/color">
                                     <div className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: color }} />
                                     <span className="font-mono text-[8px] text-black/45">{aiAnalysisResult.paletteLabels[i]}</span>
                                   </div>
@@ -811,7 +801,7 @@ export function EventBookingWizard() {
                               <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">Estimated Rental Inclusions</span>
                               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-1">
                                 {aiAnalysisResult.suggestedProps.map((prop, i) => (
-                                  <li key={i} className="flex items-center gap-1 text-[10px] text-stone-700 font-medium">
+                                  <li key={prop} className="flex items-center gap-1 text-[10px] text-stone-700 font-medium">
                                     <span className="w-1 h-1 rounded-full bg-primary" />
                                     {prop}
                                   </li>

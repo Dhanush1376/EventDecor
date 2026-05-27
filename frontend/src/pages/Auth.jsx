@@ -346,7 +346,7 @@ export function Auth() {
         </div>
 
         <div className="w-full max-w-[440px] relative z-10 my-auto py-8">
-          <AnimatePresence mode="wait">
+          <>
             {step === "success" ? (
               <SuccessState
                 key="success"
@@ -406,7 +406,7 @@ export function Auth() {
                 <div className="bg-white/70 backdrop-blur-2xl rounded-[32px] p-5 xs:p-8 md:p-10 border border-outline-variant/30 shadow-[0_24px_50px_rgba(115,92,0,0.04)] relative overflow-hidden">
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
-                  <AnimatePresence mode="wait">
+                  <>
                     {step === "identifier" ? (
                       <motion.form
                         key="email-form"
@@ -609,7 +609,7 @@ export function Auth() {
                         </div>
                       </motion.form>
                     )}
-                  </AnimatePresence>
+                  </>
                 </div>
 
                 {/* Footer Assistance */}
@@ -638,7 +638,7 @@ export function Auth() {
                 </motion.div>
               </motion.div>
             )}
-          </AnimatePresence>
+          </>
         </div>
       </div>
     </div>

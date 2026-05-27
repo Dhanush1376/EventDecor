@@ -5,7 +5,7 @@ import productRoutes from './productRoutes';
 import uploadRoutes from './uploadRoutes';
 import authRoutes from './authRoutes';
 import eventRoutes from './eventRoutes';
-import orderRoutes from './orderRoutes';
+import orderRoutes from '../features/orders/orderRoutes';
 import cmsRoutes from './cmsRoutes';
 import analyticsRoutes from './analyticsRoutes';
 import galleryRoutes from './galleryRoutes';

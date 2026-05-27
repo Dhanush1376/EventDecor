@@ -20,9 +20,9 @@ export class PaymentService {
     const shasum = crypto.createHmac('sha256', webhookSecret);
     shasum.update(rawBody);
     const digest = shasum.digest('hex');
-    const sigBuffer = Buffer.from(signature, 'utf8');
-    const digestBuffer = Buffer.from(digest, 'utf8');
-    return sigBuffer.length === digestBuffer.length && crypto.timingSafeEqual(sigBuffer, digestBuffer);
+    const expectedHash = crypto.createHash('sha256').update(digest).digest();
+    const signatureHash = crypto.createHash('sha256').update(signature).digest();
+    return crypto.timingSafeEqual(expectedHash, signatureHash);
   }
 
   static async verifyPayment(paymentData: any, userId: string, role: string) {
@@ -45,7 +45,9 @@ export class PaymentService {
     const shasum = crypto.createHmac('sha256', razorpayKeySecret);
     shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const digest = shasum.digest('hex');
-    const isSignatureValid = digest === razorpay_signature;
+    const expectedHash = crypto.createHash('sha256').update(digest).digest();
+    const signatureHash = crypto.createHash('sha256').update(razorpay_signature || '').digest();
+    const isSignatureValid = crypto.timingSafeEqual(expectedHash, signatureHash);
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -128,15 +130,15 @@ export class PaymentService {
       order.razorpayPaymentId = razorpay_payment_id;
       order.razorpaySignature = razorpay_signature;
       order.statusHistory.push({ status: 'Confirmed', note: 'Payment verified and order confirmed' });
-      
+
       await order.save({ session });
 
       await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
 
       if (order.couponCode) {
         await Coupon.findOneAndUpdate(
-          { code: order.couponCode.toUpperCase() }, 
-          { 
+          { code: order.couponCode.toUpperCase() },
+          {
             $inc: { usedCount: 1 },
             $push: { usedBy: { userId: order.user, orderId: order._id } }
           },
@@ -153,7 +155,7 @@ export class PaymentService {
     }
 
     AnalyticsService.clearCache();
-    
+
     try {
       const user = await User.findById(order.user);
       const adminEmails = getAdminEmails();
@@ -178,7 +180,7 @@ export class PaymentService {
 
       if (user) {
         const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
-        
+
         const htmlContent = compileTemplate('order-confirmation', {
           customerName: user.name,
           orderId: order._id.toString(),
@@ -231,7 +233,7 @@ export class PaymentService {
     } catch (emailErr) {
       logger.error('Failed to dispatch order confirmation email/PDF in background:', emailErr);
     }
-    
+
     logger.info(`Payment successful for order: ${order._id}`);
     return order;
   }
@@ -300,7 +302,7 @@ export class PaymentService {
           order.statusHistory.push({
             status: 'Pending' as any,
             timestamp: new Date(),
-            note: `Payment validation failed via Webhook. Amount or Currency mismatch. Expected ₹${expectedAmount/100}, Received ₹${paymentEntity.amount/100} ${paymentEntity.currency}`,
+            note: `Payment validation failed via Webhook. Amount or Currency mismatch. Expected ₹${expectedAmount / 100}, Received ₹${paymentEntity.amount / 100} ${paymentEntity.currency}`,
           });
           await order.save({ session });
           await session.commitTransaction();
@@ -323,7 +325,7 @@ export class PaymentService {
         if (order.couponCode) {
           await Coupon.findOneAndUpdate(
             { code: order.couponCode.toUpperCase() },
-            { 
+            {
               $inc: { usedCount: 1 },
               $push: { usedBy: { userId: order.user, orderId: order._id } }
             },
@@ -341,7 +343,7 @@ export class PaymentService {
 
       AnalyticsService.clearCache();
       await bumpAdminAnalyticsCacheVersion();
-      
+
       // Removed email dispatch block for brevity here as it mimics verifyPayment
       return { status: 200, message: 'Payment successfully captured via Webhook' };
     }
@@ -364,8 +366,8 @@ export class PaymentService {
               timestamp: new Date(),
               note: `Razorpay Transaction Failed. Reserved stock returned.`,
             });
-            logger.warn('[PAYMENT_FAILED] Webhook reported payment failure for order', { 
-              orderId: order._id, 
+            logger.warn('[PAYMENT_FAILED] Webhook reported payment failure for order', {
+              orderId: order._id,
               razorpayOrderId: razorpay_order_id,
               userId: order.user
             });

@@ -3,7 +3,7 @@ import logger from '../config/logger';
 
 /**
  * Per-request timeout middleware.
- * Terminates handlers that exceed the configured timeout with a 504 Gateway Timeout.
+ * Terminates handlers that exceed the configured timeout with a 408 Request Timeout.
  *
  * Design decisions:
  *   - Uses `res.headersSent` guard to avoid double-send after timeout fires
@@ -19,7 +19,7 @@ const EXCLUDED_PREFIXES = [
   '/api/v1/gallery',
 ];
 
-export const requestTimeout = (timeoutMs = 30000) => {
+export const requestTimeout = (timeoutMs = 15000) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // Skip excluded routes
     const path = (req.originalUrl || req.url || '').split('?')[0];
@@ -36,9 +36,9 @@ export const requestTimeout = (timeoutMs = 30000) => {
           userAgent: req.get('User-Agent'),
         });
 
-        res.status(504).json({
+        res.status(408).json({
           success: false,
-          message: 'Request timed out. Please try again.',
+          message: 'Request timed out (408). Please try again.',
         });
       }
     }, timeoutMs);

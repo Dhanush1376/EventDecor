@@ -15,7 +15,7 @@ const META_PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || '';
 import { safeLocalStorage } from './storage';
 
 // ─── Consent Check ───
-function hasAnalyticsConsent() {
+export function hasAnalyticsConsent() {
   try {
     const consent = safeLocalStorage.getItem('siri_cookie_consent');
     if (!consent) return false;

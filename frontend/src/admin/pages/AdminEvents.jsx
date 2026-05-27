@@ -1266,7 +1266,7 @@ export function AdminEvents() {
                       </div>
                       <div className="flex gap-2 pt-2">
                         <button onClick={() => handleEdit(ev)} className="flex-1 py-2 bg-stone-100 text-black hover:bg-slate-200 hover:text-black rounded-xl font-medium tracking-wide text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-widest font-bold flex items-center justify-center gap-1 transition-colors"><span className="material-symbols-outlined text-[13px]">edit</span> Edit</button>
-                        <button aria-label="View Event Details" onClick={() => navigate(`/events/${ev._id || ev.id}`)} target="_blank" className="px-3.5 py-2 bg-stone-50 border border-black/5 rounded-xl hover:bg-stone-100 transition-colors"><span className="material-symbols-outlined text-[14px]">visibility</span></button>
+                        <button aria-label="View Event Details" onClick={() => navigate(`/events/${ev._id || ev.id}`)} target="_blank" rel="noopener noreferrer" className="px-3.5 py-2 bg-stone-50 border border-black/5 rounded-xl hover:bg-stone-100 transition-colors"><span className="material-symbols-outlined text-[14px]">visibility</span></button>
                       </div>
                     </div>
                   </div>

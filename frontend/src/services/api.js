@@ -11,7 +11,7 @@ import {
 import { clearCachedProfile } from '../utils/authSessionCache';
 
 const api = axios.create({
-  timeout: 30000, // 30s timeout to prevent hanging connections
+  timeout: 15000, // 15s timeout to prevent hanging connections and give early feedback
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

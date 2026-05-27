@@ -58,6 +58,10 @@ services:
         fromConfig: true
       - key: SMTP_PASS
         fromConfig: true
+      - key: SMTP_HOST
+        fromConfig: true
+      - key: SMTP_PORT
+        fromConfig: true
       - key: BREVO_API_KEY
         fromConfig: true
       - key: REDIS_URL
@@ -93,6 +97,7 @@ services:
   - type: web
     name: siri-arts-backend-staging
     runtime: docker
+    branch: main
     plan: standard
     autoDeploy: true
     healthCheckPath: /api/readiness
@@ -159,6 +164,10 @@ services:
       - key: SMTP_USER
         fromConfig: true
       - key: SMTP_PASS
+        fromConfig: true
+      - key: SMTP_HOST
+        fromConfig: true
+      - key: SMTP_PORT
         fromConfig: true
       - key: BREVO_API_KEY
         fromConfig: true

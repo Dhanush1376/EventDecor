@@ -127,8 +127,8 @@ export function Footer() {
                 aria-label="Instagram"
                 className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
                 href={instagramLink}
-                target="_blank"
-                rel="noreferrer"
+                target="_blank" rel="noopener noreferrer"
+                
               >
                 <span className="material-symbols-outlined font-light text-[16px]">
                   photo_camera
@@ -143,8 +143,8 @@ export function Footer() {
                 aria-label="Pinterest"
                 className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
                 href={pinterestLink}
-                target="_blank"
-                rel="noreferrer"
+                target="_blank" rel="noopener noreferrer"
+                
               >
                 <span className="material-symbols-outlined font-light text-[16px]">
                   push_pin

@@ -1,6 +1,6 @@
 import express from 'express';
 import { getPublicConfig, getAllConfig, createOrUpdateConfig } from '../controllers/appConfigController';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
+import { requireAuth, requireAdmin, requireRole } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -9,7 +9,7 @@ router.get('/public', getPublicConfig);
 
 // Admin routes
 router.use(requireAuth);
-router.use(requireAdmin);
+router.use(requireRole(['super_admin', 'main_admin']));
 
 router.get('/', getAllConfig);
 router.post('/', createOrUpdateConfig);

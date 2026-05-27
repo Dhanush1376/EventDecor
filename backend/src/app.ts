@@ -6,7 +6,7 @@ import { securityHeadersMiddleware } from './middleware/helmetMiddleware';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 const xss = require('xss-clean');
-import { handleRazorpayWebhook } from './controllers/orderController';
+import { handleRazorpayWebhook } from './features/orders/orderController';
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 import redisClient, { pingRedis } from './utils/redis';
@@ -104,7 +104,20 @@ app.post(
 );
 
 // 3. Request Parsing (MUST be before sanitization)
-// 50kb is sufficient for typical JSON payloads; Razorpay webhook uses its own raw parser above.
+// Pre-validate body size before parsing to prevent CPU exhaustion on XSS sanitization
+app.use((req: Request, res: Response, next) => {
+  if (req.path.includes('/upload') || req.path.includes('/webhook')) {
+    return next();
+  }
+  const contentLength = parseInt(req.headers['content-length'] || '0', 10);
+  if (contentLength > 10240) { // 10kb limit for standard JSON payloads
+    logger.warn(`[SECURITY] Blocked oversized payload (${contentLength} bytes) to ${req.path}`);
+    return res.status(413).json({ success: false, message: 'Payload Too Large' });
+  }
+  next();
+});
+
+// 50kb is the max parsed size limit internally, but our 10kb guard catches oversized bodies first
 app.use(express.json({ limit: '50kb' }));
 app.use(express.urlencoded({ extended: true, limit: '50kb', parameterLimit: 50 }));
 app.use(cookieParser());
@@ -178,7 +191,7 @@ app.get('/sitemap.xml', async (req: Request, res: Response) => {
 });
 
 // Apply per-request timeout guard (30s default — excludes webhooks/uploads automatically)
-app.use(requestTimeout(30000));
+app.use(requestTimeout(15000));
 
 // Apply global rate limiting and API flooding protection
 app.use('/api/', apiFloodingLimiter);
@@ -306,9 +319,29 @@ app.get('/api/metrics', requireAuth, requireAdmin, noCacheMiddleware, async (req
   });
 });
 
+// Enforce raw upload size limit before multer buffers to prevent RAM exhaustion
+app.use('/api/v1/upload', (req: Request, res: Response, next: express.NextFunction) => {
+  const contentLength = parseInt(req.headers['content-length'] || '0', 10);
+  if (contentLength > 51 * 1024 * 1024) { // 51MB
+    return res.status(413).json({ success: false, message: 'Request payload too large' });
+  }
+  next();
+});
+
 // 7. API Routes
+// Deprecation rewrite for legacy /api consumers
+app.use('/api', (req: Request, res: Response, next: express.NextFunction) => {
+  if (req.path.startsWith('/v1/')) {
+    return next();
+  }
+  res.setHeader('Deprecation', 'true');
+  res.setHeader('Link', '</api/v1>; rel="successor-version"');
+  logger.warn(`[DEPRECATION] Legacy API accessed: ${req.originalUrl} by ${req.ip}`);
+  req.url = `/v1${req.url === '/' ? '' : req.url}`;
+  next();
+});
+
 registerApiRoutes(app, '/api/v1', 'v1');
-registerApiRoutes(app, '/api', 'legacy');
 
 // 8. Sentry Error Handler (must be before any other error middleware)
 if (process.env.SENTRY_DSN) {

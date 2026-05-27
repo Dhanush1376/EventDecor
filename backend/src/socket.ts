@@ -71,14 +71,25 @@ const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void)
       return next(new Error('Authentication error: Token missing'));
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
+    const jwtSecrets = (process.env.JWT_SECRET || '').split(',').map(s => s.trim());
+    if (!jwtSecrets.length || !jwtSecrets[0]) {
       return next(new Error('Authentication error: Server misconfigured'));
     }
 
-    const decoded = jwt.verify(token, secret) as { id?: string; iat?: number };
+    let decoded: { id?: string; iat?: number } | undefined;
+    let lastError: Error | undefined;
+
+    for (const secret of jwtSecrets) {
+      try {
+        decoded = jwt.verify(token, secret) as { id?: string; iat?: number };
+        break; // Stop on first successful verification
+      } catch (err: any) {
+        lastError = err;
+      }
+    }
+
     if (!decoded?.id) {
-      return next(new Error('Authentication error: Invalid token'));
+      return next(lastError || new Error('Authentication error: Invalid token'));
     }
 
     const user = await User.findById(decoded.id).select('role email isVerified passwordChangedAt');
@@ -168,6 +179,7 @@ export const initSocket = (server: HttpServer) => {
   setSocketAdapterMode(hasRedisAdapter ? 'redis' : 'memory');
 
   io = new Server(server, {
+    perMessageDeflate: { threshold: 1024 },
     cors: {
       origin: (origin, callback) => {
         if (!origin || isOriginAllowed(origin)) {

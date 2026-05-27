@@ -14,7 +14,7 @@ import {
   getCustomOrderConfig,
   adminUpdateCustomOrderConfig
 } from '../controllers/customOrderController';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
+import { requireAuth, requireAdmin, requireRole } from '../middleware/authMiddleware';
 import { validate } from '../middleware/validateMiddleware';
 import {
   submitCustomOrderValidator,
@@ -33,7 +33,7 @@ const router = Router();
 
 // Configuration Options for Multi-step storefront
 router.get('/config', getCustomOrderConfig);
-router.put('/config', requireAuth, requireAdmin, ...adminCustomOrderConfigValidator, validate, adminUpdateCustomOrderConfig);
+router.put('/config', requireAuth, requireRole(['super_admin', 'main_admin']), ...adminCustomOrderConfigValidator, validate, adminUpdateCustomOrderConfig);
 
 // Customer Specific routes
 router.post('/', requireAuth, submitCustomOrderValidator, validate, submitCustomOrder);
@@ -43,11 +43,11 @@ router.post('/:id/messages', requireAuth, ...customOrderMessageValidator, valida
 router.post('/:id/quotation/respond', requireAuth, ...customerQuotationRespondValidator, validate, customerRespondQuotation);
 
 // Administrative routes
-router.get('/', requireAuth, requireAdmin, adminGetCustomOrders);
-router.patch('/:id/status', requireAuth, requireAdmin, ...adminUpdateCustomOrderStatusValidator, validate, adminUpdateStatus);
-router.patch('/:id/priority', requireAuth, requireAdmin, ...adminUpdatePriorityValidator, validate, adminUpdatePriority);
-router.patch('/:id/notes', requireAuth, requireAdmin, ...adminCustomOrderNotesValidator, validate, adminUpdateNotes);
-router.patch('/:id/quotation', requireAuth, requireAdmin, ...adminCustomOrderQuotationValidator, validate, adminUpdateQuotation);
-router.patch('/:id/archive', requireAuth, requireAdmin, ...adminArchiveOrderValidator, validate, adminArchiveOrder);
+router.get('/', requireAuth, requireRole(['super_admin', 'main_admin']), adminGetCustomOrders);
+router.patch('/:id/status', requireAuth, requireRole(['super_admin', 'main_admin']), ...adminUpdateCustomOrderStatusValidator, validate, adminUpdateStatus);
+router.patch('/:id/priority', requireAuth, requireRole(['super_admin', 'main_admin']), ...adminUpdatePriorityValidator, validate, adminUpdatePriority);
+router.patch('/:id/notes', requireAuth, requireRole(['super_admin', 'main_admin']), ...adminCustomOrderNotesValidator, validate, adminUpdateNotes);
+router.patch('/:id/quotation', requireAuth, requireRole(['super_admin', 'main_admin']), ...adminCustomOrderQuotationValidator, validate, adminUpdateQuotation);
+router.patch('/:id/archive', requireAuth, requireRole(['super_admin', 'main_admin']), ...adminArchiveOrderValidator, validate, adminArchiveOrder);
 
 export default router;

@@ -17,15 +17,24 @@ import { AuthContext } from './AuthContext';
 import logger from '../utils/logger';
 
 export function AuthProvider({ children }) {
-  let cachedProfile = loadCachedProfile();
-  const hasStoredSession = hasSessionMarker();
-  
-  // If the session marker is gone but the profile is cached, this is a zombie session!
-  // We MUST clear the cached profile immediately to force a redirect to /auth.
-  if (!hasStoredSession && cachedProfile) {
-    clearCachedProfile();
-    cachedProfile = null;
-  }
+  // Use lazy initialization to avoid synchronous exceptions during render body
+  const getInitialState = () => {
+    try {
+      const cp = loadCachedProfile();
+      const hs = hasSessionMarker();
+      // If the session marker is gone but the profile is cached, this is a zombie session!
+      if (!hs && cp) {
+        clearCachedProfile();
+        return { cachedProfile: null, hasStoredSession: false };
+      }
+      return { cachedProfile: cp, hasStoredSession: hs };
+    } catch {
+      return { cachedProfile: null, hasStoredSession: false };
+    }
+  };
+
+  const [initialState] = useState(getInitialState);
+  const { cachedProfile, hasStoredSession } = initialState;
 
   const [user, setUser] = useState(cachedProfile);
   const [loading, setLoading] = useState(hasStoredSession && !cachedProfile);

@@ -61,13 +61,13 @@ const SLOW_QUERY_THRESHOLD_MS = 1000;
  */
 export const slowQueryLoggerPlugin = (schema: mongoose.Schema) => {
   // Pre hooks to mark start time
-  schema.pre(['find', 'findOne', 'findOneAndUpdate', 'findOneAndDelete', 'countDocuments', 'aggregate'], function(this: any, next) {
+  schema.pre(/^(find|findOne|findOneAndUpdate|findOneAndDelete|countDocuments|aggregate)$/, function(this: any, next: any) {
     this._startTime = performance.now();
     next();
   });
 
   // Post hooks to measure duration and log
-  schema.post(['find', 'findOne', 'findOneAndUpdate', 'findOneAndDelete', 'countDocuments', 'aggregate'], function(this: any, res: any, next: any) {
+  schema.post(/^(find|findOne|findOneAndUpdate|findOneAndDelete|countDocuments|aggregate)$/, function(this: any, res: any, next: any) {
     if (this._startTime) {
       const duration = performance.now() - this._startTime;
       if (duration > SLOW_QUERY_THRESHOLD_MS) {

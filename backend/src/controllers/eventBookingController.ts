@@ -49,7 +49,20 @@ export const initializeBookingCheckout = asyncHandler(async (req: any, res: Resp
   const durationMultiplier = durationDays === 1 ? 1 : durationDays === 2 ? 1.5 : 1.5 + (durationDays - 2) * 0.4;
   basePrice = Math.round(basePrice * durationMultiplier);
 
-  const addOnCharges = (selectedAddons || []).reduce((acc: number, item: any) => acc + (Number(item.price) || 0), 0);
+  const CANONICAL_ADDONS: Record<string, number> = {
+    "Artisanal Wooden Swings / Ooyala": 7500,
+    "Gilded Grand Arch Entry Archway": 12000,
+    "Live Nadaswaram Instrumental Stage": 15000,
+    "Grand Brass Diyas Canopy Set (8 Props)": 9500,
+    "Fresh Rose petals pathways carpet (50ft)": 5000,
+    "Traditional Handpainted Kolam/Rangoli": 3500,
+  };
+
+  const addOnCharges = (selectedAddons || []).reduce((acc: number, item: any) => {
+    const canonicalPrice = CANONICAL_ADDONS[item.name] || 0;
+    item.price = canonicalPrice; // Ensure DB saves the canonical price
+    return acc + canonicalPrice;
+  }, 0);
   const totalPrice = basePrice + addOnCharges;
   const depositAmount = Math.round(totalPrice * 0.50); // 50% strict advance deposit
 
@@ -69,14 +82,26 @@ export const initializeBookingCheckout = asyncHandler(async (req: any, res: Resp
   let booking;
 
   try {
-    // Double Booking Check
-    if (venue?.address && venue.address.trim() && venue.address.toUpperCase() !== 'TBD') {
-      const bDate = new Date(date);
-      const startOfDay = new Date(bDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(bDate);
-      endOfDay.setHours(23, 59, 59, 999);
+    const bDate = new Date(date);
+    const startOfDay = new Date(bDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bDate);
+    endOfDay.setHours(23, 59, 59, 999);
 
+    // Unconditional Date Overlap Check
+    const slotsUsed = await EventBooking.countDocuments({
+      date: { $gte: startOfDay, $lte: endOfDay },
+      status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] }
+    }).session(session);
+
+    const MAX_EVENTS_PER_DAY = 3;
+    if (slotsUsed >= MAX_EVENTS_PER_DAY) {
+      await session.abortTransaction();
+      throw new ApiError(409, 'This date is fully booked. Please choose another date.');
+    }
+
+    // Double Booking Check (Same venue)
+    if (venue?.address && venue.address.trim() && venue.address.toUpperCase() !== 'TBD') {
       const duplicate = await EventBooking.findOne({
         date: { $gte: startOfDay, $lte: endOfDay },
         'venue.address': { $regex: new RegExp(`^${venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
@@ -182,13 +207,38 @@ export const verifyBookingCheckout = asyncHandler(async (req: any, res: Response
   session.startTransaction();
 
   try {
-    if (booking.venue?.address && booking.venue.address.trim() && booking.venue.address.toUpperCase() !== 'TBD') {
-      const bDate = new Date(booking.date);
-      const startOfDay = new Date(bDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(bDate);
-      endOfDay.setHours(23, 59, 59, 999);
+    const bDate = new Date(booking.date);
+    const startOfDay = new Date(bDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bDate);
+    endOfDay.setHours(23, 59, 59, 999);
 
+    // Unconditional Date Overlap Check
+    const slotsUsed = await EventBooking.countDocuments({
+      _id: { $ne: booking._id },
+      date: { $gte: startOfDay, $lte: endOfDay },
+      status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] }
+    }).session(session);
+
+    const MAX_EVENTS_PER_DAY = 3;
+    if (slotsUsed >= MAX_EVENTS_PER_DAY) {
+      await EventBooking.findByIdAndUpdate(booking._id, {
+        status: 'failed',
+        $push: {
+          payments: {
+            amount: booking.pricing.depositAmount,
+            date: new Date(),
+            transactionId: razorpayPaymentId,
+            status: 'failed',
+            note: 'Payment successful but date became fully booked concurrently. Refund required.'
+          }
+        }
+      }, { session });
+      await session.commitTransaction();
+      throw new ApiError(409, 'Payment was successful, but the date was just fully booked by others. A full refund will be processed within 5-7 business days.');
+    }
+
+    if (booking.venue?.address && booking.venue.address.trim() && booking.venue.address.toUpperCase() !== 'TBD') {
       const duplicate = await EventBooking.findOne({
         _id: { $ne: booking._id },
         date: { $gte: startOfDay, $lte: endOfDay },
@@ -518,25 +568,50 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
 
 // 9. Admin Refines Quotation Estimates
 export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response) => {
-  const { rentalFee, setupCharges, transportationCost, addOnCharges, depositAmount } = req.body;
+  const { eventPackageId, selectedAddons, rentalDurationDays, depositAmountOverride } = req.body;
   const booking = await EventBooking.findById(req.params.id);
 
   if (!booking) {
     throw new ApiError(404, 'Booking not found');
   }
 
-  const fee = Number(rentalFee) || 0;
-  const setup = Number(setupCharges) || 0;
-  const trans = Number(transportationCost) || 0;
-  const add = Number(addOnCharges) || 0;
-  const total = fee + setup + trans + add;
+  if (eventPackageId !== undefined) booking.eventPackage = eventPackageId;
+  if (selectedAddons !== undefined) booking.selectedAddons = selectedAddons;
+  if (rentalDurationDays !== undefined) booking.rentalDurationDays = rentalDurationDays;
+
+  let basePrice = 25000;
+  if (booking.eventPackage) {
+    const pkgObj = await Event.findById(booking.eventPackage);
+    if (pkgObj) basePrice = pkgObj.basePrice || 35000;
+  }
+  
+  const durationDays = Number(booking.rentalDurationDays) || 1;
+  const durationMultiplier = durationDays === 1 ? 1 : durationDays === 2 ? 1.5 : 1.5 + (durationDays - 2) * 0.4;
+  basePrice = Math.round(basePrice * durationMultiplier);
+
+  const CANONICAL_ADDONS: Record<string, number> = {
+    "Artisanal Wooden Swings / Ooyala": 7500,
+    "Gilded Grand Arch Entry Archway": 12000,
+    "Live Nadaswaram Instrumental Stage": 15000,
+    "Grand Brass Diyas Canopy Set (8 Props)": 9500,
+    "Fresh Rose petals pathways carpet (50ft)": 5000,
+    "Traditional Handpainted Kolam/Rangoli": 3500,
+  };
+
+  const addOnCharges = (booking.selectedAddons || []).reduce((acc: number, item: any) => {
+    const canonicalPrice = CANONICAL_ADDONS[item.name] || 0;
+    item.price = canonicalPrice;
+    return acc + canonicalPrice;
+  }, 0);
+
+  const total = basePrice + addOnCharges;
 
   booking.pricing = {
-    rentalFee: fee,
-    setupCharges: setup,
-    transportationCost: trans,
-    addOnCharges: add,
-    depositAmount: (Number(depositAmount) || Math.round(total * 0.25)) as number,
+    rentalFee: basePrice,
+    setupCharges: 0,
+    transportationCost: 0,
+    addOnCharges: addOnCharges,
+    depositAmount: (Number(depositAmountOverride) || Math.round(total * 0.25)) as number,
     totalPrice: total,
     pendingBalance: Math.max(0, total - (booking.payments || []).reduce((acc, p) => acc + (p.status === 'success' ? p.amount : 0), 0)),
     paymentStatus: booking.pricing.paymentStatus as any,

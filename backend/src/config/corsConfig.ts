@@ -42,7 +42,7 @@ const getDynamicOrigins = (): Set<string> => {
 export const allowedOrigins = getDynamicOrigins();
 
 export const isOriginAllowed = (origin: string): boolean => {
-  if (!origin) return false;
+  if (!origin || origin === 'null') return false;
 
   try {
     const parsedUrl = new URL(origin);
@@ -85,31 +85,37 @@ export const isOriginAllowed = (origin: string): boolean => {
  * - Caches preflight requests
  * - Prevents wildcard origin usage with credentials
  */
-export const corsOptions: CorsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (e.g. mobile apps, curl requests, webhooks)
-    // We will restrict these at the route level if necessary.
-    if (!origin) {
-      return callback(null, true);
-    }
+export const corsOptions = (req: any, callback: any) => {
+  const origin = req.header('Origin');
+  
+  const options: CorsOptions = {
+    credentials: true,
+    optionsSuccessStatus: 200, // Legacy browsers choke on 204. Use 200 for preflight.
+    maxAge: 86400, // Cache preflight response for 24 hours
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'x-csrf-token'
+    ]
+  };
 
-    if (isOriginAllowed(origin)) {
-      return callback(null, true);
+  if (!origin) {
+    const path = req.path || '';
+    const webhookPaths = ['/api/orders/webhook', '/api/readiness', '/api/v1/csrf-token'];
+    if (webhookPaths.some(p => path.startsWith(p))) {
+      return callback(null, { ...options, origin: true });
     }
+    return callback(new Error('Not allowed by CORS: No origin header — request blocked'));
+  }
 
-    logger.warn(`[CORS BLOCKED] Unauthorized origin attempt: ${origin}`);
-    callback(new Error(`Not allowed by CORS: ${origin}`));
-  },
-  credentials: true,
-  optionsSuccessStatus: 200, // Legacy browsers choke on 204. Use 200 for preflight.
-  maxAge: 86400, // Cache preflight response for 24 hours
-  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Origin',
-    'X-Requested-With',
-    'Content-Type',
-    'Accept',
-    'Authorization',
-    'x-csrf-token'
-  ]
+  if (isOriginAllowed(origin)) {
+    return callback(null, { ...options, origin: true });
+  }
+
+  logger.warn(`[CORS BLOCKED] Unauthorized origin attempt: ${origin}`);
+  callback(new Error(`Not allowed by CORS: ${origin}`));
 };

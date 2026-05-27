@@ -69,7 +69,7 @@ const UserPreferenceProfileSchema: Schema = new Schema(
 
 // ── Indexes ──
 // userId unique index — critical for recommendation engine's findOne({ userId }) hot path
-UserPreferenceProfileSchema.index({ userId: 1 }, { unique: true });
+
 UserPreferenceProfileSchema.index({ lastRebuiltAt: 1 });
 UserPreferenceProfileSchema.index({ engagementScore: -1 });
 

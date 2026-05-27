@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import Order from '../../models/Order';
-import ApiError from '../../utils/ApiError';
+import Order from '../../../models/Order';
+import ApiError from '../../../utils/ApiError';
 // Sub-module for Razorpay Initialization and Verification
 
 export class OrderPaymentService {

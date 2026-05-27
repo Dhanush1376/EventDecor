@@ -25,7 +25,8 @@ export const saveCachedProfile = (user) => {
     return;
   }
   try {
-    safeLocalStorage.setItem(PROFILE_KEY, JSON.stringify({ user, storedAt: Date.now() }));
+    const safeUser = { name: user.name, avatar: user.avatar, role: user.role, email: user.email, _id: user._id || user.id };
+    safeLocalStorage.setItem(PROFILE_KEY, JSON.stringify({ user: safeUser, storedAt: Date.now() }));
   } catch {
     // quota or private mode
   }

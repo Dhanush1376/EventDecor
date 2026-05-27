@@ -61,17 +61,18 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   const { page = 1, limit = 10 } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
 
-  const user = await User.findById(req.params.id).populate({
-    path: 'orders',
-    select: 'totalAmount status createdAt paymentStatus paymentMethod deliveryStatus razorpayOrderId',
-    options: {
-      sort: { createdAt: -1 },
-      limit: Number(limit),
-      skip: skip,
-    }
-  });
-
+  const user = await User.findById(req.params.id).lean();
   if (!user) throw new ApiError(404, 'User not found');
+
+  const Order = require('../models/Order').default || require('../models/Order');
+  const orders = await Order.find({ user: user._id })
+    .select('totalAmount status createdAt paymentStatus paymentMethod deliveryStatus razorpayOrderId')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(Number(limit))
+    .lean();
+    
+  (user as any).orders = orders;
 
   // We fetch total order count directly from the Order model if needed for full pagination,
   // but to maintain API compatibility we return the user document.
@@ -220,6 +221,9 @@ export const toggleWishlist = asyncHandler(async (req: any, res: Response) => {
 
   const index = user.wishlist.indexOf(productId);
   if (index === -1) {
+    if (user.wishlist.length >= 100) {
+      throw new ApiError(400, 'Wishlist capacity reached. Maximum 100 items allowed.');
+    }
     user.wishlist.push(productId);
   } else {
     user.wishlist.splice(index, 1);
@@ -330,6 +334,10 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
       );
     }
   } else if (qty > 0) {
+    const currentUser = await User.findById(req.user.id).select('cart');
+    if (currentUser && currentUser.cart.length >= 50) {
+      throw new ApiError(400, 'Cart capacity reached. Maximum 50 items allowed.');
+    }
     updatedUser = await User.findOneAndUpdate(
       { _id: req.user.id },
       { $push: { cart: { product: productId, quantity: qty, variant: 'Default' } } },
@@ -358,6 +366,10 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
       quantity: item.quantity,
       variant: item.variant || 'Default'
     }));
+
+  if (updatedCart.length > 50) {
+    throw new ApiError(400, 'Cart capacity reached. Maximum 50 items allowed.');
+  }
 
   user.cart = updatedCart;
   

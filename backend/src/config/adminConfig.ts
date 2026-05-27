@@ -37,14 +37,7 @@ export const ADMIN_ROLES = [
   'owner',
   'super_admin',
   'main_admin',
-  'moderator',
-  'support_admin',
-  'support',
-  'order_manager',
-  'content_manager',
-  'admin',
-  'manager',
-  'coordinator'
+  'admin'
 ] as const;
 export type AdminRole = typeof ADMIN_ROLES[number];
 

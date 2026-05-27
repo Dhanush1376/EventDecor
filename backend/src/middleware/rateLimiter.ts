@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import rateLimit, { Options } from 'express-rate-limit';
+import rateLimit, { Options, ipKeyGenerator } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import redisClient from '../utils/redis';
 import logger from '../config/logger';
@@ -24,13 +24,19 @@ export const skipRateLimit = (req: Request) => {
 };
 
 // Custom key generator for account-based throttling
-export const accountKeyGenerator = (req: Request): string => {
+export const accountKeyGenerator = (req: Request, res: Response): string => {
   // @ts-ignore (Assuming req.user is populated by authMiddleware)
   if (req.user && req.user._id) {
     // @ts-ignore
     return `user_${req.user._id}`;
   }
-  return req.ip || req.socket.remoteAddress || 'unknown_ip';
+  
+  const ip = req.ip || req.socket.remoteAddress;
+  if (!ip) {
+    return 'unknown_ip';
+  }
+  
+  return ipKeyGenerator(ip);
 };
 
 // Factory for creating a rate limiter with standard security defaults and abuse logging

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { createOrder, verifyPayment, getMyOrders, getAllOrders, updateOrderStatus, validateTotals, getOrderById, getOrderPublicTrack, updateOrderPublicStatus, sendCodOtp, verifyCodOtp, updateOrderNotes } from '../controllers/orderController';
-import { requireAuth, requireAdmin, optionalAuth, publicTrackingAuth } from '../middleware/authMiddleware';
+import { createOrder, verifyPayment, getMyOrders, getAllOrders, updateOrderStatus, validateTotals, getOrderById, getOrderPublicTrack, updateOrderPublicStatus, sendCodOtp, verifyCodOtp, updateOrderNotes } from './orderController';
+import { requireAuth, requireAdmin, optionalAuth, publicTrackingAuth, requireRole } from '../../middleware/authMiddleware';
 import {
   createOrderSchema,
   updateStatusSchema,
@@ -10,8 +10,8 @@ import {
   codOtpEmailBodySchema,
   codOtpVerifySchema,
   orderNotesSchema,
-} from '../validators/orderSchema';
-import { validateRequest } from '../middleware/zodValidationMiddleware';
+} from '../../validators/orderSchema';
+import { validateRequest } from '../../middleware/zodValidationMiddleware';
 
 const router = Router();
 
@@ -38,9 +38,9 @@ router.post('/send-cod-otp', requireAuth, validateRequest(codOtpEmailBodySchema)
 router.post('/verify-cod-otp', requireAuth, validateRequest(codOtpVerifySchema), verifyCodOtp);
 
 // Admin Routes
-router.get('/', requireAuth, requireAdmin, getAllOrders);
-router.patch('/:id/status', requireAuth, requireAdmin, validateRequest(updateStatusSchema), updateOrderStatus);
-router.patch('/:id/notes', requireAuth, requireAdmin, validateRequest(orderNotesSchema), updateOrderNotes);
+router.get('/', requireAuth, requireRole(['super_admin', 'main_admin']), getAllOrders);
+router.patch('/:id/status', requireAuth, requireRole(['super_admin', 'main_admin']), validateRequest(updateStatusSchema), updateOrderStatus);
+router.patch('/:id/notes', requireAuth, requireRole(['super_admin', 'main_admin']), validateRequest(orderNotesSchema), updateOrderNotes);
 
 router.get('/:id', requireAuth, getOrderById);
 

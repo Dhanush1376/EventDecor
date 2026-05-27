@@ -620,7 +620,7 @@ export function EventDetail() {
 
               {/* Desktop-Only Fade Gallery */}
               <div className="hidden md:block h-full w-full relative">
-                <AnimatePresence mode="wait">
+                <>
                   <motion.img
                     key={activeGalleryIndex}
                     initial={{ opacity: 0 }}
@@ -633,7 +633,7 @@ export function EventDetail() {
                     alt={event.title}
                     onError={handleImageError}
                   />
-                </AnimatePresence>
+                </>
               </div>
 
               {/* Floating Perspective Badges */}
@@ -1037,8 +1037,8 @@ export function EventDetail() {
                           </div>
                           <a
                             href={venueDetails.googleMapsLink}
-                            target="_blank"
-                            rel="noreferrer"
+                            target="_blank" rel="noopener noreferrer"
+                            
                             className="w-7 h-7 rounded-full bg-white border border-black/5 flex items-center justify-center text-primary hover:bg-stone-50 shrink-0 transition-colors shadow-sm"
                             title="Open in Google Maps"
                           >

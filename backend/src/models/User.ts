@@ -16,7 +16,6 @@ export interface IUser extends Document {
     quantity: number;
     variant?: string;
   }>;
-  orders: mongoose.Types.ObjectId[];
   recentlyViewed?: Array<{
     product: mongoose.Types.ObjectId;
     viewedAt: Date;
@@ -69,7 +68,6 @@ const UserSchema: Schema = new Schema(
         variant: { type: String, default: 'Default' }
       }
     ],
-    orders: [{ type: Schema.Types.ObjectId, ref: 'Order', default: [] }],
     recentlyViewed: [
       {
         product: { type: Schema.Types.ObjectId, ref: 'Product' },

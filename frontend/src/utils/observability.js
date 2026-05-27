@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/react';
 import LogRocket from 'logrocket';
 import logger from './logger';
+import { hasAnalyticsConsent } from './analytics';
 
 const isProduction = import.meta.env.PROD || import.meta.env.MODE === 'production';
 
@@ -31,7 +32,7 @@ export const initObservability = () => {
   const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
   const logRocketId = import.meta.env.VITE_LOGROCKET_ID;
 
-  if (logRocketId) {
+  if (logRocketId && hasAnalyticsConsent()) {
     LogRocket.init(logRocketId, {
       shouldCaptureIP: false,
       dom: {

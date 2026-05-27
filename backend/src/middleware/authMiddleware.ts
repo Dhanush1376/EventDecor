@@ -183,9 +183,29 @@ export const optionalAuth = asyncHandler(async (req: Request, res: Response, nex
 
   try {
     const decoded = verifyTokenWithRotation(token);
-    const user = await User.findById(decoded.id).select('role email isVerified passwordChangedAt');
+    
+    // Check Redis Session Cache first to avoid MongoDB lookup on every request
+    const cacheKey = sessionKeys.profile(decoded.id);
+    let user: any = await getCachedSessionJson(cacheKey);
+
+    if (!user) {
+      const mongoQuery = User.findById(decoded.id).select('role email isVerified passwordChangedAt').lean().exec();
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('MongoDB Auth Lookup Timeout')), 10000));
+      
+      try {
+        user = await Promise.race([mongoQuery, timeout]);
+      } catch (dbErr: any) {
+        // Ignored: auth is optional
+      }
+
+      if (user) {
+        // Cache user profile in Redis for 60 seconds
+        await setCachedSessionJson(cacheKey, user, 60);
+      }
+    }
+
     if (user && user.isVerified) {
-      if (!(user.passwordChangedAt && decoded.iat != null && decoded.iat < Math.floor(user.passwordChangedAt.getTime() / 1000))) {
+      if (!(user.passwordChangedAt && decoded.iat != null && decoded.iat < Math.floor(new Date(user.passwordChangedAt).getTime() / 1000))) {
         decoded.role = user.role;
         decoded.email = user.email;
         req.user = decoded;

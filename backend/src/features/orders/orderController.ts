@@ -1,19 +1,35 @@
 import crypto from 'crypto';
 import { Request, Response } from 'express';
-import logger from '../config/logger';
-import OrderService from '../services/orderService';
-import { LogisticsService } from '../services/logisticsService';
-import { PaymentService } from '../services/paymentService';
-import AuthService from '../services/authService';
-import asyncHandler from '../utils/asyncHandler';
-import ApiResponse from '../utils/ApiResponse';
-import ApiError from '../utils/ApiError';
-import Order from '../models/Order';
+import logger from '../../config/logger';
+import OrderService from './orderService';
+import { LogisticsService } from '../../services/logisticsService';
+import { PaymentService } from '../../services/paymentService';
+import AuthService from '../../services/authService';
+import asyncHandler from '../../utils/asyncHandler';
+import ApiResponse from '../../utils/ApiResponse';
+import ApiError from '../../utils/ApiError';
+import Order from '../../models/Order';
+
+import redisClient from '../../utils/redis';
 
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const idempotencyKey = req.headers['idempotency-key'] as string;
+  const userId = req.user!.id;
+
+  if (idempotencyKey) {
+    const existing = await redisClient.get(`idempotency:${userId}:${idempotencyKey}`);
+    if (existing) {
+      return res.status(200).json(JSON.parse(existing));
+    }
+  }
+
   const orderData = { ...req.body, idempotencyKey };
-  const result = await OrderService.createOrder(req.user!.id, orderData);
+  const result = await OrderService.createOrder(userId, orderData);
+
+  if (idempotencyKey) {
+    await redisClient.set(`idempotency:${userId}:${idempotencyKey}`, JSON.stringify(new ApiResponse(true, 'Order created and payment initiated', result)), 'EX', 86400); // 24 hours
+  }
+
   res.status(201).json(new ApiResponse(true, 'Order created and payment initiated', result));
 });
 
@@ -28,7 +44,7 @@ export const validateTotals = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const getOrderById = asyncHandler(async (req: Request, res: Response) => {
-  const order = await Order.findById(req.params.id).select('+publicTrackingToken');
+  const order = await Order.findById(req.params.id);
   if (!order) throw new ApiError(404, 'Order not found');
 
   if (order.user.toString() !== req.user!.id && !['admin', 'manager', 'coordinator'].includes(req.user!.role)) {
@@ -39,8 +55,8 @@ export const getOrderById = asyncHandler(async (req: Request, res: Response) => 
 });
 
 export const getMyOrders = asyncHandler(async (req: Request, res: Response) => {
-  const orders = await OrderService.getMyOrders(req.user!.id);
-  res.status(200).json(new ApiResponse(true, 'Your orders fetched', orders));
+  const paginatedOrders = await OrderService.getMyOrders(req.user!.id, req.query);
+  res.status(200).json(new ApiResponse(true, 'Your orders retrieved successfully', paginatedOrders));
 });
 
 export const getAllOrders = asyncHandler(async (req: Request, res: Response) => {

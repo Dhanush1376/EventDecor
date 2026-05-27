@@ -645,7 +645,7 @@ export function CustomOrders() {
                 <span className="block text-[11px] font-bold uppercase tracking-wider text-[var(--color-on-surface)]">{stepsList[currentStep - 1]}</span>
               </div>
 
-              <AnimatePresence mode="wait">
+              <>
                 <motion.div
                   key={currentStep}
                   initial="hidden"
@@ -886,8 +886,8 @@ export function CustomOrders() {
                         <div className="space-y-3 pt-1">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[#685C57] block font-medium">Uploaded Photos ({directImages.length}):</span>
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-                            {directImages.map((img, i) => (
-                              <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-black/5 bg-[var(--color-surface-ivory)] group">
+                            {directImages.map((img) => (
+                              <div key={img} className="relative aspect-square rounded-xl overflow-hidden border border-black/5 bg-[var(--color-surface-ivory)] group">
                                 <img src={img} alt="Inspiration preview" className="w-full h-full object-cover" />
                                 <button
                                   type="button"
@@ -1050,8 +1050,8 @@ export function CustomOrders() {
                         <div className="space-y-2">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[#685C57]">Added Inspiration Links ({externalLinks.length}):</span>
                           <div className="flex flex-col gap-2">
-                            {externalLinks.map((link, idx) => (
-                              <div key={idx} className="flex items-center justify-between bg-[var(--color-surface-ivory)] border border-black/5 rounded-xl px-3 py-2 shadow-sm min-w-0">
+                            {externalLinks.map((link) => (
+                              <div key={link} className="flex items-center justify-between bg-[var(--color-surface-ivory)] border border-black/5 rounded-xl px-3 py-2 shadow-sm min-w-0">
                                 <div className="flex items-center gap-2 text-[11.5px] min-w-0 pr-2">
                                   <span className="material-symbols-outlined text-[15px] text-[var(--color-gold)] shrink-0">link</span>
                                   <a href={link} target="_blank" rel="noopener noreferrer" className="text-[var(--color-on-surface)] font-bold hover:underline truncate">
@@ -1293,8 +1293,8 @@ export function CustomOrders() {
                           <div className="space-y-1.5 border-b border-black/5 pb-3">
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Uploaded Inspiration Photos ({directImages.length})</span>
                             <div className="flex gap-2 overflow-x-auto pb-1">
-                              {directImages.map((img, i) => (
-                                <img key={i} src={img} alt="Thumb" className="w-12 h-12 object-cover rounded-lg border border-black/10 shrink-0" />
+                              {directImages.map((img) => (
+                                <img key={img} src={img} alt="Thumb" className="w-12 h-12 object-cover rounded-lg border border-black/10 shrink-0" />
                               ))}
                             </div>
                           </div>
@@ -1304,8 +1304,8 @@ export function CustomOrders() {
                           <div className="space-y-1.5">
                             <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">Inspiration Links ({externalLinks.length})</span>
                             <div className="flex flex-col gap-1.5">
-                              {externalLinks.map((link, i) => (
-                                <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-[var(--color-gold)] hover:underline flex items-center gap-1.5 min-w-0">
+                              {externalLinks.map((link) => (
+                                <a key={link} href={link} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-[var(--color-gold)] hover:underline flex items-center gap-1.5 min-w-0">
                                   <span className="material-symbols-outlined text-[14px] shrink-0">link</span>
                                   <span className="truncate">{link}</span>
                                 </a>
@@ -1359,7 +1359,7 @@ export function CustomOrders() {
                     )}
                   </div>
                 </motion.div>
-              </AnimatePresence>
+              </>
             </div>
           </div>
         </div>
@@ -1529,7 +1529,7 @@ export function CustomOrders() {
 
                           <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
                             {selectedOrder.quotation.items.map((it, i) => (
-                              <div key={i} className="flex justify-between text-[11px] text-[var(--color-on-surface)]/80 font-light">
+                              <div key={it._id || it.description || i} className="flex justify-between text-[11px] text-[var(--color-on-surface)]/80 font-light">
                                 <span className="truncate pr-2">{it.description}</span>
                                 <span className="font-mono font-medium shrink-0">₹{it.amount.toLocaleString("en-IN")}</span>
                               </div>
@@ -1596,7 +1596,7 @@ export function CustomOrders() {
                           {selectedOrder.inspirationImages.filter(isDirectImageUrl).length > 0 && (
                             <div className="grid grid-cols-4 gap-1.5">
                               {selectedOrder.inspirationImages.filter(isDirectImageUrl).map((img, i) => (
-                                <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="relative aspect-square rounded-lg overflow-hidden border border-black/5">
+                                <a key={img} href={img} target="_blank" rel="noopener noreferrer" className="relative aspect-square rounded-lg overflow-hidden border border-black/5">
                                   <img src={img} alt="Thumb" className="w-full h-full object-cover" />
                                 </a>
                               ))}
@@ -1607,7 +1607,7 @@ export function CustomOrders() {
                           {selectedOrder.inspirationImages.filter(url => !isDirectImageUrl(url)).length > 0 && (
                             <div className="flex flex-col gap-1.5 pt-1 border-t border-black/5">
                               {selectedOrder.inspirationImages.filter(url => !isDirectImageUrl(url)).map((link, i) => (
-                                <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="text-[10.5px] font-bold text-[var(--color-gold)] hover:underline flex items-center gap-1 min-w-0">
+                                <a key={link} href={link} target="_blank" rel="noopener noreferrer" className="text-[10.5px] font-bold text-[var(--color-gold)] hover:underline flex items-center gap-1 min-w-0">
                                   <span className="material-symbols-outlined text-[13px] shrink-0">link</span>
                                   <span className="truncate">{link}</span>
                                 </a>
@@ -1630,14 +1630,14 @@ export function CustomOrders() {
 
                           if (isLog) {
                             return (
-                              <div key={i} className="text-center py-1">
+                              <div key={msg._id || msg.createdAt || i} className="text-center py-1">
                                 <span className="px-2 py-0.5 bg-black/5 text-[#685C57] text-[8.5px] font-bold uppercase tracking-wider rounded-lg border border-black/5">{msg.text}</span>
                               </div>
                             );
                           }
 
                           return (
-                            <div key={i} className={`flex flex-col ${isAdmin ? "items-start" : "items-end"}`}>
+                            <div key={msg._id || msg.createdAt || i} className={`flex flex-col ${isAdmin ? "items-start" : "items-end"}`}>
                               <span className="text-[8px] font-bold text-[#685C57] mb-0.5 px-1">{msg.senderName} ({dateVal})</span>
                               <div className={`p-3.5 rounded-2xl text-[12px] leading-relaxed shadow-sm ${
                                 isAdmin

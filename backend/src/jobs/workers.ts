@@ -6,6 +6,7 @@ import { sendDirectEmail } from '../services/notificationService';
 import { rebuildUserProfile, rebuildStaleProfiles } from '../services/recommendation/userProfileBuilder';
 import { calculateTrending, saveTrendingSnapshot } from '../services/recommendation/trendingEngine';
 import { getCachedSeasonalContext, getPrimarySeasonalLabel } from '../services/recommendation/seasonalEngine';
+import { requestContextStorage } from '../middleware/requestTracker';
 
 // Declare workers as let (live bindings)
 export let emailWorker: Worker | null = null;
@@ -32,13 +33,16 @@ export const initWorkers = async () => {
     emailWorker = new Worker(
       'emailQueue',
       async (job: Job) => {
-        logger.info(`[WORKER] Processing email job ${job.id} for ${job.data.to}`);
-        await sendDirectEmail({
-          email: job.data.to,
-          subject: job.data.subject,
-          customHtml: job.data.html,
-          type: 'system',
-          action: 'background_email'
+        const trace = job.data._trace || {};
+        return requestContextStorage.run({ requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId }, async () => {
+          logger.info(`[WORKER] Processing email job ${job.id} for ${job.data.to}`);
+          await sendDirectEmail({
+            email: job.data.to,
+            subject: job.data.subject,
+            customHtml: job.data.html,
+            type: 'system',
+            action: 'background_email'
+          });
         });
       },
       { connection }
@@ -55,8 +59,11 @@ export const initWorkers = async () => {
     notificationWorker = new Worker(
       'notificationQueue',
       async (job: Job) => {
-        logger.info(`[WORKER] Processing notification job ${job.id}`);
-        // Future integration
+        const trace = job.data._trace || {};
+        return requestContextStorage.run({ requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId }, async () => {
+          logger.info(`[WORKER] Processing notification job ${job.id}`);
+          // Future integration
+        });
       },
       { connection }
     );
@@ -70,8 +77,11 @@ export const initWorkers = async () => {
     loyaltyWorker = new Worker(
       'loyaltyQueue',
       async (job: Job) => {
-        logger.info(`[WORKER] Processing loyalty job ${job.id} for user ${job.data.userId}`);
-        // Future integration
+        const trace = job.data._trace || {};
+        return requestContextStorage.run({ requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId }, async () => {
+          logger.info(`[WORKER] Processing loyalty job ${job.id} for user ${job.data.userId}`);
+          // Future integration
+        });
       },
       { connection }
     );
@@ -85,44 +95,47 @@ export const initWorkers = async () => {
     recommendationWorker = new Worker(
       'recommendationQueue',
       async (job: Job) => {
-        const { type } = job.data;
-        logger.info(`[WORKER] Processing recommendation job ${job.id} (type: ${type})`);
+        const trace = job.data._trace || {};
+        return requestContextStorage.run({ requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId }, async () => {
+          const { type } = job.data;
+          logger.info(`[WORKER] Processing recommendation job ${job.id} (type: ${type})`);
 
-        switch (type) {
-          case 'rebuild-user-profile': {
-            const { userId } = job.data;
-            await rebuildUserProfile(userId);
-            break;
-          }
-          case 'rebuild-stale-profiles': {
-            const count = await rebuildStaleProfiles();
-            logger.info(`[WORKER] Rebuilt ${count} stale user profiles`);
-            break;
-          }
-          case 'update-trending': {
-            for (const targetType of ['product', 'event', 'gallery']) {
-              await calculateTrending(targetType, { limit: 20 });
+          switch (type) {
+            case 'rebuild-user-profile': {
+              const { userId } = job.data;
+              await rebuildUserProfile(userId);
+              break;
             }
-            logger.info('[WORKER] Trending rankings updated');
-            break;
-          }
-          case 'update-seasonal-context': {
-            await getCachedSeasonalContext();
-            logger.info('[WORKER] Seasonal context refreshed');
-            break;
-          }
-          case 'snapshot-trending': {
-            const seasonalCtx = await getCachedSeasonalContext();
-            const label = getPrimarySeasonalLabel(seasonalCtx);
-            for (const targetType of ['product', 'event', 'gallery']) {
-              await saveTrendingSnapshot('hourly', targetType, label);
+            case 'rebuild-stale-profiles': {
+              const count = await rebuildStaleProfiles();
+              logger.info(`[WORKER] Rebuilt ${count} stale user profiles`);
+              break;
             }
-            logger.info('[WORKER] Trending snapshots saved');
-            break;
+            case 'update-trending': {
+              for (const targetType of ['product', 'event', 'gallery']) {
+                await calculateTrending(targetType, { limit: 20 });
+              }
+              logger.info('[WORKER] Trending rankings updated');
+              break;
+            }
+            case 'update-seasonal-context': {
+              await getCachedSeasonalContext();
+              logger.info('[WORKER] Seasonal context refreshed');
+              break;
+            }
+            case 'snapshot-trending': {
+              const seasonalCtx = await getCachedSeasonalContext();
+              const label = getPrimarySeasonalLabel(seasonalCtx);
+              for (const targetType of ['product', 'event', 'gallery']) {
+                await saveTrendingSnapshot('hourly', targetType, label);
+              }
+              logger.info('[WORKER] Trending snapshots saved');
+              break;
+            }
+            default:
+              logger.warn(`[WORKER] Unknown recommendation job type: ${type}`);
           }
-          default:
-            logger.warn(`[WORKER] Unknown recommendation job type: ${type}`);
-        }
+        });
       },
       { connection }
     );

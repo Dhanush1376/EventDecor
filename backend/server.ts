@@ -13,6 +13,7 @@ import { initJobs } from './src/jobs/cronJobs';
 import { initRedis, closeRedisConnections } from './src/utils/redis';
 import { initWorkers, closeWorkers } from './src/jobs/workers';
 import { initQueues, closeQueues } from './src/jobs/queues';
+import { initRecommendationSystem } from './src/services/recommendation/recommendationEngine';
 
 import * as Sentry from '@sentry/node';
 import mongoose from 'mongoose';
@@ -122,7 +123,6 @@ const startServer = async () => {
 
     // 4b. Initialize Recommendation System (warm caches — non-blocking, non-fatal)
     try {
-      const { initRecommendationSystem } = require('./src/services/recommendation/recommendationEngine');
       await initRecommendationSystem();
     } catch (err: any) {
       logger.warn(`⚠️ [RECO] Recommendation system init skipped: ${err.message}`);

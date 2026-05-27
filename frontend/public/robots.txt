@@ -1,4 +1,7 @@
 User-agent: *
-Allow: /
-
-Sitemap: https://siri-arts-n-crafts.onrender.com/sitemap.xml
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /checkout
+Disallow: /cart
+Disallow: /auth
+Sitemap: https://siriartsandcrafts.com/sitemap.xml

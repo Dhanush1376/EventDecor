@@ -51,7 +51,7 @@ export const useRazorpay = () => {
         currency: razorpayOrder.currency,
         name: 'Siri Arts & Crafts',
         description: 'Luxury Event Decor Order',
-        image: 'https://res.cloudinary.com/your-cloud-name/image/upload/v1/SiriLogo.webp',
+        image: import.meta.env.VITE_LOGO_URL || 'https://res.cloudinary.com/siriartscrafts/image/upload/v1/SiriLogo.webp',
         order_id: razorpayOrder.id,
         handler: async (response) => {
           try {

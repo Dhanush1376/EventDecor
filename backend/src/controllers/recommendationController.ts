@@ -100,10 +100,10 @@ export const getSimilar = async (req: Request, res: Response) => {
     }
 
     // Validate parameters against whitelists
-    if (!VALID_TARGET_TYPES.has(targetType)) {
+    if (!VALID_TARGET_TYPES.has(targetType as string)) {
       return res.status(400).json({ success: false, message: 'Invalid targetType' });
     }
-    if (!mongoose.Types.ObjectId.isValid(targetId)) {
+    if (!mongoose.Types.ObjectId.isValid(targetId as string)) {
       return res.status(400).json({ success: false, message: 'Invalid targetId format' });
     }
 

@@ -238,6 +238,7 @@ EventBookingSchema.index({ user: 1, createdAt: -1 });
 EventBookingSchema.index({ status: 1, createdAt: -1 });
 EventBookingSchema.index({ user: 1, status: 1 });
 EventBookingSchema.index({ user: 1, date: 1 });
+EventBookingSchema.index({ date: 1, status: 1 });
 
 const EventBooking = mongoose.model<IEventBooking>('EventBooking', EventBookingSchema);
 export default EventBooking;

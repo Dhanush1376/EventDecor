@@ -11,6 +11,7 @@ import { MandalaElement } from "../components/ui/MandalaElement";
 import { WriteReviewModal } from "../components/sections/ProductReviews";
 import toast from "react-hot-toast";
 import Barcode from "react-barcode";
+import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 
 const InvoiceTemplate = React.lazy(() => import("../components/ui").then(m => ({ default: m.InvoiceTemplate })));
 const ProductCard = React.lazy(() => import("../components/ui").then(m => ({ default: m.ProductCard })));
@@ -768,10 +769,11 @@ export function Dashboard() {
 
           {/* MAIN DYNAMIC CONTENT PORTAL PANELS */}
           <div className={`col-span-1 md:col-span-4 lg:col-span-9 space-y-4 ${mobileShowContent ? "block" : "hidden md:block"}`}>
-            <AnimatePresence mode="wait">
+            <>
               
               {/* TAB 0: RESERVED EVENT BOOKINGS */}
               {activeTab === "bookings" && (
+                <ErrorBoundary key="bookings-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load bookings tab.</div>}>
                 <motion.div
                   id="panel-bookings"
                   role="tabpanel"
@@ -808,10 +810,12 @@ export function Dashboard() {
                     <EventCustomerDashboard isEmbedded={true} />
                   </React.Suspense>
                 </motion.div>
+                </ErrorBoundary>
               )}
 
               {/* TAB 1: PROFILE EDITING & PARAMETERS */}
               {activeTab === "profile" && (
+                <ErrorBoundary key="profile-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load profile tab.</div>}>
                 <motion.div
                   id="panel-profile"
                   role="tabpanel"
@@ -933,10 +937,12 @@ export function Dashboard() {
                     </div>
                   </form>
                 </motion.div>
+                </ErrorBoundary>
               )}
 
               {/* TAB 2: ADDRESS MANAGEMENT */}
               {activeTab === "addresses" && (
+                <ErrorBoundary key="addresses-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load addresses tab.</div>}>
                 <motion.div
                   id="panel-addresses"
                   role="tabpanel"
@@ -1077,10 +1083,12 @@ export function Dashboard() {
                     </div>
                   )}
                 </motion.div>
+                </ErrorBoundary>
               )}
 
               {/* TAB 3: ACCOUNT PREFERENCES */}
               {activeTab === "preferences" && (
+                <ErrorBoundary key="preferences-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load preferences tab.</div>}>
                 <motion.div
                   id="panel-preferences"
                   role="tabpanel"
@@ -1163,10 +1171,12 @@ export function Dashboard() {
                     </div>
                   </form>
                 </motion.div>
+                </ErrorBoundary>
               )}
 
               {/* TAB 4: REAL-TIME ORDER HISTORY */}
               {activeTab === "orders" && (
+                <ErrorBoundary key="orders-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load orders tab.</div>}>
                 <motion.div
                   id="panel-orders"
                   role="tabpanel"
@@ -1372,10 +1382,12 @@ export function Dashboard() {
                     </motion.div>
                   )}
                 </motion.div>
+                </ErrorBoundary>
               )}
 
               {/* TAB 5: WISHLIST COLLECTIONS */}
               {activeTab === "wishlist" && (
+                <ErrorBoundary key="wishlist-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load wishlist tab.</div>}>
                 <motion.div
                   id="panel-wishlist"
                   role="tabpanel"
@@ -1423,10 +1435,12 @@ export function Dashboard() {
                     </div>
                   )}
                 </motion.div>
+                </ErrorBoundary>
               )}
 
               {/* TAB 6: DYNAMIC SHOPPING BAG */}
               {activeTab === "cart" && (
+                <ErrorBoundary key="cart-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load cart tab.</div>}>
                 <motion.div
                   id="panel-cart"
                   role="tabpanel"
@@ -1479,10 +1493,12 @@ export function Dashboard() {
                     </div>
                   )}
                 </motion.div>
+                </ErrorBoundary>
               )}
 
               {/* TAB 7: RECENTLY VIEWED PRODUCTS */}
               {activeTab === "recently-viewed" && (
+                <ErrorBoundary key="recently-viewed-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load recently viewed tab.</div>}>
                 <motion.div
                   id="panel-recently-viewed"
                   role="tabpanel"
@@ -1530,9 +1546,11 @@ export function Dashboard() {
                     </div>
                   )}
                 </motion.div>
+                </ErrorBoundary>
               )}
 
               {activeTab === "loyalty" && (
+                <ErrorBoundary key="loyalty-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load loyalty tab.</div>}>
                 <motion.div
                   id="panel-loyalty"
                   role="tabpanel"
@@ -1546,8 +1564,9 @@ export function Dashboard() {
                     <LoyaltyPanel />
                   </React.Suspense>
                 </motion.div>
+                </ErrorBoundary>
               )}
-            </AnimatePresence>
+            </>
           </div>
         </div>
       </div>
