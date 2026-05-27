@@ -16,7 +16,7 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const idempotencyKey = req.headers['idempotency-key'] as string;
   const userId = req.user!.id;
 
-  if (idempotencyKey) {
+  if (idempotencyKey && redisClient) {
     const existing = await redisClient.get(`idempotency:${userId}:${idempotencyKey}`);
     if (existing) {
       return res.status(200).json(JSON.parse(existing));
@@ -26,8 +26,8 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const orderData = { ...req.body, idempotencyKey };
   const result = await OrderService.createOrder(userId, orderData);
 
-  if (idempotencyKey) {
-    await redisClient.set(`idempotency:${userId}:${idempotencyKey}`, JSON.stringify(new ApiResponse(true, 'Order created and payment initiated', result)), 'EX', 86400); // 24 hours
+  if (idempotencyKey && redisClient) {
+    await redisClient.set(`idempotency:${userId}:${idempotencyKey}`, JSON.stringify(new ApiResponse(true, 'Order created and payment initiated', result)), { EX: 86400 }); // 24 hours
   }
 
   res.status(201).json(new ApiResponse(true, 'Order created and payment initiated', result));

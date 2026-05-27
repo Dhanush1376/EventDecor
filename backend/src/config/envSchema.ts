@@ -103,7 +103,7 @@ export const validateEnv = () => {
   const result = envSchema.safeParse(process.env);
   
   if (!result.success) {
-    console.error('❌ Invalid environment variables:', result.error.format());
+    process.stderr.write(`❌ Invalid environment variables: ${JSON.stringify(result.error.format(), null, 2)}\n`);
     process.exit(1);
   }
   
