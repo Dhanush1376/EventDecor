@@ -9,6 +9,7 @@ export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
   const [items, setItems] = useState([]);
   const [claimedCoupon, setClaimedCoupon] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState("");
   const itemsRef = useRef([]);
   useEffect(() => {
     itemsRef.current = items;
@@ -23,6 +24,8 @@ export function CartProvider({ children }) {
     total: 0,
   });
 
+  const syncTimeoutRef = useRef(null);
+
   const transformDbCart = useCallback((dbCart) => {
     if (!dbCart || !Array.isArray(dbCart)) return [];
     return dbCart
@@ -32,6 +35,10 @@ export function CartProvider({ children }) {
         _id: item.product._id || item.product.id,
         title: item.product.title,
         price: item.product.price,
+        oldPrice: item.product.oldPrice || item.product.price,
+        stock: item.product.stock || 0,
+        seller: item.product.seller || "Siri Arts Artisans",
+        rating: item.product.rating || 0,
         imageSrc: item.product.imageSrc,
         category: item.product.category,
         quantity: item.quantity,
@@ -90,6 +97,10 @@ export function CartProvider({ children }) {
             _id: itemKey,
             title: product.title,
             price: product.price,
+            oldPrice: product.oldPrice || product.price,
+            stock: product.stock || 10,
+            seller: product.seller || "Assured Craft Teams",
+            rating: product.rating || 4.5,
             imageSrc: product.imageSrc,
             category: product.category,
             quantity: qty,
@@ -131,8 +142,8 @@ export function CartProvider({ children }) {
     runProtectedAction(action);
   }, [runProtectedAction, transformDbCart]);
 
-  const updateQuantity = useCallback(async (id, variantOrQuantity, maybeQuantity) => {
-    const action = async () => {
+  const updateQuantity = useCallback((id, variantOrQuantity, maybeQuantity) => {
+    const action = () => {
       // Support both (id, quantity) and (id, variant, quantity) signatures
       const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
       const numericQuantity = Number(quantity) || 1;
@@ -148,20 +159,26 @@ export function CartProvider({ children }) {
       setItems(updatedItems);
       itemsRef.current = updatedItems;
 
-      try {
-        const payload = updatedItems.map((item) => ({
-          product: item.id || item._id,
-          quantity: item.quantity,
-        }));
-        const res = await userService.syncCart(payload);
-        const transformed = transformDbCart(res.data?.items);
-        setItems(transformed);
-        itemsRef.current = transformed;
-        setSummary(res.data?.summary);
-      } catch (err) {
-        logger.error("Failed to update cart quantity in database:", err);
-        toast.error("Failed to sync quantity update");
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
       }
+
+      syncTimeoutRef.current = setTimeout(async () => {
+        try {
+          const payload = itemsRef.current.map((item) => ({
+            product: item.id || item._id,
+            quantity: item.quantity,
+          }));
+          const res = await userService.syncCart(payload);
+          const transformed = transformDbCart(res.data?.items);
+          setItems(transformed);
+          itemsRef.current = transformed;
+          setSummary(res.data?.summary);
+        } catch (err) {
+          logger.error("Failed to update cart quantity in database:", err);
+          toast.error("Failed to sync quantity update");
+        }
+      }, 500);
     };
 
     runProtectedAction(action);
@@ -189,6 +206,11 @@ export function CartProvider({ children }) {
   );
 
   const subtotal = useMemo(() => summary.subtotal, [summary.subtotal]);
+  
+  const totalMRP = useMemo(
+    () => items.reduce((acc, item) => acc + (item.oldPrice || item.price) * item.quantity, 0),
+    [items]
+  );
 
   // O(1) lookup map derived from items array to prevent O(n) scans
   const itemsMap = useMemo(() => {
@@ -206,13 +228,15 @@ export function CartProvider({ children }) {
       items,
       cartCount,
       subtotal,
+      totalMRP,
       summary,
       isCartOpen,
       loading,
       claimedCoupon,
+      appliedCoupon,
       isInCart,
     }),
-    [items, cartCount, subtotal, summary, isCartOpen, loading, claimedCoupon, isInCart]
+    [items, cartCount, subtotal, totalMRP, summary, isCartOpen, loading, claimedCoupon, appliedCoupon, isInCart]
   );
 
   const dispatchValue = useMemo(
@@ -223,8 +247,9 @@ export function CartProvider({ children }) {
       clearCart,
       setIsCartOpen,
       setClaimedCoupon,
+      setAppliedCoupon,
     }),
-    [addItem, removeItem, updateQuantity, clearCart, setIsCartOpen, setClaimedCoupon]
+    [addItem, removeItem, updateQuantity, clearCart, setIsCartOpen, setClaimedCoupon, setAppliedCoupon]
   );
 
   return (
