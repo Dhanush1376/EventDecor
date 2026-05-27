@@ -61,6 +61,8 @@ export const validateTotalsSchema = z.object({
       )
       .min(1, 'Items array is required'),
     couponCode: z.string().trim().max(50).optional().or(z.literal('')),
+    paymentMethod: z.string().trim().optional(),
+    useWallet: z.boolean().optional(),
   }).strict(),
 });
 

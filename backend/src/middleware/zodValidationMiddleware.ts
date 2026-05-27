@@ -19,7 +19,8 @@ export const validateRequest = (schema: ZodSchema) => {
     } catch (error) {
       if (error instanceof ZodError) {
         // Extract validation errors securely without leaking internal schema structures
-        const validationErrors = (error as any).errors.reduce((acc: any, e: any) => {
+        const zodIssues = (error as any).issues || (error as any).errors || [];
+        const validationErrors = zodIssues.reduce((acc: any, e: any) => {
           acc[e.path.join('.')] = e.message;
           return acc;
         }, {});
