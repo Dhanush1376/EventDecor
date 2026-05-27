@@ -213,26 +213,28 @@ export function OrderSuccess() {
       <SEO title="Order Success | Siri Arts & Crafts" />
 
       {/* CSS Stylesheet Inject for Clean Receipt Printing */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          body * {
-            visibility: hidden;
+      <style>
+        {`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            #invoice-print-area, #invoice-print-area * {
+              visibility: visible;
+            }
+            #invoice-print-area {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              background: white;
+              color: black;
+              font-family: sans-serif;
+              display: block !important;
+            }
           }
-          #invoice-print-area, #invoice-print-area * {
-            visibility: visible;
-          }
-          #invoice-print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background: white;
-            color: black;
-            font-family: sans-serif;
-            display: block !important;
-          }
-        }
-      `}} />
+        `}
+      </style>
 
       {/* Progress Header Strip */}
       <div className="bg-surface-bright border-b border-outline-variant/40 py-4 px-4 mb-8 -mt-12 print:hidden">

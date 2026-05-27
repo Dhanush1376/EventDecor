@@ -1,40 +1,34 @@
-node_modules
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# ═══ Secrets & environment files ═══
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment Variables
 .env
 .env.*
 !.env.example
-backend/.env
-frontend/.env
-*.pem
-*.key
-*.cert
-*.p12
-*.pfx
+*.secret
+.env.backup
 
-# ═══ Build output ═══
-dist
-dist/
-build
-build/
-.vite
-
-# ═══ Logs & temp ═══
-logs
-logs/
-temp_backup_dir/
-scratch/
-
-# ═══ Deployment / hosting ═══
-.vercel
-
-# Legacy local image stash — serve from Cloudinary (see backend uploadAssetsToCloud seed)
-frontend/images/
-
-# ═══ Editor / IDE configurations ═══
-.cursor/
-.cursor
-.idea/
-.vscode/
-*.swp
-*.swo
+# Documents
+*.docx

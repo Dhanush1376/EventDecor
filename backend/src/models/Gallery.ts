@@ -55,6 +55,8 @@ GallerySchema.index({ type: 1 });
 // High-Performance Production Compound Indexes
 GallerySchema.index({ isActive: 1, category: 1, createdAt: -1 });
 GallerySchema.index({ isActive: 1, type: 1, createdAt: -1 });
+GallerySchema.index({ isActive: 1, category: 1, views: -1 }); // Recommendation candidate fetch (views sort)
+GallerySchema.index({ isActive: 1, views: -1 }); // Global popularity sort (cold-start feed)
 
 // Sitemap Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';

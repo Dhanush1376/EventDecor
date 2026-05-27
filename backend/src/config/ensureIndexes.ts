@@ -13,6 +13,10 @@ import EmailCampaign from '../models/EmailCampaign';
 import NotificationLog from '../models/NotificationLog';
 import OtpVerification from '../models/OtpVerification';
 import EmailTemplate from '../models/EmailTemplate';
+import UserInteraction from '../models/UserInteraction';
+import UserPreferenceProfile from '../models/UserPreferenceProfile';
+import TrendingSnapshot from '../models/TrendingSnapshot';
+import CustomOrder from '../models/CustomOrder';
 
 const INDEX_MODELS = [
   User,
@@ -29,6 +33,10 @@ const INDEX_MODELS = [
   NotificationLog,
   OtpVerification,
   EmailTemplate,
+  UserInteraction,
+  UserPreferenceProfile,
+  TrendingSnapshot,
+  CustomOrder,
 ];
 
 export const seedDefaultEmailTemplates = async (): Promise<void> => {

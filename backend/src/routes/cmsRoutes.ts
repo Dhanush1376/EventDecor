@@ -10,7 +10,11 @@ const router = Router();
 
 const requireAdminForSensitiveSections = (req: Request, res: Response, next: NextFunction) => {
   if (ContentService.isAdminOnlySection(req.params.key as string)) {
-    return requireAuth(req, res, () => requireAdmin(req, res, next));
+    return requireAuth(req, res, () => requireAdmin(req, res, () => {
+      const { applyNoCacheHeaders } = require('../middleware/noCacheMiddleware');
+      applyNoCacheHeaders(res);
+      next();
+    }));
   }
   next();
 };

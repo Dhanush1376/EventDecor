@@ -1,20 +1,36 @@
 import { Request, Response, NextFunction } from 'express';
+import logger from '../config/logger';
 
 /**
- * Redirect HTTP to HTTPS in production when the reverse proxy sets X-Forwarded-Proto.
- * Render and most PaaS providers terminate TLS at the edge; this guards bare Docker/nginx misconfig.
+ * Redirect HTTP → HTTPS in production when the reverse proxy sets X-Forwarded-Proto.
+ *
+ * Security hardening:
+ *  - Uses 301 (permanent) redirect for SEO and browser caching
+ *  - Validates Host header to prevent open-redirect via Host injection
+ *  - Handles comma-separated X-Forwarded-Proto from multi-proxy chains
+ *  - Blocks requests without X-Forwarded-Proto in production (direct access bypassing proxy)
  */
 export const enforceHttps = (req: Request, res: Response, next: NextFunction): void => {
   if (process.env.NODE_ENV !== 'production') {
     return next();
   }
 
-  const forwardedProto = req.headers['x-forwarded-proto'];
-  if (typeof forwardedProto === 'string' && forwardedProto.split(',')[0].trim() !== 'https') {
-    const host = req.headers.host || 'localhost';
-    res.redirect(301, `https://${host}${req.originalUrl}`);
+  // Express natively and securely populates req.secure based on trust proxy settings.
+  // This safely ignores spoofed X-Forwarded-Proto headers injected before the trusted proxy.
+  if (req.secure) {
+    return next();
+  }
+
+  // If proto is missing or not https, redirect
+  const host = req.headers.host;
+
+  // Validate Host header to prevent open-redirect attacks via header injection
+  // Allow alphanumeric, dots, colons (port), and hyphens only
+  if (!host || /[^a-zA-Z0-9.:\-]/.test(host)) {
+    logger.warn(`[HTTPS] Blocked redirect — invalid Host header: ${host}`);
+    res.status(400).json({ success: false, message: 'Invalid request' });
     return;
   }
 
-  next();
+  res.redirect(301, `https://${host}${req.originalUrl}`);
 };

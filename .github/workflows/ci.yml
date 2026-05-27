@@ -14,9 +14,21 @@ env:
   JWT_SECRET: ci_jwt_secret_must_be_at_least_32_chars_long
   JWT_EXPIRES_IN: 7d
   ADMIN_EMAIL: admin@ci.example.com
+  ADMIN_PASSWORD: ci_admin_password_placeholder_strong
   BREVO_API_KEY: ci_brevo_placeholder_key
   SMTP_FROM_EMAIL: no-reply@ci.example.com
   FIELD_ENCRYPTION_KEY: ci_field_encryption_key_must_be_at_least_32_chars_long
+  BACKEND_URL: http://localhost:5000
+  # Payment placeholders (required by envSchema.ts)
+  RAZORPAY_KEY_ID: rzp_test_ci_placeholder_key
+  RAZORPAY_KEY_SECRET: ci_razorpay_secret_placeholder
+  RAZORPAY_WEBHOOK_SECRET: ci_webhook_secret_placeholder_must_be_long_enough_32
+  # Media placeholders (required by envSchema.ts)
+  CLOUDINARY_CLOUD_NAME: ci_cloud_name
+  CLOUDINARY_API_KEY: ci_cloudinary_api_key
+  CLOUDINARY_API_SECRET: ci_cloudinary_api_secret
+  # URLs
+  FRONTEND_URLS: http://localhost:5173
   # Frontend build-time variables
   VITE_API_URL: https://api.ci.example.com/api
   VITE_SITE_URL: https://siriartsandcrafts.com
@@ -49,8 +61,9 @@ jobs:
             backend/package-lock.json
             frontend/package-lock.json
 
+      # Pin TruffleHog to a specific release tag for reproducible builds
       - name: TruffleHog Secret Scanner
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3.88.0
         with:
           path: ./
           extra_args: --debug --only-verified
@@ -59,9 +72,10 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      # Fail the build on critical/high severity vulnerabilities in production deps
       - name: Audit Backend Dependencies
         working-directory: backend
-        run: npm audit --audit-level=high --omit=dev || true
+        run: npm audit --audit-level=critical --omit=dev
 
       - name: Validate Backend Environment
         working-directory: backend
@@ -88,9 +102,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # Fail the build on critical/high severity vulnerabilities in production deps
       - name: Audit Frontend Dependencies
         working-directory: frontend
-        run: npm audit --audit-level=high --omit=dev || true
+        run: npm audit --audit-level=critical --omit=dev
 
       - name: Validate Frontend Environment
         working-directory: frontend

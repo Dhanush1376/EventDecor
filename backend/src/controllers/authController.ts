@@ -21,6 +21,7 @@ import {
   ADMIN_REFRESH_COOKIE,
   clearAdminRefreshCookie,
 } from '../utils/authCookies';
+import { regenerateCsrfToken, clearCsrfCookie } from '../middleware/csrfMiddleware';
 
 export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
@@ -80,9 +81,13 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 
   setCustomerRefreshCookie(res, result.refreshToken);
 
+  // Regenerate CSRF token post-login to prevent session fixation
+  const csrfToken = regenerateCsrfToken(res);
+
   const payload: Record<string, unknown> = {
     user: result.user,
     accessToken: result.accessToken,
+    csrfToken,
   };
 
   res.status(200).json(new ApiResponse(true, 'Authenticated successfully', payload));
@@ -133,8 +138,26 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   }
   clearCustomerRefreshCookie(res);
   clearAdminRefreshCookie(res);
+  clearCsrfCookie(res);
 
+  res.setHeader('Clear-Site-Data', '"cache", "cookies", "storage"');
   res.status(200).json(new ApiResponse(true, 'Logged out successfully'));
+});
+
+export const logoutAllDevices = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+
+  logger.info(`[AUTH] Global logout requested for user ${userId}`);
+  if (userId) {
+    await AuthService.revokeAllSessions(String(userId));
+    await invalidateUserSessionCaches(String(userId));
+  }
+  clearCustomerRefreshCookie(res);
+  clearAdminRefreshCookie(res);
+  clearCsrfCookie(res);
+
+  res.setHeader('Clear-Site-Data', '"cache", "cookies", "storage"');
+  res.status(200).json(new ApiResponse(true, 'Logged out from all devices successfully'));
 });
 
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {

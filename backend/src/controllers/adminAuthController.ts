@@ -12,6 +12,7 @@ import {
   setAdminRefreshCookie,
   clearAdminRefreshCookie,
 } from '../utils/authCookies';
+import { regenerateCsrfToken, clearCsrfCookie } from '../middleware/csrfMiddleware';
 
 const issueAdminSession = async (req: Request, res: Response, userId: string) => {
   const user = await User.findById(userId);
@@ -23,10 +24,14 @@ const issueAdminSession = async (req: Request, res: Response, userId: string) =>
   const session = await AuthService.createSession(user, userAgent);
   setAdminRefreshCookie(res, session.refreshToken);
 
+  // Regenerate CSRF token post-login to prevent session fixation
+  const csrfToken = regenerateCsrfToken(res);
+
   return res.status(200).json(
     new ApiResponse(true, 'Admin authenticated successfully', {
       user: session.user,
       accessToken: session.accessToken,
+      csrfToken,
     })
   );
 };
@@ -139,6 +144,50 @@ export const adminLogout = asyncHandler(async (req: Request, res: Response) => {
     await AuthService.revokeSession(refreshToken);
   }
   clearAdminRefreshCookie(res);
+  clearCsrfCookie(res);
 
   res.status(200).json(new ApiResponse(true, 'Admin logged out successfully'));
+});
+
+export const adminForgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) {
+    throw new ApiError(400, 'Email is required');
+  }
+
+  const token = await AuthService.generateAdminPasswordResetToken(email, req.ip || '127.0.0.1');
+
+  if (token) {
+    // Send email with the token (this is typically done via a background job, but we dispatch it here)
+    const { sendDirectEmail } = require('../services/notificationService');
+    const frontendUrl = process.env.ADMIN_FRONTEND_URL || 'http://localhost:5173/admin';
+    const resetLink = `${frontendUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+    
+    try {
+      sendDirectEmail({
+        email,
+        subject: 'Admin Password Reset Request',
+        customHtml: `<p>You requested an admin password reset.</p><p>Click <a href="${resetLink}">here</a> to reset your password. This link is valid for 15 minutes.</p><p>If you did not request this, please ignore this email.</p>`,
+        type: 'security',
+        action: 'admin_password_reset',
+      }).catch((err: any) => logger.error('[ADMIN AUTH] Password reset email failed:', err));
+    } catch (err) {
+      logger.error('Failed to trigger Admin Password Reset email:', err);
+    }
+  }
+
+  // Generic response to prevent email enumeration
+  res.status(200).json(new ApiResponse(true, 'If your email is registered as an admin, a password reset link has been sent.'));
+});
+
+export const adminResetPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { email, token, newPassword } = req.body;
+
+  if (!email || !token || !newPassword) {
+    throw new ApiError(400, 'Email, token, and new password are required');
+  }
+
+  await AuthService.resetAdminPassword(email, token, newPassword);
+
+  res.status(200).json(new ApiResponse(true, 'Password has been successfully reset. Please log in with your new password.'));
 });

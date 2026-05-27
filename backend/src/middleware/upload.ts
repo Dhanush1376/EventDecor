@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import cloudinary from "../config/cloudinary";
 import { UploadApiResponse } from "cloudinary";
 import crypto from "crypto";
+import { Transform } from "stream";
 import ApiError from "../utils/ApiError";
 import logger from "../config/logger";
 
@@ -50,106 +51,13 @@ const allowedExtensions = new Set([
   ".mov",
 ]);
 
-// Memory storage keeps file buffers in transient memory to verify signatures
-const memoryStorage = multer.memoryStorage();
-
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const ext = file.originalname.substring(file.originalname.lastIndexOf(".")).toLowerCase();
-  const isAllowedExt = allowedExtensions.has(ext);
-  const isAllowedMime = allowedMimeTypes.has(file.mimetype) || file.mimetype === "application/octet-stream"; // iOS/Safari sometimes sends HEIC/HEIF as octet-stream
-
-  if (isAllowedExt && isAllowedMime) {
-    cb(null, true);
-  } else {
-    cb(new ApiError(400, "Invalid file format. Supported formats: JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF, GIF, BMP, TIFF, ICO for images; MP4, WEBM, OGG, MOV for videos."));
-  }
-};
-
-const multerProducts = multer({
-  storage: memoryStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter,
-});
-
 /**
- * Stream multipart uploads directly to Cloudinary (no full-file RAM buffer).
- * C-04: avoids 50 MB heap spikes per concurrent gallery/video upload on small instances.
+ * Sanitize filename to prevent XSS and path traversal.
+ * Strips everything except alphanumerics, dots, dashes, and underscores.
  */
-const createCloudinaryStreamStorage = (folder: string): StorageEngine => ({
-  _handleFile(req, file, cb) {
-    const hash = crypto.createHash("sha256");
-    hash.update(file.originalname + Date.now() + crypto.randomBytes(8).toString("hex"));
-    const securePublicId = hash.digest("hex").substring(0, 16);
-    const isVideo = [".mp4", ".webm", ".mov", ".ogg"].some((ext) =>
-      file.originalname.toLowerCase().endsWith(ext)
-    );
-
-    const uploadOptions: Record<string, unknown> = {
-      folder: `siri-arts-crafts/${folder}`,
-      public_id: securePublicId,
-      resource_type: isVideo ? "video" : "image",
-    };
-
-    if (!isVideo) {
-      uploadOptions.transformation = [{ fetch_format: "auto", quality: "auto" }];
-    }
-
-    const uploadStream = cloudinary.uploader.upload_stream(
-      uploadOptions,
-      (error, result) => {
-        if (error) {
-          cb(error);
-          return;
-        }
-        if (!result) {
-          cb(new Error("Cloudinary upload result was empty"));
-          return;
-        }
-        const uploaded: PreUploadedMulterFile = {
-          fieldname: file.fieldname,
-          originalname: file.originalname,
-          encoding: file.encoding,
-          mimetype: file.mimetype,
-          destination: "",
-          filename: result.public_id,
-          path: result.secure_url || result.url,
-          size: result.bytes,
-          stream: file.stream,
-          buffer: Buffer.alloc(0),
-          secure_url: result.secure_url || result.url,
-          cloudinaryUploaded: true,
-        };
-        cb(null, uploaded);
-      }
-    );
-
-    file.stream.on("error", (streamErr) => cb(streamErr));
-    uploadStream.on("error", (streamErr) => cb(streamErr));
-    file.stream.pipe(uploadStream);
-  },
-  _removeFile(_req, _file, cb) {
-    cb(null);
-  },
-});
-
-// Gallery/video: stream to Cloudinary; 50MB cap applies to streamed bytes, not heap allocation
-const multerGallery = multer({
-  storage: createCloudinaryStreamStorage("gallery"),
-  limits: { fileSize: 50 * 1024 * 1024 },
-  fileFilter,
-});
-
-const multerCMS = multer({
-  storage: memoryStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter,
-});
-
-const multerAvatar = multer({
-  storage: memoryStorage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
-  fileFilter,
-});
+const sanitizeFilename = (filename: string): string => {
+  return filename.replace(/[^a-zA-Z0-9.\-_]/g, "").replace(/\.+/g, ".");
+};
 
 export const verifyImageSignature = (buffer: Buffer): string | null => {
   if (buffer.length < 4) return null;
@@ -224,6 +132,161 @@ export const verifyImageSignature = (buffer: Buffer): string | null => {
   }
   return null;
 };
+
+/**
+ * Intercepts the first 12 bytes of a stream to verify magic bytes before piping to Cloudinary.
+ * Prevents malware/ZIP bombs from bypassing stream storage.
+ */
+class SignatureValidationStream extends Transform {
+  private buffered = Buffer.alloc(0);
+  private checked = false;
+  private filename: string;
+
+  constructor(filename: string) {
+    super();
+    this.filename = filename;
+  }
+
+  _transform(chunk: Buffer, encoding: string, callback: Function) {
+    if (this.checked) {
+      this.push(chunk);
+      return callback();
+    }
+
+    this.buffered = Buffer.concat([this.buffered, chunk]);
+
+    // 12 bytes is enough to check all signatures (WEBP, MP4, etc.)
+    if (this.buffered.length >= 12) {
+      this.checked = true;
+      const mime = verifyImageSignature(this.buffered);
+      if (!mime) {
+        logger.warn(`[SECURITY] Blocked malicious stream upload for: ${this.filename}`);
+        return callback(new ApiError(400, "Malicious or invalid file contents detected in stream."));
+      }
+      this.push(this.buffered);
+      this.buffered = Buffer.alloc(0);
+    } else {
+      callback();
+    }
+  }
+
+  _flush(callback: Function) {
+    if (!this.checked && this.buffered.length > 0) {
+      const mime = verifyImageSignature(this.buffered);
+      if (!mime) {
+        logger.warn(`[SECURITY] Blocked malicious small stream upload for: ${this.filename}`);
+        return callback(new ApiError(400, "Malicious or invalid file contents detected in stream."));
+      }
+      this.push(this.buffered);
+    }
+    callback();
+  }
+}
+
+// Memory storage keeps file buffers in transient memory to verify signatures
+const memoryStorage = multer.memoryStorage();
+
+const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const ext = file.originalname.substring(file.originalname.lastIndexOf(".")).toLowerCase();
+  const isAllowedExt = allowedExtensions.has(ext);
+  const isAllowedMime = allowedMimeTypes.has(file.mimetype) || file.mimetype === "application/octet-stream"; // iOS/Safari sometimes sends HEIC/HEIF as octet-stream
+
+  if (isAllowedExt && isAllowedMime) {
+    cb(null, true);
+  } else {
+    cb(new ApiError(400, "Invalid file format. Supported formats: JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF, GIF, BMP, TIFF, ICO for images; MP4, WEBM, OGG, MOV for videos."));
+  }
+};
+
+const multerProducts = multer({
+  storage: memoryStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter,
+});
+
+/**
+ * Stream multipart uploads directly to Cloudinary (no full-file RAM buffer).
+ * C-04: avoids 50 MB heap spikes per concurrent gallery/video upload on small instances.
+ */
+const createCloudinaryStreamStorage = (folder: string): StorageEngine => ({
+  _handleFile(req, file, cb) {
+    const sanitizedName = sanitizeFilename(file.originalname);
+    const hash = crypto.createHash("sha256");
+    hash.update(sanitizedName + Date.now() + crypto.randomBytes(8).toString("hex"));
+    const securePublicId = hash.digest("hex").substring(0, 16);
+    const isVideo = [".mp4", ".webm", ".mov", ".ogg"].some((ext) =>
+      sanitizedName.toLowerCase().endsWith(ext)
+    );
+
+    const uploadOptions: Record<string, unknown> = {
+      folder: `siri-arts-crafts/${folder}`,
+      public_id: securePublicId,
+      resource_type: isVideo ? "video" : "image",
+    };
+
+    if (!isVideo) {
+      uploadOptions.transformation = [{ fetch_format: "auto", quality: "auto" }];
+    }
+
+    const uploadStream = cloudinary.uploader.upload_stream(
+      uploadOptions,
+      (error, result) => {
+        if (error) {
+          cb(error);
+          return;
+        }
+        if (!result) {
+          cb(new Error("Cloudinary upload result was empty"));
+          return;
+        }
+        const uploaded: PreUploadedMulterFile = {
+          fieldname: file.fieldname,
+          originalname: sanitizedName,
+          encoding: file.encoding,
+          mimetype: file.mimetype,
+          destination: "",
+          filename: result.public_id,
+          path: result.secure_url || result.url,
+          size: result.bytes,
+          stream: file.stream,
+          buffer: Buffer.alloc(0),
+          secure_url: result.secure_url || result.url,
+          cloudinaryUploaded: true,
+        };
+        cb(null, uploaded);
+      }
+    );
+
+    const signatureValidator = new SignatureValidationStream(sanitizedName);
+    file.stream.on("error", (streamErr) => cb(streamErr));
+    signatureValidator.on("error", (streamErr) => cb(streamErr));
+    uploadStream.on("error", (streamErr) => cb(streamErr));
+    
+    file.stream.pipe(signatureValidator).pipe(uploadStream);
+  },
+  _removeFile(_req, _file, cb) {
+    cb(null);
+  },
+});
+
+// Gallery/video: stream to Cloudinary; 50MB cap applies to streamed bytes, not heap allocation
+const multerGallery = multer({
+  storage: createCloudinaryStreamStorage("gallery"),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter,
+});
+
+const multerCMS = multer({
+  storage: memoryStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter,
+});
+
+const multerAvatar = multer({
+  storage: memoryStorage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+  fileFilter,
+});
 
 /**
  * Stream file buffer directly to Cloudinary
@@ -321,12 +384,14 @@ const handleCloudinaryUploadMiddleware = (folder: string, isArray: boolean) => {
 
         const uploadedFiles: any[] = [];
         for (const file of files) {
+          const sanitizedOriginalName = sanitizeFilename(file.originalname);
           const streamed = file as PreUploadedMulterFile;
+          
           if (streamed.cloudinaryUploaded && streamed.path) {
             uploadedFiles.push({
               path: streamed.path,
               secure_url: streamed.secure_url || streamed.path,
-              originalname: file.originalname,
+              originalname: sanitizedOriginalName,
               mimetype: file.mimetype,
               size: file.size,
             });
@@ -334,20 +399,20 @@ const handleCloudinaryUploadMiddleware = (folder: string, isArray: boolean) => {
           }
 
           if (!file.buffer?.length) {
-            throw new ApiError(400, `Upload failed for ${file.originalname}`);
+            throw new ApiError(400, `Upload failed for ${sanitizedOriginalName}`);
           }
 
           const detectedMime = verifyImageSignature(file.buffer);
           if (!detectedMime) {
-            throw new ApiError(400, `Malicious or invalid file contents detected in ${file.originalname}`);
+            throw new ApiError(400, `Malicious or invalid file contents detected in ${sanitizedOriginalName}`);
           }
 
-          const result = await uploadBufferWithRetry(file.buffer, folder, file.originalname);
+          const result = await uploadBufferWithRetry(file.buffer, folder, sanitizedOriginalName);
 
           uploadedFiles.push({
             path: result.secure_url || result.url,
             secure_url: result.secure_url || result.url,
-            originalname: file.originalname,
+            originalname: sanitizedOriginalName,
             mimetype: file.mimetype,
             size: file.size,
           });
@@ -360,11 +425,13 @@ const handleCloudinaryUploadMiddleware = (folder: string, isArray: boolean) => {
           return next();
         }
 
+        const sanitizedOriginalName = sanitizeFilename(file.originalname);
+
         if (file.cloudinaryUploaded && file.path) {
           (req as any).file = {
             path: file.path,
             secure_url: file.secure_url || file.path,
-            originalname: file.originalname,
+            originalname: sanitizedOriginalName,
             mimetype: file.mimetype,
             size: file.size,
           };
@@ -372,20 +439,20 @@ const handleCloudinaryUploadMiddleware = (folder: string, isArray: boolean) => {
         }
 
         if (!file.buffer?.length) {
-          throw new ApiError(400, `Upload failed for ${file.originalname}`);
+          throw new ApiError(400, `Upload failed for ${sanitizedOriginalName}`);
         }
 
         const detectedMime = verifyImageSignature(file.buffer);
         if (!detectedMime) {
-          throw new ApiError(400, `Malicious or invalid file contents detected in ${file.originalname}`);
+          throw new ApiError(400, `Malicious or invalid file contents detected in ${sanitizedOriginalName}`);
         }
 
-        const result = await uploadBufferWithRetry(file.buffer, folder, file.originalname);
+        const result = await uploadBufferWithRetry(file.buffer, folder, sanitizedOriginalName);
 
         (req as any).file = {
           path: result.secure_url || result.url,
           secure_url: result.secure_url || result.url,
-          originalname: file.originalname,
+          originalname: sanitizedOriginalName,
           mimetype: file.mimetype,
           size: file.size,
         };

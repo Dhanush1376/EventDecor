@@ -68,7 +68,8 @@ const UserPreferenceProfileSchema: Schema = new Schema(
 );
 
 // ── Indexes ──
-// UserPreferenceProfileSchema.index({ userId: 1 }, { unique: true }); // Removed duplicate index
+// userId unique index — critical for recommendation engine's findOne({ userId }) hot path
+UserPreferenceProfileSchema.index({ userId: 1 }, { unique: true });
 UserPreferenceProfileSchema.index({ lastRebuiltAt: 1 });
 UserPreferenceProfileSchema.index({ engagementScore: -1 });
 

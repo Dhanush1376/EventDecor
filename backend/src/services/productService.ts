@@ -24,11 +24,11 @@ class ProductService {
     }
     if (material) {
       const materials = String(material).split(',').map((item) => item.trim()).filter(Boolean);
-      if (materials.length > 0) filter.material = { $in: materials.map((item) => new RegExp(`^${item}$`, 'i')) };
+      if (materials.length > 0) filter.material = { $in: materials.map((item) => new RegExp(`^${escapeRegex(item)}$`, 'i')) };
     }
     if (collection) {
       const collections = String(collection).split(',').map((item) => item.trim()).filter(Boolean);
-      if (collections.length > 0) filter.category = { $in: collections.map((item) => new RegExp(`^${item}$`, 'i')) };
+      if (collections.length > 0) filter.category = { $in: collections.map((item) => new RegExp(`^${escapeRegex(item)}$`, 'i')) };
     }
 
     let correctedQuery: string | undefined;
@@ -52,7 +52,7 @@ class ProductService {
 
       // Apply category from AI if not manually set
       if (aiAnalysis.category && !category) {
-        filter.category = new RegExp(`^${aiAnalysis.category}$`, 'i');
+        filter.category = new RegExp(`^${escapeRegex(aiAnalysis.category)}$`, 'i');
       }
 
       const allSearchTerms = [

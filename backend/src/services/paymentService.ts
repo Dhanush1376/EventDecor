@@ -12,6 +12,8 @@ import { generateInvoicePDF } from '../utils/pdfGenerator';
 import { compileTemplate } from '../utils/templateEngine';
 import { getAdminEmails } from '../config/adminConfig';
 import { bumpAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
+import razorpay from '../config/razorpay';
+import PaymentAudit from '../models/PaymentAudit';
 
 export class PaymentService {
   static verifyWebhookSignature(signature: string, rawBody: Buffer, webhookSecret: string): boolean {
@@ -37,12 +39,13 @@ export class PaymentService {
     }
 
     const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!razorpayKeySecret) {
+    if (!razorpayKeySecret || !razorpay) {
       throw new ApiError(500, 'Payment verification is not configured on the server');
     }
     const shasum = crypto.createHmac('sha256', razorpayKeySecret);
     shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const digest = shasum.digest('hex');
+    const isSignatureValid = digest === razorpay_signature;
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -72,7 +75,40 @@ export class PaymentService {
         throw new ApiError(403, 'You are not authorized to verify this payment');
       }
 
-      if (digest !== razorpay_signature) {
+      // Fetch payment from Razorpay API
+      let fetchedPayment;
+      try {
+        fetchedPayment = await razorpay.payments.fetch(razorpay_payment_id);
+      } catch (err: any) {
+        logger.error(`Failed to fetch payment ${razorpay_payment_id} from Razorpay:`, err);
+        throw new ApiError(502, 'Failed to connect to payment gateway for verification');
+      }
+
+      const expectedAmount = Math.round(order.total * 100);
+      const isAmountValid = fetchedPayment.amount === expectedAmount;
+      const isCurrencyValid = fetchedPayment.currency === 'INR';
+      const isOrderValid = fetchedPayment.order_id === razorpay_order_id;
+      const isStatusValid = fetchedPayment.status === 'captured' || fetchedPayment.status === 'authorized';
+
+      const isValid = isSignatureValid && isAmountValid && isCurrencyValid && isOrderValid && isStatusValid;
+
+      // Log the verification attempt
+      await PaymentAudit.create([{
+        orderId: order._id,
+        userId: userId,
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        eventType: 'verification_attempt',
+        status: isValid ? 'success' : (!isSignatureValid ? 'failed' : 'tampered'),
+        amountExpected: expectedAmount,
+        amountReceived: Number(fetchedPayment.amount),
+        currencyReceived: String(fetchedPayment.currency),
+        signatureValid: isSignatureValid,
+        notes: `Signature: ${isSignatureValid}, Amount Match: ${isAmountValid}, Status: ${fetchedPayment.status}, Order Match: ${isOrderValid}`,
+        rawPayload: JSON.stringify(fetchedPayment)
+      }], { session });
+
+      if (!isValid) {
         for (const item of order.items) {
           await Product.findByIdAndUpdate(item.productId, {
             $inc: { stock: item.quantity }
@@ -80,11 +116,11 @@ export class PaymentService {
         }
 
         order.paymentStatus = 'failed';
-        order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Signature Mismatch) - Stock Released' });
+        order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Tampering/Mismatch) - Stock Released' });
         await order.save({ session });
         await session.commitTransaction();
         session.endSession();
-        throw new ApiError(400, 'Invalid payment signature. Payment untrusted.');
+        throw new ApiError(400, 'Invalid payment details. Payment untrusted.');
       }
 
       order.paymentStatus = 'paid';
@@ -235,9 +271,42 @@ export class PaymentService {
         return { status: 200, message: 'Skipped: Order not found or closed' };
       }
 
+      const expectedAmount = Math.round(order.total * 100);
+      const isAmountValid = paymentEntity.amount === expectedAmount;
+      const isCurrencyValid = paymentEntity.currency === 'INR';
+
+      const isValid = isAmountValid && isCurrencyValid;
+
       const session = await mongoose.startSession();
       session.startTransaction();
       try {
+        await PaymentAudit.create([{
+          orderId: order._id,
+          userId: order.user,
+          razorpayOrderId: razorpay_order_id,
+          razorpayPaymentId: razorpay_payment_id,
+          eventType: 'webhook_received',
+          status: isValid ? 'success' : 'tampered',
+          amountExpected: expectedAmount,
+          amountReceived: Number(paymentEntity.amount),
+          currencyReceived: String(paymentEntity.currency),
+          signatureValid: true, // Controller verified it
+          notes: `Amount Match: ${isAmountValid}, Currency Match: ${isCurrencyValid}, Event: ${event}`,
+          rawPayload: JSON.stringify(paymentEntity)
+        }], { session });
+
+        if (!isValid) {
+          order.paymentStatus = 'failed';
+          order.statusHistory.push({
+            status: 'Pending' as any,
+            timestamp: new Date(),
+            note: `Payment validation failed via Webhook. Amount or Currency mismatch. Expected ₹${expectedAmount/100}, Received ₹${paymentEntity.amount/100} ${paymentEntity.currency}`,
+          });
+          await order.save({ session });
+          await session.commitTransaction();
+          return { status: 200, message: 'Webhook processed but validation failed due to tampering' };
+        }
+
         order.paymentStatus = 'paid';
         order.orderStatus = 'Confirmed';
         order.razorpayPaymentId = razorpay_payment_id;
@@ -294,6 +363,11 @@ export class PaymentService {
               status: 'Pending' as any,
               timestamp: new Date(),
               note: `Razorpay Transaction Failed. Reserved stock returned.`,
+            });
+            logger.warn('[PAYMENT_FAILED] Webhook reported payment failure for order', { 
+              orderId: order._id, 
+              razorpayOrderId: razorpay_order_id,
+              userId: order.user
             });
             await order.save({ session });
             await session.commitTransaction();

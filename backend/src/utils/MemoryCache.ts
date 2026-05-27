@@ -11,10 +11,18 @@ export class MemoryCache {
   private cleanupInterval: any = null;
   private maxKeys: number;
   private defaultTtlMs: number;
+  private readonly name: string;
 
-  constructor(options: { defaultTtlMs?: number; maxKeys?: number; cleanupIntervalMs?: number } = {}) {
+  // Global entry tracking across all instances
+  private static totalEntries = 0;
+  private static instanceCount = 0;
+  private static readonly MAX_ENTRY_SIZE_BYTES = 512 * 1024; // 512KB per entry max
+
+  constructor(options: { defaultTtlMs?: number; maxKeys?: number; cleanupIntervalMs?: number; name?: string } = {}) {
     this.defaultTtlMs = options.defaultTtlMs || 5 * 60 * 1000; // default 5 minutes
     this.maxKeys = options.maxKeys || 1000;
+    this.name = options.name || `cache_${MemoryCache.instanceCount}`;
+    MemoryCache.instanceCount++;
     
     // Periodically sweep expired entries to prevent memory leaks
     const interval = options.cleanupIntervalMs || 60 * 1000; // default 1 minute
@@ -27,19 +35,34 @@ export class MemoryCache {
   }
 
   set<T>(key: string, value: T, ttlMs?: number): void {
+    // Rough entry size estimation to prevent caching very large objects
+    const estimatedSize = this.estimateSize(value);
+    if (estimatedSize > MemoryCache.MAX_ENTRY_SIZE_BYTES) {
+      logger.warn(`[MemoryCache:${this.name}] Rejected oversized entry (${Math.round(estimatedSize / 1024)}KB) for key: ${key.substring(0, 50)}`);
+      return;
+    }
+
     if (this.cache.size >= this.maxKeys) {
       // Simple LRU eviction: delete the oldest entry by key iteration
       const oldestKey = this.cache.keys().next().value;
       if (oldestKey) {
         this.cache.delete(oldestKey);
+        MemoryCache.totalEntries--;
       }
     }
 
+    const isNew = !this.cache.has(key);
     const ttl = ttlMs !== undefined ? ttlMs : this.defaultTtlMs;
     this.cache.set(key, {
       value,
       expiresAt: Date.now() + ttl,
     });
+    if (isNew) MemoryCache.totalEntries++;
+
+    // Log cache pressure when instance is at >90% capacity
+    if (this.cache.size > this.maxKeys * 0.9 && this.cache.size % 50 === 0) {
+      logger.warn(`[MemoryCache:${this.name}] Cache pressure: ${this.cache.size}/${this.maxKeys} entries (global: ${MemoryCache.totalEntries})`);
+    }
   }
 
   get<T>(key: string): T | null {
@@ -59,10 +82,13 @@ export class MemoryCache {
   }
 
   delete(key: string): boolean {
-    return this.cache.delete(key);
+    const existed = this.cache.delete(key);
+    if (existed) MemoryCache.totalEntries--;
+    return existed;
   }
 
   clear(): void {
+    MemoryCache.totalEntries -= this.cache.size;
     this.cache.clear();
   }
 
@@ -72,12 +98,35 @@ export class MemoryCache {
     for (const [key, entry] of this.cache.entries()) {
       if (now > entry.expiresAt) {
         this.cache.delete(key);
+        MemoryCache.totalEntries--;
         swept++;
       }
     }
     if (swept > 0) {
-      logger.debug(`[MemoryCache Sweep] Purged ${swept} expired items.`);
+      logger.debug(`[MemoryCache:${this.name} Sweep] Purged ${swept} expired items. (instance: ${this.cache.size}, global: ${MemoryCache.totalEntries})`);
     }
+  }
+
+  /** Rough byte-size estimation for a value. */
+  private estimateSize(value: any): number {
+    if (value === null || value === undefined) return 0;
+    if (typeof value === 'string') return value.length * 2;
+    if (typeof value === 'number' || typeof value === 'boolean') return 8;
+    try {
+      return JSON.stringify(value).length * 2;
+    } catch {
+      return MemoryCache.MAX_ENTRY_SIZE_BYTES + 1; // Reject non-serializable
+    }
+  }
+
+  /** Get total entries across all MemoryCache instances. */
+  static getTotalEntries(): number {
+    return MemoryCache.totalEntries;
+  }
+
+  /** Get instance entry count. */
+  get size(): number {
+    return this.cache.size;
   }
 
   // Thread-safe wrapper to get or fetch from fallback

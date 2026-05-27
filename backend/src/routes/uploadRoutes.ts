@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
+import { uploadLimiter, signedUrlLimiter } from '../middleware/rateLimiter';
 import { uploadProducts, uploadGallery, uploadCMS } from '../middleware/upload';
 import cloudinary from '../config/cloudinary';
 import ApiResponse from '../utils/ApiResponse';
@@ -20,6 +21,7 @@ const ALLOWED_UPLOAD_FOLDERS = new Set([
  */
 router.get(
   '/signed-url',
+  signedUrlLimiter,
   requireAuth,
   requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
@@ -62,30 +64,30 @@ router.get(
 );
 
 // C-02: Multipart routes use multer (not express.json) — safe for large video uploads up to multer limits
-router.post('/inspirations', requireAuth, ...uploadGallery.array('images', 5), (req, res) => {
+router.post('/inspirations', uploadLimiter, requireAuth, ...uploadGallery.array('images', 5), (req, res) => {
   const files = req.files as Express.Multer.File[];
   const imageUrls = files.map((file: any) => file.path);
   res.status(200).json({ success: true, images: imageUrls });
 });
 
-router.post('/products', requireAuth, requireAdmin, ...uploadProducts.array('images', 10), (req, res) => {
+router.post('/products', uploadLimiter, requireAuth, requireAdmin, ...uploadProducts.array('images', 10), (req, res) => {
   const files = req.files as Express.Multer.File[];
   const imageUrls = files.map((file: any) => file.path);
   res.status(200).json({ success: true, images: imageUrls });
 });
 
-router.post('/gallery', requireAuth, requireAdmin, ...uploadGallery.array('images', 10), (req, res) => {
+router.post('/gallery', uploadLimiter, requireAuth, requireAdmin, ...uploadGallery.array('images', 10), (req, res) => {
   const files = req.files as Express.Multer.File[];
   const imageUrls = files.map((file: any) => file.path);
   res.status(200).json({ success: true, images: imageUrls });
 });
 
-router.post('/cms', requireAuth, requireAdmin, ...uploadCMS.single('image'), (req, res) => {
+router.post('/cms', uploadLimiter, requireAuth, requireAdmin, ...uploadCMS.single('image'), (req, res) => {
   const file = req.file as any;
   res.status(200).json({ success: true, url: file.path });
 });
 
-router.post('/', requireAuth, requireAdmin, ...uploadProducts.array('images', 5), (req, res) => {
+router.post('/', uploadLimiter, requireAuth, requireAdmin, ...uploadProducts.array('images', 5), (req, res) => {
   const files = req.files as Express.Multer.File[];
   const imageUrls = files.map((file: any) => file.path);
   res.status(200).json({ success: true, images: imageUrls });

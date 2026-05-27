@@ -53,6 +53,8 @@ ReviewSchema.index({ customer: 1 });
 
 // High-Performance Production Compound Index for Category Showcase Feed Sorts
 ReviewSchema.index({ category: 1, status: 1, createdAt: -1 });
+// Product review page compound index (prevents full scan + in-memory sort)
+ReviewSchema.index({ product: 1, status: 1, rating: -1, createdAt: -1 });
 
 const Review = mongoose.model<IReview>('Review', ReviewSchema);
 export default Review;

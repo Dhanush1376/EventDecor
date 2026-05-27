@@ -75,6 +75,8 @@ export async function scoreItemsForUser(
       timestamp: { $gte: cutoff },
     })
       .select('targetId targetType eventType metadata.dwellTimeMs timestamp')
+      .limit(500) // Cap to prevent memory spikes on power users
+      .maxTimeMS(3000)
       .lean();
 
     // Group interactions by targetId and accumulate scores
@@ -140,6 +142,8 @@ export async function scoreItemsForSession(
       timestamp: { $gte: cutoff },
     })
       .select('targetId targetType eventType metadata.dwellTimeMs timestamp')
+      .limit(500) // Cap to prevent memory spikes
+      .maxTimeMS(3000)
       .lean();
 
     const scoreMap = new Map<string, ScoredItem>();

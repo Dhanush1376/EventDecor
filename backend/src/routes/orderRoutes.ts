@@ -3,15 +3,15 @@ import rateLimit from 'express-rate-limit';
 import { createOrder, verifyPayment, getMyOrders, getAllOrders, updateOrderStatus, validateTotals, getOrderById, getOrderPublicTrack, updateOrderPublicStatus, sendCodOtp, verifyCodOtp, updateOrderNotes } from '../controllers/orderController';
 import { requireAuth, requireAdmin, optionalAuth, publicTrackingAuth } from '../middleware/authMiddleware';
 import {
-  createOrderValidator,
-  updateStatusValidator,
-  verifyPaymentValidator,
-  validateTotalsValidator,
-  codOtpEmailValidator,
-  codOtpVerifyValidator,
-  orderNotesValidator,
-} from '../validators/orderValidator';
-import { validate } from '../middleware/validateMiddleware';
+  createOrderSchema,
+  updateStatusSchema,
+  verifyPaymentSchema,
+  validateTotalsSchema,
+  codOtpEmailBodySchema,
+  codOtpVerifySchema,
+  orderNotesSchema,
+} from '../validators/orderSchema';
+import { validateRequest } from '../middleware/zodValidationMiddleware';
 
 const router = Router();
 
@@ -25,22 +25,22 @@ const trackingLimiter = rateLimit({
 
 // Public Logistics Tracking Scan Routes (token required)
 router.get('/:id/public-track', trackingLimiter, getOrderPublicTrack);
-router.patch('/:id/public-status', optionalAuth, publicTrackingAuth, ...updateStatusValidator, validate, updateOrderPublicStatus);
+router.patch('/:id/public-status', optionalAuth, publicTrackingAuth, validateRequest(updateStatusSchema), updateOrderPublicStatus);
 
 
 
-router.post('/', requireAuth, ...createOrderValidator, validate, createOrder);
-router.post('/verify-payment', requireAuth, ...verifyPaymentValidator, validate, verifyPayment);
-router.post('/validate-totals', requireAuth, ...validateTotalsValidator, validate, validateTotals);
+router.post('/', requireAuth, validateRequest(createOrderSchema), createOrder);
+router.post('/verify-payment', requireAuth, validateRequest(verifyPaymentSchema), verifyPayment);
+router.post('/validate-totals', requireAuth, validateRequest(validateTotalsSchema), validateTotals);
 router.get('/my-orders', requireAuth, getMyOrders);
 
-router.post('/send-cod-otp', requireAuth, ...codOtpEmailValidator, validate, sendCodOtp);
-router.post('/verify-cod-otp', requireAuth, ...codOtpVerifyValidator, validate, verifyCodOtp);
+router.post('/send-cod-otp', requireAuth, validateRequest(codOtpEmailBodySchema), sendCodOtp);
+router.post('/verify-cod-otp', requireAuth, validateRequest(codOtpVerifySchema), verifyCodOtp);
 
 // Admin Routes
 router.get('/', requireAuth, requireAdmin, getAllOrders);
-router.patch('/:id/status', requireAuth, requireAdmin, ...updateStatusValidator, validate, updateOrderStatus);
-router.patch('/:id/notes', requireAuth, requireAdmin, ...orderNotesValidator, validate, updateOrderNotes);
+router.patch('/:id/status', requireAuth, requireAdmin, validateRequest(updateStatusSchema), updateOrderStatus);
+router.patch('/:id/notes', requireAuth, requireAdmin, validateRequest(orderNotesSchema), updateOrderNotes);
 
 router.get('/:id', requireAuth, getOrderById);
 

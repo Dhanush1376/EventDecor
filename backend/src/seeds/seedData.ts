@@ -303,7 +303,7 @@ const seed = async () => {
 
     // 1. Create Admin Users
     const defaultPassword = process.env.ADMIN_PASSWORD || 'SuperAdminPassword123!';
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(defaultPassword, salt);
 
     const adminsToSeed: Array<{

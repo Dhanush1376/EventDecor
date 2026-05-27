@@ -3,6 +3,7 @@ import Event from '../../models/Event';
 import Gallery from '../../models/Gallery';
 import UserInteraction from '../../models/UserInteraction';
 import { RecommendationCache } from './recommendationCache';
+import { escapeRegex } from '../../services/searchService';
 import logger from '../../config/logger';
 
 export interface SimilarItem {
@@ -80,7 +81,7 @@ export async function findSimilarProducts(
     const candidates = await Product.find({
       _id: { $ne: productId },
       isActive: true,
-      category: { $in: relatedCategories.map((c) => new RegExp(c, 'i')) },
+      category: { $in: relatedCategories.map((c) => new RegExp(escapeRegex(c), 'i')) },
     })
       .select('_id category tags price material badges')
       .limit(100)
@@ -295,7 +296,7 @@ export async function getComplementaryItems(
     const items = await Product.find({
       _id: { $nin: excludeIds },
       isActive: true,
-      category: { $in: complementary.map((c) => new RegExp(c, 'i')) },
+      category: { $in: complementary.map((c) => new RegExp(escapeRegex(c), 'i')) },
     })
       .select('_id category')
       .sort({ rating: -1, reviews: -1 })

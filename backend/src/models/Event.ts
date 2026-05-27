@@ -60,6 +60,9 @@ EventSchema.index({ style: 1 });
 // Compound Indexes for public queries
 EventSchema.index({ isActive: 1, category: 1 });
 EventSchema.index({ isActive: 1, style: 1 });
+EventSchema.index({ isActive: 1, category: 1, createdAt: -1 }); // Recommendation candidate fetch
+EventSchema.index({ isActive: 1, category: 1, basePrice: -1 }); // Search price sort
+EventSchema.index({ isActive: 1, createdAt: -1 }); // Global listing sort
 
 // Sitemap Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';

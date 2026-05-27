@@ -2,6 +2,16 @@ import logger from './logger';
 
 /**
  * Safe LocalStorage and SessionStorage wrappers.
+ *
+ * SECURITY NOTICE:
+ * Do not use these wrappers to store sensitive credentials (e.g., JWT access tokens, 
+ * refresh tokens, or passwords). LocalStorage and SessionStorage are accessible via 
+ * JavaScript and can be compromised by Cross-Site Scripting (XSS) attacks. 
+ * Sensitive tokens should always be stored in HttpOnly, Secure cookies managed 
+ * by the backend.
+ * 
+ * These wrappers are strictly for UI state, non-sensitive preferences, and caching.
+ *
  * Prevents application crashes in private browsing mode (Incognito)
  * or when cookies/third-party storage are blocked by browser settings.
  */

@@ -25,7 +25,20 @@ const sensitiveKeys = [
   /authorization/i,
   /signature/i,
   /otp/i,
-  /twoFactor/i
+  /twoFactor/i,
+  /creditCard/i,
+  /cvv/i,
+  /ssn/i,
+  /apiKey/i,
+  /cardnumber/i,
+];
+
+const secretStringPatterns = [
+  /mongodb(?:\+srv)?:\/\/[^\s]+/i, // MongoDB URI
+  /rzp_(?:live|test)_[a-zA-Z0-9]+/i, // Razorpay Keys
+  /sk_(?:live|test)_[a-zA-Z0-9]+/i, // Stripe / Generic Secret Keys
+  /eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/, // JWT
+  /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})/ // Basic CC (Visa, MC, Amex, Disc)
 ];
 
 const maskValue = (value: any): any => {
@@ -36,10 +49,24 @@ const maskValue = (value: any): any => {
   return value;
 };
 
+const maskStringPatterns = (str: string): string => {
+  if (!str || typeof str !== 'string') return str;
+  if (process.env.LOG_REDACTION === 'false') return str;
+  let masked = str;
+  for (const pattern of secretStringPatterns) {
+    masked = masked.replace(pattern, '[REDACTED_SECRET]');
+  }
+  return masked;
+};
+
 const standardKeys = new Set(['level', 'message', 'timestamp', 'service', 'requestId', 'userId', 'ip', 'stack']);
 
 const maskObject = (obj: any): any => {
   if (obj === null || obj === undefined) return obj;
+  
+  if (typeof obj === 'string') {
+    return maskStringPatterns(obj);
+  }
   
   if (Array.isArray(obj)) {
     return obj.map(maskObject);

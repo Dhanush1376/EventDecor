@@ -51,7 +51,7 @@ export const addAdmin = asyncHandler(async (req: Request, res: Response) => {
   if (existingUser) {
     if (['user', 'customer'].includes(existingUser.role)) {
       // Upgrade existing customer to admin
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(12);
       existingUser.passwordHash = await bcrypt.hash(password, salt);
       existingUser.role = role;
       existingUser.passwordChangedAt = new Date();
@@ -62,7 +62,7 @@ export const addAdmin = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, 'User with this email already exists and is an admin');
   }
 
-  const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(12);
   const passwordHash = await bcrypt.hash(password, salt);
 
   const newAdmin = await User.create({

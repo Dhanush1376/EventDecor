@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import validateEnv from './env';
+import { validateEnv } from './envSchema';
 
 // 1. Immediately parse environment variables
 dotenv.config();

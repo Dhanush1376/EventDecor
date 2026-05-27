@@ -53,6 +53,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=10000
+      # Intentionally unencrypted (redis:// instead of rediss://) for internal Docker network traffic
       - REDIS_URL=redis://redis:6379
       - AI_SERVICE_URL=http://ai-service:8000
     env_file:

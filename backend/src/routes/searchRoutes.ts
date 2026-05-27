@@ -5,19 +5,9 @@ import {
   trendingSearches,
   relatedSearches,
 } from '../controllers/searchController';
-import rateLimit from 'express-rate-limit';
+import { searchLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
-
-// Rate limiting for search: 60 requests/minute per IP
-const searchLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 60,
-  message: { success: false, message: 'Too many search requests. Please slow down.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === 'development',
-});
 
 // Autocomplete — fast, lightweight
 router.get('/autocomplete', searchLimiter, autocomplete);
@@ -26,9 +16,9 @@ router.get('/autocomplete', searchLimiter, autocomplete);
 router.get('/results', searchLimiter, searchResults);
 
 // Trending search terms
-router.get('/trending', trendingSearches);
+router.get('/trending', searchLimiter, trendingSearches);
 
 // Related/similar search suggestions
-router.get('/related', relatedSearches);
+router.get('/related', searchLimiter, relatedSearches);
 
 export default router;

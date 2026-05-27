@@ -7,6 +7,7 @@ services:
     plan: standard
     autoDeploy: true
     healthCheckPath: /api/readiness
+    maxShutdownDelaySeconds: 10
     envVars:
       - key: NODE_ENV
         value: production
@@ -79,6 +80,14 @@ services:
         value: "true"
       - key: ENABLE_CRON
         value: "true"
+      - key: BACKEND_URL
+        fromConfig: true
+      - key: SECRET_ROTATION_REMINDER
+        fromConfig: true
+      - key: LOG_REDACTION
+        value: "true"
+      - key: OTP_EXPIRY_MINUTES
+        value: 5
 
   # Staging — validate changes before production (separate MongoDB + Redis recommended in Render config)
   - type: web
@@ -87,6 +96,7 @@ services:
     plan: standard
     autoDeploy: true
     healthCheckPath: /api/readiness
+    maxShutdownDelaySeconds: 10
     envVars:
       - key: NODE_ENV
         value: staging
@@ -132,3 +142,33 @@ services:
         value: "true"
       - key: ENABLE_CRON
         value: "true"
+      - key: BACKEND_URL
+        fromConfig: true
+      - key: SECRET_ROTATION_REMINDER
+        fromConfig: true
+      - key: LOG_REDACTION
+        value: "true"
+      - key: OTP_EXPIRY_MINUTES
+        value: 5
+      - key: RAZORPAY_KEY_ID
+        fromConfig: true
+      - key: RAZORPAY_KEY_SECRET
+        fromConfig: true
+      - key: RAZORPAY_WEBHOOK_SECRET
+        fromConfig: true
+      - key: SMTP_USER
+        fromConfig: true
+      - key: SMTP_PASS
+        fromConfig: true
+      - key: BREVO_API_KEY
+        fromConfig: true
+      - key: SMTP_FROM_EMAIL
+        fromConfig: true
+      - key: ADMIN_EMAIL
+        fromConfig: true
+      - key: ADMIN_PASSWORD
+        fromConfig: true
+      - key: SUPER_ADMIN_EMAIL
+        fromConfig: true
+      - key: ADMIN_PHONE
+        fromConfig: true

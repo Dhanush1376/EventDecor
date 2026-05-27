@@ -21,9 +21,10 @@ export default defineConfig({
   build: {
     target: 'es2015',
     minify: true,
-    sourcemap: 'hidden',
+    sourcemap: process.env.NODE_ENV === 'production' ? false : 'inline',
     cssCodeSplit: true,
     chunkSizeWarningLimit: 300,
+    reportCompressedSize: true,
     rollupOptions: {
       output: {
         manualChunks(id) {

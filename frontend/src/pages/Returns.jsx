@@ -7,6 +7,7 @@ import {
 } from "../components/layout/PolicySidebar";
 import { SEO } from "../components/seo/SEO";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import { createSafeHtml } from "../utils/sanitize";
 
 export function Returns() {
   const { policies } = useWebsiteContent();
@@ -63,7 +64,7 @@ export function Returns() {
                   </h3>
                   <div 
                     className="text-[15px] text-on-surface/80 leading-[1.8] font-light space-y-4"
-                    dangerouslySetInnerHTML={{ __html: section.content }}
+                    dangerouslySetInnerHTML={createSafeHtml(section.content)}
                   />
                 </section>
               ))}

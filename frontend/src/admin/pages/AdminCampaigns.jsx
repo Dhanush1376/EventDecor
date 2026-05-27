@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { notificationService } from "../../services/domainServices";
 import toast from "react-hot-toast";
 import { AdminToggle } from "../components/AdminUIKit";
+import { createSafeHtml } from "../../utils/sanitize";
 
 import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
@@ -621,7 +622,7 @@ export function AdminCampaigns() {
                     </div>
                     <div 
                       className="border border-black/5 rounded-xl overflow-y-auto max-h-[350px] bg-white shadow-inner"
-                      dangerouslySetInnerHTML={{ __html: previewHtml }}
+                      dangerouslySetInnerHTML={createSafeHtml(previewHtml)}
                     />
                   </div>
                 ) : (

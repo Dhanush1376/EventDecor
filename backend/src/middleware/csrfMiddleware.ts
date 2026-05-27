@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { isOriginAllowed } from '../config/corsConfig';
+import { getCsrfCookieOptions, getCsrfCookieName } from '../config/cookieConfig';
 
-export const CSRF_COOKIE_NAME = 'siri_csrf';
+export const CSRF_COOKIE_NAME = getCsrfCookieName();
 export const CSRF_HEADER_NAME = 'x-csrf-token';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -14,26 +15,27 @@ const CSRF_EXEMPT_PATHS = new Set([
 
 /** Auth routes that must work on cold load before CSRF cookie is established. */
 const CSRF_EXEMPT_SUFFIXES = [
-  '/auth/send-otp',
-  '/auth/verify-otp',
   '/auth/refresh',
-  '/auth/logout',
-  '/admin/auth/login',
-  '/admin/auth/logout',
-  '/admin/auth/verify-2fa',
 ];
 
 const generateToken = (): string => crypto.randomBytes(32).toString('hex');
 
 const setCsrfCookie = (res: Response, token: string): void => {
-  const isProd = process.env.NODE_ENV === 'production';
-  res.cookie(CSRF_COOKIE_NAME, token, {
-    httpOnly: false,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    path: '/',
-    maxAge: 24 * 60 * 60 * 1000,
-  });
+  res.cookie(CSRF_COOKIE_NAME, token, getCsrfCookieOptions());
+};
+
+export const clearCsrfCookie = (res: Response): void => {
+  res.clearCookie(CSRF_COOKIE_NAME, getCsrfCookieOptions());
+};
+
+/**
+ * Regenerate the CSRF token (call after login to prevent session fixation).
+ * Returns the new token so the auth response can include it.
+ */
+export const regenerateCsrfToken = (res: Response): string => {
+  const token = generateToken();
+  setCsrfCookie(res, token);
+  return token;
 };
 
 /** Issue or refresh CSRF cookie; expose token for SPA clients. */
@@ -62,17 +64,7 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   const cookieToken = String(req.cookies?.[CSRF_COOKIE_NAME] || '');
   const headerToken = String(req.headers[CSRF_HEADER_NAME] || '');
 
-  // Origin-based CSRF mitigation fallback:
-  // If third-party cookies (SameSite=None) are blocked by the browser, cookieToken will be empty.
-  // In this case, we securely validate the request using the browser-enforced Origin header.
-  const origin = req.headers.origin;
-  const isTrustedOrigin = origin ? isOriginAllowed(origin) : false;
-
   if (!cookieToken || !headerToken || cookieToken.length !== headerToken.length) {
-    if (isTrustedOrigin) {
-      // Browser blocked the cookie but Origin is explicitly trusted and verified.
-      return next();
-    }
     res.status(403).json({
       success: false,
       message: 'Invalid or missing CSRF token',
@@ -83,9 +75,6 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   const cookieBuf = Buffer.from(cookieToken);
   const headerBuf = Buffer.from(headerToken);
   if (!crypto.timingSafeEqual(cookieBuf, headerBuf)) {
-    if (isTrustedOrigin) {
-      return next();
-    }
     res.status(403).json({
       success: false,
       message: 'Invalid or missing CSRF token',

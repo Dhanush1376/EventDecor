@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import { attachApiVersion, ApiVersionTag } from '../middleware/apiVersion';
+import { noCacheMiddleware } from '../middleware/noCacheMiddleware';
 import productRoutes from './productRoutes';
 import uploadRoutes from './uploadRoutes';
 import authRoutes from './authRoutes';
@@ -41,26 +42,26 @@ export const registerApiRoutes = (
 
   apiRouter.use('/products', productRoutes);
   apiRouter.use('/upload', uploadRoutes);
-  apiRouter.use('/auth', authRoutes);
+  apiRouter.use('/auth', noCacheMiddleware, authRoutes);
   apiRouter.use('/events', eventRoutes);
-  apiRouter.use('/orders', orderRoutes);
+  apiRouter.use('/orders', noCacheMiddleware, orderRoutes);
   apiRouter.use('/cms', cmsRoutes);
-  apiRouter.use('/analytics', analyticsRoutes);
+  apiRouter.use('/analytics', noCacheMiddleware, analyticsRoutes);
   apiRouter.use('/gallery', galleryRoutes);
   apiRouter.use('/reviews', reviewRoutes);
   apiRouter.use('/coupons', couponRoutes);
-  apiRouter.use('/users', userRoutes);
+  apiRouter.use('/users', noCacheMiddleware, userRoutes);
   apiRouter.use('/inquiries', inquiryRoutes);
   apiRouter.use('/notifications', notificationRoutes);
   apiRouter.use('/custom-orders', customOrderRoutes);
   apiRouter.use('/loyalty', loyaltyRoutes);
   apiRouter.use('/event-bookings', eventBookingRoutes);
   apiRouter.use('/showcases', showcaseRoutes);
-  apiRouter.use('/admin', adminSystemRoutes);
-  apiRouter.use('/admin/invites', adminInviteRoutes);
+  apiRouter.use('/admin', noCacheMiddleware, adminSystemRoutes);
+  apiRouter.use('/admin/invites', noCacheMiddleware, adminInviteRoutes);
   apiRouter.use('/recommendations', recommendationRoutes);
   apiRouter.use('/tracking', trackingRoutes);
-  apiRouter.use('/analytics/recommendations', recommendationAnalyticsRoutes);
+  apiRouter.use('/analytics/recommendations', noCacheMiddleware, recommendationAnalyticsRoutes);
   
   // Dynamic Configuration & Architecture Routes
   apiRouter.use('/config', appConfigRoutes);

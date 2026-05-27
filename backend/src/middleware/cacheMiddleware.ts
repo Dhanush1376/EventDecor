@@ -16,7 +16,8 @@ export const cacheResponse = (durationSeconds: number) => {
 
       // Never allow shared/CDN caching of authenticated responses (S-03)
       if (isAuthRequest) {
-        res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
+        const { applyNoCacheHeaders } = require('./noCacheMiddleware');
+        applyNoCacheHeaders(res);
       } else {
         res.setHeader('Cache-Control', `public, max-age=${durationSeconds}, must-revalidate`);
       }

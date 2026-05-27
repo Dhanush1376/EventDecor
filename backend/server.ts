@@ -1,4 +1,8 @@
 import './src/config/loadEnv'; // Load & validate environment variables before any other imports resolve!
+import { auditEnvOnStartup } from './src/config/secretAudit';
+auditEnvOnStartup();
+import { runStartupValidation } from './src/config/startupValidator';
+runStartupValidation();
 import app from './src/app';
 import connectDB from './src/config/db';
 import { ensureIndexes } from './src/config/ensureIndexes';
@@ -133,6 +137,11 @@ const startServer = async () => {
         process.send('ready');
       }
     });
+
+    // 5b. Prevent Slowloris and resource exhaustion attacks
+    // Ensure timeout is slightly higher than the load balancer's timeout (Render has 100s default, but 65s is safe for internal)
+    server.keepAliveTimeout = 65000; // 65 seconds
+    server.headersTimeout = 66000; // 66 seconds
 
     // 6. Initialize Socket.io (which binds to server)
     initSocket(server);

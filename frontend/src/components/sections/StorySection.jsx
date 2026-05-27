@@ -8,6 +8,7 @@ import { MandalaArtDecor } from "../ui/MandalaArtDecor";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { CloudinaryImage } from "../ui/CloudinaryImage";
 import { StorySkeleton } from "../ui/Skeleton";
+import { createSafeHtml } from "../../utils/sanitize";
 
 export function StorySection() {
   const containerRef = useRef(null);
@@ -134,9 +135,7 @@ export function StorySection() {
 
               <h2
                 className="font-headline text-[26px] sm:text-[38px] md:text-[65px] text-on-surface mb-5 md:mb-7 leading-[1.1] md:leading-[1.05] tracking-tight"
-                dangerouslySetInnerHTML={{
-                  __html: storyTeaser.title.replace(/\n/g, "<br/>"),
-                }}
+                dangerouslySetInnerHTML={createSafeHtml(storyTeaser.title.replace(/\n/g, "<br/>"))}
               ></h2>
 
               <div className="space-y-6">

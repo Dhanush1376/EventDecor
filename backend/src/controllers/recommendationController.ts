@@ -12,6 +12,12 @@ import { RecommendationCache } from '../services/recommendation/recommendationCa
 import Product from '../models/Product';
 import Event from '../models/Event';
 import logger from '../config/logger';
+import { escapeRegex } from '../services/searchService';
+import { sanitizeOutputStrings } from '../utils/aiSanitizer';
+import mongoose from 'mongoose';
+
+// Whitelist of valid target types for parameter validation
+const VALID_TARGET_TYPES = new Set(['product', 'event', 'gallery', 'showcase']);
 
 /**
  * GET /recommendations/feed — Personalized homepage feed.
@@ -53,10 +59,19 @@ export const getFeed = async (req: Request, res: Response) => {
     const today = new Date().toISOString().split('T')[0];
     await RecommendationCache.incrementCTR('feed', today, 'impressions');
 
+    // Sanitize output strings to prevent XSS through recommendation content
+    const sanitizedItems = sanitizeOutputStrings(result.items);
+
+    // Security headers for personalized content
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    if (userId) {
+      res.setHeader('Cache-Control', 'private, no-store');
+    }
+
     return res.status(200).json({
       success: true,
       data: {
-        items: result.items,
+        items: sanitizedItems,
         source: result.source,
         seasonal: result.seasonal,
         pagination: {
@@ -84,13 +99,22 @@ export const getSimilar = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'targetType and targetId required' });
     }
 
+    // Validate parameters against whitelists
+    if (!VALID_TARGET_TYPES.has(targetType)) {
+      return res.status(400).json({ success: false, message: 'Invalid targetType' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(targetId)) {
+      return res.status(400).json({ success: false, message: 'Invalid targetId format' });
+    }
+
     const items = await getSimilarRecommendations(targetType as any, targetId as any, { limit });
 
     await RecommendationCache.incrementCTR('similar', new Date().toISOString().split('T')[0], 'impressions');
 
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     return res.status(200).json({
       success: true,
-      data: { items, targetType, targetId },
+      data: { items: sanitizeOutputStrings(items), targetType, targetId },
     });
   } catch (err: any) {
     logger.error(`[RECO API] Error in getSimilar: ${err.message}`);
@@ -179,8 +203,8 @@ export const getSeasonal = async (req: Request, res: Response) => {
     const seasonalProducts = await Product.find({
       isActive: true,
       $or: [
-        { category: { $in: boostedCategories.map((c) => new RegExp(c, 'i')) } },
-        { tags: { $in: boostedCategories.map((c) => new RegExp(c, 'i')) } },
+        { category: { $in: boostedCategories.map((c) => new RegExp(escapeRegex(c), 'i')) } },
+        { tags: { $in: boostedCategories.map((c) => new RegExp(escapeRegex(c), 'i')) } },
       ],
     })
       .select('_id title imageSrc category price rating reviews tags slug')

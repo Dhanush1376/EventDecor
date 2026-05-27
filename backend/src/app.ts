@@ -1,17 +1,16 @@
 import express, { Application, Request, Response } from 'express';
 import os from 'os';
 import mongoose from 'mongoose';
-import cors from 'cors';
-import helmet from 'helmet';
+import { corsMiddleware, corsHandler } from './middleware/corsMiddleware';
+import { securityHeadersMiddleware } from './middleware/helmetMiddleware';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 const xss = require('xss-clean');
 import { handleRazorpayWebhook } from './controllers/orderController';
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
-import rateLimit from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
 import redisClient, { pingRedis } from './utils/redis';
+import { globalLimiter, apiFloodingLimiter } from './middleware/rateLimiter';
 import errorMiddleware from './middleware/errorMiddleware';
 import { registerApiRoutes } from './routes/registerApiRoutes';
 import { checkCloudinaryCdn, getCachedCdnHealth } from './utils/cdnHealth';
@@ -27,6 +26,11 @@ import { dbReadinessGuard } from './middleware/dbReadinessGuard';
 import { requireAuth, requireAdmin } from './middleware/authMiddleware';
 import { getMetricsReport, metricsTrackerMiddleware } from './utils/metricsTracker';
 import { getIO } from './socket';
+import { enforceHttps } from './middleware/enforceHttps';
+import { queryGuard } from './middleware/queryGuard';
+import { secretLeakInterceptor } from './config/secretAudit';
+import { noCacheMiddleware } from './middleware/noCacheMiddleware';
+import { requestTimeout } from './middleware/queryTimeout';
 
 
 // Use require for the inner xss-clean function
@@ -37,28 +41,13 @@ const app: Application = express();
 // Disable x-powered-by to prevent tech stack signature disclosure
 app.disable('x-powered-by');
 
-// Trust proxy hops — must match your deployment (see docs/DEPLOYMENT.md).
-// Render / Vercel: 1. Cloudflare → Render: 2. Override with TRUST_PROXY_HOPS.
-const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS ?? 1);
-if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 5) {
-  logger.error('[STARTUP] TRUST_PROXY_HOPS must be an integer between 0 and 5');
-  process.exit(1);
-}
-app.set('trust proxy', trustProxyHops);
-logger.info(`[STARTUP] Express trust proxy hops: ${trustProxyHops}`);
+// Trust proxy hops — enforced to 1 for Render.
+// If moving to Cloudflare + Render, this should be updated to 2.
+app.set('trust proxy', 1);
+logger.info(`[STARTUP] Express trust proxy hops: 1`);
 
-// Production: redirect when TLS is not terminated (bare Docker / misconfigured proxy)
-app.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'production' && req.headers["x-forwarded-proto"] !== "https") {
-    return res.redirect(`https://${req.headers.host}${req.url}`);
-  }
-  next();
-});
-if (process.env.NODE_ENV !== 'production') {
-  logger.info(
-    `[STARTUP] TRUST_PROXY_HOPS=${trustProxyHops} — must match proxy chain (Render=1, Cloudflare+Render=2). See docs/DEPLOYMENT.md`
-  );
-}
+// Production: redirect HTTP → HTTPS with host validation (prevents open-redirect via header injection)
+app.use(enforceHttps);
 
 // Boot Request Tracker AsyncLocalStorage context as early as possible
 app.use(requestTrackerMiddleware);
@@ -74,76 +63,12 @@ if (process.env.SENTRY_DSN) {
 }
 
 // 1. Security Middlewares
-// Generate a nonce for CSP
-app.use((req, res, next) => {
-  res.locals.nonce = crypto.randomBytes(16).toString('base64');
-  next();
-});
-
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS)],
-      scriptSrc: ["'self'", (req, res) => `'nonce-${(res as any).locals.nonce}'`, "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS), "https://checkout.razorpay.com", "https://*.razorpay.com", "https://www.googletagmanager.com"],
-      styleSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS), "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "blob:", "https:"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-      connectSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS), "https://api.razorpay.com", "https://lux.razorpay.com", ...(process.env.SENTRY_DSN ? ["https://*.sentry.io"] : [])],
-      frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
-      manifestSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS)],
-      objectSrc: ["'none'"],
-      baseUri: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS)],
-      frameAncestors: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS)],
-    },
-  },
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
-  // Razorpay checkout iframe + Cloudinary assets break under require-corp
-  crossOriginEmbedderPolicy: false,
-  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
-}));
-
-// Permissions-Policy: restrict sensitive browser APIs
-app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(self), interest-cohort=()');
-  next();
-});
+app.use(securityHeadersMiddleware);
+app.use(secretLeakInterceptor);
 
 // 2. CORS Configuration
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || isOriginAllowed(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Not allowed by CORS: ${origin}`));
-      }
-    },
-    credentials: true,
-  })
-);
-
-app.use((req, res, next) => {
-  // Payment provider webhooks have no browser Origin header
-  if (req.path === '/api/orders/webhook') {
-    return next();
-  }
-
-  const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
-  if (!mutatingMethod || process.env.NODE_ENV === 'development') {
-    return next();
-  }
-
-  const origin = req.headers.origin;
-  if (origin && isOriginAllowed(origin)) {
-    return next();
-  }
-
-  return res.status(403).json({
-    success: false,
-    message: 'Request origin is not allowed by server policy.',
-  });
-});
+app.options(/.*/, corsHandler); // Pre-flight global handler
+app.use(corsMiddleware);
 
 
 // ─── Razorpay Webhook (MUST be registered BEFORE body parsing middleware) ───
@@ -179,8 +104,9 @@ app.post(
 );
 
 // 3. Request Parsing (MUST be before sanitization)
-app.use(express.json({ limit: '100kb' }));
-app.use(express.urlencoded({ extended: true, limit: '100kb' }));
+// 50kb is sufficient for typical JSON payloads; Razorpay webhook uses its own raw parser above.
+app.use(express.json({ limit: '50kb' }));
+app.use(express.urlencoded({ extended: true, limit: '50kb', parameterLimit: 50 }));
 app.use(cookieParser());
 
 // CSRF double-submit cookie (required for cookie-credentialed mutating requests)
@@ -194,6 +120,7 @@ app.use(requestLogger);
 
 // 4. Sanitization & Performance
 app.use(compression());
+app.use(queryGuard); // Guard against complex NoSQL injection vectors (depth, raw $ operators in query)
 // Express 5 makes req.query a getter, so we cannot reassign it directly.
 // We apply sanitization in-place or handle it without reassignment.
 app.use((req, res, next) => {
@@ -225,8 +152,7 @@ app.use((req, res, next) => {
 });
 
 // Welcome / health-check redirect at root level
-app.get('/', (req: Request, res: Response) => {
-  res.setHeader('Cache-Control', 'no-store');
+app.get('/', noCacheMiddleware, (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'Welcome to Siri Arts & Crafts API Gateway. Systems are fully functional.',
@@ -251,129 +177,19 @@ app.get('/sitemap.xml', async (req: Request, res: Response) => {
   }
 });
 
-// Rate Limiting
-const rateLimitConfig = (options: any) => {
-  const memoryLimiter = rateLimit(options);
-  let redisLimiter: any = null;
+// Apply per-request timeout guard (30s default — excludes webhooks/uploads automatically)
+app.use(requestTimeout(30000));
 
-  return (req: Request, res: Response, next: any) => {
-    if (redisClient && redisClient.isReady) {
-      if (!redisLimiter) {
-        redisLimiter = rateLimit({
-          ...options,
-          store: new RedisStore({
-            // @ts-ignore
-            sendCommand: (...args: string[]) => redisClient!.sendCommand(args),
-          }),
-        });
-      }
-      return redisLimiter(req, res, next);
-    }
-    
-    // STRICT PRODUCTION ENFORCEMENT: Avoid cluster mode memory leak footgun
-    if (process.env.NODE_ENV === 'production' && process.env.REQUIRE_REDIS === 'true') {
-      logger.error('CRITICAL: Redis is disconnected but required for production rate-limiting! Failing request to prevent isolated memory store leaks in PM2 cluster mode.');
-      return res.status(503).json({ success: false, message: 'Service temporarily unavailable due to caching backend failure.' });
-    }
-
-    return memoryLimiter(req, res, next);
-  };
-};
-
-const skipRateLimit = (req: Request) => {
-  if (process.env.NODE_ENV === 'development') {
-    const ip = req.ip || req.socket.remoteAddress || '';
-    if (ip.includes('127.0.0.1') || ip.includes('::1') || ip === 'localhost') {
-      return true;
-    }
-  }
-
-  const path = (req.originalUrl || req.url || '').split('?')[0];
-  return (
-    path === '/api/health' ||
-    path === '/api/readiness' ||
-    path === '/api/version' ||
-    path === '/favicon.ico' ||
-    path === '/'
-  );
-};
-
-const globalLimiter = rateLimitConfig({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // Limit each IP to 200 requests per windowMs
-  message: { message: 'Too many requests from this IP, please try again after 15 minutes' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: skipRateLimit,
-});
-
-const authLimiter = rateLimitConfig({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Strict limit for auth routes (login/register/otp)
-  message: { message: 'Too many login attempts, please try again after 15 minutes' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: skipRateLimit,
-});
-
-const otpSendLimiter = rateLimitConfig({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 5, // Limit each IP to 5 OTP requests per 10 minutes
-  message: { message: 'Too many OTP requests from this IP. Please try again after 10 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: skipRateLimit,
-});
-
-const otpVerifyLimiter = rateLimitConfig({
-  windowMs: 10 * 60 * 1000,
-  max: 15,
-  message: { message: 'Too many OTP verification attempts from this IP. Please try again after 10 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: skipRateLimit,
-});
-
-const testRateLimitEnabled = process.env.TEST_RATE_LIMIT === 'true';
-
-if (process.env.NODE_ENV === 'production' || testRateLimitEnabled) {
-  if (testRateLimitEnabled) {
-    const testLimiter = rateLimitConfig({
-      windowMs: 60 * 1000,
-      max: 3,
-      message: 'Too many requests (TEST_RATE_LIMIT)',
-      standardHeaders: true,
-      legacyHeaders: false,
-    });
-    app.use('/api/', testLimiter);
-    app.use('/api/v1/', testLimiter);
-  } else {
-    app.use('/api/', globalLimiter);
-    app.use('/api/auth/send-otp', otpSendLimiter);
-    app.use('/api/v1/auth/send-otp', otpSendLimiter);
-    app.use('/api/auth/verify-otp', otpVerifyLimiter);
-    app.use('/api/v1/auth/verify-otp', otpVerifyLimiter);
-    app.use('/api/auth', authLimiter);
-    app.use('/api/v1/auth', authLimiter);
-  }
-} else {
-  const devLimiter = rateLimitConfig({
-    windowMs: 15 * 60 * 1000,
-    max: 1000,
-    standardHeaders: true,
-    legacyHeaders: false,
-    skip: skipRateLimit,
-  });
-  app.use('/api/', devLimiter);
-}
+// Apply global rate limiting and API flooding protection
+app.use('/api/', apiFloodingLimiter);
+app.use('/api/', globalLimiter);
 
 
 // 5. Caching & Performance telemetry already loaded above
 
 
 // 6. Health Check — lite by default (no CDN probe); ?full=1 runs delivery probe for dashboards
-app.get('/api/health', async (req: Request, res: Response) => {
-  res.setHeader('Cache-Control', 'no-store');
+app.get('/api/health', noCacheMiddleware, async (req: Request, res: Response) => {
 
   const dbState = mongoose.connection.readyState;
   const dbStatus = dbState === 1 ? 'UP' : 'DOWN';
@@ -430,22 +246,19 @@ app.get('/api/health', async (req: Request, res: Response) => {
 });
 
 // Readiness Probe (Tracks HTTP readiness, not DB readiness to prevent Render crash loops)
-app.get('/api/readiness', (req: Request, res: Response) => {
-  res.setHeader('Cache-Control', 'no-store');
+app.get('/api/readiness', noCacheMiddleware, (req: Request, res: Response) => {
   // Return 200 immediately if HTTP server is reachable.
   // DB degradation should be handled via circuit breakers and bufferCommands: false, NOT pod restarts.
   res.status(200).json({ ready: true, timestamp: new Date().toISOString() });
 });
 
 // Version endpoint — minimal public payload (no environment disclosure)
-app.get('/api/version', (req: Request, res: Response) => {
-  res.setHeader('Cache-Control', 'no-store');
+app.get('/api/version', noCacheMiddleware, (req: Request, res: Response) => {
   res.json({ version: process.env.npm_package_version || '1.0.0' });
 });
 
 // Telemetry & Metrics endpoint - protected, admin-only
-app.get('/api/metrics', requireAuth, requireAdmin, async (req: Request, res: Response) => {
-  res.setHeader('Cache-Control', 'no-store');
+app.get('/api/metrics', requireAuth, requireAdmin, noCacheMiddleware, async (req: Request, res: Response) => {
 
   const dbState = mongoose.connection.readyState;
   const dbStatus = dbState === 1 ? 'UP' : 'DOWN';

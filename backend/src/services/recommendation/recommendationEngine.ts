@@ -10,7 +10,14 @@ import { findSimilarProducts, findSimilarEvents, getUsersAlsoViewed, getCompleme
 import { getColdStartFeed, ColdStartRecommendation } from './coldStartHandler';
 import { RecommendationCache } from './recommendationCache';
 import { explorationEngine } from './explorationEngine';
+import { escapeRegex } from '../../services/searchService';
 import logger from '../../config/logger';
+
+// ── Circuit Breaker State ──
+let consecutiveFailures = 0;
+let circuitOpenUntil = 0;
+const CIRCUIT_FAILURE_THRESHOLD = 3;
+const CIRCUIT_COOLDOWN_MS = 60_000; // 60 seconds
 
 // ── Scoring Weights ──
 const WEIGHTS = {
@@ -63,10 +70,22 @@ export async function getPersonalizedRecommendations(
   const offset = ctx.offset || 0;
 
   try {
+    // Circuit breaker: if too many consecutive failures, short-circuit to cold start
+    if (Date.now() < circuitOpenUntil) {
+      logger.warn('[RECO ENGINE] Circuit breaker OPEN — serving cold-start fallback');
+      let coldItems = await getColdStartFeed({ limit: limit + 15, targetType: ctx.targetType });
+      if (ctx.page === 'homepage') {
+        coldItems = coldItems.filter(item => item.targetType !== 'gallery');
+      }
+      const enriched = await enrichItems(coldItems.slice(0, limit));
+      return { items: enriched, source: 'circuit-breaker-fallback', seasonal: null };
+    }
+
     // Check if user has a profile (not cold start)
     let userProfile = null;
     if (ctx.userId) {
       userProfile = await UserPreferenceProfile.findOne({ userId: ctx.userId })
+        .maxTimeMS(3000)
         .lean();
     }
 
@@ -103,7 +122,7 @@ export async function getPersonalizedRecommendations(
 
     // Fan out to sub-engines — scoring limit matches candidate count
     const scoringLimit = Math.max(candidateIds.length, 80);
-    const [behavioralScores, trendingFeeds] = await Promise.all([
+    const results = await Promise.allSettled([
       ctx.userId
         ? scoreItemsForUser(ctx.userId, candidateIds, { limit: scoringLimit })
         : ctx.sessionId
@@ -111,6 +130,17 @@ export async function getPersonalizedRecommendations(
         : Promise.resolve([] as ScoredItem[]),
       getTrendingFeeds(),
     ]);
+
+    // Extract results with graceful fallback for rejected promises
+    const behavioralScores = results[0].status === 'fulfilled' ? results[0].value : ([] as ScoredItem[]);
+    const trendingFeeds = results[1].status === 'fulfilled' ? results[1].value : { trendingNow: [], mostBooked: [], popularThisSeason: [], topRated: [], luxuryTrending: [] };
+
+    if (results[0].status === 'rejected') {
+      logger.warn(`[RECO ENGINE] Behavioral scoring failed (non-fatal): ${(results[0] as PromiseRejectedResult).reason?.message}`);
+    }
+    if (results[1].status === 'rejected') {
+      logger.warn(`[RECO ENGINE] Trending feeds failed (non-fatal): ${(results[1] as PromiseRejectedResult).reason?.message}`);
+    }
 
     // Build score map
     const behavioralMap = new Map(behavioralScores.map((s) => [s.targetId, s.score]));
@@ -210,6 +240,7 @@ export async function getPersonalizedRecommendations(
           .select('targetId')
           .sort({ timestamp: -1 })
           .limit(80)
+          .maxTimeMS(3000)
           .lean()
       : [];
     const interactedIds = new Set<string>(
@@ -251,12 +282,22 @@ export async function getPersonalizedRecommendations(
     // Paginate the balanced result
     const paginated = balancedItems.slice(0, limit);
 
+    // Reset circuit breaker on success
+    consecutiveFailures = 0;
+
     return {
       items: paginated.map(({ rawScore, ...rest }) => rest),
       source: isColdStart ? 'cold-start-hybrid' : 'personalized',
       seasonal,
     };
   } catch (err: any) {
+    // Increment circuit breaker counter
+    consecutiveFailures++;
+    if (consecutiveFailures >= CIRCUIT_FAILURE_THRESHOLD) {
+      circuitOpenUntil = Date.now() + CIRCUIT_COOLDOWN_MS;
+      logger.error(`[RECO ENGINE] Circuit breaker OPENED after ${consecutiveFailures} consecutive failures`);
+    }
+
     logger.error(`[RECO ENGINE] Error generating recommendations: ${err.message}`);
     // Graceful fallback
     let coldItems = await getColdStartFeed({ limit: limit + 15, targetType: ctx.targetType });
@@ -273,6 +314,7 @@ export async function getPersonalizedRecommendations(
  */
 async function getCandidateItems(ctx: RecommendationContext, userProfile: any): Promise<any[]> {
   const limit = 60; // Fetch extra candidates for scoring
+  const MAX_CANDIDATES = 80; // Hard cap to prevent memory/CPU spikes
   const candidates: any[] = [];
 
   try {
@@ -281,6 +323,7 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
         .select('_id title image category style basePrice features colorPalette createdAt')
         .sort({ createdAt: -1 })
         .limit(limit)
+        .maxTimeMS(3000)
         .lean();
       events.forEach((e) => ((e as any).__targetType = 'event'));
       candidates.push(...events);
@@ -289,6 +332,7 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
         .select('_id title image category style tags views likes createdAt')
         .sort({ createdAt: -1 })
         .limit(limit)
+        .maxTimeMS(3000)
         .lean();
       galleries.forEach((g) => ((g as any).__targetType = 'gallery'));
       candidates.push(...galleries);
@@ -326,7 +370,7 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
       const topCatProducts = await Product.find({
         isActive: true,
         _id: { $nin: candidates.map((c) => c._id) },
-        category: { $in: userProfile.topCategories.map((c: string) => new RegExp(c, 'i')) },
+        category: { $in: userProfile.topCategories.map((c: string) => new RegExp(escapeRegex(c), 'i')) },
       })
         .select('_id title imageSrc category price rating reviews tags slug createdAt')
         .limit(15)
@@ -339,7 +383,7 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
     logger.error(`[RECO ENGINE] Error fetching candidates: ${err.message}`);
   }
 
-  return candidates;
+  return candidates.slice(0, MAX_CANDIDATES);
 }
 
 /**

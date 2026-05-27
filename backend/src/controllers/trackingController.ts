@@ -5,6 +5,8 @@ import { recommendationQueue, isQueuesReady } from '../jobs/queues';
 import logger from '../config/logger';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
+import { getTrackingCookieOptions } from '../config/cookieConfig';
+import { sanitizeTrackingMetadata, stripHtmlTags } from '../utils/aiSanitizer';
 
 const VALID_EVENT_TYPES = new Set([
   'product_view',
@@ -49,17 +51,15 @@ export const trackEvent = async (req: Request, res: Response) => {
 
     // Set session cookie if not present
     if (!req.cookies?.reco_session) {
-      res.cookie('reco_session', sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 30 * 60 * 1000, // 30 minutes
-      });
+      res.cookie('reco_session', sessionId, getTrackingCookieOptions());
     }
 
     if (!isValidInteractionPayload(eventType, targetType, targetId)) {
       return res.status(400).json({ success: false, message: 'Invalid tracking event payload' });
     }
+
+    // Sanitize metadata to prevent stored XSS and invalid data
+    const sanitizedMetadata = sanitizeTrackingMetadata(metadata);
 
     // Fire-and-forget insert for performance
     UserInteraction.create({
@@ -68,16 +68,7 @@ export const trackEvent = async (req: Request, res: Response) => {
       eventType,
       targetType,
       targetId: new mongoose.Types.ObjectId(targetId),
-      metadata: {
-        category: metadata?.category,
-        style: metadata?.style,
-        tags: metadata?.tags,
-        priceRange: metadata?.priceRange,
-        searchQuery: metadata?.searchQuery,
-        dwellTimeMs: metadata?.dwellTimeMs,
-        scrollDepth: metadata?.scrollDepth,
-        source: metadata?.source,
-      },
+      metadata: sanitizedMetadata,
       timestamp: new Date(),
     }).catch((err) => {
       logger.error(`[TRACKING] Failed to store interaction: ${err.message}`);
@@ -129,26 +120,30 @@ export const trackBatchEvents = async (req: Request, res: Response) => {
     const userId = (req as any).user?.id || (req as any).user?._id || null;
     const sessionId = req.cookies?.reco_session || req.body.sessionId || crypto.randomUUID();
 
-    const docs = cappedEvents
+    // Deduplicate within batch: same (eventType+targetId+targetType) = keep first
+    const seenKeys = new Set<string>();
+    const dedupedEvents = cappedEvents.filter((e: any) => {
+      if (!e.eventType || !e.targetType || !e.targetId) return false;
+      const key = `${e.eventType}:${e.targetType}:${e.targetId}`;
+      if (seenKeys.has(key)) return false;
+      seenKeys.add(key);
+      return true;
+    });
+
+    const docs = dedupedEvents
       .filter((e: any) => e.eventType && e.targetType && e.targetId && isValidInteractionPayload(e.eventType, e.targetType, e.targetId))
-      .map((e: any) => ({
-        userId: userId ? new mongoose.Types.ObjectId(userId) : undefined,
-        sessionId,
-        eventType: e.eventType,
-        targetType: e.targetType,
-        targetId: new mongoose.Types.ObjectId(e.targetId),
-        metadata: {
-          category: e.metadata?.category,
-          style: e.metadata?.style,
-          tags: e.metadata?.tags,
-          priceRange: e.metadata?.priceRange,
-          searchQuery: e.metadata?.searchQuery,
-          dwellTimeMs: e.metadata?.dwellTimeMs,
-          scrollDepth: e.metadata?.scrollDepth,
-          source: e.metadata?.source,
-        },
-        timestamp: new Date(),
-      }));
+      .map((e: any) => {
+        const sanitizedMeta = sanitizeTrackingMetadata(e.metadata);
+        return {
+          userId: userId ? new mongoose.Types.ObjectId(userId) : undefined,
+          sessionId,
+          eventType: e.eventType,
+          targetType: e.targetType,
+          targetId: new mongoose.Types.ObjectId(e.targetId),
+          metadata: sanitizedMeta,
+          timestamp: new Date(),
+        };
+      });
 
     if (docs.length > 0) {
       UserInteraction.insertMany(docs, { ordered: false }).catch((err) => {
@@ -176,12 +171,7 @@ export const initSession = async (req: Request, res: Response) => {
 
     const sessionId = crypto.randomUUID();
 
-    res.cookie('reco_session', sessionId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 60 * 1000,
-    });
+    res.cookie('reco_session', sessionId, getTrackingCookieOptions());
 
     return res.status(200).json({ success: true, sessionId });
   } catch (err: any) {

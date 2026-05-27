@@ -6,6 +6,7 @@ import { getCachedSeasonalContext, computeSeasonalBoost } from './recommendation
 import { MemoryCache } from '../utils/MemoryCache';
 import logger from '../config/logger';
 import redisClient from '../utils/redis';
+import { sanitizePromptInput, validateAIResponse, htmlEscapeString } from '../utils/aiSanitizer';
 
 // ── In-memory caches ──
 const autocompleteCache = new MemoryCache({ defaultTtlMs: 5 * 60 * 1000, maxKeys: 500 });
@@ -295,17 +296,28 @@ export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResul
   const cached = await getSearchCache<AIAnalysisResult>('full', cacheKey);
   if (cached) return cached;
 
+  // Sanitize input before AI processing
+  const { sanitized: safeQuery, threatScore, blocked } = sanitizePromptInput(normalizedQuery);
+
+  // If input is blocked (high threat score), skip AI entirely
+  if (blocked || threatScore >= 5) {
+    logger.warn(`[SEARCH AI] Skipping AI analysis due to threat score ${threatScore} for query`);
+    const local = analyzeQueryLocally(safeQuery);
+    return local;
+  }
+
   if (!process.env.GROQ_API_KEY) {
-    const local = analyzeQueryLocally(query);
+    const local = analyzeQueryLocally(safeQuery);
     return local;
   }
 
   try {
+    // Use sanitized input in prompt — never embed raw user input
     const prompt = `
     You are an advanced search query analyzer and NLP engine for "Siri Arts & Crafts" (an Indian wedding, festival, and event decoration platform).
     Analyze the following user search query and output a structured JSON response.
 
-    Query: "${query}"
+    Query: "${safeQuery}"
 
     Guidelines:
     1. DETECT LANGUAGE: Identify the language (english, telugu, hinglish, mixed).
@@ -365,19 +377,23 @@ export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResul
     const data: any = await response.json();
     const text = data.choices?.[0]?.message?.content;
     if (text) {
-      const parsed = JSON.parse(text.trim()) as AIAnalysisResult;
-      parsed.colors = parsed.colors || [];
-      parsed.tags = parsed.tags || [];
-      parsed.expandedTerms = parsed.expandedTerms || [];
-      
-      await setSearchCache('full', cacheKey, parsed, 24 * 60 * 60 * 1000);
-      return parsed;
+      const rawParsed = JSON.parse(text.trim());
+
+      // Validate AI response against expected schema (prevents arbitrary JSON injection)
+      const validated = validateAIResponse(rawParsed);
+      if (!validated) {
+        logger.warn('[SEARCH AI] AI response failed schema validation, falling back to local parser');
+        throw new Error('AI response schema validation failed');
+      }
+
+      await setSearchCache('full', cacheKey, validated, 24 * 60 * 60 * 1000);
+      return validated;
     }
   } catch (err: any) {
     logger.warn(`[SEARCH AI] AI query parsing failed: ${err.message}. Falling back to local parser.`);
   }
 
-  const localResult = analyzeQueryLocally(query);
+  const localResult = analyzeQueryLocally(safeQuery);
   await setSearchCache('full', cacheKey, localResult, 60 * 60 * 1000);
   return localResult;
 }
@@ -574,7 +590,7 @@ export async function searchAll(
     // Stage 1: Analyze query semantic intent using AI / Local Fallback
     const aiAnalysis = await analyzeQueryWithAI(normalizedQuery);
     
-    // Stage 2: Merge terms and build regex patterns
+    // Stage 2: Merge terms and build regex patterns (capped at 15 to prevent regex explosion / ReDoS)
     const terms = [
       normalizedQuery,
       aiAnalysis.correctedQuery,
@@ -582,7 +598,7 @@ export async function searchAll(
       ...getTransliterationsAndSynonyms(normalizedQuery),
       ...generateFuzzyVariants(normalizedQuery)
     ];
-    const uniqueTerms = [...new Set(terms.filter(t => t.length > 1))];
+    const uniqueTerms = [...new Set(terms.filter(t => t.length > 1))].slice(0, 15);
     const regexPatterns = uniqueTerms.map((term) => new RegExp(escapeRegex(term), 'i'));
 
     const seasonal = await getCachedSeasonalContext();
@@ -639,6 +655,8 @@ export async function searchAll(
       promises.push(
         Product.find(productFilter)
           .select('_id title teluguTitle imageSrc category price rating reviews tags slug material description')
+          .limit(100)
+          .maxTimeMS(5000)
           .lean()
           .then((products) => {
             for (const p of products) {
@@ -686,6 +704,8 @@ export async function searchAll(
       promises.push(
         Event.find(eventFilter)
           .select('_id title category style basePrice features image description')
+          .limit(100)
+          .maxTimeMS(5000)
           .lean()
           .then((events) => {
             for (const e of events) {
@@ -724,6 +744,8 @@ export async function searchAll(
       promises.push(
         Gallery.find(galleryFilter)
           .select('_id title teluguTitle image category style tags views likes')
+          .limit(100)
+          .maxTimeMS(5000)
           .lean()
           .then((galleries) => {
             for (const g of galleries) {
@@ -957,14 +979,15 @@ export function getTransliterationsAndSynonyms(query: string): string[] {
     }
   }
 
-  return Array.from(expanded);
+  // Cap total expanded terms to prevent unbounded regex growth
+  return Array.from(expanded).slice(0, 30);
 }
 
 /**
  * Generate keyboard character mutation patterns to catch typos.
  */
 export function generateFuzzyVariants(query: string): string[] {
-  if (query.length < 3) return [];
+  if (query.length < 3 || query.length > 50) return []; // Skip for very short or very long inputs
 
   const variants = new Set<string>();
 
@@ -983,7 +1006,7 @@ export function generateFuzzyVariants(query: string): string[] {
     n: ['b', 'm'], m: ['n'],
   };
 
-  for (let i = 0; i < query.length && variants.size < 10; i++) {
+  for (let i = 0; i < query.length && variants.size < 6; i++) {
     const char = query[i].toLowerCase();
     const adjacents = keyboardMap[char];
     if (adjacents) {
@@ -993,7 +1016,7 @@ export function generateFuzzyVariants(query: string): string[] {
     }
   }
 
-  return Array.from(variants).slice(0, 10);
+  return Array.from(variants).slice(0, 6);
 }
 
 /**
@@ -1092,6 +1115,8 @@ function getMatchSource(
  * Simple Levenshtein distance for fuzzy queries.
  */
 function levenshteinDistance(a: string, b: string): number {
+  // Skip computation for very long strings to prevent event loop blocking
+  if (a.length > 50 || b.length > 50) return Math.abs(a.length - b.length);
   const m = a.length;
   const n = b.length;
   const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));

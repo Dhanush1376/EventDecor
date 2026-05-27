@@ -16,8 +16,12 @@ export const autocomplete = async (req: Request, res: Response) => {
     const query = (req.query.q as string) || '';
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 8, 12);
 
-    // Sanitize query to prevent XSS or injection in search logs
-    const sanitizedQuery = query.replace(/[<>]/g, '').trim();
+    // Security: strip null bytes, control chars, HTML tags, and cap length
+    const sanitizedQuery = query
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Control chars
+      .replace(/[<>]/g, '')                                 // HTML angle brackets
+      .trim()
+      .substring(0, 200);                                   // Hard length cap
 
     if (sanitizedQuery.length < 2) {
       return res.status(200).json({
@@ -31,6 +35,7 @@ export const autocomplete = async (req: Request, res: Response) => {
     const latencyMs = Math.round(performance.now() - start);
 
     res.setHeader('X-Search-Time', `${latencyMs}ms`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     return res.status(200).json({
       success: true,
       data: result,
@@ -59,8 +64,12 @@ export const searchResults = async (req: Request, res: Response) => {
     const priceMin = req.query.priceMin ? parseFloat(req.query.priceMin as string) : undefined;
     const priceMax = req.query.priceMax ? parseFloat(req.query.priceMax as string) : undefined;
 
-    // Sanitize query
-    const sanitizedQuery = query.replace(/[<>]/g, '').trim();
+    // Security: strip null bytes, control chars, HTML tags, and cap length
+    const sanitizedQuery = query
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      .replace(/[<>]/g, '')
+      .trim()
+      .substring(0, 200);
 
     if (sanitizedQuery.length < 1) {
       return res.status(200).json({
@@ -69,11 +78,19 @@ export const searchResults = async (req: Request, res: Response) => {
       });
     }
 
+    // Validate sort parameter against whitelist
+    const VALID_SORTS = new Set(['price_asc', 'price_desc', 'rating', 'relevance', '']);
+    const safeSort = VALID_SORTS.has(sort || '') ? sort : undefined;
+
+    // Validate type parameter against whitelist
+    const VALID_TYPES = new Set(['all', 'product', 'event', 'gallery', '']);
+    const safeType = VALID_TYPES.has(type || '') ? type : undefined;
+
     const start = performance.now();
     const result = await searchAll(sanitizedQuery, {
-      category,
-      type,
-      sort,
+      category: category?.substring(0, 50),
+      type: safeType,
+      sort: safeSort,
       page,
       limit,
       priceMin,
@@ -82,6 +99,7 @@ export const searchResults = async (req: Request, res: Response) => {
     const latencyMs = Math.round(performance.now() - start);
 
     res.setHeader('X-Search-Time', `${latencyMs}ms`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     return res.status(200).json({
       success: true,
       data: result,

@@ -29,7 +29,6 @@ declare global {
   }
 }
 
-// Validate JWT_SECRET exists at module load time — fail fast in ALL environments
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   logger.error('FATAL: JWT_SECRET environment variable is not set. Authentication will fail.');
@@ -37,6 +36,19 @@ if (!JWT_SECRET) {
     process.exit(1);
   }
 }
+const jwtSecrets = JWT_SECRET ? JWT_SECRET.split(',').map(s => s.trim()) : [];
+
+const verifyTokenWithRotation = (token: string): JwtPayload => {
+  let lastError: any = null;
+  for (const secret of jwtSecrets) {
+    try {
+      return jwt.verify(token, secret) as JwtPayload;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new Error('Invalid token');
+};
 
 /**
  * DRY helper: Log admin audit trail for mutating requests.
@@ -45,7 +57,7 @@ const logAdminAudit = (req: Request, res: Response) => {
   const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
   if (mutatingMethod) {
     res.once('finish', () => {
-      AdminAuditLog.create({
+      const auditPayload = {
         actorId: req.user?.id,
         actorEmail: req.user?.email,
         actorRole: req.user?.role,
@@ -54,7 +66,11 @@ const logAdminAudit = (req: Request, res: Response) => {
         statusCode: res.statusCode,
         ip: req.ip,
         userAgent: req.get('user-agent'),
-      }).catch((err) => logger.error('Failed to persist admin audit log', err));
+      };
+      
+      logger.info('[ADMIN_ACTION] Admin operation completed', auditPayload);
+
+      AdminAuditLog.create(auditPayload).catch((err) => logger.error('Failed to persist admin audit log', err));
     });
   }
 };
@@ -96,13 +112,12 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     throw new ApiError(401, 'Not authorized to access this route');
   }
 
-  const secret = JWT_SECRET;
-  if (!secret) {
+  if (jwtSecrets.length === 0) {
     throw new ApiError(500, 'Server authentication configuration error');
   }
 
   try {
-    const decoded = jwt.verify(token, secret) as JwtPayload;
+    const decoded = verifyTokenWithRotation(token);
     
     // Check Redis Session Cache first to avoid MongoDB lookup on every request
     const cacheKey = sessionKeys.profile(decoded.id);
@@ -164,11 +179,10 @@ export const optionalAuth = asyncHandler(async (req: Request, res: Response, nex
   }
   if (!token) return next();
 
-  const secret = JWT_SECRET;
-  if (!secret) return next();
+  if (jwtSecrets.length === 0) return next();
 
   try {
-    const decoded = jwt.verify(token, secret) as JwtPayload;
+    const decoded = verifyTokenWithRotation(token);
     const user = await User.findById(decoded.id).select('role email isVerified passwordChangedAt');
     if (user && user.isVerified) {
       if (!(user.passwordChangedAt && decoded.iat != null && decoded.iat < Math.floor(user.passwordChangedAt.getTime() / 1000))) {
@@ -212,9 +226,8 @@ export const publicTrackingAuth = asyncHandler(async (req: Request, res: Respons
   }
   // 3. Validate using JWT logistics token
   else if (logisticsToken) {
-    const secret = process.env.JWT_SECRET || '';
     try {
-      const decoded = jwt.verify(logisticsToken, secret) as any;
+      const decoded = verifyTokenWithRotation(logisticsToken) as any;
       if (decoded && decoded.orderId === orderId && decoded.purpose === 'logistics') {
         isAuthorized = true;
         isLogisticsToken = true;

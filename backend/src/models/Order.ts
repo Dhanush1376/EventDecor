@@ -178,7 +178,9 @@ OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, orderStatus: 1, createdAt: 1 });
 OrderSchema.index({ user: 1, orderStatus: 1 });
 OrderSchema.index({ user: 1, paymentStatus: 1, createdAt: -1 });
-OrderSchema.index({ razorpayPaymentId: 1 }, { sparse: true });
+OrderSchema.index({ razorpayPaymentId: 1 }, { unique: true, sparse: true });
+// Compound index for Razorpay webhook payment verification (hot path — prevents full collection scan)
+OrderSchema.index({ razorpayOrderId: 1, paymentStatus: 1 });
 
 const Order = mongoose.model<IOrder>('Order', OrderSchema);
 export default Order;

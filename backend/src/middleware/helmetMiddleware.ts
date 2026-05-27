@@ -1,0 +1,127 @@
+import helmet from 'helmet';
+import crypto from 'crypto';
+import { Request, Response, NextFunction } from 'express';
+import { ALLOWED_VERCEL_PREVIEWS } from '../config/corsConfig';
+
+/**
+ * Enterprise-grade HTTP Security Headers Middleware
+ * - Generates cryptographically secure nonces for inline scripts
+ * - Enforces rigorous Content Security Policy (CSP)
+ * - Configures strict HSTS (Production only)
+ * - Restricts browser capabilities via Permissions-Policy
+ */
+
+// 1. Nonce Generation Middleware
+const generateNonce = (req: Request, res: Response, next: NextFunction) => {
+  res.locals.nonce = crypto.randomBytes(16).toString('base64');
+  next();
+};
+
+// 2. Helmet Configuration
+const helmetConfig = helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'", "https://siriartsandcrafts.com", "https://*.siriartsandcrafts.com", ...Array.from(ALLOWED_VERCEL_PREVIEWS)],
+      scriptSrc: [
+        "'self'", 
+        (req, res) => `'nonce-${(res as any).locals.nonce}'`, 
+        "https://siriartsandcrafts.com", 
+        "https://*.siriartsandcrafts.com", 
+        ...Array.from(ALLOWED_VERCEL_PREVIEWS), 
+        "https://checkout.razorpay.com", 
+        "https://*.razorpay.com", 
+        "https://www.googletagmanager.com"
+      ],
+      styleSrc: [
+        "'self'", 
+        "'unsafe-inline'", // Often required by frontend frameworks and fonts; ideally restricted if possible
+        "https://siriartsandcrafts.com", 
+        "https://*.siriartsandcrafts.com", 
+        ...Array.from(ALLOWED_VERCEL_PREVIEWS), 
+        "https://fonts.googleapis.com"
+      ],
+      imgSrc: [
+        "'self'", 
+        "data:", 
+        "blob:", 
+        "https://res.cloudinary.com", // Allow Cloudinary images
+        "https:" // Broaden slightly if you fetch images from multiple sources securely, but cloudinary is explicitly whitelisted
+      ],
+      mediaSrc: [
+        "'self'",
+        "https://res.cloudinary.com" // Allow Cloudinary videos/audio
+      ],
+      fontSrc: [
+        "'self'", 
+        "https://fonts.gstatic.com", 
+        "data:"
+      ],
+      connectSrc: [
+        "'self'", 
+        "https://siriartsandcrafts.com", 
+        "https://*.siriartsandcrafts.com", 
+        ...Array.from(ALLOWED_VERCEL_PREVIEWS), 
+        "https://api.razorpay.com", 
+        "https://lux.razorpay.com", 
+        ...(process.env.SENTRY_DSN ? ["https://*.sentry.io"] : [])
+      ],
+      frameSrc: [
+        "'self'", 
+        "https://api.razorpay.com", 
+        "https://checkout.razorpay.com"
+      ],
+      manifestSrc: [
+        "'self'", 
+        "https://siriartsandcrafts.com", 
+        "https://*.siriartsandcrafts.com", 
+        ...Array.from(ALLOWED_VERCEL_PREVIEWS)
+      ],
+      objectSrc: ["'none'"],
+      baseUri: [
+        "'self'", 
+        "https://siriartsandcrafts.com", 
+        "https://*.siriartsandcrafts.com", 
+        ...Array.from(ALLOWED_VERCEL_PREVIEWS)
+      ],
+      frameAncestors: [
+        "'self'", 
+        "https://siriartsandcrafts.com", 
+        "https://*.siriartsandcrafts.com", 
+        ...Array.from(ALLOWED_VERCEL_PREVIEWS)
+      ],
+      upgradeInsecureRequests: [],
+      // Fallback for older browsers that don't support upgradeInsecureRequests
+      blockAllMixedContent: [],
+    },
+  },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  // Razorpay checkout iframe + Cloudinary assets break under require-corp
+  crossOriginEmbedderPolicy: false,
+  // Isolate browsing context to prevent cross-origin window references
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  hsts: process.env.NODE_ENV === 'production' 
+    ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+    : false, // Disable HSTS in dev to prevent localhost HTTPS redirects
+  // Prevent browser DNS prefetching that could leak visited domains
+  dnsPrefetchControl: { allow: false },
+  referrerPolicy: {
+    policy: 'strict-origin-when-cross-origin',
+  },
+  xFrameOptions: { action: 'sameorigin' } // Redundant with frameAncestors but good fallback for older browsers
+});
+
+// 3. Permissions-Policy Header
+const permissionsPolicy = (req: Request, res: Response, next: NextFunction) => {
+  // Prevent access to potentially sensitive APIs
+  // Using modern directives. Allow payment only from Razorpay if necessary, otherwise self.
+  const policy = 'camera=(), microphone=(), geolocation=(), interest-cohort=(), usb=(), payment=(self "https://checkout.razorpay.com")';
+  res.setHeader('Permissions-Policy', policy);
+  next();
+};
+
+// Export the complete middleware chain
+export const securityHeadersMiddleware = [
+  generateNonce,
+  helmetConfig,
+  permissionsPolicy
+];

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { sendOTP, verifyOTP, getProfile, refreshSession, logout } from '../controllers/authController';
+import { sendOTP, verifyOTP, getProfile, refreshSession, logout, logoutAllDevices } from '../controllers/authController';
 import {
   getTwoFactorStatus,
   setupTwoFactor,
@@ -8,28 +8,30 @@ import {
   verifyTwoFactorLogin,
 } from '../controllers/twoFactorController';
 import { requireAuth } from '../middleware/authMiddleware';
+import { validateRequest } from '../middleware/zodValidationMiddleware';
 import {
-  sendOtpValidator,
-  verifyOtpValidator,
-  refreshSessionValidator,
-  logoutValidator,
-} from '../validators/authValidator';
-import { validate } from '../middleware/validateMiddleware';
+  sendOtpSchema,
+  verifyOtpSchema,
+  refreshSessionSchema,
+  logoutSchema,
+} from '../validators/authSchema';
+import { authLimiter, otpSendLimiter, otpVerifyLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
 // Removed deprecated register/login routes (A-01)
 
-router.post('/send-otp', sendOtpValidator, validate, sendOTP);
-router.post('/verify-otp', verifyOtpValidator, validate, verifyOTP);
-router.post('/refresh', refreshSessionValidator, validate, refreshSession);
-router.post('/logout', logoutValidator, validate, logout);
+router.post('/send-otp', otpSendLimiter, validateRequest(sendOtpSchema), sendOTP);
+router.post('/verify-otp', otpVerifyLimiter, validateRequest(verifyOtpSchema), verifyOTP);
+router.post('/refresh', authLimiter, validateRequest(refreshSessionSchema), refreshSession);
+router.post('/logout', authLimiter, validateRequest(logoutSchema), logout);
+router.post('/logout-all', requireAuth, logoutAllDevices);
 router.get('/profile', requireAuth, getProfile);
 
 router.get('/2fa/status', requireAuth, getTwoFactorStatus);
-router.post('/2fa/setup', requireAuth, setupTwoFactor);
-router.post('/2fa/enable', requireAuth, enableTwoFactor);
-router.post('/2fa/disable', requireAuth, disableTwoFactor);
-router.post('/2fa/verify-login', verifyTwoFactorLogin);
+router.post('/2fa/setup', authLimiter, requireAuth, setupTwoFactor);
+router.post('/2fa/enable', authLimiter, requireAuth, enableTwoFactor);
+router.post('/2fa/disable', authLimiter, requireAuth, disableTwoFactor);
+router.post('/2fa/verify-login', authLimiter, verifyTwoFactorLogin);
 
 export default router;

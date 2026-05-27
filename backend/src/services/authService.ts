@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User, { IUser } from '../models/User';
 import RefreshToken from '../models/RefreshToken';
+import PasswordResetToken from '../models/PasswordResetToken';
 import OtpRequestLog from '../models/OtpRequestLog';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
@@ -202,8 +203,10 @@ class AuthService {
       );
 
       if (attempts >= 5) {
+        logger.warn('[AUTH_FAILURE] Admin account lockout due to excessive failed password attempts', { email: cleanEmail });
         throw new ApiError(429, 'Too many failed login attempts. Your account has been temporarily locked for 15 minutes.');
       } else {
+        logger.warn('[AUTH_FAILURE] Invalid admin credentials provided', { email: cleanEmail, attempts });
         throw new ApiError(401, `Invalid admin security credentials. ${5 - attempts} attempts remaining before temporary lockout.`);
       }
     }
@@ -224,6 +227,12 @@ class AuthService {
 
     // 2. Find Admin User
     const user = await User.findOne({ email: cleanEmail }).select('+passwordHash');
+    
+    // Timing attack mitigation: always perform a bcrypt comparison.
+    // The hash here corresponds to 'dummy_password' with 12 salt rounds to keep timing consistent.
+    const DUMMY_HASH = '$2a$12$R9h/cIPz0gi.URNNX3rub2A9WEjRRO.h1.2/n3hD0A3w.dG0uG.0i';
+    const isMatch = await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH);
+
     if (!user) {
       throw new ApiError(401, 'Invalid credentials');
     }
@@ -240,8 +249,6 @@ class AuthService {
     if (!user.passwordHash) {
       throw new ApiError(401, 'Admin password is not set. Please contact the Super Admin.');
     }
-
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
 
     if (!isMatch) {
       let attempts = 1;
@@ -262,8 +269,10 @@ class AuthService {
         { upsert: true, new: true }
       );
       if (attempts >= 5) {
+        logger.warn('[AUTH_FAILURE] Admin account lockout due to excessive failed login attempts', { email: cleanEmail, ip });
         throw new ApiError(429, 'Too many failed login attempts. Account locked for 15 minutes.');
       } else {
+        logger.warn('[AUTH_FAILURE] Invalid admin login credentials provided', { email: cleanEmail, attempts, ip });
         throw new ApiError(401, `Invalid credentials. ${5 - attempts} attempts remaining.`);
       }
     }
@@ -369,7 +378,7 @@ class AuthService {
     const otp = crypto.randomInt(100000, 999999).toString();
 
     // 5. Securely hash the OTP using bcrypt (prevent database leak lookup attacks)
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     const otpHash = await bcrypt.hash(otp, salt);
 
     // 6. Save OTP in MongoDB with configured expiry
@@ -513,6 +522,7 @@ class AuthService {
       );
 
       if (updated && attemptCount >= maxAttempts) {
+        logger.warn('[AUTH_FAILURE] Max OTP verification attempts exceeded', { email: cleanEmail, ip });
         await OtpVerification.updateMany({ email: cleanEmail, type: 'auth' }, { $set: { exhausted: true } });
         throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
       }
@@ -704,6 +714,88 @@ class AuthService {
     return session;
   }
 
+  static validatePasswordComplexity(password: string): void {
+    if (password.length < 8) {
+      throw new ApiError(400, 'Password must be at least 8 characters long');
+    }
+    if (!/[A-Z]/.test(password)) {
+      throw new ApiError(400, 'Password must contain at least one uppercase letter');
+    }
+    if (!/[a-z]/.test(password)) {
+      throw new ApiError(400, 'Password must contain at least one lowercase letter');
+    }
+    if (!/[0-9]/.test(password)) {
+      throw new ApiError(400, 'Password must contain at least one number');
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      throw new ApiError(400, 'Password must contain at least one special character');
+    }
+  }
+
+  static async revokeAllSessions(userId: string) {
+    await RefreshToken.deleteMany({ userId });
+    await UsedRefreshToken.deleteMany({ userId });
+  }
+
+  static async generateAdminPasswordResetToken(email: string, ip: string): Promise<string> {
+    const cleanEmail = canonicalizeEmail(email);
+
+    // Prevent enumeration via timing attack
+    const user = await User.findOne({ email: cleanEmail }).select('role');
+    const dummyHash = await bcrypt.hash('dummy', 12); // Standardize request time
+
+    const adminRoles = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin'];
+    if (!user || !adminRoles.includes(user.role)) {
+      await bcrypt.compare('dummy', dummyHash);
+      return ''; // Return empty, generic response will be sent
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await PasswordResetToken.deleteMany({ email: cleanEmail });
+    await PasswordResetToken.create({
+      email: cleanEmail,
+      tokenHash,
+      expiresAt,
+    });
+
+    return token;
+  }
+
+  static async resetAdminPassword(email: string, token: string, newPassword: string) {
+    const cleanEmail = canonicalizeEmail(email);
+
+    this.validatePasswordComplexity(newPassword);
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const resetRecord = await PasswordResetToken.findOne({
+      email: cleanEmail,
+      tokenHash,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!resetRecord) {
+      throw new ApiError(400, 'Invalid or expired password reset token');
+    }
+
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      throw new ApiError(400, 'User not found');
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    // Subtract 1 second to ensure new timestamp is reliably before new tokens are issued
+    user.passwordChangedAt = new Date(Date.now() - 1000); 
+    await user.save();
+
+    await PasswordResetToken.deleteOne({ _id: resetRecord._id });
+    await this.revokeAllSessions(user._id.toString());
+  }
+
   static async generateCodOTP(email: string, ip: string = '127.0.0.1') {
     if (!email || !email.includes('@')) {
       throw new ApiError(400, 'A valid email address is required');
@@ -718,7 +810,7 @@ class AuthService {
     const otp = crypto.randomInt(1000, 9999).toString();
 
     // 3. Hash the OTP using bcrypt
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     const otpHash = await bcrypt.hash(otp, salt);
 
     // 4. Save in DB with expiry (5 minutes)
