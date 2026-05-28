@@ -51,7 +51,7 @@ class OrderService {
     }
 
     for (const item of items) {
-      if (item.quantity < 1 || item.quantity > MAX_QUANTITY_PER_ITEM) {
+      if (typeof item.quantity !== 'number' || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > MAX_QUANTITY_PER_ITEM) {
         throw new ApiError(400, `Invalid quantity for item: ${item.productId}`);
       }
     }

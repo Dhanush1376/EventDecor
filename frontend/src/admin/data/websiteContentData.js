@@ -66,16 +66,6 @@ export const initialWebsiteContent = {
     status:"published",
   },
 
-  // ═══════════════════════════════════════════════════════
-  // HOMEPAGE — Testimonials
-  // ═══════════════════════════════════════════════════════
-  testimonials: {
-    sectionTitle:"Voices of Heritage",
-    items: [],
-    isVisible: true,
-    status:"published",
-  },
-
 
   // ═══════════════════════════════════════════════════════
   // HOMEPAGE — Story / About Teaser
@@ -118,7 +108,6 @@ export const initialWebsiteContent = {
     { id:"featuredProducts", label:"Bestselling Products", isVisible: true },
     { id:"storyTeaser", label:"Our Story Teaser", isVisible: true },
     { id:"galleryPreview", label:"Gallery Preview", isVisible: true },
-    { id:"testimonials", label:"Testimonials", isVisible: true },
   ],
 
   // ═══════════════════════════════════════════════════════

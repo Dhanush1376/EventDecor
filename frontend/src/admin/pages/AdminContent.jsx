@@ -40,7 +40,6 @@ const CMS_SIDEBAR = [
       { id:"collections", label:"Featured Collections", icon:"grid_view", desc:"Catalog category strips" },
       { id:"story", label:"About Teaser", icon:"history_edu", desc:"Studio lineage details" },
       { id:"bestsellers", label:"Bestsellers", icon:"stars", desc:"Featured product rows" },
-      { id:"testimonials", label:"Testimonials", icon:"chat_bubble", desc:"Client quotes list" },
       { id:"homepageSections", label:"Section Order", icon:"reorder", desc:"Reorder homepage blocks" },
     ]
   },
@@ -515,92 +514,7 @@ function BestsellerStripEditor({ content, onUpdate }) {
   );
 }
 
-// 5. TESTIMONIALS
-function TestimonialsEditor({ content, onUpdate }) {
-  const testm = content.testimonials || {};
-  return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
-      <SectionHeader
-        icon="chat_bubble"
-        title="Patron Voices & Reviews"
-        description="Curate luxury client testimonials and rating indicators displayed on the homepage"
-      />
-      <div className="space-y-5">
-        <AdminField label="Section Header Headline">
-          <AdminInput
-            value={testm.sectionTitle ||""}
-            onChange={(e) => onUpdate("testimonials", { sectionTitle: e.target.value })}
-            className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
-          />
-        </AdminField>
 
-        <div className="space-y-4 pt-4 border-t border-[#000000]/10">
-          <div className="flex justify-between items-center mb-1">
-            <label className="text-[11px] sm:text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#000000]">Patron Reviews</label>
-            <button
-              type="button"
-              onClick={() => {
-                const newId = Date.now().toString();
-                const copy = [...(testm.items || []), { id: newId, name:"New Client", text:"Luxury experience.", rating: 5, isVisible: true }];
-                onUpdate("testimonials", { items: copy });
-                toast.success("New Review Node Added!");
-              }}
-              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
-            >
-              + Add Review
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-4">
-            {testm.items?.map((item, idx) => (
-              <div key={item.id || idx} className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 space-y-3.5 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
-                <div className="flex justify-between items-center border-b border-[#000000]/5 pb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] text-stone-400 font-extrabold uppercase tracking-wider">Patron Name</span>
-                    <AdminInput
-                      value={item.name ||""}
-                      onChange={(e) => {
-                        const copy = [...testm.items];
-                        copy[idx] = { ...copy[idx], name: e.target.value };
-                        onUpdate("testimonials", { items: copy });
-                      }}
-                      className="!py-1.5 font-bold !text-[11px] sm:text-[11px] !w-48 bg-white border-stone-200/80 focus:border-[#000000]"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const copy = testm.items.filter(i => i.id !== item.id);
-                      onUpdate("testimonials", { items: copy });
-                      toast.success("Review Node Deleted");
-                    }}
-                    className="text-red-500 opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-1.5 hover:bg-red-50 rounded-lg"
-                  >
-                    <span className="material-symbols-outlined text-[16px] font-bold">delete</span>
-                  </button>
-                </div>
-                
-                <AdminField label="Review Content Statement">
-                  <AdminTextarea
-                    value={item.text ||""}
-                    onChange={(e) => {
-                      const copy = [...testm.items];
-                      copy[idx] = { ...copy[idx], text: e.target.value };
-                      onUpdate("testimonials", { items: copy });
-                    }}
-                    className="!text-[11px] sm:text-[11px] !py-2 bg-white border-stone-200/80 focus:border-[#000000]"
-                    rows={2}
-                  />
-                </AdminField>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ═══════════════════════════════════════════════════════════
 // 5.5 SECTION ORDERING EDITOR
@@ -1880,9 +1794,7 @@ export function AdminContent() {
               {activeSection ==="bestsellers" && (
                 <BestsellerStripEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
-              {activeSection ==="testimonials" && (
-                <TestimonialsEditor content={websiteContent} onUpdate={handleUpdate} />
-              )}
+
               {activeSection ==="homepageSections" && (
                 <SectionOrderEditor
                   sections={websiteContent.homepageSections}

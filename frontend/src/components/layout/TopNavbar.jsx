@@ -330,7 +330,7 @@ export function TopNavbar() {
                   <div className="relative hidden md:block">
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                      className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square"
+                      className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square min-h-0"
                       aria-label="User Dropdown"
                     >
                       <span className="text-[10px] text-primary uppercase font-bold tracking-wider">

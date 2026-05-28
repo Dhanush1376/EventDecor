@@ -14,23 +14,46 @@ import redisClient from '../../utils/redis';
 
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const idempotencyKey = req.headers['idempotency-key'] as string;
-  const userId = req.user!.id;
+  if (!idempotencyKey) {
+    throw new ApiError(400, 'Idempotency-Key header is required for order creation');
+  }
 
-  if (idempotencyKey && redisClient) {
-    const existing = await redisClient.get(`idempotency:${userId}:${idempotencyKey}`);
-    if (existing) {
-      return res.status(200).json(JSON.parse(existing));
+  const userId = req.user!.id;
+  const cacheKey = `idempotency:order:${userId}:${idempotencyKey}`;
+
+  if (redisClient) {
+    const lockAcquired = await redisClient.set(cacheKey, JSON.stringify({ status: 'processing' }), { NX: true, EX: 60 });
+    
+    if (!lockAcquired) {
+       const existing = await redisClient.get(cacheKey);
+       if (existing) {
+         const parsed = JSON.parse(existing);
+         if (parsed.status === 'processing') {
+            throw new ApiError(409, 'Order is currently being processed. Please wait.');
+         }
+         if (parsed && typeof parsed.success === 'boolean') {
+           return res.status(200).json(parsed);
+         }
+         return res.status(200).json(new ApiResponse(true, 'Order created and payment initiated', parsed));
+       }
     }
   }
 
-  const orderData = { ...req.body, idempotencyKey };
-  const result = await OrderService.createOrder(userId, orderData);
+  try {
+    const orderData = { ...req.body, idempotencyKey };
+    const result = await OrderService.createOrder(userId, orderData);
 
-  if (idempotencyKey && redisClient) {
-    await redisClient.set(`idempotency:${userId}:${idempotencyKey}`, JSON.stringify(new ApiResponse(true, 'Order created and payment initiated', result)), { EX: 86400 }); // 24 hours
+    if (redisClient) {
+      await redisClient.set(cacheKey, JSON.stringify(new ApiResponse(true, 'Order created and payment initiated', result)), { EX: 86400 }); // 24 hours
+    }
+
+    res.status(201).json(new ApiResponse(true, 'Order created and payment initiated', result));
+  } catch (error) {
+    if (redisClient) {
+      await redisClient.del(cacheKey);
+    }
+    throw error;
   }
-
-  res.status(201).json(new ApiResponse(true, 'Order created and payment initiated', result));
 });
 
 export const verifyPayment = asyncHandler(async (req: Request, res: Response) => {

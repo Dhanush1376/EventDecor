@@ -240,15 +240,26 @@ const computeAndValidateCart = async (user: any) => {
   const validatedCart = [];
   let cartChanged = false;
 
-  for (const item of user.cart) {
+  const rawCart = Array.isArray(user.cart) ? user.cart : [];
+  const productIds = Array.from(
+    new Set<string>(rawCart.map((item: any) => String(item.product)).filter(Boolean))
+  );
+  const products = await Product.find({ _id: { $in: productIds } });
+  const productsById = new Map(products.map((product: any) => [product._id.toString(), product]));
+
+  for (const item of rawCart) {
     if (!item.product) continue;
-    const product = await Product.findById(item.product);
+    const product = productsById.get(String(item.product));
     if (!product || !product.isActive) {
       cartChanged = true;
       continue; // Auto-prune inactive or deleted products
     }
 
-    let quantity = item.quantity;
+    let quantity = Number(item.quantity) || 0;
+    if (quantity > 50) {
+      quantity = 50;
+      cartChanged = true;
+    }
     if (quantity > product.stock) {
       quantity = product.stock;
       cartChanged = true;
@@ -314,25 +325,21 @@ export const getCart = asyncHandler(async (req: any, res: Response) => {
 
 export const addToCart = asyncHandler(async (req: any, res: Response) => {
   const { productId, quantity } = req.body;
-  const qty = Number(quantity);
+  const qty = Math.max(1, Math.min(50, Number(quantity) || 1));
+  const product = await Product.findById(productId).select('stock isActive title');
+  if (!product || !product.isActive) {
+    throw new ApiError(404, 'Product is unavailable');
+  }
   
   const userHasItem = await User.findOne({ _id: req.user.id, 'cart.product': productId });
 
   let updatedUser;
   if (userHasItem) {
-    if (qty <= 0) {
-      updatedUser = await User.findOneAndUpdate(
-        { _id: req.user.id },
-        { $pull: { cart: { product: productId } } },
-        { new: true }
-      );
-    } else {
-      updatedUser = await User.findOneAndUpdate(
-        { _id: req.user.id, 'cart.product': productId },
-        { $set: { 'cart.$.quantity': qty } },
-        { new: true }
-      );
-    }
+    updatedUser = await User.findOneAndUpdate(
+      { _id: req.user.id, 'cart.product': productId },
+      { $inc: { 'cart.$.quantity': qty } },
+      { new: true }
+    );
   } else if (qty > 0) {
     const currentUser = await User.findById(req.user.id).select('cart');
     if (currentUser && currentUser.cart.length >= 50) {
@@ -363,7 +370,7 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
     .filter((item: any) => (item.product || item._id || item.id))
     .map((item: any) => ({
       product: item.product || item._id || item.id,
-      quantity: item.quantity,
+      quantity: Math.max(1, Math.min(50, Number(item.quantity) || 1)),
       variant: item.variant || 'Default'
     }));
 

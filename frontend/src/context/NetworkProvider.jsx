@@ -110,8 +110,8 @@ export function NetworkProvider({ children }) {
     
     setNetworkState(prev => {
       if (isBooting) {
-        // Show a friendly loading toast on first failure if it's during initial boot
-        if (failedPingsRef.current === 1) {
+        // Show a friendly loading toast on second failure if it's during initial boot to avoid false positives on fast local refresh
+        if (failedPingsRef.current === 2) {
           toast.loading("Warming up the server. This might take a moment on cold start...", {
             id: "backend-cold-start",
             duration: 12000,

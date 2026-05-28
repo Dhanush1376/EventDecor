@@ -13,6 +13,7 @@ export class OrderValidationService {
     }
 
     const MAX_QUANTITY_PER_ITEM = 50;
+    
     const MAX_ITEMS_PER_ORDER = 20;
 
     if (items.length > MAX_ITEMS_PER_ORDER) {
@@ -20,7 +21,7 @@ export class OrderValidationService {
     }
 
     for (const item of items) {
-      if (item.quantity < 1 || item.quantity > MAX_QUANTITY_PER_ITEM) {
+      if (typeof item.quantity !== 'number' || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > MAX_QUANTITY_PER_ITEM) {
         throw new ApiError(400, `Invalid quantity for item: ${item.productId}`);
       }
     }

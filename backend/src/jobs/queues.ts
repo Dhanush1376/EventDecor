@@ -25,7 +25,14 @@ export const connection = new IORedis(redisUrl, {
 });
 
 connection.on('error', (err: any) => {
-  if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+  if (err.message && err.message.includes('max requests limit exceeded')) {
+    if (!(global as any).upstashBullMqDisconnectLogged) {
+      logger.error(`[BULLMQ IOREDIS] Upstash Free Limit Exceeded. Gracefully disconnecting to prevent reconnect loops.`);
+      (global as any).upstashBullMqDisconnectLogged = true;
+    }
+    // Disconnect immediately to stop the infinite auto-reconnect cycle
+    connection.disconnect();
+  } else if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
     logger.warn(`[BULLMQ IOREDIS] Transient connection issue (${err.code}). Will retry.`);
   } else {
     logger.error(`[BULLMQ IOREDIS] Connection Error: ${err.message}`);

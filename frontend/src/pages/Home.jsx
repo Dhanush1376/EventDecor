@@ -15,7 +15,6 @@ import {
   BestsellerSkeleton,
   StorySkeleton,
   GallerySkeleton,
-  ReviewsSkeleton,
 } from "../components/ui";
 
 
@@ -69,7 +68,6 @@ export function Home() {
         <BestsellerSkeleton />
         <StorySkeleton />
         <GallerySkeleton />
-        <ReviewsSkeleton />
       </>
     );
   }

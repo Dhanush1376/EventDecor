@@ -1,5 +1,5 @@
-﻿import React, { useState, createContext, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, createContext, useContext } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useRazorpay } from "../hooks/useRazorpay";
@@ -10,6 +10,11 @@ import logger from "../utils/logger";
 import { PINCODE_MAP, UPI_REGEX } from "./checkoutConstants";
 
 const CheckoutContext = createContext(null);
+
+const createIdempotencyKey = () => {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return `checkout_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+};
 
 export function useCheckout() {
   const ctx = useContext(CheckoutContext);
@@ -22,6 +27,7 @@ export function CheckoutProvider({ children }) {
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const { processPayment } = useRazorpay();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Intercept direct unauthenticated access to checkout page
   React.useEffect(() => {
@@ -39,6 +45,7 @@ export function CheckoutProvider({ children }) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const orderCompleteRef = React.useRef(false);
+  const totalsRequestRef = React.useRef(0);
 
   // Redirect to cart if empty - Bug Fix #4
   React.useEffect(() => {
@@ -50,7 +57,20 @@ export function CheckoutProvider({ children }) {
   }, [items, navigate]);
 
   // Multi-step vertical accordion state tracking
-  const [activeStep, setActiveStep] = useState(1);
+  const getInitialStep = () => {
+    try {
+      const saved = sessionStorage.getItem("siri_checkout_step");
+      if (saved) return parseInt(saved, 10);
+    } catch (e) {}
+    return 1;
+  };
+  const [activeStep, setActiveStep] = useState(getInitialStep);
+
+  React.useEffect(() => {
+    try {
+      sessionStorage.setItem("siri_checkout_step", activeStep);
+    } catch (e) {}
+  }, [activeStep]);
   const activeItems = items || [];
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
@@ -158,15 +178,6 @@ export function CheckoutProvider({ children }) {
             return c.isActive && !isExpired && (!c.usageLimit || c.usedCount < c.usageLimit);
           });
           setAvailableCoupons(activeList);
-
-          // Check if a coupon was claimed from the storefront promo banner
-          const claimed = claimedCoupon;
-          if (claimed) {
-            setCouponInput(claimed);
-            setClaimedCoupon("");
-            fetchBackendTotals(claimed);
-            toast.success(`ðŸŽŸï¸ Auto-applied claimed coupon "${claimed}"!`);
-          }
         }
       }).catch(err => {
         logger.error("Failed to load active coupons:", err);
@@ -177,9 +188,27 @@ export function CheckoutProvider({ children }) {
     }
   }, [isAuthenticated]);
 
+  // Bulletproof reactive coupon synchronization from Cart/Storefront
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      const couponCodeToApply = location.state?.couponCode || claimedCoupon;
+      if (couponCodeToApply && couponCodeToApply !== appliedCoupon) {
+        logger.info(`Auto-applying coupon: ${couponCodeToApply}`);
+        setCouponInput(couponCodeToApply);
+        setAppliedCoupon(couponCodeToApply);
+        if (claimedCoupon) {
+          setClaimedCoupon("");
+        }
+        toast.success(`Auto-applied coupon "${couponCodeToApply}"!`);
+      }
+    }
+  }, [isAuthenticated, claimedCoupon, location.state, appliedCoupon]);
+
   // Securely calculate and validate order totals from backend
   async function fetchBackendTotals(couponToApply = "") {
     if (!activeItems || activeItems.length === 0) return;
+    const requestId = totalsRequestRef.current + 1;
+    totalsRequestRef.current = requestId;
     
     try {
       const itemsPayload = activeItems.map(item => ({
@@ -195,6 +224,7 @@ export function CheckoutProvider({ children }) {
       });
 
       if (res.success && res.data) {
+        if (requestId !== totalsRequestRef.current) return;
         setBackendTotals(res.data);
         if (couponToApply) {
           setCouponValid(res.data.couponValid);
@@ -336,7 +366,7 @@ export function CheckoutProvider({ children }) {
             country,
           }));
 
-          toast.success("âœ“ Address auto-filled from your location!", { id: toastId });
+          toast.success("Address auto-filled from your location!", { id: toastId });
         } else {
           throw new Error("Geocoding API returned no address data for this coordinate");
         }
@@ -458,7 +488,7 @@ export function CheckoutProvider({ children }) {
       const res = await orderService.sendCodOtp(targetEmail);
       if (res.success) {
         setCodOtpSent(true);
-        toast.success(`ðŸ” Verification OTP sent successfully to ${targetEmail}! Please check your inbox or spam folder.`);
+        toast.success(`Verification OTP sent successfully to ${targetEmail}. Please check your inbox or spam folder.`);
       } else {
         toast.error(res.message || "Failed to send verification OTP");
       }
@@ -470,50 +500,50 @@ export function CheckoutProvider({ children }) {
     }
   };
 
-  const handleVerifyCodOtp = async () => {
+  const handleVerifyCodOtp = async (overrideOtp) => {
     const targetEmail = activeSelectedAddress?.email || user?.email;
     if (!targetEmail) {
       toast.error("An email address is required for verification");
-      return;
+      return false;
     }
-    if (!codOtpInput.trim()) {
+    const otpToVerify = typeof overrideOtp === "string" ? overrideOtp : codOtpInput;
+    if (!otpToVerify.trim()) {
       toast.error("Please enter the verification code");
-      return;
+      return false;
     }
 
     setIsProcessing(true);
     try {
-      const res = await orderService.verifyCodOtp(targetEmail, codOtpInput);
+      const res = await orderService.verifyCodOtp(targetEmail, otpToVerify);
       if (res.success) {
         setCodVerified(true);
         toast.success("Email verified successfully! Secure Cash on Delivery activated.");
+        return true;
       } else {
         toast.error(res.message || "Invalid verification code");
+        return false;
       }
     } catch (err) {
       logger.error("Failed to verify COD OTP:", err);
       toast.error(err.response?.data?.message || "Invalid verification code. Please try again.");
+      return false;
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleConfirmOrder = async () => {
+    if (isProcessing) return;
+
     if (!activeSelectedAddress) {
       toast.error("Please select a delivery address");
       setActiveStep(1);
       return;
     }
 
-    if (!needByDate) {
-      toast.error("Please provide a Required Timeline Request date");
-      setActiveStep(2);
-      return;
-    }
-
     if (paymentOption === "cod") {
       if (backendTotals.total < 500) {
-        toast.error("Cash on Delivery (COD) is only serviceable for order totals between â‚¹500 and â‚¹50,000.");
+        toast.error("Cash on Delivery (COD) is only serviceable for order totals between ₹500 and ₹50,000.");
         return;
       }
       if (!codConfirmed) {
@@ -531,11 +561,8 @@ export function CheckoutProvider({ children }) {
     const orderData = {
       items: activeItems.map((item) => ({
         productId: item.id || item._id,
-        title: item.title,
-        price: item.price,
         quantity: item.quantity,
         variant: item.variant || "Default",
-        imageSrc: item.imageSrc,
       })),
       shippingAddress: {
         name: activeSelectedAddress.name,
@@ -549,16 +576,19 @@ export function CheckoutProvider({ children }) {
         city: activeSelectedAddress.city,
         state: activeSelectedAddress.state,
         country: activeSelectedAddress.country || "India",
-        type: (activeSelectedAddress.tag || activeSelectedAddress.type || "Home").toLowerCase(),
+        type: (() => {
+          const rawType = (activeSelectedAddress.tag || activeSelectedAddress.type || "home").toLowerCase();
+          if (rawType === "office") return "work";
+          if (rawType === "home" || rawType === "work" || rawType === "other") return rawType;
+          return "other";
+        })(),
         deliveryInstructions: activeSelectedAddress.deliveryInstructions || undefined,
       },
       couponCode: appliedCoupon || undefined,
       paymentMethod: paymentOption === "razorpay" ? "razorpay" : "cod",
       useWallet,
       needByDate: needByDate || undefined,
-      subtotal: backendTotals.subtotal,
-      shippingFee: backendTotals.shippingFee,
-      total: backendTotals.total,
+      idempotencyKey: createIdempotencyKey(),
     };
 
     if (paymentOption === "razorpay") {
@@ -577,7 +607,9 @@ export function CheckoutProvider({ children }) {
     } else {
       // Handle COD
       try {
-        const response = await orderService.create(orderData);
+        const response = await orderService.create(orderData, {
+          idempotencyKey: orderData.idempotencyKey,
+        });
         if (response && response.success) {
           orderCompleteRef.current = true;
           const orderObj = response.data?.order || response.data || response;

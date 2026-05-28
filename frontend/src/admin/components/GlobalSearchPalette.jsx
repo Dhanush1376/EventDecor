@@ -19,7 +19,6 @@ const NAV_ITEMS = [
   { label:"Coupons & Discounts", path:"/admin/coupons", category:"Navigation", icon:"sell", keywords:"discounts, offers, coupons, voucher, active offers" },
   { label:"Payments & Invoices", path:"/admin/payments", category:"Navigation", icon:"payments", keywords:"invoices, razorpay, cod, transaction history" },
   { label:"Event Bookings & Themes", path:"/admin/events", category:"Navigation", icon:"event", keywords:"events, setups, venue, active bookings" },
-  { label:"Customer Reviews", path:"/admin/reviews", category:"Navigation", icon:"rate_review", keywords:"testimonials, reviews, ratings, moderate" },
   { label:"Platform Analytics", path:"/admin/analytics", category:"Navigation", icon:"analytics", keywords:"revenues, insights, views, sales graphs" },
   { label:"Marketing Campaigns", path:"/admin/campaigns", category:"Navigation", icon:"campaign", keywords:"emails, subscribers, newsletters, push notifications" },
   { label:"Staff Team Management", path:"/admin/team", category:"Navigation", icon:"groups", keywords:"employees, access, roles, permissions" },

@@ -8,273 +8,348 @@ import { useCheckout } from "./CheckoutProvider";
 
 
 export default function CheckoutPaymentStep() {
-  const { activeStep, setActiveStep, activeSelectedAddress, isAddingNewAddress, paymentOption, setPaymentOption, upiId, setUpiId, upiVerified, setUpiVerified, cardDetails, setCardDetails, selectedBank, setSelectedBank, codConfirmed, setCodConfirmed, codOtpSent, codOtpCode, codOtpInput, setCodOtpInput, codVerified, isSendingOtp, paymentError, setPaymentError, handleSendCodOtp, handleVerifyCodOtp, backendTotals, UPI_REGEX, settings, user } = useCheckout();
+  const {
+    activeStep,
+    setActiveStep,
+    activeSelectedAddress,
+    isAddingNewAddress,
+    paymentOption,
+    setPaymentOption,
+    codConfirmed,
+    setCodConfirmed,
+    codOtpSent,
+    codOtpInput,
+    setCodOtpInput,
+    codVerified,
+    isSendingOtp,
+    paymentError,
+    setPaymentError,
+    handleSendCodOtp,
+    handleVerifyCodOtp,
+    handleConfirmOrder,
+    isProcessing,
+    backendTotals,
+    settings,
+    user
+  } = useCheckout();
+
+  // References and state for 4-digit OTP grid
+  const otpRefs = [React.useRef(null), React.useRef(null), React.useRef(null), React.useRef(null)];
+  const [otpDigits, setOtpDigits] = React.useState(["", "", "", ""]);
+
+  // Sync internal digits state with global codOtpInput context state
+  React.useEffect(() => {
+    if (codOtpInput) {
+      const digits = codOtpInput.padEnd(4, " ").slice(0, 4).split("").map(c => c === " " ? "" : c);
+      setOtpDigits(digits);
+    } else {
+      setOtpDigits(["", "", "", ""]);
+    }
+  }, [codOtpInput]);
+
+  // Automatically confirm COD behind the scenes when COD option is selected to simplify user flow
+  React.useEffect(() => {
+    if (paymentOption === "cod") {
+      setCodConfirmed(true);
+    }
+  }, [paymentOption, setCodConfirmed]);
+
+  const handleDigitChange = async (index, value) => {
+    const cleanedVal = value.replace(/\D/g, "").slice(0, 1);
+    const newDigits = [...otpDigits];
+    newDigits[index] = cleanedVal;
+    setOtpDigits(newDigits);
+
+    const code = newDigits.join("");
+    setCodOtpInput(code);
+
+    // Auto-focus next field
+    if (cleanedVal !== "" && index < 3) {
+      otpRefs[index + 1].current?.focus();
+    }
+
+    // Auto-verify if fully entered
+    if (code.length === 4) {
+      await handleVerifyCodOtp(code);
+    }
+  };
+
+  const handleDigitKeyDown = (index, e) => {
+    if (e.key === "Backspace") {
+      if (otpDigits[index] === "" && index > 0) {
+        const newDigits = [...otpDigits];
+        newDigits[index - 1] = "";
+        setOtpDigits(newDigits);
+        setCodOtpInput(newDigits.join(""));
+        otpRefs[index - 1].current?.focus();
+      } else {
+        const newDigits = [...otpDigits];
+        newDigits[index] = "";
+        setOtpDigits(newDigits);
+        setCodOtpInput(newDigits.join(""));
+      }
+    }
+  };
+
+  const getSubmitButtonLabel = () => {
+    if (isProcessing) return "Processing...";
+    
+    if (paymentOption === "razorpay") {
+      return `Pay ₹${backendTotals.total.toLocaleString("en-IN")}`;
+    }
+    
+    // COD payment option selected
+    if (backendTotals.total < 500) {
+      return "COD Unavailable (< ₹500)";
+    }
+    if (!codOtpSent) {
+      return "Send Verification Code";
+    }
+    if (!codVerified) {
+      return "Verify OTP";
+    }
+    return "Place COD Order";
+  };
+
+  const handleBottomSubmit = async () => {
+    if (isProcessing) return;
+
+    if (!activeSelectedAddress) {
+      toast.error("Please select a delivery address");
+      setActiveStep(1);
+      return;
+    }
+
+    if (paymentOption === "razorpay") {
+      handleConfirmOrder();
+    } else {
+      if (backendTotals.total < 500) {
+        toast.error("COD is only serviceable for order totals between ₹500 and ₹50,000.");
+        return;
+      }
+      if (!codOtpSent) {
+        handleSendCodOtp();
+      } else if (!codVerified) {
+        if (!codOtpInput.trim() || codOtpInput.length < 4) {
+          toast.error("Please enter the 4-digit verification code");
+          return;
+        }
+        handleVerifyCodOtp();
+      } else {
+        handleConfirmOrder();
+      }
+    }
+  };
+
+  const isButtonDisabled = () => {
+    if (isProcessing) return true;
+    if (paymentOption === "cod" && backendTotals.total < 500) return true;
+    return false;
+  };
+  
   return (
-    <>
-      {/* Accordion Block 4: PAYMENT OPTIONS */}
-      <motion.div
-              layout
-              className="bg-white border border-[#d0c5af]/40 rounded-lg overflow-hidden shadow-xs relative group"
-            >
+    <div className="bg-surface-container-low -mt-2 pb-4">
+      {/* Payment Header */}
+      <div className="bg-surface-bright mb-3 px-4 py-3.5 text-[11px] font-bold text-[#a17e2b] uppercase tracking-widest border-b border-[#c29b38]/10 shadow-xs">
+         Payment Options
+      </div>
 
+      <div className="bg-surface-bright p-4 sm:p-5 shadow-xs border-b border-outline-variant/20 space-y-4 rounded-[4px]">
+        {/* Option: Razorpay (Secure Online Payment) */}
+        <div
+          onClick={() => setPaymentOption("razorpay")}
+          className={`border rounded-[4px] p-4 transition-all duration-300 cursor-pointer ${
+            paymentOption === "razorpay"
+              ? "bg-[#c29b38]/5 border-[#c29b38] shadow-xs"
+              : "border-outline-variant/40 hover:border-[#c29b38]/30"
+          }`}
+        >
+          <div className="flex items-start gap-4 select-none">
+            {/* Custom Premium Radio Button */}
+            <div className="pt-1">
+              <div className={`w-4.5 h-4.5 rounded-full border-[1.5px] flex items-center justify-center transition-all ${paymentOption === "razorpay" ? 'border-[#c29b38] bg-white' : 'border-outline-variant bg-transparent'}`}>
+                {paymentOption === "razorpay" && (
+                  <motion.div 
+                    layoutId="payment-radio-dot"
+                    className="w-2.5 h-2.5 rounded-full bg-[#c29b38]"
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  />
+                )}
+              </div>
+            </div>
+            
+            <div className="flex-1">
+              <span className="text-[13px] font-bold text-on-surface flex items-center gap-2">
+                Secure Online Payment (Razorpay)
+                <span className="bg-[#c29b38]/10 text-[#c29b38] border border-[#c29b38]/30 text-[9px] px-2 py-0.5 rounded font-extrabold uppercase tracking-wider">Recommended</span>
+              </span>
+              <p className="text-[11px] text-secondary mt-1 leading-relaxed">
+                Pay securely using UPI, Credit/Debit Card, or Netbanking via Razorpay.
+              </p>
+            </div>
+          </div>
+        </div>
 
-              {/* Header */}
-              <motion.button
-                whileTap={{
-                  backgroundColor:
-                    activeStep === 3
-                      ? "var(--color-primary)"
-                      : "var(--color-surface-container-low)",
-                }}
-                onClick={() => {
-                  if (activeStep > 2) {
-                    if (!activeSelectedAddress) {
-                      toast.error("Please configure and select a delivery address first.");
-                      return;
-                    }
-                    if (isAddingNewAddress) {
-                      toast.error("Please save your new address or click cancel to proceed.");
-                      return;
-                    }
-                    setActiveStep(3);
-                  }
-                }}
-                aria-expanded={activeStep === 3}
-                className={`w-full p-4 flex items-center justify-between cursor-pointer transition-colors ${
-                  activeStep === 3
-                    ? "bg-primary text-surface"
-                    : "bg-surface-bright text-on-surface hover:bg-surface-container-low"
-                }`}
+        {/* Option: Cash on Delivery */}
+        <div
+          onClick={() => {
+            if (backendTotals.total <= 50000) {
+              setPaymentOption("cod");
+            }
+          }}
+          className={`border rounded-[4px] p-4 transition-all duration-300 ${
+            backendTotals.total > 50000 
+              ? "opacity-45 cursor-not-allowed border-outline-variant/20 bg-gray-50/50" 
+              : "cursor-pointer " + (paymentOption === "cod" ? "bg-[#c29b38]/5 border-[#c29b38] shadow-xs" : "border-outline-variant/40 hover:border-[#c29b38]/30")
+          }`}
+        >
+          <div className="flex items-start gap-4 select-none">
+            {/* Custom Premium Radio Button */}
+            <div className="pt-1">
+              <div className={`w-4.5 h-4.5 rounded-full border-[1.5px] flex items-center justify-center transition-all ${paymentOption === "cod" ? 'border-[#c29b38] bg-white' : 'border-outline-variant bg-transparent'}`}>
+                {paymentOption === "cod" && (
+                  <motion.div 
+                    layoutId="payment-radio-dot"
+                    className="w-2.5 h-2.5 rounded-full bg-[#c29b38]"
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1">
+              <span className="text-[13px] font-bold text-on-surface">Cash on Delivery (COD)</span>
+              {backendTotals.total > 50000 ? (
+                <p className="text-[10px] text-red-600 font-bold mt-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[12px]">info</span>
+                  COD unavailable for orders above ₹50,000
+                </p>
+              ) : (
+                <p className="text-[11px] text-secondary mt-1 leading-relaxed">
+                  Pay with cash or UPI when your item arrives.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {paymentOption === "cod" && backendTotals.total <= 50000 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-3 pl-8.5 pt-3 border-t border-[#c29b38]/10 space-y-3 overflow-hidden text-xs"
               >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`w-5 h-5 font-bold text-xs rounded flex items-center justify-center transition-colors ${
-                      activeStep === 3
-                        ? "bg-surface text-primary"
-                        : "bg-surface-container-low text-secondary"
-                    }`}
-                  >
-                    4
-                  </span>
-                  <span
-                    className={`text-xs font-bold uppercase tracking-wider transition-colors ${activeStep === 3 ? "text-surface" : "text-secondary"}`}
-                  >
-                    Payment Options
-                  </span>
-                </div>
-              </motion.button>
-
-              {/* Body */}
-              <AnimatePresence>
-                {activeStep === 3 && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="p-4 sm:p-6 space-y-4 border-t border-[#f4f3f1] overflow-hidden"
-                  >
-                    {/* Payment selection list */}
-                    <div className="space-y-4">
-                      {/* Option: Razorpay (Secure Online Payment) */}
-                      <motion.div
-                        layout
-                        className={`border rounded-lg p-3 sm:p-4 transition-all ${
-                          paymentOption === "razorpay"
-                            ? "bg-primary/5 border-primary shadow-sm"
-                            : "border-outline-variant/40"
-                        }`}
-                      >
-                        <label className="flex items-start gap-4 cursor-pointer select-none">
-                          <input
-                            type="radio"
-                            name="payment-option-radio"
-                            checked={paymentOption === "razorpay"}
-                            onChange={() => setPaymentOption("razorpay")}
-                            className="mt-1 text-primary focus:ring-0 cursor-pointer transition-all"
-                          />
-                          <div className="flex-1">
-                            <span className="text-sm font-bold text-on-surface flex items-center gap-2">
-                              Secure Online Payment (Razorpay)
-                              <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Recommended</span>
-                            </span>
-                            <p className="text-[11px] text-on-surface-variant/60 mt-1">
-                              Pay securely using UPI, Credit/Debit Card, or Netbanking via Razorpay.
-                            </p>
-                          </div>
-                        </label>
-                      </motion.div>
-
-                      {/* Option: Cash on Delivery */}
-                      <motion.div
-                        layout
-                        className={`border rounded-lg p-3 sm:p-4 transition-all ${
-                          paymentOption === "cod"
-                            ? "bg-primary/5 border-primary shadow-sm"
-                            : "border-outline-variant/40"
-                        }`}
-                      >
-                        <label className={`flex items-start gap-4 select-none ${backendTotals.total > 50000 ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}>
-                          <input
-                            type="radio"
-                            name="payment-option-radio"
-                            checked={paymentOption === "cod"}
-                            disabled={backendTotals.total > 50000}
-                            onChange={() => setPaymentOption("cod")}
-                            className={`mt-1 text-primary focus:ring-0 transition-all ${backendTotals.total > 50000 ? "cursor-not-allowed" : "cursor-pointer"}`}
-                          />
-                          <div className="flex-1">
-                            <span className="text-sm font-bold text-on-surface">Cash on Delivery (COD)</span>
-                            {backendTotals.total > 50000 ? (
-                              <p className="text-[10px] text-error font-bold mt-1 flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[12px]">info</span>
-                                COD unavailable for orders above ₹50,000
-                              </p>
-                            ) : (
-                              <p className="text-[11px] text-on-surface-variant/60 mt-1">
-                                Pay with cash or UPI when your item arrives.
-                              </p>
-                            )}
-                          </div>
-                        </label>
-
-                        <AnimatePresence>
-                          {paymentOption === "cod" && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mt-3 pl-8 pt-3 border-t border-outline-variant/30 space-y-3 overflow-hidden text-xs"
-                            >
-                              {/* Order Limit Check */}
-                              {backendTotals.total < 500 ? (
-                                <div className="p-2.5 bg-amber-50 text-amber-800 rounded-lg font-semibold text-[10px] uppercase tracking-wider flex items-center gap-1.5 border border-amber-200">
-                                  <span className="material-symbols-outlined text-[13px]">warning</span>
-                                  <span>COD requires minimum order of ₹500. Please choose secure online payment.</span>
-                                </div>
-                              ) : (
-                                <>
-                                  {/* Pincode eligibility check */}
-                                  <div className="flex items-center gap-2 text-[10px] text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider">
-                                    <span className="material-symbols-outlined text-xs">local_shipping</span>
-                                    <span>COD Serviceable by Delhivery at {activeSelectedAddress?.pincode || "Your Pincode"}</span>
-                                  </div>
-
-                                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                                    <input
-                                      type="checkbox"
-                                      checked={codConfirmed}
-                                      onChange={(e) => {
-                                        const isChecked = e.target.checked;
-                                        setCodConfirmed(isChecked);
-                                        if (isChecked && !codOtpSent && !codVerified) {
-                                          handleSendCodOtp();
-                                        }
-                                      }}
-                                      className="rounded text-primary focus:ring-0 cursor-pointer"
-                                    />
-                                    <span className="text-[11px] text-on-surface-variant font-medium">
-                                      I confirm this is a real order request.
-                                    </span>
-                                  </label>
-
-                                  {/* OTP Section */}
-                                  <div className="mt-2.5 bg-surface-container-low p-3 rounded-lg border border-outline-variant/20">
-                                    <div className="flex items-center justify-between gap-2 mb-2">
-                                      <span className="text-[10px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-xs">lock</span>
-                                        Security OTP Verification
-                                      </span>
-                                      {codVerified && (
-                                        <span className="text-[9px] font-bold uppercase tracking-widest text-green-700 bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-green-200">
-                                          <span className="material-symbols-outlined text-[10px] font-bold">check</span>
-                                          Verified
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    {!codVerified ? (
-                                      <div className="space-y-2">
-                                        {!codOtpSent ? (
-                                          <button
-                                            type="button"
-                                            onClick={handleSendCodOtp}
-                                            disabled={isSendingOtp}
-                                            className="w-full bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary font-bold text-[9px] uppercase tracking-widest py-2 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1.5 shadow-2xs"
-                                          >
-                                            {isSendingOtp ? (
-                                              <>
-                                                <div className="w-3 h-3 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-                                                <span>Sending Code...</span>
-                                              </>
-                                            ) : (
-                                              <>
-                                                <span className="material-symbols-outlined text-xs">mail</span>
-                                                <span>Send Verification OTP to {activeSelectedAddress?.email || user?.email || "Email"}</span>
-                                              </>
-                                            )}
-                                          </button>
-                                        ) : (
-                                          <div className="space-y-2">
-                                            <p className="text-[10px] text-secondary leading-normal">
-                                              We sent a 4-digit code to <strong className="text-on-surface">{activeSelectedAddress?.email || user?.email}</strong>. Enter it below:
-                                            </p>
-                                            <div className="flex gap-2 items-stretch">
-                                              <input
-                                                type="text"
-                                                maxLength={4}
-                                                placeholder="Enter OTP"
-                                                value={codOtpInput}
-                                                onChange={(e) => setCodOtpInput(e.target.value.replace(/\D/g, ""))}
-                                                className="flex-1 h-9 bg-white border border-outline-variant rounded px-3 text-xs outline-none focus:border-primary transition-colors text-center font-mono font-bold tracking-widest"
-                                              />
-                                              <button
-                                                type="button"
-                                                onClick={handleVerifyCodOtp}
-                                                className="h-9 bg-primary text-white font-bold text-[9px] uppercase tracking-widest px-4 rounded cursor-pointer hover:brightness-110 shadow-xs flex items-center justify-center transition-all"
-                                              >
-                                                Verify
-                                              </button>
-                                              <button
-                                                type="button"
-                                                onClick={handleSendCodOtp}
-                                                className="h-9 bg-gray-100 text-gray-600 font-bold text-[9px] uppercase tracking-widest px-3 rounded cursor-pointer hover:bg-gray-200 flex items-center justify-center transition-all"
-                                              >
-                                                Resend
-                                              </button>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <p className="text-[10px] text-green-700 font-semibold flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-xs">verified</span>
-                                        OTP Verification completed! Ready to confirm your cash delivery.
-                                      </p>
-                                    )}
-                                  </div>
-                                </>
-                              )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
+                {/* Order Limit Check */}
+                {backendTotals.total < 500 ? (
+                  <div className="p-2.5 bg-amber-50 text-amber-800 rounded-lg font-semibold text-[10px] uppercase tracking-wider flex items-center gap-1.5 border border-amber-200">
+                    <span className="material-symbols-outlined text-[13px]">warning</span>
+                    <span>COD requires minimum order of ₹500. Please choose secure online payment.</span>
+                  </div>
+                ) : (
+                  <>
+                    {/* Delhivery check */}
+                    <div className="flex items-center gap-2.5 text-[11px] font-semibold text-green-700 bg-green-50/50 border border-green-200/50 p-3 rounded-[4px] mb-3">
+                      <span className="material-symbols-outlined text-[16px] text-green-700 font-extrabold">verified</span>
+                      <span>COD is serviceable at <span className="font-extrabold">{activeSelectedAddress?.pincode || "your pincode"}</span> by Delhivery</span>
                     </div>
 
-                    {paymentError && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="p-3 bg-red-50 text-red-600 rounded text-xs font-semibold"
-                      >
-                        ⚠️ {paymentError}
-                      </motion.div>
-                    )}
+                    {/* Unified Verification Interface */}
+                    {!codVerified ? (
+                      <div className="space-y-3 pt-1">
+                        {!codOtpSent ? (
+                          <div className="flex items-start gap-3 bg-[#c29b38]/5 border border-[#c29b38]/15 p-3.5 rounded-[4px]">
+                            <span className="material-symbols-outlined text-[#c29b38] text-[18px] shrink-0 pt-0.5">verified_user</span>
+                            <div className="flex-1">
+                              <p className="text-[12px] text-secondary leading-relaxed font-light">
+                                To secure your order, we will send a 4-digit verification code to your email address:
+                              </p>
+                              <strong className="text-on-surface font-semibold block mt-1.5 text-[13px] tracking-wide">
+                                {activeSelectedAddress?.email || user?.email}
+                              </strong>
+                              <p className="text-[10px] text-secondary/70 mt-2">
+                                Please click the prominent orange button below to request the code.
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-3 bg-[#c29b38]/5 border border-[#c29b38]/15 p-4 rounded-[4px]">
+                            <p className="text-[12px] text-secondary leading-normal">
+                              We sent a 4-digit code to <strong className="text-on-surface font-semibold">{activeSelectedAddress?.email || user?.email}</strong>. Please check your inbox or spam folder:
+                            </p>
+                            
+                            {/* Gorgeous 4-digit input grid */}
+                            <div className="flex justify-center gap-3 py-2">
+                              {otpDigits.map((digit, idx) => (
+                                <input
+                                  key={idx}
+                                  ref={otpRefs[idx]}
+                                  type="tel"
+                                  pattern="[0-9]*"
+                                  inputMode="numeric"
+                                  maxLength={1}
+                                  value={digit}
+                                  disabled={isProcessing}
+                                  onChange={(e) => handleDigitChange(idx, e.target.value)}
+                                  onKeyDown={(e) => handleDigitKeyDown(idx, e)}
+                                  className="w-12 h-12 bg-white border border-[#c29b38]/20 focus:border-[#f26a10] rounded-[6px] text-center font-bold text-lg text-on-surface shadow-xs outline-none transition-all focus:ring-1 focus:ring-[#f26a10]/50 disabled:opacity-50"
+                                />
+                              ))}
+                            </div>
 
-                  </motion.div>
+                            {/* Resend option */}
+                            <div className="flex justify-center pt-2 border-t border-[#c29b38]/10 mt-1">
+                              <button
+                                type="button"
+                                onClick={handleSendCodOtp}
+                                disabled={isSendingOtp || isProcessing}
+                                className="text-[11px] text-[#c29b38] hover:text-[#a17e2b] font-bold hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              >
+                                <span className="material-symbols-outlined text-xs">sync</span>
+                                Resend verification code
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2.5 text-[12px] text-green-700 bg-green-50/50 p-3 rounded-[4px] border border-green-200/50 mt-2 font-semibold">
+                        <span className="material-symbols-outlined text-[18px] text-green-700 font-bold">verified</span>
+                        <span>Verification completed! Ready to place your Cash on Delivery order.</span>
+                      </div>
+                    )}
+                  </>
                 )}
-              </AnimatePresence>
-            </motion.div>
-    </>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {paymentError && (
+        <div className="mx-4 mt-4 p-3 bg-red-50 text-red-600 rounded text-xs font-semibold border border-red-200">
+          ⚠️ {paymentError}
+        </div>
+      )}
+
+      {/* Sticky Action Footer */}
+      <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-lg z-40 max-w-[768px] mx-auto flex gap-3">
+         <button
+           onClick={() => setActiveStep(1)}
+           disabled={isProcessing}
+           className="flex-1 py-3 bg-surface-bright text-on-surface hover:bg-surface-container-low font-extrabold uppercase text-[12px] tracking-widest border border-outline-variant rounded transition-all disabled:opacity-50"
+         >
+           Back
+         </button>
+         <button
+           onClick={handleBottomSubmit}
+           disabled={isButtonDisabled()}
+           className="flex-1 bg-[#f26a10] hover:bg-[#d85d0d] text-white py-3 rounded text-[12px] font-extrabold uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+         >
+           {isProcessing && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />}
+           <span>{getSubmitButtonLabel()}</span>
+         </button>
+      </div>
+    </div>
   );
 }

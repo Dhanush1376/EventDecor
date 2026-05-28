@@ -5,12 +5,19 @@ import logger from '../../utils/logger';
 const checkAuthLocal = () => hasSessionMarker();
 
 export const orderService = {
-  create: async (orderData) => {
-    const response = await api.post('/orders', orderData);
+  create: async (orderData, options = {}) => {
+    const response = await api.post('/orders', orderData, {
+      ...options,
+      _disableRetry: true,
+      headers: {
+        ...(options.headers || {}),
+        ...(options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
+      },
+    });
     return response.data;
   },
   verifyPayment: async (paymentData) => {
-    const response = await api.post('/orders/verify-payment', paymentData);
+    const response = await api.post('/orders/verify-payment', paymentData, { _disableRetry: true });
     return response.data;
   },
   validateTotals: async (data) => {

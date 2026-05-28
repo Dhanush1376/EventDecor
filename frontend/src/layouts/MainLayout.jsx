@@ -85,8 +85,8 @@ export function MainLayout() {
           </Suspense>
         </ErrorBoundary>
       </main>
-      <Footer />
-      <BottomNav />
+      {pathname !== "/cart" && <Footer />}
+      {pathname !== "/cart" && <BottomNav />}
       <WhatsAppWidget />
       <ConsentPopup />
     </div>
@@ -119,7 +119,6 @@ export function MinimalLayout() {
           <Outlet />
         </Suspense>
       </main>
-      <Footer />
     </div>
   );
 }

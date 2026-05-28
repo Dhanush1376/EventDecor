@@ -24,7 +24,14 @@ async function cacheGet<T>(key: string, fallbackCache: MemoryCache): Promise<T |
       const raw = await redisClient!.get(key);
       if (raw) return JSON.parse(raw) as T;
     } catch (err: any) {
-      logger.warn(`[RECO CACHE] Redis GET failed for ${key}: ${err.message}`);
+      if (err.message && err.message.includes('max requests limit exceeded')) {
+        if (!(global as any).upstashWarningLogged) {
+          logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
+          (global as any).upstashWarningLogged = true;
+        }
+      } else {
+        logger.warn(`[RECO CACHE] Redis GET failed for ${key}: ${err.message}`);
+      }
     }
   }
   return fallbackCache.get<T>(key);
@@ -41,7 +48,14 @@ async function cacheSet<T>(key: string, value: T, ttlSeconds: number, fallbackCa
     try {
       await redisClient!.setEx(key, ttlSeconds, JSON.stringify(value));
     } catch (err: any) {
-      logger.warn(`[RECO CACHE] Redis SET failed for ${key}: ${err.message}`);
+      if (err.message && err.message.includes('max requests limit exceeded')) {
+        if (!(global as any).upstashWarningLogged) {
+          logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
+          (global as any).upstashWarningLogged = true;
+        }
+      } else {
+        logger.warn(`[RECO CACHE] Redis SET failed for ${key}: ${err.message}`);
+      }
     }
   }
 }
@@ -56,7 +70,14 @@ async function cacheDel(key: string, fallbackCache: MemoryCache): Promise<void> 
     try {
       await redisClient!.del(key);
     } catch (err: any) {
-      logger.warn(`[RECO CACHE] Redis DEL failed for ${key}: ${err.message}`);
+      if (err.message && err.message.includes('max requests limit exceeded')) {
+        if (!(global as any).upstashWarningLogged) {
+          logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
+          (global as any).upstashWarningLogged = true;
+        }
+      } else {
+        logger.warn(`[RECO CACHE] Redis DEL failed for ${key}: ${err.message}`);
+      }
     }
   }
 }
@@ -145,7 +166,14 @@ export const RecommendationCache = {
         await redisClient!.hIncrBy(key, field, 1);
         await redisClient!.expire(key, 86400 * 7); // 7-day retention for CTR
       } catch (err: any) {
-        logger.warn(`[RECO CTR] Redis CTR increment failed: ${err.message}`);
+        if (err.message && err.message.includes('max requests limit exceeded')) {
+          if (!(global as any).upstashWarningLogged) {
+            logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
+            (global as any).upstashWarningLogged = true;
+          }
+        } else {
+          logger.warn(`[RECO CTR] Redis CTR increment failed: ${err.message}`);
+        }
       }
     }
     // Fallback: use memory counter (loses on restart — acceptable for dev)
@@ -166,7 +194,14 @@ export const RecommendationCache = {
           };
         }
       } catch (err: any) {
-        logger.warn(`[RECO CTR] Redis CTR get failed: ${err.message}`);
+        if (err.message && err.message.includes('max requests limit exceeded')) {
+          if (!(global as any).upstashWarningLogged) {
+            logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
+            (global as any).upstashWarningLogged = true;
+          }
+        } else {
+          logger.warn(`[RECO CTR] Redis CTR get failed: ${err.message}`);
+        }
       }
     }
     return ctrCache.get<Record<string, number>>(key) || { impressions: 0, clicks: 0 };

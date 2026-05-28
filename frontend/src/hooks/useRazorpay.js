@@ -5,6 +5,11 @@ import { orderService } from '../services/domainServices';
 import logger from '../utils/logger';
 let razorpayPromise = null;
 
+const createIdempotencyKey = () => {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return `order_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+};
+
 export const useRazorpay = () => {
   const loadScript = (src) => {
     if (razorpayPromise) return razorpayPromise;
@@ -31,19 +36,26 @@ export const useRazorpay = () => {
 
     if (!res) {
       toast.error('Razorpay SDK failed to load. Are you online?');
+      onError?.(new Error('Razorpay SDK failed to load'));
       return;
     }
 
     try {
       // 1. Create order on backend
-      const response = await orderService.create(orderData);
+      const response = await orderService.create(orderData, {
+        idempotencyKey: orderData.idempotencyKey || createIdempotencyKey(),
+      });
       
       if (!response.success) {
         toast.error(response.message || 'Failed to create order');
+        onError?.(response);
         return;
       }
 
-      const { razorpayOrder, orderId } = response.data;
+      const { razorpayOrder } = response.data;
+      if (!razorpayOrder?.id || !razorpayOrder?.amount || !razorpayOrder?.currency) {
+        throw new Error('Payment gateway returned an invalid order payload');
+      }
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -57,7 +69,6 @@ export const useRazorpay = () => {
           try {
             // 2. Verify payment on backend
             const verifyRes = await orderService.verifyPayment({
-              orderId: orderId,
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
@@ -65,15 +76,21 @@ export const useRazorpay = () => {
 
             if (verifyRes.success) {
               toast.success('Payment successful!');
-              onSuccess(verifyRes.data);
+              onSuccess?.(verifyRes.data);
             } else {
               toast.error('Payment verification failed');
-              onError(verifyRes);
+              onError?.(verifyRes);
             }
           } catch (err) {
-            toast.error('Error verifying payment');
-            onError(err);
+            logger.error('Payment verification error:', err);
+            toast.error(err.response?.data?.message || 'Error verifying payment');
+            onError?.(err);
           }
+        },
+        modal: {
+          ondismiss: () => {
+            onError?.(new Error('Payment modal dismissed'));
+          },
         },
         prefill: {
           name: orderData.shippingAddress.name,
@@ -89,7 +106,7 @@ export const useRazorpay = () => {
     } catch (err) {
       logger.error('Payment error:', err);
       toast.error(err.response?.data?.message || 'Payment initiation failed');
-      onError(err);
+      onError?.(err);
     }
   }, []);
 

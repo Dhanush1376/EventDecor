@@ -31,13 +31,25 @@ export function VirtualizedMasonry({
   loadingState = null,
 }) {
   const [visibleCount, setVisibleCount] = useState(batchSize);
+  const [autoLoadPaused, setAutoLoadPaused] = useState(false);
   const sentinelRef = useRef(null);
   const containerRef = useRef(null);
+  const lastItemsFirstId = useRef(null);
 
   // Determine visible items
   const visibleItems = useMemo(() => {
     return items.slice(0, visibleCount);
   }, [items, visibleCount]);
+
+  // Reset visibility and pause state when filters change (detected by first item ID change)
+  useEffect(() => {
+    const firstId = items[0]?._id || items[0]?.id;
+    if (firstId !== lastItemsFirstId.current) {
+      setVisibleCount(batchSize);
+      setAutoLoadPaused(false);
+      lastItemsFirstId.current = firstId;
+    }
+  }, [items, batchSize]);
 
   // Auto-expand visible count when items grow
   useEffect(() => {
@@ -46,14 +58,20 @@ export function VirtualizedMasonry({
     }
   }, [items.length, visibleCount, hasMore]);
 
-  // IntersectionObserver for infinite scroll
+  // IntersectionObserver for infinite scroll (auto-loads first few batches, then pauses)
   useEffect(() => {
-    if (!sentinelRef.current) return;
+    if (!sentinelRef.current || autoLoadPaused) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
         if (entry.isIntersecting) {
+          // Pause auto-loading if we've already loaded a reasonable number of items (e.g. 2 batches / 40 items)
+          if (visibleCount >= batchSize * 2) {
+            setAutoLoadPaused(true);
+            return;
+          }
+
           // Load more items into view
           if (visibleCount < items.length) {
             setVisibleCount((prev) => Math.min(prev + batchSize, items.length));
@@ -63,14 +81,24 @@ export function VirtualizedMasonry({
         }
       },
       {
-        rootMargin: '400px 0px', // Start loading when 400px from bottom
+        rootMargin: '200px 0px', // Trigger slightly earlier but not too early
         threshold: 0.1,
       }
     );
 
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
-  }, [visibleCount, items.length, hasMore, loadMore, isLoading, batchSize]);
+  }, [visibleCount, items.length, hasMore, loadMore, isLoading, batchSize, autoLoadPaused]);
+
+  // Manual trigger for loading more when auto-loading is paused
+  const handleLoadMoreManual = () => {
+    setAutoLoadPaused(false);
+    if (visibleCount < items.length) {
+      setVisibleCount((prev) => Math.min(prev + batchSize, items.length));
+    } else if (hasMore && loadMore && !isLoading) {
+      loadMore();
+    }
+  };
 
   // Build column class string
   const columnClass = useMemo(() => {
@@ -120,8 +148,23 @@ export function VirtualizedMasonry({
         </div>
       )}
 
-      {/* "Loading more" indicator when there are more items to show */}
-      {!isLoading && visibleCount < items.length && (
+      {/* Manual Load More Button (shown when auto-load is paused) */}
+      {!isLoading && autoLoadPaused && (hasMore || visibleCount < items.length) && (
+        <div className="flex flex-col items-center justify-center py-8 z-20 relative">
+          <button
+            onClick={handleLoadMoreManual}
+            className="px-8 py-3.5 bg-[#f26a10] hover:bg-[#d85d0d] active:scale-95 text-white font-bold text-[11px] uppercase tracking-widest rounded-full shadow-lg hover:shadow-orange-500/20 transition-all duration-300 flex items-center gap-2 group outline-none"
+          >
+            <span>Explore More Designs</span>
+            <span className="material-symbols-outlined text-[16px] group-hover:translate-y-0.5 transition-transform">
+              expand_more
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* "Scroll to explore more" text when auto-load is active */}
+      {!isLoading && !autoLoadPaused && visibleCount < items.length && (
         <div className="text-center py-8">
           <span className="text-[11px] text-on-surface-variant/40 uppercase tracking-[0.2em] font-bold">
             Scroll to explore more

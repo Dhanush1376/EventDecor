@@ -12,24 +12,35 @@ export const createOrderSchema = z.object({
         z.object({
           productId: objectIdSchema,
           quantity: z.number().int().min(1, 'Quantity must be at least 1'),
+          variant: z.string().trim().max(100).optional().or(z.literal('')),
         }).strict()
       )
       .min(1, 'Order must contain at least one item'),
     shippingAddress: z.object({
       name: z.string().trim().min(1, 'Name is required'),
       phone: z.string().trim().min(1, 'Mobile number is required'),
+      alternatePhone: z.string().trim().optional().or(z.literal('')),
       email: z
         .string()
         .trim()
         .email('Please provide a valid email address')
         .transform((val) => canonicalizeEmail(val)),
       pincode: z.string().trim().length(6, 'Pincode must be 6 digits'),
+      locality: z.string().trim().min(1, 'Locality is required'),
       address: z.string().trim().min(1, 'Address is required'),
       landmark: z.string().trim().optional().or(z.literal('')),
       city: z.string().trim().min(1, 'City is required'),
       state: z.string().trim().min(1, 'State is required'),
       country: z.string().trim().min(1, 'Country is required'),
+      type: z.enum(['home', 'work', 'other']).optional(),
+      deliveryInstructions: z.string().trim().max(500).optional().or(z.literal('')),
     }).strict(),
+    couponCode: z.string().trim().max(50).optional().or(z.literal('')),
+    notes: z.string().trim().max(3000).optional().or(z.literal('')),
+    needByDate: z.string().trim().max(50).optional().or(z.literal('')),
+    paymentMethod: z.enum(['razorpay', 'cod']).default('razorpay'),
+    useWallet: z.boolean().optional(),
+    idempotencyKey: z.string().trim().max(120).optional(),
   }).strict(),
 });
 
@@ -123,5 +134,7 @@ export const updateStatusSchema = z.object({
     ], {
       message: 'Invalid order status',
     }),
+    note: z.string().trim().max(1000).optional().or(z.literal('')),
+    courierCharges: z.number().min(0).optional(),
   }).strict(),
 });

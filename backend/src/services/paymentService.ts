@@ -20,9 +20,9 @@ export class PaymentService {
     const shasum = crypto.createHmac('sha256', webhookSecret);
     shasum.update(rawBody);
     const digest = shasum.digest('hex');
-    const expectedHash = crypto.createHash('sha256').update(digest).digest();
-    const signatureHash = crypto.createHash('sha256').update(signature).digest();
-    return crypto.timingSafeEqual(expectedHash, signatureHash);
+    const expected = Buffer.from(digest, 'utf8');
+    const received = Buffer.from(signature || '', 'utf8');
+    return expected.length === received.length && crypto.timingSafeEqual(expected, received);
   }
 
   static async verifyPayment(paymentData: any, userId: string, role: string) {
@@ -45,9 +45,11 @@ export class PaymentService {
     const shasum = crypto.createHmac('sha256', razorpayKeySecret);
     shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const digest = shasum.digest('hex');
-    const expectedHash = crypto.createHash('sha256').update(digest).digest();
-    const signatureHash = crypto.createHash('sha256').update(razorpay_signature || '').digest();
-    const isSignatureValid = crypto.timingSafeEqual(expectedHash, signatureHash);
+    const expectedHash = Buffer.from(digest, 'utf8');
+    const signatureHash = Buffer.from(razorpay_signature || '', 'utf8');
+    const isSignatureValid =
+      expectedHash.length === signatureHash.length &&
+      crypto.timingSafeEqual(expectedHash, signatureHash);
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -261,27 +263,32 @@ export class PaymentService {
         return { status: 200, message: 'Skipped: missing entity details' };
       }
 
-      let order: any = await Order.findOneAndUpdate(
-        { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
-        { $set: { paymentStatus: 'processing' } },
-        { new: true }
-      );
-
-      if (!order) {
-        const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
-        if (existingOrder?.paymentStatus === 'paid') return { status: 200, message: 'Already paid' };
-        return { status: 200, message: 'Skipped: Order not found or closed' };
-      }
-
-      const expectedAmount = Math.round(order.total * 100);
-      const isAmountValid = paymentEntity.amount === expectedAmount;
-      const isCurrencyValid = paymentEntity.currency === 'INR';
-
-      const isValid = isAmountValid && isCurrencyValid;
-
       const session = await mongoose.startSession();
       session.startTransaction();
+
       try {
+        let order: any = await Order.findOneAndUpdate(
+          { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
+          { $set: { paymentStatus: 'processing' } },
+          { new: true, session }
+        );
+
+        if (!order) {
+          const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id }).session(session);
+          if (existingOrder?.paymentStatus === 'paid') {
+            await session.abortTransaction();
+            return { status: 200, message: 'Already paid' };
+          }
+          await session.abortTransaction();
+          return { status: 200, message: 'Skipped: Order not found or closed' };
+        }
+
+        const expectedAmount = Math.round(order.total * 100);
+        const isAmountValid = paymentEntity.amount === expectedAmount;
+        const isCurrencyValid = paymentEntity.currency === 'INR';
+
+        const isValid = isAmountValid && isCurrencyValid;
+
         await PaymentAudit.create([{
           orderId: order._id,
           userId: order.user,

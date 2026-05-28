@@ -7,7 +7,6 @@ const HeroSection = React.lazy(() => import('../sections/HeroSection').then(m =>
 const TrendingSection = React.lazy(() => import('../sections/TrendingSection').then(m => ({ default: m.TrendingSection })));
 const SeasonalHighlights = React.lazy(() => import('../sections/SeasonalHighlights').then(m => ({ default: m.SeasonalHighlights })));
 const PersonalizedFeed = React.lazy(() => import('../sections/PersonalizedFeed').then(m => ({ default: m.PersonalizedFeed })));
-const VerifiedReviews = React.lazy(() => import('../sections/VerifiedReviews').then(m => ({ default: m.VerifiedReviews })));
 const StorySection = React.lazy(() => import('../sections/StorySection').then(m => ({ default: m.StorySection })));
 const GallerySection = React.lazy(() => import('../sections/GallerySection').then(m => ({ default: m.GallerySection })));
 const NavigationHub = React.lazy(() => import('../sections/NavigationHub').then(m => ({ default: m.NavigationHub })));
@@ -18,7 +17,6 @@ const componentRegistry = {
   TrendingSection,
   SeasonalHighlights,
   PersonalizedFeed,
-  VerifiedReviews,
   StorySection,
   GallerySection,
   NavigationHub,
@@ -64,7 +62,6 @@ export const DynamicSectionRenderer = ({ pagePath }) => {
           <SeasonalHighlights />
           <StorySection />
           <GallerySection />
-          <VerifiedReviews />
         </Suspense>
       );
     }
@@ -75,6 +72,7 @@ export const DynamicSectionRenderer = ({ pagePath }) => {
     <>
       <Suspense fallback={<div className="animate-pulse bg-surface-container w-full h-32" />}>
         {layout.sections.map((section, index) => {
+          if (section.componentName === 'VerifiedReviews') return null;
           const Component = componentRegistry[section.componentName];
           if (!Component) {
             logger.warn(`Component ${section.componentName} is not registered in DynamicSectionRenderer.`);

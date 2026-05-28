@@ -7,7 +7,7 @@ import { handleImageError } from "../../utils/imageUtils";
 const EMPTY_CART_ILLU = "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129342/event_decor_ecommerce/assets/event_decor_empty_cart_illustration.jpg";
 
 export function CartDrawer({ isOpen, onClose }) {
-  const { items, removeItem, updateQuantity, subtotal, cartCount } = useCart();
+  const { items, removeItem, updateQuantity, subtotal, cartCount, loading } = useCart();
   const [confirmingRemove, setConfirmingRemove] = React.useState(null); // { id, variant }
 
   const drawerRef = React.useRef(null);
@@ -104,7 +104,20 @@ export function CartDrawer({ isOpen, onClose }) {
 
             {/* Items List */}
             <div className="flex-1 overflow-y-auto p-6">
-              {items.length === 0 ? (
+              {loading && items.length === 0 ? (
+                <div className="space-y-6">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex gap-4 p-4 rounded-[20px] border border-outline-variant/5 bg-surface-container-low animate-pulse">
+                      <div className="w-20 h-24 rounded-[12px] bg-surface-container" />
+                      <div className="flex-1 py-2 space-y-4">
+                        <div className="h-4 bg-surface-container rounded w-3/4" />
+                        <div className="h-3 bg-surface-container rounded w-1/2" />
+                        <div className="h-5 bg-surface-container rounded w-1/4 mt-4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : items.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center p-8 text-center">
                   {/* Minimalist Premium Icon Container */}
                   <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 relative">
@@ -136,10 +149,15 @@ export function CartDrawer({ isOpen, onClose }) {
                 </div>
               ) : (
                 <div className="space-y-6">
+                  <AnimatePresence mode="popLayout">
                   {items.map((item) => (
-                    <div
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, x: -30, transition: { duration: 0.2 } }}
                       key={`${item.id}-${item.variant || ""}`}
-                      className="flex gap-4 p-4 rounded-[20px] bg-surface-container-low border border-outline-variant/10"
+                      className="relative flex gap-4 p-4 rounded-[20px] bg-surface-container-low border border-outline-variant/10 shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
                     >
                       <div className="w-20 h-24 rounded-[12px] overflow-hidden flex-shrink-0 bg-surface-container">
                         <img
@@ -245,8 +263,9 @@ export function CartDrawer({ isOpen, onClose }) {
                           )}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
+                  </AnimatePresence>
                 </div>
               )}
             </div>

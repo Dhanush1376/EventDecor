@@ -38,7 +38,6 @@ const navSections = [
     label: "Bookings & Feedback",
     items: [
       { label: "Event Bookings", icon: "event", path: "/admin/events", keywords: "booking, setups, dates" },
-      { label: "Customer Reviews", icon: "rate_review", path: "/admin/reviews", keywords: "ratings, testimonials, feedback" },
     ],
   },
   {

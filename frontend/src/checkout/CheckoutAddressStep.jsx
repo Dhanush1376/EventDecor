@@ -1,650 +1,585 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-import { handleImageError } from "../utils/imageUtils";
 import { useCheckout } from "./CheckoutProvider";
 
+let DefaultIcon = L.icon({
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+function LocationMarker({ position, setPosition, fetchAddressFromCoords }) {
+  const map = useMapEvents({
+    click(e) {
+      setPosition(e.latlng);
+      fetchAddressFromCoords(e.latlng.lat, e.latlng.lng);
+    },
+  });
+
+  return position === null ? null : (
+    <Marker 
+      position={position} 
+      draggable={true}
+      eventHandlers={{
+        dragend: (e) => {
+          const marker = e.target;
+          const pos = marker.getLatLng();
+          setPosition(pos);
+          fetchAddressFromCoords(pos.lat, pos.lng);
+        },
+      }}
+    />
+  );
+}
 
 export default function CheckoutAddressStep() {
-  const { activeStep, setActiveStep, activeSelectedAddress, savedAddresses, setSavedAddresses, selectedAddressId, setSelectedAddressId, isAddingNewAddress, setIsAddingNewAddress, isDetectingLocation, newAddress, setNewAddress, sendUpdatesToWhatsApp, setSendUpdatesToWhatsApp, addressError, setAddressError, isProcessing, handleSaveNewAddress, handleFetchCurrentLocation, PINCODE_MAP, user } = useCheckout();
-  return (
-    <>
-      {/* Accordion Block 2: DELIVERY ADDRESS */}
-      <motion.div
-              layout
-              className="bg-surface-bright border border-outline-variant/40 rounded-lg overflow-hidden shadow-xs relative group"
-            >
+  const {
+    activeItems,
+    setActiveStep,
+    activeSelectedAddress,
+    savedAddresses,
+    selectedAddressId,
+    setSelectedAddressId,
+    isAddingNewAddress,
+    setIsAddingNewAddress,
+    isDetectingLocation,
+    newAddress,
+    setNewAddress,
+    addressError,
+    setAddressError,
+    isProcessing,
+    handleSaveNewAddress,
+    handleFetchCurrentLocation,
+    PINCODE_MAP,
+  } = useCheckout();
 
+  // Local state to toggle between Main View and Select List View
+  const [isSelectingList, setIsSelectingList] = useState(false);
 
-              {/* Accordion Header */}
-              <motion.button
-                whileTap={{
-                  backgroundColor:
-                    activeStep === 1
-                      ? "var(--color-primary)"
-                      : "var(--color-surface-container-low)",
-                }}
-                onClick={() => setActiveStep(1)}
-                aria-expanded={activeStep === 1}
-                className={`w-full p-4 flex items-center justify-between cursor-pointer transition-colors ${
-                  activeStep === 1
-                    ? "bg-primary text-surface"
-                    : "bg-surface-bright text-on-surface hover:bg-surface-container-low"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`w-5 h-5 font-bold text-xs rounded flex items-center justify-center transition-colors ${
-                      activeStep === 1
-                        ? "bg-surface text-primary"
-                        : "bg-surface-container-low text-secondary"
-                    }`}
-                  >
-                    2
-                  </span>
-                  <span
-                    className={`text-xs font-bold uppercase tracking-wider transition-colors ${activeStep === 1 ? "text-surface" : "text-secondary"}`}
-                  >
-                    Delivery Address
-                  </span>
-                  {activeStep > 1 && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="material-symbols-outlined text-base text-green-700 font-bold"
-                    >
-                      check
-                    </motion.span>
-                  )}
+  const [mapPosition, setMapPosition] = useState({ lat: 20.5937, lng: 78.9629 }); // Default India
+
+  const fetchAddressFromCoords = async (lat, lng) => {
+    try {
+      toast.loading("Locating address...", { id: "geocoding" });
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
+      const data = await response.json();
+      if (data && data.address) {
+        const addr = data.address;
+        
+        const newPincode = addr.postcode || "";
+        const newCity = addr.city || addr.town || addr.village || addr.county || addr.state_district || "";
+        const newState = addr.state || "";
+        const newLocality = addr.suburb || addr.neighbourhood || addr.road || addr.residential || "";
+        const newLandmark = addr.amenity || addr.building || addr.shop || "";
+        const newHouse = addr.house_number || addr.name || "";
+        
+        setNewAddress(prev => ({
+          ...prev,
+          pincode: newPincode,
+          city: newCity,
+          state: newState,
+          locality: newLocality,
+          landmark: newLandmark || prev.landmark,
+          address: newHouse || prev.address
+        }));
+        
+        toast.success("Address auto-filled from map!", { id: "geocoding" });
+      } else {
+         toast.dismiss("geocoding");
+      }
+    } catch (err) {
+      toast.error("Failed to auto-fill address from map", { id: "geocoding" });
+    }
+  };
+
+  // If we have no saved addresses, force them to add one
+  React.useEffect(() => {
+    if (savedAddresses.length === 0) {
+      setIsAddingNewAddress(true);
+      setIsSelectingList(false);
+    }
+  }, [savedAddresses, setIsAddingNewAddress]);
+
+  // Handle Edit Mode
+  const handleEdit = (addr) => {
+    setNewAddress({
+      id: addr._id || addr.id,
+      name: addr.name || "",
+      phone: addr.phone || "",
+      alternatePhone: addr.alternatePhone || "",
+      email: addr.email || "",
+      pincode: addr.pincode || "",
+      locality: addr.locality || "",
+      address: addr.addressString || addr.address || "",
+      landmark: addr.landmark || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      country: addr.country || "India",
+      type: addr.tag || addr.type || "Home",
+      deliveryInstructions: addr.deliveryInstructions || "",
+    });
+    setIsAddingNewAddress(true);
+    setIsSelectingList(false);
+  };
+
+  const handleAddNew = () => {
+    setNewAddress({
+      name: "",
+      phone: "",
+      alternatePhone: "",
+      email: "",
+      pincode: "",
+      locality: "",
+      address: "",
+      landmark: "",
+      city: "",
+      state: "",
+      country: "India",
+      type: "Home",
+      deliveryInstructions: "",
+    });
+    setIsAddingNewAddress(true);
+    setIsSelectingList(false);
+  };
+
+  // Helper to get delivery estimate dates (e.g., +3 to +5 days)
+  const getDeliveryEstimates = () => {
+    const start = new Date();
+    start.setDate(start.getDate() + 3);
+    const end = new Date();
+    end.setDate(end.getDate() + 5);
+    
+    const options = { day: 'numeric', month: 'short' };
+    return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
+  };
+
+  const deliveryEstimates = getDeliveryEstimates();
+
+  // ------------------------------------------
+  // STATE 3: ADD/EDIT ADDRESS FORM (Screenshot 2)
+  // ------------------------------------------
+  if (isAddingNewAddress) {
+    return (
+      <div className="bg-surface-container-low -mt-2">
+        <form onSubmit={handleSaveNewAddress} className="pb-24">
+          <div className="p-4 space-y-4">
+            {addressError && (
+              <div className="p-3 bg-red-50 text-red-600 rounded text-[11px] font-semibold mb-2">
+                ⚠️ {addressError}
+              </div>
+            )}
+            
+            {/* Contact Details Block */}
+            <div className="bg-surface-bright rounded-lg p-4 shadow-sm border border-outline-variant/20">
+              <h2 className="text-[13px] font-bold text-on-surface mb-4">Contact Details</h2>
+              <div className="space-y-4">
+                <div className="relative mt-2">
+                  <input
+                    id="name"
+                    type="text"
+                    required
+                    placeholder="Name*"
+                    value={newAddress.name}
+                    onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
+                    className="peer w-full h-12 border border-outline-variant rounded px-3 text-[13px] text-on-surface outline-none bg-transparent focus:border-primary transition-colors placeholder-transparent"
+                  />
+                  <label htmlFor="name" className="absolute left-2 -top-2 bg-surface-bright px-1 text-[11px] text-secondary transition-all peer-placeholder-shown:text-[13px] peer-placeholder-shown:top-3.5 peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:text-[11px] peer-focus:bg-surface-bright peer-focus:text-primary pointer-events-none">
+                    Name*
+                  </label>
+                </div>
+                <div className="relative mt-2">
+                  <input
+                    id="phone"
+                    type="tel"
+                    required
+                    pattern="[0-9]{10}"
+                    placeholder="Mobile No*"
+                    value={newAddress.phone}
+                    onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
+                    className="peer w-full h-12 border border-outline-variant rounded px-3 text-[13px] text-on-surface outline-none bg-transparent focus:border-primary transition-colors placeholder-transparent"
+                  />
+                  <label htmlFor="phone" className="absolute left-2 -top-2 bg-surface-bright px-1 text-[11px] text-secondary transition-all peer-placeholder-shown:text-[13px] peer-placeholder-shown:top-3.5 peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:text-[11px] peer-focus:bg-surface-bright peer-focus:text-primary pointer-events-none">
+                    Mobile No*
+                  </label>
+                </div>
+                <div className="relative mt-2">
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    placeholder="Email Address*"
+                    value={newAddress.email}
+                    onChange={(e) => setNewAddress({ ...newAddress, email: e.target.value })}
+                    className="peer w-full h-12 border border-outline-variant rounded px-3 text-[13px] text-on-surface outline-none bg-transparent focus:border-primary transition-colors placeholder-transparent"
+                  />
+                  <label htmlFor="email" className="absolute left-2 -top-2 bg-surface-bright px-1 text-[11px] text-secondary transition-all peer-placeholder-shown:text-[13px] peer-placeholder-shown:top-3.5 peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:text-[11px] peer-focus:bg-surface-bright peer-focus:text-primary pointer-events-none">
+                    Email Address*
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Address Block */}
+            <div className="bg-surface-bright rounded-lg p-4 shadow-sm border border-outline-variant/20">
+              <h2 className="text-[13px] font-bold text-on-surface mb-4">Address</h2>
+              
+              <div className="w-full h-48 bg-surface-container-low rounded-lg mb-4 relative overflow-hidden border border-outline-variant/30 z-0">
+                 <MapContainer center={mapPosition} zoom={4} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+                   <TileLayer
+                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                   />
+                   <LocationMarker position={mapPosition} setPosition={setMapPosition} fetchAddressFromCoords={fetchAddressFromCoords} />
+                 </MapContainer>
+                 <div className="absolute top-2 right-2 z-[1000]">
+                   <button 
+                     type="button" 
+                     onClick={(e) => {
+                       e.preventDefault();
+                       toast.loading("Finding you...", { id: "gps" });
+                       if (navigator.geolocation) {
+                         navigator.geolocation.getCurrentPosition(
+                           (pos) => {
+                             const { latitude, longitude } = pos.coords;
+                             setMapPosition({ lat: latitude, lng: longitude });
+                             fetchAddressFromCoords(latitude, longitude);
+                             toast.success("Location found!", { id: "gps" });
+                           },
+                           (err) => {
+                             toast.error("Could not access GPS", { id: "gps" });
+                           }
+                         );
+                       } else {
+                         toast.error("Geolocation not supported by this browser", { id: "gps" });
+                       }
+                     }}
+                     className="bg-white p-2 rounded shadow flex items-center justify-center text-primary hover:bg-gray-50 transition-colors"
+                     title="Locate Me"
+                   >
+                     <span className="material-symbols-outlined text-[18px]">my_location</span>
+                   </button>
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="relative mt-2">
+                  <input
+                    id="pincode"
+                    type="tel"
+                    required
+                    maxLength={6}
+                    placeholder="Pin Code*"
+                    value={newAddress.pincode}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                      const updated = { ...newAddress, pincode: val };
+                      if (val.length === 6 && PINCODE_MAP[val]) {
+                        updated.city = PINCODE_MAP[val].city;
+                        updated.state = PINCODE_MAP[val].state;
+                      }
+                      setNewAddress(updated);
+                    }}
+                    className="peer w-full h-12 border border-outline-variant rounded px-3 text-[13px] text-on-surface outline-none bg-transparent focus:border-primary transition-colors placeholder-transparent"
+                  />
+                  <label htmlFor="pincode" className="absolute left-2 -top-2 bg-surface-bright px-1 text-[11px] text-secondary transition-all peer-placeholder-shown:text-[13px] peer-placeholder-shown:top-3.5 peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:text-[11px] peer-focus:bg-surface-bright peer-focus:text-primary pointer-events-none">
+                    Pin Code*
+                  </label>
                 </div>
 
-                {activeStep > 1 && (
-                  <span className="text-xs font-bold text-primary hover:underline">
-                    Change
-                  </span>
-                )}
-              </motion.button>
+                <div className="relative mt-2">
+                  <input
+                    id="address"
+                    type="text"
+                    required
+                    placeholder="House Number/Tower/Block*"
+                    value={newAddress.address}
+                    onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
+                    className="peer w-full h-12 border border-outline-variant rounded px-3 text-[13px] text-on-surface outline-none bg-transparent focus:border-primary transition-colors placeholder-transparent"
+                  />
+                  <label htmlFor="address" className="absolute left-2 -top-2 bg-surface-bright px-1 text-[11px] text-secondary transition-all peer-placeholder-shown:text-[13px] peer-placeholder-shown:top-3.5 peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:text-[11px] peer-focus:bg-surface-bright peer-focus:text-primary pointer-events-none">
+                    House Number/Tower/Block*
+                  </label>
+                </div>
 
-              {/* Accordion Content with liquid layout motion */}
-              <AnimatePresence mode="wait">
-                {activeStep === 1 ? (
-                  <motion.div
-                    key="expanded-addr"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="p-4 sm:p-6 space-y-4 overflow-hidden relative"
-                  >
+                <div className="relative mt-2">
+                  <input
+                    id="locality"
+                    type="text"
+                    required
+                    placeholder="Address (locality,building,street)*"
+                    value={newAddress.locality}
+                    onChange={(e) => setNewAddress({ ...newAddress, locality: e.target.value })}
+                    className="peer w-full h-12 border border-outline-variant rounded px-3 text-[13px] text-on-surface outline-none bg-transparent focus:border-primary transition-colors placeholder-transparent"
+                  />
+                  <label htmlFor="locality" className="absolute left-2 -top-2 bg-surface-bright px-1 text-[11px] text-secondary transition-all peer-placeholder-shown:text-[13px] peer-placeholder-shown:top-3.5 peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:text-[11px] peer-focus:bg-surface-bright peer-focus:text-primary pointer-events-none">
+                    Address (locality,building,street)*
+                  </label>
+                </div>
+                
+                <div className="relative mt-2">
+                  <input
+                    id="landmark"
+                    type="text"
+                    required
+                    placeholder="Landmark*"
+                    value={newAddress.landmark}
+                    onChange={(e) => setNewAddress({ ...newAddress, landmark: e.target.value })}
+                    className="peer w-full h-12 border border-outline-variant rounded px-3 text-[13px] text-on-surface outline-none bg-transparent focus:border-primary transition-colors placeholder-transparent"
+                  />
+                  <label htmlFor="landmark" className="absolute left-2 -top-2 bg-surface-bright px-1 text-[11px] text-secondary transition-all peer-placeholder-shown:text-[13px] peer-placeholder-shown:top-3.5 peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:text-[11px] peer-focus:bg-surface-bright peer-focus:text-primary pointer-events-none">
+                    Landmark*
+                  </label>
+                </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative mt-2">
+                    <input
+                      id="city"
+                      type="text"
+                      required
+                      placeholder="City / District*"
+                      value={newAddress.city}
+                      onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                      className="peer w-full h-12 border border-outline-variant rounded px-3 text-[13px] text-on-surface outline-none bg-transparent focus:border-primary transition-colors placeholder-transparent"
+                    />
+                    <label htmlFor="city" className="absolute left-2 -top-2 bg-surface-bright px-1 text-[11px] text-secondary transition-all peer-placeholder-shown:text-[13px] peer-placeholder-shown:top-3.5 peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:text-[11px] peer-focus:bg-surface-bright peer-focus:text-primary pointer-events-none">
+                      City / District*
+                    </label>
+                  </div>
+                  <div className="relative mt-2">
+                    <input
+                      id="state"
+                      type="text"
+                      required
+                      placeholder="State*"
+                      value={newAddress.state}
+                      onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
+                      className="peer w-full h-12 border border-outline-variant rounded px-3 text-[13px] text-on-surface outline-none bg-transparent focus:border-primary transition-colors placeholder-transparent uppercase"
+                    />
+                    <label htmlFor="state" className="absolute left-2 -top-2 bg-surface-bright px-1 text-[11px] text-secondary transition-all peer-placeholder-shown:text-[13px] peer-placeholder-shown:top-3.5 peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:text-[11px] peer-focus:bg-surface-bright peer-focus:text-primary pointer-events-none">
+                      State*
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                    {/* Render Saved Address Selection Radio stack */}
-                    <div className="space-y-3">
-                      {savedAddresses.map((addr) => {
-                        const addrId = addr._id || addr.id;
-                        return (
-                          <motion.label
-                            layout
-                            whileHover={{
-                              scale: selectedAddressId === addrId ? 1 : 1.005,
-                            }}
-                            key={addrId}
-                            className={`block p-4 rounded-lg border cursor-pointer transition-all relative ${
-                              selectedAddressId === addrId
-                                ? "bg-surface-bright border-primary ring-1 ring-primary"
-                                : "bg-white border-outline-variant/50 hover:border-outline-variant"
-                            }`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <input
-                                type="radio"
-                                name="delivery-address-radio"
-                                checked={selectedAddressId === addrId}
-                                onChange={() => {
-                                  setSelectedAddressId(addrId);
-                                  setIsAddingNewAddress(false);
-                                }}
-                                className="mt-1 text-primary focus:ring-0 cursor-pointer transition-all"
-                              />
-                              <div className="flex-1 min-w-0 text-xs">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-bold text-on-surface text-[10px] sm:text-xs">
-                                    {addr.name}
-                                  </span>
-                                  <span className="bg-surface-container-low text-secondary text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-                                    {addr.type}
-                                  </span>
-                                  <span className="font-bold text-on-surface ml-2 text-[10px] sm:text-xs">
-                                    {addr.phone}
-                                  </span>
-                                </div>
-                                <p className="text-secondary leading-relaxed">
-                                  {addr.address}, {addr.locality}, {addr.city},{" "}
-                                  {addr.state} -{" "}
-                                  <span className="font-bold text-on-surface">
-                                    {addr.pincode}
-                                  </span>
-                                </p>
-
-                                {/* Active CTA inside active radial item */}
-                                <AnimatePresence>
-                                  {selectedAddressId === addrId &&
-                                    !isAddingNewAddress && (
-                                      <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="mt-4 pt-3 border-t border-surface-container-low overflow-hidden"
-                                      >
-                                        <motion.button
-                                          whileHover={{ scale: 1.02 }}
-                                          whileTap={{ scale: 0.98 }}
-                                          type="button"
-                                          onClick={() => {
-                                            if (!selectedAddressId) {
-                                              toast.error("Please select a delivery address first.");
-                                              return;
-                                            }
-                                            if (isAddingNewAddress) {
-                                              toast.error("Please save your new address or click cancel to proceed.");
-                                              return;
-                                            }
-                                            setActiveStep(2);
-                                          }}
-                                          className="bg-primary hover:bg-primary-hover text-surface font-bold text-xs uppercase tracking-wider px-6 py-2.5 rounded shadow-xs transition-colors cursor-pointer"
-                                        >
-                                          Deliver Here
-                                        </motion.button>
-                                      </motion.div>
-                                    )}
-                                </AnimatePresence>
-                              </div>
-                            </div>
-                          </motion.label>
-                        );
-                      })}
+            {/* Address Type Block */}
+            <div className="bg-surface-bright rounded-lg p-4 shadow-sm border border-outline-variant/20">
+               <h2 className="text-[12px] font-bold text-on-surface mb-3">Address Type</h2>
+               <div className="flex items-center gap-6 mb-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div className={`w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center ${newAddress.type === 'Home' ? 'border-primary' : 'border-outline-variant'}`}>
+                      {newAddress.type === 'Home' && <div className="w-2 h-2 rounded-full bg-primary"></div>}
                     </div>
+                    <span className="text-[13px] text-on-surface">Home</span>
+                    <input type="radio" className="hidden" checked={newAddress.type === 'Home'} onChange={() => setNewAddress({...newAddress, type: 'Home'})} />
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div className={`w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center ${newAddress.type === 'Work' || newAddress.type === 'Office' ? 'border-primary' : 'border-outline-variant'}`}>
+                      {(newAddress.type === 'Work' || newAddress.type === 'Office') && <div className="w-2 h-2 rounded-full bg-primary"></div>}
+                    </div>
+                    <span className="text-[13px] text-on-surface">Office</span>
+                    <input type="radio" className="hidden" checked={newAddress.type === 'Work' || newAddress.type === 'Office'} onChange={() => setNewAddress({...newAddress, type: 'Office'})} />
+                  </label>
+               </div>
+               
+               <label className="flex items-center gap-2 cursor-pointer mt-2">
+                 <div className={`w-4 h-4 rounded flex items-center justify-center ${true ? 'bg-primary' : 'border border-outline-variant'}`}>
+                    <span className="material-symbols-outlined text-[12px] text-surface font-bold">check</span>
+                 </div>
+                 <span className="text-[12px] text-on-surface">Make this as my default address</span>
+               </label>
+            </div>
+          </div>
 
-                    {/* Add New Address Form Expansion toggle */}
-                    <AnimatePresence mode="wait">
-                      {!isAddingNewAddress ? (
-                        <motion.button
-                          key="btn-add-new"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          whileHover={{ scale: 1.005 }}
-                          whileTap={{ scale: 0.995 }}
-                          type="button"
-                          onClick={() => setIsAddingNewAddress(true)}
-                          className="w-full py-3 border border-dashed border-outline-variant text-primary font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-surface-bright transition-colors text-left px-4 flex items-center gap-2 cursor-pointer block"
-                        >
-                          <span className="material-symbols-outlined text-base">
-                            add
-                          </span>
-                          Add a new address
-                        </motion.button>
-                      ) : (
-                        <motion.form
-                          key="form-add-new"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.25 }}
-                          onSubmit={handleSaveNewAddress}
-                          className="mt-6 pt-4 border-t border-outline-variant/40 space-y-4 overflow-hidden block"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                            <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                              Enter New Address Information
-                            </span>
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              type="button"
-                              onClick={handleFetchCurrentLocation}
-                              disabled={isDetectingLocation}
-                              className="inline-flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-lg border border-primary/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <span className={`material-symbols-outlined text-base ${isDetectingLocation ? 'animate-spin' : ''}`}>
-                                {isDetectingLocation ? 'sync' : 'my_location'}
-                              </span>
-                              {isDetectingLocation ? 'Detecting Location...' : 'Use Current Location'}
-                            </motion.button>
+          {/* Sticky Action Footer */}
+          <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-lg z-40 max-w-[768px] mx-auto flex gap-3">
+             <button
+               type="button"
+               onClick={() => {
+                 if (savedAddresses.length > 0) {
+                   setIsAddingNewAddress(false);
+                 } else {
+                   toast.error("Please add at least one address to continue.");
+                 }
+               }}
+               className="flex-1 py-3 bg-surface-bright text-on-surface font-extrabold uppercase text-[13px] tracking-widest border border-outline-variant rounded"
+             >
+               Cancel
+             </button>
+             <button
+               type="submit"
+               disabled={isProcessing}
+               className="flex-1 py-3 bg-[#f26a10] hover:bg-[#d85d0d] text-white font-extrabold uppercase text-[13px] tracking-widest rounded shadow-md disabled:opacity-70"
+             >
+               {isProcessing ? "Saving..." : "Save"}
+             </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // ------------------------------------------
+  // STATE 2: SELECT ADDRESS LIST (Screenshot 3)
+  // ------------------------------------------
+  if (isSelectingList) {
+    return (
+      <div className="bg-surface-bright pb-24">
+         <div className="p-4">
+            <button 
+              onClick={handleAddNew}
+              className="w-full py-3.5 border border-outline-variant/60 rounded text-[12px] font-extrabold uppercase tracking-widest text-primary shadow-sm hover:bg-surface-container-low transition-colors"
+            >
+              Add New Address
+            </button>
+         </div>
+
+         <div className="bg-surface-container-low px-4 py-2 text-[11px] font-bold text-secondary uppercase tracking-widest border-y border-outline-variant/20">
+            Default Address
+         </div>
+
+         <div className="divide-y divide-outline-variant/20">
+            {savedAddresses.map((addr) => {
+               const addrId = addr._id || addr.id;
+               const isSelected = selectedAddressId === addrId;
+               return (
+                 <div key={addrId} className="p-4">
+                    <div className="flex gap-3">
+                       <div className="pt-1 cursor-pointer" onClick={() => setSelectedAddressId(addrId)}>
+                         <div className={`w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center ${isSelected ? 'border-primary' : 'border-outline-variant'}`}>
+                           {isSelected && <div className="w-2 h-2 rounded-full bg-primary"></div>}
+                         </div>
+                       </div>
+                       <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                             <span className="text-[13px] font-bold text-on-surface">{addr.name}</span>
+                             {addr.tag && (
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border border-primary text-primary rounded-full">
+                                  {addr.tag}
+                                </span>
+                             )}
                           </div>
-                          {addressError && (
-                            <div className="p-3 bg-red-50 text-red-600 rounded text-[11px] font-semibold mb-4">
-                              ⚠️ {addressError}
+                          <p className="text-[12px] text-secondary leading-relaxed mb-1">
+                             {addr.addressString || addr.address}, {addr.locality}, {addr.city}, {addr.state} {addr.pincode}
+                          </p>
+                          <p className="text-[12px] text-secondary">
+                             Mobile: <span className="font-bold text-on-surface">{addr.phone}</span>
+                          </p>
+
+                          {isSelected && (
+                            <div className="flex gap-3 mt-4">
+                               <button 
+                                 className="px-6 py-2 border border-outline-variant rounded text-[11px] font-bold text-on-surface uppercase tracking-wider"
+                               >
+                                 Remove
+                               </button>
+                               <button 
+                                 onClick={() => handleEdit(addr)}
+                                 className="px-6 py-2 border border-outline-variant rounded text-[11px] font-bold text-on-surface uppercase tracking-wider"
+                               >
+                                 Edit
+                               </button>
                             </div>
                           )}
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <label
-                                htmlFor="checkout-name"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                Name
-                              </label>
-                              <input
-                                id="checkout-name"
-                                type="text"
-                                required
-                                autoComplete="name"
-                                placeholder="Your full name"
-                                value={newAddress.name}
-                                onChange={(e) =>
-                                  setNewAddress({
-                                    ...newAddress,
-                                    name: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label
-                                htmlFor="checkout-phone"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                10-digit Mobile Number
-                              </label>
-                              <input
-                                id="checkout-phone"
-                                type="tel"
-                                required
-                                autoComplete="tel"
-                                placeholder="9876543210"
-                                pattern="[0-9]{10}"
-                                value={newAddress.phone}
-                                onChange={(e) =>
-                                  setNewAddress({
-                                    ...newAddress,
-                                    phone: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <label
-                                htmlFor="checkout-alternate-phone"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                Alternate Mobile Number (Optional)
-                              </label>
-                              <input
-                                id="checkout-alternate-phone"
-                                type="tel"
-                                autoComplete="tel"
-                                placeholder="Alternate mobile"
-                                pattern="[0-9]{10}"
-                                value={newAddress.alternatePhone}
-                                onChange={(e) =>
-                                  setNewAddress({
-                                    ...newAddress,
-                                    alternatePhone: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label
-                                htmlFor="checkout-email"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                Email Address *
-                              </label>
-                              <input
-                                id="checkout-email"
-                                type="email"
-                                required
-                                autoComplete="email"
-                                placeholder="Email address"
-                                value={newAddress.email}
-                                onChange={(e) =>
-                                  setNewAddress({
-                                    ...newAddress,
-                                    email: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <label
-                                htmlFor="checkout-pincode"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                Pincode
-                              </label>
-                              <input
-                                id="checkout-pincode"
-                                type="tel"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                required
-                                autoComplete="postal-code"
-                                placeholder="6-digit Pincode"
-                                value={newAddress.pincode}
-                                onChange={(e) => {
-                                  const val = e.target.value
-                                    .replace(/\D/g, "")
-                                    .slice(0, 6);
-                                  const updated = {
-                                    ...newAddress,
-                                    pincode: val,
-                                  };
-                                  // Auto-fill logic
-                                  if (val.length === 6) {
-                                    if (PINCODE_MAP[val]) {
-                                      updated.city = PINCODE_MAP[val].city;
-                                      updated.state = PINCODE_MAP[val].state;
-                                    } else {
-                                      // Real API Lookup with a 3-second timeout safeguard
-                                      const controller = new AbortController();
-                                      const timeoutId = setTimeout(() => controller.abort(), 3000);
-                                      
-                                      fetch(
-                                        `https://api.postalpincode.in/pincode/${val}`,
-                                        { signal: controller.signal }
-                                      )
-                                        .then((res) => res.json())
-                                        .then((data) => {
-                                          clearTimeout(timeoutId);
-                                          if (
-                                            data &&
-                                            data[0] &&
-                                            data[0].Status === "Success" &&
-                                            data[0].PostOffice
-                                          ) {
-                                            const po = data[0].PostOffice[0];
-                                            setNewAddress((prev) => ({
-                                              ...prev,
-                                              city: po.District,
-                                              state: po.State,
-                                            }));
-                                          }
-                                        })
-                                        .catch((err) => {
-                                          clearTimeout(timeoutId);
-                                          logger.warn(
-                                            "Pincode API Safeguard Triggered (Using manual entry fallback):",
-                                            err
-                                          );
-                                        });
-                                    }
-                                  }
-                                  setNewAddress(updated);
-                                }}
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label
-                                htmlFor="checkout-locality"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                Locality / Town
-                              </label>
-                              <input
-                                id="checkout-locality"
-                                type="text"
-                                required
-                                autoComplete="address-level3"
-                                placeholder="Locality"
-                                value={newAddress.locality}
-                                onChange={(e) =>
-                                  setNewAddress({
-                                    ...newAddress,
-                                    locality: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label
-                              htmlFor="checkout-address"
-                              className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                            >
-                              Address (Area and Street) *
-                            </label>
-                            <textarea
-                              id="checkout-address"
-                              rows="2"
-                              required
-                              autoComplete="street-address"
-                              placeholder="House No, Building, Street, Area"
-                              value={newAddress.address}
-                              onChange={(e) =>
-                                setNewAddress({
-                                  ...newAddress,
-                                  address: e.target.value,
-                                })
-                              }
-                              className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <label
-                                htmlFor="checkout-landmark"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                Landmark *
-                              </label>
-                              <input
-                                id="checkout-landmark"
-                                type="text"
-                                required
-                                autoComplete="address-line2"
-                                placeholder="E.g., near Appollo hospital"
-                                value={newAddress.landmark}
-                                onChange={(e) =>
-                                  setNewAddress({
-                                    ...newAddress,
-                                    landmark: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label
-                                htmlFor="checkout-country"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                Country *
-                              </label>
-                              <input
-                                id="checkout-country"
-                                type="text"
-                                required
-                                autoComplete="country-name"
-                                placeholder="Country name"
-                                value={newAddress.country}
-                                onChange={(e) =>
-                                  setNewAddress({
-                                    ...newAddress,
-                                    country: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <label
-                                htmlFor="checkout-city"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                City / District
-                              </label>
-                              <input
-                                id="checkout-city"
-                                type="text"
-                                required
-                                autoComplete="address-level2"
-                                placeholder="City"
-                                value={newAddress.city}
-                                onChange={(e) =>
-                                  setNewAddress({
-                                    ...newAddress,
-                                    city: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label
-                                htmlFor="checkout-state"
-                                className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                              >
-                                State
-                              </label>
-                              <input
-                                id="checkout-state"
-                                type="text"
-                                required
-                                autoComplete="address-level1"
-                                placeholder="State"
-                                value={newAddress.state}
-                                onChange={(e) =>
-                                  setNewAddress({
-                                    ...newAddress,
-                                    state: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label
-                              htmlFor="checkout-instructions"
-                              className="block text-[10px] uppercase font-bold text-secondary mb-1"
-                            >
-                              Delivery Instructions / Gate Codes (Optional)
-                            </label>
-                            <textarea
-                              id="checkout-instructions"
-                              rows="1"
-                              placeholder="E.g. drop at security desk, call before coming"
-                              value={newAddress.deliveryInstructions}
-                              onChange={(e) =>
-                                setNewAddress({
-                                  ...newAddress,
-                                  deliveryInstructions: e.target.value,
-                                })
-                              }
-                              className="w-full bg-white border border-outline-variant rounded p-2 text-xs outline-none focus:border-primary transition-colors"
-                            />
-                          </div>
-
-                          {/* Address Type configuration selectors */}
-                          <div>
-                            <label className="block text-[10px] uppercase font-bold text-secondary mb-1">
-                              Address Type *
-                            </label>
-                            <div className="flex items-center gap-4 mt-1">
-                              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
-                                <input
-                                  type="radio"
-                                  name="addr-type-tag"
-                                  checked={newAddress.type === "Home"}
-                                  onChange={() =>
-                                    setNewAddress({
-                                      ...newAddress,
-                                      type: "Home",
-                                    })
-                                  }
-                                  className="text-primary focus:ring-0 cursor-pointer transition-all"
-                                />
-                                <span>Home (All day delivery)</span>
-                              </label>
-                              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
-                                <input
-                                  type="radio"
-                                  name="addr-type-tag"
-                                  checked={newAddress.type === "Work"}
-                                  onChange={() =>
-                                    setNewAddress({
-                                      ...newAddress,
-                                      type: "Work",
-                                    })
-                                  }
-                                  className="text-primary focus:ring-0 cursor-pointer transition-all"
-                                />
-                                <span>
-                                  Work (Delivery between 10 AM - 5 PM)
-                                </span>
-                              </label>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3 pt-3">
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              type="submit"
-                              className="bg-primary hover:bg-primary-hover text-surface font-bold text-xs uppercase tracking-wider px-6 py-2.5 rounded shadow-xs transition-colors cursor-pointer"
-                            >
-                              Save and Deliver Here
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              type="button"
-                              onClick={() => setIsAddingNewAddress(false)}
-                              className="text-[#685c57] font-bold text-xs uppercase tracking-wider px-4 py-2.5 hover:underline cursor-pointer"
-                            >
-                              Cancel
-                            </motion.button>
-                          </div>
-                        </motion.form>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                ) : (
-                  /* Completed summary banner snippet */
-                  <motion.div
-                    key="collapsed-addr"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="px-12 py-3 text-xs text-[#1a1c1a] border-t border-[#f4f3f1] flex justify-between items-center"
-                  >
-                    <div className="line-clamp-1">
-                      <span className="font-bold">
-                        {activeSelectedAddress.name}
-                      </span>{" "}
-                      — {activeSelectedAddress.address},{" "}
-                      {activeSelectedAddress.locality},{" "}
-                      {activeSelectedAddress.city} -{" "}
-                      <span className="font-bold">
-                        {activeSelectedAddress.pincode}
-                      </span>
+                       </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-    </>
+                 </div>
+               );
+            })}
+         </div>
+
+         {/* Sticky Action Footer */}
+         <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 max-w-[768px] mx-auto">
+            <button
+              onClick={() => setIsSelectingList(false)}
+              className="w-full bg-[#f26a10] hover:bg-[#d85d0d] text-white py-3.5 rounded-[4px] text-[13px] font-extrabold uppercase tracking-widest shadow-sm transition-colors text-center"
+            >
+              Confirm
+            </button>
+         </div>
+      </div>
+    );
+  }
+
+  // ------------------------------------------
+  // STATE 1: MAIN DELIVERY VIEW (Screenshot 1)
+  // ------------------------------------------
+  return (
+    <div className="bg-surface-container-low -mt-2">
+      {/* Selected Address Block */}
+      <div className="bg-surface-bright mb-2 p-4 pt-6 shadow-sm">
+        {activeSelectedAddress && (
+          <div className="relative">
+            <div className="flex justify-between items-start mb-2">
+               <div className="flex items-center gap-2">
+                 <span className="text-[14px] font-extrabold text-on-surface">
+                   {activeSelectedAddress.name}
+                 </span>
+                 <span className="text-[11px] text-secondary">(Default)</span>
+                 {activeSelectedAddress.tag && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border border-primary text-primary rounded-full">
+                      {activeSelectedAddress.tag}
+                    </span>
+                 )}
+               </div>
+               <button 
+                 onClick={() => setIsSelectingList(true)}
+                 className="text-[12px] font-bold text-primary uppercase tracking-wide cursor-pointer"
+               >
+                 Change
+               </button>
+            </div>
+            
+            <p className="text-[13px] text-on-surface leading-relaxed w-[85%]">
+               {activeSelectedAddress.addressString || activeSelectedAddress.address}<br />
+               {activeSelectedAddress.locality}<br />
+               {activeSelectedAddress.city}, {activeSelectedAddress.state} {activeSelectedAddress.pincode}
+            </p>
+            
+            <div className="mt-3 text-[13px]">
+               <span className="text-secondary">Mobile: </span>
+               <span className="font-extrabold text-on-surface">{activeSelectedAddress.phone}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Delivery Estimates Block */}
+      <div className="bg-surface-container-low px-4 py-3 text-[11px] font-bold text-secondary uppercase tracking-widest">
+         Delivery Estimates
+      </div>
+      
+      <div className="bg-surface-bright p-4 shadow-sm border-t border-outline-variant/10 flex flex-col gap-4">
+        {activeItems.map(item => (
+          <div key={item.id} className="flex items-center gap-4">
+            <div className="w-12 h-14 bg-surface-container-low rounded overflow-hidden flex-shrink-0">
+               <img src={item.imageSrc} alt={item.title} className="w-full h-full object-cover" />
+            </div>
+            <div className="text-[13px] text-on-surface">
+              Delivery between <span className="font-extrabold">{deliveryEstimates}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Sticky Action Footer */}
+      <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 max-w-[768px] mx-auto">
+         <button
+           onClick={() => setActiveStep(2)} // Proceed to Payment
+           className="w-full bg-[#f26a10] hover:bg-[#d85d0d] text-white py-3.5 rounded-[4px] text-[13px] font-extrabold uppercase tracking-widest shadow-sm transition-colors text-center"
+         >
+           Continue
+         </button>
+      </div>
+    </div>
   );
 }

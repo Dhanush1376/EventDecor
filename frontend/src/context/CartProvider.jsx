@@ -7,22 +7,35 @@ import logger from '../utils/logger';
 
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
-  const [items, setItems] = useState([]);
+  const getInitialCartState = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('siri_cart_cache');
+        if (cached) return JSON.parse(cached);
+      }
+    } catch (e) {}
+    return { items: [], summary: { subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 } };
+  };
+
+  const initialState = getInitialCartState();
+  const [items, setItems] = useState(initialState.items);
   const [claimedCoupon, setClaimedCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState("");
-  const itemsRef = useRef([]);
+  const itemsRef = useRef(initialState.items);
+  
+  const [summary, setSummary] = useState(initialState.summary);
+
   useEffect(() => {
     itemsRef.current = items;
-  }, [items]);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('siri_cart_cache', JSON.stringify({ items, summary }));
+      }
+    } catch (e) {}
+  }, [items, summary]);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [summary, setSummary] = useState({
-    subtotal: 0,
-    shippingFee: 0,
-    platformFee: 0,
-    discount: 0,
-    total: 0,
-  });
 
   const syncTimeoutRef = useRef(null);
 
@@ -59,9 +72,8 @@ export function CartProvider({ children }) {
           setItems(transformDbCart(res.data?.items));
           setSummary(res.data?.summary || summary);
         } else {
-          // Guest mode: Keep purely in-memory, reset to empty
-          setItems([]);
-          setSummary({ subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 });
+          // Guest mode: Keep purely in-memory. 
+          // Do not reset to empty because we want to preserve localStorage cart.
         }
       } catch (err) {
         if (err.name !== 'CanceledError' && err?.code !== 'ERR_NO_SESSION' && err?.message !== 'Not authenticated') {

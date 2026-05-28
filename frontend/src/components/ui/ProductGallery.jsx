@@ -42,7 +42,9 @@ export function ProductGallery({ images = [], product }) {
     }, 10);
   };
 
-  const handleBack = () => {
+  const handleBack = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (window.history.state && window.history.state.idx > 0) {
       navigate(-1);
     } else {
@@ -135,7 +137,7 @@ export function ProductGallery({ images = [], product }) {
         {/* Mobile Back Arrow Overlay */}
         <button
           onClick={handleBack}
-          className="flex md:hidden absolute top-4 left-4 z-20 items-center justify-center w-10 h-10 rounded-full bg-[#fbfbf8]/90 backdrop-blur-xs shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white outline-none focus:outline-none"
+          className="flex md:hidden absolute top-4 left-4 z-20 items-center justify-center w-10 h-10 rounded-full bg-[#fbfbf8]/90 backdrop-blur-xs shadow-lg border border-black/5 active:scale-90 transition-all text-black outline-none focus:outline-none"
           aria-label="Go back"
         >
           <span className="material-symbols-outlined text-[20px] text-black">

@@ -291,12 +291,22 @@ api.interceptors.response.use(
     const hasRetryAttemptsLeft =
       originalRequest && (!originalRequest._retryCount || originalRequest._retryCount < maxRetries);
     const isAuthRoute = pathIncludesAuth(originalRequest?.url);
-    const canRetryMutation = !isAuthRoute && ['post', 'put', 'patch'].includes(method);
+    const retryDisabled = originalRequest?._disableRetry === true;
+    const isPaymentOrOrderMutation =
+      originalRequest?.url?.includes('/orders') ||
+      originalRequest?.url?.includes('/verify-payment') ||
+      originalRequest?.url?.includes('/payment');
+    const canRetryMutation =
+      !retryDisabled &&
+      !isPaymentOrOrderMutation &&
+      !isAuthRoute &&
+      ['post', 'put', 'patch'].includes(method);
 
     if (
       isTransientError &&
       hasRetryAttemptsLeft &&
       !originalRequest?._retry &&
+      !retryDisabled &&
       !window.__isOffline &&
       (isGet || canRetryMutation)
     ) {

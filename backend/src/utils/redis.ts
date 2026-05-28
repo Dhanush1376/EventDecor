@@ -68,7 +68,14 @@ export const initRedis = async (): Promise<void> => {
 
     const setupListeners = (client: RedisClientType, name: string) => {
       client.on('error', (err: any) => {
-        if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+        if (err.message && err.message.includes('max requests limit exceeded')) {
+          if (!(global as any).upstashDisconnectLogged) {
+            logger.error(`[REDIS ${name}] Upstash Free Limit Exceeded. Gracefully disconnecting to prevent reconnect loops.`);
+            (global as any).upstashDisconnectLogged = true;
+          }
+          // Disconnect immediately so node-redis stops the infinite auto-reconnect cycle
+          client.disconnect().catch(() => {});
+        } else if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
           logger.warn(`[REDIS ${name}] Transient network issue (${err.code}).`);
         } else {
           logger.error(`[REDIS ${name}] Error: ${err.message}`);

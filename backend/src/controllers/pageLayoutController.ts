@@ -19,8 +19,7 @@ export const getLayoutByPath = async (req: Request, res: Response) => {
           { componentName: 'TrendingSection', props: {}, order: 4, isActive: true },
           { componentName: 'SeasonalHighlights', props: {}, order: 5, isActive: true },
           { componentName: 'StorySection', props: {}, order: 6, isActive: true },
-          { componentName: 'GallerySection', props: {}, order: 7, isActive: true },
-          { componentName: 'VerifiedReviews', props: {}, order: 8, isActive: true }
+          { componentName: 'GallerySection', props: {}, order: 7, isActive: true }
         ];
         layout = await PageLayout.create({
           pagePath: '/',
@@ -33,9 +32,9 @@ export const getLayoutByPath = async (req: Request, res: Response) => {
       }
     }
 
-    // Sort active sections by order
+    // Sort active sections by order, filtering out VerifiedReviews entirely
     const activeSections = layout.sections
-      .filter((s) => s.isActive)
+      .filter((s) => s.isActive && s.componentName !== 'VerifiedReviews')
       .sort((a, b) => a.order - b.order);
 
     res.status(200).json({ success: true, data: { ...layout.toObject(), sections: activeSections } });
@@ -48,7 +47,13 @@ export const getLayoutByPath = async (req: Request, res: Response) => {
 export const getAllLayouts = async (req: Request, res: Response) => {
   try {
     const layouts = await PageLayout.find();
-    res.status(200).json({ success: true, data: layouts });
+    // Filter out VerifiedReviews from sections array
+    const cleanedLayouts = layouts.map(layout => {
+      const obj = layout.toObject();
+      obj.sections = obj.sections.filter((s: any) => s.componentName !== 'VerifiedReviews');
+      return obj;
+    });
+    res.status(200).json({ success: true, data: cleanedLayouts });
   } catch (error: any) {
     logger.error('Error fetching all layouts', error);
     res.status(500).json({ success: false, message: 'Server Error' });

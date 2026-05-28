@@ -3,93 +3,80 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { SEO } from "../components/seo/SEO";
 import { CheckoutProvider, useCheckout } from "../checkout/CheckoutProvider";
+import toast from "react-hot-toast";
 
 const CheckoutAddressStep = lazy(() => import("../checkout/CheckoutAddressStep"));
-const CheckoutOrderSummaryStep = lazy(() => import("../checkout/CheckoutOrderSummaryStep"));
 const CheckoutPaymentStep = lazy(() => import("../checkout/CheckoutPaymentStep"));
-const CheckoutSidebar = lazy(() => import("../checkout/CheckoutSidebar"));
-const CheckoutRecommendations = lazy(() => import("../checkout/CheckoutRecommendations"));
+import { CheckoutSteps } from "../components/ui/CheckoutSteps";
 
 function StepFallback() {
   return (
     <div
-      className="h-24 animate-pulse bg-surface-container-low rounded-lg border border-outline-variant/30"
+      className="h-[50vh] flex items-center justify-center"
       aria-hidden
-    />
+    >
+      <div className="w-8 h-8 border-4 border-[#f26a10] border-t-transparent rounded-full animate-spin"></div>
+    </div>
   );
 }
 
+const CheckoutSidebar = lazy(() => import("../checkout/CheckoutSidebar"));
+
 function CheckoutContent() {
-  const { user, isAuthenticated, navigate } = useCheckout();
+  const { activeStep, setActiveStep, activeSelectedAddress, navigate } = useCheckout();
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="bg-surface-container-low min-h-screen pb-32 font-body text-on-surface"
-    >
+    <div className="bg-surface-container-low min-h-screen pb-32 font-body text-on-surface">
       <SEO
         title="Secure Checkout"
         description="Finalize your Siri Arts & Crafts order through our secure checkout portal."
         noindex
       />
 
-      <div className="max-w-max-width mx-auto px-4 sm:px-6 pt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 xl:col-span-8 space-y-4">
-            <motion.div
-              layout
-              className="bg-surface-bright border border-outline-variant/40 rounded-lg overflow-hidden shadow-xs"
-            >
-              <div className="p-4 bg-surface-bright flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="w-5 h-5 bg-surface-container-low text-secondary font-bold text-[10px] sm:text-xs rounded flex items-center justify-center">
-                    1
-                  </span>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-secondary">
-                    Login
-                  </span>
-                  <span className="material-symbols-outlined text-base text-green-700 font-bold">
-                    check
-                  </span>
-                </div>
-                {isAuthenticated && (
-                  <button
-                    type="button"
-                    onClick={() => navigate("/dashboard")}
-                    className="text-[10px] sm:text-xs font-bold text-primary hover:underline cursor-pointer"
-                  >
-                    Change
-                  </button>
-                )}
-              </div>
-              <div className="px-12 py-3 text-[10px] sm:text-xs text-on-surface border-t border-surface-container-low">
-                <span className="font-bold">{user?.name || "Guest User"}</span>{" "}
-                <span className="text-secondary mx-2">{user?.phone || "Verification Pending"}</span>
-              </div>
-            </motion.div>
+      {/* Top Header Strip with Animated Progress Bar */}
+      <CheckoutSteps 
+        currentStep={activeStep} 
+        onStepClick={(stepIndex) => {
+          if (stepIndex === 0) {
+            navigate("/cart");
+          } else if (stepIndex === 1) {
+            setActiveStep(1);
+          } else if (stepIndex === 2) {
+            if (!activeSelectedAddress) {
+              toast.error("Please configure and select a delivery address first.");
+              return;
+            }
+            setActiveStep(2);
+          }
+        }}
+      />
 
+      <div className="max-w-[1240px] mx-auto w-full pt-4 px-4 sm:px-6">
+        {activeStep === 1 ? (
+          <div className="max-w-[768px] mx-auto">
             <Suspense fallback={<StepFallback />}>
               <CheckoutAddressStep />
             </Suspense>
-            <Suspense fallback={<StepFallback />}>
-              <CheckoutOrderSummaryStep />
-            </Suspense>
-            <Suspense fallback={<StepFallback />}>
-              <CheckoutRecommendations />
-            </Suspense>
-            <Suspense fallback={<StepFallback />}>
-              <CheckoutPaymentStep />
-            </Suspense>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Active Step Form Details */}
+            <div className="lg:col-span-7 xl:col-span-8">
+              <Suspense fallback={<StepFallback />}>
+                {activeStep === 2 && <CheckoutPaymentStep />}
+              </Suspense>
+            </div>
 
-          <Suspense fallback={<StepFallback />}>
-            <CheckoutSidebar />
-          </Suspense>
-        </div>
+            {/* Right Column: Price Details Sidebar & Recommendations */}
+            <div className="lg:col-span-5 xl:col-span-4">
+              <Suspense fallback={<div className="h-40 bg-surface-bright border border-outline-variant/35 rounded-lg animate-pulse" />}>
+                <CheckoutSidebar />
+              </Suspense>
+            </div>
+          </div>
+        )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

@@ -90,73 +90,54 @@ export default function CheckoutOrderSummaryStep() {
                     transition={{ duration: 0.3 }}
                     className="p-4 sm:p-6 space-y-4 border-t border-[#f4f3f1] overflow-hidden relative"
                   >
-                    {/* Need By Date Selector (Moved to Top for High Visibility) */}
-                    <div className="bg-[#fff9e6] p-4 rounded-xl border border-[#ffe0b2] text-xs">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="material-symbols-outlined text-[var(--color-gold-dark)] text-sm">calendar_today</span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-gold-dark)]">
-                          Required Timeline Request *
-                        </span>
-                      </div>
-                      <label htmlFor="need-by-date-input" className="block text-[11px] text-secondary leading-normal mb-2">
-                        By when do you need this product? We recommend setting a date at least 5-7 days from today to ensure handcrafted perfection and smooth shipping delivery.
-                      </label>
-                      <input
-                        id="need-by-date-input"
-                        type="date"
-                        min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // minimum tomorrow
-                        value={needByDate}
-                        onChange={(e) => setNeedByDate(e.target.value)}
-                        className="w-full bg-white border border-[#ffe0b2] rounded p-2.5 text-xs outline-none focus:border-primary transition-colors font-sans text-on-surface"
-                        required
-                      />
-                    </div>
-
-                    {/* Line Items List */}
-                    <div className="space-y-4 divide-y divide-[#f4f3f1]">
+                    {/* Line Items List - Premium Vertical Stack (Reverted from Horizontal Scroll) */}
+                    <div className="space-y-3">
                       {activeItems.map((item) => (
                         <div
-                          key={`summary-item-${item.id}`}
-                          className="pt-4 first:pt-0 flex gap-4"
+                          key={`summary-item-${item.id || item._id}`}
+                          className="bg-[#fafafa] border border-outline-variant/35 rounded-2xl p-3 flex gap-4 relative select-none shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
                         >
-                          <img
-                            onError={handleImageError}
-                            src={item.imageSrc}
-                            alt="Traditional wedding event decoration"
-                            className="w-16 h-20 bg-[#f4f3f1] rounded object-cover flex-shrink-0"
-                            loading="lazy"
-                            width={64}
-                            height={80}
-                          />
+                          {/* Image Canvas */}
+                          <div className="aspect-[4/5] w-[90px] rounded-xl overflow-hidden bg-[#FAF9F6] border border-black/5 relative shrink-0">
+                            <img
+                              onError={handleImageError}
+                              src={item.imageSrc}
+                              alt="Traditional wedding event decoration"
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              width={90}
+                              height={112}
+                            />
+                            
+                            {/* Quantity Indicator Overlap */}
+                            <div className="absolute bottom-1.5 right-1.5 bg-black/75 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow-sm z-10 select-none">
+                              Qty: {item.quantity}
+                            </div>
+                          </div>
 
-                          <div className="flex-1 min-w-0 text-xs">
-                            <h4 className="font-bold text-[#1a1c1a] line-clamp-1">
-                              {item.title}
-                            </h4>
-                            <span className="text-[11px] text-[#685c57] block mt-0.5">
+                          {/* Details Metadata */}
+                          <div className="pt-1 flex flex-col flex-1 text-xs min-w-0">
+                            <span className="text-[9px] uppercase tracking-wider text-secondary font-bold truncate">
                               Seller: {item.seller || "Assured Craft Teams"}
                             </span>
+                            <h4 className="font-bold text-[#1a1c1a] truncate leading-tight mt-0.5" title={item.title}>
+                              {item.title}
+                            </h4>
 
-                            <div className="flex items-baseline gap-2 mt-2">
-                              <span className="font-bold text-sm text-[#1a1c1a]">
+                            <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
+                              <span className="font-bold text-xs text-[#1a1c1a]">
                                 ₹{item.price.toLocaleString()}
                               </span>
                               {item.oldPrice > item.price && (
-                                <span className="text-[11px] text-[#685c57] line-through">
+                                <span className="text-[10px] text-secondary line-through">
                                   ₹{item.oldPrice.toLocaleString()}
                                 </span>
                               )}
-                              <span className="text-[10px] text-green-700 font-bold">
-                                2 Offer Applied
-                              </span>
                             </div>
-
-                            <div className="mt-1 text-[11px] text-[#685c57]">
-                              Quantity setup allocation:{" "}
-                              <strong className="text-[#1a1c1a]">
-                                {item.quantity}
-                              </strong>
-                            </div>
+                            
+                            <span className="text-[9px] text-green-700 font-bold mt-1.5 block">
+                              2 Offers Applied
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -184,10 +165,6 @@ export default function CheckoutOrderSummaryStep() {
                         whileTap={{ scale: 0.99 }}
                         type="button"
                         onClick={() => {
-                          if (!needByDate) {
-                            toast.error("Please select a Required Timeline Request date");
-                            return;
-                          }
                           setActiveStep(3);
                         }}
                         className="w-full bg-[#fb641b] hover:bg-[#f2550a] text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded shadow-xs transition-colors cursor-pointer text-center block"

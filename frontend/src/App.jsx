@@ -78,7 +78,6 @@ const AdminCustomerProfile = lazy(() => import("./admin/pages/AdminCustomerProfi
 const AdminGallery = lazy(() => import("./admin/pages/AdminGallery").then((m) => ({ default: m.AdminGallery })));
 const AdminEvents = lazy(() => import("./admin/pages/AdminEvents").then((m) => ({ default: m.AdminEvents })));
 const AdminBookingDetail = lazy(() => import("./admin/pages/AdminBookingDetail").then((m) => ({ default: m.AdminBookingDetail })));
-const AdminReviews = lazy(() => import("./admin/pages/AdminReviews").then((m) => ({ default: m.AdminReviews })));
 const AdminAnalytics = lazy(() => import("./admin/pages/AdminAnalytics").then((m) => ({ default: m.AdminAnalytics })));
 const AdminRecommendationAnalytics = lazy(() => import("./admin/pages/AdminRecommendationAnalytics").then((m) => ({ default: m.AdminRecommendationAnalytics })));
 const AdminInventory = lazy(() => import("./admin/pages/AdminInventory").then((m) => ({ default: m.AdminInventory })));
@@ -215,7 +214,6 @@ function App() {
                             <Route path="gallery" element={<AdminGallery />} />
                             <Route path="events" element={<AdminEvents />} />
                             <Route path="events/:bookingId" element={<AdminBookingDetail />} />
-                            <Route path="reviews" element={<AdminReviews />} />
                             <Route path="analytics" element={<AdminAnalytics />} />
                             <Route path="recommendations" element={<AdminRecommendationAnalytics />} />
                             <Route path="inventory" element={<AdminInventory />} />
