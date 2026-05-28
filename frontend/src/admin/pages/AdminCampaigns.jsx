@@ -90,7 +90,7 @@ export function AdminCampaigns() {
 
       const res = await notificationService.createCampaign(payload);
       if (res.success) {
-        toast.success("Marketing campaign draft compiled successfully!", {
+        toast.success("Draft created", {
           icon: "✦",
           style: {
             background: "#FFFFFF",
@@ -126,7 +126,7 @@ export function AdminCampaigns() {
     try {
       const res = await notificationService.sendCampaign(campaignId);
       if (res.success) {
-        toast.success("Broadcast queued successfully! Executing dispatches in background.");
+        toast.success("Broadcast queued for sending.");
         fetchData();
       }
     } catch (err) {
@@ -151,7 +151,7 @@ export function AdminCampaigns() {
       }
 
       if (res.success) {
-        toast.success(isEditingTemplate?._id ? "Email template updated successfully!" : "Template created!");
+        toast.success(isEditingTemplate?._id ? "Template updated" : "Template created");
         setIsEditingTemplate(null);
         setTemplateForm({ name: "", subjectLine: "", htmlContent: "", type: "marketing" });
         fetchData();
@@ -184,21 +184,21 @@ export function AdminCampaigns() {
       initial="hidden"
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1300px] mx-auto space-y-6 pb-20 font-body text-on-surface"
+      className="max-w-[1300px] mx-auto space-y-6 pb-20  text-[var(--admin-text-primary)]"
     >
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between border-b border-black/5 pb-4 gap-4">
+      <div className="flex flex-wrap items-center justify-between border-b border-[var(--admin-border-subtle)] pb-4 gap-4">
         <div>
-          <h2 className="text-[26px] font-bold text-on-surface font-display">
+          <h2 className="text-[26px] font-bold text-[var(--admin-text-primary)] font-display">
             Marketing Campaigns & Curation
           </h2>
-          <p className="text-[13px] text-outline">
+          <p className="text-[13px] text-[var(--admin-text-tertiary)]">
             Administer customer email dispatches, draft holiday newsletters, and track live link-click open rates
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-stone-100 p-1 rounded-full text-xs">
+          <div className="flex items-center gap-1.5 bg-[var(--admin-surface-muted)] p-1 rounded-full text-xs">
             {[
               { id: "broadcasts", label: "Broadcast Hub", icon: "campaign" },
               { id: "templates", label: "Design Curation", icon: "brush" },
@@ -212,7 +212,7 @@ export function AdminCampaigns() {
                 }}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-label uppercase text-[9px] tracking-wider font-bold transition-all cursor-pointer ${
                   activeTab === tab.id
-                    ? "bg-white text-black shadow-sm"
+                    ? "bg-[var(--admin-surface)] text-black shadow-sm"
                     : "text-black/55 hover:text-black"
                 }`}
               >
@@ -236,8 +236,8 @@ export function AdminCampaigns() {
             { label: "Click redrafts", value: analytics.overview.totalClicks, sub: "Secure tracker redirects", icon: "ads_click" },
             { label: "Subscribers Opted-in", value: analytics.overview.newsletterSubscribers, sub: `Across ${analytics.overview.visitorConsentProfiles} consent keys`, icon: "mark_email_read" }
           ].map((item, idx) => (
-            <div key={idx} className="bg-white border border-black/5 p-5 rounded-3xl shadow-sm flex items-start gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-stone-100 flex items-center justify-center shrink-0">
+            <div key={idx} className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-5 rounded-3xl shadow-sm flex items-start gap-4">
+              <div className="w-10 h-10 rounded-2xl bg-[var(--admin-surface-muted)] flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-black text-lg">{item.icon}</span>
               </div>
               <div>
@@ -253,8 +253,8 @@ export function AdminCampaigns() {
       {/* Tab Content Panels */}
       <AnimatePresence mode="wait">
         {isLoading ? (
-          <div className="bg-white border border-black/5 p-20 rounded-3xl text-center space-y-3 shadow-sm">
-            <div className="w-8 h-8 border-2 border-black/20 border-t-black rounded-full animate-spin mx-auto" />
+          <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-20 rounded-3xl text-center space-y-3 shadow-sm">
+            <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
             <p className="text-black/55 font-label text-[9px] uppercase tracking-widest font-bold">Decrypting campaign analytics...</p>
           </div>
         ) : activeTab === "broadcasts" ? (
@@ -266,23 +266,23 @@ export function AdminCampaigns() {
             className="space-y-4"
           >
             {campaigns.length === 0 ? (
-              <div className="bg-white border border-black/5 p-12 rounded-3xl text-center flex flex-col items-center justify-center shadow-sm">
+              <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-12 rounded-3xl text-center flex flex-col items-center justify-center shadow-sm">
                 <span className="material-symbols-outlined text-black/20 text-[48px] mb-2">search_off</span>
                 <h3 className="text-sm font-bold text-black font-display">Data Not Found</h3>
                 <p className="text-[12px] text-black/40 font-light mt-1 mb-4">No campaigns designed yet. You can easily craft a customized broadcast using our pre-seeded premium templates.</p>
                 <button
                   onClick={() => setActiveTab("new")}
-                  className="bg-black text-white hover:bg-stone-900 rounded-full px-5 py-2.5 font-label uppercase text-[9px] tracking-wider font-bold shadow-md hover:shadow-lg transition-colors cursor-pointer active:scale-95"
+                  className="bg-[var(--admin-accent)] text-white hover:bg-[var(--admin-text-primary)] rounded-full px-5 py-2.5 font-label uppercase text-[9px] tracking-wider font-bold shadow-md hover:shadow-lg transition-colors cursor-pointer active:scale-95"
                 >
                   Create Campaign
                 </button>
               </div>
             ) : (
-              <div className="bg-white border border-black/5 rounded-3xl overflow-hidden shadow-sm">
+              <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-3xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-stone-50 border-b border-black/5 text-black/55 font-label uppercase text-[9px] tracking-wider font-bold">
+                      <tr className="bg-[var(--admin-bg-subtle)] border-b border-[var(--admin-border-subtle)] text-black/55 font-label uppercase text-[9px] tracking-wider font-bold">
                         <th className="p-4 font-semibold">Campaign Details</th>
                         <th className="p-4 font-semibold">Audience Rules</th>
                         <th className="p-4 font-semibold">Current Status</th>
@@ -292,13 +292,13 @@ export function AdminCampaigns() {
                     </thead>
                     <tbody className="divide-y divide-black/5">
                       {campaigns.map((camp) => (
-                        <tr key={camp._id} className="hover:bg-stone-50/50 transition-colors">
+                        <tr key={camp._id} className="hover:bg-[var(--admin-bg-subtle)]/50 transition-colors">
                           <td className="p-4">
                             <strong className="text-black font-bold text-sm block font-display">{camp.title}</strong>
                             <span className="text-[11px] text-black/45 block font-light mt-0.5">Subject: {camp.subject}</span>
                           </td>
                           <td className="p-4">
-                            <span className="text-[9px] bg-stone-100 text-stone-700 font-label uppercase tracking-widest font-bold px-2.5 py-0.5 rounded-full">
+                            <span className="text-[9px] bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] font-label uppercase tracking-widest font-bold px-2.5 py-0.5 rounded-full">
                               {camp.targetAudience.role}
                             </span>
                             {camp.targetAudience.consentedOnly && (
@@ -307,10 +307,10 @@ export function AdminCampaigns() {
                           </td>
                           <td className="p-4">
                             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${
-                              camp.status === "sent" ? "bg-emerald-50 text-emerald-700" :
+                              camp.status === "sent" ? "bg-[var(--admin-success-light)] text-[var(--admin-success)]" :
                               camp.status === "sending" ? "bg-amber-50 text-amber-700 animate-pulse" :
-                              camp.status === "scheduled" ? "bg-slate-100 text-blue-700" :
-                              "bg-stone-100 text-stone-600"
+                              camp.status === "scheduled" ? "bg-[var(--admin-surface-muted)] text-[var(--admin-info)]" :
+                              "bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]"
                             }`}>
                               <span className="w-1 h-1 rounded-full bg-current" />
                               {camp.status}
@@ -333,7 +333,7 @@ export function AdminCampaigns() {
                                   <span className="text-[9px] text-black/40 block">Opened</span>
                                 </div>
                                 <div className="text-center">
-                                  <strong className="text-stone-700 font-bold text-sm block font-mono">{camp.stats.clickCount}</strong>
+                                  <strong className="text-[var(--admin-text-secondary)] font-bold text-sm block font-mono">{camp.stats.clickCount}</strong>
                                   <span className="text-[9px] text-black/40 block">Clicks</span>
                                 </div>
                               </div>
@@ -343,7 +343,7 @@ export function AdminCampaigns() {
                             {camp.status === "draft" && (
                               <button
                                 onClick={() => handleSendTrigger(camp._id)}
-                                className="bg-black hover:bg-stone-900 text-white rounded-full px-4 py-2 font-label uppercase text-[9px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95"
+                                className="bg-black hover:bg-[var(--admin-text-primary)] text-white rounded-full px-4 py-2 font-label uppercase text-[9px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95"
                               >
                                 Trigger Send
                               </button>
@@ -372,8 +372,8 @@ export function AdminCampaigns() {
             className="grid grid-cols-1 lg:grid-cols-3 gap-6"
           >
             {/* Template Form / Editor */}
-            <div className="lg:col-span-1 bg-white border border-black/5 p-6 rounded-3xl space-y-4 shadow-sm self-start">
-              <div className="flex items-center justify-between border-b border-black/5 pb-2">
+            <div className="lg:col-span-1 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-3xl space-y-4 shadow-sm self-start">
+              <div className="flex items-center justify-between border-b border-[var(--admin-border-subtle)] pb-2">
                 <h3 className="font-display font-bold text-base text-black">
                   {isEditingTemplate ? "Edit Template Copies" : "Seed Custom Design"}
                 </h3>
@@ -399,7 +399,7 @@ export function AdminCampaigns() {
                     value={templateForm.name}
                     onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
                     placeholder="e.g. Festive Urli Launch"
-                    className="w-full bg-[#F8F9FB]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-neutral-200 focus:border-[#000000] focus:bg-white transition-all font-medium"
+                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
                   />
                 </div>
 
@@ -410,7 +410,7 @@ export function AdminCampaigns() {
                     value={templateForm.subjectLine}
                     onChange={(e) => setTemplateForm({ ...templateForm, subjectLine: e.target.value })}
                     placeholder="e.g. ✦ Unveiling Timeless Diya Curations"
-                    className="w-full bg-[#F8F9FB]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-neutral-200 focus:border-[#000000] focus:bg-white transition-all font-medium"
+                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
                   />
                 </div>
 
@@ -419,7 +419,7 @@ export function AdminCampaigns() {
                   <select
                     value={templateForm.type}
                     onChange={(e) => setTemplateForm({ ...templateForm, type: e.target.value })}
-                    className="w-full bg-[#F8F9FB]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-neutral-200 focus:border-[#000000] focus:bg-white transition-all font-medium"
+                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
                   >
                     <option value="marketing">Marketing Broadcast</option>
                     <option value="transactional">Transactional Notification</option>
@@ -436,7 +436,7 @@ export function AdminCampaigns() {
                     value={templateForm.htmlContent}
                     onChange={(e) => setTemplateForm({ ...templateForm, htmlContent: e.target.value })}
                     placeholder="<!-- Write HTML boilerplate with placeholder variables like {{name}} -->"
-                    className="w-full bg-[#F8F9FB]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-neutral-200 focus:border-[#000000] focus:bg-white transition-all font-mono"
+                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-mono"
                   />
                   <p className="text-[9px] text-black/40 font-light mt-1">Available placeholders: <code>{"{{name}}"}</code>, <code>{"{{orderId}}"}</code>, <code>{"{{totalAmount}}"}</code>, <code>{"{{shippingAddress}}"}</code>, <code>{"{{frontend_url}}"}</code></p>
                 </div>
@@ -444,7 +444,7 @@ export function AdminCampaigns() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-black hover:bg-stone-900 text-white rounded-full py-3 font-label uppercase text-[10px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95 text-center"
+                  className="w-full bg-black hover:bg-[var(--admin-text-primary)] text-white rounded-full py-3 font-label uppercase text-[10px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95 text-center"
                 >
                   {isSubmitting ? "Saving..." : isEditingTemplate ? "Update Template" : "Add Design Template"}
                 </button>
@@ -457,14 +457,14 @@ export function AdminCampaigns() {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {templates.map((temp) => (
-                  <div key={temp._id} className="bg-white border border-black/5 rounded-3xl p-5 flex flex-col justify-between shadow-sm">
+                  <div key={temp._id} className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-3xl p-5 flex flex-col justify-between shadow-sm">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9px] bg-[#F8F9FB] border border-black/5 text-black/55 font-label uppercase tracking-widest px-2.5 py-0.5 rounded-full">
+                        <span className="text-[9px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-black/55 font-label uppercase tracking-widest px-2.5 py-0.5 rounded-full">
                           {temp.type}
                         </span>
                         {!temp.isActive && (
-                          <span className="text-[8px] bg-red-50 text-red-600 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">Draft</span>
+                          <span className="text-[8px] admin-badge admin-badge-error font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">Draft</span>
                         )}
                       </div>
                       
@@ -474,7 +474,7 @@ export function AdminCampaigns() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2 border-t border-black/5 pt-3 mt-4">
+                    <div className="flex items-center gap-2 border-t border-[var(--admin-border-subtle)] pt-3 mt-4">
                       <button
                         onClick={() => {
                           setIsEditingTemplate(temp);
@@ -485,7 +485,7 @@ export function AdminCampaigns() {
                             type: temp.type,
                           });
                         }}
-                        className="px-3 py-2 rounded-xl border border-black/10 hover:border-black text-[9px] font-label uppercase tracking-wider font-bold transition-all text-black hover:bg-black hover:text-white flex-1 text-center cursor-pointer"
+                        className="px-3 py-2 rounded-xl border border-[var(--admin-border)] hover:border-black text-[9px] font-label uppercase tracking-wider font-bold transition-all text-black hover:bg-black hover:text-white flex-1 text-center cursor-pointer"
                       >
                         Modify HTML
                       </button>
@@ -496,7 +496,7 @@ export function AdminCampaigns() {
                           previewWindow.document.write(temp.htmlContent);
                           previewWindow.document.close();
                         }}
-                        className="px-3 py-2 rounded-xl border border-transparent bg-stone-100 hover:bg-stone-200 text-stone-700 hover:text-black text-[9px] font-label uppercase tracking-wider font-bold transition-all flex-1 text-center cursor-pointer"
+                        className="px-3 py-2 rounded-xl border border-transparent bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-black text-[9px] font-label uppercase tracking-wider font-bold transition-all flex-1 text-center cursor-pointer"
                       >
                         Preview Canvas
                       </button>
@@ -515,8 +515,8 @@ export function AdminCampaigns() {
             className="grid grid-cols-1 lg:grid-cols-2 gap-6"
           >
             {/* Form */}
-            <div className="bg-white border border-black/5 p-6 rounded-3xl shadow-sm self-start space-y-4">
-              <h3 className="font-display font-bold text-base text-black border-b border-black/5 pb-2">
+            <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-3xl shadow-sm self-start space-y-4">
+              <h3 className="font-display font-bold text-base text-black border-b border-[var(--admin-border-subtle)] pb-2">
                 Draft Marketing Campaign
               </h3>
               
@@ -529,7 +529,7 @@ export function AdminCampaigns() {
                     value={campaignForm.title}
                     onChange={(e) => setCampaignForm({ ...campaignForm, title: e.target.value })}
                     placeholder="e.g. Diwali Urli Launch & Diyas Promo"
-                    className="w-full bg-[#F8F9FB]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-neutral-200 focus:border-[#000000] focus:bg-white transition-all font-medium"
+                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
                   />
                 </div>
 
@@ -541,7 +541,7 @@ export function AdminCampaigns() {
                     value={campaignForm.subject}
                     onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })}
                     placeholder="e.g. Unveiling Siri Arts Festive Splendors ✦ 50% Early Access"
-                    className="w-full bg-[#F8F9FB]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-neutral-200 focus:border-[#000000] focus:bg-white transition-all font-medium"
+                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
                   />
                 </div>
 
@@ -551,7 +551,7 @@ export function AdminCampaigns() {
                     <select
                       value={campaignForm.targetRole}
                       onChange={(e) => setCampaignForm({ ...campaignForm, targetRole: e.target.value })}
-                      className="w-full bg-[#F8F9FB]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-neutral-200 focus:border-[#000000] focus:bg-white transition-all font-medium"
+                      className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
                     >
                       <option value="all">All Registered Accounts (Customers + Admins)</option>
                       <option value="customer">Customers Only</option>
@@ -564,7 +564,7 @@ export function AdminCampaigns() {
                     <select
                       value={campaignForm.templateId}
                       onChange={handleSelectTemplateForForm}
-                      className="w-full bg-[#F8F9FB]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-neutral-200 focus:border-[#000000] focus:bg-white transition-all font-medium"
+                      className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
                     >
                       <option value="">-- Custom HTML / No Template --</option>
                       {templates.map(t => (
@@ -574,7 +574,7 @@ export function AdminCampaigns() {
                   </div>
                 </div>
 
-                <div className="bg-stone-50 border border-black/5 px-4.5 py-3 rounded-2xl">
+                <div className="bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] px-4.5 py-3 rounded-2xl">
                   <AdminToggle
                     label="Enforce GDPR/ePrivacy Consent"
                     description="Highly Recommended. Only sends marketing alerts to visitors who explicitly checked marketingEmails or accepted notifications."
@@ -591,7 +591,7 @@ export function AdminCampaigns() {
                       value={campaignForm.customHtml}
                       onChange={(e) => setCampaignForm({ ...campaignForm, customHtml: e.target.value })}
                       placeholder="<!-- Paste complete raw HTML email newsletter copy here -->"
-                      className="w-full bg-[#F8F9FB]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-neutral-200 focus:border-[#000000] focus:bg-white transition-all font-mono"
+                      className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-mono"
                     />
                   </div>
                 )}
@@ -599,7 +599,7 @@ export function AdminCampaigns() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-black hover:bg-stone-900 text-white rounded-full py-3 font-label uppercase text-[10px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95 text-center"
+                  className="w-full bg-black hover:bg-[var(--admin-text-primary)] text-white rounded-full py-3 font-label uppercase text-[10px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95 text-center"
                 >
                   {isSubmitting ? "Compiling..." : "Save Campaign Draft"}
                 </button>
@@ -607,33 +607,33 @@ export function AdminCampaigns() {
             </div>
 
             {/* Live Canvas Preview */}
-            <div className="bg-white border border-black/5 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
+            <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-3xl shadow-sm flex flex-col justify-between">
               <div>
-                <h3 className="font-display font-bold text-base text-black border-b border-black/5 pb-2 mb-4">
+                <h3 className="font-display font-bold text-base text-black border-b border-[var(--admin-border-subtle)] pb-2 mb-4">
                   Visual Canvas Preview
                 </h3>
                 
                 {previewHtml ? (
-                  <div className="border border-black/5 rounded-2xl overflow-hidden bg-stone-50 p-4">
-                    <div className="bg-white rounded-xl p-2.5 mb-3 border border-black/5">
+                  <div className="border border-[var(--admin-border-subtle)] rounded-2xl overflow-hidden bg-[var(--admin-bg-subtle)] p-4">
+                    <div className="bg-[var(--admin-surface)] rounded-xl p-2.5 mb-3 border border-[var(--admin-border-subtle)]">
                       <p className="text-[10px] text-black/40 font-mono">
                         <span className="font-bold text-black">Subject:</span> {campaignForm.subject || "✦ Siri Arts Splendors"}
                       </p>
                     </div>
                     <div 
-                      className="border border-black/5 rounded-xl overflow-y-auto max-h-[350px] bg-white shadow-inner"
+                      className="border border-[var(--admin-border-subtle)] rounded-xl overflow-y-auto max-h-[350px] bg-[var(--admin-surface)] shadow-inner"
                       dangerouslySetInnerHTML={createSafeHtml(previewHtml)}
                     />
                   </div>
                 ) : (
-                  <div className="border border-dashed border-black/10 rounded-2xl p-16 text-center text-black/40 font-light text-xs">
+                  <div className="border border-dashed border-[var(--admin-border)] rounded-2xl p-16 text-center text-black/40 font-light text-xs">
                     <span className="material-symbols-outlined text-[36px] mb-2 text-black/20">visibility</span>
                     <p>Select a pre-seeded template or type custom HTML to generate an instant visual canvas review.</p>
                   </div>
                 )}
               </div>
 
-              <div className="bg-stone-50 p-4 rounded-2xl border border-black/5 mt-6">
+              <div className="bg-[var(--admin-bg-subtle)] p-4 rounded-2xl border border-[var(--admin-border-subtle)] mt-6">
                 <span className="text-[9px] font-bold text-black uppercase tracking-wider block font-sans">Auto-rewriter active</span>
                 <p className="text-[9.5px] text-black/40 font-light leading-relaxed mt-1">
                   On broadcast, Siri Arts Campaign dispatcher will automatically inject a unique 1x1 tracking pixel to compute open rates and rewrite all anchor links to support secure tracking redirects.

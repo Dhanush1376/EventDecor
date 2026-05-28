@@ -42,7 +42,7 @@ export function VideoUpload({ value, onChange, folder = 'gallery', label ="Uploa
       const res = await uploadService.uploadImages(formData, folder);
       onChange(res.images[0]); 
       
-      toast.success('Video uploaded successfully!', { id: toastId });
+      toast.success('Video uploaded!', { id: toastId });
     } catch (err) {
       logger.error('Video upload failed:', err);
       toast.error(err.response?.data?.message || 'Failed to upload video. Please verify file signature and try again.', { id: toastId });
@@ -60,7 +60,7 @@ export function VideoUpload({ value, onChange, folder = 'gallery', label ="Uploa
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="text-[#C4A87C] hover:text-amber-800 transition-colors font-bold text-[11px] cursor-pointer flex items-center gap-1"
+          className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] transition-colors font-bold text-[11px] cursor-pointer flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-[12px] block">movie</span>
           <span>{isUploading ? 'Uploading...' : (value ? 'Change Video' : 'Upload Video')}</span>
@@ -77,7 +77,7 @@ export function VideoUpload({ value, onChange, folder = 'gallery', label ="Uploa
 
       {isUploading ? (
         <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center shrink-0 border border-neutral-200">
-          <span className="w-3 h-3 border border-amber-600 border-t-transparent rounded-full animate-spin" />
+          <div className="skeleton-box inline-block w-3 h-3 rounded-md" />
         </div>
       ) : value ? (
         <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-neutral-200/60 shrink-0 group bg-black">

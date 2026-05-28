@@ -112,7 +112,7 @@ export function AdminAddProduct() {
         setAiAnalysisResult(generatedData);
         setShowAIHUD(true);
         
-        toast.success("AI successfully curated and extracted product attributes!", { id: loadingToast });
+        toast.success("AI filled product details", { id: loadingToast });
       } else {
         toast.error("Failed to generate details. Please try again.", { id: loadingToast });
       }
@@ -153,7 +153,7 @@ export function AdminAddProduct() {
         clearInterval(interval);
         setIsApplyingFields(false);
         setFocusedField("");
-        toast.success("AI specifications successfully populated with glowing animation!");
+        toast.success("AI filled product details");
         return;
       }
       
@@ -403,7 +403,7 @@ export function AdminAddProduct() {
         : await productService.create(payload);
 
       if (res.success) {
-        toast.success(isEditMode ?"Product updated successfully" :"Product published successfully");
+        toast.success(isEditMode ? "Product updated" : "Product published");
         if (refreshProducts) {
           try {
             await refreshProducts();
@@ -435,15 +435,15 @@ export function AdminAddProduct() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/admin/products")}
-            className="w-10 h-10 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-[#64748B] hover:text-[#0F172A] hover:border-[#000000] cursor-pointer transition-all active:scale-95"
+            className="w-10 h-10 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95"
           >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
           <div>
-            <h2 className="text-[11px] sm:text-[11px] font-bold text-[#0F172A]">
+            <h2 className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)]">
               {isEditMode ?"Edit Product Curation" :"New Craft Curation"}
             </h2>
-            <p className="text-[11px] sm:text-[11px] text-[#64748B]">
+            <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]">
               {isEditMode
                 ? `Modifying #${id.substring(id.length - 8).toUpperCase()}`
                 :"Guided step-by-step product catalog publisher"}
@@ -454,26 +454,26 @@ export function AdminAddProduct() {
         {/* Keyboard Shortcut Banner + Auto-save */}
         <div className="flex items-center gap-3">
           {lastDraftSaved && !isEditMode && (
-            <div className="hidden md:flex items-center gap-1.5 text-[11px] text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-1.5 rounded-full">
+            <div className="hidden md:flex items-center gap-1.5 text-[11px] text-[var(--admin-success)] font-semibold bg-[var(--admin-success-light)] border border-emerald-100 px-2.5 py-1.5 rounded-full">
               <span className="material-symbols-outlined text-[12px]">cloud_done</span>
               Draft saved {lastDraftSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
           )}
-          <div className="hidden md:flex items-center gap-2 text-[11px] text-[#64748B] font-semibold bg-white border border-[#E5E7EB] px-3 py-1.5 rounded-full uppercase tracking-wider">
-            <span className="px-1.5 py-0.5 bg-[#F8F9FB] border border-[#E5E7EB] rounded text-[11px] sm:text-[11px] sm:text-[11px]">Alt + →</span>
+          <div className="hidden md:flex items-center gap-2 text-[11px] text-[var(--admin-text-secondary)] font-semibold bg-[var(--admin-surface)] border border-[var(--admin-border)] px-3 py-1.5 rounded-full uppercase tracking-wider">
+            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px] sm:text-[11px]">Alt + →</span>
             <span>Next</span>
             <span className="text-[#E5E7EB]">|</span>
-            <span className="px-1.5 py-0.5 bg-[#F8F9FB] border border-[#E5E7EB] rounded text-[11px] sm:text-[11px] sm:text-[11px]">Ctrl+S</span>
+            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px] sm:text-[11px]">Ctrl+S</span>
             <span>Save</span>
             <span className="text-[#E5E7EB]">|</span>
-            <span className="px-1.5 py-0.5 bg-[#F8F9FB] border border-[#E5E7EB] rounded text-[11px] sm:text-[11px] sm:text-[11px]">Esc</span>
+            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px] sm:text-[11px]">Esc</span>
             <span>Back</span>
           </div>
         </div>
       </div>
 
       {/* Guided Progress Bar (Desktop & Mobile Responsive) */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.01)] lg:block hidden overflow-x-auto">
+      <div className="admin-card p-4 border border-[var(--admin-border)]/80 shadow-[var(--admin-shadow-sm)] lg:block hidden overflow-x-auto">
         <div className="flex items-center justify-between min-w-[700px] px-2">
           {WIZARD_STEPS.map((step, index) => {
             const isCompleted = index < currentStep;
@@ -495,10 +495,10 @@ export function AdminAddProduct() {
                   <div
                     className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
                       isActive
-                        ?"bg-black text-white scale-105 shadow-sm"
+                        ?"bg-[var(--admin-accent)] text-white scale-105 shadow-sm"
                         : isCompleted
-                        ?"bg-slate-100 text-black border border-slate-200"
-                        :"bg-slate-50 text-slate-400 border border-slate-150"
+                        ?"bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]"
+                        :"bg-[var(--admin-bg-subtle)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border-subtle)]"
                     }`}
                   >
                     <span className="material-symbols-outlined text-[15px]">
@@ -508,14 +508,14 @@ export function AdminAddProduct() {
                   <div>
                     <p
                       className={`text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider ${
-                        isActive ?"text-black" :"text-slate-400"
+                        isActive ?"text-[var(--admin-text-primary)]" :"text-[var(--admin-text-tertiary)]"
                       }`}
                     >
                       Step {index + 1}
                     </p>
                     <p
                       className={`text-[11px] sm:text-[11px] font-bold ${
-                        isActive ?"text-black" :"text-slate-600"
+                        isActive ?"text-[var(--admin-text-primary)]" :"text-[var(--admin-text-secondary)]"
                       }`}
                     >
                       {step.label}
@@ -525,7 +525,7 @@ export function AdminAddProduct() {
                 {index < WIZARD_STEPS.length - 1 && (
                   <div
                     className={`flex-1 h-[2px] mx-4 rounded-full ${
-                      isCompleted ?"bg-black" :"bg-slate-100"
+                      isCompleted ?"bg-black" :"bg-[var(--admin-surface-muted)]"
                     }`}
                   />
                 )}
@@ -536,32 +536,32 @@ export function AdminAddProduct() {
       </div>
 
       {/* Guided Progress Bar (Mobile) */}
-      <div className="lg:hidden bg-white rounded-2xl p-4 border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex items-center justify-between">
+      <div className="lg:hidden admin-card p-4 border border-[var(--admin-border)]/80 shadow-[var(--admin-shadow-sm)] flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-[var(--admin-accent)] text-white flex items-center justify-center shadow-sm">
             <span className="material-symbols-outlined text-[18px]">
               {WIZARD_STEPS[currentStep].icon}
             </span>
           </div>
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Step {currentStep + 1} of {WIZARD_STEPS.length}</span>
-            <h4 className="text-[13px] font-bold text-slate-800">{WIZARD_STEPS[currentStep].label}</h4>
+            <span className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest block">Step {currentStep + 1} of {WIZARD_STEPS.length}</span>
+            <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">{WIZARD_STEPS[currentStep].label}</h4>
           </div>
         </div>
-        <div className="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/40">
+        <div className="w-24 bg-[var(--admin-surface-muted)] h-1.5 rounded-full overflow-hidden border border-[var(--admin-border)]/40">
           <div className="bg-black h-full transition-all duration-300" style={{ width: `${((currentStep + 1) / WIZARD_STEPS.length) * 100}%` }} />
         </div>
       </div>
 
       {/* Mobile Form/Preview Tab Switcher */}
-      <div className="flex lg:hidden bg-slate-150 p-1 rounded-xl border border-slate-200/60 w-full">
+      <div className="flex lg:hidden bg-[var(--admin-surface-muted)] p-1 rounded-xl border border-[var(--admin-border)]/60 w-full">
         <button
           type="button"
           onClick={() => setMobileTab("form")}
           className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
             mobileTab ==="form"
-              ?"bg-white text-black shadow-xs border border-slate-200/40"
-              :"text-slate-500 hover:text-slate-800"
+              ?"bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40"
+              :"text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
           }`}
         >
           Edit Curation
@@ -571,8 +571,8 @@ export function AdminAddProduct() {
           onClick={() => setMobileTab("preview")}
           className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
             mobileTab ==="preview"
-              ?"bg-white text-black shadow-xs border border-slate-200/40"
-              :"text-slate-500 hover:text-slate-800"
+              ?"bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40"
+              :"text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
           }`}
         >
           Storefront Preview
@@ -582,7 +582,7 @@ export function AdminAddProduct() {
       {/* Main Grid: Form wizard on left, real-time preview on right */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
         {/* Form Wizard Frame */}
-        <div className={`bg-white rounded-3xl border border-[#E5E7EB]/60 p-4 sm:p-6 shadow-sm min-h-[480px] flex-col justify-between relative overflow-hidden ${mobileTab ==="form" ?"flex" :"hidden lg:flex"}`}>
+        <div className={`admin-card p-4 sm:p-6 shadow-sm min-h-[480px] flex-col justify-between relative overflow-hidden ${mobileTab ==="form" ?"flex" :"hidden lg:flex"}`}>
           {/* Simulated Compression Loading Overlay */}
           <AnimatePresence>
             {isCompressing && (
@@ -592,11 +592,11 @@ export function AdminAddProduct() {
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-8 text-center"
               >
-                <div className="w-16 h-16 rounded-full border-4 border-[#E5E7EB] border-t-[#000000] animate-spin mb-4" />
-                <h3 className="text-[11px] font-bold text-[#0F172A]">Optimizing Curation Media</h3>
-                <p className="text-[11px] text-[#64748B] mt-1 max-w-[280px]">Simulating advanced lossless compression & Cloudinary upload...</p>
+                <div className="skeleton-box inline-block w-16 h-16 rounded-md" />
+                <h3 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Optimizing Curation Media</h3>
+                <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1 max-w-[280px]">Simulating advanced lossless compression & Cloudinary upload...</p>
                 <div className="w-48 bg-[#E5E7EB] h-1.5 rounded-full mt-4 overflow-hidden">
-                  <div className="bg-[#000000] h-full transition-all" style={{ width: `${compressionProgress}%` }} />
+                  <div className="bg-[var(--admin-accent)] h-full transition-all" style={{ width: `${compressionProgress}%` }} />
                 </div>
               </motion.div>
             )}
@@ -618,21 +618,21 @@ export function AdminAddProduct() {
                 {currentStep === 0 && (
                   <div className="space-y-5">
                     <div>
-                      <h2 className="text-[11px] font-bold text-[#0F172A]">Curation Assets & Media</h2>
-                      <p className="text-[11px] text-[#64748B]">Provide image links directly or upload multiple files at once. The first image acts as the primary cover.</p>
+                      <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Curation Assets & Media</h2>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Provide image links directly or upload multiple files at once. The first image acts as the primary cover.</p>
                     </div>
 
                     <div className="space-y-4">
                       
                       {/* URL Paste Box */}
-                      <div className="p-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl space-y-3">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-widest">Option 1: Paste Image URLs</label>
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest">Option 1: Paste Image URLs</label>
                         <div className="flex gap-2">
                           <input 
                             type="text" 
                             id="directUrlInput"
                             placeholder="https://example.com/image.jpg"
-                            className="flex-1 bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-[11px] outline-none focus:border-[#000000]/40"
+                            className="flex-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-lg px-3 py-2 text-[11px] outline-none focus:border-[var(--admin-accent)]/40"
                           />
                           <button 
                             type="button"
@@ -644,7 +644,7 @@ export function AdminAddProduct() {
                                 input.value ="";
                               }
                             }}
-                            className="bg-black text-white hover:bg-slate-900 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-transform active:scale-95 cursor-pointer"
+                            className="bg-[var(--admin-accent)] text-white hover:brightness-110 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-transform active:scale-95 cursor-pointer"
                           >
                             Add URL
                           </button>
@@ -652,10 +652,10 @@ export function AdminAddProduct() {
                       </div>
 
                       {/* Multi Upload Box */}
-                      <div className="p-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl space-y-3">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-widest flex justify-between items-center">
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest flex justify-between items-center">
                           <span>Option 2: Bulk Upload Files</span>
-                          {isCompressing && <span className="text-[#000000] text-[11px] animate-pulse">Uploading to Cloudinary...</span>}
+                          {isCompressing && <span className="text-[var(--admin-accent)] text-[11px] animate-pulse">Uploading to Cloudinary...</span>}
                         </label>
                         <input 
                           type="file" 
@@ -680,20 +680,20 @@ export function AdminAddProduct() {
                               setIsCompressing(false);
                             }
                           }}
-                          className="w-full text-[11px] text-[#64748B] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:uppercase file:tracking-wider file:bg-black file:text-white hover:file:bg-slate-900 cursor-pointer shadow-sm"
+                          className="w-full text-[11px] text-[var(--admin-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:uppercase file:tracking-wider file:bg-[var(--admin-accent)] file:text-white hover:file:bg-[var(--admin-accent-hover)] cursor-pointer shadow-sm border border-[var(--admin-border)] rounded-xl p-2 bg-[var(--admin-surface)] focus:border-[var(--admin-accent)] focus:outline-none transition-all"
                         />
                       </div>
 
                       {/* Gallery Grid */}
                       {formData.images.length > 0 && (
                         <div className="pt-2">
-                          <h4 className="text-[11px] sm:text-[11px] font-bold text-[#0F172A] uppercase tracking-widest mb-3">Media Gallery ({formData.images.length})</h4>
+                          <h4 className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] uppercase tracking-widest mb-3">Media Gallery ({formData.images.length})</h4>
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                             {formData.images.map((img, idx) => (
-                              <div key={idx} className={`relative aspect-square rounded-xl overflow-hidden border-2 ${formData.imageSrc === img ? 'border-[#000000]' : 'border-[#E5E7EB]'} group`}>
+                              <div key={idx} className={`relative aspect-square rounded-xl overflow-hidden border-2 ${formData.imageSrc === img ? 'border-[var(--admin-accent)]' : 'border-[var(--admin-border)]'} group`}>
                                 <img src={img} className="w-full h-full object-cover" alt="Gallery" />
                                 {formData.imageSrc === img && (
-                                  <div className="absolute top-1 left-1 bg-[#000000] text-white text-[11px] sm:text-[11px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                  <div className="absolute top-1 left-1 bg-[var(--admin-accent)] text-white text-[11px] sm:text-[11px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm">
                                     Primary
                                   </div>
                                 )}
@@ -702,7 +702,7 @@ export function AdminAddProduct() {
                                     <button
                                       type="button"
                                       onClick={() => setFormData({...formData, imageSrc: img})}
-                                      className="w-7 h-7 bg-white text-[#000000] rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                                      className="w-7 h-7 bg-[var(--admin-surface)] text-[var(--admin-accent)] rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
                                       title="Make Primary"
                                     >
                                       <span className="material-symbols-outlined text-[14px]">star</span>
@@ -718,7 +718,7 @@ export function AdminAddProduct() {
                                         imageSrc: formData.imageSrc === img ? (newArr[0] ||"") : formData.imageSrc
                                       });
                                     }}
-                                    className="w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                                    className="w-7 h-7 bg-[var(--admin-error-light)]0 text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
                                     title="Delete"
                                   >
                                     <span className="material-symbols-outlined text-[14px]">delete</span>
@@ -738,17 +738,17 @@ export function AdminAddProduct() {
                   <div className="space-y-5">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div>
-                        <h2 className="text-[11px] font-bold text-[#0F172A]">General Specifications</h2>
-                        <p className="text-[11px] text-[#64748B]">Detail the craftsmanship elements, Telugu translation title, and materials used.</p>
+                        <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">General Specifications</h2>
+                        <p className="text-[11px] text-[var(--admin-text-secondary)]">Detail the craftsmanship elements, Telugu translation title, and materials used.</p>
                       </div>
                       <button
                         type="button"
                         onClick={handleAIAutoFill}
                         disabled={isAIGenerating}
-                        className="bg-black text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:bg-slate-900 transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
+                        className="bg-[var(--admin-accent)] text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
                       >
                         {isAIGenerating ? (
-                          <div className="w-3.5 h-3.5 border-2 border-[#000000]/30 border-t-[#000000] rounded-full animate-spin" />
+                          <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
                         ) : (
                           <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
                         )}
@@ -758,7 +758,7 @@ export function AdminAddProduct() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2 sm:col-span-1">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
                           English Title <span className="text-error">*</span>
                         </label>
                         <input
@@ -767,16 +767,12 @@ export function AdminAddProduct() {
                           value={formData.title}
                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                           placeholder="e.g. Vintage Teak Jharokha Mirror"
-                          className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body ${
-                            focusedField ==="title" 
-                              ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                              :"border border-transparent focus:border-[#000000]/40 focus:bg-white"
-                          }`}
+                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                         />
                       </div>
 
                       <div className="col-span-2 sm:col-span-1">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
                           Telugu Title (optional)
                         </label>
                         <input
@@ -784,16 +780,12 @@ export function AdminAddProduct() {
                           value={formData.teluguTitle}
                           onChange={(e) => setFormData({ ...formData, teluguTitle: e.target.value })}
                           placeholder="సాంప్రదాయ పూజా పీఠం"
-                          className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body ${
-                            focusedField ==="teluguTitle" 
-                              ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                              :"border border-transparent focus:border-[#000000]/40 focus:bg-white"
-                          }`}
+                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                         />
                       </div>
 
                       <div className="col-span-2 sm:col-span-1">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
                           Slug (auto-fills if empty)
                         </label>
                         <input
@@ -801,16 +793,12 @@ export function AdminAddProduct() {
                           value={formData.slug}
                           onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                           placeholder="vintage-teak-jharokha"
-                          className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body ${
-                            focusedField ==="slug" 
-                              ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                              :"border border-transparent focus:border-[#000000]/40 focus:bg-white"
-                          }`}
+                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                         />
                       </div>
 
                       <div className="col-span-2 sm:col-span-1">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
                           Material
                         </label>
                         <input
@@ -818,17 +806,13 @@ export function AdminAddProduct() {
                           value={formData.material}
                           onChange={(e) => setFormData({ ...formData, material: e.target.value })}
                           placeholder="e.g. Teak wood, Pure Brass"
-                          className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body ${
-                            focusedField ==="material" 
-                              ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                              :"border border-transparent focus:border-[#000000]/40 focus:bg-white"
-                          }`}
+                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                         />
                       </div>
 
                       <div className="col-span-2 sm:col-span-1">
-                        <div className="flex justify-between items-center mb-1.5">
-                          <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider block">
+                        <div className="flex justify-between items-center h-5 mb-1.5">
+                          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
                             Category <span className="text-error">*</span>
                           </label>
                           <button
@@ -837,7 +821,7 @@ export function AdminAddProduct() {
                               setIsCustomCategory(!isCustomCategory);
                               setFormData({ ...formData, category:"" });
                             }}
-                            className="text-[11px] font-bold text-[#000000] hover:underline cursor-pointer flex items-center gap-0.5"
+                            className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer flex items-center gap-0.5"
                           >
                             <span className="material-symbols-outlined text-[12px]">{isCustomCategory ?"list" :"add_circle"}</span>
                             {isCustomCategory ?"Select from list" :"Add Custom"}
@@ -850,22 +834,14 @@ export function AdminAddProduct() {
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                             placeholder="e.g. Traditional Urlis, Brass Lamps"
-                            className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none font-body transition-all ${
-                              focusedField ==="category" 
-                                ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                                :"border border-[#000000]/40 focus:bg-white animate-pulse-subtle"
-                            }`}
+                            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                           />
                         ) : (
                           <select
                             required
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none cursor-pointer transition-all ${
-                              focusedField ==="category" 
-                                ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                                :"border border-transparent focus:border-[#000000]/40"
-                            }`}
+                            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                           >
                             <option value="">Select Category</option>
                             {categoriesList.map((c) => (
@@ -876,24 +852,22 @@ export function AdminAddProduct() {
                       </div>
 
                       <div className="col-span-2 sm:col-span-1">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
-                          Dimensions (L x W x H)
-                        </label>
+                        <div className="flex items-center h-5 mb-1.5">
+                          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+                            Dimensions (L x W x H)
+                          </label>
+                        </div>
                         <input
                           type="text"
                           value={formData.dimensions}
                           onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
                           placeholder='e.g. 18" x 4" x 24"'
-                          className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body ${
-                            focusedField ==="dimensions" 
-                              ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                              :"border border-transparent focus:border-[#000000]/40 focus:bg-white"
-                          }`}
+                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                         />
                       </div>
 
                       <div className="col-span-2">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
                           Product Description
                         </label>
                         <textarea
@@ -901,11 +875,7 @@ export function AdminAddProduct() {
                           value={formData.description}
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                           placeholder="Detail the story, craftsmanship techniques, and ritual significance of this piece..."
-                          className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body resize-none ${
-                            focusedField ==="description" 
-                              ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                              :"border border-transparent focus:border-[#000000]/40 focus:bg-white"
-                          }`}
+                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20 resize-none"
                         />
                       </div>
                     </div>
@@ -917,17 +887,17 @@ export function AdminAddProduct() {
                   <div className="space-y-5">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div>
-                        <h2 className="text-[11px] font-bold text-[#0F172A]">Attributes & Custom Variants</h2>
-                        <p className="text-[11px] text-[#64748B]">Define custom colors, sizes, or wood variations with their own inventory adjustments.</p>
+                        <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Attributes & Custom Variants</h2>
+                        <p className="text-[11px] text-[var(--admin-text-secondary)]">Define custom colors, sizes, or wood variations with their own inventory adjustments.</p>
                       </div>
                       <button
                         type="button"
                         onClick={handleAIAutoFill}
                         disabled={isAIGenerating}
-                        className="bg-black text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:bg-slate-900 transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
+                        className="bg-[var(--admin-accent)] text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
                       >
                         {isAIGenerating ? (
-                          <div className="w-3.5 h-3.5 border-2 border-[#000000]/30 border-t-[#000000] rounded-full animate-spin" />
+                          <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
                         ) : (
                           <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
                         )}
@@ -938,7 +908,7 @@ export function AdminAddProduct() {
                     {/* Badge Pill Inputs */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2 sm:col-span-1">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
                           Storefront Badges (comma-separated)
                         </label>
                         <input
@@ -946,12 +916,12 @@ export function AdminAddProduct() {
                           value={formData.badges}
                           onChange={(e) => setFormData({ ...formData, badges: e.target.value })}
                           placeholder="e.g. Best Seller, Heritage Craft"
-                          className="w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none border border-transparent focus:border-[#000000]/40 focus:bg-white transition-all font-body"
+                          className="w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white transition-all "
                         />
                       </div>
 
                       <div className="col-span-2 sm:col-span-1">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
                           Tags / Collections
                         </label>
                         <input
@@ -959,44 +929,44 @@ export function AdminAddProduct() {
                           value={formData.tags}
                           onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                           placeholder="e.g. brass, puja, diwali"
-                          className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body ${
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all  ${
                             focusedField ==="tags" 
-                              ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                              :"border border-transparent focus:border-[#000000]/40 focus:bg-white"
+                              ?"border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]" 
+                              :"border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white"
                           }`}
                         />
                       </div>
                     </div>
 
                      {/* Dynamic Variant Constructor */}
-                    <div className="p-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl space-y-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#0F172A]">Add Variation Parameter</p>
+                    <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">Add Variation Parameter</p>
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
                         <input
                           type="text"
                           placeholder="Attribute (e.g. Wood)"
                           value={newVariant.name}
                           onChange={(e) => setNewVariant({ ...newVariant, name: e.target.value })}
-                          className="bg-white rounded-lg px-2.5 py-2.5 text-[12px] border border-[#E5E7EB] outline-none w-full"
+                          className="bg-[var(--admin-surface)] rounded-lg px-2.5 py-2.5 text-[12px] border border-[var(--admin-border)] outline-none w-full"
                         />
                         <input
                           type="text"
                           placeholder="Value (e.g. Rosewood)"
                           value={newVariant.value}
                           onChange={(e) => setNewVariant({ ...newVariant, value: e.target.value })}
-                          className="bg-white rounded-lg px-2.5 py-2.5 text-[12px] border border-[#E5E7EB] outline-none w-full"
+                          className="bg-[var(--admin-surface)] rounded-lg px-2.5 py-2.5 text-[12px] border border-[var(--admin-border)] outline-none w-full"
                         />
                         <input
                           type="number"
                           placeholder="+/- Price (₹)"
                           value={newVariant.price}
                           onChange={(e) => setNewVariant({ ...newVariant, price: e.target.value })}
-                          className="bg-white rounded-lg px-2.5 py-2.5 text-[12px] border border-[#E5E7EB] outline-none w-full"
+                          className="bg-[var(--admin-surface)] rounded-lg px-2.5 py-2.5 text-[12px] border border-[var(--admin-border)] outline-none w-full"
                         />
                         <button
                           type="button"
                           onClick={handleAddVariant}
-                          className="bg-black text-white text-[11px] sm:text-[11px] font-bold uppercase py-2.5 rounded-lg hover:brightness-110 cursor-pointer w-full transition-transform active:scale-95 shadow-sm"
+                          className="bg-[var(--admin-accent)] text-white text-[11px] sm:text-[11px] font-bold uppercase py-2.5 rounded-lg hover:brightness-110 cursor-pointer w-full transition-transform active:scale-95 shadow-sm"
                         >
                           Add Option
                         </button>
@@ -1008,14 +978,14 @@ export function AdminAddProduct() {
                           {formData.variants.map((v) => (
                             <span
                               key={v.id}
-                              className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-[#E5E7EB] text-[11px] sm:text-[11px] rounded-lg text-[#0F172A] font-medium"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[11px] sm:text-[11px] rounded-lg text-[var(--admin-text-primary)] font-medium"
                             >
-                              <span className="text-[#64748B]">{v.name}:</span> {v.value}
-                              {v.price && <span className="text-[#000000] font-bold">({Number(v.price) >= 0 ? `+₹${v.price}` : `-₹${Math.abs(v.price)}`})</span>}
+                              <span className="text-[var(--admin-text-secondary)]">{v.name}:</span> {v.value}
+                              {v.price && <span className="text-[var(--admin-accent)] font-bold">({Number(v.price) >= 0 ? `+₹${v.price}` : `-₹${Math.abs(v.price)}`})</span>}
                               <button
                                 type="button"
                                 onClick={() => handleRemoveVariant(v.id)}
-                                className="text-red-500 hover:text-red-700 ml-1 flex items-center justify-center cursor-pointer"
+                                className="text-[var(--admin-error)] hover:text-[var(--admin-error)] ml-1 flex items-center justify-center cursor-pointer"
                               >
                                 <span className="material-symbols-outlined text-[14px]">close</span>
                               </button>
@@ -1031,13 +1001,13 @@ export function AdminAddProduct() {
                 {currentStep === 3 && (
                   <div className="space-y-5">
                     <div>
-                      <h2 className="text-[11px] font-bold text-[#0F172A]">SEO Meta Configuration</h2>
-                      <p className="text-[11px] text-[#64748B]">Perfect your organic reach titles. Renders live search engine preview results below.</p>
+                      <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">SEO Meta Configuration</h2>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Perfect your organic reach titles. Renders live search engine preview results below.</p>
                     </div>
 
                     <div className="space-y-4">
                       <div>
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
                           SEO Page Title
                         </label>
                         <input
@@ -1045,16 +1015,16 @@ export function AdminAddProduct() {
                           value={formData.seoTitle}
                           onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
                           placeholder="e.g. Antique Brass Urli Bowl with Bells | Siri Arts & Crafts"
-                          className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body ${
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all  ${
                             focusedField ==="seoTitle" 
-                              ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                              :"border border-transparent focus:border-[#000000]/40 focus:bg-white"
+                              ?"border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]" 
+                              :"border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white"
                           }`}
                         />
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 block">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
                           SEO Meta Description
                         </label>
                         <textarea
@@ -1062,19 +1032,19 @@ export function AdminAddProduct() {
                           value={formData.seoDescription}
                           onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
                           placeholder="Exquisite handmade floating flower urli bowl. Ideal for festive entryways, home decor gifts, and pujas. Free shipping across India..."
-                          className={`w-full bg-[#F8F9FB] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all font-body resize-none ${
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all  resize-none ${
                             focusedField ==="seoDescription" 
-                              ?"border-2 border-[#000000] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-[1.01] bg-white" 
-                              :"border border-transparent focus:border-[#000000]/40 focus:bg-white"
+                              ?"border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]" 
+                              :"border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white"
                           }`}
                         />
                       </div>
 
                       {/* Google Search Snippet Live Preview */}
-                      <div className="p-4 bg-white border border-[#E5E7EB] rounded-2xl shadow-sm space-y-1.5 text-left font-sans">
+                      <div className="p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-2xl shadow-sm space-y-1.5 text-left font-sans">
                         <div className="flex items-center gap-1.5 text-[11px] sm:text-[11px] text-[#202124]">
                           <span>siriartsandcrafts.com</span>
-                          <span className="text-[#5f6368]">› products › {formData.slug ||"jharokha"}</span>
+                          <span className="text-[#5f6368]"> › products › {formData.slug ||"jharokha"}</span>
                         </div>
                         <h4 className="text-[#1a0dab] text-[18px] hover:underline cursor-pointer leading-tight font-medium font-sans">
                           {formData.seoTitle || formData.title ||"Buy Luxury Handcrafted Traditional Decor Items Online"}
@@ -1092,50 +1062,50 @@ export function AdminAddProduct() {
                 {currentStep === 4 && (
                   <div className="space-y-5">
                     <div>
-                      <h2 className="text-[11px] font-bold text-[#0F172A]">Pricing & Inventory</h2>
-                      <p className="text-[11px] text-[#64748B]">Set list price, optional higher old striking price (to show sale discounts), and warehouse stock.</p>
+                      <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Pricing & Inventory</h2>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Set list price, optional higher old striking price (to show sale discounts), and warehouse stock.</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                      <div className="p-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-2 block">
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                           Curation Price (₹) <span className="text-error">*</span>
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] text-[13px] font-bold">₹</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-secondary)] text-[13px] font-bold">₹</span>
                           <input
                             type="number"
                             required
                             min="1"
                             value={formData.price}
                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                            className="w-full bg-white rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[#E5E7EB] focus:border-[#000000]/40 font-body"
+                            className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40 "
                           />
                         </div>
                       </div>
 
-                      <div className="p-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-2 block">
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                           Old Striking Price (₹)
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]/50 text-[13px] font-bold">₹</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-secondary)]/50 text-[13px] font-bold">₹</span>
                           <input
                             type="number"
                             value={formData.oldPrice}
                             onChange={(e) => setFormData({ ...formData, oldPrice: e.target.value })}
                             placeholder="Optional list price"
-                            className="w-full bg-white rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[#E5E7EB] focus:border-[#000000]/40 font-body"
+                            className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40 "
                           />
                         </div>
                       </div>
 
-                      <div className="p-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl">
-                        <label className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-2 block">
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                           Available Stock <span className="text-error">*</span>
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] text-[13px] font-bold">#</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-secondary)] text-[13px] font-bold">#</span>
                           <input
                             type="number"
                             required
@@ -1143,7 +1113,7 @@ export function AdminAddProduct() {
                             placeholder="Units"
                             value={formData.stock}
                             onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                            className="w-full bg-white rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[#E5E7EB] focus:border-[#000000]/40 font-body"
+                            className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40 "
                           />
                         </div>
                       </div>
@@ -1162,21 +1132,21 @@ export function AdminAddProduct() {
                 {currentStep === 5 && (
                   <div className="space-y-5">
                     <div>
-                      <h2 className="text-[11px] font-bold text-[#0F172A]">Catalog Validation Curation</h2>
-                      <p className="text-[11px] text-[#64748B]">Review publishing credentials. Check visibility status and home curation locks.</p>
+                      <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Catalog Validation Curation</h2>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Review publishing credentials. Check visibility status and home curation locks.</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Visibility Status Toggle */}
-                      <div className="p-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl flex items-center justify-between">
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between">
                         <div>
-                          <p className="text-[12.5px] font-bold text-[#0F172A]">Visibility Status</p>
-                          <p className="text-[11px] text-[#64748B]">Controls visible storefront availability</p>
+                          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">Visibility Status</p>
+                          <p className="text-[11px] text-[var(--admin-text-secondary)]">Controls visible storefront availability</p>
                         </div>
                         <select
                           value={formData.isActive ?"active" :"draft"}
                           onChange={(e) => setFormData({ ...formData, isActive: e.target.value ==="active" })}
-                          className="bg-white border border-[#E5E7EB] rounded-xl px-3 py-1.5 text-[11px] sm:text-[11px] font-bold text-[#0F172A] cursor-pointer outline-none"
+                          className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl px-3 py-1.5 text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] cursor-pointer outline-none"
                         >
                           <option value="active">Active (Visible)</option>
                           <option value="draft">Draft (Private)</option>
@@ -1184,10 +1154,10 @@ export function AdminAddProduct() {
                       </div>
 
                       {/* Curation Highlight Toggle */}
-                      <div className="p-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl flex items-center justify-between">
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between">
                         <div>
-                          <p className="text-[12.5px] font-bold text-[#0F172A]">Featured Collection</p>
-                          <p className="text-[11px] text-[#64748B]">Pin to Homepage Hero Carousel</p>
+                          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">Featured Collection</p>
+                          <p className="text-[11px] text-[var(--admin-text-secondary)]">Pin to Homepage Hero Carousel</p>
                         </div>
                         <AdminToggle
                           checked={formData.featured}
@@ -1196,10 +1166,10 @@ export function AdminAddProduct() {
                       </div>
 
                       {/* Show in Gallery Toggle */}
-                      <div className="p-4 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl flex items-center justify-between col-span-1 sm:col-span-2">
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between col-span-1 sm:col-span-2">
                         <div>
-                          <p className="text-[12.5px] font-bold text-[#0F172A]">Show in Gallery Also</p>
-                          <p className="text-[11px] text-[#64748B]">Automatically sync and display this product in the Inspiration Gallery</p>
+                          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">Show in Gallery Also</p>
+                          <p className="text-[11px] text-[var(--admin-text-secondary)]">Automatically sync and display this product in the Inspiration Gallery</p>
                         </div>
                         <AdminToggle
                           checked={formData.showInGallery}
@@ -1208,44 +1178,44 @@ export function AdminAddProduct() {
                       </div>
 
                       {/* Summary Data Review list */}
-                      <div className="col-span-1 sm:col-span-2 p-5 bg-[#F8F9FB] border border-[#E5E7EB] rounded-2xl space-y-4 text-[12px]">
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] border-b border-[#E5E7EB]/60 pb-1.5 mb-2">Curation Credentials Summary</p>
+                      <div className="col-span-1 sm:col-span-2 p-5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-4 text-[12px]">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] border-b border-[var(--admin-border)]/60 pb-1.5 mb-2">Curation Credentials Summary</p>
                         <div className="space-y-3">
-                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[#E5E7EB]/40 pb-2 gap-1">
-                            <span className="font-semibold text-[#64748B] uppercase tracking-wider text-[11px]">English Title</span>
-                            <span className="font-bold text-[#0F172A] sm:text-right">{formData.title}</span>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+                            <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">English Title</span>
+                            <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">{formData.title}</span>
                           </div>
                           {formData.teluguTitle && (
-                            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[#E5E7EB]/40 pb-2 gap-1">
-                              <span className="font-semibold text-[#64748B] uppercase tracking-wider text-[11px]">Telugu Title</span>
-                              <span className="font-semibold text-[#0F172A] sm:text-right">{formData.teluguTitle}</span>
+                            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+                              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">Telugu Title</span>
+                              <span className="font-semibold text-[var(--admin-text-primary)] sm:text-right">{formData.teluguTitle}</span>
                             </div>
                           )}
-                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[#E5E7EB]/40 pb-2 gap-1">
-                            <span className="font-semibold text-[#64748B] uppercase tracking-wider text-[11px]">Category</span>
-                            <span className="font-bold text-[#0F172A] sm:text-right">{formData.category ||"Unassigned"}</span>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+                            <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">Category</span>
+                            <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">{formData.category ||"Unassigned"}</span>
                           </div>
-                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[#E5E7EB]/40 pb-2 gap-1">
-                            <span className="font-semibold text-[#64748B] uppercase tracking-wider text-[11px]">Retail Price</span>
-                            <span className="font-bold text-black sm:text-right">₹{Number(formData.price || 0).toLocaleString()}</span>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+                            <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">Retail Price</span>
+                            <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">₹{Number(formData.price || 0).toLocaleString()}</span>
                           </div>
-                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[#E5E7EB]/40 pb-2 gap-1">
-                            <span className="font-semibold text-[#64748B] uppercase tracking-wider text-[11px]">Stock Quantity</span>
-                            <span className="font-bold text-[#0F172A] sm:text-right">{formData.stock || 0} Units</span>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+                            <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">Stock Quantity</span>
+                            <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">{formData.stock || 0} Units</span>
                           </div>
                           {formData.material && (
-                            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[#E5E7EB]/40 pb-2 gap-1">
-                              <span className="font-semibold text-[#64748B] uppercase tracking-wider text-[11px]">Core Material</span>
-                              <span className="font-bold text-[#0F172A] sm:text-right">{formData.material}</span>
+                            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+                              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">Core Material</span>
+                              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">{formData.material}</span>
                             </div>
                           )}
-                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[#E5E7EB]/40 pb-2 gap-1">
-                            <span className="font-semibold text-[#64748B] uppercase tracking-wider text-[11px]">Featured</span>
-                            <span className="font-bold text-[#0F172A] sm:text-right">{formData.featured ?"Yes" :"No"}</span>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+                            <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">Featured</span>
+                            <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">{formData.featured ?"Yes" :"No"}</span>
                           </div>
                           <div className="flex flex-col sm:flex-row sm:justify-between pb-1 gap-1">
-                            <span className="font-semibold text-[#64748B] uppercase tracking-wider text-[11px]">Show in Gallery</span>
-                            <span className="font-bold text-[#0F172A] sm:text-right">{formData.showInGallery ?"Yes" :"No"}</span>
+                            <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">Show in Gallery</span>
+                            <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">{formData.showInGallery ?"Yes" :"No"}</span>
                           </div>
                         </div>
                       </div>
@@ -1257,12 +1227,12 @@ export function AdminAddProduct() {
           </div>
 
           {/* Footer Controls: Back & Next / Save */}
-          <div className="border-t border-[#E5E7EB]/60 pt-4 mt-6 flex items-center justify-between bg-white">
+          <div className="border-t border-[var(--admin-border)]/60 pt-4 mt-6 flex items-center justify-between bg-[var(--admin-surface)]">
             <button
               type="button"
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="px-5 py-2.5 bg-[#F8F9FB] border border-[#E5E7EB] text-[#64748B] rounded-full text-[12px] font-bold hover:bg-[#E5E7EB]/45 cursor-pointer disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95"
+              className="px-5 py-2.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] rounded-full text-[12px] font-bold hover:bg-[#E5E7EB]/45 cursor-pointer disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95"
             >
               Back
             </button>
@@ -1271,7 +1241,7 @@ export function AdminAddProduct() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-6 py-2.5 bg-black text-white rounded-full text-[12px] font-bold hover:bg-slate-900 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md"
+                className="px-6 py-2.5 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold hover:brightness-110 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md"
               >
                 Continue
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -1281,11 +1251,11 @@ export function AdminAddProduct() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="px-7 py-3 bg-black text-white rounded-full text-[12px] font-bold uppercase tracking-wider hover:bg-slate-900 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                className="px-7 py-3 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold uppercase tracking-wider hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
               >
                 {isLoading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
                     Saving Curation...
                   </>
                 ) : (
@@ -1302,12 +1272,12 @@ export function AdminAddProduct() {
         {/* Live Catalog Preview Card */}
         <div className={`lg:sticky lg:top-24 space-y-6 w-full ${mobileTab ==="preview" ?"block" :"hidden lg:block"}`}>
           <div className="text-center lg:text-left">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#64748B]">Storefront Preview</span>
-            <p className="text-[11px] sm:text-[11px] text-[#64748B]/75 mt-0.5">Real-time catalog rendition of your craft product</p>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--admin-text-secondary)]">Storefront Preview</span>
+            <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]/75 mt-0.5">Real-time catalog rendition of your craft product</p>
           </div>
 
           {/* Luxury Card Rendering */}
-          <div className="bg-white rounded-3xl overflow-hidden border border-[#E5E7EB]/60 shadow-[0_12px_30px_rgba(45,43,41,0.06)] group relative">
+          <div className="bg-[var(--admin-surface)] rounded-3xl overflow-hidden border border-[var(--admin-border)]/60 shadow-[var(--admin-shadow-sm)] group relative">
             {/* Badges Overlay */}
             <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
               {formData.badges &&
@@ -1318,13 +1288,13 @@ export function AdminAddProduct() {
                   .map((b, i) => (
                     <span
                       key={i}
-                      className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-widest bg-black text-white shadow-sm"
+                      className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-widest bg-[var(--admin-accent)] text-white shadow-sm"
                     >
                       {b}
                     </span>
                   ))}
               {formData.featured && (
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-widest bg-[#000000] text-white shadow-sm flex items-center gap-0.5">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-widest bg-[var(--admin-accent)] text-white shadow-sm flex items-center gap-0.5">
                   <span className="material-symbols-outlined text-[11px] fill-current">star</span>
                   Featured
                 </span>
@@ -1345,7 +1315,7 @@ export function AdminAddProduct() {
             </div>
 
             {/* Card Thumbnail */}
-            <div className="aspect-[4/3] bg-[#F8F9FB] relative overflow-hidden">
+            <div className="aspect-[4/3] bg-[var(--admin-bg-subtle)] relative overflow-hidden">
               {formData.imageSrc ? (
                 <img
                   src={formData.imageSrc}
@@ -1353,7 +1323,7 @@ export function AdminAddProduct() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-[#64748B]/40">
+                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--admin-text-secondary)]/40">
                   <span className="material-symbols-outlined text-[36px] mb-2">add_a_photo</span>
                   <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-widest">Image Preview Canvas</span>
                 </div>
@@ -1366,7 +1336,7 @@ export function AdminAddProduct() {
                 {formData.images.filter(Boolean).map((img, i) => (
                   <div
                     key={i}
-                    className="w-8 h-8 rounded-lg overflow-hidden border border-[#E5E7EB] cursor-pointer hover:border-[#000000]"
+                    className="w-8 h-8 rounded-lg overflow-hidden border border-[var(--admin-border)] cursor-pointer hover:border-[var(--admin-accent)]"
                   >
                     <img src={img} alt="Traditional wedding event decoration" className="w-full h-full object-cover" />
                   </div>
@@ -1376,45 +1346,45 @@ export function AdminAddProduct() {
 
             {/* Product Body */}
             <div className="p-4 space-y-2">
-              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[#000000]">
+              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--admin-accent)]">
                 {formData.category ||"Category Unassigned"}
               </span>
 
               <div>
-                <h3 className="text-[14.5px]  font-bold text-[#0F172A] truncate">
+                <h3 className="text-[14.5px]  font-bold text-[var(--admin-text-primary)] truncate">
                   {formData.title ||"Traditional Sanskriti Masterpiece"}
                 </h3>
                 {formData.teluguTitle && (
-                  <p className="text-[11px] sm:text-[11px] font-body text-[#64748B]/90 italic mt-0.5 truncate">
+                  <p className="text-[11px] sm:text-[11px]  text-[var(--admin-text-secondary)]/90 italic mt-0.5 truncate">
                     {formData.teluguTitle}
                   </p>
                 )}
               </div>
 
               {formData.material && (
-                <div className="flex items-center gap-1 text-[11px] text-[#64748B] font-medium bg-[#F8F9FB] px-2 py-1 rounded-lg w-max border border-[#E5E7EB]/40">
-                  <span className="material-symbols-outlined text-[12px] text-[#000000]">auto_awesome</span>
+                <div className="flex items-center gap-1 text-[11px] text-[var(--admin-text-secondary)] font-medium bg-[var(--admin-bg-subtle)] px-2 py-1 rounded-lg w-max border border-[var(--admin-border)]/40">
+                  <span className="material-symbols-outlined text-[12px] text-[var(--admin-accent)]">auto_awesome</span>
                   <span>{formData.material}</span>
                 </div>
               )}
 
               {/* Price Tag Row */}
-              <div className="flex items-center justify-between pt-2 border-t border-[#E5E7EB]/40 mt-3">
+              <div className="flex items-center justify-between pt-2 border-t border-[var(--admin-border)]/40 mt-3">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-[16px]  font-extrabold text-[#0F172A]">
+                  <span className="text-[16px]  font-extrabold text-[var(--admin-text-primary)]">
                     ₹{Number(formData.price || 0).toLocaleString()}
                   </span>
                   {formData.oldPrice && (
-                    <span className="text-[11px] sm:text-[11px] text-[#64748B]/50 line-through">
+                    <span className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]/50 line-through">
                       ₹{Number(formData.oldPrice).toLocaleString()}
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-0.5">
-                  <span className="material-symbols-outlined text-[13px] text-[#000000] fill-current">star</span>
-                  <span className="text-[11px] font-bold text-[#0F172A]">4.9</span>
-                  <span className="text-[11px] sm:text-[11px] sm:text-[11px] text-[#64748B]">(12 reviews)</span>
+                  <span className="material-symbols-outlined text-[13px] text-[var(--admin-accent)] fill-current">star</span>
+                  <span className="text-[11px] font-bold text-[var(--admin-text-primary)]">4.9</span>
+                  <span className="text-[11px] sm:text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]">(12 reviews)</span>
                 </div>
               </div>
             </div>
@@ -1425,15 +1395,15 @@ export function AdminAddProduct() {
       {/* SaaS AI Curation HUD Overlay Modal */}
       {showAIHUD && aiAnalysisResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-[#F8F9FB] border border-[#000000]/40 max-w-xl w-full rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] font-body relative">
+          <div className="bg-[var(--admin-bg-subtle)] border border-[var(--admin-accent)]/40 max-w-xl w-full rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]  relative">
             
             {/* Luxury Header */}
-            <div className="bg-[#0F172A] p-5 text-white flex justify-between items-center border-b border-white/10">
+            <div className="bg-[var(--admin-text-primary)] p-5 text-white flex justify-between items-center border-b border-white/10">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-white animate-pulse">auto_awesome</span>
                 <div className="text-left">
                   <h3 className="text-[13px] font-bold uppercase tracking-wider text-white">Groq Llama 4 Curation Analysis</h3>
-                  <p className="text-[11px] sm:text-[11px] sm:text-[11px] text-slate-300">Rigorous 4-Stage Multimodal Craft Curation</p>
+                  <p className="text-[11px] sm:text-[11px] sm:text-[11px] text-[var(--admin-text-tertiary)]">Rigorous 4-Stage Multimodal Craft Curation</p>
                 </div>
               </div>
               <button 
@@ -1446,14 +1416,14 @@ export function AdminAddProduct() {
             </div>
 
             {/* Scrollable Dashboard Panel */}
-            <div className="p-6 overflow-y-auto space-y-5 text-left text-[#0F172A]">
+            <div className="p-6 overflow-y-auto space-y-5 text-left text-[var(--admin-text-primary)]">
               
               {/* Top Classification Row: Object + Confidence Score */}
-              <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-sm">
+              <div className="flex items-center justify-between bg-[var(--admin-surface)] p-4 rounded-2xl border border-[var(--admin-border)] shadow-sm">
                 <div>
-                  <p className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Detected Object Class</p>
-                  <h4 className="text-[17px] font-bold text-[#0F172A] flex items-center gap-1.5 mt-0.5">
-                    <span className="material-symbols-outlined text-[#000000] text-[18px]">workspace_premium</span>
+                  <p className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">Detected Object Class</p>
+                  <h4 className="text-[17px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5 mt-0.5">
+                    <span className="material-symbols-outlined text-[var(--admin-accent)] text-[18px]">workspace_premium</span>
                     {aiAnalysisResult.detected_object ||"Unidentified Curation"}
                   </h4>
                 </div>
@@ -1469,13 +1439,13 @@ export function AdminAddProduct() {
 
               {/* Titles Block */}
               <div className="space-y-3">
-                <div className="p-3.5 bg-white border border-[#E5E7EB] rounded-xl space-y-1 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider block">Generated English Title</span>
-                  <p className="text-[12.5px] font-bold text-[#0F172A]">{aiAnalysisResult.english_title}</p>
+                <div className="p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">Generated English Title</span>
+                  <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">{aiAnalysisResult.english_title}</p>
                 </div>
-                <div className="p-3.5 bg-white border border-[#E5E7EB] rounded-xl space-y-1 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider block">Natural Telugu Curation</span>
-                  <p className="text-[13px] font-bold text-[#0F172A] font-body TeluguScript">{aiAnalysisResult.telugu_title}</p>
+                <div className="p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">Natural Telugu Curation</span>
+                  <p className="text-[13px] font-bold text-[var(--admin-text-primary)]  TeluguScript">{aiAnalysisResult.telugu_title}</p>
                 </div>
               </div>
 
@@ -1483,8 +1453,8 @@ export function AdminAddProduct() {
               <div className="grid grid-cols-2 gap-4">
                 
                 {/* Category */}
-                <div className="p-3.5 bg-white border border-[#E5E7EB] rounded-xl space-y-1.5 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider block">Category Mapped</span>
+                <div className="p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1.5 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">Category Mapped</span>
                   <div className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg text-[11px] sm:text-[11px] font-bold border border-purple-200">
                     <span className="material-symbols-outlined text-[11px] sm:text-[11px]">category</span>
                     {aiAnalysisResult.category ||"General Decor"}
@@ -1492,18 +1462,18 @@ export function AdminAddProduct() {
                 </div>
 
                 {/* Occasion / Style */}
-                <div className="p-3.5 bg-white border border-[#E5E7EB] rounded-xl space-y-1.5 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider block">Style & Theme</span>
-                  <p className="text-[11px] sm:text-[11px] font-bold text-[#0F172A]">{aiAnalysisResult.style ||"Traditional Indian"}</p>
+                <div className="p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1.5 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">Style & Theme</span>
+                  <p className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)]">{aiAnalysisResult.style ||"Traditional Indian"}</p>
                 </div>
 
                 {/* Materials Chips */}
-                <div className="col-span-2 p-3.5 bg-white border border-[#E5E7EB] rounded-xl space-y-2 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider block">Auto-Detected Craft Materials</span>
+                <div className="col-span-2 p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-2 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">Auto-Detected Craft Materials</span>
                   <div className="flex flex-wrap gap-1.5">
                     {(aiAnalysisResult.materials || []).map((m, idx) => (
-                      <span key={idx} className="bg-amber-50 text-[#000000] px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] font-bold border border-[#000000]/20 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#000000]" />
+                      <span key={idx} className="bg-amber-50 text-[var(--admin-accent)] px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] font-bold border border-[var(--admin-accent)]/20 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)]" />
                         {m}
                       </span>
                     ))}
@@ -1511,8 +1481,8 @@ export function AdminAddProduct() {
                 </div>
 
                 {/* Color Palette */}
-                <div className="col-span-2 p-3.5 bg-white border border-[#E5E7EB] rounded-xl space-y-2 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider block">Color Palette Extracted</span>
+                <div className="col-span-2 p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-2 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">Color Palette Extracted</span>
                   <div className="flex flex-wrap gap-3">
                     {(aiAnalysisResult.colors || []).map((c, idx) => {
                       const colorMap = {
@@ -1529,9 +1499,9 @@ export function AdminAddProduct() {
                       const hex = colorMap[c.toLowerCase()] ||"#64748B";
                       const isLight = c.toLowerCase() ==="ivory";
                       return (
-                        <div key={idx} className="flex items-center gap-1.5 bg-[#F8F9FB] border border-[#E5E7EB] px-2.5 py-1 rounded-xl shadow-sm">
-                          <span className={`w-3 h-3 rounded-full shadow-inner border ${isLight ? 'border-gray-300' : 'border-transparent'}`} style={{ backgroundColor: hex }} />
-                          <span className="text-[11px] sm:text-[11px] font-bold text-[#0F172A] capitalize">{c}</span>
+                        <div key={idx} className="flex items-center gap-1.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-2.5 py-1 rounded-xl shadow-sm">
+                          <span className={`w-3 h-3 rounded-full shadow-inner border ${isLight ? 'border-[var(--admin-border-strong)]' : 'border-transparent'}`} style={{ backgroundColor: hex }} />
+                          <span className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] capitalize">{c}</span>
                         </div>
                       );
                     })}
@@ -1539,11 +1509,11 @@ export function AdminAddProduct() {
                 </div>
 
                 {/* Tags Generation */}
-                <div className="col-span-2 p-3.5 bg-white border border-[#E5E7EB] rounded-xl space-y-2 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider block">SEO Collections & Search Tags</span>
+                <div className="col-span-2 p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-2 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">SEO Collections & Search Tags</span>
                   <div className="flex flex-wrap gap-1">
                     {(aiAnalysisResult.tags || []).map((t, idx) => (
-                      <span key={idx} className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-lg text-[11px] sm:text-[11px] sm:text-[11px] font-semibold border border-gray-200">
+                      <span key={idx} className="bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] px-2 py-0.5 rounded-lg text-[11px] sm:text-[11px] sm:text-[11px] font-semibold border border-[var(--admin-border)]">
                         #{t}
                       </span>
                     ))}
@@ -1551,8 +1521,8 @@ export function AdminAddProduct() {
                 </div>
 
                 {/* Description */}
-                <div className="col-span-2 p-3.5 bg-white border border-[#E5E7EB] rounded-xl space-y-1.5 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider block">Premium Curation Description</span>
+                <div className="col-span-2 p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1.5 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">Premium Curation Description</span>
                   <p className="text-[11px] sm:text-[11px] text-[#555] leading-relaxed italic">"{aiAnalysisResult.description}"</p>
                 </div>
 
@@ -1561,11 +1531,11 @@ export function AdminAddProduct() {
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 bg-[#F8F9FB] border-t border-[#E5E7EB] flex flex-col sm:flex-row gap-2.5">
+            <div className="p-4 bg-[var(--admin-bg-subtle)] border-t border-[var(--admin-border)] flex flex-col sm:flex-row gap-2.5">
               <button 
                 type="button"
                 onClick={() => setShowAIHUD(false)}
-                className="w-full sm:flex-1 border border-[#E5E7EB] text-[#64748B] py-2.5 rounded-xl text-[11px] sm:text-[11px] font-bold hover:bg-white transition-colors cursor-pointer"
+                className="w-full sm:flex-1 border border-[var(--admin-border)] text-[var(--admin-text-secondary)] py-2.5 rounded-xl text-[11px] sm:text-[11px] font-bold hover:bg-white transition-colors cursor-pointer"
               >
                 Manual Correction / Reject
               </button>
@@ -1573,7 +1543,7 @@ export function AdminAddProduct() {
               <button 
                 type="button"
                 onClick={handleApplyAISpecs}
-                className="w-full sm:flex-1 bg-black text-white py-2.5 rounded-xl text-[11px] sm:text-[11px] font-bold shadow-md hover:bg-slate-900 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                className="w-full sm:flex-1 bg-[var(--admin-accent)] text-white py-2.5 rounded-xl text-[11px] sm:text-[11px] font-bold shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <span className="material-symbols-outlined text-[15px] animate-bounce">published_with_changes</span>
                 Apply AI Curation
@@ -1586,3 +1556,4 @@ export function AdminAddProduct() {
     </div>
   );
 }
+

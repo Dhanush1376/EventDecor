@@ -1,25 +1,49 @@
-import React, { useState, useMemo, useEffect } from"react";
-import { motion, AnimatePresence } from"framer-motion";
-import { useNavigate } from"react-router-dom";
-import { useAdmin } from"../context/AdminContext";
-import { playSuccessBeep, playErrorBeep } from"../../utils/audioUtils";
-import toast from"react-hot-toast";
+import React, { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useAdmin } from "../context/AdminContext";
+import { playSuccessBeep, playErrorBeep } from "../../utils/audioUtils";
+import toast from "react-hot-toast";
+import {
+  PageHeader,
+  FilterBar,
+  StatusBadge,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from "../components/AdminUIKit";
 
-const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideDrawer = {
-  hidden: { x:"100%" },
-  show: { x: 0 },
-  exit: { x:"100%" },
+  hidden: { x: "100%", opacity: 0 },
+  show: { x: 0, opacity: 1 },
+  exit: { x: "100%", opacity: 0 },
 };
 
-const statusColors = {"Pending":"text-amber-700 bg-amber-50 border-amber-200","Confirmed":"text-slate-900 bg-slate-100 border-slate-300","Packed":"text-purple-700 bg-purple-50 border-purple-200","Ready to Ship":"text-sky-700 bg-sky-50 border-sky-200","Shipped":"text-blue-700 bg-slate-100 border-slate-300","Out for Delivery":"text-teal-700 bg-teal-50 border-teal-200","Delivered":"text-emerald-700 bg-emerald-50 border-emerald-250","Cancelled":"text-rose-700 bg-rose-50 border-rose-200","Returned":"text-slate-650 bg-slate-50 border-slate-200","Refunded":"text-slate-500 bg-slate-50 border-slate-200",
-};
-
-const statusIcons = {"Pending":"schedule","Confirmed":"thumb_up","Packed":"inventory_2","Ready to Ship":"conveyor_belt","Shipped":"local_shipping","Out for Delivery":"directions_run","Delivered":"verified","Cancelled":"cancel","Returned":"keyboard_return","Refunded":"payments",
-};
-
-const allStatuses = ["Pending","Confirmed","Packed","Ready to Ship","Shipped","Out for Delivery","Delivered","Cancelled","Returned","Refunded",
+const allStatuses = [
+  "Pending",
+  "Confirmed",
+  "Packed",
+  "Ready to Ship",
+  "Shipped",
+  "Out for Delivery",
+  "Delivered",
+  "Cancelled",
+  "Returned",
+  "Refunded",
 ];
+
+const statusIcons = {
+  "Pending": "schedule",
+  "Confirmed": "thumb_up",
+  "Packed": "inventory_2",
+  "Ready to Ship": "conveyor_belt",
+  "Shipped": "local_shipping",
+  "Out for Delivery": "directions_run",
+  "Delivered": "verified",
+  "Cancelled": "cancel",
+  "Returned": "keyboard_return",
+  "Refunded": "payments",
+};
 
 export function AdminOrders() {
   const navigate = useNavigate();
@@ -56,7 +80,7 @@ export function AdminOrders() {
 
   // Capture physical barcode scanner keyboard inputs
   useEffect(() => {
-    let buffer ="";
+    let buffer = "";
     let lastKeyTime = Date.now();
 
     const handleKeyPress = (e) => {
@@ -64,24 +88,24 @@ export function AdminOrders() {
       
       // Fast barcode keyboard sweeps (< 50ms)
       if (currentTime - lastKeyTime > 50) {
-        buffer ="";
+        buffer = "";
       }
       lastKeyTime = currentTime;
 
-      if (e.key ==="Shift" || e.key ==="Control" || e.key ==="Alt" || e.key ==="Meta") {
+      if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") {
         return;
       }
 
-      if (e.key ==="Enter") {
+      if (e.key === "Enter") {
         if (buffer.length >= 3) {
           const scannedCode = buffer.trim().toUpperCase();
-          buffer ="";
+          buffer = "";
           
           const matchedOrder = orders.find((o) => {
             const cleanId = o.id.toUpperCase();
-            const cleanAWB = (o.trackingNumber ||"").toUpperCase();
+            const cleanAWB = (o.trackingNumber || "").toUpperCase();
             const customBarcode = `SR-${o.id.substring(o.id.length - 8).toUpperCase()}-IN`;
-            const invoiceNum = (o.invoiceNumber ||"").toUpperCase();
+            const invoiceNum = (o.invoiceNumber || "").toUpperCase();
             return (
               scannedCode === cleanId ||
               scannedCode === cleanAWB ||
@@ -97,7 +121,7 @@ export function AdminOrders() {
             navigate(`/admin/orders/${matchedOrder.id}`);
           } else {
             playErrorBeep();
-            toast.error(`Scan mismatch! Code"${scannedCode}" not found in orders list.`);
+            toast.error(`Scan mismatch! Code "${scannedCode}" not found in orders list.`);
           }
         }
         return;
@@ -121,7 +145,7 @@ export function AdminOrders() {
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
-      const matchStatus = filterStatus ==="All" || o.status === filterStatus;
+      const matchStatus = filterStatus === "All" || o.status === filterStatus;
       const matchSearch =
         !searchQuery ||
         o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -139,27 +163,26 @@ export function AdminOrders() {
     return counts;
   }, [orders]);
 
-  // Export orders to CSV
   const handleExportCSV = () => {
     if (filteredOrders.length === 0) {
       return toast.error("No orders found to export");
     }
 
-    const headers ="Order ID,Customer,Phone,Items Summary,Total Amount,Payment Type,Status,Order Date\n";
+    const headers = "Order ID,Customer,Phone,Items Summary,Total Amount,Payment Type,Status,Order Date\n";
     const rows = filteredOrders
       .map((o) => {
-        const itemsList = o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(" |");
+        const itemsList = o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(" | ");
         return `"${o.id}","${o.customer}","${o.phone}","${itemsList}",${o.total},"${o.payment}","${o.status}","${o.date}"`;
       })
       .join("\n");
 
-    const blob = new Blob([headers + rows], { type:"text/csv" });
+    const blob = new Blob([headers + rows], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
     link.setAttribute("download", `SiriArts_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
     link.click();
-    toast.success("CSV Order Export generated successfully!");
+    toast.success("Export ready");
   };
 
   const openOrderDrawer = (order) => {
@@ -168,246 +191,217 @@ export function AdminOrders() {
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto space-y-6">
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="text-left">
-          <h2 className="text-[11px] sm:text-[11px] font-bold text-slate-900 tracking-tight">
-            Inquiry & Order Hub
-          </h2>
-          <p className="text-[11px] sm:text-[11px] text-slate-500 mt-1">
-            {orders.length} transactions managing handcrafted traditional setups
-          </p>
-        </div>
-
-        {/* View Toggle and Export Controls */}
-        <div className="flex items-center gap-3">
-          <div className="flex bg-slate-100 border border-slate-200/60 rounded-xl p-0.5 shadow-xs">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
-                viewMode ==="table" ?"bg-white text-slate-900 shadow-xs border border-slate-200/30" :"text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              <span className="material-symbols-outlined text-[15px]">view_list</span>
-              Table View
-            </button>
-            <button
-              onClick={() => setViewMode("kanban")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
-                viewMode ==="kanban" ?"bg-white text-slate-900 shadow-xs border border-slate-200/30" :"text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              <span className="material-symbols-outlined text-[15px]">dashboard</span>
-              Kanban Board
-            </button>
-          </div>
-
-          <button onClick={handleExportCSV} className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-black rounded-lg shadow-xs flex items-center gap-1.5 transition-all">
-            <span className="material-symbols-outlined text-[16px]">
-              download
-            </span>
-            Export CSV
+      <PageHeader
+        title="Inquiry & Order Hub"
+        subtitle={`${orders.length} transactions managing handcrafted traditional setups`}
+      >
+        <div className="flex bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 shadow-sm">
+          <button
+            onClick={() => setViewMode("table")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+              viewMode === "table"
+                ? "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)]"
+                : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">view_list</span>
+            Table
+          </button>
+          <button
+            onClick={() => setViewMode("kanban")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+              viewMode === "kanban"
+                ? "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)]"
+                : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">dashboard</span>
+            Kanban
           </button>
         </div>
-      </div>
+        <button onClick={handleExportCSV} className="admin-btn admin-btn-outline min-h-[36px]">
+          <span className="material-symbols-outlined text-[16px]">download</span>
+          Export CSV
+        </button>
+      </PageHeader>
 
       {/* Real-time Logistics & COD Remittance Reconciliation Ledger */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 p-5 rounded-2xl bg-white border border-slate-200 shadow-xs relative overflow-hidden text-left">
-        <div className="absolute top-0 left-0 w-full h-[3px] bg-slate-200"></div>
-        <div className="space-y-1">
-          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wider">COD Order Volume</span>
-          <p className="text-[11px] sm:text-[11px] font-bold text-slate-900">₹{codStats.totalVolume.toLocaleString()}</p>
-          <span className="text-[11px] text-slate-450 mt-1 block">Total cash-delivery orders initiated</span>
+      <motion.div variants={fadeUp} className="admin-card overflow-hidden text-left relative p-0">
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[var(--admin-border-subtle)]">
+          <div className="p-5 space-y-1">
+            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">COD Order Volume</span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">{formatCurrency(codStats.totalVolume)}</p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">Total cash-delivery orders initiated</span>
+          </div>
+          <div className="p-5 space-y-1">
+            <span className="text-[10px] text-[var(--admin-warning)] font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--admin-warning)] animate-pulse" />
+              Courier Collections Pending
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">{formatCurrency(codStats.pendingRemittance)}</p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">Cash held by agents, awaiting transfer</span>
+          </div>
+          <div className="p-5 space-y-1">
+            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">Shipping Deductions</span>
+            <p className="text-[14px] font-bold text-[var(--admin-error)]">{formatCurrency(codStats.courierDeductions)}</p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">Aggregated logistics & partner fees</span>
+          </div>
+          <div className="p-5 space-y-1 bg-[var(--admin-success-light)] border-l-0">
+            <span className="text-[10px] text-[var(--admin-success)] font-bold uppercase tracking-wider">Net Bank Payouts</span>
+            <p className="text-[14px] font-bold text-[var(--admin-success)]">{formatCurrency(codStats.settledPayouts)}</p>
+            <span className="text-[10px] text-[var(--admin-success)] opacity-80 mt-1 block">Payment reconciled</span>
+          </div>
         </div>
-        <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-slate-100 pt-3 sm:pt-0 sm:pl-5">
-          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-            Courier Collections Pending
-          </span>
-          <p className="text-[11px] sm:text-[11px] font-bold text-amber-600">₹{codStats.pendingRemittance.toLocaleString()}</p>
-          <span className="text-[11px] text-slate-450 mt-1 block">Cash held by agents, awaiting bank transfer</span>
-        </div>
-        <div className="space-y-1 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-5">
-          <span className="block text-[11px] text-slate-400 font-bold uppercase tracking-wider">Courier Shipping Deductions</span>
-          <p className="text-[11px] sm:text-[11px] font-bold text-rose-600">₹{codStats.courierDeductions.toLocaleString()}</p>
-          <span className="text-[11px] sm:text-[11px] text-slate-455">Aggregated logistics & COD partner fees</span>
-        </div>
-        <div className="space-y-1 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-5 bg-emerald-50/15 p-2 rounded-xl border border-emerald-100/50">
-          <span className="block text-[11px] text-emerald-800 font-bold uppercase tracking-wider uppercase tracking-wider">Net Bank Payouts</span>
-          <p className="text-[11px] sm:text-[11px] font-bold text-emerald-600">₹{codStats.settledPayouts.toLocaleString()}</p>
-          <span className="text-[11px] sm:text-[11px] text-emerald-600/80">Reconciled remittance successfully credited</span>
-        </div>
-      </div>
+      </motion.div>
 
       {/* Table Filters Tab */}
-      {viewMode ==="table" && (
-        <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar scroll-smooth">
-          {["All", ...allStatuses].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider whitespace-nowrap cursor-pointer transition-all border ${
-                filterStatus === s
-                  ?"bg-slate-900 text-white border-slate-900 shadow-xs"
-                  :"bg-white text-slate-500 border-slate-200 hover:text-slate-800 hover:border-slate-350"
-              }`}
-            >
-              {s}{""}
-              <span
-                className={`px-1.5 py-0.5 rounded text-[11px] sm:text-[11px] sm:text-[11px] font-bold ${
-                  filterStatus === s ?"bg-white/20 text-white" :"bg-slate-100 text-slate-450"
-                }`}
-              >
-                {statusCounts[s]}
-              </span>
-            </button>
-          ))}
-        </div>
+      {viewMode === "table" && (
+        <motion.div variants={fadeUp}>
+          <FilterBar
+            filters={["All", ...allStatuses]}
+            value={filterStatus}
+            onChange={setFilterStatus}
+            counts={statusCounts}
+          />
+        </motion.div>
       )}
 
       {/* CONTENT SWITCHER */}
       <AnimatePresence mode="wait">
-        {viewMode ==="table" ? (
+        {viewMode === "table" ? (
           /* TABLE VIEW */
           <motion.div
             key="table"
             initial="hidden"
             animate="show"
+            exit="hidden"
             variants={fadeUp}
-            className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs"
+            className="admin-card overflow-x-auto"
           >
-            <div className="overflow-x-auto">
-              <table className="w-full text-[11px] border-collapse min-w-[900px]">
-                <thead>
-                  <tr className="bg-slate-50 text-left text-slate-450 border-b border-slate-200 select-none">
-                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] w-32 text-left">Order ID</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-left">Client Info</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] hidden md:table-cell text-left">Details Curation</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-left">Total Cost</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] hidden sm:table-cell text-left">Payment</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-left">Status Indicator</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] hidden lg:table-cell text-left">Curation Date</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-left">Required Date</th>
-                    <th className="p-4 font-bold tracking-wider uppercase text-[11px] text-right">Actions</th>
+            <table className="admin-table w-full min-w-[900px]">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Client Info</th>
+                  <th className="hidden md:table-cell">Details Curation</th>
+                  <th>Total Cost</th>
+                  <th className="hidden sm:table-cell">Payment</th>
+                  <th>Status Indicator</th>
+                  <th className="hidden lg:table-cell">Curation Date</th>
+                  <th>Required Date</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="py-20 text-center">
+                      <div className="flex flex-col items-center justify-center text-[var(--admin-text-tertiary)]">
+                        <span className="material-symbols-outlined text-[36px] mb-2">search_off</span>
+                        <p className="text-[12px] font-bold text-[var(--admin-text-secondary)]">Data Not Found</p>
+                        <p className="text-[11px] mt-0.5">Try adjusting filters or search queries</p>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredOrders.map((o) => {
+                ) : (
+                  filteredOrders.map((o) => {
                     const isVip = o.total >= 15000;
                     const isNew = o.date && o.date.includes("Today");
 
                     return (
                       <tr
                         key={o.id}
-                        className="border-b border-slate-100 last:border-none hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                        className="admin-table-row-clickable group"
                         onClick={() => openOrderDrawer(o)}
                       >
-                        <td className="p-4 font-semibold text-black group-hover:text-slate-900 transition-colors text-left">
-                          <div className="flex items-center gap-1.5">
+                        <td className="font-semibold text-[var(--admin-text-primary)]">
+                          <div className="flex items-center gap-2">
                             #{o.id.substring(o.id.length - 8).toUpperCase()}
                             {isNew && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" title="Recent order" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping" title="Recent order" />
                             )}
                           </div>
                         </td>
-                        <td className="p-4 text-left">
+                        <td>
                           <div className="flex flex-col">
-                            <span className="font-semibold text-slate-800 text-[11px]">{o.customer}</span>
-                            <span className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[12px] text-slate-400">call</span>
+                            <span className="font-semibold text-[var(--admin-text-primary)]">{o.customer}</span>
+                            <span className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[12px]">call</span>
                               {o.phone}
                             </span>
                           </div>
                         </td>
-                        <td className="p-4 text-slate-500 hidden md:table-cell max-w-[200px] truncate text-left">
-                          {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(",")}
+                        <td className="hidden md:table-cell max-w-[200px] truncate text-[var(--admin-text-secondary)]">
+                          {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(", ")}
                         </td>
-                        <td className="p-4 font-bold text-slate-800 text-left">
-                          <div className="flex flex-col">
-                            <span>₹{o.total.toLocaleString()}</span>
+                        <td className="font-bold text-[var(--admin-text-primary)]">
+                          <div className="flex flex-col items-start">
+                            <span>{formatCurrency(o.total)}</span>
                             {isVip && (
-                              <span className="text-[7.5px] uppercase tracking-widest font-extrabold text-black mt-0.5 bg-slate-100 px-1 w-max rounded">
+                              <span className="admin-badge admin-badge-neutral text-[8px] mt-1 p-0.5 px-1 font-extrabold uppercase bg-[var(--admin-surface-muted)]">
                                 VIP Collection
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="p-4 hidden sm:table-cell text-left">
-                          <span
-                            className={`px-2 py-0.5 rounded border text-[11px] sm:text-[11px] font-semibold uppercase tracking-wider ${
-                              o.payment ==="Paid"
-                                ?"text-emerald-700 bg-emerald-50 border-emerald-200"
-                                : o.payment ==="COD"
-                                ?"text-amber-700 bg-amber-50 border-amber-200"
-                                :"text-rose-600 bg-rose-50 border-rose-200"
-                            }`}
-                          >
+                        <td className="hidden sm:table-cell">
+                          <span className="admin-badge admin-badge-neutral uppercase text-[9px] tracking-wider font-bold">
                             {o.payment}
                           </span>
                         </td>
-                        <td className="p-4 text-left">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded border text-[11px] font-semibold ${statusColors[o.status]}`}
-                          >
-                            <span className="material-symbols-outlined text-[13px]">{statusIcons[o.status]}</span>
-                            {o.status}
-                          </span>
+                        <td>
+                          <StatusBadge status={o.status} />
                         </td>
-                        <td className="p-4 text-slate-450 hidden lg:table-cell text-left">{o.date}</td>
-                        <td className="p-4 text-left">
+                        <td className="hidden lg:table-cell text-[var(--admin-text-secondary)]">{o.date}</td>
+                        <td>
                           {o.needByDate ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-250 text-[11px] font-bold">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[var(--admin-radius-sm)] bg-[var(--admin-info-light)] text-[var(--admin-info)] border border-[var(--admin-info-border)] text-[10px] font-bold uppercase tracking-wider">
                               <span className="material-symbols-outlined text-[12px]">calendar_today</span>
                               {new Date(o.needByDate).toLocaleDateString("en-IN", {
-                                day:"numeric",
-                                month:"short",
+                                day: "numeric",
+                                month: "short",
                               })}
                             </span>
                           ) : (
-                            <span className="text-slate-400 text-[11px]">—</span>
+                            <span className="text-[var(--admin-text-tertiary)]">—</span>
                           )}
                         </td>
-                        <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-1">
+                        <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => openOrderDrawer(o)}
-                              className="p-1.5 rounded-lg text-slate-450 hover:bg-slate-100 hover:text-slate-800 border border-transparent hover:border-slate-200 cursor-pointer"
-                              title="Quick Details Panel"
+                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                              title="Quick Details"
                             >
-                              <span className="material-symbols-outlined text-[15px]">visibility</span>
+                              <span className="material-symbols-outlined text-[16px]">visibility</span>
                             </button>
                             <button
                               onClick={() => navigate(`/admin/orders/${o.id}`)}
-                              className="p-1.5 rounded-lg text-slate-450 hover:bg-slate-100 hover:text-black border border-transparent hover:border-slate-200 cursor-pointer"
-                              title="Full Invoice & Prints"
+                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                              title="Full Invoice"
                             >
-                              <span className="material-symbols-outlined text-[15px]">receipt_long</span>
+                              <span className="material-symbols-outlined text-[16px]">receipt_long</span>
                             </button>
                             <a
-                              href={`https://wa.me/${o.phone.replace(/[^0-9]/g,"")}`}
+                              href={`https://wa.me/${o.phone.replace(/[^0-9]/g, "")}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg text-slate-450 hover:bg-emerald-50 hover:text-emerald-600 border border-transparent hover:border-emerald-250 flex items-center justify-center"
-                              title="Direct Whatsapp"
+                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)]"
+                              title="WhatsApp"
                             >
-                              <span className="material-symbols-outlined text-[15px]">chat</span>
+                              <span className="material-symbols-outlined text-[16px]">chat</span>
                             </a>
                           </div>
                         </td>
                       </tr>
                     );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {filteredOrders.length === 0 && (
-              <div className="py-20 text-center text-slate-400">
-                <span className="material-symbols-outlined text-[36px] text-slate-300">search_off</span>
-                <p className="text-[12px] font-bold mt-2 text-slate-700">Data Not Found</p>
-                <p className="text-[11px] sm:text-[11px] mt-0.5 text-slate-450">Try adjusting filters or search queries</p>
-              </div>
-            )}
+                  })
+                )}
+              </tbody>
+            </table>
           </motion.div>
         ) : (
           /* KANBAN BOARD */
@@ -415,36 +409,37 @@ export function AdminOrders() {
             key="kanban"
             initial="hidden"
             animate="show"
+            exit="hidden"
             variants={fadeUp}
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 items-start"
           >
             {filteredOrders.length === 0 ? (
-              <div className="py-20 text-center text-slate-400 bg-white rounded-xl border border-slate-200 w-full col-span-full flex flex-col items-center justify-center">
-                <span className="material-symbols-outlined text-[36px] text-slate-300">search_off</span>
-                <p className="text-[12px] font-bold mt-2 text-slate-700">Data Not Found</p>
-                <p className="text-[11px] sm:text-[11px] mt-0.5 text-slate-450">Try adjusting your active search keywords or status tabs.</p>
+              <div className="py-20 text-center col-span-full admin-card flex flex-col items-center justify-center">
+                <span className="material-symbols-outlined text-[36px] text-[var(--admin-text-tertiary)] mb-2">search_off</span>
+                <p className="text-[12px] font-bold text-[var(--admin-text-secondary)]">Data Not Found</p>
+                <p className="text-[11px] mt-0.5 text-[var(--admin-text-tertiary)]">Try adjusting your active search keywords or status tabs.</p>
               </div>
             ) : (
               allStatuses.slice(0, 5).map((status) => {
                 const statusOrders = filteredOrders.filter((o) => o.status === status);
 
                 return (
-                  <div key={status} className="bg-slate-50/65 rounded-xl p-3 border border-slate-200/80 space-y-3 min-h-[350px] flex flex-col">
+                  <div key={status} className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[600px]">
                     {/* Column Header */}
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-2 shrink-0 select-none">
-                      <div className="flex items-center gap-1.5 text-left">
-                        <span className={`material-symbols-outlined text-[15px] ${statusColors[status].split("")[0]}`}>
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--admin-border-subtle)] shrink-0 select-none">
+                      <div className="flex items-center gap-2 text-left">
+                        <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-secondary)]">
                           {statusIcons[status]}
                         </span>
-                        <span className="text-[11px] sm:text-[11px] font-bold text-slate-700">{status}</span>
+                        <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider">{status}</span>
                       </div>
-                      <span className="text-[11px] sm:text-[11px] font-bold bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] font-bold bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] px-1.5 py-0.5 rounded-[var(--admin-radius-sm)]">
                         {statusOrders.length}
                       </span>
                     </div>
 
                     {/* Cards Pool */}
-                    <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[500px] custom-scrollbar pr-0.5">
+                    <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-1">
                       {statusOrders.map((o) => {
                         const hasNote = Boolean(o.notes);
 
@@ -452,34 +447,34 @@ export function AdminOrders() {
                           <div
                             key={o.id}
                             onClick={() => openOrderDrawer(o)}
-                            className="bg-white rounded-lg p-3.5 border border-slate-200 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-black hover:shadow-xs transition-all duration-200 cursor-pointer group text-left"
+                            className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] p-4 border border-[var(--admin-border)] shadow-[var(--admin-shadow-sm)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-200 cursor-pointer group text-left flex flex-col"
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] sm:text-[11px] font-semibold text-slate-800 group-hover:text-black transition-colors">
-                                #{o.id.substring(o.id.length - 8).toUpperCase()}
-                              </span>
-                              <span className="text-[11px] font-bold text-slate-900">
-                                ₹{o.total.toLocaleString()}
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <span className="text-[12px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors">
+                                  #{o.id.substring(o.id.length - 8).toUpperCase()}
+                                </span>
+                                <p className="text-[11px] font-medium text-[var(--admin-text-secondary)] mt-0.5 truncate max-w-[120px]">
+                                  {o.customer}
+                                </p>
+                              </div>
+                              <span className="text-[12px] font-bold text-[var(--admin-text-primary)]">
+                                {formatCurrency(o.total)}
                               </span>
                             </div>
 
-                            <p className="text-[12px] font-semibold text-slate-700 mt-2 truncate">
-                              {o.customer}
+                            <p className="text-[10px] text-[var(--admin-text-tertiary)] truncate mb-4">
+                              {o.items.map((i) => i.name).join(", ")}
                             </p>
 
-                            <p className="text-[11px] text-slate-400 truncate mt-1">
-                              {o.items.map((i) => i.name).join(",")}
-                            </p>
-
-                            {/* Interactive status selector dropdown */}
-                            <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-3 gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mt-auto pt-3 border-t border-[var(--admin-border-subtle)] gap-2" onClick={(e) => e.stopPropagation()}>
                               <select
                                 value={o.status}
                                 onChange={(e) => {
                                   updateOrderStatus(o.id, e.target.value);
                                   toast.success(`Moved #${o.id.substring(o.id.length - 6).toUpperCase()} to ${e.target.value}`);
                                 }}
-                                className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 cursor-pointer outline-none max-w-[100px]"
+                                className="admin-input py-1 px-2 text-[10px] font-bold uppercase tracking-wider cursor-pointer min-h-0 h-7"
                               >
                                 {allStatuses.map((st) => (
                                   <option key={st} value={st}>
@@ -488,19 +483,19 @@ export function AdminOrders() {
                                 ))}
                               </select>
 
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 shrink-0">
                                 {hasNote && (
-                                  <span className="material-symbols-outlined text-[13px] text-amber-500" title="Contains team note">
+                                  <span className="material-symbols-outlined text-[14px] text-[var(--admin-warning)]" title="Contains team note">
                                     sticky_note_2
                                   </span>
                                 )}
                                 <a
-                                  href={`https://wa.me/${o.phone.replace(/[^0-9]/g,"")}`}
+                                  href={`https://wa.me/${o.phone.replace(/[^0-9]/g, "")}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="w-5 h-5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-colors"
+                                  className="w-7 h-7 rounded-[var(--admin-radius-sm)] bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] flex items-center justify-center hover:bg-[var(--admin-success)] hover:text-white transition-colors"
                                 >
-                                  <span className="material-symbols-outlined text-[11px] sm:text-[11px] font-bold">chat</span>
+                                  <span className="material-symbols-outlined text-[14px]">chat</span>
                                 </a>
                               </div>
                             </div>
@@ -509,9 +504,9 @@ export function AdminOrders() {
                       })}
 
                       {statusOrders.length === 0 && (
-                        <div className="py-10 text-center text-slate-300 border border-dashed border-slate-200 rounded-lg select-none flex flex-col items-center justify-center">
-                          <span className="material-symbols-outlined text-[18px] mb-1">inbox</span>
-                          <span className="text-[11px] sm:text-[11px] sm:text-[11px] uppercase font-bold tracking-wider">Empty</span>
+                        <div className="py-12 text-center text-[var(--admin-text-tertiary)] border border-dashed border-[var(--admin-border)] rounded-[var(--admin-radius-lg)] flex flex-col items-center justify-center">
+                          <span className="material-symbols-outlined text-[24px] mb-2">inbox</span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider">Empty</span>
                         </div>
                       )}
                     </div>
@@ -527,114 +522,123 @@ export function AdminOrders() {
       <AnimatePresence>
         {isDrawerOpen && selectedOrder && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsDrawerOpen(false)}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[999] cursor-pointer"
+              className="fixed inset-0 z-[999] cursor-pointer"
+              style={{ background: "var(--admin-surface-overlay)", backdropFilter: "blur(4px)" }}
             />
 
-            {/* Slide block drawer */}
             <motion.aside
               initial="hidden"
               animate="show"
               exit="exit"
               variants={slideDrawer}
-              transition={{ type:"spring", damping: 30, stiffness: 350 }}
-              className="fixed right-0 top-0 h-screen w-full sm:w-[480px] bg-white z-[1000] shadow-xl flex flex-col overflow-hidden border-l border-slate-200"
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed right-0 top-0 h-screen w-full sm:w-[500px] z-[1000] shadow-[var(--admin-shadow-2xl)] flex flex-col overflow-hidden border-l border-[var(--admin-border)]"
+              style={{ background: "var(--admin-surface)" }}
             >
               {/* Drawer Header */}
-              <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0 text-left">
+              <div className="px-6 py-5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0 text-left bg-[var(--admin-bg-subtle)]">
                 <div>
-                  <h3 className="text-[11px] font-bold text-slate-800">
+                  <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
                     Order Details Panel
                   </h3>
-                  <p className="text-[11px] text-slate-400 mt-1">
+                  <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1">
                     #{selectedOrder.id.toUpperCase()}
                   </p>
                 </div>
                 <button
                   onClick={() => setIsDrawerOpen(false)}
-                  className="w-7 h-7 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-400 cursor-pointer"
+                  className="admin-btn-icon"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
               </div>
 
               {/* Drawer Scroll Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar text-left">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar text-left bg-[var(--admin-bg)]">
                 {/* 1. Client Card */}
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-3">
+                <div className="admin-card p-5 space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Customer Profile</p>
-                      <h4 className="text-[11px] font-bold text-slate-800 mt-1">{selectedOrder.customer}</h4>
+                      <p className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">Customer Profile</p>
+                      <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">{selectedOrder.customer}</h4>
                     </div>
                     <a
-                      href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g,"")}`}
+                      href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white rounded-lg text-[11px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
+                      className="admin-badge admin-badge-success flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
                     >
-                      <span className="material-symbols-outlined text-[12px] font-bold">chat</span>
+                      <span className="material-symbols-outlined text-[14px]">chat</span>
                       WhatsApp
                     </a>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-y-2 text-[11px] pt-3 border-t border-slate-200/50">
-                    <p className="text-slate-450 font-medium">Phone:</p> <p className="font-semibold text-slate-700">{selectedOrder.phone}</p>
-                    <p className="text-slate-455 font-medium">Payment Mode:</p> <p className="font-semibold text-slate-700">{selectedOrder.payment}</p>
-                    <p className="text-slate-455 font-medium">Invoice Date:</p> <p className="font-semibold text-slate-700">{selectedOrder.date}</p>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-[12px] pt-4 border-t border-[var(--admin-border-subtle)]">
+                    <div>
+                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">Phone</p>
+                      <p className="font-semibold text-[var(--admin-text-primary)]">{selectedOrder.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">Payment Mode</p>
+                      <p className="font-semibold text-[var(--admin-text-primary)]">{selectedOrder.payment}</p>
+                    </div>
+                    <div>
+                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">Invoice Date</p>
+                      <p className="font-semibold text-[var(--admin-text-primary)]">{selectedOrder.date}</p>
+                    </div>
                     {selectedOrder.needByDate && (
-                      <>
-                        <p className="text-emerald-800 font-bold">Need-By Date:</p>
-                        <p className="font-bold text-emerald-800 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[13px]">calendar_today</span>
+                      <div>
+                        <p className="text-[var(--admin-info)] font-bold mb-0.5 text-[10px] uppercase">Need-By Date</p>
+                        <p className="font-bold text-[var(--admin-info)] flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px]">calendar_today</span>
                           {new Date(selectedOrder.needByDate).toLocaleDateString("en-IN", {
-                            day:"numeric",
-                            month:"short",
-                            year:"numeric",
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
                           })}
                         </p>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
 
                 {/* 2. Items List */}
                 <div className="space-y-3">
-                  <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700">Curated Items</h4>
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] pl-1">Curated Items</h4>
                   <div className="space-y-2">
                     {selectedOrder.items.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
+                      <div key={idx} className="flex items-center justify-between p-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)] shadow-[var(--admin-shadow-sm)]">
                         <div className="flex items-center gap-3">
                           {item.image && (
-                            <img src={item.image} alt="Traditional wedding event decoration" className="w-8 h-8 rounded-lg object-cover border border-slate-200" />
+                            <img src={item.image} alt={item.name} className="w-10 h-10 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border-subtle)] shrink-0" />
                           )}
                           <div>
-                            <p className="text-[12px] font-bold text-slate-800">{item.name}</p>
-                            <p className="text-[11px] text-slate-400 mt-0.5">Quantity: {item.quantity || 1}</p>
+                            <p className="text-[12px] font-bold text-[var(--admin-text-primary)] line-clamp-1">{item.name}</p>
+                            <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">Qty: {item.quantity || 1}</p>
                           </div>
                         </div>
-                        <span className="text-[11px] sm:text-[11px] font-bold text-slate-700">
-                          ₹{Number(item.price * (item.quantity || 1)).toLocaleString()}
+                        <span className="text-[12px] font-bold text-[var(--admin-text-primary)] shrink-0 ml-3">
+                          {formatCurrency(Number(item.price * (item.quantity || 1)))}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold">
-                    <span className="text-[12px] text-slate-700">Order Grand Total:</span>
-                    <span className="text-[11px] text-black font-bold">₹{selectedOrder.total.toLocaleString()}</span>
+                  <div className="flex items-center justify-between p-4 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] rounded-[var(--admin-radius-lg)]">
+                    <span className="text-[12px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">Grand Total</span>
+                    <span className="text-[16px] text-[var(--admin-text-primary)] font-bold">{formatCurrency(selectedOrder.total)}</span>
                   </div>
                 </div>
 
                 {/* 3. Transaction Timeline */}
-                <div className="space-y-4">
-                  <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700">Delivery Timeline</h4>
-                  <div className="relative pl-6 space-y-4 border-l-2 border-slate-200 ml-3">
+                <div className="admin-card p-5">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] mb-5">Delivery Timeline</h4>
+                  <div className="relative pl-6 space-y-5 border-l-2 border-[var(--admin-border)] ml-3">
                     {allStatuses.slice(0, 5).map((st, sidx) => {
                       const isDone = allStatuses.indexOf(selectedOrder.status) >= sidx;
                       const isCurrent = selectedOrder.status === st;
@@ -642,19 +646,19 @@ export function AdminOrders() {
                       return (
                         <div key={st} className="relative flex items-center justify-between">
                           <span
-                            className={`absolute -left-[30.5px] w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center transition-all ${
-                              isDone ?"border-black" :"border-slate-200"
+                            className={`absolute -left-[31px] w-4 h-4 rounded-full border-2 bg-[var(--admin-surface)] flex items-center justify-center transition-all ${
+                              isDone ? "border-[var(--admin-accent)]" : "border-[var(--admin-border-strong)]"
                             }`}
                           >
-                            {isDone && <span className="w-1.5 h-1.5 rounded-full bg-black" />}
+                            {isDone && <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />}
                           </span>
                           <div>
-                            <p className={`text-[12px] font-bold ${isCurrent ?"text-black" :"text-slate-600"}`}>
+                            <p className={`text-[12px] font-bold ${isCurrent ? "text-[var(--admin-accent)]" : "text-[var(--admin-text-secondary)]"}`}>
                               {st}
                             </p>
                           </div>
                           {isCurrent && (
-                            <span className="text-[11px] sm:text-[11px] sm:text-[11px] uppercase font-bold tracking-widest text-black bg-slate-100 px-2 py-0.5 rounded-full animate-pulse border border-slate-200">
+                            <span className="text-[9px] uppercase font-bold tracking-widest text-[var(--admin-accent)] bg-[var(--admin-accent)]/10 px-2 py-0.5 rounded-full animate-pulse border border-[var(--admin-accent)]/20">
                               Active State
                             </span>
                           )}
@@ -665,27 +669,27 @@ export function AdminOrders() {
                 </div>
 
                 {/* 4. Staff Notes Form */}
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block pl-1">
                     Internal Staff Notes
                   </label>
                   <textarea
                     rows={3}
                     placeholder="Type logistics references, customer specifications, or event notes..."
-                    defaultValue={selectedOrderData?.notes ||""}
+                    defaultValue={selectedOrderData?.notes || ""}
                     onBlur={(e) => handleSaveNote(selectedOrder.id, e.target.value)}
-                    className="w-full bg-white rounded-lg border border-slate-200 p-3 text-[12px] text-slate-700 outline-none focus:border-black resize-none font-sans"
+                    className="admin-textarea bg-[var(--admin-surface)]"
                   />
-                  <p className="text-[11px] sm:text-[11px] sm:text-[11px] text-slate-400 leading-normal block">
-                    * Note auto-saves when you click out of the box. Saved notes are only visible to logged-in studio staff.
+                  <p className="text-[10px] text-[var(--admin-text-tertiary)] pl-1">
+                    * Note auto-saves when you click out. Visible only to studio staff.
                   </p>
                 </div>
               </div>
 
               {/* Drawer Footer Controls */}
-              <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 shrink-0 flex items-center gap-3 text-left">
+              <div className="p-5 bg-[var(--admin-surface-muted)] border-t border-[var(--admin-border)] shrink-0 flex flex-col gap-4 text-left">
                 <div className="flex-1">
-                  <label className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
                     Direct Status Override
                   </label>
                   <select
@@ -694,7 +698,7 @@ export function AdminOrders() {
                       updateOrderStatus(selectedOrder.id, e.target.value);
                       toast.success(`Updated order status to ${e.target.value}`);
                     }}
-                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] sm:text-[11px] font-bold text-slate-800 cursor-pointer outline-none shadow-xs"
+                    className="admin-input font-bold"
                   >
                     {allStatuses.map((st) => (
                       <option key={st} value={st}>
@@ -703,29 +707,32 @@ export function AdminOrders() {
                     ))}
                   </select>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDrawerOpen(false);
-                    navigate(`/admin/orders/${selectedOrder.id}`);
-                  }}
-                  className="px-3.5 py-2 bg-white border border-slate-200 text-slate-700 hover:text-black hover:bg-slate-50 rounded-lg text-[11px] font-bold uppercase tracking-wider cursor-pointer self-end flex items-center gap-1.5 transition-all shadow-xs"
-                >
-                  <span className="material-symbols-outlined text-[14px]">receipt_long</span>
-                  Full Details
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="px-4 py-2 bg-black text-white rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-slate-900 cursor-pointer shadow-xs self-end"
-                >
-                  Done
-                </button>
+                
+                <div className="flex items-center gap-3 w-full">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDrawerOpen(false);
+                      navigate(`/admin/orders/${selectedOrder.id}`);
+                    }}
+                    className="admin-btn admin-btn-outline flex-1 min-h-[40px]"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                    Full Details
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="admin-btn flex-1 min-h-[40px]"
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             </motion.aside>
           </>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

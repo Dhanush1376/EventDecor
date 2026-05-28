@@ -22,13 +22,13 @@ const typeIcons = {
 };
 
 const typeColors = {
-  order:"bg-slate-100 text-black border-slate-200 hover:bg-blue-100/50",
-  booking:"bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100/50",
-  stock:"bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100/50",
-  review:"bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100/50",
-  payment:"bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100/50",
-  custom_request:"bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100/50",
-  inquiry:"bg-sky-50 text-sky-600 border-sky-100 hover:bg-sky-100/50",
+  order: "bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]",
+  booking: "bg-[var(--admin-surface-muted)] text-[var(--admin-accent)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]",
+  stock: "bg-[var(--admin-error-light)] text-[var(--admin-error)] border-none hover:opacity-90",
+  review: "bg-[var(--admin-warning-light)] text-[var(--admin-warning)] border-none hover:opacity-90",
+  payment: "bg-[var(--admin-success-light)] text-[var(--admin-success)] border-none hover:opacity-90",
+  custom_request: "bg-[var(--admin-surface-muted)] text-[var(--admin-accent)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]",
+  inquiry: "bg-[var(--admin-surface-muted)] text-[var(--admin-accent)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]",
 };
 
 export function AdminNotifications() {
@@ -74,19 +74,19 @@ export function AdminNotifications() {
       initial="hidden"
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1000px] mx-auto space-y-6 font-body text-on-surface"
+      className="max-w-[1000px] mx-auto space-y-6  text-[var(--admin-text-primary)]"
     >
       {/* Header Block */}
       <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-[26px] font-bold  text-on-surface">
+          <h2 className="text-[26px] font-bold  text-[var(--admin-text-primary)]">
             Notification Center
           </h2>
-          <p className="text-[13px] text-outline mt-0.5">
+          <p className="text-[13px] text-[var(--admin-text-tertiary)] mt-0.5">
             {unreadCount > 0 ? (
-              <span className="text-black font-bold">{unreadCount} actionable alerts needing response</span>
+              <span className="text-[var(--admin-text-primary)] font-bold">{unreadCount} actionable alerts needing response</span>
             ) : (
-              <span className="text-emerald-600 font-bold">All caught up! No pending alerts</span>
+              <span className="text-[var(--admin-success)] font-bold">All caught up! No pending alerts</span>
             )}
           </p>
         </div>
@@ -94,7 +94,7 @@ export function AdminNotifications() {
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="px-4 py-2 bg-slate-100 text-black hover:bg-black hover:text-white rounded-xl text-[12px] font-bold uppercase tracking-wider cursor-pointer transition-all border border-slate-250 flex items-center gap-1.5"
+              className="admin-btn admin-btn-outline h-9 px-4 text-[12px] font-bold uppercase tracking-wider flex items-center gap-1.5"
             >
               <span className="material-symbols-outlined text-[16px]">done_all</span>
               Mark All Read
@@ -104,7 +104,7 @@ export function AdminNotifications() {
       </motion.div>
 
       {/* Tabs Filter Bar */}
-      <motion.div variants={fadeUp} className="flex border-b border-surface-container-highest/60 overflow-x-auto gap-4 scrollbar-none">
+      <motion.div variants={fadeUp} className="flex border-b border-[var(--admin-border)] overflow-x-auto gap-4 scrollbar-none">
         {[
           { id:"all", label:"All Alerts", count: notifications.length },
           { id:"unread", label:"Unread", count: unreadCount },
@@ -119,14 +119,14 @@ export function AdminNotifications() {
             onClick={() => setActiveTab(tab.id)}
             className={`pb-3 text-[13px] font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all shrink-0 relative ${
               activeTab === tab.id
-                ?"border-slate-900 text-black"
-                :"border-transparent text-outline hover:text-on-surface"
+                ?"border-[var(--admin-accent)] text-[var(--admin-text-primary)]"
+                :"border-transparent text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
             }`}
           >
             {tab.label}
             {tab.count > 0 && (
-              <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold ${
-                activeTab === tab.id ?"bg-black text-white" :"bg-surface-container-highest text-outline"
+              <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] font-bold ${
+                activeTab === tab.id ?"bg-[var(--admin-accent)] text-white" :"bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)]"
               }`}>
                 {tab.count}
               </span>
@@ -146,11 +146,11 @@ export function AdminNotifications() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="py-16 text-center bg-white border border-surface-container-highest/60 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center"
+              className="py-16 text-center bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center"
             >
-              <span className="material-symbols-outlined text-[48px] text-[#64748B]/40 mb-2 block">search_off</span>
-              <h3 className="text-[14px] font-bold text-[#0F172A] mb-0.5">Data Not Found</h3>
-              <p className="text-[12px] text-[#64748B] max-w-[280px]">No notification alerts available in this category.</p>
+              <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-secondary)]/40 mb-2 block">search_off</span>
+              <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-0.5">Data Not Found</h3>
+              <p className="text-[12px] text-[var(--admin-text-secondary)] max-w-[280px]">No notification alerts available in this category.</p>
             </motion.div>
           ) : (
             filteredNotifications.map(n => {
@@ -182,8 +182,8 @@ export function AdminNotifications() {
                   exit={{ opacity: 0, x: -50 }}
                   className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border transition-all ${
                     !n.read
-                      ?"bg-white border-slate-200 shadow-md shadow-primary/2"
-                      :"bg-[#F8F9FB] border-surface-container-highest/40 opacity-75 hover:opacity-100"
+                      ?"bg-[var(--admin-surface)] border-[var(--admin-border)] shadow-md shadow-primary/2"
+                      :"bg-[var(--admin-bg-subtle)] border-[var(--admin-border-subtle)] opacity-75 hover:opacity-100"
                   }`}
                 >
                   <div className="flex items-start gap-4 flex-1 min-w-0">
@@ -195,20 +195,20 @@ export function AdminNotifications() {
                     {/* Details Column */}
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className={`text-[13px] font-bold ${!n.read ?"text-on-surface" :"text-outline"}`}>
+                        <span className={`text-[13px] font-bold ${!n.read ?"text-[var(--admin-text-primary)]" :"text-[var(--admin-text-tertiary)]"}`}>
                           {n.title}
                         </span>
                         {!n.read && (
                           <span className="flex h-2 w-2 relative shrink-0">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-black"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--admin-accent)] opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--admin-accent)]"></span>
                           </span>
                         )}
                       </div>
-                      <p className="text-[12px] text-on-surface-variant leading-relaxed font-medium">
+                      <p className="text-[12px] text-[var(--admin-text-secondary)] leading-relaxed font-medium">
                         {n.message}
                       </p>
-                      <p className="text-[11px] text-outline font-mono">{formattedDate} • {n.time}</p>
+                      <p className="text-[11px] text-[var(--admin-text-tertiary)] font-mono">{formattedDate} • {n.time}</p>
                     </div>
                   </div>
 
@@ -217,7 +217,7 @@ export function AdminNotifications() {
                     {n.actionLink && (
                       <button
                         onClick={() => navigate(n.actionLink)}
-                        className="px-3.5 py-1.5 bg-surface hover:bg-surface-container-high border border-outline-variant/65 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-on-surface cursor-pointer transition-all flex items-center gap-1 shadow-sm"
+                        className="admin-btn admin-btn-outline admin-btn-sm h-8 px-3 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider border-[var(--admin-border)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)]"
                       >
                         {actionLabel}
                         <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
@@ -227,7 +227,7 @@ export function AdminNotifications() {
                     {!n.read && (
                       <button
                         onClick={() => handleMarkRead(n.id)}
-                        className="p-2 bg-slate-100 hover:bg-slate-100 text-black rounded-xl cursor-pointer transition-all flex items-center justify-center"
+                        className="p-2 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] rounded-xl cursor-pointer transition-all flex items-center justify-center"
                         title="Mark as Read"
                       >
                         <span className="material-symbols-outlined text-[16px]">done</span>

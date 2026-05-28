@@ -40,7 +40,7 @@ export function AdminReviews() {
     try {
       const res = await loyaltyService.adminModerateReview(reviewId, action);
       if (res.success) {
-        toast.success(res.message || `Review successfully ${action}d!`, { id: toastId, duration: 4000 });
+        toast.success(res.message || `Review ${action}d! `, { id: toastId, duration: 4000 });
         fetchReviews(); // Refresh feed
       } else {
         toast.error(res.message ||"Failed to update review status", { id: toastId });
@@ -77,10 +77,10 @@ export function AdminReviews() {
       {/* Title block */}
       <motion.div variants={fadeUp} className="flex justify-between items-center">
         <div>
-          <h2 className="text-[24px] font-bold text-on-surface">
+          <h2 className="text-[24px] font-bold text-[var(--admin-text-primary)]">
             Reviews & Testimonials
           </h2>
-          <p className="text-[13px] text-outline">
+          <p className="text-[13px] text-[var(--admin-text-tertiary)]">
             {reviews.length} total reviews ·{""}
             {reviews.filter((r) => r.status ==="pending").length} pending approval payout
           </p>
@@ -93,7 +93,7 @@ export function AdminReviews() {
             placeholder="Search customer, item, or comment..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-outline-variant/30 rounded-xl px-4 py-2 text-[11px] outline-none focus:border-slate-900 transition-all font-semibold"
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-xl px-4 py-2 text-[11px] outline-none focus:border-slate-900 transition-all font-semibold"
           />
         </div>
       </motion.div>
@@ -106,8 +106,8 @@ export function AdminReviews() {
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-xl text-[12px] font-semibold capitalize cursor-pointer transition-all ${
               filter === f 
-                ?"bg-black text-white" 
-                :"bg-white text-outline border border-surface-container-highest/60 hover:border-slate-900-container/30"
+                ?"bg-[var(--admin-accent)] text-white" 
+                :"bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border)] hover:border-slate-900-container/30"
             }`}
           >
             {f}
@@ -119,16 +119,16 @@ export function AdminReviews() {
       <motion.div variants={fadeUp} className="space-y-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
-            <div className="w-8 h-8 border-2 border-slate-250 border-t-primary rounded-full animate-spin" />
+            <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
             <span className="text-[11px] sm:text-[11px] uppercase tracking-widest text-secondary font-semibold">
               Loading Review Ledger...
             </span>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-20 text-center bg-white rounded-3xl border border-surface-container-highest/60 flex flex-col items-center justify-center p-6 shadow-sm">
-            <span className="material-symbols-outlined text-[48px] text-[#64748B]/40 mb-2 block">search_off</span>
-            <p className="text-[14px] font-bold text-[#0F172A] mt-1">No Reviews Found</p>
-            <p className="text-[12px] text-[#64748B] max-w-[280px]">No testimonials or reviews matched your active filters or search terms.</p>
+          <div className="py-20 text-center admin-card flex flex-col items-center justify-center p-6 shadow-sm">
+            <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-secondary)]/40 mb-2 block">search_off</span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">No Reviews Found</p>
+            <p className="text-[12px] text-[var(--admin-text-secondary)] max-w-[280px]">No testimonials or reviews matched your active filters or search terms.</p>
           </div>
         ) : (
           filtered.map((r) => {
@@ -146,7 +146,7 @@ export function AdminReviews() {
               <motion.div
                 key={r._id}
                 whileHover={{ y: -2 }}
-                className="bg-white rounded-2xl p-5 border border-surface-container-highest/60 transition-shadow shadow-xs"
+                className="admin-card p-5 border border-[var(--admin-border)] transition-shadow shadow-xs"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -157,12 +157,12 @@ export function AdminReviews() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-[14px] font-semibold text-on-surface">
+                        <p className="text-[14px] font-semibold text-[var(--admin-text-primary)]">
                           {customer}
                         </p>
                         <span className="text-[11px] sm:text-[11px] sm:text-[11px] text-secondary font-mono">({r.user?.email})</span>
                       </div>
-                      <p className="text-[11px] sm:text-[11px] text-outline">
+                      <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-tertiary)]">
                         {product} · {date}
                       </p>
                     </div>
@@ -188,8 +188,8 @@ export function AdminReviews() {
                     </div>
                     <span
                       className={`px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider font-bold ${
-                        r.status ==="approved" ?"text-emerald-700 bg-emerald-50 border border-emerald-200/50" :
-                        r.status ==="rejected" ?"text-red-700 bg-red-50 border border-red-200/50" :"text-amber-700 bg-amber-50 border border-amber-200/50"
+                        r.status ==="approved" ?"text-[var(--admin-success)] bg-[var(--admin-success-light)] border border-[var(--admin-success-border)]/50" :
+                        r.status ==="rejected" ?"text-[var(--admin-error)] bg-[var(--admin-error-light)] border border-[var(--admin-error-border)]/50" :"text-amber-700 bg-amber-50 border border-amber-200/50"
                       }`}
                     >
                       {r.status ||"pending"}
@@ -197,15 +197,15 @@ export function AdminReviews() {
                   </div>
                 </div>
 
-                <p className="text-[13px] text-on-surface-variant leading-relaxed mb-4 italic">"{comment}"
+                <p className="text-[13px] text-[var(--admin-text-secondary)] leading-relaxed mb-4 italic">"{comment}"
                 </p>
 
-                <div className="flex items-center gap-3 border-t border-outline-variant/30 pt-3">
+                <div className="flex items-center gap-3 border-t border-[var(--admin-border-subtle)] pt-3">
                   {r.status ==="pending" && (
                     <>
                       <button
                         onClick={() => handleModerate(r._id, 'approve')}
-                        className="btn-minimal group !bg-emerald-600 !text-white !border-emerald-600 !py-1.5 !px-3 !text-[11px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer rounded-lg hover:brightness-110 transition-all"
+                        className="admin-btn admin-btn-ghost admin-btn-sm group !bg-emerald-600 !text-white !border-emerald-600 !py-1.5 !px-3 !text-[11px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer rounded-lg hover:brightness-110 transition-all"
                       >
                         <span className="material-symbols-outlined text-[14px]">
                           check
@@ -215,7 +215,7 @@ export function AdminReviews() {
 
                       <button
                         onClick={() => handleModerate(r._id, 'reject')}
-                        className="btn-minimal group !text-red-500 !border-red-100 hover:!bg-red-50 !py-1.5 !px-3 !text-[11px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer rounded-lg transition-all"
+                        className="admin-btn admin-btn-ghost admin-btn-sm group !text-[var(--admin-error)] !border-red-100 hover:!bg-[var(--admin-error-light)] !py-1.5 !px-3 !text-[11px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer rounded-lg transition-all"
                       >
                         <span className="material-symbols-outlined text-[14px]">
                           close
@@ -226,14 +226,14 @@ export function AdminReviews() {
                   )}
 
                   {r.status ==="approved" && (
-                    <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                    <span className="text-[11px] text-[var(--admin-success)] font-bold flex items-center gap-1">
                       <span className="material-symbols-outlined text-[11px]">verified</span>
-                      Approved & Siri Cash disbursed successfully
+                      Approved and cash disbursed
                     </span>
                   )}
 
                   {r.status ==="rejected" && (
-                    <span className="text-[11px] text-red-600 font-bold flex items-center gap-1">
+                    <span className="text-[11px] text-[var(--admin-error)] font-bold flex items-center gap-1">
                       <span className="material-symbols-outlined text-[11px]">block</span>
                       Review rejected from listing feed
                     </span>

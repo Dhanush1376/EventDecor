@@ -123,24 +123,24 @@ function AISparkButton({ text, onApply }) {
       <button
         type="button"
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center justify-center transition-all text-[#000000]/80 hover:text-[#000000] cursor-pointer h-7 w-7 rounded-full hover:bg-[#000000]/10 bg-transparent border-none"
+        className="flex items-center justify-center transition-all text-[var(--admin-accent)]/80 hover:text-[var(--admin-accent)] cursor-pointer h-7 w-7 rounded-full hover:bg-[var(--admin-accent)]/10 bg-transparent border-none"
         style={{ minHeight:"0px" }}
         title="AI Copywriting Assistant"
         aria-label="Open AI Copywriting Assistant"
       >
         {loading ? (
-          <span className="w-3 h-3 border-2 border-[#000000] border-t-transparent rounded-full animate-spin" />
+          <div className="skeleton-box inline-block w-3 h-3 rounded-md" />
         ) : (
-          <span className="material-symbols-outlined text-[13px] block font-bold text-[#000000]">auto_awesome</span>
+          <span className="material-symbols-outlined text-[13px] block font-bold text-[var(--admin-accent)]">psychology</span>
         )}
       </button>
 
       {showDropdown && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
-          <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 backdrop-blur-md border border-[#000000]/30 shadow-[0_12px_35px_rgba(115,92,0,0.12)] py-2 z-50 overflow-hidden text-[11px] sm:text-[11px] animate-fade-in-up">
-            <div className="px-3.5 py-1.5 font-extrabold text-[#64748B] text-[11px] tracking-[0.18em] uppercase border-b border-[#000000]/10 pb-1.5 mb-1.5 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[11px] sm:text-[11px] text-[#000000] font-bold">auto_awesome</span>
+          <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[var(--admin-surface)] border border-[var(--admin-accent)]/30 shadow-[var(--admin-shadow-sm)] py-2 z-50 overflow-hidden text-[11px] sm:text-[11px] animate-fade-in-up">
+            <div className="px-3.5 py-1.5 font-semibold text-[var(--admin-text-secondary)] text-[11px] tracking-[0.18em] uppercase border-b border-[var(--admin-border-subtle)] pb-1.5 mb-1.5 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[11px] sm:text-[11px] text-[var(--admin-accent)] font-bold">auto_awesome</span>
               AI Copywriter
             </div>
             {prompts.map((p) => (
@@ -149,7 +149,7 @@ function AISparkButton({ text, onApply }) {
                 type="button"
                 onClick={() => handleGenerate(p.action)}
                 disabled={loading}
-                className="w-full text-left px-4 py-2 hover:bg-[#000000]/10 text-stone-700 hover:text-stone-900 transition-all flex items-center gap-2 cursor-pointer font-bold disabled:opacity-50"
+                className="w-full text-left px-4 py-2 hover:bg-[var(--admin-accent)]/10 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] transition-all flex items-center gap-2 cursor-pointer font-bold disabled:opacity-50"
               >
                 {p.label}
               </button>
@@ -169,8 +169,8 @@ function AISparkButton({ text, onApply }) {
 function HeroSectionEditor({ content, onUpdate }) {
   const hero = content.hero || {};
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="aspect_ratio"
         title="Hero Banner Curation"
@@ -178,11 +178,11 @@ function HeroSectionEditor({ content, onUpdate }) {
       />
       <div className="space-y-5">
         <AdminField label="Primary Headline" description="The main premium bold text welcoming storefront patrons">
-          <div className="relative flex items-center w-full shadow-2xs rounded-xl">
+          <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
             <AdminInput
               value={hero.title ||""}
               onChange={(e) => onUpdate("hero", { title: e.target.value })}
-              className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
             <div className="absolute right-2.5">
               <AISparkButton text={hero.title} onApply={(val) => onUpdate("hero", { title: val })} />
@@ -191,12 +191,12 @@ function HeroSectionEditor({ content, onUpdate }) {
         </AdminField>
 
         <AdminField label="Subtext Paragraph" description="A descriptive sentence establishing the boutique curation context">
-          <div className="relative flex items-start w-full shadow-2xs rounded-xl">
+          <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
             <AdminTextarea
               value={hero.subtitle ||""}
               onChange={(e) => onUpdate("hero", { subtitle: e.target.value })}
               rows={2}
-              className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
             <div className="absolute right-2.5 top-2.5">
               <AISparkButton text={hero.subtitle} onApply={(val) => onUpdate("hero", { subtitle: val })} />
@@ -209,14 +209,14 @@ function HeroSectionEditor({ content, onUpdate }) {
             <AdminInput
               value={hero.badgeText ||""}
               onChange={(e) => onUpdate("hero", { badgeText: e.target.value })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
           <AdminField label="Rotating Seal Ring Text" description="Floating seal label (e.g. '• HANDCRAFTED LUXURY • HERITAGE ARTISTRY •')">
             <AdminInput
               value={hero.rotatingSealText ||""}
               onChange={(e) => onUpdate("hero", { rotatingSealText: e.target.value })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
         </div>
@@ -237,19 +237,19 @@ function HeroSectionEditor({ content, onUpdate }) {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#000000]/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[var(--admin-border-subtle)]">
           <AdminField label="Primary Action Button Text">
             <AdminInput
               value={hero.ctaPrimary?.text ||""}
               onChange={(e) => onUpdate("hero", { ctaPrimary: { ...(hero.ctaPrimary || {}), text: e.target.value } })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
           <AdminField label="Primary Action Button Destination Link" description="Page path (e.g. '/collections')">
             <AdminInput
               value={hero.ctaPrimary?.link ||""}
               onChange={(e) => onUpdate("hero", { ctaPrimary: { ...(hero.ctaPrimary || {}), link: e.target.value } })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
         </div>
@@ -259,33 +259,33 @@ function HeroSectionEditor({ content, onUpdate }) {
             <AdminInput
               value={hero.ctaSecondary?.text ||""}
               onChange={(e) => onUpdate("hero", { ctaSecondary: { ...(hero.ctaSecondary || {}), text: e.target.value } })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
           <AdminField label="Secondary Action Button Destination Link" description="Page path (e.g. '/about')">
             <AdminInput
               value={hero.ctaSecondary?.link ||""}
               onChange={(e) => onUpdate("hero", { ctaSecondary: { ...(hero.ctaSecondary || {}), link: e.target.value } })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
         </div>
 
-        <div className="pt-4 border-t border-[#000000]/10 space-y-4">
-          <h4 className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#000000]">Floating Glass Card Settings (Desktop View)</h4>
+        <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-accent)]">Floating Glass Card Settings (Desktop View)</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <AdminField label="Floating Card Title">
               <AdminInput
                 value={hero.floatingCardTitle ||""}
                 onChange={(e) => onUpdate("hero", { floatingCardTitle: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
             </AdminField>
             <AdminField label="Floating Card Action Button Link">
               <AdminInput
                 value={hero.floatingCardCtaLink ||""}
                 onChange={(e) => onUpdate("hero", { floatingCardCtaLink: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
             </AdminField>
           </div>
@@ -294,14 +294,14 @@ function HeroSectionEditor({ content, onUpdate }) {
               <AdminInput
                 value={hero.floatingCardCtaText ||""}
                 onChange={(e) => onUpdate("hero", { floatingCardCtaText: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
             </AdminField>
             <AdminField label="Floating Card Description Paragraph">
               <AdminInput
                 value={hero.floatingCardDesc ||""}
                 onChange={(e) => onUpdate("hero", { floatingCardDesc: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
             </AdminField>
           </div>
@@ -317,8 +317,8 @@ function HeroSectionEditor({ content, onUpdate }) {
 function FeaturedCollectionsEditor({ content, onUpdate }) {
   const fCol = content.featuredCollections || {};
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="grid_view"
         title="Featured Collections Strip"
@@ -330,25 +330,25 @@ function FeaturedCollectionsEditor({ content, onUpdate }) {
             <AdminInput
               value={fCol.sectionTitle ||""}
               onChange={(e) => onUpdate("featuredCollections", { sectionTitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
           <AdminField label="Pill Subtitle">
             <AdminInput
               value={fCol.sectionSubtitle ||""}
               onChange={(e) => onUpdate("featuredCollections", { sectionSubtitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
         </div>
 
-        <div className="space-y-4 pt-4 border-t border-[#000000]/10">
-          <label className="text-[11px] sm:text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#000000] block mb-1">Configure Category Nodes</label>
+        <div className="space-y-4 pt-4 border-t border-[var(--admin-border-subtle)]">
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-accent)] block mb-1">Configure Category Nodes</label>
           <div className="grid grid-cols-1 gap-4.5">
             {fCol.items?.map((item, idx) => (
-              <div key={item.id || idx} className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 flex flex-col md:flex-row items-stretch md:items-center gap-4.5 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
+              <div key={item.id || idx} className="p-4 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] flex flex-col md:flex-row items-stretch md:items-center gap-4.5 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300">
                 <div className="flex-1 space-y-1.5">
-                  <span className="text-[11px] text-stone-400 font-extrabold uppercase tracking-wider block font-sans">Node Name</span>
+                  <span className="text-[11px] text-[var(--admin-text-tertiary)] font-semibold uppercase tracking-wider block font-sans">Node Name</span>
                   <AdminInput
                     value={item.name ||""}
                     onChange={(e) => {
@@ -356,7 +356,7 @@ function FeaturedCollectionsEditor({ content, onUpdate }) {
                       copy[idx] = { ...copy[idx], name: e.target.value };
                       onUpdate("featuredCollections", { items: copy });
                     }}
-                    className="!py-2 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
+                    className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
                   />
                 </div>
                 <div className="shrink-0">
@@ -371,8 +371,8 @@ function FeaturedCollectionsEditor({ content, onUpdate }) {
                     folder="cms"
                   />
                 </div>
-                <div className="flex items-center gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-[#000000]/5 justify-between md:justify-end">
-                  <span className="text-[11px] sm:text-[11px] font-bold text-stone-500 uppercase tracking-wider">Visible</span>
+                <div className="flex items-center gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-[var(--admin-accent)]/5 justify-between md:justify-end">
+                  <span className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">Visible</span>
                   <AdminToggle
                     checked={item.isVisible}
                     onChange={() => {
@@ -395,8 +395,8 @@ function FeaturedCollectionsEditor({ content, onUpdate }) {
 function StoryTeaserEditor({ content, onUpdate }) {
   const story = content.storyTeaser || {};
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="history_edu"
         title="Artisan Story Editorial"
@@ -408,25 +408,25 @@ function StoryTeaserEditor({ content, onUpdate }) {
             <AdminInput
               value={story.subtitle ||""}
               onChange={(e) => onUpdate("storyTeaser", { subtitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
           <AdminField label="Editorial Bold Headline">
             <AdminInput
               value={story.title ||""}
               onChange={(e) => onUpdate("storyTeaser", { title: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
         </div>
 
         <AdminField label="Brand Chronology Paragraph" description="Write a compelling, culturally rich editorial narrative">
-          <div className="relative flex items-start w-full shadow-2xs rounded-xl">
+          <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
             <AdminTextarea
               value={story.description ||""}
               onChange={(e) => onUpdate("storyTeaser", { description: e.target.value })}
               rows={4}
-              className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
             <div className="absolute right-2.5 top-2.5">
               <AISparkButton text={story.description} onApply={(val) => onUpdate("storyTeaser", { description: val })} />
@@ -446,14 +446,14 @@ function StoryTeaserEditor({ content, onUpdate }) {
               <AdminInput
                 value={story.ctaText ||""}
                 onChange={(e) => onUpdate("storyTeaser", { ctaText: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
             </AdminField>
             <AdminField label="Heritage Year Badge Text">
               <AdminInput
                 value={story.establishedYear ||"Est. in 2003"}
                 onChange={(e) => onUpdate("storyTeaser", { establishedYear: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
             </AdminField>
           </div>
@@ -467,8 +467,8 @@ function StoryTeaserEditor({ content, onUpdate }) {
 function BestsellerStripEditor({ content, onUpdate }) {
   const bs = content.featuredProducts || {};
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="stars"
         title="Bestsellers Carousel Strip"
@@ -480,29 +480,29 @@ function BestsellerStripEditor({ content, onUpdate }) {
             <AdminInput
               value={bs.sectionTitle ||""}
               onChange={(e) => onUpdate("featuredProducts", { sectionTitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
           <AdminField label="Shelf Subtitle Tag">
             <AdminInput
               value={bs.sectionSubtitle ||""}
               onChange={(e) => onUpdate("featuredProducts", { sectionSubtitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#000000]/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[var(--admin-border-subtle)]">
           <AdminField label="Max Items Rendered">
             <AdminInput
               type="number"
               value={bs.maxDisplay || 4}
               onChange={(e) => onUpdate("featuredProducts", { maxDisplay: parseInt(e.target.value) || 4 })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
-          <div className="flex items-center justify-between border border-[#000000]/15 px-4.5 py-3 rounded-2xl bg-white/80 backdrop-blur-xs mt-5 h-[46px] shadow-2xs">
-            <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider">Enable Section Shelf</span>
+          <div className="flex items-center justify-between border border-[var(--admin-border)] px-4.5 py-3 rounded-2xl bg-[var(--admin-surface)] mt-5 h-[46px] shadow-[var(--admin-shadow-xs)]">
+            <span className="text-[11px] font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider">Enable Section Shelf</span>
             <AdminToggle
               checked={bs.isVisible}
               onChange={() => onUpdate("featuredProducts", { isVisible: !bs.isVisible })}
@@ -521,8 +521,8 @@ function BestsellerStripEditor({ content, onUpdate }) {
 // ═══════════════════════════════════════════════════════════
 function SectionOrderEditor({ sections, onToggle, onReorder }) {
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="reorder"
         title="Homepage Section Order & Visibility"
@@ -533,34 +533,34 @@ function SectionOrderEditor({ sections, onToggle, onReorder }) {
         {sections?.map((section, idx) => (
           <div
             key={section.id}
-            className={`flex items-center gap-4.5 p-4 rounded-2xl border transition-all duration-300 shadow-2xs hover:shadow-xs ${
+            className={`flex items-center gap-4.5 p-4 rounded-2xl border transition-all duration-300 shadow-[var(--admin-shadow-xs)] hover:shadow-xs ${
               section.isVisible
-                ?"bg-white border-[#000000]/15 hover:border-[#000000]/35"
-                :"bg-stone-50/50 border-transparent opacity-60"
+                ?"bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]/35"
+                :"bg-[var(--admin-surface-muted)] border-transparent opacity-60"
             }`}
           >
             {/* Position Badging */}
-            <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-serif font-extrabold text-[11px] sm:text-[11px] shrink-0 shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-[var(--admin-text-primary)] text-white flex items-center justify-center  font-semibold text-[11px] sm:text-[11px] shrink-0 shadow-sm">
               {idx + 1}
             </div>
 
             {/* Title / Description */}
             <div className="flex-1 min-w-0">
-              <span className="text-[12px] font-extrabold text-stone-900 block tracking-tight">
+              <span className="text-[12px] font-semibold text-[var(--admin-text-primary)] block tracking-tight">
                 {section.label}
               </span>
-              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-stone-400 uppercase tracking-widest block mt-0.5 font-sans">
+              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest block mt-0.5 font-sans">
                 {section.id ==="hero" ?"Intro Visuals" : section.id ==="featuredCollections" ?"Catalog Category Strip" : section.id ==="featuredProducts" ?"Bestselling Products Shelf" : section.id ==="storyTeaser" ?"Linage Editorial Story" :"Patron Voices Reviews"}
               </span>
             </div>
 
             {/* Position Reordering Buttons */}
-            <div className="flex items-center gap-1.5 shrink-0 bg-stone-50 p-1.5 rounded-xl border border-stone-200/80">
+            <div className="flex items-center gap-1.5 shrink-0 bg-[var(--admin-bg-subtle)] p-1.5 rounded-xl border border-[var(--admin-border)]">
               <button
                 type="button"
                 onClick={() => idx > 0 && onReorder(idx, idx - 1)}
                 disabled={idx === 0}
-                className="text-stone-500 hover:text-stone-900 disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-white flex items-center justify-center transition-all border-none bg-transparent"
+                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-[var(--admin-surface)] flex items-center justify-center transition-all border-none bg-transparent"
                 title="Move Section Up"
               >
                 <span className="material-symbols-outlined text-[16px] font-bold">
@@ -571,7 +571,7 @@ function SectionOrderEditor({ sections, onToggle, onReorder }) {
                 type="button"
                 onClick={() => idx < sections.length - 1 && onReorder(idx, idx + 1)}
                 disabled={idx === sections.length - 1}
-                className="text-stone-500 hover:text-stone-900 disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-white flex items-center justify-center transition-all border-none bg-transparent"
+                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-[var(--admin-surface)] flex items-center justify-center transition-all border-none bg-transparent"
                 title="Move Section Down"
               >
                 <span className="material-symbols-outlined text-[16px] font-bold">
@@ -581,8 +581,8 @@ function SectionOrderEditor({ sections, onToggle, onReorder }) {
             </div>
 
             {/* Visibility Toggle */}
-            <div className="flex items-center gap-2 border-l border-[#000000]/10 pl-4.5 shrink-0">
-              <span className="text-[11px] sm:text-[11px] font-bold text-stone-400 uppercase tracking-wider hidden sm:inline">Visible</span>
+            <div className="flex items-center gap-2 border-l border-[var(--admin-border-subtle)] pl-4.5 shrink-0">
+              <span className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider hidden sm:inline">Visible</span>
               <AdminToggle
                 checked={section.isVisible}
                 onChange={() => onToggle(section.id)}
@@ -600,8 +600,8 @@ function GalleryPortfolioEditor({ content, onUpdate }) {
   const gp = content.galleryPreview || {};
   
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="photo_library"
         title="Gallery Curation Settings"
@@ -613,29 +613,29 @@ function GalleryPortfolioEditor({ content, onUpdate }) {
             <AdminInput
               value={gp.sectionTitle ||""}
               onChange={(e) => onUpdate("galleryPreview", { sectionTitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
           <AdminField label="Gallery Subtitle Tag" description="Gold elegant narrative label showing below heading">
             <AdminInput
               value={gp.sectionSubtitle ||""}
               onChange={(e) => onUpdate("galleryPreview", { sectionSubtitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#000000]/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[var(--admin-border-subtle)]">
           <AdminField label="Maximum Display Count" description="Adjust limit of masonry cards shown on feed">
             <AdminInput
               type="number"
               value={gp.maxDisplay || 6}
               onChange={(e) => onUpdate("galleryPreview", { maxDisplay: parseInt(e.target.value) || 6 })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
-          <div className="flex items-center justify-between border border-[#000000]/15 px-4.5 py-3 rounded-2xl bg-white/80 backdrop-blur-xs mt-5 h-[46px] shadow-2xs">
-            <span className="text-[11px] font-extrabold text-[#64748B] uppercase tracking-wider">Show Grid on Homepage</span>
+          <div className="flex items-center justify-between border border-[var(--admin-border)] px-4.5 py-3 rounded-2xl bg-[var(--admin-surface)] mt-5 h-[46px] shadow-[var(--admin-shadow-xs)]">
+            <span className="text-[11px] font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider">Show Grid on Homepage</span>
             <AdminToggle
               checked={gp.isVisible !== false}
               onChange={() => onUpdate("galleryPreview", { isVisible: gp.isVisible === false ? true : false })}
@@ -643,9 +643,9 @@ function GalleryPortfolioEditor({ content, onUpdate }) {
           </div>
         </div>
 
-        <div className="p-4.5 bg-[#F1F5F9] rounded-2xl border border-[#000000]/15 space-y-2.5 mt-4 shadow-3xs">
-          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.15em] block">Masonry Filter Options</span>
-          <p className="text-[11px] sm:text-[11px] text-stone-500 font-light leading-relaxed">
+        <div className="p-4.5 bg-[var(--admin-surface-muted)] rounded-2xl border border-[var(--admin-border)] space-y-2.5 mt-4 shadow-[var(--admin-shadow-xs)]">
+          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.15em] block">Masonry Filter Options</span>
+          <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-tertiary)] font-light leading-relaxed">
             Storefront visitors can seamlessly filter using categories like <em>Traditional Wedding Decor</em>, <em>Pooja Decoration Sets</em>, <em>Customized Gift Hampers</em>, and <em>Bangle Trays</em> dynamically populated from your catalog.
           </p>
         </div>
@@ -682,8 +682,8 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
   const ab = content || {};
   
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="info"
         title="About Heritage Page Customizer"
@@ -692,21 +692,21 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
       
       <div className="space-y-6">
         {/* Cinematic Hero */}
-        <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">1. Editorial Hero Showcase</span>
+        <div className="admin-card p-5 space-y-4">
+          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2">1. Editorial Hero Showcase</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
             <AdminField label="Cinematic Title Headline">
               <AdminInput
                 value={ab.heroTitle ||""}
                 onChange={(e) => onUpdate("about", { heroTitle: e.target.value })}
-                className="!py-2.5 !text-[12px] border-stone-200/85 focus:border-[#000000]"
+                className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
               />
             </AdminField>
             <AdminField label="Cinematic Subtitle">
               <AdminInput
                 value={ab.heroSubtitle ||""}
                 onChange={(e) => onUpdate("about", { heroSubtitle: e.target.value })}
-                className="!py-2.5 !text-[12px] border-stone-200/85 focus:border-[#000000]"
+                className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
               />
             </AdminField>
           </div>
@@ -719,15 +719,15 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
         </div>
 
         {/* Mission & Narrative */}
-        <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">2. Narrative & Mission Statement</span>
+        <div className="admin-card p-5 space-y-4">
+          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2">2. Narrative & Mission Statement</span>
           <AdminField label="Brand Mission Block" description="Core statement emphasizing the Telugu craftsmanship legacy">
-            <div className="relative flex items-start w-full shadow-3xs rounded-xl">
+            <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
               <AdminTextarea
                 value={ab.missionStatement ||""}
                 onChange={(e) => onUpdate("about", { missionStatement: e.target.value })}
                 rows={3}
-                className="pr-10 !py-2.5 !text-[12px] border-stone-200/85 focus:border-[#000000]"
+                className="!pr-12 !py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
               />
               <div className="absolute right-2.5 top-2.5">
                 <AISparkButton text={ab.missionStatement} onApply={(val) => onUpdate("about", { missionStatement: val })} />
@@ -746,14 +746,14 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                 <AdminInput
                   value={ab.founderName ||"Sirisha Atmakuri"}
                   onChange={(e) => onUpdate("about", { founderName: e.target.value })}
-                  className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/85 focus:border-[#000000]"
+                  className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                 />
               </AdminField>
               <AdminField label="Leadership Role Title">
                 <AdminInput
                   value={ab.founderRole ||"Founder & Creative Head"}
                   onChange={(e) => onUpdate("about", { founderRole: e.target.value })}
-                  className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/85 focus:border-[#000000]"
+                  className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                 />
               </AdminField>
             </div>
@@ -762,12 +762,12 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
 
         {/* Dual Leadership */}
         {ab.founders && (
-          <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-            <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2 font-sans">3. Studio Founders & Directors</span>
+          <div className="admin-card p-5 space-y-4">
+            <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2 font-sans">3. Studio Founders & Directors</span>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
               {ab.founders.map((founder, idx) => (
-                <div key={idx} className="bg-gradient-to-b from-white to-[#F8F9FB] p-4.5 rounded-xl border border-[#000000]/15 space-y-3.5 shadow-3xs">
-                  <span className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest block font-sans">Founder {idx + 1}</span>
+                <div key={idx} className="bg-[var(--admin-surface)] p-4.5 rounded-xl border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)]">
+                  <span className="text-[11px] font-semibold text-[var(--admin-text-tertiary)] uppercase tracking-widest block font-sans">Founder {idx + 1}</span>
                   <div className="grid grid-cols-2 gap-2.5">
                     <AdminField label="Full Name">
                       <AdminInput
@@ -832,9 +832,9 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
         )}
 
         {/* Signature Specializations */}
-        <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <div className="flex justify-between items-center border-b border-[#000000]/10 pb-2">
-            <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block font-sans">4. Signature Specializations</span>
+        <div className="admin-card p-5 space-y-4">
+          <div className="flex justify-between items-center border-b border-[var(--admin-border-subtle)] pb-2">
+            <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block font-sans">4. Signature Specializations</span>
             <button
               type="button"
               onClick={() => {
@@ -843,7 +843,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                 onUpdate("about", { specializations: copy });
                 toast.success("New Specialization Added!");
               }}
-              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+              className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-accent)] border border-[var(--admin-accent)]/30 hover:border-[var(--admin-accent)] px-3.5 py-1.5 rounded-full bg-[var(--admin-surface)] transition-all cursor-pointer shadow-[var(--admin-shadow-xs)] hover:shadow-xs"
             >
               + Add Specialization
             </button>
@@ -851,9 +851,9 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
 
           <div className="grid grid-cols-1 gap-4.5">
             {(ab.specializations || DEFAULT_SPECIALIZATIONS).map((item, idx) => (
-              <div key={idx} className="p-4 bg-white/85 backdrop-blur-md rounded-2xl border border-[#000000]/15 flex flex-col md:flex-row items-stretch md:items-center gap-4.5 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
+              <div key={idx} className="p-4 bg-[var(--admin-surface)]/85 backdrop-blur-md rounded-2xl border border-[var(--admin-border)] flex flex-col md:flex-row items-stretch md:items-center gap-4.5 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300">
                 <div className="flex-1 space-y-1.5">
-                  <span className="text-[11px] text-stone-400 font-extrabold uppercase tracking-wider block font-sans">Specialization Title</span>
+                  <span className="text-[11px] text-[var(--admin-text-tertiary)] font-semibold uppercase tracking-wider block font-sans">Specialization Title</span>
                   <AdminInput
                     value={item.title ||""}
                     onChange={(e) => {
@@ -861,7 +861,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                       copy[idx] = { ...copy[idx], title: e.target.value };
                       onUpdate("about", { specializations: copy });
                     }}
-                    className="!py-2 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
+                    className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
                   />
                 </div>
                 <div className="shrink-0">
@@ -883,7 +883,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                     onUpdate("about", { specializations: copy });
                     toast.success("Specialization Deleted");
                   }}
-                  className="text-red-500 opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-1.5 hover:bg-red-50 rounded-lg shrink-0"
+                  className="text-[var(--admin-error)] opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-1.5 hover:bg-[var(--admin-error-light)] rounded-lg shrink-0"
                 >
                   <span className="material-symbols-outlined text-[16px] font-bold">delete</span>
                 </button>
@@ -893,9 +893,9 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
         </div>
 
         {/* Why Families Choose Us */}
-        <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <div className="flex justify-between items-center border-b border-[#000000]/10 pb-2">
-            <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block font-sans">5. Why Families Choose Us</span>
+        <div className="admin-card p-5 space-y-4">
+          <div className="flex justify-between items-center border-b border-[var(--admin-border-subtle)] pb-2">
+            <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block font-sans">5. Why Families Choose Us</span>
             <button
               type="button"
               onClick={() => {
@@ -904,7 +904,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                 onUpdate("about", { features: copy });
                 toast.success("New Feature Added!");
               }}
-              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+              className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-accent)] border border-[var(--admin-accent)]/30 hover:border-[var(--admin-accent)] px-3.5 py-1.5 rounded-full bg-[var(--admin-surface)] transition-all cursor-pointer shadow-[var(--admin-shadow-xs)] hover:shadow-xs"
             >
               + Add Feature
             </button>
@@ -912,10 +912,10 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
 
           <div className="grid grid-cols-1 gap-4.5">
             {(ab.features || DEFAULT_FEATURES).map((item, idx) => (
-              <div key={idx} className="p-4 bg-white/85 backdrop-blur-md rounded-2xl border border-[#000000]/15 space-y-3.5 shadow-2xs hover:border-[#000000]/35 transition-all duration-300">
-                <div className="flex justify-between items-center border-b border-[#000000]/5 pb-2">
+              <div key={idx} className="p-4 bg-[var(--admin-surface)]/85 backdrop-blur-md rounded-2xl border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-accent)]/35 transition-all duration-300">
+                <div className="flex justify-between items-center border-b border-[var(--admin-accent)]/5 pb-2">
                   <div className="flex items-center gap-3">
-                    <span className="text-[11px] text-stone-400 font-extrabold uppercase tracking-wider">Feature Title</span>
+                    <span className="text-[11px] text-[var(--admin-text-tertiary)] font-semibold uppercase tracking-wider">Feature Title</span>
                     <AdminInput
                       value={item.title ||""}
                       onChange={(e) => {
@@ -923,7 +923,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                         copy[idx] = { ...copy[idx], title: e.target.value };
                         onUpdate("about", { features: copy });
                       }}
-                      className="!py-1.5 font-bold !text-[11px] sm:text-[11px] !w-48 bg-white border-stone-200/80 focus:border-[#000000]"
+                      className="!py-1.5 font-bold !text-[11px] sm:text-[11px] !w-48 bg-[var(--admin-surface)] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                     />
                   </div>
                   <button
@@ -933,7 +933,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                       onUpdate("about", { features: copy });
                       toast.success("Feature Deleted");
                     }}
-                    className="text-red-500 opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-1.5 hover:bg-red-50 rounded-lg"
+                    className="text-[var(--admin-error)] opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-1.5 hover:bg-[var(--admin-error-light)] rounded-lg"
                   >
                     <span className="material-symbols-outlined text-[16px] font-bold">delete</span>
                   </button>
@@ -948,7 +948,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                         copy[idx] = { ...copy[idx], icon: e.target.value };
                         onUpdate("about", { features: copy });
                       }}
-                      className="!py-2 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
+                      className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
                     />
                   </AdminField>
 
@@ -960,7 +960,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                         copy[idx] = { ...copy[idx], desc: e.target.value };
                         onUpdate("about", { features: copy });
                       }}
-                      className="!py-1.5 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
+                      className="!py-1.5 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
                       rows={2}
                     />
                   </AdminField>
@@ -981,8 +981,8 @@ function EventsPageEditor({ content, onUpdate }) {
   const promo = ep.promo || {};
 
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="celebration"
         title="Events Page Customizer"
@@ -990,15 +990,15 @@ function EventsPageEditor({ content, onUpdate }) {
       />
       <div className="space-y-6">
         {/* Hero Section Banner */}
-        <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">1. Hero Section Banner</span>
+        <div className="admin-card p-5 space-y-4">
+          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2">1. Hero Section Banner</span>
           
           <AdminField label="Hero Title" description="The primary main headline of the events page">
-            <div className="relative flex items-center w-full shadow-2xs rounded-xl">
+            <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
               <AdminInput
                 value={hero.title ||""}
                 onChange={(e) => onUpdate("events-page", { hero: { ...hero, title: e.target.value } })}
-                className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
               <div className="absolute right-2.5">
                 <AISparkButton text={hero.title} onApply={(val) => onUpdate("events-page", { hero: { ...hero, title: val } })} />
@@ -1007,11 +1007,11 @@ function EventsPageEditor({ content, onUpdate }) {
           </AdminField>
 
           <AdminField label="Hero Subtitle" description="A short tagline or category group text">
-            <div className="relative flex items-center w-full shadow-2xs rounded-xl">
+            <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
               <AdminInput
                 value={hero.subtitle ||""}
                 onChange={(e) => onUpdate("events-page", { hero: { ...hero, subtitle: e.target.value } })}
-                className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
               <div className="absolute right-2.5">
                 <AISparkButton text={hero.subtitle} onApply={(val) => onUpdate("events-page", { hero: { ...hero, subtitle: val } })} />
@@ -1020,12 +1020,12 @@ function EventsPageEditor({ content, onUpdate }) {
           </AdminField>
 
           <AdminField label="Hero Description" description="Immersive description paragraph detailing our event services">
-            <div className="relative flex items-start w-full shadow-2xs rounded-xl">
+            <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
               <AdminTextarea
                 value={hero.description ||""}
                 onChange={(e) => onUpdate("events-page", { hero: { ...hero, description: e.target.value } })}
                 rows={3}
-                className="pr-10 !py-3 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+                className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
               <div className="absolute right-2.5 top-2.5">
                 <AISparkButton text={hero.description} onApply={(val) => onUpdate("events-page", { hero: { ...hero, description: val } })} />
@@ -1042,8 +1042,8 @@ function EventsPageEditor({ content, onUpdate }) {
         </div>
 
         {/* Promo Banner Settings */}
-        <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-[#000000]/15 space-y-4 shadow-2xs">
-          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.18em] block border-b border-[#000000]/10 pb-2">2. Promo Banner Settings</span>
+        <div className="admin-card p-5 space-y-4">
+          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2">2. Promo Banner Settings</span>
           <ImageUpload
             label="Promo Section Background Image"
             value={promo.backgroundImage ||""}
@@ -1061,8 +1061,8 @@ function ContactInfoEditor({ content, onUpdate }) {
   const c = content || {};
   
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="contact_page"
         title="Contact Info & Helpline Channels"
@@ -1076,32 +1076,32 @@ function ContactInfoEditor({ content, onUpdate }) {
             <AdminInput
               value={c.phone ||""}
               onChange={(e) => onUpdate("contact", { phone: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
             />
           </AdminField>
           <AdminField label="WhatsApp Instant Link" description="Direct messaging URL">
             <AdminInput
               value={c.whatsapp ||""}
               onChange={(e) => onUpdate("contact", { whatsapp: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
             />
           </AdminField>
           <AdminField label="Official Support Email" description="Digital studio inbox">
             <AdminInput
               value={c.email ||""}
               onChange={(e) => onUpdate("contact", { email: e.target.value })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
             />
           </AdminField>
         </div>
 
         {/* Address and Maps */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5 pt-4 border-t border-[#000000]/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5 pt-4 border-t border-[var(--admin-border-subtle)]">
           <AdminField label="Studio Physical Address" description="Location rendered on footer & contact pages">
             <AdminInput
               value={c.address ||""}
               onChange={(e) => onUpdate("contact", { address: e.target.value })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000]"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
             />
           </AdminField>
           <AdminField label="Google Maps Direction Link" description="Anchor link routing users to navigate">
@@ -1109,25 +1109,25 @@ function ContactInfoEditor({ content, onUpdate }) {
               value={c.mapEmbed ||""}
               onChange={(e) => onUpdate("contact", { mapEmbed: e.target.value })}
               placeholder="e.g. https://maps.google.com/?q=..."
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000]"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
             />
           </AdminField>
         </div>
 
         {/* Timings */}
-        <div className="bg-white/80 backdrop-blur-md p-4.5 rounded-2xl border border-[#000000]/15 space-y-3 mt-4 shadow-3xs">
-          <span className="text-[11px] sm:text-[11px] font-extrabold text-[#000000] uppercase tracking-[0.15em] block font-sans">Studio Business Hours</span>
+        <div className="bg-[var(--admin-surface)] p-4.5 rounded-2xl border border-[var(--admin-border)] space-y-3 mt-4 shadow-[var(--admin-shadow-xs)]">
+          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.15em] block font-sans">Studio Business Hours</span>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
             <AdminField label="Weekdays opening schedule">
               <AdminInput
                 value={c.businessHours ||"Mon - Sat: 10 AM - 7 PM"}
                 onChange={(e) => onUpdate("contact", { businessHours: e.target.value })}
-                className="!py-2 !text-[11px] sm:text-[11px] bg-white border-stone-200/80"
+                className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
               />
             </AdminField>
-            <div className="p-3 bg-[#F1F5F9] rounded-xl border border-[#000000]/10 flex items-center justify-center text-center">
-              <span className="text-[11px] text-stone-500 font-light leading-normal">
+            <div className="p-3 bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border-subtle)] flex items-center justify-center text-center">
+              <span className="text-[11px] text-[var(--admin-text-tertiary)] font-light leading-normal">
                 Rendered across the responsive helpline and custom booking panels.
               </span>
             </div>
@@ -1142,8 +1142,8 @@ function ContactInfoEditor({ content, onUpdate }) {
 function CustomOrdersEditor({ content, onUpdate }) {
   const co = content || {};
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="design_services"
         title="Custom Orders Settings"
@@ -1154,14 +1154,14 @@ function CustomOrdersEditor({ content, onUpdate }) {
           <AdminInput
             value={co.pageTitle ||""}
             onChange={(e) => onUpdate("custom-orders", { pageTitle: e.target.value })}
-            className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
+            className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
           />
         </AdminField>
         <AdminField label="Intake Form Notice Text">
           <AdminInput
             value={co.noticeText ||""}
             onChange={(e) => onUpdate("custom-orders", { noticeText: e.target.value })}
-            className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000]"
+            className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
           />
         </AdminField>
       </div>
@@ -1193,8 +1193,8 @@ function FAQEditor({ content, onUpdate }) {
   };
 
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="help_center"
         title="Frequently Asked Questions"
@@ -1205,28 +1205,28 @@ function FAQEditor({ content, onUpdate }) {
         {/* Homepage FAQs */}
         <div>
           <div className="flex justify-between items-center mb-4">
-            <span className="text-[12px] font-extrabold text-[#000000] uppercase tracking-[0.18em]">Homepage FAQs</span>
+            <span className="text-[12px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em]">Homepage FAQs</span>
             <button
               onClick={() => handleAdd('homepage')}
-              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+              className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-accent)] border border-[var(--admin-accent)]/30 hover:border-[var(--admin-accent)] px-3.5 py-1.5 rounded-full bg-[var(--admin-surface)] transition-all cursor-pointer shadow-[var(--admin-shadow-xs)] hover:shadow-xs"
             >
               + Add FAQ
             </button>
           </div>
           <div className="space-y-4">
             {homepageFaqs.map((faq, idx) => (
-              <div key={idx} className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 space-y-3.5 shadow-2xs">
-                <div className="flex justify-between items-center border-b border-[#000000]/5 pb-2">
+              <div key={idx} className="p-4 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)]">
+                <div className="flex justify-between items-center border-b border-[var(--admin-accent)]/5 pb-2">
                   <AdminField label={`Question ${idx + 1}`} className="w-full">
                     <AdminInput
                       value={faq.question}
                       onChange={(e) => handleUpdate('homepage', idx, 'question', e.target.value)}
-                      className="!py-1.5 font-bold !text-[11px] bg-white border-stone-200/80 focus:border-[#000000]"
+                      className="!py-1.5 font-bold !text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                     />
                   </AdminField>
                   <button
                     onClick={() => handleDelete('homepage', idx)}
-                    className="text-red-500 opacity-60 hover:opacity-100 p-1.5 ml-2 hover:bg-red-50 rounded-lg cursor-pointer"
+                    className="text-[var(--admin-error)] opacity-60 hover:opacity-100 p-1.5 ml-2 hover:bg-[var(--admin-error-light)] rounded-lg cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>
                   </button>
@@ -1236,7 +1236,7 @@ function FAQEditor({ content, onUpdate }) {
                     value={faq.answer}
                     onChange={(e) => handleUpdate('homepage', idx, 'answer', e.target.value)}
                     rows={2}
-                    className="!py-2 !text-[11px] bg-white border-stone-200/80 focus:border-[#000000]"
+                    className="!py-2 !text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                   />
                 </AdminField>
               </div>
@@ -1245,30 +1245,30 @@ function FAQEditor({ content, onUpdate }) {
         </div>
 
         {/* Product FAQs */}
-        <div className="pt-6 border-t border-[#000000]/10">
+        <div className="pt-6 border-t border-[var(--admin-border-subtle)]">
           <div className="flex justify-between items-center mb-4">
-            <span className="text-[12px] font-extrabold text-[#000000] uppercase tracking-[0.18em]">Products FAQs</span>
+            <span className="text-[12px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em]">Products FAQs</span>
             <button
               onClick={() => handleAdd('products')}
-              className="text-[11px] sm:text-[11px] font-bold text-[#000000] hover:text-stone-950 border border-[#000000]/30 hover:border-stone-900 px-3.5 py-1.5 rounded-full bg-white transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+              className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-accent)] border border-[var(--admin-accent)]/30 hover:border-[var(--admin-accent)] px-3.5 py-1.5 rounded-full bg-[var(--admin-surface)] transition-all cursor-pointer shadow-[var(--admin-shadow-xs)] hover:shadow-xs"
             >
               + Add FAQ
             </button>
           </div>
           <div className="space-y-4">
             {productsFaqs.map((faq, idx) => (
-              <div key={idx} className="p-4 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 space-y-3.5 shadow-2xs">
-                <div className="flex justify-between items-center border-b border-[#000000]/5 pb-2">
+              <div key={idx} className="p-4 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)]">
+                <div className="flex justify-between items-center border-b border-[var(--admin-accent)]/5 pb-2">
                   <AdminField label={`Question ${idx + 1}`} className="w-full">
                     <AdminInput
                       value={faq.question}
                       onChange={(e) => handleUpdate('products', idx, 'question', e.target.value)}
-                      className="!py-1.5 font-bold !text-[11px] bg-white border-stone-200/80 focus:border-[#000000]"
+                      className="!py-1.5 font-bold !text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                     />
                   </AdminField>
                   <button
                     onClick={() => handleDelete('products', idx)}
-                    className="text-red-500 opacity-60 hover:opacity-100 p-1.5 ml-2 hover:bg-red-50 rounded-lg cursor-pointer"
+                    className="text-[var(--admin-error)] opacity-60 hover:opacity-100 p-1.5 ml-2 hover:bg-[var(--admin-error-light)] rounded-lg cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>
                   </button>
@@ -1278,7 +1278,7 @@ function FAQEditor({ content, onUpdate }) {
                     value={faq.answer}
                     onChange={(e) => handleUpdate('products', idx, 'answer', e.target.value)}
                     rows={2}
-                    className="!py-2 !text-[11px] bg-white border-stone-200/80 focus:border-[#000000]"
+                    className="!py-2 !text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                   />
                 </AdminField>
               </div>
@@ -1296,8 +1296,8 @@ function SEOCenterEditor({ content, onUpdate }) {
   const seo = content || {};
   
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="search"
         title="SEO Settings & Brand Metadata"
@@ -1310,7 +1310,7 @@ function SEOCenterEditor({ content, onUpdate }) {
           <AdminInput
             value={seo.globalTitle ||""}
             onChange={(e) => onUpdate("seo", { globalTitle: e.target.value })}
-            className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+            className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
           />
         </AdminField>
         
@@ -1319,17 +1319,17 @@ function SEOCenterEditor({ content, onUpdate }) {
             value={seo.globalDescription ||""}
             onChange={(e) => onUpdate("seo", { globalDescription: e.target.value })}
             rows={3}
-            className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+            className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
           />
         </AdminField>
 
         {/* Social Meta */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[#000000]/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[var(--admin-border-subtle)]">
           <AdminField label="Global Search Keywords Tag" description="Comma-separated crawling keywords">
             <AdminInput
               value={seo.globalKeywords ||""}
               onChange={(e) => onUpdate("seo", { globalKeywords: e.target.value })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
           <ImageUpload
@@ -1349,8 +1349,8 @@ function SEOCenterEditor({ content, onUpdate }) {
 // 12. ANNOUNCEMENT PROMOS
 function AnnouncementBarEditor({ banners, onUpdate }) {
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="campaign"
         title="Header Promotion Promos"
@@ -1360,15 +1360,15 @@ function AnnouncementBarEditor({ banners, onUpdate }) {
         {banners?.map((b, idx) => (
           <div
             key={b.id}
-            className={`p-4 rounded-2xl border flex items-center justify-between gap-3.5 transition-all duration-300 shadow-2xs hover:shadow-xs ${
+            className={`p-4 rounded-2xl border flex items-center justify-between gap-3.5 transition-all duration-300 shadow-[var(--admin-shadow-xs)] hover:shadow-xs ${
               b.isActive 
-                ?"bg-white border-[#000000]" 
-                :"bg-white/80 border-stone-200/80 opacity-70 hover:opacity-100"
+                ?"bg-[var(--admin-surface)] border-[var(--admin-accent)]" 
+                :"bg-[var(--admin-surface)]/80 border-[var(--admin-border)] opacity-70 hover:opacity-100"
             }`}
           >
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-7 h-7 rounded-lg bg-[#F1F5F9] border border-[#000000]/20 flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[14px] text-[#000000] font-semibold">{b.icon ||"notifications"}</span>
+              <div className="w-7 h-7 rounded-lg bg-[var(--admin-surface-muted)] border border-[var(--admin-accent)]/20 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[14px] text-[var(--admin-accent)] font-semibold">{b.icon ||"notifications"}</span>
               </div>
               <AdminInput
                 value={b.text}
@@ -1398,8 +1398,8 @@ function AnnouncementBarEditor({ banners, onUpdate }) {
 function NavigationFooterEditor({ nav, footer, onUpdate }) {
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-5 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+      <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-6 space-y-5 shadow-[var(--admin-shadow-xs)] relative overflow-hidden">
+        
         <SectionHeader
           icon="menu"
           title="Navbar Logo Builder"
@@ -1410,21 +1410,21 @@ function NavigationFooterEditor({ nav, footer, onUpdate }) {
             <AdminInput
               value={nav.logo?.text ||""}
               onChange={(e) => onUpdate("navigation", { logo: { ...nav.logo, text: e.target.value } })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
           <AdminField label="Subtext Tagline">
             <AdminInput
               value={nav.logo?.tagline ||""}
               onChange={(e) => onUpdate("navigation", { logo: { ...nav.logo, tagline: e.target.value } })}
-              className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
         </div>
       </div>
 
-      <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-5 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+      <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-6 space-y-5 shadow-[var(--admin-shadow-xs)] relative overflow-hidden">
+        
         <SectionHeader
           icon="bottom_navigation"
           title="Footer Credentials"
@@ -1435,7 +1435,7 @@ function NavigationFooterEditor({ nav, footer, onUpdate }) {
             value={footer.description ||""}
             onChange={(e) => onUpdate("footer", { description: e.target.value })}
             rows={3}
-            className="!py-2.5 !text-[12px] border-stone-200/80 focus:border-[#000000] bg-white/70 hover:bg-white"
+            className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
           />
         </AdminField>
       </div>
@@ -1451,8 +1451,8 @@ function PublisherVersionsEditor() {
   ];
 
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-5 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-6 space-y-5 shadow-[var(--admin-shadow-xs)] relative overflow-hidden">
+      
       <SectionHeader
         icon="history"
         title="Version Rollback Vault"
@@ -1460,15 +1460,15 @@ function PublisherVersionsEditor() {
       />
       <div className="space-y-4">
         {versions.map((v) => (
-          <div key={v.id} className="p-4.5 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 flex items-center justify-between gap-4.5 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
+          <div key={v.id} className="p-4.5 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] flex items-center justify-between gap-4.5 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300">
             <div className="space-y-1">
-              <span className="text-[7.5px] bg-[#000000]/15 text-[#000000] font-extrabold px-2.5 py-0.5 rounded-full font-mono w-fit block shadow-3xs">{v.tag}</span>
-              <span className="text-[12px] font-bold text-stone-850 mt-2 block leading-none">{v.desc}</span>
-              <span className="text-[11px] text-stone-400 block mt-1">{v.time}</span>
+              <span className="text-[7.5px] bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] font-semibold px-2.5 py-0.5 rounded-full font-mono w-fit block shadow-[var(--admin-shadow-xs)]">{v.tag}</span>
+              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] mt-2 block leading-none">{v.desc}</span>
+              <span className="text-[11px] text-[var(--admin-text-tertiary)] block mt-1">{v.time}</span>
             </div>
             <button
               onClick={() => toast.success(`Rolled back to ${v.tag}!`)}
-              className="px-4 py-2 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-extrabold border border-[#000000]/30 hover:border-[#000000] bg-white text-stone-700 hover:text-stone-900 cursor-pointer shadow-2xs transition-all active:scale-95"
+              className="px-4 py-2 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-semibold border border-[var(--admin-border)] hover:border-[var(--admin-accent)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] cursor-pointer shadow-[var(--admin-shadow-xs)] transition-all active:scale-95"
             >
               Restore
             </button>
@@ -1487,8 +1487,8 @@ function MediaLibraryEditor() {
   ];
 
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="image"
         title="Media Lossless Vault"
@@ -1496,12 +1496,12 @@ function MediaLibraryEditor() {
       />
       <div className="grid grid-cols-1 gap-4.5">
         {mediaFiles.map((f) => (
-          <div key={f.id} className="p-3 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 flex items-center justify-between gap-4 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
+          <div key={f.id} className="p-3 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] flex items-center justify-between gap-4 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300">
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-cover bg-center shrink-0 border border-black/5 shadow-inner" style={{ backgroundImage: `url(${f.url})` }} />
+              <div className="w-11 h-11 rounded-xl bg-cover bg-center shrink-0 border border-[var(--admin-border-subtle)] shadow-inner" style={{ backgroundImage: `url(${f.url})` }} />
               <div>
-                <span className="text-[11px] sm:text-[11px] font-extrabold text-stone-850 block truncate max-w-[155px] leading-tight">{f.name}</span>
-                <span className="text-[11px] text-stone-400 uppercase tracking-widest font-extrabold mt-1 block">optimized png • {f.size}</span>
+                <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-text-primary)] block truncate max-w-[155px] leading-tight">{f.name}</span>
+                <span className="text-[11px] text-[var(--admin-text-tertiary)] uppercase tracking-widest font-semibold mt-1 block">optimized png • {f.size}</span>
               </div>
             </div>
             <button
@@ -1509,7 +1509,7 @@ function MediaLibraryEditor() {
                 navigator.clipboard.writeText(window.location.origin + f.url);
                 toast.success("Copied Link to Clipboard!");
               }}
-              className="p-2.5 rounded-full bg-[#F1F5F9]/60 border border-[#000000]/20 text-[#000000] hover:bg-[#000000]/15 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all"
+              className="p-2.5 rounded-full bg-[var(--admin-surface-muted)]/60 border border-[var(--admin-accent)]/20 text-[var(--admin-accent)] hover:bg-[var(--admin-accent)]/15 flex items-center justify-center cursor-pointer shadow-[var(--admin-shadow-xs)] active:scale-95 transition-all"
             >
               <span className="material-symbols-outlined text-[13px] block font-bold">link</span>
             </button>
@@ -1524,8 +1524,8 @@ function MediaLibraryEditor() {
 function QuickCatalogControl() {
   const { products, toggleProductFeatured } = useAdmin();
   return (
-    <div className="bg-gradient-to-tr from-white to-[#F1F5F9] rounded-[2rem] border border-[#000000]/15 p-6 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)] relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#000000]/30 to-transparent" />
+    <div className="admin-card p-6 space-y-6">
+      
       <SectionHeader
         icon="inventory_2"
         title="Featured Shelf Flags"
@@ -1533,20 +1533,20 @@ function QuickCatalogControl() {
       />
       <div className="space-y-3 max-h-[390px] overflow-y-auto pr-1 scrollbar-none">
         {products?.slice(0, 8).map((prd) => (
-          <div key={prd.id} className="p-3 bg-white/80 backdrop-blur-md rounded-2xl border border-[#000000]/15 flex items-center justify-between gap-3 shadow-2xs hover:border-[#000000]/35 hover:shadow-xs transition-all duration-300">
+          <div key={prd.id} className="p-3 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] flex items-center justify-between gap-3 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300">
             <div className="flex items-center gap-3">
-              <img src={prd.image} alt={prd.name} className="w-10 h-10 object-cover rounded-xl border border-black/5 shadow-2xs shrink-0" />
+              <img src={prd.image} alt={prd.name} className="w-10 h-10 object-cover rounded-xl border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] shrink-0" />
               <div>
-                <span className="text-[11px] sm:text-[11px] font-bold text-stone-850 block line-clamp-1 leading-tight">{prd.name}</span>
-                <span className="text-[11px] text-[#000000] font-extrabold uppercase tracking-widest mt-1 block">{prd.category}</span>
+                <span className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1 leading-tight">{prd.name}</span>
+                <span className="text-[11px] text-[var(--admin-accent)] font-semibold uppercase tracking-widest mt-1 block">{prd.category}</span>
               </div>
             </div>
             <button
               onClick={() => toggleProductFeatured(prd.id)}
-              className={`p-2 rounded-full border transition-all cursor-pointer flex items-center justify-center shadow-3xs active:scale-95 ${
+              className={`p-2 rounded-full border transition-all cursor-pointer flex items-center justify-center shadow-[var(--admin-shadow-xs)] active:scale-95 ${
                 prd.featured 
-                  ?"bg-[#000000]/15 border-[#000000]/40 text-[#000000] shadow-[0_2px_8px_rgba(196,168,124,0.2)]" 
-                  :"bg-white border-stone-200 text-neutral-300 hover:text-neutral-500"
+                  ?"bg-[var(--admin-accent)]/15 border-[var(--admin-accent)]/40 text-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]" 
+                  :"bg-[var(--admin-surface)] border-[var(--admin-border)] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)]"
               }`}
             >
               <span className="material-symbols-outlined text-[13px] block font-bold">star</span>
@@ -1589,51 +1589,51 @@ export function AdminContent() {
       initial="hidden"
       animate="show"
       variants={stagger}
-      className="max-w-[1500px] mx-auto space-y-6 relative font-sans text-neutral-800 text-[12px] leading-normal"
+      className="max-w-[1500px] mx-auto space-y-6 relative font-sans text-[var(--admin-text-primary)] text-[12px] leading-normal"
     >
       {/* Sleek Minimal Command Header */}
       <motion.div
         variants={fadeUp}
-        className="flex items-center justify-between pb-4.5 border-b border-stone-200/80 gap-4"
+        className="flex items-center justify-between pb-4.5 border-b border-[var(--admin-border)] gap-4"
       >
         <div>
-          <h2 className="text-[22px] font-serif font-extrabold text-neutral-900 tracking-wide">
+          <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
             Storefront CMS Editor
           </h2>
-          <p className="text-[11px] sm:text-[11px] text-[#64748B] uppercase tracking-[0.25em] font-extrabold mt-1 block">
+          <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)] uppercase tracking-[0.25em] font-semibold mt-1 block">
             Bespoke Website Layout & Theme Styling Studio
           </p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden sm:flex items-center gap-2 text-[11px] sm:text-[11px] sm:text-[11px] text-emerald-800 font-extrabold uppercase tracking-[0.18em] bg-emerald-50 border border-emerald-200/50 px-4 py-1.5 rounded-full shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+          <div className="hidden sm:flex items-center gap-2 text-[11px] sm:text-[11px] sm:text-[11px] text-[var(--admin-success)] font-semibold uppercase tracking-wider bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] px-4 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-success)] animate-pulse " />
             Live Sync Mode
           </div>
 
           {/* Quick Auto-Publish Toggle Switch */}
-          <div className="flex items-center gap-2 bg-stone-50 border border-stone-200/80 px-3 py-1.5 rounded-full shadow-2xs">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-stone-600">Auto-Publish</span>
+          <div className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-3 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)]">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">Auto-Publish</span>
             <button
               onClick={toggleAutoPublish}
               className={`w-11 h-6 rounded-full transition-colors duration-250 relative focus:outline-none cursor-pointer min-h-0 p-0 ${
-                autoPublish ?"bg-slate-900" :"bg-slate-300"
+                autoPublish ?"bg-[var(--admin-accent)]" :"bg-[var(--admin-border-strong)]"
               }`}
             >
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-250 shadow-sm ${
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-250 shadow-sm ${
                 autoPublish ?"translate-x-5" :""
               }`} />
             </button>
           </div>
           
           {autoPublish ? (
-            <div className="flex items-center gap-2 px-5 py-2.5 bg-emerald-950 text-emerald-300 border border-emerald-800/80 rounded-full text-[11px] font-bold uppercase tracking-[0.2em] shadow-2xs">
-              <span className="material-symbols-outlined text-[14px] font-bold animate-spin-slow">sync</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] rounded-full text-[11px] font-bold uppercase tracking-wider">
+              <span className="material-symbols-outlined text-[14px] animate-spin-slow">sync</span>
               <span>Auto-Publishing</span>
             </div>
           ) : (
             <button 
               onClick={publishAllContent} 
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#0F172A] text-[#F8F9FB] hover:bg-[#0F172A] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[#000000]/40"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent-hover)] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[var(--admin-shadow-sm)] hover:shadow-[var(--admin-shadow-md)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[var(--admin-accent)]/40"
             >
               <span className="material-symbols-outlined text-[14px] font-bold">publish</span>
               <span>Publish</span>
@@ -1646,10 +1646,10 @@ export function AdminContent() {
       <div className="grid grid-cols-1 lg:grid-cols-[230px_1fr] xl:grid-cols-[240px_1fr] gap-6 items-start">
         
         {/* Mobile Navigation Header: Horizontal Scrollable Swipe Hub (Mobile Only) */}
-        <div className="block lg:hidden space-y-3.5 bg-gradient-to-r from-[#F1F5F9] to-[#F8F9FB] rounded-3xl border border-[#000000]/15 p-4 shadow-[0_8px_25px_rgba(115,92,0,0.02)]">
+        <div className="block lg:hidden space-y-3.5 bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-4 shadow-[var(--admin-shadow-xs)]">
           {/* Main Category Groups */}
           <div 
-            className="flex items-center gap-1.5 overflow-x-auto pb-1.5 border-b border-[#000000]/10"
+            className="flex items-center gap-1.5 overflow-x-auto pb-1.5 border-b border-[var(--admin-border-subtle)]"
             style={{ scrollbarWidth:"none", msOverflowStyle:"none" }}
           >
             {CMS_SIDEBAR.map((cat) => {
@@ -1662,10 +1662,10 @@ export function AdminContent() {
                     // Instantly set active section to the first item under this category group
                     setActiveSection(cat.items[0].id);
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-extrabold uppercase tracking-[0.12em] transition-all duration-300 shrink-0 cursor-pointer border ${
+                  className={`px-3.5 py-1.5 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] transition-all duration-300 shrink-0 cursor-pointer border ${
                     isGroupActive
-                      ?"text-[#F8F9FB] bg-[#0F172A] border-[#0F172A] shadow-sm"
-                      :"text-[#64748B] bg-[#F8F9FB]/40 border-[#000000]/15 hover:bg-white hover:text-stone-850"
+                      ?"text-[var(--admin-text-inverse)] bg-[var(--admin-text-primary)] border-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)]"
+                      :"text-[var(--admin-text-secondary)] bg-[var(--admin-bg-subtle)]/40 border-[var(--admin-border)] hover:bg-[var(--admin-surface)] hover:text-[var(--admin-text-primary)]"
                   }`}
                 >
                   {cat.title}
@@ -1690,20 +1690,20 @@ export function AdminContent() {
                     key={item.id}
                     type="button"
                     onClick={() => setActiveSection(item.id)}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all duration-300 shrink-0 border ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all duration-200 shrink-0 border ${
                       isActive
-                        ?"bg-white border-[#000000] text-[#000000] font-extrabold shadow-2xs scale-98"
-                        :"bg-white/60 border-stone-200/80 text-[#64748B] hover:bg-white hover:text-stone-850"
+                        ?"bg-[var(--admin-accent-subtle)] border-transparent text-[var(--admin-accent)] font-semibold"
+                        :"bg-[var(--admin-surface)]/60 border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-primary)]"
                     }`}
                   >
                     <span
-                      className={`material-symbols-outlined text-[13px] block transition-colors duration-300 ${
-                        isActive ?"text-[#000000]" :"text-[#64748B]/60"
+                      className={`material-symbols-outlined text-[13px] block transition-colors duration-200 ${
+                        isActive ?"text-[var(--admin-accent)]" :"text-[var(--admin-text-secondary)]/60"
                       }`}
                     >
                       {item.icon}
                     </span>
-                    <span className="text-[11px] sm:text-[11px] font-extrabold uppercase tracking-wider">
+                    <span className="text-[11px] sm:text-[11px] font-semibold uppercase tracking-wider">
                       {item.label}
                     </span>
                   </button>
@@ -1716,13 +1716,13 @@ export function AdminContent() {
         {/* Column 1: Sidebar Drawer Accordion (Desktop Only) */}
         <motion.div
           variants={fadeUp}
-          className="hidden lg:block bg-white/80 backdrop-blur-md rounded-[2.5rem] border border-[#000000]/15 p-3.5 lg:sticky lg:top-24 lg:space-y-4.5 shadow-[0_12px_30px_rgba(115,92,0,0.015)]"
+          className="hidden lg:block bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-3.5 lg:sticky lg:top-24 lg:space-y-4.5 shadow-[var(--admin-shadow-sm)]"
         >
           {CMS_SIDEBAR.map((cat) => (
             <div key={cat.title} className="space-y-1.5">
               <button
                 onClick={() => toggleCategory(cat.title)}
-                className="w-full text-left px-2.5 py-1 text-[11px] font-extrabold text-stone-400 hover:text-stone-700 tracking-[0.2em] uppercase flex items-center justify-between border-b border-[#000000]/5 pb-1.5 cursor-pointer transition-all"
+                className="w-full text-left px-2.5 py-1 text-[11px] font-semibold text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)] tracking-[0.2em] uppercase flex items-center justify-between border-b border-[var(--admin-accent)]/5 pb-1.5 cursor-pointer transition-all"
               >
                 <span>{cat.title}</span>
                 <span className="material-symbols-outlined text-[12px] font-bold">
@@ -1746,15 +1746,15 @@ export function AdminContent() {
                           onClick={() => {
                             setActiveSection(item.id);
                           }}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left cursor-pointer transition-all duration-300 border ${
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left cursor-pointer transition-all duration-200 border ${
                             isActive 
-                              ?"bg-[#0F172A] border-[#0F172A] text-[#F8F9FB] font-bold shadow-[0_4px_14px_rgba(0,0,0,0.15)] -translate-y-0.5" 
-                              :"text-[#64748B] border-transparent hover:bg-white hover:border-stone-200 hover:text-[#0F172A] hover:shadow-2xs"
+                              ?"bg-[var(--admin-accent-subtle)] border-transparent text-[var(--admin-accent)] font-semibold" 
+                              :"text-[var(--admin-text-secondary)] border-transparent hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-primary)]"
                           }`}
                         >
                           <span
-                            className={`material-symbols-outlined text-[16px] block transition-colors duration-300 ${
-                              isActive ?"text-[#000000] font-semibold" :"text-[#64748B]/70"
+                            className={`material-symbols-outlined text-[16px] block transition-colors duration-200 ${
+                              isActive ?"text-[var(--admin-accent)] font-semibold" :"text-[var(--admin-text-secondary)]/70"
                             }`}
                           >
                             {item.icon}
@@ -1809,7 +1809,7 @@ export function AdminContent() {
                 <AboutPageDetailsEditor content={websiteContent.aboutPage} onUpdate={handleUpdate} />
               )}
               {activeSection ==="events-page" && (
-                <EventsPageDetailsEditor content={websiteContent.eventsPage} onUpdate={handleUpdate} />
+                <EventsPageEditor content={websiteContent.eventsPage} onUpdate={handleUpdate} />
               )}
               {activeSection ==="contact" && (
                 <ContactInfoEditor contact={websiteContent.contact} onUpdate={handleUpdate} />
@@ -1835,6 +1835,9 @@ export function AdminContent() {
               )}
               {activeSection ==="catalog" && (
                 <QuickCatalogControl />
+              )}
+              {activeSection ==="faqs" && (
+                <FAQEditor content={websiteContent} onUpdate={handleUpdate} />
               )}
             </motion.div>
           </AnimatePresence>

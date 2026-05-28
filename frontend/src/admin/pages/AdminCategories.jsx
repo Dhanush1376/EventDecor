@@ -2,7 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { SectionHeader, AdminInput, AdminToggle } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  AdminInput,
+  AdminToggle,
+  SkeletonTable,
+  EmptyState,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 export function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -48,49 +56,62 @@ export function AdminCategories() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <SectionHeader
-          icon="category"
-          title="Dynamic Taxonomy"
-          description="Manage global categories used across the storefront, products, and navigation."
-        />
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="space-y-6"
+    >
+      <PageHeader
+        title="Dynamic Taxonomy"
+        subtitle="Manage global categories used across the storefront, products, and navigation."
+      >
         <button
           onClick={handleCreate}
-          className="btn-primary py-2 px-4 text-xs shadow-sm hover:shadow-md"
+          className="admin-btn admin-btn-primary"
         >
-          + Add Category
+          <span className="material-symbols-outlined text-[16px]">add</span>
+          Add Category
         </button>
-      </div>
+      </PageHeader>
 
       {loading ? (
-        <div className="animate-pulse space-y-4">
-          <div className="h-16 bg-surface-container rounded-xl w-full" />
-          <div className="h-16 bg-surface-container rounded-xl w-full" />
-        </div>
+        <SkeletonTable rows={4} cols={4} />
+      ) : categories.length === 0 ? (
+        <EmptyState
+          icon="category"
+          title="No Categories"
+          description="Create your first category to organize products and content across the storefront."
+          action={
+            <button onClick={handleCreate} className="admin-btn admin-btn-primary admin-btn-sm">
+              <span className="material-symbols-outlined text-[14px]">add</span>
+              Add Category
+            </button>
+          }
+        />
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/10 divide-y divide-outline-variant/10">
+        <motion.div variants={fadeUp} className="admin-card divide-y divide-[var(--admin-border-subtle)]">
           {categories.map((cat) => (
-            <div key={cat._id} className="p-4 flex items-center justify-between gap-4">
-              <div className="grid grid-cols-3 gap-4 flex-1">
-                <div>
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Name</span>
+            <div key={cat._id} className="p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1 w-full">
+                <div className="space-y-1.5">
+                  <label className="admin-label">Name</label>
                   <AdminInput
                     value={cat.name}
                     onChange={(e) => handleUpdate(cat._id, 'name', e.target.value)}
                   />
                 </div>
-                <div>
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Slug</span>
+                <div className="space-y-1.5">
+                  <label className="admin-label">Slug</label>
                   <AdminInput
                     value={cat.slug}
                     onChange={(e) => handleUpdate(cat._id, 'slug', e.target.value)}
                   />
                 </div>
-                <div>
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Type</span>
+                <div className="space-y-1.5">
+                  <label className="admin-label">Type</label>
                   <select
-                    className="w-full h-10 border border-outline-variant/30 rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white"
+                    className="admin-select"
                     value={cat.type}
                     onChange={(e) => handleUpdate(cat._id, 'type', e.target.value)}
                   >
@@ -101,20 +122,18 @@ export function AdminCategories() {
                   </select>
                 </div>
               </div>
-              <div className="flex items-center gap-6">
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase mb-2 block">Active</span>
-                  <AdminToggle
-                    checked={cat.isActive}
-                    onChange={() => handleUpdate(cat._id, 'isActive', !cat.isActive)}
-                  />
-                </div>
+              <div className="flex items-center gap-4 shrink-0">
+                <AdminToggle
+                  label="Active"
+                  checked={cat.isActive}
+                  onChange={() => handleUpdate(cat._id, 'isActive', !cat.isActive)}
+                />
               </div>
             </div>
           ))}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

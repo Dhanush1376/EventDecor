@@ -50,7 +50,7 @@ export function ImageUpload({ value, onChange, folder = 'products', label ="Uplo
         const res = await uploadService.uploadImages(formData, folder);
         onChange(res.images[0]); 
       }
-      toast.success('Asset uploaded successfully!', { id: toastId });
+      toast.success('Asset uploaded!', { id: toastId });
     } catch (err) {
       logger.error('Upload failed:', err);
       toast.error(err.response?.data?.message || 'Failed to upload image. Please verify file signature and try again.', { id: toastId });
@@ -61,14 +61,14 @@ export function ImageUpload({ value, onChange, folder = 'products', label ="Uplo
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 p-2 bg-neutral-50 rounded-lg border border-neutral-200/50">
+    <div className="flex items-center justify-between gap-3 p-2 bg-[var(--admin-surface)] rounded-lg border border-[var(--admin-border)] shadow-[var(--admin-shadow-xs)]">
       <div className="flex-1 space-y-0.5">
-        {label && <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-neutral-400 uppercase tracking-widest block">{label}</span>}
+        {label && <span className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest block">{label}</span>}
         <button 
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="text-[#C4A87C] hover:text-amber-800 transition-colors font-bold text-[11px] cursor-pointer flex items-center gap-1"
+          className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] transition-colors font-bold text-[11px] cursor-pointer flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-[12px] block">upload_file</span>
           <span>{isUploading ? 'Uploading...' : (value ? 'Change Image' : 'Upload Image')}</span>

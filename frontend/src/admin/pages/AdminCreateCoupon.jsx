@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from"react";
-import { motion } from"framer-motion";
-import { useNavigate, useParams } from"react-router-dom";
-import { couponService, productService } from"../../services/domainServices";
-import toast from"react-hot-toast";
-import { AdminToggle } from"../components/AdminUIKit";
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useNavigate, useParams } from "react-router-dom";
+import { couponService, productService } from "../../services/domainServices";
+import toast from "react-hot-toast";
+import {
+  PageHeader,
+  SectionHeader,
+  AdminToggle,
+  SkeletonPage,
+  fadeUp,
+  stagger,
+} from "../components/AdminUIKit";
 
 import logger from '../../utils/logger';
-const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 const AVAILABLE_CATEGORIES = ["Wedding Curation","Flower Decor","Mandap Props","Backdrops","Lights & Candles","Table Settings","Festive Decor","Luxury Scapes"
 ];
@@ -202,7 +208,7 @@ export function AdminCreateCoupon() {
         : await couponService.create(payload);
 
       if (res.success) {
-        toast.success(isEdit ?"Coupon configuration updated successfully" :"Promo campaign generated and published!");
+        toast.success(isEdit ? "Coupon updated" : "Campaign published");
         navigate("/admin/coupons");
       }
     } catch (err) {
@@ -213,34 +219,29 @@ export function AdminCreateCoupon() {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="w-10 h-10 border-3 border-slate-900 border-t-transparent rounded-full animate-spin" />
-        <p className="text-[12px] text-outline">Fetching coupon details...</p>
-      </div>
-    );
+    return <SkeletonPage />;
   }
 
   return (
     <motion.div
       initial="hidden"
       animate="show"
-      variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[850px] mx-auto space-y-6 font-body text-on-surface pb-16"
+      variants={stagger}
+      className="max-w-[850px] mx-auto space-y-6 pb-16"
     >
       {/* Header */}
       <motion.div variants={fadeUp} className="flex items-center gap-4">
         <button
           onClick={() => navigate("/admin/coupons")}
-          className="w-10 h-10 rounded-xl bg-white border border-surface-container-highest/60 flex items-center justify-center text-outline hover:text-black hover:border-slate-900-container/30 cursor-pointer transition-all hover:shadow-sm active:scale-95"
+          className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)]"
         >
           <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         </button>
         <div>
-          <h2 className="text-[24px] font-bold text-on-surface">
+          <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
             {isEdit ?"Edit Premium Promo Campaign" :"Configure Advanced Promotion Code"}
           </h2>
-          <p className="text-[13px] text-outline">
+          <p className="text-[13px] text-[var(--admin-text-secondary)] mt-0.5">
             {isEdit ?"Refine segmentation rules, wallet loyalty parameters, and exclusions" :"Set up high-fidelity checkout coupons with custom targeting models"}
           </p>
         </div>
@@ -249,19 +250,17 @@ export function AdminCreateCoupon() {
       <motion.form
         onSubmit={handleSubmit}
         variants={fadeUp}
-        className="bg-white rounded-3xl border border-surface-container-highest/60 p-8 space-y-8 shadow-sm"
+        className="admin-card p-6 md:p-8 space-y-8"
       >
         {/* SECTION 1: BASIC DETAILS */}
         <div className="space-y-5">
-          <h2 className="text-[16px] font-bold text-on-surface flex items-center gap-2 border-b border-surface-container-low pb-2">
-            <span className="material-symbols-outlined text-[20px] text-black">sell</span>
+          <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">sell</span>
             1. Campaign Metadata
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Coupon Code *
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Coupon Code *</label>
               <input
                 type="text"
                 required
@@ -269,17 +268,15 @@ export function AdminCreateCoupon() {
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                 placeholder="e.g., FESTIVE40"
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant font-mono tracking-wider outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all uppercase disabled:opacity-50"
+                className="admin-input font-mono tracking-wider uppercase disabled:opacity-50"
               />
             </div>
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Discount Type
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Discount Type</label>
               <select
                 value={formData.discountType}
                 onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 cursor-pointer"
+                className="admin-select"
               >
                 <option value="percentage">Percentage (%)</option>
                 <option value="fixed">Flat Amount (₹)</option>
@@ -287,61 +284,53 @@ export function AdminCreateCoupon() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Discount Value *
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Discount Value *</label>
               <input
                 type="number"
                 required
                 value={formData.discountValue}
                 onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
                 placeholder="e.g. 15 for 15% or 500 for flat discount"
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all"
+                className="admin-input"
               />
             </div>
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Minimum Purchase Amount (₹)
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Minimum Purchase Amount (₹)</label>
               <input
                 type="number"
                 value={formData.minOrderAmount}
                 onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
                 placeholder="e.g. 500"
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all"
+                className="admin-input"
               />
             </div>
           </div>
-          <div>
-            <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-              Maximum Discount Cap (₹)
-            </label>
+          <div className="space-y-1.5">
+            <label className="admin-label">Maximum Discount Cap (₹)</label>
             <input
               type="number"
               value={formData.maxDiscount}
               disabled={formData.discountType ==="fixed"}
               onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
               placeholder={formData.discountType ==="fixed" ?"N/A (Flat Discount)" :"Unlimited"}
-              className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all disabled:opacity-40"
+              className="admin-input disabled:opacity-40"
             />
           </div>
         </div>
 
         {/* SECTION 2: CUSTOMER & CATALOG TARGETING */}
         <div className="space-y-5">
-          <h2 className="text-[16px] font-bold text-on-surface flex items-center gap-2 border-b border-surface-container-low pb-2">
-            <span className="material-symbols-outlined text-[20px] text-black">groups</span>
+          <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">groups</span>
             2. Customer & Catalog Segment Targeting
           </h2>
-          <div>
-            <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-              Segmentation Rules Model
-            </label>
+          <div className="space-y-1.5">
+            <label className="admin-label">Segmentation Rules Model</label>
             <select
               value={formData.targetType}
               onChange={(e) => setFormData({ ...formData, targetType: e.target.value })}
-              className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 cursor-pointer"
+              className="admin-select"
             >
               <option value="all">Apply to All Products & All Customers</option>
               <option value="products">Apply ONLY to Selected Products</option>
@@ -352,36 +341,36 @@ export function AdminCreateCoupon() {
 
           {/* Targeted Products Checklist */}
           {formData.targetType ==="products" && (
-            <div className="p-4 bg-surface-container-low rounded-2xl border border-surface-container-highest/60 space-y-3">
-              <label className="text-[11px] sm:text-[11px] font-bold text-outline uppercase tracking-widest block">
+            <div className="admin-card-inset p-4 space-y-3">
+              <label className="admin-label">
                 Select Eligible Catalog Products ({formData.targetProductIds.length} Selected)
               </label>
-              <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+              <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                 {products.length === 0 ? (
-                  <p className="text-[12px] text-outline italic">No products found in database</p>
+                  <p className="text-[12px] text-[var(--admin-text-tertiary)] italic">No products found in database</p>
                 ) : (
                   products.map((p) => {
                     const isChecked = formData.targetProductIds.includes(p._id || p.id);
                     return (
                       <label
                         key={p._id || p.id}
-                        className="flex items-center gap-3 p-2 bg-white rounded-xl border border-surface-container-highest/20 hover:border-slate-900-container/30 cursor-pointer transition-all text-[13px]"
+                        className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
                       >
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleProductSelect(p._id || p.id)}
-                          className="w-4 h-4 rounded text-black focus:ring-primary border-outline-variant/60"
+                          className="w-4 h-4 rounded accent-[var(--admin-accent)]"
                         />
                         <div className="flex items-center gap-2">
                           <img
                             src={p.imageSrc}
-                            alt="Traditional wedding event decoration"
-                            className="w-8 h-8 rounded-lg object-cover"
+                            alt={p.title}
+                            className="w-8 h-8 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border-subtle)]"
                           />
                           <div>
-                            <span className="font-bold text-on-surface">{p.title}</span>
-                            <span className="text-[11px] text-outline ml-2">₹{p.price}</span>
+                            <span className="font-semibold text-[var(--admin-text-primary)]">{p.title}</span>
+                            <span className="text-[11px] text-[var(--admin-text-tertiary)] ml-2">₹{p.price}</span>
                           </div>
                         </div>
                       </label>
@@ -394,8 +383,8 @@ export function AdminCreateCoupon() {
 
           {/* Targeted Categories Checklist */}
           {formData.targetType ==="categories" && (
-            <div className="p-4 bg-surface-container-low rounded-2xl border border-surface-container-highest/60 space-y-3">
-              <label className="text-[11px] sm:text-[11px] font-bold text-outline uppercase tracking-widest block">
+            <div className="admin-card-inset p-4 space-y-3">
+              <label className="admin-label">
                 Select Eligible Storefront Categories ({formData.targetCategories.length} Selected)
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -404,15 +393,15 @@ export function AdminCreateCoupon() {
                   return (
                     <label
                       key={cat}
-                      className="flex items-center gap-3 p-2 bg-white rounded-xl border border-surface-container-highest/20 hover:border-slate-900-container/30 cursor-pointer transition-all text-[13px]"
+                      className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => toggleCategorySelect(cat)}
-                        className="w-4 h-4 rounded text-black focus:ring-primary border-outline-variant/60"
+                        className="w-4 h-4 rounded accent-[var(--admin-accent)]"
                       />
-                      <span className="font-bold text-on-surface">{cat}</span>
+                      <span className="font-semibold text-[var(--admin-text-primary)]">{cat}</span>
                     </label>
                   );
                 })}
@@ -422,8 +411,8 @@ export function AdminCreateCoupon() {
 
           {/* Targeted Loyalty Tiers Checklist */}
           {formData.targetType ==="tiers" && (
-            <div className="p-4 bg-surface-container-low rounded-2xl border border-surface-container-highest/60 space-y-3">
-              <label className="text-[11px] sm:text-[11px] font-bold text-outline uppercase tracking-widest block">
+            <div className="admin-card-inset p-4 space-y-3">
+              <label className="admin-label">
                 Select Eligible Loyalty Membership Tiers ({formData.targetUserTiers.length} Selected)
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -432,17 +421,15 @@ export function AdminCreateCoupon() {
                   return (
                     <label
                       key={tier}
-                      className="flex items-center gap-3 p-3 bg-white rounded-xl border border-surface-container-highest/20 hover:border-slate-900-container/30 cursor-pointer transition-all text-[13px] flex-col items-start"
+                      className="flex items-center gap-3 p-3 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
                     >
-                      <div className="flex items-center gap-2 w-full">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleTierSelect(tier)}
-                          className="w-4 h-4 rounded text-black focus:ring-primary border-outline-variant/60"
-                        />
-                        <span className="font-bold text-on-surface">{tier} Member</span>
-                      </div>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleTierSelect(tier)}
+                        className="w-4 h-4 rounded accent-[var(--admin-accent)]"
+                      />
+                      <span className="font-semibold text-[var(--admin-text-primary)]">{tier} Member</span>
                     </label>
                   );
                 })}
@@ -453,12 +440,12 @@ export function AdminCreateCoupon() {
 
         {/* SECTION 3: DISPLAY CONTROLS */}
         <div className="space-y-5">
-          <h2 className="text-[16px] font-bold text-on-surface flex items-center gap-2 border-b border-surface-container-low pb-2">
-            <span className="material-symbols-outlined text-[20px] text-black">visibility</span>
+          <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">visibility</span>
             3. Storefront Visibility & Auto-Apply Settings
           </h2>
-          <div className="p-4 bg-surface-container-low rounded-2xl border border-surface-container-highest/60 space-y-4">
-            <label className="text-[11px] sm:text-[11px] font-bold text-outline uppercase tracking-widest block">
+          <div className="admin-card-inset p-4 space-y-4">
+            <label className="admin-label">
               Where should this coupon be displayed?
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -467,43 +454,43 @@ export function AdminCreateCoupon() {
                 return (
                   <label
                     key={loc.value}
-                    className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-surface-container-highest/10 hover:border-slate-900-container/30 cursor-pointer transition-all text-[12.5px]"
+                    className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[12px]"
                   >
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleDisplayLocation(loc.value)}
-                      className="w-4 h-4 rounded text-black focus:ring-primary border-outline-variant/60"
+                      className="w-4 h-4 rounded accent-[var(--admin-accent)]"
                     />
-                    <span className="text-on-surface font-semibold">{loc.label}</span>
+                    <span className="text-[var(--admin-text-primary)] font-semibold">{loc.label}</span>
                   </label>
                 );
               })}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl cursor-pointer">
+            <label className="flex items-center gap-4 p-4 admin-card-inset rounded-[var(--admin-radius-lg)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.isFeatured}
                 onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-                className="w-4 h-4 rounded text-black focus:ring-primary border-outline-variant/60"
+                className="w-4 h-4 rounded accent-[var(--admin-accent)]"
               />
               <div>
-                <p className="text-[13px] font-bold text-on-surface">Mark as Featured Offer</p>
-                <p className="text-[11px] text-outline">Highlighted on promotion banners</p>
+                <p className="text-[13px] font-semibold text-[var(--admin-text-primary)]">Mark as Featured Offer</p>
+                <p className="text-[11px] text-[var(--admin-text-tertiary)]">Highlighted on promotion banners</p>
               </div>
             </label>
-            <label className="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl cursor-pointer">
+            <label className="flex items-center gap-4 p-4 admin-card-inset rounded-[var(--admin-radius-lg)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.isAutoApply}
                 onChange={(e) => setFormData({ ...formData, isAutoApply: e.target.checked })}
-                className="w-4 h-4 rounded text-black focus:ring-primary border-outline-variant/60"
+                className="w-4 h-4 rounded accent-[var(--admin-accent)]"
               />
               <div>
-                <p className="text-[13px] font-bold text-on-surface">Auto-Apply at Checkout</p>
-                <p className="text-[11px] text-outline">Applies automatically if conditions match</p>
+                <p className="text-[13px] font-semibold text-[var(--admin-text-primary)]">Auto-Apply at Checkout</p>
+                <p className="text-[11px] text-[var(--admin-text-tertiary)]">Applies automatically if conditions match</p>
               </div>
             </label>
           </div>
@@ -511,36 +498,32 @@ export function AdminCreateCoupon() {
 
         {/* SECTION 4: LOYALTY WALLET CASHBACK */}
         <div className="space-y-5">
-          <h2 className="text-[16px] font-bold text-on-surface flex items-center gap-2 border-b border-surface-container-low pb-2">
-            <span className="material-symbols-outlined text-[20px] text-black">payments</span>
+          <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">payments</span>
             4. Loyalty Wallet Cashback Perks
           </h2>
-          <p className="text-[11px] sm:text-[11px] text-outline">
+          <p className="text-[11px] text-[var(--admin-text-tertiary)]">
             Give customers promotional Siri Cash directly in their store wallets upon placing their orders. Admins can configure percentages, fixed credits, or hybrid reward perks!
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Cashback Rate (%)
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Cashback Rate (%)</label>
               <input
                 type="number"
                 value={formData.cashbackPercentage}
                 onChange={(e) => setFormData({ ...formData, cashbackPercentage: e.target.value })}
                 placeholder="e.g. 5 for 5% cashback"
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all"
+                className="admin-input"
               />
             </div>
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Flat Wallet Cashback Credits (₹)
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Flat Wallet Cashback Credits (₹)</label>
               <input
                 type="number"
                 value={formData.cashbackFixed}
                 onChange={(e) => setFormData({ ...formData, cashbackFixed: e.target.value })}
                 placeholder="e.g. ₹100 flat cashback"
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all"
+                className="admin-input"
               />
             </div>
           </div>
@@ -548,104 +531,92 @@ export function AdminCreateCoupon() {
 
         {/* SECTION 5: SCHEDULING, LIMITS & STACKING */}
         <div className="space-y-5">
-          <h2 className="text-[16px] font-bold text-on-surface flex items-center gap-2 border-b border-surface-container-low pb-2">
-            <span className="material-symbols-outlined text-[20px] text-black">rule</span>
+          <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">rule</span>
             5. Exclusions & Campaign Rules
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Validity Start Date *
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Validity Start Date *</label>
               <input
                 type="date"
                 required
                 value={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 cursor-pointer"
+                className="admin-input"
               />
             </div>
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Campaign Expiry Date *
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Campaign Expiry Date *</label>
               <input
                 type="date"
                 required
                 value={formData.expiryDate}
                 onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 cursor-pointer"
+                className="admin-input"
               />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-1">
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Global Limit
-              </label>
+            <div className="sm:col-span-1 space-y-1.5">
+              <label className="admin-label">Global Limit</label>
               <input
                 type="number"
                 value={formData.usageLimit}
                 onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
                 placeholder="Unlimited"
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all"
+                className="admin-input"
               />
             </div>
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Stacking Rules
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Stacking Rules</label>
               <select
                 value={formData.stackingRule}
                 onChange={(e) => setFormData({ ...formData, stackingRule: e.target.value })}
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 cursor-pointer"
+                className="admin-select"
               >
                 <option value="exclusive">Standalone Exclusive (Cannot Stack)</option>
                 <option value="stackable">Stackable (Can Combine Offers)</option>
               </select>
             </div>
-            <div>
-              <label className="text-[12px] font-bold text-outline uppercase tracking-wider mb-2 block">
-                Campaign Priority Level
-              </label>
+            <div className="space-y-1.5">
+              <label className="admin-label">Campaign Priority Level</label>
               <input
                 type="number"
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                 placeholder="e.g. 1"
-                className="w-full bg-surface-container-low rounded-xl px-4 py-3.5 text-[14px] text-on-surface-variant outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all"
+                className="admin-input"
               />
             </div>
           </div>
         </div>
 
         {/* SECTION 6: PUBLISHING STATUS */}
-        <div className="flex items-center justify-between gap-6 p-4 bg-surface-container-low rounded-2xl max-w-sm border border-surface-container-highest/20">
-          <div>
-            <p className="text-[13px] font-bold text-on-surface">Publishing Campaign Status</p>
-            <p className="text-[11px] text-outline mt-0.5">Enable to activate this promotional offer in production</p>
-          </div>
+        <div className="admin-card-inset p-4 rounded-[var(--admin-radius-lg)] max-w-sm">
           <AdminToggle
+            label="Publishing Campaign Status"
+            description="Enable to activate this promotional offer in production"
             checked={formData.isActive}
             onChange={() => setFormData({ ...formData, isActive: !formData.isActive })}
           />
         </div>
 
         {/* SUBMIT ACTIONS */}
-        <div className="pt-8 flex items-center justify-end gap-3 border-t border-surface-container-highest/60">
+        <div className="pt-6 flex items-center justify-end gap-3 border-t border-[var(--admin-border-subtle)]">
           <button
             type="button"
             onClick={() => navigate("/admin/coupons")}
-            className="px-6 py-3 border border-outline-variant/40 text-outline rounded-full text-[12px] font-bold uppercase tracking-wider hover:bg-surface hover:text-on-surface cursor-pointer transition-all active:scale-[0.98]"
+            className="admin-btn admin-btn-outline"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-3.5 bg-black text-white rounded-full text-[12px] font-bold uppercase tracking-widest hover:shadow-lg disabled:opacity-50 transition-all cursor-pointer"
+            className="admin-btn admin-btn-primary disabled:opacity-50"
           >
-            {saving ?"Saving..." : isEdit ?"Update Campaign Selection" :"Launch Premium Promotion Campaign"}
+            {saving ?"Saving..." : isEdit ?"Update Campaign" :"Launch Promotion Campaign"}
           </button>
         </div>
       </motion.form>

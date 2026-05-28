@@ -1,5 +1,5 @@
-import React from"react";
-import { motion, AnimatePresence } from"framer-motion";
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 /**
  * Reusable confirmation dialog for destructive actions.
@@ -7,11 +7,11 @@ import { motion, AnimatePresence } from"framer-motion";
  */
 export function ConfirmDialog({
   open,
-  title ="Are you sure?",
-  description ="",
-  confirmLabel ="Confirm",
-  cancelLabel ="Cancel",
-  variant ="danger", //"danger" |"warning" |"info"
+  title = "Are you sure?",
+  description = "",
+  confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
+  variant = "danger", // "danger" | "warning" | "info"
   icon,
   onConfirm,
   onCancel,
@@ -19,25 +19,28 @@ export function ConfirmDialog({
 }) {
   const variantConfig = {
     danger: {
-      iconBg:"bg-rose-50 border-rose-100",
-      iconColor:"text-rose-600",
-      defaultIcon:"delete_forever",
-      btnBg:"bg-rose-600 hover:bg-rose-700",
-      btnText:"text-white",
+      iconBg: "var(--admin-error-light)",
+      iconBorder: "var(--admin-error-border)",
+      iconColor: "var(--admin-error)",
+      defaultIcon: "delete_forever",
+      btnBg: "var(--admin-error)",
+      btnHover: "#DC2626",
     },
     warning: {
-      iconBg:"bg-amber-50 border-amber-100",
-      iconColor:"text-amber-600",
-      defaultIcon:"warning",
-      btnBg:"bg-amber-600 hover:bg-amber-700",
-      btnText:"text-white",
+      iconBg: "var(--admin-warning-light)",
+      iconBorder: "var(--admin-warning-border)",
+      iconColor: "var(--admin-warning)",
+      defaultIcon: "warning",
+      btnBg: "var(--admin-warning)",
+      btnHover: "#B45309",
     },
     info: {
-      iconBg:"bg-slate-100 border-slate-200",
-      iconColor:"text-black",
-      defaultIcon:"info",
-      btnBg:"bg-black hover:bg-slate-900",
-      btnText:"text-white",
+      iconBg: "var(--admin-surface-muted)",
+      iconBorder: "var(--admin-border)",
+      iconColor: "var(--admin-text-primary)",
+      defaultIcon: "info",
+      btnBg: "var(--admin-text-primary)",
+      btnHover: "#27272A",
     },
   };
 
@@ -47,7 +50,7 @@ export function ConfirmDialog({
   React.useEffect(() => {
     if (!open) return;
     const handleKey = (e) => {
-      if (e.key ==="Escape") onCancel?.();
+      if (e.key === "Escape") onCancel?.();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -62,17 +65,24 @@ export function ConfirmDialog({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[200]"
+            className="fixed inset-0 z-[200]"
+            style={{ background: "var(--admin-surface-overlay)", backdropFilter: "blur(4px)" }}
             onClick={onCancel}
           />
-          
+
           {/* Dialog */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            transition={{ type:"spring", damping: 25, stiffness: 350 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[210] w-[90vw] max-w-[400px] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"
+            transition={{ type: "spring", damping: 25, stiffness: 350 }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[210] w-[90vw] max-w-[400px] overflow-hidden"
+            style={{
+              background: "var(--admin-surface)",
+              borderRadius: "var(--admin-radius-xl)",
+              boxShadow: "var(--admin-shadow-overlay)",
+              border: "1px solid var(--admin-border)",
+            }}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
@@ -80,37 +90,48 @@ export function ConfirmDialog({
           >
             <div className="p-6 text-center">
               {/* Icon */}
-              <div className={`w-12 h-12 rounded-xl ${cfg.iconBg} border flex items-center justify-center mx-auto mb-4`}>
-                <span className={`material-symbols-outlined text-[24px] ${cfg.iconColor}`}>
+              <div
+                className="w-12 h-12 rounded-[var(--admin-radius-xl)] flex items-center justify-center mx-auto mb-4"
+                style={{
+                  background: cfg.iconBg,
+                  border: `1px solid ${cfg.iconBorder}`,
+                }}
+              >
+                <span
+                  className="material-symbols-outlined text-[24px]"
+                  style={{ color: cfg.iconColor }}
+                >
                   {icon || cfg.defaultIcon}
                 </span>
               </div>
-              
+
               {/* Title */}
-              <h3 
+              <h3
                 id="confirm-dialog-title"
-                className="text-[16px] font-semibold text-slate-900 mb-2"
+                className="text-[16px] font-semibold mb-2"
+                style={{ color: "var(--admin-text-primary)" }}
               >
                 {title}
               </h3>
-              
+
               {/* Description */}
               {description && (
-                <p 
+                <p
                   id="confirm-dialog-desc"
-                  className="text-[12px] text-slate-500 leading-relaxed max-w-[300px] mx-auto"
+                  className="text-[12px] leading-relaxed max-w-[300px] mx-auto"
+                  style={{ color: "var(--admin-text-tertiary)" }}
                 >
                   {description}
                 </p>
               )}
             </div>
-            
+
             {/* Actions */}
             <div className="flex items-center gap-3 px-6 pb-6 justify-center">
               <button
                 onClick={onCancel}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-[12px] font-semibold uppercase tracking-wider hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer disabled:opacity-50"
+                className="admin-btn admin-btn-outline flex-1 text-[12px] disabled:opacity-50"
               >
                 {cancelLabel}
               </button>
@@ -118,11 +139,15 @@ export function ConfirmDialog({
                 onClick={onConfirm}
                 disabled={loading}
                 autoFocus
-                className={`flex-1 px-4 py-2 ${cfg.btnBg} ${cfg.btnText} rounded-lg text-[12px] font-semibold uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2`}
+                className="admin-btn flex-1 text-[12px] text-white disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{
+                  background: cfg.btnBg,
+                  borderColor: cfg.btnBg,
+                }}
               >
                 {loading ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="admin-skeleton inline-block w-3.5 h-3.5 rounded-full" />
                     Processing...
                   </>
                 ) : (

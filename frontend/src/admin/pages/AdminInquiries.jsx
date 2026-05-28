@@ -153,7 +153,7 @@ export function AdminInquiries() {
 
       const res = await customOrderService.adminUpdateQuotation(selectedOrder._id, payload);
       if (res.success) {
-        toast.success("Quotation sent to customer successfully!");
+        toast.success("Quote sent");
         setOrders(prev => prev.map(o => o._id === selectedOrder._id ? res.data : o));
         setSelectedOrder(res.data);
       }
@@ -187,7 +187,7 @@ export function AdminInquiries() {
     try {
       const res = await customOrderService.adminArchive(id, true);
       if (res.success) {
-        toast.success("Order archived successfully");
+        toast.success("Order archived");
         setOrders(prev => prev.filter(o => o._id !== id));
         setSelectedOrder(null);
       }
@@ -202,7 +202,7 @@ export function AdminInquiries() {
     try {
       const res = await customOrderService.updateConfig(cmsConfig);
       if (res.success) {
-        toast.success("Storefront form options saved successfully!");
+        toast.success("Form options saved");
       }
     } catch (err) {
       toast.error("Failed to save storefront options");
@@ -247,25 +247,25 @@ export function AdminInquiries() {
       initial="hidden"
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1440px] mx-auto space-y-6 font-body text-[#0F172A]"
+      className="max-w-[1440px] mx-auto space-y-6  text-[var(--admin-text-primary)]"
     >
       
       {/* Page Header Area */}
-      <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#0F172A]/10 pb-5">
+      <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--admin-border)] pb-5">
         <div>
-          <h2 className="text-[26px] font-light text-[#0F172A]">
+          <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
             Custom Orders Manager
           </h2>
-          <p className="text-[12px] text-[#64748B] font-light tracking-wide mt-0.5">
+          <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-0.5">
             Manage custom customer requests, write quotations, chat with customers, and edit storefront form options.
           </p>
         </div>
 
-        <div className="flex bg-[#F2EFE9] p-1 rounded-full border border-black/5 self-start sm:self-auto shadow-inner">
+        <div className="flex bg-[var(--admin-surface-muted)] p-0.5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] self-start sm:self-auto">
           <button
             onClick={() => setCurrentWorkspace("active")}
             className={`px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-300 ${
-              currentWorkspace ==="active" ?"bg-[#0F172A] text-white shadow-sm" :"text-[#64748B] hover:text-[#0F172A]"
+              currentWorkspace ==="active" ?"bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]" :"text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
             }`}
           >
             Orders List
@@ -273,7 +273,7 @@ export function AdminInquiries() {
           <button
             onClick={() => setCurrentWorkspace("config")}
             className={`px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-300 ${
-              currentWorkspace ==="config" ?"bg-[#0F172A] text-white shadow-sm" :"text-[#64748B] hover:text-[#0F172A]"
+              currentWorkspace ==="config" ?"bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]" :"text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
             }`}
           >
             Edit Form Options
@@ -288,39 +288,39 @@ export function AdminInquiries() {
           {/* Enhanced Premium Analytics Panel */}
           <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {[
-              { label:"Total Orders", val: stats.total, icon:"assignment_late", color:"bg-white border-black/5 hover:border-[#000000]/30 text-[#0F172A]" },
-              { label:"New Requests", val: stats.pending, icon:"fiber_new", color:"bg-white border-black/5 hover:border-[#000000]/30 text-[#000000]" },
-              { label:"Quotes Sent", val: stats.quotesSent, icon:"payments", color:"bg-white border-black/5 hover:border-[#000000]/30 text-black" },
-              { label:"Approved Orders", val: stats.approved, icon:"task_alt", color:"bg-white border-black/5 hover:border-[#000000]/30 text-emerald-600" },
-              { label:"Total Quote Value", val: `₹${stats.valuation.toLocaleString("en-IN")}`, icon:"trending_up", color:"bg-white border-black/5 hover:border-[#000000]/30 text-[#64748B]" }
+              { label:"Total Orders", val: stats.total, icon:"assignment_late", color:"bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] text-[var(--admin-text-primary)]" },
+              { label:"New Requests", val: stats.pending, icon:"fiber_new", color:"bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] text-[var(--admin-accent)]" },
+              { label:"Quotes Sent", val: stats.quotesSent, icon:"payments", color:"bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] text-[var(--admin-text-primary)]" },
+              { label:"Approved Orders", val: stats.approved, icon:"task_alt", color:"bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] text-[var(--admin-success)]" },
+              { label:"Total Quote Value", val: `₹${stats.valuation.toLocaleString("en-IN")}`, icon:"trending_up", color:"bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] text-[var(--admin-text-secondary)]" }
             ].map((s, i) => (
-              <div key={i} className={`rounded-2xl p-5 border transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${s.color}`}>
+              <div key={i} className={`admin-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--admin-shadow-md)] ${s.color}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="material-symbols-outlined text-[20px] opacity-75">{s.icon}</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#000000]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)]" />
                 </div>
                 <p className="text-[22px] font-bold font-mono tracking-tight">{s.val}</p>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] mt-1">{s.label}</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] mt-1">{s.label}</p>
               </div>
             ))}
           </motion.div>
 
           {/* Luxury Status Pipeline Segment Controls */}
-          <motion.div variants={fadeUp} className="flex flex-wrap gap-2 border-b border-black/5 pb-4">
+          <motion.div variants={fadeUp} className="flex flex-wrap gap-2 border-b border-[var(--admin-border-subtle)] pb-4">
             {["All","Pending","Reviewing","Quote Sent","Approved","In Progress","Ready","Delivered","Cancelled"].map(tab => (
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
                 className={`px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer border ${
                   statusFilter === tab
-                    ?"bg-[#0F172A] border-[#0F172A] text-white shadow-sm"
-                    :"bg-white border-black/5 text-[#64748B] hover:text-[#0F172A] hover:border-black/15"
+                    ?"bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border-[var(--admin-border-subtle)]"
+                    :"bg-[var(--admin-surface)] border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)]"
                 }`}
               >
                 {tab}
                 {orders.filter(o => tab ==="All" ? true : o.status === tab).length > 0 && (
                   <span className={`ml-2 px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-mono font-bold ${
-                    statusFilter === tab ?"bg-white text-[#0F172A]" :"bg-[#F2EFE9] text-[#64748B]"
+                    statusFilter === tab ?"bg-[var(--admin-surface)] text-[var(--admin-text-primary)]" :"bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]"
                   }`}>
                     {orders.filter(o => tab ==="All" ? true : o.status === tab).length}
                   </span>
@@ -330,11 +330,11 @@ export function AdminInquiries() {
           </motion.div>
 
           {/* Full-Width Catalog Grid Table */}
-          <div className="bg-white rounded-3xl border border-black/5 overflow-hidden shadow-sm">
+          <div className="admin-card overflow-hidden p-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-[12px] min-w-[900px]">
+              <table className="admin-table w-full min-w-[900px]">
                 <thead>
-                  <tr className="bg-[#F8F9FB] border-b border-black/5 text-[#64748B] font-bold uppercase tracking-wider">
+                  <tr className="">
                     <th className="p-4.5 pl-6">Customer Name</th>
                     <th className="p-4.5">Occasion</th>
                     <th className="p-4.5">Product Type</th>
@@ -347,10 +347,10 @@ export function AdminInquiries() {
                 <tbody>
                   {filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-20 text-center text-[#64748B] bg-white">
-                        <span className="material-symbols-outlined text-[48px] text-black/15 mb-2 block">search_off</span>
-                        <p className="text-[14px] font-bold text-[#0F172A]">Data Not Found</p>
-                        <p className="text-[11px] sm:text-[11px] text-[#64748B] mt-1 max-w-[280px] mx-auto">No custom orders found matching your search.</p>
+                      <td colSpan={7} className="p-20 text-center text-[var(--admin-text-secondary)] bg-[var(--admin-surface)]">
+                        <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-2 block">search_off</span>
+                        <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">Data Not Found</p>
+                        <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)] mt-1 max-w-[280px] mx-auto">No custom orders found matching your search.</p>
                       </td>
                     </tr>
                   ) : (
@@ -362,20 +362,20 @@ export function AdminInquiries() {
                         <tr
                           key={order._id}
                           onClick={() => setSelectedOrder(order)}
-                          className="border-b border-black/5 hover:bg-[#F8F9FB] cursor-pointer transition-all duration-300 border-l-4 border-l-transparent hover:border-l-[#000000]"
+                          className="border-b border-[var(--admin-border-subtle)] hover:bg-[var(--admin-bg-subtle)] cursor-pointer transition-all duration-300 border-l-4 border-l-transparent hover:border-l-[var(--admin-accent)]"
                         >
                           <td className="p-4.5 pl-6 flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-[#F8F9FB] border border-black/5 text-[#000000] flex items-center justify-center font-bold  text-[13px] shadow-sm">
+                            <div className="w-9 h-9 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] flex items-center justify-center font-bold  text-[13px] shadow-sm">
                               {customerInitial}
                             </div>
                             <div>
-                              <p className="font-bold text-[#0F172A]">{order.customerName}</p>
-                              <span className="text-[11px] text-[#64748B]/70 font-mono tracking-tight">{order.customerEmail}</span>
+                              <p className="font-bold text-[var(--admin-text-primary)]">{order.customerName}</p>
+                              <span className="text-[11px] text-[var(--admin-text-secondary)]/70 font-mono tracking-tight">{order.customerEmail}</span>
                             </div>
                           </td>
-                          <td className="p-4.5 font-bold uppercase tracking-wider text-[#0F172A]/80">{order.occasion}</td>
-                          <td className="p-4.5 text-[#64748B]">{order.productType}</td>
-                          <td className="p-4.5 font-mono text-[#0F172A] font-light">{dateStr}</td>
+                          <td className="p-4.5 font-bold uppercase tracking-wider text-[var(--admin-text-primary)]/80">{order.occasion}</td>
+                          <td className="p-4.5 text-[var(--admin-text-secondary)]">{order.productType}</td>
+                          <td className="p-4.5 font-mono text-[var(--admin-text-primary)] font-light">{dateStr}</td>
                           <td className="p-4.5">
                             <select
                               value={order.priority}
@@ -385,8 +385,8 @@ export function AdminInquiries() {
                               }}
                               onClick={(e) => e.stopPropagation()}
                               className={`px-3 py-1 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider border cursor-pointer outline-none transition-all ${
-                                order.priority ==="high" ?"bg-red-50 text-red-700 border-red-200" :
-                                order.priority ==="medium" ?"bg-amber-50 text-amber-600 border-amber-200" :"bg-gray-50 text-gray-600 border-gray-200"
+                                order.priority ==="high" ?"bg-[var(--admin-error-light)] text-[var(--admin-error)] border-[var(--admin-error-border)]" :
+                                order.priority ==="medium" ?"admin-badge admin-badge-warning border-[var(--admin-warning-border)]" :"bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border-[var(--admin-border)]"
                               }`}
                             >
                               <option value="low">Low</option>
@@ -396,14 +396,14 @@ export function AdminInquiries() {
                           </td>
                           <td className="p-4.5">
                             <span className={`px-2.5 py-1 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider ${
-                              order.status ==="Pending" ?"bg-amber-100 text-amber-700" :
-                              order.status ==="Approved" ?"bg-emerald-100 text-emerald-700" :
-                              order.status ==="Cancelled" ?"bg-red-100 text-red-700" :"bg-blue-100 text-blue-700"
+                              order.status ==="Pending" ?"admin-badge admin-badge-warning" :
+                              order.status ==="Approved" ?"bg-[var(--admin-success-light)] text-[var(--admin-success)]" :
+                              order.status ==="Cancelled" ?"admin-badge admin-badge-error" :"bg-[var(--admin-info-light)] text-[var(--admin-info)]"
                             }`}>
                               {order.status}
                             </span>
                           </td>
-                          <td className="p-4.5 text-right pr-6 font-mono font-bold text-[#000000]">
+                          <td className="p-4.5 text-right pr-6 font-mono font-bold text-[var(--admin-accent)]">
                             {order.quotation?.total > 0 ? `₹${order.quotation.total.toLocaleString("en-IN")}` :"Custom Quote"}
                           </td>
                         </tr>
@@ -425,7 +425,7 @@ export function AdminInquiries() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setSelectedOrder(null)}
-                  className="fixed inset-0 z-45 bg-[#0F172A]/30 backdrop-blur-sm"
+                  className="fixed inset-0 z-45 bg-[var(--admin-surface-overlay)] backdrop-blur-sm"
                 />
 
                 {/* Sliding Content Drawer */}
@@ -434,17 +434,17 @@ export function AdminInquiries() {
                   animate={{ x: 0 }}
                   exit={{ x:"100%" }}
                   transition={{ type:"spring", damping: 25, stiffness: 200 }}
-                  className="fixed top-0 right-0 h-full w-full max-w-[540px] bg-white z-50 shadow-2xl flex flex-col border-l border-black/5"
+                  className="fixed top-0 right-0 h-full w-full max-w-[540px] bg-[var(--admin-surface)] z-50 shadow-2xl flex flex-col border-l border-[var(--admin-border)]"
                 >
                   {/* Drawer Header details */}
-                  <div className="p-6 border-b border-black/5 flex items-start justify-between bg-[#F8F9FB]">
+                  <div className="p-6 border-b border-[var(--admin-border-subtle)] flex items-start justify-between bg-[var(--admin-bg-subtle)]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-white border border-black/5 text-[#000000] flex items-center justify-center font-bold  text-[16px] shadow-sm">
+                      <div className="w-12 h-12 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] flex items-center justify-center font-bold  text-[16px] shadow-sm">
                         {(selectedOrder.customerName ||"C").charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <h3 className="text-[17px] font-bold text-[#0F172A]">{selectedOrder.customerName}</h3>
-                        <p className="text-[11px] sm:text-[11px] text-[#64748B] mt-0.5">{selectedOrder.customerEmail}</p>
+                        <h3 className="text-[17px] font-bold text-[var(--admin-text-primary)]">{selectedOrder.customerName}</h3>
+                        <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)] mt-0.5">{selectedOrder.customerEmail}</p>
                       </div>
                     </div>
 
@@ -453,21 +453,21 @@ export function AdminInquiries() {
                         href={`https://wa.me/${selectedOrder.customerPhone?.replace(/[^0-9]/g,"")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-9 h-9 rounded-full bg-white hover:bg-emerald-50 text-emerald-600 border border-black/5 flex items-center justify-center shadow-sm cursor-pointer transition-all active:scale-90"
+                        className="w-9 h-9 rounded-full bg-[var(--admin-surface)] hover:admin-badge admin-badge-success border border-[var(--admin-border-subtle)] flex items-center justify-center shadow-sm cursor-pointer transition-all active:scale-90"
                         title="WhatsApp Client"
                       >
                         <span className="material-symbols-outlined text-[18px]">chat</span>
                       </a>
                       <a
                         href={`mailto:${selectedOrder.customerEmail}`}
-                        className="w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-black border border-black/5 flex items-center justify-center shadow-sm cursor-pointer transition-all active:scale-90"
+                        className="w-9 h-9 rounded-full bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] border border-[var(--admin-border-subtle)] flex items-center justify-center shadow-sm cursor-pointer transition-all active:scale-90"
                         title="Email Client"
                       >
                         <span className="material-symbols-outlined text-[18px]">mail</span>
                       </a>
                       <button
                         onClick={() => setSelectedOrder(null)}
-                        className="w-9 h-9 rounded-full bg-white hover:bg-black/5 text-[#64748B] border border-black/5 flex items-center justify-center shadow-sm cursor-pointer transition-all active:scale-90"
+                        className="w-9 h-9 rounded-full bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border border-[var(--admin-border-subtle)] flex items-center justify-center shadow-sm cursor-pointer transition-all active:scale-90"
                       >
                         ✕
                       </button>
@@ -478,24 +478,24 @@ export function AdminInquiries() {
                   <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     
                     {/* Metadata Card grids */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-[#F8F9FB] p-4.5 rounded-2xl border border-black/5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-[var(--admin-bg-subtle)] p-4.5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
                       <div>
-                        <span className="text-[11px] uppercase tracking-wider text-[#64748B] font-bold">Event Date & Location</span>
-                        <p className="text-[12px] font-bold text-[#0F172A] mt-0.5">
+                        <span className="text-[11px] uppercase tracking-wider text-[var(--admin-text-secondary)] font-bold">Event Date & Location</span>
+                        <p className="text-[12px] font-bold text-[var(--admin-text-primary)] mt-0.5">
                           {selectedOrder.eventDate ? new Date(selectedOrder.eventDate).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" }) :"TBD"} • {selectedOrder.city ||"Any Location"}
                         </p>
                       </div>
                       <div>
-                        <span className="text-[11px] uppercase tracking-wider text-[#64748B] font-bold">Consultation Type</span>
-                        <p className="text-[12px] font-bold text-[#0F172A] mt-0.5">{selectedOrder.bookingType}</p>
+                        <span className="text-[11px] uppercase tracking-wider text-[var(--admin-text-secondary)] font-bold">Consultation Type</span>
+                        <p className="text-[12px] font-bold text-[var(--admin-text-primary)] mt-0.5">{selectedOrder.bookingType}</p>
                       </div>
                     </div>
 
                     {/* Customer directives */}
                     {selectedOrder.customRequirements && (
-                      <div className="space-y-1.5 bg-[#F8F9FB] p-4.5 rounded-2xl border-2 border-dashed border-[#000000]/20">
-                        <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[#000000]">Customer's Special Requirements</span>
-                        <p className="text-[12px] text-[#0F172A]/90 leading-relaxed italic">"{selectedOrder.customRequirements}"</p>
+                      <div className="space-y-1.5 bg-[var(--admin-bg-subtle)] p-4.5 rounded-[var(--admin-radius-lg)] border-2 border-dashed border-[var(--admin-accent)]/20">
+                        <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)]">Customer's Special Requirements</span>
+                        <p className="text-[12px] text-[var(--admin-text-primary)]/90 leading-relaxed italic">"{selectedOrder.customRequirements}"</p>
                       </div>
                     )}
 
@@ -512,7 +512,7 @@ export function AdminInquiries() {
                         <div className="space-y-3">
                           {directImages.length > 0 && (
                             <div className="space-y-2">
-                              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">Uploaded Inspiration Images ({directImages.length}):</span>
+                              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">Uploaded Inspiration Images ({directImages.length}):</span>
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {directImages.map((img, idx) => (
                                   <a
@@ -520,7 +520,7 @@ export function AdminInquiries() {
                                     href={img}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="relative aspect-square rounded-xl overflow-hidden border border-black/5 shadow-sm hover:scale-105 transition-all duration-350 cursor-zoom-in"
+                                    className="relative aspect-square rounded-xl overflow-hidden border border-[var(--admin-border-subtle)] shadow-sm hover:scale-105 transition-all duration-350 cursor-zoom-in"
                                   >
                                     <img src={img} alt="Inspiration preview" className="w-full h-full object-cover" />
                                   </a>
@@ -531,17 +531,17 @@ export function AdminInquiries() {
 
                           {externalLinks.length > 0 && (
                             <div className="space-y-2">
-                              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">Pasted Inspiration Links ({externalLinks.length}):</span>
+                              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">Pasted Inspiration Links ({externalLinks.length}):</span>
                               <div className="flex flex-col gap-2">
                                 {externalLinks.map((link, idx) => (
-                                  <div key={idx} className="flex items-center justify-between bg-[#F8F9FB] border border-[#0F172A]/5 rounded-xl px-4 py-2">
+                                  <div key={idx} className="flex items-center justify-between bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] rounded-xl px-4 py-2">
                                     <div className="flex items-center gap-2 text-[11px] sm:text-[11px] min-w-0">
-                                      <span className="material-symbols-outlined text-[15px] text-[#000000] shrink-0">link</span>
+                                      <span className="material-symbols-outlined text-[15px] text-[var(--admin-accent)] shrink-0">link</span>
                                       <a
                                         href={link}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[#0F172A] font-bold hover:underline truncate"
+                                        className="text-[var(--admin-text-primary)] font-bold hover:underline truncate"
                                       >
                                         {link}
                                       </a>
@@ -550,7 +550,7 @@ export function AdminInquiries() {
                                       href={link}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-[#000000] hover:text-[#0F172A] text-[11px] uppercase font-bold tracking-wider shrink-0 pl-2 cursor-pointer"
+                                      className="text-[var(--admin-accent)] hover:text-[var(--admin-text-primary)] text-[11px] uppercase font-bold tracking-wider shrink-0 pl-2 cursor-pointer"
                                     >
                                       Open Board
                                     </a>
@@ -564,9 +564,9 @@ export function AdminInquiries() {
                     })()}
 
                     {/* Curator Correspondence Logs */}
-                    <div className="space-y-3 pt-4 border-t border-black/5">
-                      <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">Customer Chat & History</span>
-                      <div className="h-[200px] overflow-y-auto space-y-3 bg-[#F8F9FB] p-3 rounded-2xl border border-black/5 shadow-inner">
+                    <div className="space-y-3 pt-4 border-t border-[var(--admin-border-subtle)]">
+                      <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">Customer Chat & History</span>
+                      <div className="h-[200px] overflow-y-auto space-y-3 bg-[var(--admin-bg-subtle)] p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] shadow-inner">
                         {selectedOrder.messages?.map((msg, i) => {
                           const isMe = msg.sender ==="admin";
                           const isLog = msg.senderName ==="System";
@@ -574,16 +574,16 @@ export function AdminInquiries() {
                           if (isLog) {
                             return (
                               <div key={i} className="text-center py-1">
-                                <span className="px-2.5 py-1 bg-black/5 text-[#64748B] text-[11px] font-bold uppercase tracking-wider rounded-lg border border-black/5">{msg.text}</span>
+                                <span className="px-2.5 py-1 bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] text-[11px] font-bold uppercase tracking-wider rounded-lg border border-[var(--admin-border-subtle)]">{msg.text}</span>
                               </div>
                             );
                           }
 
                           return (
                             <div key={i} className={`flex flex-col ${isMe ?"items-end" :"items-start"}`}>
-                              <span className="text-[11px] font-bold text-[#64748B] mb-0.5 px-1">{msg.senderName}</span>
-                              <div className={`p-3 rounded-2xl text-[11px] sm:text-[11px] leading-relaxed max-w-[85%] shadow-sm ${
-                                isMe ?"bg-[#0F172A] text-white rounded-tr-none" :"bg-white text-[#0F172A] rounded-tl-none border border-black/5"
+                              <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] mb-0.5 px-1">{msg.senderName}</span>
+                              <div className={`p-3 rounded-[var(--admin-radius-lg)] text-[11px] sm:text-[11px] leading-relaxed max-w-[85%] shadow-sm ${
+                                isMe ?"bg-[var(--admin-accent)] text-white rounded-tr-none" :"bg-[var(--admin-surface)] text-[var(--admin-text-primary)] rounded-tl-none border border-[var(--admin-border-subtle)]"
                               }`}>
                                 {msg.text}
                               </div>
@@ -599,12 +599,12 @@ export function AdminInquiries() {
                           value={adminMessageText}
                           onChange={(e) => setAdminMessageText(e.target.value)}
                           placeholder="Type message to customer..."
-                          className="flex-1 bg-[#F8F9FB] border border-black/15 rounded-full px-4 py-2.5 text-[12px] outline-none focus:border-[#000000] transition-all text-[#0F172A]"
+                          className="flex-1 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-strong)] admin-input rounded-full"
                         />
                         <button aria-label="send"
                           type="submit"
                           disabled={isSendingMessage || !adminMessageText.trim()}
-                          className="w-10 h-10 rounded-full bg-[#0F172A] hover:bg-[#000000] text-white flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-40 disabled:pointer-events-none"
+                          className="w-10 h-10 rounded-full bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 disabled:opacity-40 disabled:pointer-events-none"
                         >
                           <span className="material-symbols-outlined text-[16px]">send</span>
                         </button>
@@ -612,16 +612,16 @@ export function AdminInquiries() {
                     </div>
 
                     {/* Interactive estimate luxury receipt builder */}
-                    <div className="space-y-4 pt-4 border-t border-black/5">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#000000] block">Create Quotation / Pricing</span>
+                    <div className="space-y-4 pt-4 border-t border-[var(--admin-border-subtle)]">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)] block">Create Quotation / Pricing</span>
                       
-                      <div className="space-y-3.5 bg-[#F8F9FB] p-4 md:p-5 rounded-2xl border border-black/5 shadow-sm">
+                      <div className="space-y-3.5 bg-[var(--admin-bg-subtle)] p-4 md:p-5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] shadow-sm">
                         
                         {/* Price Breakdown Items list (Auto height, no ugly nested scrollbar!) */}
                         <div className="space-y-3">
                           {quoteItems.map((item, idx) => (
                             <div key={idx} className="flex items-center gap-2.5">
-                              <div className="w-6 h-6 rounded-lg bg-black/5 text-[#64748B] flex items-center justify-center font-mono text-[11px] sm:text-[11px] sm:text-[11px] font-bold shrink-0">
+                              <div className="w-6 h-6 rounded-lg bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] flex items-center justify-center font-mono text-[11px] sm:text-[11px] sm:text-[11px] font-bold shrink-0">
                                 {String(idx + 1).padStart(2,"0")}
                               </div>
                               <input
@@ -633,10 +633,10 @@ export function AdminInquiries() {
                                   setQuoteItems(next);
                                 }}
                                 placeholder="Item Description (e.g. Stage Flower Decor)"
-                                className="flex-1 bg-white border border-black/10 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#000000] text-[#0F172A] transition-all"
+                                className="flex-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input"
                               />
                               <div className="relative w-24 shrink-0">
-                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] sm:text-[11px] font-mono text-[#64748B]">₹</span>
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] sm:text-[11px] font-mono text-[var(--admin-text-secondary)]">₹</span>
                                 <input
                                   type="number"
                                   value={item.amount}
@@ -646,13 +646,13 @@ export function AdminInquiries() {
                                     setQuoteItems(next);
                                   }}
                                   placeholder="Price"
-                                  className="w-full bg-white border border-black/10 rounded-xl pl-5 pr-2 py-2 text-[12px] outline-none focus:border-[#000000] font-mono text-right text-[#0F172A]"
+                                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input font-mono text-right"
                                 />
                               </div>
                               <button
                                 type="button"
                                 onClick={() => setQuoteItems(quoteItems.filter((_, i) => i !== idx))}
-                                className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center cursor-pointer transition-all shrink-0 active:scale-90"
+                                className="w-8 h-8 rounded-xl bg-[var(--admin-error-light)] hover:bg-[var(--admin-error-light)] text-[var(--admin-error)] flex items-center justify-center cursor-pointer transition-all shrink-0 active:scale-90"
                                 title="Remove Item"
                               >
                                 <span className="material-symbols-outlined text-[15px]">delete</span>
@@ -663,35 +663,35 @@ export function AdminInquiries() {
                           <button
                             type="button"
                             onClick={() => setQuoteItems([...quoteItems, { description:"", amount: 0 }])}
-                            className="w-full py-2 border border-dashed border-[#000000]/35 text-[#000000] hover:bg-[#000000]/5 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                            className="w-full py-2 border border-dashed border-[var(--admin-accent)]/35 text-[var(--admin-accent)] hover:bg-[var(--admin-accent)]/5 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                           >
                             <span className="material-symbols-outlined text-[15px]">add</span> Add Price Item
                           </button>
                         </div>
 
                         {/* Taxes and Shipping side-by-side */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-black/5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-[var(--admin-border-subtle)]">
                           <div className="space-y-1">
-                            <label className="text-[11px] font-bold uppercase text-[#64748B] tracking-wider block">Taxes (₹)</label>
+                            <label className="text-[11px] font-bold uppercase text-[var(--admin-text-secondary)] tracking-wider block">Taxes (₹)</label>
                             <div className="relative">
-                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] sm:text-[11px] font-mono text-[#64748B]">₹</span>
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] sm:text-[11px] font-mono text-[var(--admin-text-secondary)]">₹</span>
                               <input
                                 type="number"
                                 value={quoteTax}
                                 onChange={(e) => setQuoteTax(Number(e.target.value) || 0)}
-                                className="w-full bg-white border border-black/10 rounded-xl pl-5 pr-3 py-2 text-[12px] outline-none focus:border-[#000000] font-mono text-right text-[#0F172A]"
+                                className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input font-mono text-right"
                               />
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[11px] font-bold uppercase text-[#64748B] tracking-wider block">Shipping & Setup (₹)</label>
+                            <label className="text-[11px] font-bold uppercase text-[var(--admin-text-secondary)] tracking-wider block">Shipping & Setup (₹)</label>
                             <div className="relative">
-                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] sm:text-[11px] font-mono text-[#64748B]">₹</span>
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] sm:text-[11px] font-mono text-[var(--admin-text-secondary)]">₹</span>
                               <input
                                 type="number"
                                 value={quoteShipping}
                                 onChange={(e) => setQuoteShipping(Number(e.target.value) || 0)}
-                                className="w-full bg-white border border-black/10 rounded-xl pl-5 pr-3 py-2 text-[12px] outline-none focus:border-[#000000] font-mono text-right text-[#0F172A]"
+                                className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input font-mono text-right"
                               />
                             </div>
                           </div>
@@ -699,21 +699,21 @@ export function AdminInquiries() {
 
                         {/* Special Terms & Notes */}
                         <div className="space-y-1.5 pt-1">
-                          <label className="text-[11px] font-bold uppercase text-[#64748B] tracking-wider block">Special Terms / Payment Notes</label>
+                          <label className="text-[11px] font-bold uppercase text-[var(--admin-text-secondary)] tracking-wider block">Special Terms / Payment Notes</label>
                           <input
                             type="text"
                             value={quoteNotes}
                             onChange={(e) => setQuoteNotes(e.target.value)}
                             placeholder="E.g. 50% advance payment required, balance on event date..."
-                            className="w-full bg-white border border-black/10 rounded-xl px-4 py-2.5 text-[12px] outline-none focus:border-[#000000] text-[#0F172A] transition-all"
+                            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input"
                           />
                         </div>
 
                         {/* Invoice Receipt Block */}
-                        <div className="pt-3 border-t border-dashed border-black/10 space-y-1">
-                          <div className="flex justify-between items-center font-bold text-[13px] pt-1 text-[#0F172A]">
+                        <div className="pt-3 border-t border-dashed border-[var(--admin-border)] space-y-1">
+                          <div className="flex justify-between items-center font-bold text-[13px] pt-1 text-[var(--admin-text-primary)]">
                             <span>Grand Total:</span>
-                            <span className="font-mono text-[15px] text-[#000000]">₹{liveQuoteTotal.toLocaleString("en-IN")}</span>
+                            <span className="font-mono text-[15px] text-[var(--admin-accent)]">₹{liveQuoteTotal.toLocaleString("en-IN")}</span>
                           </div>
                         </div>
 
@@ -725,14 +725,14 @@ export function AdminInquiries() {
                           type="button"
                           onClick={handleDispatchQuotation}
                           disabled={updatingId === selectedOrder._id}
-                          className="flex-1 bg-[#0F172A] hover:bg-[#000000] text-white py-3 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer text-center shadow-md active:scale-95 disabled:opacity-40"
+                          className="flex-1 bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white py-3 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer text-center shadow-md active:scale-95 disabled:opacity-40"
                         >
                           Send Quotation to Customer
                         </button>
                         <button
                           type="button"
                           onClick={() => handleArchiveOrder(selectedOrder._id)}
-                          className="bg-red-50 text-red-500 hover:bg-red-100 border border-red-200 px-4 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider cursor-pointer active:scale-95 transition-all"
+                          className="bg-[var(--admin-error-light)] text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] border border-[var(--admin-error-border)] px-4 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider cursor-pointer active:scale-95 transition-all"
                         >
                           Archive Order
                         </button>
@@ -740,33 +740,33 @@ export function AdminInquiries() {
                     </div>
 
                     {/* Elite Pipeline status selector card (replaces the cluttered 8-button grid!) */}
-                    <div className="space-y-3 pt-4 border-t border-black/5">
-                      <div className="bg-[#F8F9FB] p-4.5 rounded-2xl border border-black/5 flex items-center justify-between gap-4">
+                    <div className="space-y-3 pt-4 border-t border-[var(--admin-border-subtle)]">
+                      <div className="bg-[var(--admin-bg-subtle)] p-4.5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] flex items-center justify-between gap-4">
                         <div>
-                          <span className="text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider text-[#64748B] font-bold">Active Status</span>
+                          <span className="text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider text-[var(--admin-text-secondary)] font-bold">Active Status</span>
                           <div className="flex items-center gap-2 mt-1.5">
                             <span className={`w-2.5 h-2.5 rounded-full ${
-                              selectedOrder.status ==="Pending" ?"bg-amber-500 animate-pulse" :
-                              selectedOrder.status ==="Approved" ?"bg-emerald-500" :
-                              selectedOrder.status ==="Cancelled" ?"bg-red-500" :"bg-slate-900"
+                              selectedOrder.status ==="Pending" ?"bg-[var(--admin-warning)] animate-pulse" :
+                              selectedOrder.status ==="Approved" ?"bg-[var(--admin-success)]" :
+                              selectedOrder.status ==="Cancelled" ?"bg-[var(--admin-error)]" :"bg-[var(--admin-text-primary)]"
                             }`} />
-                            <p className="text-[13px] font-bold uppercase tracking-wider text-[#0F172A]">{selectedOrder.status}</p>
+                            <p className="text-[13px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">{selectedOrder.status}</p>
                           </div>
                         </div>
                         
                         <div className="w-[180px] space-y-1">
-                          <span className="text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider text-[#64748B] font-bold block text-right">Change Status</span>
+                          <span className="text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider text-[var(--admin-text-secondary)] font-bold block text-right">Change Status</span>
                           <div className="relative">
                             <select
                               value={selectedOrder.status}
                               onChange={(e) => handleUpdateStatus(selectedOrder._id, e.target.value)}
-                              className="w-full bg-white border border-black/10 rounded-xl pl-3 pr-8 py-2 text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[#0F172A] outline-none focus:border-[#000000] cursor-pointer appearance-none shadow-sm"
+                              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl pl-3 pr-8 py-2 text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-accent)] cursor-pointer appearance-none shadow-sm"
                             >
                               {["Pending","Reviewing","Quote Sent","Approved","In Progress","Ready","Delivered","Cancelled"].map(st => (
                                 <option key={st} value={st}>{st}</option>
                               ))}
                             </select>
-                            <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[15px] text-[#64748B] pointer-events-none">expand_more</span>
+                            <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[15px] text-[var(--admin-text-secondary)] pointer-events-none">expand_more</span>
                           </div>
                         </div>
                       </div>
@@ -783,24 +783,24 @@ export function AdminInquiries() {
 
       {/* ─── WORKSPACE: STOREFRONT CMS CONFIG CMS ─── */}
       {currentWorkspace ==="config" && (
-        <div className="bg-white rounded-3xl border border-black/5 p-6 md:p-8 space-y-6 shadow-sm max-w-4xl mx-auto">
+        <div className="admin-card border border-[var(--admin-border-subtle)] p-6 md:p-8 space-y-6 shadow-sm max-w-4xl mx-auto">
           <div>
-            <h2 className="text-[18px] font-bold text-[#0F172A]">Manage Form Options (Storefront)</h2>
-            <p className="text-[12px] text-[#64748B] font-light mt-0.5">Add, edit, or disable the occasion and product category options that customers see on the custom order form.</p>
+            <h2 className="text-[18px] font-bold text-[var(--admin-text-primary)]">Manage Form Options (Storefront)</h2>
+            <p className="text-[12px] text-[var(--admin-text-secondary)] font-light mt-0.5">Add, edit, or disable the occasion and product category options that customers see on the custom order form.</p>
           </div>
 
           {!cmsConfig ? (
             <div className="flex flex-col items-center py-20 gap-3">
-              <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-              <p className="text-[11px] sm:text-[11px] text-[#64748B]">Syncing dynamic configs...</p>
+              <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
+              <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]">Syncing dynamic configs...</p>
             </div>
           ) : (
-            <div className="space-y-6 pt-4 border-t border-black/5">
+            <div className="space-y-6 pt-4 border-t border-[var(--admin-border-subtle)]">
               
               {/* Occasions List Config */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-black/5 pb-2">
-                  <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[#000000]">Occasions List (e.g. Wedding, Birthday)</h4>
+                <div className="flex items-center justify-between border-b border-[var(--admin-border-subtle)] pb-2">
+                  <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)]">Occasions List (e.g. Wedding, Birthday)</h4>
                   <button
                     type="button"
                     onClick={() => {
@@ -808,14 +808,14 @@ export function AdminInquiries() {
                       next.push({ id: `custom_${Date.now()}`, label:"New Occasion Option", enabled: true });
                       setCmsConfig({ ...cmsConfig, occasions: next });
                     }}
-                    className="text-[11px] sm:text-[11px] text-[#0F172A] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline cursor-pointer"
+                    className="text-[11px] sm:text-[11px] text-[var(--admin-text-primary)] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline cursor-pointer"
                   >
                     + Add New Occasion
                   </button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {cmsConfig.occasions?.map((oc, index) => (
-                    <div key={oc.id} className="flex items-center gap-2 bg-[#F8F9FB] p-3 rounded-2xl border border-black/5">
+                    <div key={oc.id} className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
                       <input
                         type="text"
                         value={oc.label}
@@ -824,7 +824,7 @@ export function AdminInquiries() {
                           next[index].label = e.target.value;
                           setCmsConfig({ ...cmsConfig, occasions: next });
                         }}
-                        className="flex-1 bg-white border border-black/10 rounded-xl px-3 py-1.5 text-[11px] sm:text-[11px] outline-none focus:border-[#000000] transition-all"
+                        className="flex-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl px-3 py-1.5 text-[11px] sm:text-[11px] outline-none focus:border-[var(--admin-accent)] transition-all"
                       />
                       <button
                         type="button"
@@ -834,7 +834,7 @@ export function AdminInquiries() {
                           setCmsConfig({ ...cmsConfig, occasions: next });
                         }}
                         className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider border cursor-pointer transition-all duration-300 ${
-                          oc.enabled ?"bg-emerald-50 text-emerald-700 border-emerald-200" :"bg-gray-100 text-gray-500 border-gray-200"
+                          oc.enabled ?"bg-[var(--admin-success-light)] text-[var(--admin-success)] border-[var(--admin-success-border)]" :"bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)]"
                         }`}
                       >
                         {oc.enabled ?"Active" :"Disabled"}
@@ -845,7 +845,7 @@ export function AdminInquiries() {
                           const next = cmsConfig.occasions.filter((_, idx) => idx !== index);
                           setCmsConfig({ ...cmsConfig, occasions: next });
                         }}
-                        className="text-red-500 hover:text-red-600 font-bold px-2 text-[12px] cursor-pointer"
+                        className="text-[var(--admin-error)] hover:text-[var(--admin-error)] font-bold px-2 text-[12px] cursor-pointer"
                       >
                         ✕
                       </button>
@@ -856,8 +856,8 @@ export function AdminInquiries() {
 
               {/* Decor Categories Config */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-black/5 pb-2">
-                  <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[#000000]">Product Categories (e.g. Table Centerpieces)</h4>
+                <div className="flex items-center justify-between border-b border-[var(--admin-border-subtle)] pb-2">
+                  <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)]">Product Categories (e.g. Table Centerpieces)</h4>
                   <button
                     type="button"
                     onClick={() => {
@@ -865,14 +865,14 @@ export function AdminInquiries() {
                       next.push({ id: `custom_${Date.now()}`, label:"New Product Category", enabled: true });
                       setCmsConfig({ ...cmsConfig, productTypes: next });
                     }}
-                    className="text-[11px] sm:text-[11px] text-[#0F172A] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline cursor-pointer"
+                    className="text-[11px] sm:text-[11px] text-[var(--admin-text-primary)] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline cursor-pointer"
                   >
                     + Add New Category
                   </button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {cmsConfig.productTypes?.map((pt, index) => (
-                    <div key={pt.id} className="flex items-center gap-2 bg-[#F8F9FB] p-3 rounded-2xl border border-black/5">
+                    <div key={pt.id} className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
                       <input
                         type="text"
                         value={pt.label}
@@ -881,7 +881,7 @@ export function AdminInquiries() {
                           next[index].label = e.target.value;
                           setCmsConfig({ ...cmsConfig, productTypes: next });
                         }}
-                        className="flex-1 bg-white border border-black/10 rounded-xl px-3 py-1.5 text-[11px] sm:text-[11px] outline-none focus:border-[#000000] transition-all"
+                        className="flex-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl px-3 py-1.5 text-[11px] sm:text-[11px] outline-none focus:border-[var(--admin-accent)] transition-all"
                       />
                       <button
                         type="button"
@@ -891,7 +891,7 @@ export function AdminInquiries() {
                           setCmsConfig({ ...cmsConfig, productTypes: next });
                         }}
                         className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider border cursor-pointer transition-all duration-300 ${
-                          pt.enabled ?"bg-emerald-50 text-emerald-700 border-emerald-200" :"bg-gray-100 text-gray-500 border-gray-200"
+                          pt.enabled ?"bg-[var(--admin-success-light)] text-[var(--admin-success)] border-[var(--admin-success-border)]" :"bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)]"
                         }`}
                       >
                         {pt.enabled ?"Active" :"Disabled"}
@@ -902,7 +902,7 @@ export function AdminInquiries() {
                           const next = cmsConfig.productTypes.filter((_, idx) => idx !== index);
                           setCmsConfig({ ...cmsConfig, productTypes: next });
                         }}
-                        className="text-red-500 hover:text-red-600 font-bold px-2 text-[12px] cursor-pointer"
+                        className="text-[var(--admin-error)] hover:text-[var(--admin-error)] font-bold px-2 text-[12px] cursor-pointer"
                       >
                         ✕
                       </button>
@@ -912,12 +912,12 @@ export function AdminInquiries() {
               </div>
 
               {/* Action buttons */}
-              <div className="pt-6 border-t border-black/5 flex justify-end">
+              <div className="pt-6 border-t border-[var(--admin-border-subtle)] flex justify-end">
                 <button
                   type="button"
                   onClick={handleSaveCMSConfig}
                   disabled={isSavingCMS}
-                  className="bg-[#0F172A] hover:bg-[#000000] text-white px-6 py-3 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider cursor-pointer shadow-md transition-all active:scale-95 disabled:opacity-50"
+                  className="bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white px-6 py-3 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider cursor-pointer shadow-md transition-all active:scale-95 disabled:opacity-50"
                 >
                   {isSavingCMS ?"Saving Options..." :"Save Form Options"}
                 </button>

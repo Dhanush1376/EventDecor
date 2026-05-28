@@ -290,63 +290,9 @@ export const initialWebsiteContent = {
   },
 
   // ═══════════════════════════════════════════════════════
-  // POLICIES
+  // POLICIES (Moved to dynamic Database Model - Policy.ts)
   // ═══════════════════════════════════════════════════════
-  policies: {
-    shipping: {
-      title:"Shipping Policy",
-      lastUpdated:"May 15, 2026",
-      sections: [
-        {
-          title:"1. Processing & Dispatch",
-          content:"<p>We pride ourselves on swift handling of all authentic handcrafted decor acquisitions:</p><ul class=\"list-disc pl-5 space-y-2 mt-3\"><li><strong>Ready-to-Ship Items:</strong> Dispatched within 24 to 48 hours of order confirmation.</li><li><strong>Custom Commissions:</strong> Production timelines vary between 10 to 25 business days.</li></ul>"
-        },
-        {
-          title:"2. Delivery Timelines",
-          content:"<p>Estimated transit times post-dispatch depend on your target destination:</p><ul class=\"list-disc pl-5 space-y-2 mt-3\"><li><strong>Metropolitan Cities (India):</strong> 2 to 4 working days.</li><li><strong>Tier 2 & 3 Cities (India):</strong> 5 to 7 working days.</li><li><strong>International:</strong> 10 to 14 working days via premium courier partners.</li></ul>"
-        },
-        {
-          title:"3. Shipping Fees",
-          content:"<p>We provide <strong>Complimentary Free Shipping</strong> on all domestic orders across India. International shipping charges are calculated dynamically at checkout based on destination and volumetric weight.</p>"
-        },
-        {
-          title:"4. Secure Packaging",
-          content:"<p>All items are securely encased in our multi-layer bubble wrap and custom-molded heritage outers to prevent transit damage. Bespoke pieces include velvet linings and specialized protection layers.</p>"
-        },
-        {
-          title:"5. Tracking Details",
-          content:"<p>Once your order leaves our workshop, tracking updates will be emailed to your registered address and updated live inside your user profile dashboard.</p>"
-        }
-      ]
-    },
-    returns: {
-      title:"Returns & Refunds",
-      lastUpdated:"May 15, 2026",
-      sections: [
-        {
-          title:"1. Return Window",
-          content:"<p>We offer a hassle-free <strong>7-day return policy</strong> for all standard handcrafted decor items from the date of delivery. Items must be in their original, unused condition with all authentic tags intact.</p>"
-        },
-        {
-          title:"2. Eligibility Criteria",
-          content:"<p>To qualify for a refund or exchange, please ensure:</p><ul class=\"list-disc pl-5 space-y-2 mt-3\"><li>The product is in its original heritage packaging.</li><li>The item is not a custom, bespoke, or personalized order (these are final sale).</li><li>The product is not marked as \"Final Sale\" or \"Non-Returnable\" on the product page.</li></ul>"
-        },
-        {
-          title:"3. Damage During Transit",
-          content:"<p>In the rare event that your acquisition arrives damaged, please record a photograph of the damage and contact us within 24 hours at <strong>support@siriartsandcrafts.com</strong>. We will arrange a priority replacement at no extra cost.</p>"
-        },
-        {
-          title:"4. Refund Process",
-          content:"<p>Once we receive and inspect your returned item, we will process your refund to the original payment method within 7 to 10 working days. You will receive a confirmation email once the transaction is finalized.</p>"
-        },
-        {
-          title:"5. Return Pickup",
-          content:"<p>We provide complimentary pickup for returns across India. For international returns, shipping costs are to be borne by the customer.</p>"
-        }
-      ]
-    },
-    status:"published"
-  },
+  policies: {},
 
   // ═══════════════════════════════════════════════════════════
   // DIGITAL STUDIO — Configurator & Custom Orders
@@ -447,5 +393,40 @@ export const initialWebsiteContent = {
     enableSmoothScroll: true,
     darkMode: false,
     status:"published",
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // FAQs
+  // ═══════════════════════════════════════════════════════
+  faqs: {
+    homepage: [
+      {
+        "question": "What types of events do you decorate?",
+        "answer": "We specialize in a wide range of events including weddings, engagements, housewarmings (Griha Pravesh), birthdays, corporate events, and traditional poojas."
+      },
+      {
+        "question": "Do you offer customized handmade gifts?",
+        "answer": "Yes, we craft bespoke wedding trays, customized return gifts, and premium pooja essentials tailored to your theme and preferences."
+      },
+      {
+        "question": "Where are you located and what areas do you serve?",
+        "answer": "We are based in Ongole, Andhra Pradesh, and serve clients across Ongole, Vijayawada, Guntur, and various other districts in Andhra Pradesh and Telangana for large-scale events."
+      }
+    ],
+    products: [
+      {
+        "question": "Are your products handcrafted?",
+        "answer": "Absolutely. All our premium wedding trays, pooja items, and decor props are meticulously handcrafted by skilled artisans to ensure the highest quality."
+      },
+      {
+        "question": "Can I place a bulk order for return gifts?",
+        "answer": "Yes, we specialize in bulk orders for return gifts and wedding favors. Please contact our team directly for bulk pricing and customization options."
+      },
+      {
+        "question": "Do you ship your products internationally?",
+        "answer": "Yes, we ship our handcrafted products globally. Shipping costs and delivery times vary based on the destination."
+      }
+    ],
+    status: "published"
   },
 };

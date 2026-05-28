@@ -1,141 +1,1067 @@
-/* ═══════════════════════════════════════════════════════════════
-   ENTERPRISE ADMIN DESIGN SYSTEM
-   Premium minimalist SaaS dashboard tokens & utilities
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN DESIGN SYSTEM v2.0
+   Production-grade SaaS dashboard tokens, utilities & component styles
+   Inspired by: Linear, Vercel, Stripe, Shopify Admin
+   ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ─── DESIGN TOKENS ─── */
 .admin-section-root {
-  /* Font overrides */
-  --font-display: "Inter", sans-serif !important;
-  --font-headline: "Inter", sans-serif !important;
-  --font-label: "Inter", sans-serif !important;
-  --font-signature: "Inter", sans-serif !important;
-  font-family: "Inter", sans-serif !important;
+  /* Font System */
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  --font-headline: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  --font-label: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  --font-signature: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", monospace;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
 
-  /* ── Enterprise Color Palette ── */
-  --admin-bg: #F8F9FB;
-  --admin-surface: #FFFFFF;
-  --admin-surface-hover: #F9FAFB;
-  --admin-surface-muted: #F3F4F6;
-  --admin-border: #E5E7EB;
-  --admin-border-subtle: #F0F1F3;
-  --admin-text-primary: #111827;
-  --admin-text-secondary: #6B7280;
-  --admin-text-tertiary: #9CA3AF;
-  --admin-text-placeholder: #D1D5DB;
-  --admin-accent: #000000;
-  --admin-accent-hover: #111827;
-  --admin-accent-light: #F3F4F6;
-  --admin-accent-muted: rgba(0, 0, 0, 0.05);
-  --admin-success: #059669;
-  --admin-success-light: #ECFDF5;
-  --admin-warning: #D97706;
-  --admin-warning-light: #FFFBEB;
-  --admin-error: #DC2626;
-  --admin-error-light: #FEF2F2;
-  --admin-info: #000000;
-  --admin-info-light: #F3F4F6;
+  /* ── Color Palette: Warm Luxury Light Theme ── */
+  --admin-bg:              #FAF9F6;
+  --admin-bg-subtle:       #F4F3F0;
+  --admin-surface:         #FFFFFF;
+  --admin-surface-hover:   #F8F7F4;
+  --admin-surface-muted:   #F0EFE9;
+  --admin-surface-raised:  #FFFFFF;
+  --admin-surface-overlay: rgba(0, 0, 0, 0.5);
+
+  --admin-border:          #E3E0D8;
+  --admin-border-subtle:   #EFEDE6;
+  --admin-border-strong:   #D0C5AF;
+  --admin-border-focus:    #D4AF37;
+
+  --admin-text-primary:    #1A1C1A;
+  --admin-text-secondary:  #685C57;
+  --admin-text-tertiary:   #9C9488;
+  --admin-text-placeholder:#D0C5AF;
+  --admin-text-inverse:    #FFFFFF;
+
+  /* Accent: Warm Gold */
+  --admin-accent:          #8B7340;
+  --admin-accent-hover:    #735C00;
+  --admin-accent-light:    #FDF8EC;
+  --admin-accent-muted:    rgba(139, 115, 64, 0.08);
+  --admin-accent-subtle:   rgba(139, 115, 64, 0.04);
+  --admin-accent-text:     #735C00;
+
+  /* Semantic Colors */
+  --admin-success:         #059669;
+  --admin-success-light:   #ECFDF5;
+  --admin-success-border:  #A7F3D0;
+  --admin-warning:         #D97706;
+  --admin-warning-light:   #FFFBEB;
+  --admin-warning-border:  #FDE68A;
+  --admin-error:           #EF4444;
+  --admin-error-light:     #FEF2F2;
+  --admin-error-border:    #FECACA;
+  --admin-info:            #7C6A3E;
+  --admin-info-light:      #FDF8EC;
+  --admin-info-border:     #E9D5A0;
 
   /* ── Typography Scale ── */
-  --admin-text-xxs: 10px;
-  --admin-text-xs: 11px;
-  --admin-text-sm: 12px;
+  --admin-text-xs:   11px;
+  --admin-text-sm:   12px;
   --admin-text-base: 13px;
-  --admin-text-md: 14px;
-  --admin-text-lg: 15px;
-  --admin-text-xl: 18px;
-  --admin-text-2xl: 22px;
-  --admin-text-3xl: 28px;
+  --admin-text-md:   14px;
+  --admin-text-lg:   16px;
+  --admin-text-xl:   18px;
+  --admin-text-2xl:  22px;
+  --admin-text-3xl:  28px;
+  --admin-text-4xl:  36px;
+  --admin-text-metric: 28px;
 
-  /* ── Spacing ── */
-  --admin-space-xs: 4px;
-  --admin-space-sm: 8px;
-  --admin-space-md: 12px;
-  --admin-space-lg: 16px;
-  --admin-space-xl: 20px;
-  --admin-space-2xl: 24px;
-  --admin-space-3xl: 32px;
-  --admin-space-4xl: 40px;
+  /* ── Spacing Scale (4px base) ── */
+  --admin-space-0:   0px;
+  --admin-space-0_5: 2px;
+  --admin-space-1:   4px;
+  --admin-space-1_5: 6px;
+  --admin-space-2:   8px;
+  --admin-space-3:   12px;
+  --admin-space-4:   16px;
+  --admin-space-5:   20px;
+  --admin-space-6:   24px;
+  --admin-space-8:   32px;
+  --admin-space-10:  40px;
+  --admin-space-12:  48px;
+  --admin-space-16:  64px;
 
-  /* ── Shadows ── */
-  --admin-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --admin-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --admin-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  --admin-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --admin-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
-  --admin-shadow-overlay: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  /* ── Shadows (soft blue-tinted, Vercel-style) ── */
+  --admin-shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.04);
+  --admin-shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --admin-shadow-md:  0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --admin-shadow-lg:  0 12px 24px -4px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  --admin-shadow-xl:  0 20px 40px -8px rgba(0, 0, 0, 0.1), 0 8px 16px -4px rgba(0, 0, 0, 0.05);
+  --admin-shadow-2xl: 0 32px 64px -12px rgba(0, 0, 0, 0.14), 0 12px 24px -6px rgba(0, 0, 0, 0.06);
+  --admin-shadow-overlay: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
+  --admin-shadow-ring: 0 0 0 3px var(--admin-accent-muted);
 
   /* ── Radii ── */
-  --admin-radius-sm: 6px;
-  --admin-radius-md: 8px;
-  --admin-radius-lg: 12px;
-  --admin-radius-xl: 16px;
+  --admin-radius-sm:   6px;
+  --admin-radius-md:   8px;
+  --admin-radius-lg:   10px;
+  --admin-radius-xl:   12px;
+  --admin-radius-2xl:  16px;
   --admin-radius-full: 9999px;
 
   /* ── Transitions ── */
-  --admin-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --admin-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --admin-duration-fast:   120ms;
+  --admin-duration-normal: 200ms;
+  --admin-duration-slow:   350ms;
+  --admin-transition:      150ms cubic-bezier(0.4, 0, 0.2, 1);
   --admin-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Chart Colors (Warm Luxury Palette) ── */
+  --admin-chart-1: #8B7340;
+  --admin-chart-2: #D4AF37;
+  --admin-chart-3: #B8860B;
+  --admin-chart-4: #A0785A;
+  --admin-chart-5: #C49A3C;
+  --admin-chart-6: #8E6F47;
+  --admin-chart-7: #D4975A;
+  --admin-chart-8: #7C6A3E;
+
+  /* ── Layout ── */
+  --admin-sidebar-width:      260px;
+  --admin-sidebar-collapsed:  72px;
+  --admin-topbar-height:      56px;
+  --admin-max-content-width:  1600px;
+  --admin-bottom-nav-height:  60px;
+
+  /* Map Tailwind v4 design tokens */
+  --color-on-surface: var(--admin-text-primary) !important;
+  --color-on-surface-variant: var(--admin-text-secondary) !important;
+  --color-surface: var(--admin-surface) !important;
+  --color-surface-bright: var(--admin-surface) !important;
+  --color-surface-dim: var(--admin-bg) !important;
+  --color-outline: var(--admin-text-secondary) !important;
+  --color-outline-variant: var(--admin-border) !important;
 }
 
-/* ── Admin Card ── */
-.admin-section-root .admin-card {
-  background: var(--admin-surface);
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-radius-xl);
-  box-shadow: var(--admin-shadow-xs);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL RESETS (scoped to admin)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root,
+.admin-section-root *,
+.admin-section-root *::before,
+.admin-section-root *::after {
+  box-sizing: border-box;
 }
 
-/* ── Admin Scrollbar ── */
+.admin-section-root {
+  background-color: var(--admin-bg);
+  color: var(--admin-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Override storefront heading fonts inside admin */
+.admin-section-root h1,
+.admin-section-root h2,
+.admin-section-root h3,
+.admin-section-root h4,
+.admin-section-root h5,
+.admin-section-root h6 {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  letter-spacing: -0.01em;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .admin-section-root .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
 .admin-section-root .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 .admin-section-root .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--admin-text-placeholder);
+  background: var(--admin-border-strong);
   border-radius: 10px;
 }
 .admin-section-root .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--admin-text-tertiary);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   PREMIUM LUXURY DARK THEME SYSTEM OVERRIDES
-   Scopes all admin nodes to deep zinc/coal tones with gold/white pops
-   ═══════════════════════════════════════════════════════════════ */
+.admin-section-root .scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.admin-section-root .scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-xs);
+  transition: box-shadow var(--admin-duration-normal) var(--admin-ease),
+              border-color var(--admin-duration-normal) var(--admin-ease);
+}
+
+.admin-section-root .admin-card:hover {
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.admin-section-root .admin-card-interactive {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-xs);
+  cursor: pointer;
+  transition: all var(--admin-duration-normal) var(--admin-ease);
+}
+
+.admin-section-root .admin-card-interactive:hover {
+  border-color: var(--admin-border-strong);
+  box-shadow: var(--admin-shadow-md);
+  transform: translateY(-1px);
+}
+
+.admin-section-root .admin-card-elevated {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-md);
+  transition: all var(--admin-duration-normal) var(--admin-ease);
+}
+
+.admin-section-root .admin-card-elevated:hover {
+  box-shadow: var(--admin-shadow-lg);
+  transform: translateY(-2px);
+}
+
+.admin-section-root .admin-card-flush {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  overflow: hidden;
+}
+
+.admin-section-root .admin-card-inset {
+  background: var(--admin-bg-subtle);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-lg);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTON SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: var(--admin-text-sm);
+  line-height: 1;
+  border-radius: var(--admin-radius-lg);
+  padding: 8px 16px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--admin-duration-fast) var(--admin-ease);
+  white-space: nowrap;
+  user-select: none;
+  min-height: 36px;
+}
+
+.admin-section-root .admin-btn:active {
+  transform: scale(0.97);
+}
+
+.admin-section-root .admin-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-shadow-ring);
+}
+
+/* Primary */
+.admin-section-root .admin-btn-primary {
+  background: var(--admin-accent);
+  color: white;
+  border-color: var(--admin-accent);
+}
+
+.admin-section-root .admin-btn-primary:hover {
+  background: var(--admin-accent-hover);
+  border-color: var(--admin-accent-hover);
+  box-shadow: var(--admin-shadow-sm);
+}
+
+/* Secondary */
+.admin-section-root .admin-btn-secondary {
+  background: var(--admin-text-primary);
+  color: var(--admin-text-inverse);
+  border-color: var(--admin-text-primary);
+}
+
+.admin-section-root .admin-btn-secondary:hover {
+  background: #27272A;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+/* Outline */
+.admin-section-root .admin-btn-outline {
+  background: var(--admin-surface);
+  color: var(--admin-text-primary);
+  border-color: var(--admin-border);
+  box-shadow: var(--admin-shadow-xs);
+}
+
+.admin-section-root .admin-btn-outline:hover {
+  background: var(--admin-surface-hover);
+  border-color: var(--admin-border-strong);
+}
+
+/* Ghost */
+.admin-section-root .admin-btn-ghost {
+  background: transparent;
+  color: var(--admin-text-secondary);
+  border-color: transparent;
+}
+
+.admin-section-root .admin-btn-ghost:hover {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-primary);
+}
+
+/* Destructive */
+.admin-section-root .admin-btn-destructive {
+  background: var(--admin-error);
+  color: white;
+  border-color: var(--admin-error);
+}
+
+.admin-section-root .admin-btn-destructive:hover {
+  background: #DC2626;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+/* Icon Button */
+.admin-section-root .admin-btn-icon {
+  padding: 8px;
+  min-height: 36px;
+  min-width: 36px;
+  background: transparent;
+  color: var(--admin-text-secondary);
+  border-color: transparent;
+  border-radius: var(--admin-radius-md);
+}
+
+.admin-section-root .admin-btn-icon:hover {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-primary);
+}
+
+/* Button Sizes */
+.admin-section-root .admin-btn-sm {
+  padding: 5px 10px;
+  font-size: var(--admin-text-xs);
+  min-height: 28px;
+  border-radius: var(--admin-radius-md);
+  gap: 4px;
+}
+
+.admin-section-root .admin-btn-lg {
+  padding: 10px 20px;
+  font-size: var(--admin-text-md);
+  min-height: 42px;
+  border-radius: var(--admin-radius-xl);
+  gap: 8px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGE SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--admin-radius-md);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.6;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.admin-section-root .admin-badge-success {
+  color: var(--admin-success);
+  background: var(--admin-success-light);
+  border-color: var(--admin-success-border);
+}
+
+.admin-section-root .admin-badge-warning {
+  color: var(--admin-warning);
+  background: var(--admin-warning-light);
+  border-color: var(--admin-warning-border);
+}
+
+.admin-section-root .admin-badge-error {
+  color: var(--admin-error);
+  background: var(--admin-error-light);
+  border-color: var(--admin-error-border);
+}
+
+.admin-section-root .admin-badge-info {
+  color: var(--admin-info);
+  background: var(--admin-info-light);
+  border-color: var(--admin-info-border);
+}
+
+.admin-section-root .admin-badge-neutral {
+  color: var(--admin-text-secondary);
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+.admin-section-root .admin-badge-primary {
+  color: var(--admin-accent);
+  background: var(--admin-accent-light);
+  border-color: rgba(139, 115, 64, 0.2);
+}
+
+.admin-section-root .admin-badge-dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.admin-section-root .admin-badge-dot-pulse::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  animation: admin-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORM SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-input {
+  width: 100%;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 9px 12px;
+  font-size: var(--admin-text-base);
+  font-family: inherit;
+  color: var(--admin-text-primary);
+  transition: all var(--admin-duration-fast) var(--admin-ease);
+  outline: none;
+  min-height: 38px;
+}
+
+.admin-section-root .admin-input::placeholder {
+  color: var(--admin-text-placeholder);
+}
+
+.admin-section-root .admin-input:not(:focus):hover {
+  border-color: var(--admin-border-strong);
+}
+
+.admin-section-root .admin-input:focus,
+.admin-section-root input:focus,
+.admin-section-root .admin-input:focus-visible,
+.admin-section-root input:focus-visible,
+.admin-section-root select:focus,
+.admin-section-root select:focus-visible,
+.admin-section-root textarea:focus,
+.admin-section-root textarea:focus-visible,
+.admin-section-root [type="text"]:focus,
+.admin-section-root [type="text"]:focus-visible,
+.admin-section-root [type="number"]:focus,
+.admin-section-root [type="number"]:focus-visible,
+.admin-section-root [type="email"]:focus,
+.admin-section-root [type="email"]:focus-visible,
+.admin-section-root [type="url"]:focus,
+.admin-section-root [type="url"]:focus-visible,
+.admin-section-root [type="password"]:focus,
+.admin-section-root [type="password"]:focus-visible,
+.admin-section-root [type="search"]:focus,
+.admin-section-root [type="search"]:focus-visible,
+.admin-section-root [type="tel"]:focus,
+.admin-section-root [type="tel"]:focus-visible {
+  border-color: var(--admin-accent) !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
+  outline: none !important;
+}
+
+.admin-section-root .admin-select {
+  width: 100%;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 9px 32px 9px 12px;
+  font-size: var(--admin-text-base);
+  font-family: inherit;
+  color: var(--admin-text-primary);
+  cursor: pointer;
+  outline: none;
+  min-height: 38px;
+  transition: all var(--admin-duration-fast) var(--admin-ease);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2371717A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+}
+
+.admin-section-root .admin-select:not(:focus):hover {
+  border-color: var(--admin-border-strong);
+}
+
+.admin-section-root .admin-select:focus,
+.admin-section-root select:focus,
+.admin-section-root .admin-select:focus-visible,
+.admin-section-root select:focus-visible {
+  border-color: var(--admin-accent) !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
+  outline: none !important;
+}
+
+.admin-section-root .admin-textarea {
+  width: 100%;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 10px 12px;
+  font-size: var(--admin-text-base);
+  font-family: inherit;
+  color: var(--admin-text-primary);
+  resize: vertical;
+  outline: none;
+  min-height: 80px;
+  transition: all var(--admin-duration-fast) var(--admin-ease);
+}
+
+.admin-section-root .admin-textarea:not(:focus):hover {
+  border-color: var(--admin-border-strong);
+}
+
+.admin-section-root .admin-textarea:focus,
+.admin-section-root textarea:focus,
+.admin-section-root .admin-textarea:focus-visible,
+.admin-section-root textarea:focus-visible {
+  border-color: var(--admin-accent) !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
+  outline: none !important;
+}
+
+.admin-section-root .admin-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--admin-text-secondary);
+  margin-bottom: 6px;
+}
+
+.admin-section-root .admin-field-error {
+  border-color: var(--admin-error) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.admin-section-root .admin-field-helper {
+  font-size: var(--admin-text-xs);
+  color: var(--admin-text-tertiary);
+  margin-top: 4px;
+}
+
+.admin-section-root .admin-field-error-text {
+  font-size: var(--admin-text-xs);
+  color: var(--admin-error);
+  margin-top: 4px;
+}
+
+/* Toggle switch override */
+.admin-section-root .admin-toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--admin-border-strong);
+  cursor: pointer;
+  border: none;
+  padding: 2px;
+  transition: background var(--admin-duration-normal) var(--admin-ease);
+  flex-shrink: 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+.admin-section-root .admin-toggle[aria-checked="true"] {
+  background: var(--admin-accent);
+}
+
+.admin-section-root .admin-toggle > div {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLE SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--admin-radius-xl);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+}
+
+.admin-section-root .admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--admin-text-sm);
+}
+
+.admin-section-root .admin-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.admin-section-root .admin-table thead tr {
+  background: var(--admin-bg-subtle);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-section-root .admin-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-tertiary);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.admin-section-root .admin-table td {
+  padding: 12px 16px;
+  text-align: left;
+  color: var(--admin-text-primary);
+  vertical-align: middle;
+}
+
+.admin-section-root .admin-table tbody tr {
+  border-bottom: 1px solid var(--admin-border-subtle);
+  transition: background var(--admin-duration-fast) var(--admin-ease);
+}
+
+.admin-section-root .admin-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.admin-section-root .admin-table tbody tr:hover {
+  background: var(--admin-surface-hover);
+}
+
+.admin-section-root .admin-table tbody tr.admin-table-row-clickable {
+  cursor: pointer;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SKELETON SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--admin-surface-muted);
+  border-radius: var(--admin-radius-md);
+}
+
+.admin-section-root .admin-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  animation: admin-skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+.admin-section-root .admin-skeleton-text {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.admin-section-root .admin-skeleton-title {
+  height: 20px;
+  border-radius: 8px;
+  width: 40%;
+}
+
+.admin-section-root .admin-skeleton-avatar {
+  border-radius: 50%;
+}
+
+.admin-section-root .admin-skeleton-card {
+  border-radius: var(--admin-radius-xl);
+  border: 1px solid var(--admin-border-subtle);
+}
+
+.admin-section-root .admin-skeleton-chart {
+  border-radius: var(--admin-radius-xl);
+  height: 280px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHART TOOLTIP SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .recharts-tooltip-wrapper {
+  pointer-events: none !important;
+}
+
+.admin-section-root .admin-chart-tooltip {
+  background: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: var(--admin-radius-lg) !important;
+  box-shadow: var(--admin-shadow-lg) !important;
+  padding: 10px 14px !important;
+  min-width: 120px;
+}
+
+.admin-section-root .admin-chart-tooltip-label {
+  font-size: var(--admin-text-xs);
+  font-weight: 500;
+  color: var(--admin-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.admin-section-root .admin-chart-tooltip-value {
+  font-size: var(--admin-text-md);
+  font-weight: 700;
+  color: var(--admin-text-primary);
+}
+
+/* Recharts label and axis styling */
+.admin-section-root .recharts-cartesian-axis-tick-value {
+  font-size: 10px !important;
+  fill: var(--admin-text-tertiary) !important;
+}
+
+.admin-section-root .recharts-cartesian-grid line {
+  stroke: var(--admin-border-subtle) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE GRID UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-grid-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.admin-section-root .admin-grid-charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.admin-section-root .admin-grid-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .admin-section-root .admin-grid-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-section-root .admin-grid-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .admin-section-root .admin-grid-charts {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .admin-section-root .admin-grid-content {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MISC UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Floating Publish Bar / Action Bar */
+.admin-section-root .admin-floating-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  background: var(--admin-text-primary);
+  color: var(--admin-text-inverse);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-2xl);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Empty State */
+.admin-section-root .admin-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  border: 1px dashed var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  background: var(--admin-bg-subtle);
+}
+
+/* Divider */
+.admin-section-root .admin-divider {
+  height: 1px;
+  background: var(--admin-border-subtle);
+  border: none;
+  margin: 0;
+}
+
+/* Stat card accent stripe */
+.admin-section-root .admin-stat-accent {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+}
+
+/* Filter pill active state */
+.admin-section-root .admin-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--admin-radius-lg);
+  font-size: var(--admin-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--admin-duration-fast) var(--admin-ease);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  color: var(--admin-text-secondary);
+  white-space: nowrap;
+}
+
+.admin-section-root .admin-filter-pill:hover {
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text-primary);
+}
+
+.admin-section-root .admin-filter-pill-active {
+  background: var(--admin-accent);
+  color: var(--admin-text-inverse);
+  border-color: var(--admin-accent);
+}
+
+.admin-section-root .admin-filter-pill-active:hover {
+  background: var(--admin-accent-hover);
+  border-color: var(--admin-accent-hover);
+  color: var(--admin-text-inverse);
+}
+
+/* Dropdown / popover panel */
+.admin-section-root .admin-dropdown {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-xl);
+  overflow: hidden;
+}
+
+.admin-section-root .admin-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: var(--admin-text-sm);
+  color: var(--admin-text-secondary);
+  cursor: pointer;
+  transition: all var(--admin-duration-fast) var(--admin-ease);
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+}
+
+.admin-section-root .admin-dropdown-item:hover {
+  background: var(--admin-surface-hover);
+  color: var(--admin-text-primary);
+}
+
+/* Page section spacing */
+.admin-section-root .admin-page-section {
+  margin-bottom: 24px;
+}
+
+@media (min-width: 1024px) {
+  .admin-section-root .admin-page-section {
+    margin-bottom: 32px;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes admin-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes admin-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes admin-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-section-root .admin-animate-in {
+  animation: admin-fade-in 0.3s var(--admin-ease-spring) forwards;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK THEME — Clean Variable Swap
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 .admin-section-root.dark {
-  --admin-bg: #09090B;
-  --admin-surface: #121214;
-  --admin-surface-hover: #1C1C1E;
-  --admin-surface-muted: #1E1E24;
-  --admin-border: rgba(255, 255, 255, 0.08);
-  --admin-border-subtle: rgba(255, 255, 255, 0.04);
-  --admin-text-primary: #F4F4F5;
-  --admin-text-secondary: #A1A1AA;
-  --admin-text-tertiary: #71717A;
-  --admin-text-placeholder: #52525B;
-  --admin-accent: #FFFFFF;
-  --admin-accent-hover: #E4E4E7;
-  --admin-accent-light: #27272A;
-  --admin-accent-muted: rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
 
-  /* Map Tailwind v4 design token custom properties to the dark theme values */
-  --color-on-surface: #F4F4F5 !important;
-  --color-on-surface-variant: #A1A1AA !important;
-  --color-surface: #121214 !important;
-  --color-surface-bright: #121214 !important;
-  --color-surface-dim: #09090B !important;
-  --color-surface-container-lowest: #09090B !important;
+  --admin-bg:              #09090B;
+  --admin-bg-subtle:       #0F0F12;
+  --admin-surface:         #18181B;
+  --admin-surface-hover:   #1F1F23;
+  --admin-surface-muted:   #27272A;
+  --admin-surface-raised:  #1C1C20;
+  --admin-surface-overlay: rgba(0, 0, 0, 0.7);
+
+  --admin-border:          rgba(255, 255, 255, 0.08);
+  --admin-border-subtle:   rgba(255, 255, 255, 0.04);
+  --admin-border-strong:   rgba(255, 255, 255, 0.12);
+  --admin-border-focus:    #818CF8;
+
+  --admin-text-primary:    #F4F4F5;
+  --admin-text-secondary:  #A1A1AA;
+  --admin-text-tertiary:   #71717A;
+  --admin-text-placeholder:#52525B;
+  --admin-text-inverse:    #09090B;
+
+  --admin-accent:          #D4AF37;
+  --admin-accent-hover:    #C49A3C;
+  --admin-accent-light:    rgba(212, 175, 55, 0.12);
+  --admin-accent-muted:    rgba(212, 175, 55, 0.1);
+  --admin-accent-subtle:   rgba(212, 175, 55, 0.05);
+  --admin-accent-text:     #F1D592;
+
+  --admin-success-light:   rgba(5, 150, 105, 0.12);
+  --admin-success-border:  rgba(5, 150, 105, 0.25);
+  --admin-warning-light:   rgba(217, 119, 6, 0.12);
+  --admin-warning-border:  rgba(217, 119, 6, 0.25);
+  --admin-error-light:     rgba(239, 68, 68, 0.12);
+  --admin-error-border:    rgba(239, 68, 68, 0.25);
+  --admin-info-light:      rgba(124, 106, 62, 0.12);
+  --admin-info-border:     rgba(124, 106, 62, 0.25);
+
+  --admin-shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.3);
+  --admin-shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.4);
+  --admin-shadow-md:  0 4px 8px -2px rgba(0, 0, 0, 0.5);
+  --admin-shadow-lg:  0 12px 24px -4px rgba(0, 0, 0, 0.6);
+  --admin-shadow-xl:  0 20px 40px -8px rgba(0, 0, 0, 0.7);
+  --admin-shadow-2xl: 0 32px 64px -12px rgba(0, 0, 0, 0.8);
+
+  --color-on-surface: var(--admin-text-primary) !important;
+  --color-on-surface-variant: var(--admin-text-secondary) !important;
+  --color-surface: var(--admin-surface) !important;
+  --color-surface-bright: var(--admin-surface) !important;
+  --color-surface-dim: var(--admin-bg) !important;
+  --color-surface-container-lowest: var(--admin-bg) !important;
   --color-surface-container-low: rgba(255, 255, 255, 0.03) !important;
   --color-surface-container: rgba(255, 255, 255, 0.04) !important;
   --color-surface-container-high: rgba(255, 255, 255, 0.06) !important;
   --color-surface-container-highest: rgba(255, 255, 255, 0.08) !important;
-  --color-outline: #A1A1AA !important;
-  --color-outline-variant: rgba(255, 255, 255, 0.08) !important;
+  --color-outline: var(--admin-text-secondary) !important;
+  --color-outline-variant: var(--admin-border) !important;
 }
 
-/* Scoped elements dark overrides */
+/* Dark mode: global surface overrides (catch-all for inline Tailwind bg/text) */
 .admin-section-root.dark,
 .admin-section-root.dark .min-h-screen,
 .admin-section-root.dark main {
@@ -152,35 +1078,48 @@
   border-color: var(--admin-border) !important;
 }
 
-.admin-section-root.dark .bg-stone-50,
+/* Dark: Background utility overrides */
 .admin-section-root.dark .bg-slate-50,
+.admin-section-root.dark .bg-stone-50,
 .admin-section-root.dark .bg-neutral-50,
+.admin-section-root.dark .bg-zinc-50,
 .admin-section-root.dark .bg-\[\#F8F9FB\],
 .admin-section-root.dark .bg-\[\#F8F9FB\]\/40,
-.admin-section-root.dark .bg-zinc-50 {
+.admin-section-root.dark .bg-\[\#F1F5F9\],
+.admin-section-root.dark .bg-\[\#FAFAFA\] {
   background-color: var(--admin-bg) !important;
   color: var(--admin-text-primary) !important;
-  border-color: var(--admin-border) !important;
 }
 
-/* Cards & Modals */
+.admin-section-root.dark .bg-slate-100,
+.admin-section-root.dark .bg-stone-100,
+.admin-section-root.dark .bg-neutral-100,
+.admin-section-root.dark .bg-stone-200,
+.admin-section-root.dark .bg-slate-200 {
+  background-color: var(--admin-surface-muted) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* Dark: Cards & Modals */
 .admin-section-root.dark .admin-card,
+.admin-section-root.dark .admin-card-interactive,
+.admin-section-root.dark .admin-card-elevated,
+.admin-section-root.dark .admin-card-flush,
 .admin-section-root.dark .ui-card,
 .admin-section-root.dark .rounded-2xl.bg-white,
 .admin-section-root.dark .rounded-xl.bg-white,
 .admin-section-root.dark .rounded-lg.bg-white,
-.admin-section-root.dark .shadow-lg.bg-white,
-.admin-section-root.dark .bg-white\/80 {
+.admin-section-root.dark .shadow-lg.bg-white {
   background-color: var(--admin-surface) !important;
   color: var(--admin-text-primary) !important;
   border-color: var(--admin-border) !important;
 }
 
-/* Inputs & Form Fields */
+/* Dark: Inputs */
 .admin-section-root.dark input,
 .admin-section-root.dark select,
 .admin-section-root.dark textarea {
-  background-color: #1A1A1E !important;
+  background-color: var(--admin-surface-muted) !important;
   color: var(--admin-text-primary) !important;
   border-color: var(--admin-border) !important;
 }
@@ -190,78 +1129,49 @@
   color: var(--admin-text-placeholder) !important;
 }
 
-/* Buttons */
+/* Dark: Dropdown options */
+.admin-section-root.dark option {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* Dark: Primary buttons (inverted) */
+.admin-section-root.dark .admin-btn-secondary,
 .admin-section-root.dark .bg-black,
 .admin-section-root.dark .bg-slate-900 {
-  background-color: #FFFFFF !important;
-  color: #000000 !important;
+  background-color: var(--admin-text-primary) !important;
+  color: var(--admin-bg) !important;
 }
 
 .admin-section-root.dark .bg-black:hover,
 .admin-section-root.dark .bg-slate-900:hover {
-  background-color: #E4E4E7 !important;
+  background-color: #D4D4D8 !important;
 }
 
 .admin-section-root.dark .bg-black span,
-.admin-section-root.dark .bg-slate-900 span {
-  color: #000000 !important;
+.admin-section-root.dark .bg-slate-900 span,
+.admin-section-root.dark .bg-black *,
+.admin-section-root.dark .bg-slate-900 * {
+  color: var(--admin-bg) !important;
 }
 
-.admin-section-root.dark .bg-stone-100,
-.admin-section-root.dark .bg-slate-100,
-.admin-section-root.dark .bg-stone-200,
-.admin-section-root.dark .bg-neutral-100 {
-  background-color: #27272A !important;
-  color: #F4F4F5 !important;
-  border-color: transparent !important;
-}
-
-.admin-section-root.dark .bg-stone-100:hover,
-.admin-section-root.dark .bg-slate-100:hover,
-.admin-section-root.dark .bg-stone-200:hover {
-  background-color: #3F3F46 !important;
-}
-
-.admin-section-root.dark .bg-stone-100 span,
-.admin-section-root.dark .bg-slate-100 span {
-  color: #F4F4F5 !important;
-}
-
-/* Navigation items & sub-bars */
-.admin-section-root.dark .bg-slate-100 {
-  background-color: #27272A !important;
-}
-
-.admin-section-root.dark .text-slate-600 {
-  color: var(--admin-text-secondary) !important;
-}
-
-.admin-section-root.dark .hover\:bg-slate-50:hover,
-.admin-section-root.dark .hover\:bg-slate-100:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Typography & Text overrides */
+/* Dark: Text overrides */
 .admin-section-root.dark .text-slate-900,
 .admin-section-root.dark .text-stone-900,
 .admin-section-root.dark .text-zinc-900,
 .admin-section-root.dark .text-neutral-900,
 .admin-section-root.dark .text-slate-950,
 .admin-section-root.dark .text-zinc-950,
-.admin-section-root.dark .text-stone-950,
-.admin-section-root.dark .text-neutral-950,
 .admin-section-root.dark .text-slate-800,
 .admin-section-root.dark .text-zinc-800,
 .admin-section-root.dark .text-stone-800,
-.admin-section-root.dark .text-neutral-800,
 .admin-section-root.dark .text-slate-700,
 .admin-section-root.dark .text-zinc-700,
 .admin-section-root.dark .text-stone-700,
-.admin-section-root.dark .text-neutral-700,
 .admin-section-root.dark .text-\[\#0F172A\],
-.admin-section-root.dark .text-\[\#0f172a\],
-.admin-section-root.dark .text-\[\#1a1a1a\],
 .admin-section-root.dark .text-\[\#111827\],
+.admin-section-root.dark .text-\[\#1a1a1a\],
+.admin-section-root.dark .text-\[\#000000\],
 .admin-section-root.dark .text-black,
 .admin-section-root.dark h1,
 .admin-section-root.dark h2,
@@ -272,85 +1182,69 @@
   color: var(--admin-text-primary) !important;
 }
 
+.admin-section-root.dark .text-slate-600,
+.admin-section-root.dark .text-zinc-600,
+.admin-section-root.dark .text-stone-600 {
+  color: var(--admin-text-secondary) !important;
+}
+
 .admin-section-root.dark .text-slate-500,
 .admin-section-root.dark .text-zinc-500,
 .admin-section-root.dark .text-stone-500,
 .admin-section-root.dark .text-slate-400,
 .admin-section-root.dark .text-zinc-400,
 .admin-section-root.dark .text-stone-400 {
-  color: var(--admin-text-secondary) !important;
+  color: var(--admin-text-tertiary) !important;
 }
 
-/* Border styles */
+/* Dark: Translucent text overrides */
+.admin-section-root.dark .text-black\/10,
+.admin-section-root.dark .text-black\/20,
+.admin-section-root.dark .text-black\/30,
+.admin-section-root.dark .text-black\/40,
+.admin-section-root.dark .text-black\/50 {
+  color: var(--admin-text-tertiary) !important;
+}
+
+.admin-section-root.dark .text-black\/60,
+.admin-section-root.dark .text-black\/70,
+.admin-section-root.dark .text-black\/80,
+.admin-section-root.dark .text-black\/90 {
+  color: var(--admin-text-primary) !important;
+}
+
+/* Dark: Border overrides */
 .admin-section-root.dark .border-slate-200,
 .admin-section-root.dark .border-neutral-200,
 .admin-section-root.dark .border-stone-200,
-.admin-section-root.dark .border-black\/5,
+.admin-section-root.dark .border-zinc-200,
 .admin-section-root.dark .border-slate-100,
+.admin-section-root.dark .border-black\/5,
+.admin-section-root.dark .border-black\/10,
+.admin-section-root.dark .border-black\/15,
 .admin-section-root.dark .divide-slate-100,
 .admin-section-root.dark .divide-slate-200,
-.admin-section-root.dark .divide-neutral-200,
-.admin-section-root.dark .border-zinc-200,
-.admin-section-root.dark .border-slate-200\/60,
-.admin-section-root.dark .border-slate-200\/80,
 .admin-section-root.dark .divide-y,
 .admin-section-root.dark .divide-x {
   border-color: var(--admin-border) !important;
 }
 
-.admin-section-root.dark tr:hover {
-  background-color: rgba(255, 255, 255, 0.03) !important;
-}
-
 .admin-section-root.dark .border-black {
-  border-color: #ffffff !important;
+  border-color: var(--admin-text-primary) !important;
 }
 
-/* Badges & Pill Components */
-.admin-section-root.dark .badge-premium,
-.admin-section-root.dark .rounded-full.bg-stone-100 {
-  background-color: #27272A !important;
-  color: var(--admin-text-primary) !important;
-  border-color: var(--admin-border) !important;
+/* Dark: Table row hover */
+.admin-section-root.dark tr:hover {
+  background-color: var(--admin-surface-hover) !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   PREMIUM LUXURY DARK THEME REFINEMENTS
-   Ensures 100% color compliance & perfect premium aesthetic pops
-   ═══════════════════════════════════════════════════════════════ */
-
-/* 1. Universal Text & Labels Color Compliance */
-.admin-section-root.dark .text-stone-600,
-.admin-section-root.dark .text-slate-600,
-.admin-section-root.dark .text-zinc-600,
-.admin-section-root.dark .text-stone-700,
-.admin-section-root.dark .text-slate-700,
-.admin-section-root.dark .text-zinc-700,
-.admin-section-root.dark .text-\[\#000000\],
-.admin-section-root.dark .text-\[\#000000\]\/80 {
-  color: var(--admin-text-primary) !important;
+/* Dark: Hover state overrides */
+.admin-section-root.dark .hover\:bg-slate-50:hover,
+.admin-section-root.dark .hover\:bg-slate-100:hover {
+  background-color: var(--admin-surface-hover) !important;
 }
 
-.admin-section-root.dark .text-stone-400,
-.admin-section-root.dark .text-slate-400,
-.admin-section-root.dark .text-zinc-400,
-.admin-section-root.dark .text-stone-500,
-.admin-section-root.dark .text-slate-500,
-.admin-section-root.dark .text-zinc-500,
-.admin-section-root.dark .text-outline,
-.admin-section-root.dark .text-outline-variant {
-  color: var(--admin-text-secondary) !important;
-}
-
-/* 2. Gradient Overrides on Storefront Curation Cards */
-.admin-section-root.dark .bg-gradient-to-tr.from-white.to-\[\#F1F5F9\],
-.admin-section-root.dark .bg-gradient-to-tr {
-  background-image: none !important;
-  background-color: var(--admin-surface) !important;
-  color: var(--admin-text-primary) !important;
-}
-
-/* 3. Translucent White Containers & Input Variations */
+/* Dark: Translucent backgrounds */
 .admin-section-root.dark .bg-white\/95,
 .admin-section-root.dark .bg-white\/90,
 .admin-section-root.dark .bg-white\/80,
@@ -366,49 +1260,28 @@
   color: var(--admin-text-primary) !important;
 }
 
-.admin-section-root.dark .bg-\[\#F8F9FB\]\/40 {
-  background-color: rgba(255, 255, 255, 0.03) !important;
-  color: var(--admin-text-primary) !important;
-}
-
-.admin-section-root.dark .bg-\[\#F1F5F9\] {
-  background-color: var(--admin-bg) !important;
-  color: var(--admin-text-primary) !important;
-}
-
-/* 4. Border Color Normalization */
-.admin-section-root.dark .border-stone-200\/80,
-.admin-section-root.dark .border-stone-200\/85,
-.admin-section-root.dark .border-neutral-200,
-.admin-section-root.dark .border-slate-205,
-.admin-section-root.dark .border-\[\#000000\]\/10,
-.admin-section-root.dark .border-\[\#000000\]\/15,
-.admin-section-root.dark .border-\[\#000000\]\/30,
-.admin-section-root.dark .border-surface-container-highest,
-.admin-section-root.dark .border-surface-container-highest\/30,
-.admin-section-root.dark .border-surface-container-highest\/60 {
-  border-color: var(--admin-border) !important;
-}
-
-/* 5. Dropdown Options & Autocomplete */
-.admin-section-root.dark option {
+/* Dark: Gradient overrides */
+.admin-section-root.dark .bg-gradient-to-tr {
+  background-image: none !important;
   background-color: var(--admin-surface) !important;
-  color: var(--admin-text-primary) !important;
 }
 
-/* 6. Success/Warning/Error Translucent Glow Pills */
-.admin-section-root.dark .bg-red-50 {
-  background-color: rgba(239, 68, 68, 0.08) !important;
-  border-color: rgba(239, 68, 68, 0.18) !important;
+/* Dark: Semantic color badges */
+.admin-section-root.dark .bg-red-50,
+.admin-section-root.dark .bg-rose-50 {
+  background-color: var(--admin-error-light) !important;
+  border-color: var(--admin-error-border) !important;
 }
+
 .admin-section-root.dark .bg-amber-50 {
-  background-color: rgba(245, 158, 11, 0.08) !important;
-  border-color: rgba(245, 158, 11, 0.18) !important;
+  background-color: var(--admin-warning-light) !important;
+  border-color: var(--admin-warning-border) !important;
 }
+
 .admin-section-root.dark .bg-emerald-50,
 .admin-section-root.dark .bg-green-50 {
-  background-color: rgba(16, 185, 129, 0.08) !important;
-  border-color: rgba(16, 185, 129, 0.18) !important;
+  background-color: var(--admin-success-light) !important;
+  border-color: var(--admin-success-border) !important;
 }
 
 .admin-section-root.dark .text-red-600,
@@ -430,24 +1303,53 @@
   color: #10B981 !important;
 }
 
-/* 7. Metric Pills & Progress Rails */
-.admin-section-root.dark .bg-surface {
+/* Dark: Chart tooltips */
+.admin-section-root.dark .recharts-tooltip-wrapper,
+.admin-section-root.dark .recharts-default-tooltip {
   background-color: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border) !important;
+  color: var(--admin-text-primary) !important;
 }
 
+/* Dark: Progress bar fills */
 .admin-section-root.dark .bg-surface-container-low,
 .admin-section-root.dark .bg-surface-container-low\/20,
-.admin-section-root.dark .bg-surface-container-low\/40,
-.admin-section-root.dark .bg-slate-105 {
+.admin-section-root.dark .bg-surface-container-low\/40 {
   background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Progress bar fill - bg-black under dark mode */
-.admin-section-root.dark .bg-black {
-  background-color: var(--admin-text-primary) !important;
+/* Dark: Toggle */
+.admin-section-root.dark button[role="switch"] {
+  background-color: var(--admin-surface-muted) !important;
 }
 
-/* 8. Interactive element hover fixes */
+.admin-section-root.dark button[role="switch"][aria-checked="true"] {
+  background-color: var(--admin-accent) !important;
+}
+
+.admin-section-root.dark button[role="switch"][aria-checked="true"] > div {
+  background-color: var(--admin-bg) !important;
+}
+
+/* Dark: Badges */
+.admin-section-root.dark .badge-premium,
+.admin-section-root.dark .rounded-full.bg-stone-100 {
+  background-color: var(--admin-surface-muted) !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+/* Dark: Active tab buttons */
+.admin-section-root.dark .bg-white.text-black {
+  background-color: var(--admin-text-primary) !important;
+  color: var(--admin-bg) !important;
+}
+
+.admin-section-root.dark .bg-white.text-black span {
+  color: var(--admin-bg) !important;
+}
+
+/* Dark: Interactive elements */
 .admin-section-root.dark .bg-\[\#000000\]\/10,
 .admin-section-root.dark .hover\:bg-\[\#000000\]\/10:hover {
   background-color: rgba(255, 255, 255, 0.06) !important;
@@ -459,73 +1361,69 @@
   color: var(--admin-bg) !important;
 }
 
-.admin-section-root.dark button.bg-black *,
-.admin-section-root.dark a.bg-black * {
-  color: var(--admin-bg) !important;
-}
-
-/* Chart Tooltips */
-.admin-section-root.dark .recharts-tooltip-wrapper,
-.admin-section-root.dark .recharts-default-tooltip {
+.admin-section-root.dark .bg-surface {
   background-color: var(--admin-surface) !important;
-  border: 1px solid var(--admin-border) !important;
-  color: var(--admin-text-primary) !important;
-}
-
-/* 9. Translucent Black Text Overrides */
-.admin-section-root.dark .text-black\/10,
-.admin-section-root.dark .text-black\/15,
-.admin-section-root.dark .text-black\/20,
-.admin-section-root.dark .text-black\/30,
-.admin-section-root.dark .text-black\/35,
-.admin-section-root.dark .text-black\/40,
-.admin-section-root.dark .text-black\/45,
-.admin-section-root.dark .text-black\/50,
-.admin-section-root.dark .text-black\/55 {
-  color: var(--admin-text-secondary) !important;
-}
-
-.admin-section-root.dark .text-black\/60,
-.admin-section-root.dark .text-black\/70,
-.admin-section-root.dark .text-black\/80,
-.admin-section-root.dark .text-black\/90,
-.admin-section-root.dark .hover\:text-black:hover,
-.admin-section-root.dark .group-hover\:text-black:hover {
-  color: var(--admin-text-primary) !important;
-}
-
-/* 10. Translucent Black Borders & Dividers */
-.admin-section-root.dark .border-black\/5,
-.admin-section-root.dark .border-black\/10,
-.admin-section-root.dark .border-black\/15,
-.admin-section-root.dark .border-black\/20,
-.admin-section-root.dark .divide-black\/5,
-.admin-section-root.dark .divide-black\/10,
-.admin-section-root.dark .divide-black\/15 {
-  border-color: var(--admin-border) !important;
-}
-
-/* Active tab button adjustments */
-.admin-section-root.dark .bg-white.text-black {
-  background-color: var(--admin-accent) !important;
-  color: var(--admin-bg) !important;
-}
-.admin-section-root.dark .bg-white.text-black span {
-  color: var(--admin-bg) !important;
-}
-
-/* 11. Custom Tactile Switch Toggle Overrides */
-.admin-section-root.dark button[role="switch"] {
-  background-color: #27272A !important;
-}
-
-.admin-section-root.dark button[role="switch"][aria-checked="true"] {
-  background-color: var(--admin-accent) !important;
-}
-
-.admin-section-root.dark button[role="switch"][aria-checked="true"] > div {
-  background-color: var(--admin-bg) !important;
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE-SPECIFIC OVERRIDES
+   ═══════════════════════════════════════════════════════════════════════════ */
 
+@media (max-width: 640px) {
+  .admin-section-root .admin-table-wrapper {
+    border-radius: var(--admin-radius-lg);
+  }
+
+  .admin-section-root .admin-card,
+  .admin-section-root .admin-card-interactive,
+  .admin-section-root .admin-card-elevated {
+    border-radius: var(--admin-radius-lg);
+  }
+
+  .admin-section-root .admin-btn-lg {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+
+  /* Ensure touch targets */
+  .admin-section-root button,
+  .admin-section-root a,
+  .admin-section-root [role="button"] {
+    min-height: 36px;
+  }
+}
+
+/* Tablet sidebar behavior */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .admin-section-root {
+    --admin-sidebar-width: 72px;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media print {
+  .admin-section-root aside,
+  .admin-section-root header,
+  .admin-section-root nav,
+  .admin-section-root .admin-floating-bar {
+    display: none !important;
+  }
+
+  .admin-section-root main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .admin-section-root .admin-card,
+  .admin-section-root .admin-card-interactive,
+  .admin-section-root .admin-card-elevated {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}

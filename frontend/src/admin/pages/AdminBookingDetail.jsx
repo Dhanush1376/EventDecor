@@ -1,14 +1,18 @@
-import React from"react";
-import { motion } from"framer-motion";
-import { useParams, useNavigate } from"react-router-dom";
-import { useAdmin } from"../context/AdminContext";
+import React from "react";
+import { motion } from "framer-motion";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAdmin } from "../context/AdminContext";
+import {
+  StatusBadge,
+  fadeUp,
+  stagger,
+} from "../components/AdminUIKit";
 
-const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
-const statusColors = {
-  Confirmed:"text-emerald-600 bg-emerald-50 border-emerald-200",
-  Pending:"text-amber-600 bg-amber-50 border-amber-200",
-  Processing:"text-black bg-slate-100 border-slate-300",
-  Cancelled:"text-red-600 bg-red-50 border-red-200",
+const statusIcons = {
+  Confirmed: "thumb_up",
+  Pending: "schedule",
+  Processing: "sync",
+  Cancelled: "cancel",
 };
 
 export function AdminBookingDetail() {
@@ -19,14 +23,14 @@ export function AdminBookingDetail() {
 
   if (!booking) {
     return (
-      <div className="max-w-[900px] mx-auto py-20 text-center">
-        <span className="material-symbols-outlined text-[64px] text-outline-variant">
+      <div className="py-24 text-center flex flex-col items-center justify-center">
+        <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">
           event
         </span>
-        <p className="text-[16px] text-outline mt-4">Booking not found</p>
+        <p className="text-[16px] font-bold text-[var(--admin-text-primary)] mb-4">Booking not found</p>
         <button
           onClick={() => navigate("/admin/events")}
-          className="btn-minimal group"
+          className="admin-btn h-10 px-6"
         >
           Back to Bookings
         </button>
@@ -38,31 +42,31 @@ export function AdminBookingDetail() {
     <motion.div
       initial="hidden"
       animate="show"
-      variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1000px] mx-auto space-y-6"
+      variants={stagger}
+      className="space-y-6"
     >
-      <motion.div variants={fadeUp} className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/admin/events")}
-          className="w-10 h-10 rounded-xl bg-white border border-surface-container-highest/60 flex items-center justify-center text-outline hover:text-black hover:border-slate-900-container/30 cursor-pointer transition-all hover:shadow-sm active:scale-95"
-        >
-          <span className="material-symbols-outlined text-[20px]">
-            arrow_back
-          </span>
-        </button>
-        <div className="flex-1">
-          <h2 className="text-[24px] font-bold text-on-surface">
-            {booking.eventType}
-          </h2>
-          <p className="text-[13px] text-outline">
-            Booking {booking.id} · {booking.date}
-          </p>
+      <motion.div variants={fadeUp} className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate("/admin/events")}
+            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]"
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              arrow_back
+            </span>
+          </button>
+          <div>
+            <h2 className="text-[20px] font-bold text-[var(--admin-text-primary)] leading-none mb-1.5">
+              {booking.eventType}
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-[var(--admin-text-secondary)] font-bold uppercase tracking-wider">{booking.id}</span>
+              <span className="text-[var(--admin-text-tertiary)]">•</span>
+              <span className="text-[12px] text-[var(--admin-text-secondary)] font-medium">{booking.date}</span>
+            </div>
+          </div>
         </div>
-        <span
-          className={`px-3 py-1.5 rounded-xl text-[12px] font-bold border ${statusColors[booking.status]}`}
-        >
-          {booking.status}
-        </span>
+        <StatusBadge status={booking.status} />
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
@@ -70,18 +74,23 @@ export function AdminBookingDetail() {
           {/* Status */}
           <motion.div
             variants={fadeUp}
-            className="bg-white rounded-2xl border border-surface-container-highest/60 p-6"
+            className="admin-card p-6"
           >
-            <h2 className="text-[15px] font-bold text-on-surface mb-4">
+            <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-4">
               Update Status
             </h2>
             <div className="flex flex-wrap gap-2">
-              {["Pending","Processing","Confirmed","Cancelled"].map((s) => (
+              {["Pending", "Processing", "Confirmed", "Cancelled"].map((s) => (
                 <button
                   key={s}
                   onClick={() => updateBookingStatus(booking.id, s)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-[12px] font-bold cursor-pointer transition-all border-2 active:scale-[0.96] ${booking.status === s ? statusColors[s] +" shadow-sm" :"border-surface-container-highest/60 text-outline hover:border-slate-900-container/30 hover:text-black"}`}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-[var(--admin-radius-lg)] text-[12px] font-bold cursor-pointer transition-all border ${
+                    booking.status === s
+                      ? "bg-[var(--admin-accent)] border-[var(--admin-accent)] text-white shadow-sm"
+                      : "bg-[var(--admin-surface)] border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:border-[var(--admin-border-strong)] hover:text-[var(--admin-text-primary)]"
+                  }`}
                 >
+                  <span className="material-symbols-outlined text-[16px]">{statusIcons[s]}</span>
                   {s}
                 </button>
               ))}
@@ -91,46 +100,46 @@ export function AdminBookingDetail() {
           {/* Event Details */}
           <motion.div
             variants={fadeUp}
-            className="bg-white rounded-2xl border border-surface-container-highest/60 p-6"
+            className="admin-card p-6"
           >
-            <h2 className="text-[15px] font-bold text-on-surface mb-4">
+            <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-5">
               Event Details
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 {
-                  icon:"event",
-                  label:"Event Type",
+                  icon: "event",
+                  label: "Event Type",
                   value: booking.eventType,
                 },
-                { icon:"calendar_today", label:"Date", value: booking.date },
-                { icon:"location_on", label:"Venue", value: booking.venue },
+                { icon: "calendar_today", label: "Date", value: booking.date },
+                { icon: "location_on", label: "Venue", value: booking.venue },
                 {
-                  icon:"payments",
-                  label:"Amount",
+                  icon: "payments",
+                  label: "Amount",
                   value: `₹${booking.amount.toLocaleString()}`,
                 },
                 {
-                  icon:"credit_card",
-                  label:"Payment Status",
+                  icon: "credit_card",
+                  label: "Payment Status",
                   value: booking.payment,
                 },
                 {
-                  icon:"groups",
-                  label:"Assigned Staff",
-                  value: booking.staff.join(",") ||"Not assigned yet",
+                  icon: "groups",
+                  label: "Assigned Staff",
+                  value: booking.staff.join(", ") || "Not assigned yet",
                 },
               ].map((f, i) => (
-                <div key={i} className="bg-surface rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="material-symbols-outlined text-[16px] text-slate-800">
+                <div key={i} className="bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-4 border border-[var(--admin-border-subtle)]">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-tertiary)]">
                       {f.icon}
                     </span>
-                    <span className="text-[11px] font-semibold text-outline uppercase tracking-wider">
+                    <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
                       {f.label}
                     </span>
                   </div>
-                  <p className="text-[14px] font-semibold text-on-surface">
+                  <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-tight">
                     {f.value}
                   </p>
                 </div>
@@ -141,22 +150,24 @@ export function AdminBookingDetail() {
           {/* Notes */}
           <motion.div
             variants={fadeUp}
-            className="bg-white rounded-2xl border border-surface-container-highest/60 p-6"
+            className="admin-card p-6"
           >
-            <h2 className="text-[15px] font-bold text-on-surface mb-3">
+            <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-4">
               Notes & Requirements
             </h2>
-            <div className="bg-surface rounded-xl p-4">
-              <p className="text-[13px] text-on-surface-variant leading-relaxed">
+            <div className="bg-[#fffbeb] rounded-[var(--admin-radius-lg)] p-5 border border-[#fde68a]">
+              <p className="text-[13px] text-[#92400e] leading-relaxed font-medium">
                 {booking.notes}
               </p>
             </div>
             <textarea
               rows={3}
               placeholder="Add internal notes..."
-              className="w-full mt-4 bg-surface-container-low rounded-xl px-4 py-3 text-[13px] outline-none border border-transparent focus:border-slate-900-container/40 focus:bg-white focus:shadow-sm transition-all resize-none placeholder:text-outline-variant"
+              className="admin-textarea mt-4"
             />
-            <button className="btn-minimal group">Save Notes</button>
+            <div className="flex justify-end mt-4">
+              <button className="admin-btn admin-btn-primary h-9">Save Notes</button>
+            </div>
           </motion.div>
         </div>
 
@@ -164,21 +175,24 @@ export function AdminBookingDetail() {
         <div className="space-y-6">
           <motion.div
             variants={fadeUp}
-            className="bg-white rounded-2xl border border-surface-container-highest/60 p-5"
+            className="admin-card p-6"
           >
-            <h2 className="text-[15px] font-bold text-on-surface mb-4">
+            <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-5">
               Customer
             </h2>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-container/20 to-primary/10 flex items-center justify-center">
-                <span className="text-[14px] font-bold text-black">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-[var(--admin-radius-md)] bg-[var(--admin-bg-subtle)] flex items-center justify-center border border-[var(--admin-border)] shrink-0">
+                <span className="text-[14px] font-bold text-[var(--admin-text-primary)]">
                   {booking.customer
-                    .split("")
+                    .split(" ")
+                    .filter(Boolean)
                     .map((n) => n[0])
-                    .join("")}
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
                 </span>
               </div>
-              <p className="text-[14px] font-bold text-on-surface">
+              <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
                 {booking.customer}
               </p>
             </div>
@@ -186,25 +200,25 @@ export function AdminBookingDetail() {
 
           <motion.div
             variants={fadeUp}
-            className="bg-gradient-to-br from-primary-container/10 to-primary/5 rounded-2xl border border-slate-200 p-5 text-center"
+            className="bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-6 flex flex-col items-center justify-center text-center"
           >
-            <span className="material-symbols-outlined text-[28px] text-slate-800">
+            <span className="material-symbols-outlined text-[28px] text-[var(--admin-text-secondary)] mb-2">
               payments
             </span>
-            <p className="text-[24px] font-bold text-black mt-2">
+            <p className="text-[24px] font-bold text-[var(--admin-text-primary)] font-mono leading-none">
               ₹{booking.amount.toLocaleString()}
             </p>
-            <p className="text-[12px] text-outline mt-1">{booking.payment}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-2">{booking.payment}</p>
           </motion.div>
 
           <motion.div variants={fadeUp} className="space-y-3">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-surface-container-highest/60 text-black rounded-2xl text-[12px] font-bold hover:border-slate-900-container/30 hover:bg-surface cursor-pointer transition-all active:scale-[0.98]">
+            <button className="admin-btn admin-btn-outline w-full h-11 border-[var(--admin-border-strong)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)]">
               <span className="material-symbols-outlined text-[16px]">
                 person_add
               </span>
               Assign Staff
             </button>
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-surface-container-highest/60 text-black rounded-2xl text-[12px] font-bold hover:border-slate-900-container/30 hover:bg-surface cursor-pointer transition-all active:scale-[0.98]">
+            <button className="admin-btn admin-btn-outline w-full h-11 border-[var(--admin-border-strong)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)]">
               <span className="material-symbols-outlined text-[16px]">
                 receipt
               </span>

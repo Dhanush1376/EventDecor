@@ -73,7 +73,7 @@ export const AdminSystemUsers = () => {
     try {
       if (modalMode === 'add') {
         await api.post('/admin/system/users', formData);
-        toast.success('Admin added successfully');
+        toast.success("Admin added");
       } else {
         await api.put(`/admin/system/users/${editingId}/role`, { role: formData.role });
         toast.success('Admin role updated');
@@ -100,9 +100,9 @@ export const AdminSystemUsers = () => {
   if (!isSuperAdmin) {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <ShieldAlert className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-[11px]  text-stone-800">Access Denied</h2>
-        <p className="text-stone-500 mt-2">Only Super Admins can manage system users.</p>
+        <ShieldAlert className="w-16 h-16 text-[var(--admin-error)] mb-4" />
+        <h2 className="text-[11px]  text-[var(--admin-text-primary)]">Access Denied</h2>
+        <p className="text-[var(--admin-text-tertiary)] mt-2">Only Super Admins can manage system users.</p>
       </div>
     );
   }
@@ -111,8 +111,8 @@ export const AdminSystemUsers = () => {
     <div className="p-6 md:p-10 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-[11px]  text-stone-900 tracking-tight">System Access</h2>
-          <p className="text-stone-500 mt-1">Manage administrators, staff, and access control</p>
+          <h2 className="text-[11px]  text-[var(--admin-text-secondary)]900 tracking-tight">System Access</h2>
+          <p className="text-[var(--admin-text-tertiary)] mt-1">Manage administrators, staff, and access control</p>
         </div>
         <button
           onClick={() => handleOpenModal('add')}
@@ -123,14 +123,14 @@ export const AdminSystemUsers = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+      <div className="admin-card shadow-sm border border-stone-100 overflow-hidden">
         {loading ? (
-          <div className="p-10 text-center text-stone-500">Loading system users...</div>
+          <div className="p-10 text-center text-[var(--admin-text-tertiary)]">Loading system users...</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-stone-50 border-b border-stone-100 text-[11px] uppercase tracking-wider text-stone-500">
+                <tr className="bg-[var(--admin-bg-subtle)] border-b border-stone-100 text-[11px] uppercase tracking-wider text-[var(--admin-text-tertiary)]">
                   <th className="px-6 py-4 font-medium">User Details</th>
                   <th className="px-6 py-4 font-medium">Role</th>
                   <th className="px-6 py-4 font-medium">Security Status</th>
@@ -139,15 +139,15 @@ export const AdminSystemUsers = () => {
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {admins.map((admin) => (
-                  <tr key={admin._id} className="hover:bg-stone-50/50 transition-colors">
+                  <tr key={admin._id} className="hover:bg-[var(--admin-bg-subtle)]/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                           {admin.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-medium text-stone-900">{admin.name}</div>
-                          <div className="text-[11px] text-stone-500">{admin.email}</div>
+                          <div className="font-medium text-[var(--admin-text-secondary)]900">{admin.name}</div>
+                          <div className="text-[11px] text-[var(--admin-text-tertiary)]">{admin.email}</div>
                         </div>
                       </div>
                     </td>
@@ -158,12 +158,12 @@ export const AdminSystemUsers = () => {
                     </td>
                     <td className="px-6 py-4">
                       {admin.isLocked ? (
-                        <div className="flex items-center gap-1.5 text-red-600 text-[11px]">
+                        <div className="flex items-center gap-1.5 text-[var(--admin-error)] text-[11px]">
                           <ShieldAlert size={16} />
                           <span>Locked Out</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1.5 text-emerald-600 text-[11px]">
+                        <div className="flex items-center gap-1.5 text-[var(--admin-success)] text-[11px]">
                           <ShieldCheck size={16} />
                           <span>Active</span>
                         </div>
@@ -174,14 +174,14 @@ export const AdminSystemUsers = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleOpenModal('edit', admin)}
-                            className="p-2 text-stone-400 hover:text-primary transition-colors"
+                            className="p-2 text-[var(--admin-text-secondary)]400 hover:text-primary transition-colors"
                             title="Edit Role"
                           >
                             <Edit2 size={18} />
                           </button>
                           <button
                             onClick={() => handleDelete(admin._id)}
-                            className="p-2 text-stone-400 hover:text-red-500 transition-colors"
+                            className="p-2 text-[var(--admin-text-secondary)]400 hover:text-[var(--admin-error)] transition-colors"
                             title="Revoke Access"
                           >
                             <Trash2 size={18} />
@@ -198,8 +198,8 @@ export const AdminSystemUsers = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-stone-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--admin-text-primary)]/50 backdrop-blur-sm">
+          <div className="admin-card p-6 w-full max-w-md shadow-xl border border-stone-100">
             <h2 className="text-[11px]  mb-4">
               {modalMode === 'add' ? 'Add New System User' : 'Edit User Role'}
             </h2>
@@ -207,45 +207,45 @@ export const AdminSystemUsers = () => {
               {modalMode === 'add' && (
                 <>
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-700 mb-1">Full Name</label>
+                    <label className="block text-[11px] font-medium text-[var(--admin-text-secondary)] mb-1">Full Name</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                      className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-[var(--admin-accent)] focus:border-[var(--admin-accent)] outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-700 mb-1">Email Address</label>
+                    <label className="block text-[11px] font-medium text-[var(--admin-text-secondary)] mb-1">Email Address</label>
                     <input
                       type="email"
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                      className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-[var(--admin-accent)] focus:border-[var(--admin-accent)] outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-700 mb-1">Temporary Password</label>
+                    <label className="block text-[11px] font-medium text-[var(--admin-text-secondary)] mb-1">Temporary Password</label>
                     <input
                       type="text"
                       required
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                      className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-[var(--admin-accent)] focus:border-[var(--admin-accent)] outline-none"
                     />
-                    <p className="text-[11px] text-stone-500 mt-1">User must use this password to login initially.</p>
+                    <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1">User must use this password to login initially.</p>
                   </div>
                 </>
               )}
               
               <div>
-                <label className="block text-[11px] font-medium text-stone-700 mb-1">Role & Permissions</label>
+                <label className="block text-[11px] font-medium text-[var(--admin-text-secondary)] mb-1">Role & Permissions</label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-[var(--admin-accent)] focus:border-[var(--admin-accent)] outline-none"
                 >
                   <option value="manager">Manager (General Store Ops)</option>
                   <option value="main_admin">Main Admin (Store Setup & Settings)</option>
@@ -260,7 +260,7 @@ export const AdminSystemUsers = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-stone-500 hover:text-stone-700 transition-colors"
+                  className="px-4 py-2 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)] transition-colors"
                 >
                   Cancel
                 </button>

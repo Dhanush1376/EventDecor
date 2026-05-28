@@ -1,14 +1,14 @@
-import React, { useState, useMemo } from"react";
-import { motion } from"framer-motion";
-import { useNavigate } from"react-router-dom";
-import { useAdmin } from"../context/AdminContext";
-
-const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
-const segmentColors = {
-  VIP:"text-slate-800 bg-slate-100",
-  Regular:"text-black bg-slate-100",
-  New:"text-emerald-600 bg-emerald-50",
-};
+import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useAdmin } from "../context/AdminContext";
+import {
+  PageHeader,
+  FilterBar,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from "../components/AdminUIKit";
 
 export function AdminCustomers() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export function AdminCustomers() {
 
   const filtered = useMemo(() => {
     return customers.filter((c) => {
-      const matchSeg = segmentFilter ==="All" || c.segment === segmentFilter;
+      const matchSeg = segmentFilter === "All" || c.segment === segmentFilter;
       const matchSearch =
         !searchQuery ||
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -30,164 +30,154 @@ export function AdminCustomers() {
     <motion.div
       initial="hidden"
       animate="show"
-      variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1440px] mx-auto space-y-6"
+      variants={stagger}
+      className="space-y-6"
     >
-      <motion.div
-        variants={fadeUp}
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      <PageHeader
+        title="Customers"
+        subtitle={`${customers.length} registered customers`}
       >
-        <div>
-          <h2 className="text-[11px] sm:text-[11px] font-bold text-on-surface">
-            Customers
-          </h2>
-          <p className="text-[11px] sm:text-[11px] text-outline mt-1">
-            {customers.length} registered customers
-          </p>
-        </div>
-        <button className="btn-minimal group">
-          <span className="material-symbols-outlined text-[18px]">
-            download
-          </span>
+        <button className="admin-btn admin-btn-outline h-9">
+          <span className="material-symbols-outlined text-[16px]">download</span>
           Export Customers
         </button>
+      </PageHeader>
+
+      <motion.div variants={fadeUp}>
+        <FilterBar
+          filters={["All", "VIP", "Regular", "New"]}
+          value={segmentFilter}
+          onChange={setSegmentFilter}
+        />
       </motion.div>
 
-      {/* Segment Filter */}
-      <motion.div variants={fadeUp} className="flex gap-2">
-        {["All","VIP","Regular","New"].map((s) => (
-          <button
-            key={s}
-            onClick={() => setSegmentFilter(s)}
-            className={`px-4 py-2 rounded-xl text-[11px] font-bold cursor-pointer transition-all ${segmentFilter === s ?"bg-black text-white" :"bg-white text-outline border border-surface-container-highest/60 hover:border-slate-900-container/30"}`}
+      <AnimatePresence mode="wait">
+        {filtered.length === 0 ? (
+          <motion.div
+            key="empty"
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            variants={fadeUp}
+            className="admin-card py-24 flex flex-col items-center justify-center text-center"
           >
-            {s}
-          </button>
-        ))}
-      </motion.div>
-
-      {/* Customer Cards */}
-      {filtered.length === 0 ? (
-        <div className="py-16 text-center bg-white rounded-2xl border border-surface-container-highest/60 flex flex-col items-center justify-center">
-          <span className="material-symbols-outlined text-[48px] text-outline-variant">
-            search_off
-          </span>
-          <p className="text-[11px] sm:text-[11px] font-bold text-[#0F172A] mt-3">Data Not Found</p>
-          <p className="text-[11px] text-[#64748B] mt-1">No customers matched your search query or segment filters.</p>
-        </div>
-      ) : (
-        <motion.div
-          variants={fadeUp}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        >
-          {filtered.map((c) => (
-            <motion.div
-              key={c.id}
-              whileHover={{ y: -4, boxShadow:"0 20px 40px rgba(0, 0, 0, 0.04)" }}
-              className="bg-white rounded-2xl p-5 border border-surface-container-highest/60 transition-shadow group"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-container/20 to-primary/10 flex items-center justify-center">
-                    <span className="text-[11px] font-bold text-black">
-                      {c.name
-                        .split("")
-                        .map((n) => n[0])
-                        .join("")}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-on-surface">
-                      {c.name}
-                    </p>
-                    <p className="text-[11px] sm:text-[11px] text-outline">{c.city ||"Ongole"}</p>
-                    
-                    {/* Siri Wallet & Loyalty Progression Stats */}
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <span className="flex items-center gap-0.5 text-[11px] text-green-700 font-bold bg-green-50 px-1.5 py-0.5 rounded-md border border-green-200/50">
-                        <span className="material-symbols-outlined text-[11px]">account_balance_wallet</span>
-                        ₹{(c.walletBalance || 0).toLocaleString()}
-                      </span>
-                      <span className="flex items-center gap-0.5 text-[11px] text-slate-700 font-bold bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200">
-                        <span className="material-symbols-outlined text-[11px]">stars</span>
-                        {c.siriCoins || 0} Coins
+            <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">
+              search_off
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">Data Not Found</p>
+            <p className="text-[12px] text-[var(--admin-text-secondary)]">No customers matched your search query or segment filters.</p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="grid"
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+          >
+            {filtered.map((c) => (
+              <motion.div
+                key={c.id}
+                variants={fadeUp}
+                className="admin-card p-6 group hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-300"
+              >
+                <div className="flex items-start justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] flex items-center justify-center shrink-0 group-hover:border-[var(--admin-accent)] group-hover:text-[var(--admin-accent)] transition-colors">
+                      <span className="text-[14px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)]">
+                        {c.name.split(" ").filter(Boolean).map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                       </span>
                     </div>
+                    <div>
+                      <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-tight">
+                        {c.name}
+                      </p>
+                      <p className="text-[11px] text-[var(--admin-text-tertiary)] font-medium uppercase tracking-wider mt-0.5">{c.city || "Ongole"}</p>
+                      
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="admin-badge admin-badge-success h-6 px-2 border-none font-bold text-[10px]">
+                          <span className="material-symbols-outlined text-[12px] mr-1">account_balance_wallet</span>
+                          {formatCurrency(c.walletBalance || 0)}
+                        </span>
+                        <span className="admin-badge admin-badge-neutral h-6 px-2 font-bold text-[10px]">
+                          <span className="material-symbols-outlined text-[12px] mr-1">stars</span>
+                          {c.siriCoins || 0} Coins
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <span
+                      className={`admin-badge h-6 px-2.5 font-bold text-[9px] border-none shadow-sm ${
+                        c.segment === "VIP" ? "bg-[var(--admin-text-primary)] text-white" :
+                        c.segment === "New" ? "bg-[var(--admin-success-light)] text-[var(--admin-success)]" :
+                        "bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]"
+                      }`}
+                    >
+                      {c.segment}
+                    </span>
+                    <span
+                      className={`admin-badge h-6 px-2.5 font-bold text-[9px] shadow-sm ${
+                        c.loyaltyTier === 'Platinum' ? 'bg-[#f0f9ff] text-[#0284c7] border-[#bae6fd]' :
+                        c.loyaltyTier === 'Gold' ? 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border-[var(--admin-border-strong)]' :
+                        c.loyaltyTier === 'Silver' ? 'bg-[#f8fafc] text-[var(--admin-text-secondary)] border-[#e2e8f0]' :
+                        'bg-[#fffbeb] text-[#d97706] border-[#fde68a]'
+                      }`}
+                    >
+                      👑 {c.loyaltyTier || 'Bronze'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1.5">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${segmentColors[c.segment] ||"text-gray-600 bg-gray-50"}`}
+                
+                <div className="grid grid-cols-3 gap-3 mb-5 p-3 bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
+                  <div className="text-center">
+                    <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+                      {c.orders}
+                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">Orders</p>
+                  </div>
+                  <div className="text-center border-l border-r border-[var(--admin-border)]">
+                    <p className="text-[14px] font-bold text-[var(--admin-accent)]">
+                      {c.totalSpent >= 1000 ? `₹${(c.totalSpent / 1000).toFixed(1)}K` : `₹${c.totalSpent}`}
+                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">Spent</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[12px] font-bold text-[var(--admin-text-primary)] mt-0.5">
+                      {c.lastOrder.slice(5)}
+                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">Last Order</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 pt-4 border-t border-[var(--admin-border-subtle)]">
+                  <a
+                    href={`mailto:${c.email}`}
+                    className="admin-btn admin-btn-outline flex-1 min-h-[32px] h-8 text-[10px] px-0 hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)]"
                   >
-                    {c.segment}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[11px] uppercase tracking-wider font-bold ${
-                      c.loyaltyTier === 'Platinum' ? 'text-[#4c84a8] bg-sky-50 border border-sky-200/60' :
-                      c.loyaltyTier === 'Gold' ? 'text-slate-800 bg-slate-100 border border-slate-200' :
-                      c.loyaltyTier === 'Silver' ? 'text-[#7d8b99] bg-slate-50 border border-slate-200/60' :
-                      'text-[#a87c53] bg-amber-50 border border-amber-200/60'
-                    }`}
+                    <span className="material-symbols-outlined text-[14px]">mail</span> Email
+                  </a>
+                  <a
+                    href={`https://wa.me/${c.phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="admin-btn admin-btn-outline flex-1 min-h-[32px] h-8 text-[10px] px-0 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)]"
                   >
-                    👑 {c.loyaltyTier || 'Bronze'}
-                  </span>
+                    <span className="material-symbols-outlined text-[14px]">chat</span> WhatsApp
+                  </a>
+                  <button
+                    onClick={() => navigate(`/admin/customers/${c.id}`)}
+                    className="admin-btn flex-1 min-h-[32px] h-8 text-[10px] px-0 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)]"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">visibility</span> Profile
+                  </button>
                 </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="text-center p-2 bg-surface rounded-xl">
-                  <p className="text-[11px] sm:text-[11px] font-bold text-on-surface">
-                    {c.orders}
-                  </p>
-                  <p className="text-[11px] text-outline">Orders</p>
-                </div>
-                <div className="text-center p-2 bg-surface rounded-xl">
-                  <p className="text-[11px] sm:text-[11px] font-bold text-black">
-                    {c.totalSpent >= 1000 ? `₹${(c.totalSpent / 1000).toFixed(1)}K` : `₹${c.totalSpent}`}
-                  </p>
-                  <p className="text-[11px] text-outline">Spent</p>
-                </div>
-                <div className="text-center p-2 bg-surface rounded-xl">
-                  <p className="text-[11px] font-bold text-on-surface">
-                    {c.lastOrder.slice(5)}
-                  </p>
-                  <p className="text-[11px] text-outline">Last Order</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 pt-3 border-t border-surface-container-low">
-                <a
-                  href={`mailto:${c.email}`}
-                  className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider text-outline hover:bg-surface-container-low cursor-pointer transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[14px]">
-                    mail
-                  </span>
-                  Email
-                </a>
-                <a
-                  href={`https://wa.me/${c.phone.replace(/[^0-9]/g,"")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider text-green-600 hover:bg-green-50 cursor-pointer transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[14px]">
-                    chat
-                  </span>
-                  WhatsApp
-                </a>
-                <button
-                  onClick={() => navigate(`/admin/customers/${c.id}`)}
-                  className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider text-black hover:bg-slate-100 cursor-pointer transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[14px]">
-                    visibility
-                  </span>
-                  Profile
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

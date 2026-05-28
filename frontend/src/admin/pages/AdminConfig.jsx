@@ -2,7 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { SectionHeader, AdminInput, AdminToggle } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  AdminInput,
+  AdminToggle,
+  SkeletonTable,
+  EmptyState,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 export function AdminConfig() {
   const [configs, setConfigs] = useState([]);
@@ -52,41 +60,55 @@ export function AdminConfig() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <SectionHeader
-          icon="settings_suggest"
-          title="Global System Config"
-          description="Manage application variables, feature flags, and frontend bootstrapping rules."
-        />
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="space-y-6"
+    >
+      <PageHeader
+        title="Global System Config"
+        subtitle="Manage application variables, feature flags, and frontend bootstrapping rules."
+      >
         <button
           onClick={handleCreate}
-          className="btn-primary py-2 px-4 text-xs shadow-sm hover:shadow-md"
+          className="admin-btn admin-btn-primary"
         >
-          + Add Variable
+          <span className="material-symbols-outlined text-[16px]">add</span>
+          Add Variable
         </button>
-      </div>
+      </PageHeader>
 
       {loading ? (
-        <div className="animate-pulse space-y-4">
-          <div className="h-16 bg-surface-container rounded-xl w-full" />
-        </div>
+        <SkeletonTable rows={4} cols={4} />
+      ) : configs.length === 0 ? (
+        <EmptyState
+          icon="settings_suggest"
+          title="No Configurations"
+          description="Add your first config variable to manage feature flags and application settings."
+          action={
+            <button onClick={handleCreate} className="admin-btn admin-btn-primary admin-btn-sm">
+              <span className="material-symbols-outlined text-[14px]">add</span>
+              Add Variable
+            </button>
+          }
+        />
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/10 divide-y divide-outline-variant/10">
+        <motion.div variants={fadeUp} className="admin-card divide-y divide-[var(--admin-border-subtle)]">
           {configs.map((conf) => (
-            <div key={conf._id} className="p-4 flex items-center justify-between gap-4">
-              <div className="grid grid-cols-3 gap-4 flex-1">
-                <div>
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Key</span>
-                  <div className="font-mono text-sm bg-stone-100 px-3 py-2 rounded-lg border border-stone-200">
+            <div key={conf._id} className="p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1 w-full">
+                <div className="space-y-1.5">
+                  <label className="admin-label">Key</label>
+                  <div className="admin-card-inset px-3 py-2.5 font-mono text-[12px] text-[var(--admin-text-primary)] tracking-wide">
                     {conf.key}
                   </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Value</span>
+                <div className="space-y-1.5">
+                  <label className="admin-label">Value</label>
                   {conf.type === 'boolean' ? (
                     <select
-                      className="w-full h-10 border border-outline-variant/30 rounded-lg px-3 text-sm focus:border-primary"
+                      className="admin-select"
                       value={conf.value}
                       onChange={(e) => handleUpdate({ ...conf, value: e.target.value === 'true' })}
                     >
@@ -100,26 +122,26 @@ export function AdminConfig() {
                     />
                   )}
                 </div>
-                <div>
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Description</span>
+                <div className="space-y-1.5">
+                  <label className="admin-label">Description</label>
                   <AdminInput
                     value={conf.description || ''}
                     onChange={(e) => handleUpdate({ ...conf, description: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase mb-2 block">Public</span>
+              <div className="flex items-center gap-4 shrink-0">
                 <AdminToggle
+                  label="Public"
                   checked={conf.isPublic}
                   onChange={() => handleUpdate({ ...conf, isPublic: !conf.isPublic })}
                 />
               </div>
             </div>
           ))}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

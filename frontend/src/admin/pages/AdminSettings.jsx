@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from"react";
-import { motion } from"framer-motion";
-import { userService, cmsService, notificationService } from"../../services/domainServices";
-import { useAuth } from"../../context/AuthContext";
-import { useAdmin } from"../context/AdminContext";
-import toast from"react-hot-toast";
-
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { userService, cmsService, notificationService } from "../../services/domainServices";
+import { useAuth } from "../../context/AuthContext";
+import { useAdmin } from "../context/AdminContext";
+import toast from "react-hot-toast";
 import logger from '../../utils/logger';
-const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
+import {
+  PageHeader,
+  fadeUp,
+  stagger,
+} from "../components/AdminUIKit";
 
 export function AdminSettings() {
   const { user: authUser, setUser: setAuthUser } = useAuth();
@@ -62,14 +65,14 @@ export function AdminSettings() {
         toast.error("SMTP Diagnostic failed. Check stack trace.", { id: testToast });
         setSmtpTestResult({
           success: false,
-          message: res.message ||"Connection refused.",
-          errorMessage: res.errorMessage ||"Unknown transport error.",
+          message: res.message || "Connection refused.",
+          errorMessage: res.errorMessage || "Unknown transport error.",
           details: res.details
         });
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message ||"Diagnostic request timed out.";
-      const errorStack = error.response?.data?.errorMessage || error.response?.data?.errorStack || error.stack ||"";
+      const errorMsg = error.response?.data?.message || error.message || "Diagnostic request timed out.";
+      const errorStack = error.response?.data?.errorMessage || error.response?.data?.errorStack || error.stack || "";
       toast.error(`SMTP Verification Failed: ${errorMsg}`, { id: testToast });
       setSmtpTestResult({
         success: false,
@@ -87,37 +90,37 @@ export function AdminSettings() {
 
   // Dynamic Profile State
   const [profileForm, setProfileForm] = useState({
-    name:"",
-    email:"",
-    phone:"",
-    role:"manager",
+    name: "",
+    email: "",
+    phone: "",
+    role: "manager",
   });
 
   // Dynamic Business & Portal Settings State
   const [settings, setSettings] = useState({
-    businessName:"Siri Arts & Crafts",
-    tagline:"",
-    businessEmail:"Sirisha.atmakuri@gmail.com",
-    phoneNumber:"+91 98660 06648",
-    gstNumber:"GSTIN123456789",
-    address:"#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
-    primaryColor:"var(--color-gold-dark)",
-    secondaryColor:"#F8F9FB",
-    fontFamily:"Playfair Display + Inter",
-    freeShippingThreshold:"2000",
-    standardShippingFee:"99",
-    expressShippingFee:"249",
-    codFee:"90",
-    deliveryEstimate:"5-7",
-    razorpayKeyId:"",
-    upiId:"siriarts@upi",
-    whatsappNumber:"+91 98660 06648",
-    whatsappMessage:"Hello! Thank you for reaching Siri Arts & Crafts.",
+    businessName: "Siri Arts & Crafts",
+    tagline: "",
+    businessEmail: "Sirisha.atmakuri@gmail.com",
+    phoneNumber: "+91 98660 06648",
+    gstNumber: "GSTIN123456789",
+    address: "#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
+    primaryColor: "var(--color-gold-dark)",
+    secondaryColor: "#F8F9FB",
+    fontFamily: "Playfair Display + Inter",
+    freeShippingThreshold: "2000",
+    standardShippingFee: "99",
+    expressShippingFee: "249",
+    codFee: "90",
+    deliveryEstimate: "5-7",
+    razorpayKeyId: "",
+    upiId: "siriarts@upi",
+    whatsappNumber: "+91 98660 06648",
+    whatsappMessage: "Hello! Thank you for reaching Siri Arts & Crafts.",
   });
 
   const handleBackupDownload = () => {
     try {
-      const dataStr ="data:text/json;charset=utf-8," + encodeURIComponent(
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(
         JSON.stringify({
           exportedBy: activeRole.toUpperCase(),
           exportTimestamp: new Date().toISOString(),
@@ -131,8 +134,8 @@ export function AdminSettings() {
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      logAdminAction("BACKUP_DOWNLOAD","Catalog database local backup JSON exported successfully");
-      toast.success("Database catalog backup exported successfully!");
+      logAdminAction("BACKUP_DOWNLOAD", "Catalog database local backup JSON exported");
+      toast.success("Backup exported");
     } catch {
       toast.error("Failed to generate export file.");
     }
@@ -144,15 +147,15 @@ export function AdminSettings() {
       toast.error("Wipe Protection: All three safeguard checkmarks must be acknowledged!");
       return;
     }
-    if (resetCodePhrase !=="CONFIRM HARD RESET") {
+    if (resetCodePhrase !== "CONFIRM HARD RESET") {
       toast.error("Wipe Protection: Passphrase matches failed!");
       return;
     }
-    if (activeRole ==="viewer") {
+    if (activeRole === "viewer") {
       toast.error("Viewer Role: Access denied for hard wipe!");
       return;
     }
-    if (activeRole ==="editor" || activeRole ==="manager") {
+    if (activeRole === "editor" || activeRole === "manager") {
       toast.error("Access Denied: Only Owner class admins can reset database.");
       return;
     }
@@ -162,11 +165,11 @@ export function AdminSettings() {
     }
 
     setResetExecuting(true);
-    const wipeToast = toast.loading("Executing administrative wipe operations...");
+    const wipeToast = toast.loading("Resetting database...");
     try {
       await new Promise((r) => setTimeout(r, 2000));
-      logAdminAction("HARD_RESET_EXECUTED","Database purged and reset to system defaults","Success");
-      toast.success("Database purged and reset to system defaults successfully!", { id: wipeToast });
+      logAdminAction("HARD_RESET_EXECUTED", "Database purged and reset to system defaults", "Success");
+      toast.success("Database reset to defaults", { id: wipeToast });
       
       setResetCheck1(false);
       setResetCheck2(false);
@@ -188,25 +191,25 @@ export function AdminSettings() {
         const profRes = await userService.getProfile();
         if (profRes?.success && profRes?.data) {
           setProfileForm({
-            name: profRes.data.name || authUser?.name ||"Siri Master Admin",
-            email: profRes.data.email || authUser?.email ||"admin@siriartsandcrafts.com",
-            phone: profRes.data.phone || authUser?.phone ||"+91 98660 06648",
-            role: profRes.data.role || authUser?.role ||"admin",
+            name: profRes.data.name || authUser?.name || "Siri Master Admin",
+            email: profRes.data.email || authUser?.email || "admin@siriartsandcrafts.com",
+            phone: profRes.data.phone || authUser?.phone || "+91 98660 06648",
+            role: profRes.data.role || authUser?.role || "admin",
           });
         } else {
           setProfileForm({
-            name: authUser?.name ||"Siri Master Admin",
-            email: authUser?.email ||"admin@siriartsandcrafts.com",
-            phone: authUser?.phone ||"+91 98660 06648",
-            role: authUser?.role ||"admin",
+            name: authUser?.name || "Siri Master Admin",
+            email: authUser?.email || "admin@siriartsandcrafts.com",
+            phone: authUser?.phone || "+91 98660 06648",
+            role: authUser?.role || "admin",
           });
         }
       } catch {
         setProfileForm({
-          name: authUser?.name ||"Siri Master Admin",
-          email: authUser?.email ||"admin@siriartsandcrafts.com",
-          phone: authUser?.phone ||"+91 98660 06648",
-          role: authUser?.role ||"admin",
+          name: authUser?.name || "Siri Master Admin",
+          email: authUser?.email || "admin@siriartsandcrafts.com",
+          phone: authUser?.phone || "+91 98660 06648",
+          role: authUser?.role || "admin",
         });
       }
 
@@ -215,7 +218,7 @@ export function AdminSettings() {
         const cmsRes = await cmsService.getSection("studio_settings");
         const rawSection = cmsRes?.data ?? cmsRes;
         const sectionData = rawSection?.data ?? rawSection;
-        if (sectionData && typeof sectionData ==="object" && !Array.isArray(sectionData)) {
+        if (sectionData && typeof sectionData === "object" && !Array.isArray(sectionData)) {
           const { razorpaySecret: _removed, razorpayKeySecret: _removedKey, ...safeSettings } = sectionData;
           setSettings((prev) => ({
             ...prev,
@@ -248,15 +251,15 @@ export function AdminSettings() {
         phone: profileForm.phone
       });
       if (res.success) {
-        toast.success("Administrator Profile updated successfully!", {
-          icon:"👤",
+        toast.success("Profile updated", {
+          icon: "👤",
         });
         if (setAuthUser && res.data) {
           setAuthUser(res.data);
         }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message ||"Failed to update profile details.");
+      toast.error(err.response?.data?.message || "Failed to update profile details.");
     } finally {
       setSaving(false);
     }
@@ -270,8 +273,8 @@ export function AdminSettings() {
       const { razorpaySecret: _s, razorpayKeySecret: _k, ...settingsToSave } = settings;
       const res = await cmsService.updateSection("studio_settings", settingsToSave);
       if (res) {
-        toast.success("Global configurations saved successfully in database!", {
-          icon:"⚙️",
+        toast.success("Settings saved", {
+          icon: "⚙️",
         });
       }
     } catch (err) {
@@ -283,9 +286,9 @@ export function AdminSettings() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-28 space-y-4 font-body">
-        <div className="w-10 h-10 border-3 border-slate-900 border-t-transparent rounded-full animate-spin" />
-        <p className="text-[11px] sm:text-[11px] text-outline font-medium uppercase tracking-widest">
+      <div className="flex flex-col items-center justify-center py-24 space-y-4">
+        <div className="w-10 h-10 border-4 border-[var(--admin-border-strong)] border-t-[var(--admin-accent)] rounded-full animate-spin" />
+        <p className="text-[12px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest">
           Syncing profile & configurations...
         </p>
       </div>
@@ -294,56 +297,52 @@ export function AdminSettings() {
 
   // Settings structural layout
   const sectionsList = [
-    { id:"profile", title:"Profile & Account", icon:"person" },
-    { id:"business", title:"Business Information", icon:"store" },
-    { id:"shipping", title:"Shipping & Fulfillment", icon:"local_shipping" },
-    { id:"branding", title:"Portal Visual Branding", icon:"palette" },
-    { id:"payments", title:"Payment Integrations", icon:"payments" },
-    { id:"whatsapp", title:"WhatsApp Automations", icon:"chat" },
-    { id:"security", title:"Security & Operations", icon:"shield" },
-    { id:"email", title:"Email & SMTP Diagnostics", icon:"mail" },
+    { id: "profile", title: "Profile & Account", icon: "person" },
+    { id: "business", title: "Business Information", icon: "store" },
+    { id: "shipping", title: "Shipping & Fulfillment", icon: "local_shipping" },
+    { id: "branding", title: "Portal Visual Branding", icon: "palette" },
+    { id: "payments", title: "Payment Integrations", icon: "payments" },
+    { id: "whatsapp", title: "WhatsApp Automations", icon: "chat" },
+    { id: "security", title: "Security & Operations", icon: "shield" },
+    { id: "email", title: "Email & SMTP Diagnostics", icon: "mail" },
   ];
 
   return (
     <motion.div
       initial="hidden"
       animate="show"
-      variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1440px] mx-auto space-y-6 font-body text-on-surface"
+      variants={stagger}
+      className="space-y-6"
     >
-      <motion.div variants={fadeUp}>
-        <h2 className="text-[11px] sm:text-[11px] font-bold text-on-surface  tracking-tight">
-          System Settings & Profile
-        </h2>
-        <p className="text-[11px] sm:text-[11px] text-outline mt-1">
-          Administer your contact profile, business models, and secure API gateways
-        </p>
-      </motion.div>
+      <PageHeader
+        title="System Settings & Profile"
+        subtitle="Administer your contact profile, business models, and secure API gateways"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         {/* Navigation Sidebar */}
         <motion.div
           variants={fadeUp}
-          className="bg-white rounded-[2rem] border border-surface-container-highest/60 p-3 h-fit lg:sticky lg:top-24"
+          className="admin-card p-3 h-fit lg:sticky lg:top-24 space-y-1"
         >
           {sectionsList.map((sec, i) => (
             <button
               key={sec.id}
               onClick={() => setActiveSection(i)}
-              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left cursor-pointer transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-[var(--admin-radius-lg)] text-left cursor-pointer transition-all ${
                 activeSection === i
-                  ?"bg-slate-100 text-black font-bold"
-                  :"text-outline hover:bg-surface hover:text-on-surface"
+                  ? "bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] font-bold shadow-sm"
+                  : "text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-subtle)] hover:text-[var(--admin-text-primary)]"
               }`}
             >
               <span
-                className={`material-symbols-outlined text-[20px] ${
-                  activeSection === i ?"text-black" :"text-outline"
+                className={`material-symbols-outlined text-[18px] ${
+                  activeSection === i ? "text-[var(--admin-text-primary)]" : "text-[var(--admin-text-tertiary)]"
                 }`}
               >
                 {sec.icon}
               </span>
-              <span className="text-[11px] font-bold tracking-tight">
+              <span className="text-[13px]">
                 {sec.title}
               </span>
             </button>
@@ -353,31 +352,31 @@ export function AdminSettings() {
         {/* Dynamic Panels Workspace */}
         <motion.div
           variants={fadeUp}
-          className="bg-white rounded-[2rem] border border-surface-container-highest/60 p-8 shadow-xs"
+          className="admin-card p-6 md:p-8"
         >
           {/* Header Description */}
-          <div className="flex items-center gap-3.5 mb-8 pb-4 border-b border-surface-container-low">
-            <div className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-black">
-              <span className="material-symbols-outlined text-[22px]">
+          <div className="flex items-center gap-4 mb-8 pb-5 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-12 h-12 rounded-[var(--admin-radius-md)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-primary)]">
+              <span className="material-symbols-outlined text-[24px]">
                 {sectionsList[activeSection].icon}
               </span>
             </div>
             <div>
-              <h2 className="text-[11px] sm:text-[11px] font-bold text-on-surface  leading-tight">
+              <h2 className="text-[18px] font-bold text-[var(--admin-text-primary)] leading-tight">
                 {sectionsList[activeSection].title}
               </h2>
-              <p className="text-[11px] sm:text-[11px] text-outline font-light mt-1">
+              <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium mt-1">
                 Update details for {sectionsList[activeSection].title} in database
               </p>
             </div>
           </div>
 
           {/* Form Actions router */}
-          {sectionsList[activeSection].id ==="profile" && (
-            <form onSubmit={handleProfileSave} className="space-y-5">
+          {sectionsList[activeSection].id === "profile" && (
+            <form onSubmit={handleProfileSave} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Your Full Name
                   </label>
                   <input
@@ -387,25 +386,25 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setProfileForm({ ...profileForm, name: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="admin-input"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Staff Designation (Read Only)
                   </label>
                   <input
                     type="text"
                     disabled
                     value={profileForm.role.toUpperCase()}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] text-zinc-500 font-bold tracking-wider cursor-not-allowed outline-none"
+                    className="admin-input bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] cursor-not-allowed border-transparent"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Verified Account Email Address
                   </label>
                   <input
@@ -415,11 +414,11 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setProfileForm({ ...profileForm, email: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="admin-input"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Contact Phone Number
                   </label>
                   <input
@@ -429,38 +428,35 @@ export function AdminSettings() {
                       setProfileForm({ ...profileForm, phone: e.target.value })
                     }
                     placeholder="e.g. +91 98765 43210"
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="admin-input"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t border-surface-container-low mt-8">
+              <div className="flex justify-end gap-3 pt-6 mt-8 border-t border-[var(--admin-border-subtle)]">
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="admin-btn admin-btn-outline h-10 border-transparent bg-transparent hover:bg-[var(--admin-surface-muted)]"
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="btn-minimal group flex items-center gap-2"
+                  className="admin-btn h-10"
                 >
-                  {saving && (
-                    <div className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                  )}
-                  Save Profile Info
+                  {saving ? "Saving..." : "Save Profile Info"}
                 </button>
               </div>
             </form>
           )}
 
-          {sectionsList[activeSection].id ==="business" && (
-            <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
+          {sectionsList[activeSection].id === "business" && (
+            <form onSubmit={handleGlobalSettingsSave} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Business Name
                   </label>
                   <input
@@ -470,11 +466,11 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setSettings({ ...settings, businessName: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="admin-input"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Brand Tagline
                   </label>
                   <input
@@ -483,14 +479,14 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setSettings({ ...settings, tagline: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="admin-input"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Store Support Email
                   </label>
                   <input
@@ -502,11 +498,11 @@ export function AdminSettings() {
                         businessEmail: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="admin-input"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Merchant GST Number
                   </label>
                   <input
@@ -515,13 +511,13 @@ export function AdminSettings() {
                     onChange={(e) =>
                       setSettings({ ...settings, gstNumber: e.target.value })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono uppercase"
+                    className="admin-input uppercase"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+              <div className="space-y-2">
+                <label className="admin-label">
                   Corporate HQ / Workshop Address
                 </label>
                 <textarea
@@ -530,37 +526,34 @@ export function AdminSettings() {
                   onChange={(e) =>
                     setSettings({ ...settings, address: e.target.value })
                   }
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
+                  className="admin-textarea"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t border-surface-container-low mt-8">
+              <div className="flex justify-end gap-3 pt-6 mt-8 border-t border-[var(--admin-border-subtle)]">
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="admin-btn admin-btn-outline h-10 border-transparent bg-transparent hover:bg-[var(--admin-surface-muted)]"
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="btn-minimal group flex items-center gap-2"
+                  className="admin-btn h-10"
                 >
-                  {saving && (
-                    <div className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                  )}
-                  Save Business Info
+                  {saving ? "Saving..." : "Save Business Info"}
                 </button>
               </div>
             </form>
           )}
 
-          {sectionsList[activeSection].id ==="shipping" && (
-            <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
+          {sectionsList[activeSection].id === "shipping" && (
+            <form onSubmit={handleGlobalSettingsSave} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Free Shipping Threshold (₹)
                   </label>
                   <input
@@ -572,11 +565,11 @@ export function AdminSettings() {
                         freeShippingThreshold: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="admin-input"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Standard Shipping Fee (₹)
                   </label>
                   <input
@@ -588,14 +581,14 @@ export function AdminSettings() {
                         standardShippingFee: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="admin-input"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Express Shipping Premium (₹)
                   </label>
                   <input
@@ -607,28 +600,28 @@ export function AdminSettings() {
                         expressShippingFee: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="admin-input"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#000000] flex items-center gap-1.5 font-bold">
+                <div className="space-y-2">
+                  <label className="admin-label flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
                     COD Handling Fee (₹)
                   </label>
                   <input
                     type="number"
-                    value={settings.codFee ||"90"}
+                    value={settings.codFee || "90"}
                     onChange={(e) =>
                       setSettings({
                         ...settings,
                         codFee: e.target.value,
                       })
                     }
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-[#000000] transition-all font-mono"
+                    className="admin-input focus:border-black"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Delivery Estimate Label
                   </label>
                   <input
@@ -641,38 +634,35 @@ export function AdminSettings() {
                       })
                     }
                     placeholder="e.g. 5-7 Days"
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
+                    className="admin-input"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t border-surface-container-low mt-8">
+              <div className="flex justify-end gap-3 pt-6 mt-8 border-t border-[var(--admin-border-subtle)]">
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="admin-btn admin-btn-outline h-10 border-transparent bg-transparent hover:bg-[var(--admin-surface-muted)]"
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="btn-minimal group flex items-center gap-2"
+                  className="admin-btn h-10"
                 >
-                  {saving && (
-                    <div className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                  )}
-                  Save Shipping Config
+                  {saving ? "Saving..." : "Save Shipping Config"}
                 </button>
               </div>
             </form>
           )}
 
-          {sectionsList[activeSection].id ==="branding" && (
-            <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
+          {sectionsList[activeSection].id === "branding" && (
+            <form onSubmit={handleGlobalSettingsSave} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Primary Brand Color
                   </label>
                   <div className="flex items-center gap-3">
@@ -682,7 +672,7 @@ export function AdminSettings() {
                       onChange={(e) =>
                         setSettings({ ...settings, primaryColor: e.target.value })
                       }
-                      className="w-12 h-12 rounded-xl cursor-pointer border border-zinc-200"
+                      className="w-12 h-12 rounded-[var(--admin-radius-md)] cursor-pointer border border-[var(--admin-border-subtle)] p-1 bg-[var(--admin-surface)]"
                     />
                     <input
                       type="text"
@@ -690,13 +680,13 @@ export function AdminSettings() {
                       onChange={(e) =>
                         setSettings({ ...settings, primaryColor: e.target.value })
                       }
-                      className="flex-1 bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                      className="admin-input flex-1"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Secondary Color Accent
                   </label>
                   <div className="flex items-center gap-3">
@@ -709,7 +699,7 @@ export function AdminSettings() {
                           secondaryColor: e.target.value,
                         })
                       }
-                      className="w-12 h-12 rounded-xl cursor-pointer border border-zinc-200"
+                      className="w-12 h-12 rounded-[var(--admin-radius-md)] cursor-pointer border border-[var(--admin-border-subtle)] p-1 bg-[var(--admin-surface)]"
                     />
                     <input
                       type="text"
@@ -720,14 +710,14 @@ export function AdminSettings() {
                           secondaryColor: e.target.value,
                         })
                       }
-                      className="flex-1 bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                      className="admin-input flex-1"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+              <div className="space-y-2">
+                <label className="admin-label">
                   System Font Family Settings
                 </label>
                 <input
@@ -736,37 +726,34 @@ export function AdminSettings() {
                   onChange={(e) =>
                     setSettings({ ...settings, fontFamily: e.target.value })
                   }
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
+                  className="admin-input"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t border-surface-container-low mt-8">
+              <div className="flex justify-end gap-3 pt-6 mt-8 border-t border-[var(--admin-border-subtle)]">
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="admin-btn admin-btn-outline h-10 border-transparent bg-transparent hover:bg-[var(--admin-surface-muted)]"
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="btn-minimal group flex items-center gap-2"
+                  className="admin-btn h-10"
                 >
-                  {saving && (
-                    <div className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                  )}
-                  Save Brand Setup
+                  {saving ? "Saving..." : "Save Brand Setup"}
                 </button>
               </div>
             </form>
           )}
 
-          {sectionsList[activeSection].id ==="payments" && (
-            <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
+          {sectionsList[activeSection].id === "payments" && (
+            <form onSubmit={handleGlobalSettingsSave} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <div className="space-y-2">
+                  <label className="admin-label">
                     Razorpay Key ID
                   </label>
                   <input
@@ -776,19 +763,21 @@ export function AdminSettings() {
                       setSettings({ ...settings, razorpayKeyId: e.target.value })
                     }
                     placeholder="e.g. rzp_live_xxxxxxxxxxxx"
-                    className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                    className="admin-input"
                   />
                 </div>
               </div>
-              <p className="text-[11px] sm:text-[11px] text-outline/80 leading-relaxed">
-                Razorpay secret keys are configured only via server environment variables (
-                <code className="font-mono text-[11px]">RAZORPAY_KEY_SECRET</code>,{""}
-                <code className="font-mono text-[11px]">RAZORPAY_WEBHOOK_SECRET</code>). Use{""}
-                <code className="font-mono text-[11px]">VITE_RAZORPAY_KEY_ID</code> for the public checkout key.
-              </p>
+              <div className="p-4 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)]">
+                <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium leading-relaxed">
+                  Razorpay secret keys are configured only via server environment variables (
+                  <code className="bg-[var(--admin-bg-subtle)] px-1.5 py-0.5 rounded text-[11px] font-mono text-[var(--admin-text-primary)] mx-1">RAZORPAY_KEY_SECRET</code>,
+                  <code className="bg-[var(--admin-bg-subtle)] px-1.5 py-0.5 rounded text-[11px] font-mono text-[var(--admin-text-primary)] mx-1">RAZORPAY_WEBHOOK_SECRET</code>). Use
+                  <code className="bg-[var(--admin-bg-subtle)] px-1.5 py-0.5 rounded text-[11px] font-mono text-[var(--admin-text-primary)] mx-1">VITE_RAZORPAY_KEY_ID</code> for the public checkout key.
+                </p>
+              </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+              <div className="space-y-2">
+                <label className="admin-label">
                   Merchant UPI Settlement ID
                 </label>
                 <input
@@ -797,36 +786,33 @@ export function AdminSettings() {
                   onChange={(e) =>
                     setSettings({ ...settings, upiId: e.target.value })
                   }
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                  className="admin-input"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t border-surface-container-low mt-8">
+              <div className="flex justify-end gap-3 pt-6 mt-8 border-t border-[var(--admin-border-subtle)]">
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="admin-btn admin-btn-outline h-10 border-transparent bg-transparent hover:bg-[var(--admin-surface-muted)]"
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="btn-minimal group flex items-center gap-2"
+                  className="admin-btn h-10"
                 >
-                  {saving && (
-                    <div className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                  )}
-                  Save Keys
+                  {saving ? "Saving..." : "Save Keys"}
                 </button>
               </div>
             </form>
           )}
 
-          {sectionsList[activeSection].id ==="whatsapp" && (
-            <form onSubmit={handleGlobalSettingsSave} className="space-y-5">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+          {sectionsList[activeSection].id === "whatsapp" && (
+            <form onSubmit={handleGlobalSettingsSave} className="space-y-6">
+              <div className="space-y-2">
+                <label className="admin-label">
                   WhatsApp Business Number
                 </label>
                 <input
@@ -836,99 +822,96 @@ export function AdminSettings() {
                     setSettings({ ...settings, whatsappNumber: e.target.value })
                   }
                   placeholder="e.g. +91 98660 06648"
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-mono"
+                  className="admin-input"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+              <div className="space-y-2">
+                <label className="admin-label">
                   Default Click-to-Chat Message Template
                 </label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={settings.whatsappMessage}
                   onChange={(e) =>
                     setSettings({ ...settings, whatsappMessage: e.target.value })
                   }
-                  className="w-full bg-[#F8F9FB] border border-surface-container-highest rounded-xl px-4 py-3.5 text-[11px] sm:text-[11px] outline-none focus:border-slate-900 transition-all font-medium"
+                  className="admin-textarea"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t border-surface-container-low mt-8">
+              <div className="flex justify-end gap-3 pt-6 mt-8 border-t border-[var(--admin-border-subtle)]">
                 <button
                   type="button"
                   onClick={syncSettingsData}
-                  className="px-5 py-2.5 rounded-xl text-[11px] font-bold text-outline hover:bg-surface-container-low transition-colors cursor-pointer"
+                  className="admin-btn admin-btn-outline h-10 border-transparent bg-transparent hover:bg-[var(--admin-surface-muted)]"
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="btn-minimal group flex items-center gap-2"
+                  className="admin-btn h-10"
                 >
-                  {saving && (
-                    <div className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                  )}
-                  Save WhatsApp Rules
+                  {saving ? "Saving..." : "Save WhatsApp Rules"}
                 </button>
               </div>
             </form>
           )}
 
-          {sectionsList[activeSection].id ==="security" && (
+          {sectionsList[activeSection].id === "security" && (
             <div className="space-y-8">
               {/* Operational Controls Card */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6">
-                <h3 className="text-[13px] font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px] text-indigo-600">settings_applications</span>
+              <div className="bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-xl)] p-6">
+                <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider mb-5 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">settings_applications</span>
                   Operational Safeguards & Timing
                 </h3>
                 
-                <div className="space-y-5">
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)]">
                     <div>
-                      <h4 className="text-[12.5px] font-bold text-slate-800">Global Safety Lock</h4>
-                      <p className="text-[11px] text-slate-400">Restricts all write operations (Add, Edit, Delete) across the database portal.</p>
+                      <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">Global Safety Lock</h4>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">Restricts all write operations (Add, Edit, Delete) across the database portal.</p>
                     </div>
                     <button
                       onClick={toggleSafetyLock}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${safetyLock ?"bg-slate-900" :"bg-slate-300"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${safetyLock ? "bg-[var(--admin-accent)]" : "bg-[var(--admin-border-strong)]"}`}
                     >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${safetyLock ?"translate-x-5" :""}`} />
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-200 shadow-sm ${safetyLock ? "translate-x-5" : ""}`} />
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)]">
                     <div>
-                      <h4 className="text-[12.5px] font-bold text-slate-800">Storefront Maintenance Mode</h4>
-                      <p className="text-[11px] text-slate-400">Intercepts storefront traffic and displays a customizable maintenance mode screen.</p>
+                      <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">Storefront Maintenance Mode</h4>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">Intercepts storefront traffic and displays a customizable maintenance mode screen.</p>
                     </div>
                     <button
                       onClick={toggleMaintenanceMode}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${maintenanceMode ?"bg-slate-900" :"bg-slate-300"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${maintenanceMode ? "bg-[var(--admin-accent)]" : "bg-[var(--admin-border-strong)]"}`}
                     >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${maintenanceMode ?"translate-x-5" :""}`} />
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-200 shadow-sm ${maintenanceMode ? "translate-x-5" : ""}`} />
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)]">
                     <div>
-                      <h4 className="text-[12.5px] font-bold text-slate-800">Auto-Publish CMS Changes</h4>
-                      <p className="text-[11px] text-slate-400">Instantly saves and publishes layout changes to the live database without manual staging.</p>
+                      <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">Auto-Publish CMS Changes</h4>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">Instantly saves and publishes layout changes to the live database without manual staging.</p>
                     </div>
                     <button
                       onClick={toggleAutoPublish}
-                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${autoPublish ?"bg-slate-900" :"bg-slate-300"}`}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${autoPublish ? "bg-[var(--admin-accent)]" : "bg-[var(--admin-border-strong)]"}`}
                     >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-xs ${autoPublish ?"translate-x-5" :""}`} />
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-200 shadow-sm ${autoPublish ? "translate-x-5" : ""}`} />
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] items-center gap-4 p-3.5 bg-white border border-slate-200 rounded-xl">
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] items-center gap-4 p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)]">
                     <div>
-                      <h4 className="text-[12.5px] font-bold text-slate-800">Session Idle Timeout Heartbeat</h4>
-                      <p className="text-[11px] text-slate-400">Auto log out administrators after a period of inactive mouse/keyboard activity.</p>
+                      <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">Session Idle Timeout Heartbeat</h4>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">Auto log out administrators after a period of inactive mouse/keyboard activity.</p>
                     </div>
                     <select
                       value={idleTimeoutMinutes}
@@ -936,7 +919,7 @@ export function AdminSettings() {
                         const val = parseInt(e.target.value);
                         changeIdleTimeout(val);
                       }}
-                      className="bg-[#F8F9FB] border border-slate-200 rounded-xl px-3 py-2 text-[12px] font-semibold text-slate-800 outline-none focus:border-black cursor-pointer"
+                      className="admin-input h-10 py-0"
                     >
                       <option value="5">5 Minutes</option>
                       <option value="15">15 Minutes</option>
@@ -948,50 +931,50 @@ export function AdminSettings() {
               </div>
 
               {/* Audit Logs Trail Card */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-xl)] p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div>
-                    <h3 className="text-[13px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[16px] text-indigo-600">receipt_long</span>
-                      Administrative Operations Trail
+                    <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">receipt_long</span>
+                      Activity Log
                     </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Chronological record of system modifications and administrative acts</p>
+                    <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">A history of admin actions and changes</p>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleBackupDownload}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-black border border-slate-200 rounded-xl text-[11px] sm:text-[11px] font-bold transition-all cursor-pointer"
+                      className="admin-btn admin-btn-outline h-9 px-4"
                     >
-                      <span className="material-symbols-outlined text-[13px]">download</span>
+                      <span className="material-symbols-outlined text-[14px]">download</span>
                       Backup JSON
                     </button>
                     <button
                       onClick={clearAuditLogs}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-rose-50 hover:bg-rose-100/80 text-rose-700 border border-rose-100 rounded-xl text-[11px] sm:text-[11px] font-bold transition-all cursor-pointer"
+                      className="admin-btn h-9 px-4 bg-[var(--admin-error-light)] text-[var(--admin-error)] border-none hover:bg-[var(--admin-error)] hover:text-white"
                     >
-                      <span className="material-symbols-outlined text-[13px]">delete_sweep</span>
+                      <span className="material-symbols-outlined text-[14px]">delete_sweep</span>
                       Clear Logs
                     </button>
                   </div>
                 </div>
 
                 {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] gap-3 mb-5">
                   <div className="relative">
-                    <span className="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-2.5">search</span>
+                    <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] absolute left-3 top-2.5">search</span>
                     <input
                       type="text"
                       placeholder="Search audit trail logs..."
                       value={auditSearchQuery}
                       onChange={(e) => setAuditSearchQuery(e.target.value)}
-                      className="w-full bg-[#F8F9FB] border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-[11px] sm:text-[11px] outline-none focus:border-black font-medium"
+                      className="admin-input pl-10 h-10"
                     />
                   </div>
                   <select
                     value={auditActorFilter}
                     onChange={(e) => setAuditActorFilter(e.target.value)}
-                    className="bg-[#F8F9FB] border border-slate-200 rounded-xl px-3 py-2 text-[11px] sm:text-[11px] font-semibold text-slate-800 outline-none focus:border-black cursor-pointer"
+                    className="admin-input h-10 py-0"
                   >
                     <option value="all">All Actors</option>
                     <option value="owner">Owner Actions</option>
@@ -1002,41 +985,41 @@ export function AdminSettings() {
                 </div>
 
                 {/* Audit Logs Table */}
-                <div className="border border-slate-150 rounded-xl overflow-hidden max-h-[300px] overflow-y-auto custom-scrollbar">
-                  <table className="w-full text-left border-collapse text-[11px] sm:text-[11px]">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-150 text-slate-500 font-bold uppercase tracking-wider">
-                        <th className="px-4 py-2.5">Timestamp</th>
-                        <th className="px-4 py-2.5">Actor</th>
-                        <th className="px-4 py-2.5">Event</th>
-                        <th className="px-4 py-2.5">Details</th>
-                        <th className="px-4 py-2.5">Status</th>
+                <div className="border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] overflow-hidden max-h-[300px] overflow-y-auto custom-scrollbar">
+                  <table className="admin-table w-full min-w-[700px]">
+                    <thead className="sticky top-0 bg-[var(--admin-surface-muted)] z-10">
+                      <tr>
+                        <th className="pl-4">Timestamp</th>
+                        <th>Actor</th>
+                        <th>Event</th>
+                        <th>Details</th>
+                        <th className="pr-4">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                    <tbody className="font-mono text-[11px]">
                       {auditLogs
                         .filter(log => {
                           const matchesSearch = log.details?.toLowerCase().includes(auditSearchQuery.toLowerCase()) || 
                                                 log.action?.toLowerCase().includes(auditSearchQuery.toLowerCase());
-                          const matchesActor = auditActorFilter ==="all" || log.actor?.toLowerCase() === auditActorFilter.toLowerCase();
+                          const matchesActor = auditActorFilter === "all" || log.actor?.toLowerCase() === auditActorFilter.toLowerCase();
                           return matchesSearch && matchesActor;
                         })
                         .map((log) => (
-                          <tr key={log.id} className="hover:bg-slate-50/50">
-                            <td className="px-4 py-2.5 text-slate-400 whitespace-nowrap">
+                          <tr key={log.id} className="hover:bg-[var(--admin-surface-muted)] transition-colors">
+                            <td className="pl-4 text-[var(--admin-text-secondary)] whitespace-nowrap">
                               {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </td>
-                            <td className="px-4 py-2.5 font-bold text-slate-700">
+                            <td className="font-bold text-[var(--admin-text-primary)]">
                               {log.actor}
                             </td>
-                            <td className="px-4 py-2.5 font-bold text-indigo-600">
+                            <td className="font-bold text-[var(--admin-accent)]">
                               {log.action}
                             </td>
-                            <td className="px-4 py-2.5 text-slate-500 max-w-[200px] truncate" title={log.details}>
+                            <td className="text-[var(--admin-text-secondary)] max-w-[200px] truncate" title={log.details}>
                               {log.details}
                             </td>
-                            <td className="px-4 py-2.5">
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] sm:text-[11px] sm:text-[11px] font-bold bg-emerald-50 border border-emerald-100 text-emerald-700">
+                            <td className="pr-4">
+                              <span className="admin-badge admin-badge-neutral text-[9px] font-bold h-5 px-1.5 uppercase tracking-wider">
                                 {log.status}
                               </span>
                             </td>
@@ -1044,8 +1027,8 @@ export function AdminSettings() {
                         ))}
                       {auditLogs.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="py-8 text-center text-slate-400 font-sans text-[11px] sm:text-[11px]">
-                            No administrative logs found.
+                          <td colSpan={5} className="py-10 text-center text-[var(--admin-text-tertiary)] font-sans text-[12px]">
+                            No recent activity.
                           </td>
                         </tr>
                       )}
@@ -1055,66 +1038,66 @@ export function AdminSettings() {
               </div>
 
               {/* Database Wiping Lockout Safeguard */}
-              <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6">
-                <div className="flex items-start gap-3.5 mb-5">
-                  <div className="w-9 h-9 rounded-xl bg-rose-100 flex items-center justify-center text-rose-700 shrink-0">
-                    <span className="material-symbols-outlined text-[18px]">warning</span>
+              <div className="bg-[#fff1f2] border border-[#fecdd3] rounded-[var(--admin-radius-xl)] p-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-10 h-10 rounded-[var(--admin-radius-md)] bg-[#ffe4e6] flex items-center justify-center text-[#e11d48] shrink-0">
+                    <span className="material-symbols-outlined text-[20px]">warning</span>
                   </div>
                   <div>
-                    <h3 className="text-[13px] font-bold text-rose-900 uppercase tracking-wider leading-tight">
+                    <h3 className="text-[14px] font-bold text-[#9f1239] uppercase tracking-wider leading-tight mt-0.5">
                       Danger Zone: Database Hard Reset Gate
                     </h3>
-                    <p className="text-[11px] text-rose-600/80 mt-1 font-light">
-                      Purges all website categories, coupon systems, administrative audit logs, and storefront catalog layouts back to raw system seed defaults.
+                    <p className="text-[12px] text-[#e11d48] mt-1.5 font-medium leading-relaxed">
+                      Resets the entire store to default settings.
                     </p>
                   </div>
                 </div>
 
                 <form onSubmit={handleHardReset} className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="reset-check-1" className="flex items-start gap-2.5 cursor-pointer select-none">
+                  <div className="space-y-2.5">
+                    <label htmlFor="reset-check-1" className="flex items-start gap-3 cursor-pointer select-none">
                       <input
                         id="reset-check-1"
                         type="checkbox"
                         checked={resetCheck1}
                         onChange={(e) => setResetCheck1(e.target.checked)}
-                        className="mt-0.5 rounded border-rose-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                        className="mt-1 w-4 h-4 rounded border-[#fecdd3] text-[#e11d48] focus:ring-[#fecdd3] cursor-pointer"
                       />
-                      <span className="text-[11px] sm:text-[11px] text-rose-800 font-medium leading-tight">
+                      <span className="text-[12px] text-[#9f1239] font-bold">
                         I understand that hard resetting database data is completely irreversible.
                       </span>
                     </label>
                     
-                    <label htmlFor="reset-check-2" className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <label htmlFor="reset-check-2" className="flex items-start gap-3 cursor-pointer select-none">
                       <input
                         id="reset-check-2"
                         type="checkbox"
                         checked={resetCheck2}
                         onChange={(e) => setResetCheck2(e.target.checked)}
-                        className="mt-0.5 rounded border-rose-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                        className="mt-1 w-4 h-4 rounded border-[#fecdd3] text-[#e11d48] focus:ring-[#fecdd3] cursor-pointer"
                       />
-                      <span className="text-[11px] sm:text-[11px] text-rose-800 font-medium leading-tight">
+                      <span className="text-[12px] text-[#9f1239] font-bold">
                         I have downloaded a catalog backup configuration file to my local machine.
                       </span>
                     </label>
 
-                    <label htmlFor="reset-check-3" className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <label htmlFor="reset-check-3" className="flex items-start gap-3 cursor-pointer select-none">
                       <input
                         id="reset-check-3"
                         type="checkbox"
                         checked={resetCheck3}
                         onChange={(e) => setResetCheck3(e.target.checked)}
-                        className="mt-0.5 rounded border-rose-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                        className="mt-1 w-4 h-4 rounded border-[#fecdd3] text-[#e11d48] focus:ring-[#fecdd3] cursor-pointer"
                       />
-                      <span className="text-[11px] sm:text-[11px] text-rose-800 font-medium leading-tight">
+                      <span className="text-[12px] text-[#9f1239] font-bold">
                         I confirm that my preview role credentials match Owner privileges.
                       </span>
                     </label>
                   </div>
 
-                  <div className="space-y-1.5 pt-2">
-                    <label htmlFor="reset-passphrase-input" className="block text-[11px] sm:text-[11px] uppercase tracking-wider text-rose-700 font-bold">
-                      Enter phrase"CONFIRM HARD RESET" to unlock
+                  <div className="space-y-2 pt-4">
+                    <label htmlFor="reset-passphrase-input" className="block text-[11px] uppercase tracking-wider text-[#e11d48] font-bold">
+                      Enter phrase "CONFIRM HARD RESET" to unlock
                     </label>
                     <input
                       id="reset-passphrase-input"
@@ -1122,22 +1105,22 @@ export function AdminSettings() {
                       placeholder="Type the passphrase exactly..."
                       value={resetCodePhrase}
                       onChange={(e) => setResetCodePhrase(e.target.value)}
-                      className="w-full bg-white border border-rose-200 focus:border-rose-500 rounded-xl px-4 py-2.5 text-[12px] outline-none transition-all font-mono font-bold"
+                      className="w-full bg-[var(--admin-surface)] border border-[#fecdd3] focus:border-[#e11d48] rounded-[var(--admin-radius-lg)] px-4 py-3 text-[13px] outline-none transition-all font-mono font-bold text-center uppercase"
                     />
                   </div>
 
-                  <div className="flex justify-end pt-3">
+                  <div className="flex justify-end pt-4">
                     <button
                       type="submit"
-                      disabled={resetExecuting || resetCodePhrase !=="CONFIRM HARD RESET" || !resetCheck1 || !resetCheck2 || !resetCheck3}
-                      className="px-5 py-2.5 bg-rose-600 hover:bg-rose-750 disabled:bg-rose-100 disabled:text-rose-300 text-white rounded-xl text-[12px] font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                      disabled={resetExecuting || resetCodePhrase !== "CONFIRM HARD RESET" || !resetCheck1 || !resetCheck2 || !resetCheck3}
+                      className="admin-btn h-11 bg-[#e11d48] hover:bg-[#be123c] text-white border-none disabled:bg-[#ffe4e6] disabled:text-[#fda4af]"
                     >
-                      {resetExecuting ? (
-                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <span className="material-symbols-outlined text-[15px]">delete_forever</span>
+                      {resetExecuting ? "Executing Wipe..." : (
+                        <>
+                          <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                          Wipe Database & Restore Defaults
+                        </>
                       )}
-                      Wipe Database & Restore Defaults
                     </button>
                   </div>
                 </form>
@@ -1145,70 +1128,65 @@ export function AdminSettings() {
             </div>
           )}
 
-          {sectionsList[activeSection].id ==="email" && (
+          {sectionsList[activeSection].id === "email" && (
             <div className="space-y-6">
-              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-6">
-                <h3 className="text-[14px] font-bold text-slate-800">SMTP Configurations Check</h3>
-                <p className="text-[11px] sm:text-[11px] text-slate-500 mt-1 font-light">
+              <div className="bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-xl)] p-6">
+                <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)]">SMTP Configurations Check</h3>
+                <p className="text-[12px] text-[var(--admin-text-secondary)] mt-1.5 font-medium leading-relaxed">
                   Inspect whether the mandatory environment variables for transactional mailing are correctly loaded on this platform.
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
-                    <span className="text-[11px] sm:text-[11px] font-medium text-slate-600">SMTP Host</span>
-                    <span className="text-[11px] sm:text-[11px] font-semibold text-slate-900 font-mono">smtp.gmail.com</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                  <div className="flex items-center justify-between bg-[var(--admin-surface)] border border-[var(--admin-border)] p-4 rounded-[var(--admin-radius-lg)] shadow-sm">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)]">SMTP Host</span>
+                    <span className="text-[13px] font-bold text-[var(--admin-text-primary)] font-mono">smtp.gmail.com</span>
                   </div>
-                  <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
-                    <span className="text-[11px] sm:text-[11px] font-medium text-slate-600">SMTP Port</span>
-                    <span className="text-[11px] sm:text-[11px] font-semibold text-slate-900 font-mono">587</span>
+                  <div className="flex items-center justify-between bg-[var(--admin-surface)] border border-[var(--admin-border)] p-4 rounded-[var(--admin-radius-lg)] shadow-sm">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)]">SMTP Port</span>
+                    <span className="text-[13px] font-bold text-[var(--admin-text-primary)] font-mono">587</span>
                   </div>
-                  <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
-                    <span className="text-[11px] sm:text-[11px] font-medium text-slate-600">Transporter SSL/TLS Bypass</span>
-                    <span className="text-[11px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">rejectUnauthorized: false</span>
+                  <div className="flex items-center justify-between bg-[var(--admin-surface)] border border-[var(--admin-border)] p-4 rounded-[var(--admin-radius-lg)] shadow-sm">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)]">Transporter SSL Bypass</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-[var(--admin-success-light)] text-[var(--admin-success)]">rejectUnauthorized: false</span>
                   </div>
-                  <div className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl shadow-xs">
-                    <span className="text-[11px] sm:text-[11px] font-medium text-slate-600">Encryption Layer</span>
-                    <span className="text-[11px] sm:text-[11px] font-semibold text-slate-900 font-mono">STARTTLS</span>
+                  <div className="flex items-center justify-between bg-[var(--admin-surface)] border border-[var(--admin-border)] p-4 rounded-[var(--admin-radius-lg)] shadow-sm">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)]">Encryption Layer</span>
+                    <span className="text-[13px] font-bold text-[var(--admin-text-primary)] font-mono">STARTTLS</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200/60 rounded-2xl p-6 space-y-4">
+              <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-xl)] p-6 shadow-sm space-y-5">
                 <div>
-                  <h3 className="text-[14px] font-bold text-slate-800">Run Connection Verification</h3>
-                  <p className="text-[11px] sm:text-[11px] text-slate-500 mt-1 font-light">
+                  <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)]">Run Connection Verification</h3>
+                  <p className="text-[12px] text-[var(--admin-text-secondary)] mt-1.5 font-medium leading-relaxed">
                     Send a premium luxury test email to verify correct SMTP handshake, domain signing (SPF/DKIM/DMARC), and server socket connectivity.
                   </p>
                 </div>
 
-                <form onSubmit={handleSmtpTest} className="space-y-4 pt-1">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-outline">
+                <form onSubmit={handleSmtpTest} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="admin-label">
                       Recipient Test Email Address
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <input
                         type="email"
                         required
                         placeholder="e.g. admin@siriartsandcrafts.com"
                         value={testRecipientEmail}
                         onChange={(e) => setTestRecipientEmail(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-slate-850 focus:bg-white rounded-xl px-4 py-2.5 text-[12px] outline-none transition-all"
+                        className="admin-input flex-1"
                       />
                       <button
                         type="submit"
                         disabled={testingSmtp}
-                        className="px-6 py-2.5 bg-slate-900 hover:bg-black disabled:bg-slate-350 disabled:text-slate-400 text-white rounded-xl text-[12px] font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed whitespace-nowrap"
+                        className="admin-btn h-11 shrink-0 px-6"
                       >
-                        {testingSmtp ? (
+                        {testingSmtp ? "Verifying..." : (
                           <>
-                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            <span>Verifying...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="material-symbols-outlined text-[15px]">send</span>
-                            <span>Verify Transporter</span>
+                            <span className="material-symbols-outlined text-[16px]">send</span>
+                            Verify Transporter
                           </>
                         )}
                       </button>
@@ -1216,46 +1194,53 @@ export function AdminSettings() {
                   </div>
                 </form>
 
-                {smtpTestResult && (
-                  <div className={`rounded-xl border p-4 transition-all ${
-                    smtpTestResult.success 
-                      ?"bg-emerald-50/50 border-emerald-200/60 text-emerald-800" 
-                      :"bg-rose-50/50 border-rose-200/60 text-rose-800"
-                  }`}>
-                    <div className="flex items-start gap-3">
-                      <span className={`material-symbols-outlined text-[20px] mt-0.5 ${
-                        smtpTestResult.success ?"text-emerald-600" :"text-rose-600"
-                      }`}>
-                        {smtpTestResult.success ?"check_circle" :"error"}
-                      </span>
-                      <div className="space-y-2 w-full">
-                        <div>
-                          <h4 className="text-[12px] font-bold tracking-tight">
-                            {smtpTestResult.success ?"SMTP connection verified and test email sent successfully!" :"SMTP Connection Failed"}
-                          </h4>
-                          <p className="text-[11px] sm:text-[11px] opacity-90 mt-0.5">
-                            {smtpTestResult.message}
-                          </p>
+                <AnimatePresence mode="wait">
+                  {smtpTestResult && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className={`rounded-[var(--admin-radius-lg)] border p-5 mt-5 ${
+                        smtpTestResult.success 
+                          ? "bg-[var(--admin-success-light)] border-[#bbf7d0]" 
+                          : "bg-[#fff1f2] border-[#fecdd3]"
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <span className={`material-symbols-outlined text-[24px] ${
+                          smtpTestResult.success ? "text-[#16a34a]" : "text-[#e11d48]"
+                        }`}>
+                          {smtpTestResult.success ? "check_circle" : "error"}
+                        </span>
+                        <div className="space-y-3 w-full">
+                          <div>
+                            <h4 className={`text-[14px] font-bold ${smtpTestResult.success ? "text-[#166534]" : "text-[#9f1239]"}`}>
+                              {smtpTestResult.success ? "Test email sent" : "SMTP Connection Failed"}
+                            </h4>
+                            <p className={`text-[12px] font-medium mt-1 ${smtpTestResult.success ? "text-[#15803d]" : "text-[#be123c]"}`}>
+                              {smtpTestResult.message}
+                            </p>
+                          </div>
+  
+                          {!smtpTestResult.success && smtpTestResult.errorMessage && (
+                            <div className="bg-[#ffe4e6] border border-[#fecdd3] rounded-[var(--admin-radius-md)] p-4 font-mono text-[11px] leading-relaxed break-all text-[#9f1239]">
+                              <strong className="block mb-1">Diagnostic Stack:</strong> {smtpTestResult.errorMessage}
+                            </div>
+                          )}
+  
+                          {smtpTestResult.success && smtpTestResult.details && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#bbf7d0] text-[12px] text-[#15803d]">
+                              <div><strong>Message ID:</strong> <span className="font-mono text-[11px] break-all ml-1 bg-white/40 px-1.5 py-0.5 rounded">{smtpTestResult.messageId}</span></div>
+                              <div><strong>SMTP Account:</strong> <span className="font-mono text-[11px] ml-1 bg-white/40 px-1.5 py-0.5 rounded">{smtpTestResult.details.user}</span></div>
+                              <div><strong>Target Host:</strong> <span className="font-mono text-[11px] ml-1 bg-white/40 px-1.5 py-0.5 rounded">{smtpTestResult.details.host}:{smtpTestResult.details.port}</span></div>
+                              <div><strong>Recipient:</strong> <span className="font-mono text-[11px] ml-1 bg-white/40 px-1.5 py-0.5 rounded">{smtpTestResult.details.recipient}</span></div>
+                            </div>
+                          )}
                         </div>
-
-                        {!smtpTestResult.success && smtpTestResult.errorMessage && (
-                          <div className="bg-rose-100/50 border border-rose-200/40 rounded-lg p-3 font-mono text-[11px] leading-relaxed break-all text-rose-900">
-                            <strong>Diagnostic Stack:</strong> {smtpTestResult.errorMessage}
-                          </div>
-                        )}
-
-                        {smtpTestResult.success && smtpTestResult.details && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1.5 text-[11px] sm:text-[11px] font-light">
-                            <div><strong>Message ID:</strong> <span className="font-mono text-[11px] break-all">{smtpTestResult.messageId}</span></div>
-                            <div><strong>SMTP Account:</strong> <span className="font-mono text-[11px]">{smtpTestResult.details.user}</span></div>
-                            <div><strong>Target Host:</strong> <span className="font-mono text-[11px]">{smtpTestResult.details.host}:{smtpTestResult.details.port}</span></div>
-                            <div><strong>Recipient:</strong> <span className="font-mono text-[11px]">{smtpTestResult.details.recipient}</span></div>
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  </div>
-                )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           )}

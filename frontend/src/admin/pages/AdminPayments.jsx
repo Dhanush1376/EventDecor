@@ -1,6 +1,6 @@
-import React, { useMemo } from"react";
-import { motion } from"framer-motion";
-import { useAdmin } from"../context/AdminContext";
+import React, { useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAdmin } from "../context/AdminContext";
 import {
   BarChart,
   Bar,
@@ -9,32 +9,39 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from"recharts";
-
-const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
-
-const formatCurrency = (val) => {
-  if (!val) return"₹0";
-  if (val >= 100000) {
-    return `₹${(val / 100000).toFixed(2)}L`;
-  }
-  return `₹${val.toLocaleString("en-IN")}`;
-};
+} from "recharts";
+import {
+  PageHeader,
+  StatCard,
+  ChartCard,
+  StatusBadge,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from "../components/AdminUIKit";
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white rounded-xl shadow-xl border border-surface-container-highest px-4 py-3">
-      <p className="text-[11px] sm:text-[11px] font-semibold text-outline">{label}</p>
-      <p className="text-[13px] font-bold text-black font-mono">
-        ₹{payload[0].value.toLocaleString("en-IN")}
+    <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] shadow-[var(--admin-shadow-lg)] border border-[var(--admin-border-subtle)] px-4 py-3">
+      <p className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">{label}</p>
+      <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">
+        {formatCurrency(payload[0].value)}
       </p>
     </div>
   );
 }
 
 export function AdminPayments() {
-  const { orders, dataLoading, searchQuery } = useAdmin();
+  const { orders, dataLoading, searchQuery, refreshOrders } = useAdmin();
+
+  // Auto-refresh orders every 60 seconds to keep payment stats live
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshOrders();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [refreshOrders]);
 
   // Aggregate metrics and chart details dynamically from actual MongoDB order collections
   const metrics = useMemo(() => {
@@ -46,7 +53,7 @@ export function AdminPayments() {
 
     // Initialize month labels dynamically based on past 6 months to avoid hardcoding
     const monthlyMap = {};
-    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     
     const currentMonthIndex = new Date().getMonth();
     for (let i = 5; i >= 0; i--) {
@@ -62,7 +69,7 @@ export function AdminPayments() {
       const orderDate = o.date ? new Date(o.date) : new Date();
       const monthLabel = monthNames[orderDate.getMonth()];
 
-      if (o.payment ==="Paid") {
+      if (o.payment === "Paid") {
         totalCollected += amount;
         
         // Add to monthly aggregates
@@ -76,7 +83,7 @@ export function AdminPayments() {
         if (monthLabel === currentMonthName) {
           thisMonth += amount;
         }
-      } else if (o.status ==="Cancelled") {
+      } else if (o.status === "Cancelled") {
         refunded += amount;
       } else {
         pending += amount;
@@ -92,13 +99,13 @@ export function AdminPayments() {
     // Create a transaction record list directly linked to storefront checkouts
     let transactions = orders.map((o) => {
       const orderNum = o.id && o.id.length > 8 ? o.id.slice(-6).toUpperCase() : o.id;
-      const paymentMethod = o.rawOrder?.paymentMethod || (o.payment ==="COD" ?"COD" :"UPI");
-      const statusLabel = o.payment ==="Paid" ?"Completed" : o.status ==="Cancelled" ?"Refunded" :"Pending";
+      const paymentMethod = o.rawOrder?.paymentMethod || (o.payment === "COD" ? "COD" : "UPI");
+      const statusLabel = o.payment === "Paid" ? "Completed" : o.status === "Cancelled" ? "Refunded" : "Pending";
 
       return {
         id: `TXN-${o.rawOrder?.paymentInfo?.razorpayPaymentId?.slice(-8).toUpperCase() || o.id.slice(-8).toUpperCase()}`,
         order: `ORD-${orderNum}`,
-        customer: o.customer ||"Anonymous Buyer",
+        customer: o.customer || "Anonymous Buyer",
         amount: o.total || 0,
         method: paymentMethod,
         status: statusLabel,
@@ -109,11 +116,11 @@ export function AdminPayments() {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       transactions = transactions.filter(t => 
-        (t.id ||"").toLowerCase().includes(q) ||
-        (t.order ||"").toLowerCase().includes(q) ||
-        (t.customer ||"").toLowerCase().includes(q) ||
-        (t.method ||"").toLowerCase().includes(q) ||
-        (t.status ||"").toLowerCase().includes(q)
+        (t.id || "").toLowerCase().includes(q) ||
+        (t.order || "").toLowerCase().includes(q) ||
+        (t.customer || "").toLowerCase().includes(q) ||
+        (t.method || "").toLowerCase().includes(q) ||
+        (t.status || "").toLowerCase().includes(q)
       );
     }
 
@@ -127,198 +134,181 @@ export function AdminPayments() {
     };
   }, [orders, searchQuery]);
 
-  if (dataLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="w-10 h-10 border-3 border-slate-900 border-t-transparent rounded-full animate-spin" />
-        <p className="text-[12px] text-outline font-body">Syncing live payments from gateway...</p>
-      </div>
-    );
-  }
-
   return (
     <motion.div
       initial="hidden"
       animate="show"
-      variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1440px] mx-auto space-y-6 font-body text-on-surface"
+      variants={stagger}
+      className="space-y-6"
     >
-      {/* Header */}
-      <motion.div variants={fadeUp}>
-        <h2 className="text-[24px] font-bold text-on-surface">
-          Payments
-        </h2>
-        <p className="text-[13px] text-outline">
-          Real-time transaction tracking and sales revenue aggregations
-        </p>
-      </motion.div>
-
-      {/* KPI Cards */}
-      <motion.div
-        variants={fadeUp}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      <PageHeader
+        title="Payments"
+        subtitle="Real-time transaction tracking and sales revenue aggregations"
       >
-        {[
-          {
-            label:"Total Collected",
-            value: formatCurrency(metrics.totalCollected),
-            icon:"account_balance",
-            bg:"bg-slate-50 text-black border-slate-250",
-          },
-          { 
-            label:"This Month", 
-            value: formatCurrency(metrics.thisMonth), 
-            icon:"calendar_today",
-            bg:"bg-emerald-50 text-emerald-600 border-emerald-200",
-          },
-          { 
-            label:"Pending Receivables", 
-            value: formatCurrency(metrics.pending), 
-            icon:"pending",
-            bg:"bg-amber-50 text-amber-600 border-amber-200",
-          },
-          { 
-            label:"Refunded/Cancelled", 
-            value: formatCurrency(metrics.refunded), 
-            icon:"undo",
-            bg:"bg-rose-50 text-rose-600 border-rose-200",
-          },
-        ].map((s, i) => (
-          <div
-            key={i}
-            className={`bg-white rounded-2xl p-5 border shadow-sm transition-all hover:y-[-2px] ${s.bg}`}
-          >
-            <span className="material-symbols-outlined text-[24px] mb-2 block">
-              {s.icon}
-            </span>
-            <p className="text-[22px] font-bold tracking-tight text-on-surface font-mono">{s.value}</p>
-            <p className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-outline-variant">{s.label}</p>
-          </div>
-        ))}
-      </motion.div>
+        <button className="admin-btn admin-btn-outline h-9">
+          <span className="material-symbols-outlined text-[16px]">download</span>
+          Export Report
+        </button>
+      </PageHeader>
 
-      {/* BarChart */}
-      <motion.div
-        variants={fadeUp}
-        className="bg-white rounded-2xl p-6 border border-surface-container-highest/60 shadow-sm"
-      >
-        <h3 className="text-[16px] font-bold text-on-surface mb-4">
-          Monthly Collections (Sales Vol.)
-        </h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={metrics.chartData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-surface-container-highest)"
-              vertical={false}
-            />
-            <XAxis
-              dataKey="month"
-              tick={{ fontSize: 11, fill:"var(--color-outline)" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fontSize: 11, fill:"var(--color-outline)" }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v) => `₹${v >= 100000 ? `${v / 100000}L` : `${v / 1000}K`}`}
-            />
-            <Tooltip content={<ChartTooltip />} />
-            <Bar
-              dataKey="amount"
-              fill="var(--color-primary)"
-              radius={[8, 8, 0, 0]}
-              name="Amount"
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </motion.div>
-
-      {/* Transactions Table */}
-      <motion.div
-        variants={fadeUp}
-        className="bg-white rounded-2xl border border-surface-container-highest/60 shadow-sm overflow-hidden"
-      >
-        <div className="p-5 border-b border-surface-container-low flex items-center justify-between">
-          <div>
-            <h3 className="text-[16px] font-bold text-on-surface">
-              Recent Checkout Transactions
-            </h3>
-            <p className="text-[11px] sm:text-[11px] text-outline">Payments registered through credit/debit card, UPI, and net banking</p>
-          </div>
-          <span className="px-3 py-1 bg-surface-container-low text-outline text-[11px] font-bold uppercase tracking-wider rounded-lg">
-            {metrics.transactions.length} total
-          </span>
+      {dataLoading ? (
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <div className="w-10 h-10 border-4 border-[var(--admin-border-strong)] border-t-[var(--admin-accent)] rounded-full animate-spin" />
+          <p className="text-[12px] font-bold text-[var(--admin-text-secondary)]">Syncing live payments from gateway...</p>
         </div>
-        <div className="overflow-x-auto">
-          {metrics.transactions.length === 0 ? (
-            <div className="p-12 text-center text-outline flex flex-col items-center justify-center">
-              <span className="material-symbols-outlined text-[48px] mb-2 block text-outline-variant">search_off</span>
-              <p className="text-[14px] font-bold text-[#0F172A] mt-1">Data Not Found</p>
-              <p className="text-[11px] sm:text-[11px] text-[#64748B] mt-1">No checkouts or transactions matched your search or filters.</p>
+      ) : (
+        <>
+          <div className="admin-grid-stats">
+            <StatCard
+              icon="account_balance"
+              label="Total Collected"
+              value={formatCurrency(metrics.totalCollected)}
+              change="All Time"
+              changeType="neutral"
+            />
+            <StatCard
+              icon="calendar_today"
+              label="This Month"
+              value={formatCurrency(metrics.thisMonth)}
+              change="Current Period"
+              changeType="neutral"
+              color="var(--admin-success)"
+            />
+            <StatCard
+              icon="pending"
+              label="Pending Receivables"
+              value={formatCurrency(metrics.pending)}
+              change="To Collect"
+              changeType="neutral"
+              color="var(--admin-warning)"
+            />
+            <StatCard
+              icon="undo"
+              label="Refunded/Cancelled"
+              value={formatCurrency(metrics.refunded)}
+              change="Returns"
+              changeType="neutral"
+              color="var(--admin-error)"
+            />
+          </div>
+
+          <ChartCard title="Monthly Collections (Sales Vol.)">
+            <div className="h-[280px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={metrics.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--admin-border-subtle)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 11, fill: "var(--admin-text-tertiary)", fontWeight: 600 }}
+                    axisLine={false}
+                    tickLine={false}
+                    dy={10}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "var(--admin-text-tertiary)", fontWeight: 600 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) => `₹${v >= 100000 ? `${v / 100000}L` : `${v / 1000}K`}`}
+                    dx={-10}
+                  />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--admin-surface-muted)' }} />
+                  <Bar
+                    dataKey="amount"
+                    fill="var(--admin-accent)"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={50}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-          ) : (
-            <table className="w-full text-[12px]">
-              <thead>
-                <tr className="bg-surface text-left text-outline border-b border-surface-container-highest/60">
-                  <th className="p-4 font-semibold">Transaction ID</th>
-                  <th className="p-4 font-semibold">Order Reference</th>
-                  <th className="p-4 font-semibold">Customer</th>
-                  <th className="p-4 font-semibold">Amount</th>
-                  <th className="p-4 font-semibold hidden sm:table-cell">
-                    Method
-                  </th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold hidden md:table-cell">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metrics.transactions.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-b border-surface-container-low hover:bg-surface/50 transition-colors"
+          </ChartCard>
+
+          <motion.div variants={fadeUp} className="admin-card overflow-hidden p-0">
+            <div className="p-5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
+              <div>
+                <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)]">
+                  Recent Checkout Transactions
+                </h3>
+                <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-1">Payments registered through credit/debit card, UPI, and net banking</p>
+              </div>
+              <span className="admin-badge admin-badge-neutral font-bold uppercase tracking-wider">
+                {metrics.transactions.length} total
+              </span>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <AnimatePresence mode="wait">
+                {metrics.transactions.length === 0 ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="p-16 text-center flex flex-col items-center justify-center"
                   >
-                    <td className="p-4">
-                      <p className="font-semibold text-black font-mono">{p.id}</p>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-mono text-outline-variant font-semibold">
-                        {p.order}
-                      </p>
-                    </td>
-                    <td className="p-4 text-on-surface-variant font-medium">{p.customer}</td>
-                    <td className="p-4 font-bold text-on-surface">
-                      ₹{p.amount.toLocaleString("en-IN")}
-                    </td>
-                    <td className="p-4 text-outline hidden sm:table-cell">
-                      <span className="px-2 py-1 bg-surface rounded-md text-[11px] font-bold font-mono">
-                        {p.method}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] font-bold border ${
-                          p.status ==="Completed" 
-                            ?"text-emerald-600 bg-emerald-50 border-emerald-200" 
-                            : p.status ==="Refunded"
-                            ?"text-rose-600 bg-rose-50 border-rose-200"
-                            :"text-amber-600 bg-amber-50 border-amber-200"
-                        }`}
-                      >
-                        {p.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-outline hidden md:table-cell">
-                      {new Date(p.date).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </motion.div>
+                    <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">search_off</span>
+                    <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">Data Not Found</p>
+                    <p className="text-[12px] text-[var(--admin-text-secondary)]">No checkouts or transactions matched your search or filters.</p>
+                  </motion.div>
+                ) : (
+                  <motion.table
+                    key="table"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="admin-table w-full min-w-[800px]"
+                  >
+                    <thead>
+                      <tr>
+                        <th>Transaction ID</th>
+                        <th>Order Reference</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th className="hidden sm:table-cell">Method</th>
+                        <th>Status</th>
+                        <th className="hidden md:table-cell text-right">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metrics.transactions.map((p) => (
+                        <tr key={p.id} className="hover:bg-[var(--admin-surface-muted)] transition-colors">
+                          <td>
+                            <p className="font-bold text-[var(--admin-text-primary)] text-[12px] uppercase tracking-wider">{p.id}</p>
+                          </td>
+                          <td>
+                            <p className="font-bold text-[var(--admin-text-tertiary)] text-[12px] uppercase tracking-wider">
+                              {p.order}
+                            </p>
+                          </td>
+                          <td className="font-bold text-[var(--admin-text-secondary)]">{p.customer}</td>
+                          <td className="font-bold text-[var(--admin-text-primary)] text-[13px]">
+                            {formatCurrency(p.amount)}
+                          </td>
+                          <td className="hidden sm:table-cell">
+                            <span className="admin-badge admin-badge-neutral text-[10px] font-bold tracking-wider">
+                              {p.method}
+                            </span>
+                          </td>
+                          <td>
+                            <StatusBadge status={p.status} />
+                          </td>
+                          <td className="hidden md:table-cell text-right text-[var(--admin-text-tertiary)] font-bold">
+                            {new Date(p.date).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </motion.table>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        </>
+      )}
     </motion.div>
   );
 }

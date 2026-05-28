@@ -231,7 +231,7 @@ export function AdminProvider({ children }) {
       const res = await analyticsService.clearAuditLogs();
       if (res.success) {
         setAuditLogs([]);
-        toast.success("Audit trail log history cleared successfully.");
+        toast.success("Activity log cleared");
       }
     } catch (err) {
       logger.error("Failed to clear audit logs:", err);
@@ -393,7 +393,7 @@ export function AdminProvider({ children }) {
       next[type] = [newCat, ...list];
       cmsService.updateSection('custom_categories', next).catch(e => logger.error("Failed to save category:", e));
       logAdminAction("ADD_CATEGORY", `Added new category/theme '${data.name}' to ${type}`);
-      toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} added successfully!`);
+      toast.success(`${type === "products" ? "Category" : "Theme"} added`);
       return next;
     });
   }, [activeRole, safetyLock, logAdminAction]);
@@ -716,7 +716,7 @@ export function AdminProvider({ children }) {
           })
         );
         logAdminAction("UPDATE_ORDER_NOTES", `Updated Order ID ${orderId} notes`);
-        toast.success("Order notes updated successfully");
+        toast.success("Notes updated");
       }
     } catch (err) {
       toast.error("Failed to update order notes");
@@ -850,6 +850,22 @@ export function AdminProvider({ children }) {
       logger.warn('[WEBSOCKET] Handshake failed or role unauthorized:', err.message);
     });
 
+    // ─── Live data sync via WebSocket events ───
+    socket.on('order_update', () => {
+      logger.dev('[WEBSOCKET] Order update received, refreshing orders...');
+      refreshOrders();
+    });
+
+    socket.on('stock_update', () => {
+      logger.dev('[WEBSOCKET] Stock update received, refreshing products...');
+      refreshProducts();
+    });
+
+    socket.on('booking_update', () => {
+      logger.dev('[WEBSOCKET] Booking update received, refreshing events...');
+      refreshEvents();
+    });
+
     return () => {
       socket.disconnect();
     };
@@ -873,8 +889,8 @@ export function AdminProvider({ children }) {
       // Clear/Refresh the hook global cache immediately!
       await refreshWebsiteContent();
       
-      setPublishToast(`${section} published successfully!`);
-      toast.success(`${section} published successfully!`);
+      setPublishToast(`${section} published!`);
+      toast.success(`${section} published!`);
       setTimeout(() => setPublishToast(null), 3000);
     } catch (err) {
       toast.error(`Failed to publish ${section}`);
@@ -970,8 +986,8 @@ export function AdminProvider({ children }) {
       if (failedSections.length > 0) {
         toast.error(`Failed to publish: ${failedSections.join(",")}`);
       } else {
-        setPublishToast("All content published successfully!");
-        toast.success("All content published successfully!");
+        setPublishToast("All content published!");
+        toast.success("All content published!");
       }
       setTimeout(() => setPublishToast(null), 3000);
     } catch (err) {
@@ -1055,6 +1071,52 @@ export function AdminProvider({ children }) {
     } catch (err) { /* silent */ }
   }, []);
 
+  const refreshCustomers = useCallback(async () => {
+    try {
+      const res = await userService.getAll({ limit: 50, role: "user" });
+      if (res.success) {
+        const list = res.data?.data || [];
+        setCustomers(list.map(mapDbCustomerToFrontend));
+      }
+    } catch (err) { /* silent */ }
+  }, []);
+
+  const refreshReviews = useCallback(async () => {
+    try {
+      const res = await reviewService.getAll({ limit: 50 });
+      if (res.success) {
+        setReviews(res.data?.data || []);
+      }
+    } catch (err) { /* silent */ }
+  }, []);
+
+  // ─── Last Data Refresh Timestamp ───
+  const [lastDataRefresh, setLastDataRefresh] = useState(new Date());
+
+  // ─── Auto-Polling: Refresh key data every 60 seconds for live dashboard ───
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      try {
+        await Promise.allSettled([
+          refreshOrders(),
+          refreshDashboard(),
+          (async () => {
+            const alertsRes = await notificationService.getAdminAlerts();
+            if (alertsRes?.success) {
+              const list = alertsRes.data?.notifications || (Array.isArray(alertsRes.data) ? alertsRes.data : []);
+              setNotifications(list.map(mapDbNotificationToFrontend));
+            }
+          })()
+        ]);
+        setLastDataRefresh(new Date());
+      } catch (err) {
+        // Silent — polling should never crash the app
+      }
+    }, 60000);
+
+    return () => clearInterval(pollInterval);
+  }, [refreshOrders, refreshDashboard]);
+
   return (
     <AdminContext.Provider
       value={{
@@ -1083,12 +1145,14 @@ export function AdminProvider({ children }) {
         refreshOrders,
         // Customers
         customers,
+        refreshCustomers,
         // Events
         eventBookings,
         refreshEvents,
         // Reviews
         reviews,
         approveReview,
+        refreshReviews,
         // Notifications
         notifications,
         unreadNotifications,
@@ -1139,6 +1203,8 @@ export function AdminProvider({ children }) {
         // Auto-Publish
         autoPublish,
         toggleAutoPublish,
+        // Live Data Refresh
+        lastDataRefresh,
       }}
     >
       {children}
