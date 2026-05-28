@@ -46,17 +46,21 @@ export const getLayoutByPath = async (req: Request, res: Response) => {
 
 export const getAllLayouts = async (req: Request, res: Response) => {
   try {
+    logger.info('[PAGE_LAYOUT] Fetching all layouts...');
     const layouts = await PageLayout.find();
-    // Filter out VerifiedReviews from sections array
+    
+    // Filter out VerifiedReviews from sections array safely
     const cleanedLayouts = layouts.map(layout => {
       const obj = layout.toObject();
-      obj.sections = obj.sections.filter((s: any) => s.componentName !== 'VerifiedReviews');
+      obj.sections = (obj.sections || []).filter((s: any) => s?.componentName !== 'VerifiedReviews');
       return obj;
     });
+    
+    logger.info(`[PAGE_LAYOUT] Found ${cleanedLayouts.length} layouts`);
     res.status(200).json({ success: true, data: cleanedLayouts });
   } catch (error: any) {
-    logger.error('Error fetching all layouts', error);
-    res.status(500).json({ success: false, message: 'Server Error' });
+    logger.error('[PAGE_LAYOUT] Error fetching all layouts:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };
 

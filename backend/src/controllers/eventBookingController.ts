@@ -14,7 +14,7 @@ import ApiError from '../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { generateUniqueBookingId } from '../utils/bookingId';
 import { ADMIN_ROLES } from '../config/adminConfig';
-import razorpay from '../config/razorpay';
+import getRazorpay from '../config/razorpay';
 import crypto from 'crypto';
 import { EventBookingService } from '../services/eventBookingService';
 
@@ -34,6 +34,7 @@ export const initializeBookingCheckout = asyncHandler(async (req: any, res: Resp
   const user = await User.findById(userId);
   if (!user) throw new ApiError(404, 'User not found.');
 
+  const razorpay = getRazorpay();
   if (!razorpay) {
     throw new ApiError(503, 'Payment gateway configuration is missing.');
   }

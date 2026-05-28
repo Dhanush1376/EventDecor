@@ -138,15 +138,16 @@ export const initJobs = () => {
     });
   });
 
-  // 10. Recommendation: Rebuild stale user profiles every 6 hours
+  // 10. Recommendation: Rebuild stale user profiles and active user feeds every 6 hours
   cron.schedule('0 */6 * * *', async () => {
     if (!isQueuesReady()) return;
     await withCronLock('reco-profile-rebuild', 5 * 60 * 60, async () => {
       try {
         await recommendationQueue.add('rebuild-stale-profiles', { type: 'rebuild-stale-profiles' }, { priority: 5 });
-        logger.info('[CRON] Enqueued stale profile rebuild');
+        await recommendationQueue.add('precompute-active-users-feeds', { type: 'precompute-active-users-feeds' }, { priority: 6 });
+        logger.info('[CRON] Enqueued stale profile rebuild and active user feed precomputations');
       } catch (err: any) {
-        logger.error(`[CRON] Failed to enqueue profile rebuild: ${err.message}`);
+        logger.error(`[CRON] Failed to enqueue profile rebuild / active user feeds: ${err.message}`);
       }
     });
   });
@@ -173,6 +174,19 @@ export const initJobs = () => {
         logger.info('[CRON] Enqueued trending snapshot');
       } catch (err: any) {
         logger.error(`[CRON] Failed to enqueue trending snapshot: ${err.message}`);
+      }
+    });
+  });
+
+  // 13. Recommendation: Catalog recommendations precomputation (daily at 2:00 AM UTC)
+  cron.schedule('0 2 * * *', async () => {
+    if (!isQueuesReady()) return;
+    await withCronLock('reco-catalog-precompute', 60 * 60, async () => {
+      try {
+        await recommendationQueue.add('precompute-catalog-recommendations', { type: 'precompute-catalog-recommendations' }, { priority: 7 });
+        logger.info('[CRON] Enqueued catalog recommendations precomputation');
+      } catch (err: any) {
+        logger.error(`[CRON] Failed to enqueue catalog precomputation: ${err.message}`);
       }
     });
   });

@@ -1,15 +1,10 @@
-import { v2 as cloudinary } from 'cloudinary';
+import getCloudinary from '../config/cloudinary';
 import logger from '../config/logger';
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 export const uploadOnCloudinary = async (localFilePath: string) => {
   try {
     if (!localFilePath) return null;
+    const cloudinary = getCloudinary();
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: 'auto',
       folder: 'siri-arts-crafts',
@@ -57,6 +52,7 @@ export const getBlurredPlaceholder = (url: string) => {
 
 export const deleteFromCloudinary = async (publicId: string) => {
   try {
+    const cloudinary = getCloudinary();
     await cloudinary.uploader.destroy(publicId);
   } catch (error) {
     logger.error(`Cloudinary delete failed: ${error}`);
@@ -106,5 +102,5 @@ export const extractAllCloudinaryUrls = (obj: any): string[] => {
   return urls;
 };
 
-export default cloudinary;
+export default getCloudinary;
 

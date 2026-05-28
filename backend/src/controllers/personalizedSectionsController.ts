@@ -1,77 +1,110 @@
 import { Request, Response } from 'express';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
-import { getPersonalizedRecommendations, RecommendedItem } from '../services/recommendation/recommendationEngine';
-import UserPreferenceProfile from '../models/UserPreferenceProfile';
+import { RecommendationCache } from '../services/recommendation/recommendationCache';
+import { getTrendingFeeds } from '../services/recommendation/trendingEngine';
+import { getColdStartFeed } from '../services/recommendation/coldStartHandler';
+import logger from '../config/logger';
 
 export const getHomepageSections = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id?.toString() || req.query.userId as string;
   const sessionId = req.headers['x-session-id'] as string || req.query.sessionId as string || 'anonymous-session';
   
-  // 1. Handpicked For You (Main Personalized Feed)
-  const curatedPromise = getPersonalizedRecommendations({
-    userId,
-    sessionId,
-    page: 'homepage',
-    limit: 8
-  });
+  const { recommendationQueue, isQueuesReady } = require('../jobs/queues');
+  
+  // 1. Handpicked For You (homepage)
+  let curatedItems: any[] = [];
+  let curatedSource = 'trending';
+  let curatedFromCache = false;
+  
+  if (userId) {
+    const cached = await RecommendationCache.getPersonalFeed(userId, 'homepage');
+    if (cached) {
+      curatedItems = cached.items || cached;
+      curatedSource = cached.source || 'personalized';
+      curatedFromCache = true;
+    } else {
+      // Trigger background job
+      if (isQueuesReady()) {
+        recommendationQueue.add('rebuild-user-feed', { userId, page: 'homepage' }, { priority: 2 }).catch((err: any) => {
+          logger.error(`[SECTION API] Failed to enqueue rebuild-user-feed homepage: ${err.message}`);
+        });
+      }
+    }
+  }
+  
+  // Fallback for curated
+  if (curatedItems.length === 0) {
+    const trending = await getTrendingFeeds().catch(() => null);
+    if (trending && trending.trendingNow) {
+      curatedItems = trending.trendingNow.slice(0, 8);
+    } else {
+      curatedItems = await getColdStartFeed({ limit: 8 }).catch(() => []);
+    }
+    // Enrich fallback items
+    const { enrichScoredItems } = require('../services/recommendation/recommendationEngine');
+    curatedItems = await enrichScoredItems(
+      curatedItems.map(i => ({ targetId: i.targetId || i._id, targetType: i.targetType, score: i.score }))
+    );
+  }
 
   // 2. Trending This Season
-  const trendingPromise = getPersonalizedRecommendations({
-    userId,
-    sessionId,
-    page: 'trending',
-    limit: 8
-  });
+  let trendingItems: any[] = [];
+  const trendingFeeds = await getTrendingFeeds().catch(() => null);
+  if (trendingFeeds && trendingFeeds.trendingNow) {
+    const { enrichScoredItems } = require('../services/recommendation/recommendationEngine');
+    trendingItems = await enrichScoredItems(
+      trendingFeeds.trendingNow.slice(0, 8).map(i => ({ targetId: i.targetId, targetType: i.targetType, score: i.score }))
+    );
+  }
 
-  // 3. Inspired By Your Style (if user has profile)
-  let stylePromise: Promise<{ items: RecommendedItem[]; source?: string; seasonal?: unknown }> =
-    Promise.resolve({ items: [] });
+  // 3. Inspired By Your Style
+  let styleItems: any[] = [];
+  let styleFromCache = false;
+  
   if (userId) {
-    const profile = await UserPreferenceProfile.findOne({ userId }).lean();
-    if (profile && Object.keys(profile.styleAffinities || {}).length > 0) {
-      // We simulate this by getting standard recommendations but we'll override the title in the frontend
-      stylePromise = getPersonalizedRecommendations({
-        userId,
-        sessionId,
-        page: 'style',
-        limit: 8
-      });
+    const cached = await RecommendationCache.getPersonalFeed(userId, 'style');
+    if (cached) {
+      styleItems = cached.items || cached;
+      styleFromCache = true;
+    } else {
+      // Trigger background job
+      if (isQueuesReady()) {
+        recommendationQueue.add('rebuild-user-feed', { userId, page: 'style' }, { priority: 2 }).catch((err: any) => {
+          logger.error(`[SECTION API] Failed to enqueue rebuild-user-feed style: ${err.message}`);
+        });
+      }
     }
   }
 
-  const [curatedRes, trendingRes, styleRes] = await Promise.all([
-    curatedPromise,
-    trendingPromise,
-    stylePromise
-  ]);
-
   const sections = [];
 
-  if (curatedRes.items.length > 0) {
+  if (curatedItems.length > 0) {
     sections.push({
       key: 'for-you',
       title: 'Handpicked For You',
       badge: 'Personalized',
-      items: curatedRes.items
+      items: curatedItems,
+      fromCache: curatedFromCache
     });
   }
 
-  if (trendingRes.items.length > 0) {
+  if (trendingItems.length > 0) {
     sections.push({
       key: 'trending',
       title: 'Trending This Season',
       badge: 'Hot',
-      items: trendingRes.items
+      items: trendingItems
     });
   }
 
-  if (styleRes.items.length > 0) {
+  if (styleItems.length > 0) {
     sections.push({
       key: 'style-match',
       title: 'Inspired By Your Style',
       badge: 'Style Match',
-      items: styleRes.items
+      items: styleItems,
+      fromCache: styleFromCache
     });
   }
 

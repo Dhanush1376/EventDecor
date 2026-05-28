@@ -15,6 +15,7 @@ import logger from '../config/logger';
 import { escapeRegex } from '../services/searchService';
 import { sanitizeOutputStrings } from '../utils/aiSanitizer';
 import mongoose from 'mongoose';
+import { recommendationQueue, isQueuesReady } from '../jobs/queues';
 
 // Whitelist of valid target types for parameter validation
 const VALID_TARGET_TYPES = new Set(['product', 'event', 'gallery', 'showcase']);
@@ -39,45 +40,45 @@ export const getFeed = async (req: Request, res: Response) => {
       }
     }
 
-    const ctx: RecommendationContext = {
-      userId: userId || undefined,
-      sessionId: sessionId || undefined,
-      page,
-      limit,
-      offset,
-      targetType,
-    };
-
-    const result = await getPersonalizedRecommendations(ctx);
-
-    // Cache for authenticated users
-    if (userId && offset === 0) {
-      await RecommendationCache.setPersonalFeed(userId, page, result);
+    // Cache miss for authenticated user or session
+    const trendingFeeds = await getTrendingFeeds().catch(() => null);
+    let fallbackItems: any[] = [];
+    if (trendingFeeds) {
+      fallbackItems = page === 'homepage'
+        ? trendingFeeds.trendingNow.filter((i: any) => i.targetType !== 'gallery')
+        : trendingFeeds.trendingNow;
+    }
+    if (fallbackItems.length === 0) {
+      fallbackItems = await getColdStartFeed({ limit: limit + 5 }).catch(() => []);
     }
 
-    // Track impression for CTR
+    const enrichedFallback = await enrichTrendingItems(fallbackItems.slice(0, limit));
+    const seasonal = await getCachedSeasonalContext().catch(() => null);
+
+    // Trigger async personalized recommendation build in background
+    if (isQueuesReady()) {
+      recommendationQueue.add('rebuild-user-feed', { userId, sessionId, page }, { priority: 2 }).catch((err: any) => {
+        logger.error(`[RECO API] Failed to enqueue rebuild-user-feed: ${err.message}`);
+      });
+    }
+
+    // Track impression for CTR fallback
     const today = new Date().toISOString().split('T')[0];
     await RecommendationCache.incrementCTR('feed', today, 'impressions');
 
-    // Sanitize output strings to prevent XSS through recommendation content
-    const sanitizedItems = sanitizeOutputStrings(result.items);
-
-    // Security headers for personalized content
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    if (userId) {
-      res.setHeader('Cache-Control', 'private, no-store');
-    }
-
     return res.status(200).json({
       success: true,
       data: {
-        items: sanitizedItems,
-        source: result.source,
-        seasonal: result.seasonal,
+        items: sanitizeOutputStrings(enrichedFallback),
+        source: 'trending-fallback',
+        seasonal,
+        isFallback: true,
+        fromCache: false,
         pagination: {
           offset,
           limit,
-          hasMore: result.items.length === limit,
+          hasMore: false,
         },
       },
     });
@@ -107,14 +108,73 @@ export const getSimilar = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Invalid targetId format' });
     }
 
-    const items = await getSimilarRecommendations(targetType as any, targetId as any, { limit });
+    // Check cache
+    const cacheKey = targetType === 'event' ? `event:${targetId as string}` : targetId as string;
+    const cached = await RecommendationCache.getSimilar(cacheKey);
+
+    if (cached) {
+      const enriched = await enrichTrendingItems(
+        cached.map((item: any) => ({ targetId: item.targetId, targetType: item.targetType, score: item.similarityScore }))
+      );
+      return res.status(200).json({
+        success: true,
+        data: { items: sanitizeOutputStrings(enriched.slice(0, limit)), targetType, targetId, fromCache: true },
+      });
+    }
+
+    // Cache miss: serve category-based fallback instantly
+    let fallbackItems: any[] = [];
+    if (targetType === 'product') {
+      const product = await Product.findById(targetId).select('category').lean();
+      if (product) {
+        const products = await Product.find({ category: product.category, _id: { $ne: targetId }, isActive: true })
+          .select('_id title imageSrc category price rating reviews slug')
+          .limit(limit)
+          .lean();
+        fallbackItems = products.map(p => ({
+          targetId: p._id.toString(),
+          targetType: 'product',
+          title: p.title,
+          imageSrc: p.imageSrc,
+          category: p.category,
+          price: p.price,
+          rating: p.rating,
+          reviews: p.reviews,
+          slug: p.slug
+        }));
+      }
+    } else if (targetType === 'event') {
+      const event = await Event.findById(targetId).select('category').lean();
+      if (event) {
+        const events = await Event.find({ category: event.category, _id: { $ne: targetId }, isActive: true })
+          .select('_id title image category style basePrice')
+          .limit(limit)
+          .lean();
+        fallbackItems = events.map(e => ({
+          targetId: e._id.toString(),
+          targetType: 'event',
+          title: e.title,
+          image: e.image,
+          category: e.category,
+          style: e.style,
+          basePrice: e.basePrice
+        }));
+      }
+    }
+
+    // Trigger background calculation
+    if (isQueuesReady()) {
+      recommendationQueue.add('precompute-similar', { targetType, targetId }, { priority: 4 }).catch((err: any) => {
+        logger.error(`[RECO API] Failed to enqueue precompute-similar job: ${err.message}`);
+      });
+    }
 
     await RecommendationCache.incrementCTR('similar', new Date().toISOString().split('T')[0], 'impressions');
 
     res.setHeader('X-Content-Type-Options', 'nosniff');
     return res.status(200).json({
       success: true,
-      data: { items: sanitizeOutputStrings(items), targetType, targetId },
+      data: { items: sanitizeOutputStrings(fallbackItems), targetType, targetId, isFallback: true, fromCache: false },
     });
   } catch (err: any) {
     logger.error(`[RECO API] Error in getSimilar: ${err.message}`);
@@ -155,6 +215,10 @@ export const getTrending = async (req: Request, res: Response) => {
     // Filter by target type if specified
     if (targetType) {
       items = items.filter((item) => item.targetType === targetType);
+    }
+
+    if (items.length === 0) {
+      items = await getColdStartFeed({ limit, targetType }).catch(() => []);
     }
 
     // Enrich trending items with full data
@@ -253,20 +317,45 @@ export const getForYou = async (req: Request, res: Response) => {
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 12, 30);
     const offset = parseInt(req.query.offset as string, 10) || 0;
 
-    const result = await getPersonalizedRecommendations({
-      userId,
-      page: 'for-you',
-      limit,
-      offset,
-    });
+    // Check personal feed cache
+    const cached = await RecommendationCache.getPersonalFeed(userId, 'for-you');
+    if (cached && offset === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          items: cached.items || cached,
+          source: cached.source || 'personalized',
+          fromCache: true
+        },
+      });
+    }
+
+    // Cache miss: serve fast trending fallback
+    const trendingFeeds = await getTrendingFeeds().catch(() => null);
+    let fallbackItems: any[] = [];
+    if (trendingFeeds) {
+      fallbackItems = trendingFeeds.trendingNow;
+    } else {
+      fallbackItems = await getColdStartFeed({ limit: limit + 5 }).catch(() => []);
+    }
+    const enrichedFallback = await enrichTrendingItems(fallbackItems.slice(0, limit));
+
+    // Trigger async build in background
+    if (isQueuesReady()) {
+      recommendationQueue.add('rebuild-user-feed', { userId, page: 'for-you' }, { priority: 2 }).catch((err: any) => {
+        logger.error(`[RECO API] Failed to enqueue rebuild-user-feed job for you: ${err.message}`);
+      });
+    }
 
     return res.status(200).json({
       success: true,
       data: {
-        items: result.items,
-        source: result.source,
-        pagination: { offset, limit, hasMore: result.items.length === limit },
-      },
+        items: sanitizeOutputStrings(enrichedFallback),
+        source: 'trending-fallback',
+        isFallback: true,
+        fromCache: false,
+        pagination: { offset, limit, hasMore: false }
+      }
     });
   } catch (err: any) {
     logger.error(`[RECO API] Error in getForYou: ${err.message}`);
@@ -282,38 +371,46 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
     const { targetId } = req.params;
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 6, 12);
 
-    // Get source product's category
+    // Check cache
+    const cached = await RecommendationCache.getCompleteSetup(targetId as string);
+    if (cached) {
+      return res.status(200).json({ success: true, data: { items: cached.slice(0, limit), fromCache: true } });
+    }
+
+    // Cache miss: serve fast fallback
     const product = await Product.findById(targetId).select('category').lean();
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const items = await getComplementaryItems(product.category as any, [targetId as any], { limit });
-
-    // Enrich with full product data
-    const productIds = items.map((i) => i.targetId);
-    const fullProducts = await Product.find({ _id: { $in: productIds }, isActive: true })
+    const fallbackProducts = await Product.find({ category: product.category, _id: { $ne: targetId }, isActive: true })
       .select('_id title imageSrc category price rating reviews slug')
+      .limit(limit)
       .lean();
 
-    const enriched = items.map((item) => {
-      const full = fullProducts.find((p) => (p._id as any).toString() === item.targetId);
-      return full ? {
-        _id: item.targetId,
-        targetType: 'product',
-        score: item.similarityScore,
-        source: 'complete-setup',
-        title: full.title,
-        imageSrc: full.imageSrc,
-        category: full.category,
-        price: full.price,
-        rating: full.rating,
-        reviews: full.reviews,
-        slug: full.slug,
-      } : null;
-    }).filter(Boolean);
+    const fallbackItems = fallbackProducts.map(p => ({
+      _id: p._id.toString(),
+      targetType: 'product',
+      title: p.title,
+      imageSrc: p.imageSrc,
+      category: p.category,
+      price: p.price,
+      rating: p.rating,
+      reviews: p.reviews,
+      slug: p.slug
+    }));
 
-    return res.status(200).json({ success: true, data: { items: enriched } });
+    // Trigger background precomputation
+    if (isQueuesReady()) {
+      recommendationQueue.add('precompute-similar', { targetType: 'product', targetId }, { priority: 4 }).catch((err: any) => {
+        logger.error(`[RECO API] Failed to enqueue precompute-similar job for setup: ${err.message}`);
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { items: sanitizeOutputStrings(fallbackItems), isFallback: true, fromCache: false }
+    });
   } catch (err: any) {
     logger.error(`[RECO API] Error in getCompleteSetup: ${err.message}`);
     return res.status(500).json({ success: false, message: 'Failed to load complementary items' });
@@ -329,14 +426,63 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
     const targetType = (req.query.targetType as string) || 'product';
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 8, 15);
 
-    const items = await getUsersAlsoViewed(targetId as any, targetType as any, { limit });
+    // Check cache
+    const cached = await RecommendationCache.getAlsoViewed(targetId as string);
+    if (cached) {
+      return res.status(200).json({ success: true, data: { items: cached.slice(0, limit), fromCache: true } });
+    }
 
-    // Enrich with full data
-    const enriched = await enrichTrendingItems(
-      items.map((i) => ({ targetId: i.targetId, targetType: i.targetType, score: i.similarityScore }))
-    );
+    // Cache miss: serve fast fallback
+    let fallbackItems: any[] = [];
+    if (targetType === 'product') {
+      const product = await Product.findById(targetId).select('category').lean();
+      if (product) {
+        const products = await Product.find({ category: product.category, _id: { $ne: targetId }, isActive: true })
+          .select('_id title imageSrc category price rating reviews slug')
+          .limit(limit)
+          .lean();
+        fallbackItems = products.map(p => ({
+          _id: p._id.toString(),
+          targetType: 'product',
+          title: p.title,
+          imageSrc: p.imageSrc,
+          category: p.category,
+          price: p.price,
+          rating: p.rating,
+          reviews: p.reviews,
+          slug: p.slug
+        }));
+      }
+    } else {
+      const event = await Event.findById(targetId).select('category').lean();
+      if (event) {
+        const events = await Event.find({ category: event.category, _id: { $ne: targetId }, isActive: true })
+          .select('_id title image category style basePrice')
+          .limit(limit)
+          .lean();
+        fallbackItems = events.map(e => ({
+          _id: e._id.toString(),
+          targetType: 'event',
+          title: e.title,
+          image: e.image,
+          category: e.category,
+          style: e.style,
+          basePrice: e.basePrice
+        }));
+      }
+    }
 
-    return res.status(200).json({ success: true, data: { items: enriched } });
+    // Trigger background precomputation
+    if (isQueuesReady()) {
+      recommendationQueue.add('precompute-similar', { targetType, targetId }, { priority: 4 }).catch((err: any) => {
+        logger.error(`[RECO API] Failed to enqueue precompute-similar job for also-viewed: ${err.message}`);
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { items: sanitizeOutputStrings(fallbackItems), isFallback: true, fromCache: false }
+    });
   } catch (err: any) {
     logger.error(`[RECO API] Error in getAlsoViewed: ${err.message}`);
     return res.status(500).json({ success: false, message: 'Failed to load also-viewed items' });

@@ -65,13 +65,16 @@ export const createRateLimiter = (name: string, options: Partial<Options>) => {
 
   const limiterOptions = {
     windowMs: 15 * 60 * 1000,
-    limit: process.env.TEST_RATE_LIMIT === 'true' ? 3 : 100,
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     handler: customHandler,
     skip: skipRateLimit,
     ...options,
   } as Options;
+
+  if (process.env.TEST_RATE_LIMIT === 'true') {
+    limiterOptions.limit = 3;
+  }
 
   const memoryLimiter = rateLimit(limiterOptions);
   let redisLimiter: any = null;

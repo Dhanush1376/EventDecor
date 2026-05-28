@@ -1,11 +1,12 @@
 import multer, { StorageEngine } from "multer";
 import { Request, Response, NextFunction } from "express";
-import cloudinary from "../config/cloudinary";
-import { UploadApiResponse } from "cloudinary";
+import getCloudinary from "../config/cloudinary";
+import type { UploadApiResponse } from "cloudinary";
 import crypto from "crypto";
 import { Transform } from "stream";
 import ApiError from "../utils/ApiError";
 import logger from "../config/logger";
+import type sharp from "sharp";
 
 /** Multer file already streamed to Cloudinary (gallery path — no in-memory buffer). */
 type PreUploadedMulterFile = Express.Multer.File & {
@@ -226,11 +227,13 @@ const createCloudinaryStreamStorage = (folder: string): StorageEngine => ({
 
     if (!isVideo) {
       uploadOptions.transformation = [{ fetch_format: "auto", quality: "auto" }];
+      uploadOptions.format = "webp";
     }
 
+    const cloudinary = getCloudinary();
     const uploadStream = cloudinary.uploader.upload_stream(
       uploadOptions,
-      (error, result) => {
+      (error: any, result: any) => {
         if (error) {
           cb(error);
           return;
@@ -239,11 +242,20 @@ const createCloudinaryStreamStorage = (folder: string): StorageEngine => ({
           cb(new Error("Cloudinary upload result was empty"));
           return;
         }
+        
+        let finalOriginalName = sanitizedName;
+        let finalMimeType = file.mimetype;
+        if (!isVideo) {
+          finalMimeType = "image/webp";
+          const lastDot = sanitizedName.lastIndexOf(".");
+          finalOriginalName = (lastDot !== -1 ? sanitizedName.substring(0, lastDot) : sanitizedName) + ".webp";
+        }
+
         const uploaded: PreUploadedMulterFile = {
           fieldname: file.fieldname,
-          originalname: sanitizedName,
+          originalname: finalOriginalName,
           encoding: file.encoding,
-          mimetype: file.mimetype,
+          mimetype: finalMimeType,
           destination: "",
           filename: result.public_id,
           path: result.secure_url || result.url,
@@ -258,11 +270,26 @@ const createCloudinaryStreamStorage = (folder: string): StorageEngine => ({
     );
 
     const signatureValidator = new SignatureValidationStream(sanitizedName);
-    file.stream.on("error", (streamErr) => cb(streamErr));
-    signatureValidator.on("error", (streamErr) => cb(streamErr));
-    uploadStream.on("error", (streamErr) => cb(streamErr));
+    file.stream.on("error", (streamErr: any) => cb(streamErr));
+    signatureValidator.on("error", (streamErr: any) => cb(streamErr));
+    uploadStream.on("error", (streamErr: any) => cb(streamErr));
     
-    file.stream.pipe(signatureValidator).pipe(uploadStream);
+    if (!isVideo) {
+      const sharp = require("sharp");
+      const transformer = sharp()
+        .resize({
+          width: 2048,
+          height: 2048,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .webp({ quality: 80 });
+
+      transformer.on("error", (streamErr: any) => cb(streamErr));
+      file.stream.pipe(signatureValidator).pipe(transformer).pipe(uploadStream);
+    } else {
+      file.stream.pipe(signatureValidator).pipe(uploadStream);
+    }
   },
   _removeFile(_req, _file, cb) {
     cb(null);
@@ -316,9 +343,10 @@ const uploadBufferToCloudinary = (
       ];
     }
 
+    const cloudinary = getCloudinary();
     const uploadStream = cloudinary.uploader.upload_stream(
       uploadOptions,
-      (error, result) => {
+      (error: any, result: any) => {
         if (error) {
           reject(error);
         } else if (result) {
@@ -357,6 +385,39 @@ const uploadBufferWithRetry = async (
   throw lastError || new Error(`Cloudinary upload failed after ${retries} attempts`);
 };
 
+const optimizeMemoryFileIfNeeded = async (file: Express.Multer.File): Promise<void> => {
+  if (!file.buffer?.length) return;
+  const mime = verifyImageSignature(file.buffer);
+  if (mime && mime.startsWith("image/") && mime !== "image/gif" && mime !== "image/x-icon" && mime !== "image/svg+xml") {
+    try {
+      const sharp = require("sharp");
+      const sharpInstance = sharp(file.buffer);
+      const metadata = await sharpInstance.metadata();
+
+      let pipeline = sharpInstance;
+      if (metadata.width && metadata.height && (metadata.width > 2048 || metadata.height > 2048)) {
+        pipeline = pipeline.resize({
+          width: 2048,
+          height: 2048,
+          fit: "inside",
+          withoutEnlargement: true,
+        });
+      }
+
+      file.buffer = await pipeline
+        .webp({ quality: 80, effort: 4 })
+        .toBuffer();
+
+      file.mimetype = "image/webp";
+      const lastDot = file.originalname.lastIndexOf(".");
+      file.originalname = (lastDot !== -1 ? file.originalname.substring(0, lastDot) : file.originalname) + ".webp";
+      file.size = file.buffer.length;
+    } catch (err) {
+      logger.error(`[IMAGE COMPRESSION] Failed to optimize upload buffer for ${file.originalname}: ${err}`);
+    }
+  }
+};
+
 /**
  * Express middleware helper bridging Multer buffers and Cloudinary streams
  */
@@ -384,14 +445,13 @@ const handleCloudinaryUploadMiddleware = (folder: string, isArray: boolean) => {
 
         const uploadedFiles: any[] = [];
         for (const file of files) {
-          const sanitizedOriginalName = sanitizeFilename(file.originalname);
           const streamed = file as PreUploadedMulterFile;
           
           if (streamed.cloudinaryUploaded && streamed.path) {
             uploadedFiles.push({
               path: streamed.path,
               secure_url: streamed.secure_url || streamed.path,
-              originalname: sanitizedOriginalName,
+              originalname: sanitizeFilename(file.originalname),
               mimetype: file.mimetype,
               size: file.size,
             });
@@ -399,13 +459,17 @@ const handleCloudinaryUploadMiddleware = (folder: string, isArray: boolean) => {
           }
 
           if (!file.buffer?.length) {
-            throw new ApiError(400, `Upload failed for ${sanitizedOriginalName}`);
+            throw new ApiError(400, `Upload failed for ${file.originalname}`);
           }
 
           const detectedMime = verifyImageSignature(file.buffer);
           if (!detectedMime) {
-            throw new ApiError(400, `Malicious or invalid file contents detected in ${sanitizedOriginalName}`);
+            throw new ApiError(400, `Malicious or invalid file contents detected in ${file.originalname}`);
           }
+
+          // Optimize image buffer
+          await optimizeMemoryFileIfNeeded(file);
+          const sanitizedOriginalName = sanitizeFilename(file.originalname);
 
           const result = await uploadBufferWithRetry(file.buffer, folder, sanitizedOriginalName);
 
@@ -425,13 +489,11 @@ const handleCloudinaryUploadMiddleware = (folder: string, isArray: boolean) => {
           return next();
         }
 
-        const sanitizedOriginalName = sanitizeFilename(file.originalname);
-
         if (file.cloudinaryUploaded && file.path) {
           (req as any).file = {
             path: file.path,
             secure_url: file.secure_url || file.path,
-            originalname: sanitizedOriginalName,
+            originalname: sanitizeFilename(file.originalname),
             mimetype: file.mimetype,
             size: file.size,
           };
@@ -439,13 +501,17 @@ const handleCloudinaryUploadMiddleware = (folder: string, isArray: boolean) => {
         }
 
         if (!file.buffer?.length) {
-          throw new ApiError(400, `Upload failed for ${sanitizedOriginalName}`);
+          throw new ApiError(400, `Upload failed for ${file.originalname}`);
         }
 
         const detectedMime = verifyImageSignature(file.buffer);
         if (!detectedMime) {
-          throw new ApiError(400, `Malicious or invalid file contents detected in ${sanitizedOriginalName}`);
+          throw new ApiError(400, `Malicious or invalid file contents detected in ${file.originalname}`);
         }
+
+        // Optimize image buffer
+        await optimizeMemoryFileIfNeeded(file);
+        const sanitizedOriginalName = sanitizeFilename(file.originalname);
 
         const result = await uploadBufferWithRetry(file.buffer, folder, sanitizedOriginalName);
 

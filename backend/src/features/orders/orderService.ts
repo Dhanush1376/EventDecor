@@ -1,7 +1,7 @@
 import { OrderValidationService } from './services/orderValidation';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
-import razorpay from '../../config/razorpay';
+import getRazorpay from '../../config/razorpay';
 import Order, { IOrder } from '../../models/Order';
 import Product from '../../models/Product';
 import User from '../../models/User';
@@ -378,6 +378,7 @@ class OrderService {
           receipt: `rcpt_${Date.now()}`,
         };
 
+        const razorpay = getRazorpay();
         if (!razorpay) {
           throw new ApiError(500, 'Payment gateway is not configured. Contact support.');
         }
@@ -688,6 +689,7 @@ class OrderService {
   }
 
   static async updateOrderStatus(id: string, status: string, note?: string, courierCharges?: number) {
+    const razorpay = getRazorpay();
     const order = await Order.findById(id);
     if (!order) throw new ApiError(404, 'Order not found');
 

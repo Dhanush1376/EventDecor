@@ -6,7 +6,7 @@ import { securityHeadersMiddleware } from './middleware/helmetMiddleware';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 const xss = require('xss-clean');
-import { handleRazorpayWebhook } from './features/orders/orderController';
+
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 import redisClient, { pingRedis } from './utils/redis';
@@ -31,6 +31,8 @@ import { queryGuard } from './middleware/queryGuard';
 import { secretLeakInterceptor } from './config/secretAudit';
 import { noCacheMiddleware } from './middleware/noCacheMiddleware';
 import { requestTimeout } from './middleware/queryTimeout';
+import { pingDb, getDbMetrics } from './config/db';
+import { cacheHeadersMiddleware } from './middleware/cacheHeaders';
 
 
 // Use require for the inner xss-clean function
@@ -52,7 +54,7 @@ app.use(enforceHttps);
 // Boot Request Tracker AsyncLocalStorage context as early as possible
 app.use(requestTrackerMiddleware);
 app.use(metricsTrackerMiddleware);
-
+app.use(cacheHeadersMiddleware);
 
 // 0. Initialize Sentry
 if (process.env.SENTRY_DSN) {
@@ -100,7 +102,14 @@ app.post(
     }
     next();
   },
-  handleRazorpayWebhook
+  (req: Request, res: Response, next: express.NextFunction) => {
+    try {
+      const controller = require('./features/orders/orderController');
+      controller.handleRazorpayWebhook(req, res, next);
+    } catch (err) {
+      next(err);
+    }
+  }
 );
 
 // 3. Request Parsing (MUST be before sanitization)
@@ -205,15 +214,23 @@ app.use('/api/', globalLimiter);
 app.get('/api/health', noCacheMiddleware, async (req: Request, res: Response) => {
 
   const dbState = mongoose.connection.readyState;
-  const dbStatus = dbState === 1 ? 'UP' : 'DOWN';
+  let dbStatus = dbState === 1 ? 'UP' : 'DOWN';
   const redisStatus = await pingRedis();
   const fullProbe = req.query.full === '1' || req.query.full === 'true';
   const cdnStatus = fullProbe ? await checkCloudinaryCdn() : getCachedCdnHealth();
   const requireRedis = process.env.REQUIRE_REDIS === 'true';
+  
+  if (fullProbe && dbState === 1) {
+    const isPingOk = await pingDb();
+    if (!isPingOk) {
+      dbStatus = 'DEGRADED';
+    }
+  }
+
   const redisRequiredDown =
     requireRedis && (redisStatus === 'down' || redisStatus === 'not_configured');
 
-  const dbHealthFail = dbState !== 1 || redisRequiredDown;
+  const dbHealthFail = dbState !== 1 || dbStatus === 'DEGRADED' || redisRequiredDown;
 
   const healthData = {
     success: !dbHealthFail,
@@ -275,6 +292,7 @@ app.get('/api/metrics', requireAuth, requireAdmin, noCacheMiddleware, async (req
 
   const dbState = mongoose.connection.readyState;
   const dbStatus = dbState === 1 ? 'UP' : 'DOWN';
+  const dbMetrics = getDbMetrics();
   
   let activeSockets = 0;
   try {
@@ -298,6 +316,7 @@ app.get('/api/metrics', requireAuth, requireAdmin, noCacheMiddleware, async (req
     database: {
       status: dbStatus,
       state: dbState,
+      metrics: dbMetrics,
     },
     redis: {
       status: redisStatus,

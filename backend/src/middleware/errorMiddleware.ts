@@ -14,6 +14,14 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
     message = 'CORS Policy Violation: Request from origin is not allowed.';
   }
 
+  // Handle Mongoose duplicate key
+  else if (err.code === 11000) {
+    statusCode = 400;
+    const duplicateField = Object.keys(err.keyPattern || {}).join(', ') || 'field';
+    const duplicateValue = Object.values(err.keyValue || {}).join(', ') || '';
+    message = `A record with this ${duplicateField} (${duplicateValue}) already exists. Please choose a unique name/value.`;
+  }
+
   // Handle Mongoose Connection / MongoDB offline errors
   else if (
     err.name === 'MongoNotConnectedError' ||
@@ -46,12 +54,6 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
   else if (err.name === 'CastError') {
     statusCode = 404;
     message = `Resource not found with id of ${err.value}`;
-  }
-
-  // Mongoose duplicate key
-  else if (err.code === 11000) {
-    statusCode = 400;
-    message = 'Duplicate field value entered';
   }
 
   // Mongoose validation error

@@ -1,32 +1,29 @@
-import express, { Application } from 'express';
+import express, { Application, Router, Request, Response, NextFunction } from 'express';
 import { attachApiVersion, ApiVersionTag } from '../middleware/apiVersion';
 import { noCacheMiddleware } from '../middleware/noCacheMiddleware';
-import productRoutes from './productRoutes';
-import uploadRoutes from './uploadRoutes';
-import authRoutes from './authRoutes';
-import eventRoutes from './eventRoutes';
-import orderRoutes from '../features/orders/orderRoutes';
-import cmsRoutes from './cmsRoutes';
-import analyticsRoutes from './analyticsRoutes';
-import galleryRoutes from './galleryRoutes';
-import reviewRoutes from './reviewRoutes';
-import couponRoutes from './couponRoutes';
-import userRoutes from './userRoutes';
-import inquiryRoutes from './inquiryRoutes';
-import notificationRoutes from './notificationRoutes';
-import customOrderRoutes from './customOrderRoutes';
-import loyaltyRoutes from './loyaltyRoutes';
-import eventBookingRoutes from './eventBookingRoutes';
-import showcaseRoutes from './showcaseRoutes';
-import adminSystemRoutes from './adminSystemRoutes';
-import adminInviteRoutes from './adminInviteRoutes';
-import recommendationRoutes from './recommendationRoutes';
-import trackingRoutes from './trackingRoutes';
-import recommendationAnalyticsRoutes from './recommendationAnalyticsRoutes';
-import appConfigRoutes from './appConfigRoutes';
-import categoryRoutes from './categoryRoutes';
-import pageLayoutRoutes from './pageLayoutRoutes';
-import searchRoutes from './searchRoutes';
+
+/**
+ * Lazy Router wrapper that defers importing route files
+ * until the first HTTP request hits the route prefix using CommonJS require.
+ */
+const lazyRouter = (modulePath: string) => {
+  let routerInstance: Router | null = null;
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!routerInstance) {
+        const module = require(modulePath);
+        routerInstance = module.default || module;
+      }
+      if (routerInstance) {
+        routerInstance(req, res, next);
+      } else {
+        next(new Error(`Failed to load route module at ${modulePath}`));
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
+};
 
 /**
  * Mount all API routers under a prefix.
@@ -40,34 +37,36 @@ export const registerApiRoutes = (
   const apiRouter = express.Router();
   apiRouter.use(attachApiVersion(apiVersion));
 
-  apiRouter.use('/products', productRoutes);
-  apiRouter.use('/upload', uploadRoutes);
-  apiRouter.use('/auth', noCacheMiddleware, authRoutes);
-  apiRouter.use('/events', eventRoutes);
-  apiRouter.use('/orders', noCacheMiddleware, orderRoutes);
-  apiRouter.use('/cms', cmsRoutes);
-  apiRouter.use('/analytics', noCacheMiddleware, analyticsRoutes);
-  apiRouter.use('/gallery', galleryRoutes);
-  apiRouter.use('/reviews', reviewRoutes);
-  apiRouter.use('/coupons', couponRoutes);
-  apiRouter.use('/users', noCacheMiddleware, userRoutes);
-  apiRouter.use('/inquiries', inquiryRoutes);
-  apiRouter.use('/notifications', notificationRoutes);
-  apiRouter.use('/custom-orders', customOrderRoutes);
-  apiRouter.use('/loyalty', loyaltyRoutes);
-  apiRouter.use('/event-bookings', eventBookingRoutes);
-  apiRouter.use('/showcases', showcaseRoutes);
-  apiRouter.use('/admin', noCacheMiddleware, adminSystemRoutes);
-  apiRouter.use('/admin/invites', noCacheMiddleware, adminInviteRoutes);
-  apiRouter.use('/recommendations', recommendationRoutes);
-  apiRouter.use('/tracking', trackingRoutes);
-  apiRouter.use('/analytics/recommendations', noCacheMiddleware, recommendationAnalyticsRoutes);
+  apiRouter.use('/products', lazyRouter('./productRoutes'));
+  apiRouter.use('/upload', lazyRouter('./uploadRoutes'));
+  apiRouter.use('/auth', noCacheMiddleware, lazyRouter('./authRoutes'));
+  apiRouter.use('/events', lazyRouter('./eventRoutes'));
+  apiRouter.use('/orders', noCacheMiddleware, lazyRouter('../features/orders/orderRoutes'));
+  apiRouter.use('/cms', lazyRouter('./cmsRoutes'));
+  apiRouter.use('/analytics', noCacheMiddleware, lazyRouter('./analyticsRoutes'));
+  apiRouter.use('/gallery', lazyRouter('./galleryRoutes'));
+  apiRouter.use('/reviews', lazyRouter('./reviewRoutes'));
+  apiRouter.use('/coupons', lazyRouter('./couponRoutes'));
+  apiRouter.use('/users', noCacheMiddleware, lazyRouter('./userRoutes'));
+  apiRouter.use('/inquiries', lazyRouter('./inquiryRoutes'));
+  apiRouter.use('/notifications', lazyRouter('./notificationRoutes'));
+  apiRouter.use('/policies', lazyRouter('./policyRoutes'));
+  apiRouter.use('/custom-orders', lazyRouter('./customOrderRoutes'));
+  apiRouter.use('/loyalty', lazyRouter('./loyaltyRoutes'));
+  apiRouter.use('/event-bookings', lazyRouter('./eventBookingRoutes'));
+  apiRouter.use('/showcases', lazyRouter('./showcaseRoutes'));
+  apiRouter.use('/admin', noCacheMiddleware, lazyRouter('./adminSystemRoutes'));
+  apiRouter.use('/admin/invites', noCacheMiddleware, lazyRouter('./adminInviteRoutes'));
+  apiRouter.use('/recommendations', lazyRouter('./recommendationRoutes'));
+  apiRouter.use('/tracking', lazyRouter('./trackingRoutes'));
+  apiRouter.use('/analytics/recommendations', noCacheMiddleware, lazyRouter('./recommendationAnalyticsRoutes'));
   
   // Dynamic Configuration & Architecture Routes
-  apiRouter.use('/config', appConfigRoutes);
-  apiRouter.use('/categories', categoryRoutes);
-  apiRouter.use('/layouts', pageLayoutRoutes);
-  apiRouter.use('/search', searchRoutes);
+  apiRouter.use('/config', lazyRouter('./appConfigRoutes'));
+  apiRouter.use('/categories', lazyRouter('./categoryRoutes'));
+  apiRouter.use('/layouts', lazyRouter('./pageLayoutRoutes'));
+  apiRouter.use('/search', lazyRouter('./searchRoutes'));
+  apiRouter.use('/media', lazyRouter('./mediaRoutes'));
 
   app.use(prefix, apiRouter);
 };

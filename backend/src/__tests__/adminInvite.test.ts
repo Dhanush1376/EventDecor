@@ -58,6 +58,8 @@ const mockAdminInviteFindOne = AdminInvite.findOne as jest.Mock;
 const createMockQuery = (resolvedValue: any) => {
   const query = {
     select: jest.fn().mockImplementation(() => query),
+    lean: jest.fn().mockImplementation(() => query),
+    exec: jest.fn().mockImplementation(() => Promise.resolve(resolvedValue)),
     then: (resolve: any, reject: any) => Promise.resolve(resolvedValue).then(resolve, reject),
     catch: (reject: any) => Promise.resolve(resolvedValue).catch(reject),
   };

@@ -1,4 +1,4 @@
-import PDFDocument from 'pdfkit';
+import type PDFDocument from 'pdfkit';
 import type { Response } from 'express';
 
 export type InvoicePdfData = {
@@ -12,7 +12,7 @@ export type InvoicePdfData = {
   total: number;
 };
 
-const writeInvoiceContent = (doc: InstanceType<typeof PDFDocument>, orderData: InvoicePdfData): void => {
+const writeInvoiceContent = (doc: any, orderData: InvoicePdfData): void => {
   const brandColor = '#735c00';
   const textColor = '#1a1a1a';
   const grayColor = '#555555';
@@ -155,7 +155,8 @@ export const streamInvoicePDFToResponse = (
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-  const doc = new PDFDocument({ margin: 50 });
+  const PDFDocumentClass = require('pdfkit');
+  const doc = new PDFDocumentClass({ margin: 50 });
   doc.pipe(res);
   writeInvoiceContent(doc, orderData);
   doc.end();
@@ -165,7 +166,8 @@ export const streamInvoicePDFToResponse = (
 export const generateInvoicePDF = async (orderData: InvoicePdfData): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
     try {
-      const doc = new PDFDocument({ margin: 50 });
+      const PDFDocumentClass = require('pdfkit');
+      const doc = new PDFDocumentClass({ margin: 50 });
       const buffers: Buffer[] = [];
 
       doc.on('data', (chunk: Buffer) => buffers.push(chunk));

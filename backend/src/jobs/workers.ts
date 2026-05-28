@@ -111,6 +111,83 @@ export const initWorkers = async () => {
               logger.info(`[WORKER] Rebuilt ${count} stale user profiles`);
               break;
             }
+            case 'rebuild-user-feed': {
+              const { userId, page } = job.data;
+              const { getPersonalizedRecommendations } = require('../services/recommendation/recommendationEngine');
+              const { RecommendationCache } = require('../services/recommendation/recommendationCache');
+              
+              if (userId) {
+                const result = await getPersonalizedRecommendations({ userId, page, limit: 12, offset: 0 });
+                await RecommendationCache.setPersonalFeed(userId, page, result);
+                logger.info(`[WORKER] Rebuilt personalized feed for user ${userId} page ${page}`);
+              }
+              break;
+            }
+            case 'precompute-similar': {
+              const { targetType, targetId } = job.data;
+              const { RecommendationCache } = require('../services/recommendation/recommendationCache');
+              const Product = require('../models/Product').default;
+              
+              if (targetType === 'product') {
+                await require('../services/recommendation/similarityEngine').findSimilarProducts(targetId, { limit: 12 });
+                
+                const product = await Product.findById(targetId).select('category').lean();
+                if (product) {
+                  const compItems = await require('../services/recommendation/similarityEngine').getComplementaryItems(product.category || '', [targetId], { limit: 8 });
+                  const productIds = compItems.map((i: any) => i.targetId);
+                  const fullProducts = await Product.find({ _id: { $in: productIds }, isActive: true })
+                    .select('_id title imageSrc category price rating reviews slug')
+                    .lean();
+
+                  const enrichedComp = compItems.map((item: any) => {
+                    const full = fullProducts.find((prod: any) => (prod._id as any).toString() === item.targetId);
+                    return full ? {
+                      _id: item.targetId,
+                      targetType: 'product',
+                      score: item.similarityScore,
+                      source: 'complete-setup',
+                      title: full.title,
+                      imageSrc: full.imageSrc,
+                      category: full.category,
+                      price: full.price,
+                      rating: full.rating,
+                      reviews: full.reviews,
+                      slug: full.slug,
+                    } : null;
+                  }).filter(Boolean);
+                  await RecommendationCache.setCompleteSetup(targetId, enrichedComp);
+                }
+
+                const alsoViewed = await require('../services/recommendation/similarityEngine').getUsersAlsoViewed(targetId, 'product', { limit: 12 });
+                const { enrichScoredItems: enrichHelper } = require('../services/recommendation/recommendationEngine');
+                const enrichedAlsoViewed = await enrichHelper(
+                  alsoViewed.map((i: any) => ({ targetId: i.targetId, targetType: i.targetType, score: i.similarityScore }))
+                );
+                await RecommendationCache.setAlsoViewed(targetId, enrichedAlsoViewed);
+
+              } else if (targetType === 'event') {
+                await require('../services/recommendation/similarityEngine').findSimilarEvents(targetId, { limit: 8 });
+                
+                const alsoViewed = await require('../services/recommendation/similarityEngine').getUsersAlsoViewed(targetId, 'event', { limit: 8 });
+                const { enrichScoredItems: enrichHelper } = require('../services/recommendation/recommendationEngine');
+                const enrichedAlsoViewed = await enrichHelper(
+                  alsoViewed.map((i: any) => ({ targetId: i.targetId, targetType: i.targetType, score: i.similarityScore }))
+                );
+                await RecommendationCache.setAlsoViewed(targetId, enrichedAlsoViewed);
+              }
+              logger.info(`[WORKER] Precomputed similarities and fallbacks for ${targetType} ${targetId}`);
+              break;
+            }
+            case 'precompute-catalog-recommendations': {
+              const { precomputeCatalogRecommendations } = require('../services/recommendation/recommendationEngine');
+              await precomputeCatalogRecommendations();
+              break;
+            }
+            case 'precompute-active-users-feeds': {
+              const { precomputeActiveUsersFeeds } = require('../services/recommendation/recommendationEngine');
+              await precomputeActiveUsersFeeds();
+              break;
+            }
             case 'update-trending': {
               for (const targetType of ['product', 'event', 'gallery']) {
                 await calculateTrending(targetType, { limit: 20 });

@@ -1,4 +1,3 @@
-import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import EmailTemplate, { IEmailTemplate } from '../models/EmailTemplate';

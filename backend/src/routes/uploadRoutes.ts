@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 import { uploadLimiter, signedUrlLimiter } from '../middleware/rateLimiter';
 import { uploadProducts, uploadGallery, uploadCMS } from '../middleware/upload';
-import cloudinary from '../config/cloudinary';
+import getCloudinary from '../config/cloudinary';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import asyncHandler from '../utils/asyncHandler';
@@ -60,7 +60,7 @@ router.get(
       resource_type: resourceType,
     };
 
-    const signature = cloudinary.utils.api_sign_request(paramsToSign, apiSecret);
+    const signature = getCloudinary().utils.api_sign_request(paramsToSign, apiSecret);
 
     res.status(200).json(
       new ApiResponse(true, 'Signed upload parameters generated', {

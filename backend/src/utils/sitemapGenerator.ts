@@ -50,6 +50,11 @@ export async function generateSitemap(): Promise<string> {
       xml += `  </url>\n`;
     }
 
+    // Ensure models are registered by dynamically requiring them first
+    require('../models/Product');
+    require('../models/Gallery');
+    require('../models/Event');
+
     // Retrieve models dynamically from mongoose to prevent circular imports
     const Product = mongoose.model('Product');
     const Gallery = mongoose.model('Gallery');

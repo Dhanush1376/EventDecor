@@ -1,43 +1,4 @@
 import logger from './logger';
-import User from '../models/User';
-import Product from '../models/Product';
-import Order from '../models/Order';
-import EventBooking from '../models/EventBooking';
-import Event from '../models/Event';
-import Gallery from '../models/Gallery';
-import ContentSection from '../models/ContentSection';
-import Review from '../models/Review';
-import Coupon from '../models/Coupon';
-import WalletTransaction from '../models/WalletTransaction';
-import EmailCampaign from '../models/EmailCampaign';
-import NotificationLog from '../models/NotificationLog';
-import OtpVerification from '../models/OtpVerification';
-import EmailTemplate from '../models/EmailTemplate';
-import UserInteraction from '../models/UserInteraction';
-import UserPreferenceProfile from '../models/UserPreferenceProfile';
-import TrendingSnapshot from '../models/TrendingSnapshot';
-import CustomOrder from '../models/CustomOrder';
-
-const INDEX_MODELS = [
-  User,
-  Product,
-  Order,
-  EventBooking,
-  Event,
-  Gallery,
-  ContentSection,
-  Review,
-  Coupon,
-  WalletTransaction,
-  EmailCampaign,
-  NotificationLog,
-  OtpVerification,
-  EmailTemplate,
-  UserInteraction,
-  UserPreferenceProfile,
-  TrendingSnapshot,
-  CustomOrder,
-];
 
 export const seedDefaultEmailTemplates = async (): Promise<void> => {
   try {
@@ -82,10 +43,37 @@ export const ensureIndexes = async (): Promise<void> => {
     return;
   }
 
-  for (const model of INDEX_MODELS) {
-    if (model && typeof model.createIndexes === 'function') {
-      logger.info(`[DATABASE] Ensuring indexes for ${model.modelName}...`);
-      await model.createIndexes();
+  const modelPaths = [
+    '../models/User',
+    '../models/Product',
+    '../models/Order',
+    '../models/EventBooking',
+    '../models/Event',
+    '../models/Gallery',
+    '../models/ContentSection',
+    '../models/Review',
+    '../models/Coupon',
+    '../models/WalletTransaction',
+    '../models/EmailCampaign',
+    '../models/NotificationLog',
+    '../models/OtpVerification',
+    '../models/EmailTemplate',
+    '../models/UserInteraction',
+    '../models/UserPreferenceProfile',
+    '../models/TrendingSnapshot',
+    '../models/CustomOrder',
+  ];
+
+  for (const path of modelPaths) {
+    try {
+      const modelModule = require(path);
+      const model = (modelModule.default || modelModule) as any;
+      if (model && typeof model.createIndexes === 'function') {
+        logger.info(`[DATABASE] Ensuring indexes for ${model.modelName}...`);
+        await model.createIndexes();
+      }
+    } catch (err: any) {
+      logger.error(`[DATABASE] Failed to build index for model at ${path}: ${err.message}`);
     }
   }
 

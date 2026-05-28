@@ -92,7 +92,7 @@ export const RecommendationCache = {
     return cacheGet<any>(`reco:personal:${userId}:${page}`, personalFeedCache);
   },
   async setPersonalFeed(userId: string, page: string, data: any) {
-    await cacheSet(`reco:personal:${userId}:${page}`, data, 600, personalFeedCache); // 10 min
+    await cacheSet(`reco:personal:${userId}:${page}`, data, 3600, personalFeedCache); // 1 hour
   },
   async clearPersonalFeed(userId: string) {
     const pages = ['homepage', 'gallery', 'events', 'products'];
@@ -122,7 +122,23 @@ export const RecommendationCache = {
     return cacheGet<any>(`reco:similar:${targetId}`, similarCache);
   },
   async setSimilar(targetId: string, data: any) {
-    await cacheSet(`reco:similar:${targetId}`, data, 1800, similarCache); // 30 min
+    await cacheSet(`reco:similar:${targetId}`, data, 86400, similarCache); // 24 hours
+  },
+
+  // ── Complete Setup / Complementary ──
+  async getCompleteSetup(productId: string) {
+    return cacheGet<any>(`reco:complete:${productId}`, similarCache);
+  },
+  async setCompleteSetup(productId: string, data: any) {
+    await cacheSet(`reco:complete:${productId}`, data, 86400, similarCache); // 24 hours
+  },
+
+  // ── Users Also Viewed ──
+  async getAlsoViewed(targetId: string) {
+    return cacheGet<any>(`reco:alsoviewed:${targetId}`, similarCache);
+  },
+  async setAlsoViewed(targetId: string, data: any) {
+    await cacheSet(`reco:alsoviewed:${targetId}`, data, 86400, similarCache); // 24 hours
   },
 
   // ── Session Context (real-time adaptation) ──

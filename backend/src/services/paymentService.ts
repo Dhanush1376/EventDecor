@@ -12,7 +12,7 @@ import { generateInvoicePDF } from '../utils/pdfGenerator';
 import { compileTemplate } from '../utils/templateEngine';
 import { getAdminEmails } from '../config/adminConfig';
 import { bumpAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
-import razorpay from '../config/razorpay';
+import getRazorpay from '../config/razorpay';
 import PaymentAudit from '../models/PaymentAudit';
 
 export class PaymentService {
@@ -38,6 +38,7 @@ export class PaymentService {
       throw new ApiError(400, 'Missing payment signature verification parameter');
     }
 
+    const razorpay = getRazorpay();
     const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
     if (!razorpayKeySecret || !razorpay) {
       throw new ApiError(500, 'Payment verification is not configured on the server');

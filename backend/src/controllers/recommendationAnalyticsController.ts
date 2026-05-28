@@ -17,6 +17,7 @@ export const getOverview = async (req: Request, res: Response) => {
       uniqueUsers,
       activeProfiles,
       interactionsByType,
+      interactionsByDay,
     ] = await Promise.all([
       UserInteraction.countDocuments({ timestamp: { $gte: thirtyDaysAgo } }),
       UserInteraction.distinct('userId', { timestamp: { $gte: thirtyDaysAgo }, userId: { $exists: true } }),
@@ -25,6 +26,16 @@ export const getOverview = async (req: Request, res: Response) => {
         { $match: { timestamp: { $gte: thirtyDaysAgo } } },
         { $group: { _id: '$eventType', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
+      ]),
+      UserInteraction.aggregate([
+        { $match: { timestamp: { $gte: thirtyDaysAgo } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
       ]),
     ]);
 
@@ -37,6 +48,10 @@ export const getOverview = async (req: Request, res: Response) => {
         interactionBreakdown: interactionsByType.map((i) => ({
           eventType: i._id,
           count: i.count,
+        })),
+        interactionsByDay: interactionsByDay.map((d) => ({
+          _id: d._id,
+          count: d.count,
         })),
         period: '30 days',
       },

@@ -70,24 +70,20 @@ process.on('unhandledRejection', (reason: any) => {
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
-const startServer = async () => {
+const initializeServicesProgressively = async (httpServer: Server) => {
   try {
-    // Prevent BYPASS_OTP_CODE in production (Checked early)
-    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_OTP_CODE) {
-      logger.error('CRITICAL: BYPASS_OTP_CODE must not be set in production');
-      process.exit(1);
-    }
-
-    // 1. Connect to Database (block, retry internally, throw if fails)
-    logger.info('[STARTUP] Connecting to MongoDB...');
+    const bootStartTime = performance.now();
+    // 1. Connect to Database (retry internally, throw if fails)
+    logger.info('[STARTUP] Progressive Init: Connecting to MongoDB...');
     await connectDB();
+    logger.info('🟢 [STARTUP] MongoDB connected successfully');
 
     // 2. Build indexes in background
     if (process.env.SKIP_INDEX_BUILD !== 'true') {
       ensureIndexes()
         .then(() => logger.info('[DATABASE] Background index verification finished'))
         .catch((err) => {
-          logger.error('[DATABASE] CRITICAL ALERT: Background index verification failed! Database performance will degrade to full collection scans:', err);
+          logger.error('[DATABASE] CRITICAL ALERT: Background index verification failed!', err);
           if (process.env.SENTRY_DSN) Sentry.captureException(err);
         });
     } else {
@@ -95,7 +91,7 @@ const startServer = async () => {
     }
 
     // 3. Initialize Redis (graceful fallback if REQUIRE_REDIS=false)
-    logger.info('[STARTUP] Initializing Redis...');
+    logger.info('[STARTUP] Progressive Init: Initializing Redis...');
     let redisReady = false;
     try {
       await initRedis();
@@ -108,11 +104,20 @@ const startServer = async () => {
       }
     }
 
-    // 4. Initialize BullMQ Queues and Workers (only if Redis is ready or REQUIRE_REDIS=false)
+    // 4. Initialize Socket.io (now that Redis connection is ready or failed, it can bind its adapter)
+    try {
+      initSocket(httpServer);
+      logger.info('🟢 [STARTUP] Socket.io initialized successfully');
+    } catch (err: any) {
+      logger.error(`❌ [SOCKET.IO] Initialization error: ${err.message}`);
+    }
+
+    // 5. Initialize BullMQ Queues and Workers
     if (redisReady || process.env.REQUIRE_REDIS !== 'true') {
       try {
         await initQueues();
         await initWorkers();
+        logger.info('🟢 [STARTUP] BullMQ queues and workers initialized');
       } catch (err: any) {
         logger.error(`❌ [BULLMQ] Initialization error: ${err.message}`);
         if (process.env.REQUIRE_REDIS === 'true') {
@@ -121,14 +126,43 @@ const startServer = async () => {
       }
     }
 
-    // 4b. Initialize Recommendation System (warm caches — non-blocking, non-fatal)
-    try {
-      await initRecommendationSystem();
-    } catch (err: any) {
+    // 6. Initialize Recommendation System (warm caches — non-blocking, non-fatal)
+    initRecommendationSystem().catch((err: any) => {
       logger.warn(`⚠️ [RECO] Recommendation system init skipped: ${err.message}`);
+    });
+
+    // 7. Initialize Background Cron/Jobs
+    try {
+      initJobs();
+      logger.info('🟢 [STARTUP] Background cron/jobs initialized');
+    } catch (err: any) {
+      logger.error(`❌ [STARTUP] Jobs initialization error: ${err.message}`);
     }
 
-    // 5. Start Express Server
+    // 8. Auto-generate sitemap
+    generateSitemap().catch((err: any) => 
+      logger.error(`[BOOT SITEMAP] Initial sitemap generation failed: ${err.message}`)
+    );
+
+    const bootEndTime = performance.now();
+    logger.info(`⚡ [STARTUP] Progressive boot sequence completed in ${((bootEndTime - bootStartTime) / 1000).toFixed(2)}s`);
+
+  } catch (error: any) {
+    logger.error('🚨 CRITICAL SERVICE INITIALIZATION ERROR:', error);
+    // Trigger fatal error shutdown handling
+    handleFatalError(error, 'progressiveInitialization');
+  }
+};
+
+const startServer = async () => {
+  try {
+    // Prevent BYPASS_OTP_CODE in production (Checked early)
+    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_OTP_CODE) {
+      logger.error('CRITICAL: BYPASS_OTP_CODE must not be set in production');
+      process.exit(1);
+    }
+
+    // 1. Start Express Server Immediately
     server = app.listen(PORT, '0.0.0.0', () => {
       logger.info(
         `🚀 [STARTUP] Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`
@@ -136,21 +170,16 @@ const startServer = async () => {
       if (typeof process.send === 'function') {
         process.send('ready');
       }
+
+      // Kick off background initialization AFTER port is bound
+      initializeServicesProgressively(server);
     });
 
-    // 5b. Prevent Slowloris and resource exhaustion attacks
+    // 1b. Prevent Slowloris and resource exhaustion attacks
     // Ensure timeout is slightly higher than the load balancer's timeout (Render has 100s default, but 65s is safe for internal)
     server.keepAliveTimeout = 65000; // 65 seconds
     server.headersTimeout = 66000; // 66 seconds
 
-    // 6. Initialize Socket.io (which binds to server)
-    initSocket(server);
-
-    // 7. Initialize Background Cron/Jobs
-    initJobs();
-
-    // 8. Auto-generate sitemap
-    generateSitemap().catch((err: any) => logger.error(`[BOOT SITEMAP] Initial sitemap generation failed: ${err.message}`));
 
 
 

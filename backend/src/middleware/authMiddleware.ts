@@ -287,8 +287,8 @@ export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response
     throw new ApiError(401, 'Authentication required');
   }
 
-  const isSuperAdminRole = req.user.role === 'super_admin';
-  if (isSuperAdminRole) {
+  const isRootAdmin = req.user.role === 'super_admin' || req.user.role === 'owner';
+  if (isRootAdmin) {
     // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
     await checkSafetyLock(req);
 
@@ -329,9 +329,9 @@ export const requireRole = (allowedRoles: string[]) => {
       return next();
     }
 
-    // Super Admin always gets access
-    const isSuperAdmin = req.user.role === 'super_admin';
-    if (isSuperAdmin || allowedRoles.includes(req.user.role)) {
+    // Owner and Super Admin always get access
+    const isRootAdmin = req.user.role === 'super_admin' || req.user.role === 'owner';
+    if (isRootAdmin || allowedRoles.includes(req.user.role)) {
       // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
       await checkSafetyLock(req);
 
