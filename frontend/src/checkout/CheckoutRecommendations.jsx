@@ -5,6 +5,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { productService } from "../services/domainServices";
 import toast from "react-hot-toast";
+import logger from "../utils/logger";
 
 // Helper utilities matching ProductCard.jsx
 const parseNumericPrice = (val) => {
@@ -162,7 +163,7 @@ export default function CheckoutRecommendations({ containerClassName = "mb-4" })
           setProducts(list);
         }
       } catch (err) {
-        console.error("Failed to load checkout recommendations:", err);
+        logger.error("Failed to load checkout recommendations:", err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
