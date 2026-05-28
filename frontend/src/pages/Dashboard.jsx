@@ -20,6 +20,7 @@ const EventCustomerDashboard = React.lazy(() => import("./EventCustomerDashboard
 
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { useDashboardData } from "../hooks/useDashboardData";
+import { OrdersListSkeleton, ProductCardSkeleton, Skeleton } from "../components/ui/Skeleton";
 
 import logger from '../utils/logger';
 export function Dashboard() {
@@ -452,7 +453,7 @@ export function Dashboard() {
               >
                 {isUploadingAvatar ? (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                    <div className="w-6 h-6 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
+                    <div className="skeleton-box inline-block w-6 h-6 rounded-md" />
                   </div>
                 ) : null}
 
@@ -793,16 +794,16 @@ export function Dashboard() {
                     </span>
                   </div>
                   <React.Suspense fallback={
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {[...Array(2)].map((_, i) => (
                         <div key={i} className="p-5 rounded-2xl bg-white border border-outline-variant/10 space-y-4">
                           <div className="flex justify-between items-center">
-                            <div className="h-4 w-24 bg-stone-100 rounded animate-pulse" />
-                            <div className="h-6 w-20 bg-stone-100 rounded-full animate-pulse" />
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-6 w-20 rounded-full" />
                           </div>
-                          <div className="h-5 w-3/4 bg-stone-100 rounded animate-pulse" />
-                          <div className="h-4 w-full bg-stone-100 rounded animate-pulse" />
-                          <div className="h-4 w-2/3 bg-stone-100 rounded animate-pulse" />
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-2/3" />
                         </div>
                       ))}
                     </div>
@@ -926,7 +927,7 @@ export function Dashboard() {
                         className="btn-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[10px] inline-flex items-center gap-2 cursor-pointer shadow-md"
                       >
                         {isUpdatingProfile ? (
-                          <div className="w-3.5 h-3.5 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
+                          <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
                         ) : (
                           <>
                             <span className="material-symbols-outlined text-[13px]">save</span>
@@ -1160,7 +1161,7 @@ export function Dashboard() {
                         className="bg-primary text-surface px-5 py-2 rounded-full font-bold uppercase tracking-widest text-[9px] inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-on-surface transition-colors"
                       >
                         {isPreferencesSaving ? (
-                          <div className="w-3.5 h-3.5 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
+                          <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
                         ) : (
                           <>
                             <span className="material-symbols-outlined text-[13px]">tune</span>
@@ -1213,10 +1214,7 @@ export function Dashboard() {
                   </div>
 
                   {isOrdersLoading ? (
-                    <div className="space-y-4">
-                      <div className="h-32 bg-white border border-outline-variant/20 rounded-lg animate-pulse" />
-                      <div className="h-32 bg-white border border-outline-variant/20 rounded-lg animate-pulse" />
-                    </div>
+                    <OrdersListSkeleton rows={2} />
                   ) : (
                     <motion.div layout className="space-y-4">
                       <AnimatePresence>
@@ -1410,7 +1408,7 @@ export function Dashboard() {
                   {wishlistItems && wishlistItems.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       <AnimatePresence>
-                        <React.Suspense fallback={<div className="animate-pulse h-32 bg-surface-bright rounded-lg"></div>}>
+                        <React.Suspense fallback={<ProductCardSkeleton />}>
                           {wishlistItems.map((item, idx) => (
                             <ProductCard
                               key={item._id || idx}
@@ -1520,8 +1518,8 @@ export function Dashboard() {
 
                   {isLoadingRecentlyViewed ? (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="h-44 bg-white border border-outline-variant/20 rounded-lg animate-pulse" />
-                      <div className="h-44 bg-white border border-outline-variant/20 rounded-lg animate-pulse" />
+                      <ProductCardSkeleton />
+                      <ProductCardSkeleton />
                     </div>
                   ) : recentlyViewed && recentlyViewed.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -1560,7 +1558,7 @@ export function Dashboard() {
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <React.Suspense fallback={<div className="animate-pulse h-32 bg-surface-bright rounded-lg"></div>}>
+                  <React.Suspense fallback={<Skeleton className="h-32 w-full rounded-lg" />}>
                     <LoyaltyPanel />
                   </React.Suspense>
                 </motion.div>
@@ -1636,7 +1634,7 @@ export function Dashboard() {
                     >
                       {isDetectingLocation ? (
                         <>
-                          <div className="w-3 h-3 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+                          <div className="skeleton-box inline-block w-3 h-3 rounded-md" />
                           <span>Locating...</span>
                         </>
                       ) : (
@@ -1838,7 +1836,7 @@ export function Dashboard() {
                       className="flex-1 btn-primary py-3 rounded-full font-bold uppercase tracking-widest text-[10px] cursor-pointer inline-flex items-center justify-center gap-1.5"
                     >
                       {isAddressSaving ? (
-                        <div className="w-3 h-3 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
+                        <div className="skeleton-box inline-block w-3 h-3 rounded-md" />
                       ) : (
                         <>
                           <span className="material-symbols-outlined text-xs">save</span>
@@ -1889,7 +1887,7 @@ export function Dashboard() {
               onClick={(e) => e.stopPropagation()}
               className="bg-surface w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl"
             >
-              <React.Suspense fallback={<div className="p-8 text-center">Loading Invoice Template...</div>}>
+              <React.Suspense fallback={<div className="p-8"><Skeleton className="h-80 w-full rounded-xl" /></div>}>
                 <InvoiceTemplate 
                   order={selectedInvoiceOrder} 
                   user={user} 

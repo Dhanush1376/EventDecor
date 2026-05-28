@@ -919,7 +919,7 @@ export function CustomOrders() {
                               <div className="bg-white/80 backdrop-blur-sm border border-black/5 rounded-xl p-4 space-y-3">
                                 <div className="flex justify-between items-center text-[9.5px] font-bold uppercase tracking-wider text-[var(--color-gold)]">
                                   <span className="flex items-center gap-1.5">
-                                    <span className="animate-spin text-[12px] material-symbols-outlined">sync</span>
+                                    <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
                                     Siri AI scanning design motifs...
                                   </span>
                                   <span>{aiStep * 20}%</span>

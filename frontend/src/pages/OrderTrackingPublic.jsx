@@ -194,7 +194,7 @@ export function OrderTrackingPublic() {
     return (
       <div className="min-h-screen bg-surface-bright flex flex-col items-center justify-center p-4">
         <div className="relative flex items-center justify-center w-20 h-20 mb-4">
-          <div className="absolute inset-0 border border-primary/20 rounded-full animate-spin" />
+          <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
           <span className="font-display text-2xl text-primary">✦</span>
         </div>
         <p className="text-xs text-secondary font-bold uppercase tracking-widest animate-pulse">

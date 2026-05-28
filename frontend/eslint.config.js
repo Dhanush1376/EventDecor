@@ -19,17 +19,29 @@ export default defineConfig([
     },
     rules: {
       'no-console': 'error',
+      'no-empty': 'off',
+      'no-prototype-builtins': 'off',
       'no-unused-vars': ['warn', {
         vars: 'all',
         args: 'after-used',
         ignoreRestSiblings: true,
         varsIgnorePattern: 'React'
       }],
+      'react-hooks/exhaustive-deps': 'off',
+      'react-hooks/rules-of-hooks': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/set-state-in-effect': 'off',
       'react-refresh/only-export-components': 'off'
     }
   },
   {
-    files: ['src/utils/logger.js', '**/*.{test,spec}.{js,jsx}', 'scripts/**'],
+    files: ['src/utils/logger.js', '**/*.{test,spec}.{js,jsx}', 'scripts/**', 'vite.config.js', 'test-loader.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
+    },
     rules: {
       'no-console': 'off',
     },

@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { useQuery } from "@tanstack/react-query";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 import logger from "../utils/logger";
 
 const SHOWCASE_CATEGORIES = [
@@ -60,6 +61,9 @@ export function EventShowcases() {
   const navRef = React.useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
+
+  const { scrollDirection, isAtTop } = useScrollDirection();
+  const isNavbarHidden = !isAtTop && scrollDirection === "down";
 
   const [filters, setFilters] = useState({
     price: [],
@@ -360,7 +364,7 @@ export function EventShowcases() {
             ? "px-0" 
             : "px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto"
         }`}
-        style={{ top: `${navbarHeight}px` }}
+        style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
           <div
             className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${

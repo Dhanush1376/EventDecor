@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { authService } from '../services/domainServices';
 import {
   setAccessToken,
@@ -17,6 +18,7 @@ import { AuthContext } from './AuthContext';
 import logger from '../utils/logger';
 
 export function AuthProvider({ children }) {
+  const queryClient = useQueryClient();
   // Use lazy initialization to avoid synchronous exceptions during render body
   const getInitialState = () => {
     try {
@@ -47,6 +49,12 @@ export function AuthProvider({ children }) {
   const initStarted = useRef(false);
 
   const logout = useCallback(async (silent = false) => {
+    // Clear React Query cache on logout to prevent state leakage/desynchronization
+    queryClient.clear();
+    try {
+      localStorage.removeItem('siri_query_cache_v1');
+    } catch (_) {}
+
     setAccessToken(null);
     clearCachedProfile();
     clearAuthStorage();
@@ -64,7 +72,7 @@ export function AuthProvider({ children }) {
     if (!silent) {
       toast.success('Logged out successfully');
     }
-  }, []);
+  }, [queryClient]);
 
   const restoreSession = useCallback(async (signal) => {
     setAuthBootstrapActive(true);

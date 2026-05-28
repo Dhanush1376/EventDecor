@@ -452,7 +452,7 @@ export function Auth() {
                           className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20 cursor-pointer active:scale-[0.98]"
                         >
                           {isLoading ? (
-                            <div className="w-5 h-5 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
+                            <div className="skeleton-box inline-block w-5 h-5 rounded-md" />
                           ) : (
                             <>
                               <span>Send Verification Code</span>
@@ -585,7 +585,7 @@ export function Auth() {
                             className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20 cursor-pointer active:scale-[0.98]"
                           >
                             {isLoading ? (
-                              <div className="w-5 h-5 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
+                              <div className="skeleton-box inline-block w-5 h-5 rounded-md" />
                             ) : (
                               "Verify & Authenticate"
                             )}

@@ -363,7 +363,7 @@ export function AuthModal() {
                             className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
                           >
                             {isLoading ? (
-                              <div className="w-4 h-4 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
+                              <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
                             ) : (
                               <>
                                 <span>Get Verification Key</span>
@@ -434,7 +434,7 @@ export function AuthModal() {
                               className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
                             >
                               {isLoading ? (
-                                <div className="w-4 h-4 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
+                                <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
                               ) : (
                                 <span>Verify and Open Gateway</span>
                               )}

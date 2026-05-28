@@ -3,8 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { handleImageError } from "../../utils/imageUtils";
+import { prefetchManager } from "../../utils/prefetchManager";
+import { CloudinaryImage } from "../ui/CloudinaryImage";
 
 const EMPTY_CART_ILLU = "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129342/event_decor_ecommerce/assets/event_decor_empty_cart_illustration.jpg";
+
 
 export function CartDrawer({ isOpen, onClose }) {
   const { items, removeItem, updateQuantity, subtotal, cartCount, loading } = useCart();
@@ -160,13 +163,15 @@ export function CartDrawer({ isOpen, onClose }) {
                       className="relative flex gap-4 p-4 rounded-[20px] bg-surface-container-low border border-outline-variant/10 shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
                     >
                       <div className="w-20 h-24 rounded-[12px] overflow-hidden flex-shrink-0 bg-surface-container">
-                        <img
-                          onError={handleImageError}
+                        <CloudinaryImage
                           src={item.imageSrc || item.image}
                           alt={item.title}
                           className="w-full h-full object-cover"
+                          containerClassName="w-full h-full"
                           loading="lazy"
-                          decoding="async"
+                          width={160}
+                          height={192}
+                          sizes="80px"
                         />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -291,6 +296,7 @@ export function CartDrawer({ isOpen, onClose }) {
                 </p>
                 <Link
                   to="/checkout"
+                  onMouseEnter={() => prefetchManager.prefetchRoute("/checkout", { kind: "hover" })}
                   onClick={onClose}
                   className="block w-full bg-primary text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-primary/95 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/10"
                 >

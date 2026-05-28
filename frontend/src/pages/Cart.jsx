@@ -6,13 +6,16 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { SEO } from "../components/seo/SEO";
 import { handleImageError } from "../utils/imageUtils";
-import { RecommendationSystem } from "../components/sections/RecommendationSystem";
 import { couponService, cmsService } from "../services/domainServices";
 import { useAuth } from "../context/AuthContext";
-import { useApi } from "../hooks/useApi";
-import { CartSkeleton } from "../components/ui/Skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { CartSkeleton, Skeleton } from "../components/ui/Skeleton";
 import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
 import { CheckoutSteps } from "../components/ui/CheckoutSteps";
+
+const RecommendationSystem = React.lazy(() =>
+  import("../components/sections/RecommendationSystem").then((m) => ({ default: m.RecommendationSystem }))
+);
 
 export function Cart() {
   const { items, removeItem, updateQuantity, cartCount, addItem, summary, totalMRP, loading, claimedCoupon, setClaimedCoupon } = useCart();
@@ -27,8 +30,15 @@ export function Cart() {
     source: 'cart'
   });
 
-  const { data: settingsData, loading: settingsLoading } = useApi(cmsService.getSection, "storeSettings");
-  const settings = settingsData?.data || {};
+  const { data: settingsData, isLoading: settingsLoading } = useQuery({
+    queryKey: ["cms", "section", "storeSettings"],
+    queryFn: async () => {
+      const res = await cmsService.getSection("storeSettings");
+      return res.success ? res.data : res;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+  const settings = settingsData || {};
 
   // Always reset checkout step state when viewing the cart to ensure fresh start on step 1 (Address)
   useEffect(() => {
@@ -44,13 +54,15 @@ export function Cart() {
   const [notification, setNotification] = useState("");
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
 
-  const { data: couponsData, request: fetchCoupons } = useApi(couponService.getAll);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchCoupons();
-    }
-  }, [fetchCoupons, isAuthenticated]);
+  const { data: couponsData } = useQuery({
+    queryKey: ["coupons"],
+    queryFn: async () => {
+      const res = await couponService.getAll();
+      return res.success ? res.data : res;
+    },
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const activeCouponsList = couponsData?.data || couponsData?.items || (Array.isArray(couponsData) ? couponsData : []);
   const activeCoupons = activeCouponsList.filter(c => {
@@ -396,12 +408,14 @@ export function Cart() {
 
               {/* Cross Selling Recommendations */}
               <div className="mt-8">
-                 <RecommendationSystem
+                <React.Suspense fallback={<Skeleton className="h-52 w-full rounded-2xl" />}>
+                  <RecommendationSystem
                     category={items.length > 0 ? items[0].category : undefined}
                     currentProductId={items.length > 0 ? (items[0].id || items[0]._id) : undefined}
                     hideHeader={false}
                     horizontalScroll={true}
-                 />
+                  />
+                </React.Suspense>
               </div>
 
             </div>
@@ -519,9 +533,17 @@ export function Cart() {
               {/* Price Details Summary Card */}
               <div className="bg-surface-bright border border-outline-variant/40 rounded shadow-sm relative">
                 {loading && (
-                   <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center rounded">
-                      <div className="w-6 h-6 border-2 border-[#c29b38] border-t-transparent rounded-full animate-spin"></div>
-                   </div>
+                  <div className="absolute inset-0 bg-surface/70 backdrop-blur-[1px] z-10 rounded p-4">
+                    <div className="space-y-3">
+                      <Skeleton className="h-4 w-40" />
+                      {[0, 1, 2].map((idx) => (
+                        <div className="flex justify-between" key={idx}>
+                          <Skeleton className="h-3 w-24" delay={idx * 90} />
+                          <Skeleton className="h-3 w-16" delay={idx * 90 + 70} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
                 <div className="p-4">
                    <h3 className="text-[13px] font-bold text-on-surface uppercase tracking-wide pb-3 border-b border-outline-variant/40 mb-3">

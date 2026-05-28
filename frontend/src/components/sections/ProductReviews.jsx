@@ -185,7 +185,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
             className="w-full h-12 bg-primary text-white rounded-full font-label text-[11px] uppercase tracking-widest font-bold hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {submitting ? (
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
             ) : (
               <>
                 <span className="material-symbols-outlined text-[16px]">rate_review</span>
@@ -281,7 +281,7 @@ export function ProductReviews({ productId, productTitle }) {
     if (!eligibility) {
       return (
         <div className="w-8 h-8 flex items-center justify-center bg-stone-100 rounded-full border border-black/5 opacity-75 animate-fade-in">
-          <span className="w-4 h-4 border-2 border-stone-300 border-t-stone-500 rounded-full animate-spin" />
+          <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
         </div>
       );
     }
@@ -385,17 +385,17 @@ export function ProductReviews({ productId, productTitle }) {
       {loading && reviews.length === 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-[20px] border border-black/5 p-5 animate-pulse space-y-3">
+            <div key={i} className="skeleton-box bg-white rounded-[20px] border border-black/5 p-5 space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-neutral-100" />
+                <div className="w-10 h-10 rounded-full bg-neutral-100/50" />
                 <div className="space-y-1.5">
-                  <div className="h-3 w-24 bg-neutral-100 rounded" />
-                  <div className="h-2 w-16 bg-neutral-100 rounded" />
+                  <div className="h-3 w-24 bg-neutral-100/50 rounded" />
+                  <div className="h-2 w-16 bg-neutral-100/50 rounded" />
                 </div>
               </div>
-              <div className="h-2.5 w-20 bg-neutral-100 rounded" />
-              <div className="h-3 w-full bg-neutral-100 rounded" />
-              <div className="h-3 w-4/5 bg-neutral-100 rounded" />
+              <div className="h-2.5 w-20 bg-neutral-100/50 rounded" />
+              <div className="h-3 w-full bg-neutral-100/50 rounded" />
+              <div className="h-3 w-4/5 bg-neutral-100/50 rounded" />
             </div>
           ))}
         </div>
@@ -419,9 +419,9 @@ export function ProductReviews({ productId, productTitle }) {
               <button
                 onClick={() => fetchReviews(page + 1)}
                 disabled={loading}
-                className="px-8 py-3 rounded-full border border-black/10 font-label text-[11px] uppercase tracking-widest font-bold text-black/60 hover:border-primary hover:text-primary transition-all"
+                className="px-8 py-3 rounded-full border border-black/10 font-label text-[11px] uppercase tracking-widest font-bold text-black/60 hover:border-primary hover:text-primary transition-all flex items-center justify-center"
               >
-                {loading ? "Loading..." : "Load More Reviews"}
+                {loading ? <div className="skeleton-box inline-block w-24 h-4 rounded-full bg-current/20 border-transparent" /> : "Load More Reviews"}
               </button>
             </div>
           )}

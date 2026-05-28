@@ -1,98 +1,57 @@
-import { useState, useEffect, useCallback } from 'react';
-import { orderService, userService } from '../services/domainServices';
-import logger from '../utils/logger';
-
-const CACHE_TTL_MS = 30_000;
-
-let inflightPromise = null;
-let cachedPayload = null;
-let cacheTimestamp = 0;
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { orderService } from '../services/domainServices';
+import { useUserAddresses, useRecentlyViewed } from './useUserQueries';
 
 /**
- * Fetches orders, addresses, and recently viewed in parallel with in-flight deduplication.
+ * useDashboardData - retrieves orders, addresses, and recently viewed in parallel using TanStack Query.
  */
 export function useDashboardData(userId) {
-  const [orders, setOrders] = useState([]);
-  const [addresses, setAddresses] = useState([]);
-  const [recentlyViewed, setRecentlyViewed] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
 
-  const load = useCallback(async (force = false) => {
-    if (!userId) return;
+  // Queries
+  const ordersQuery = useQuery({
+    queryKey: ['dashboard', 'orders', userId],
+    queryFn: async () => {
+      const res = await orderService.getMyOrders();
+      return res.data ?? res ?? [];
+    },
+    enabled: Boolean(userId),
+    staleTime: 30 * 1000, // 30 seconds dashboard order cache
+    gcTime: 5 * 60 * 1000,
+  });
 
-    const now = Date.now();
-    if (!force && cachedPayload && now - cacheTimestamp < CACHE_TTL_MS) {
-      setOrders(cachedPayload.orders);
-      setAddresses(cachedPayload.addresses);
-      setRecentlyViewed(cachedPayload.recentlyViewed);
-      return;
+  const addressesQuery = useUserAddresses();
+  const recentlyViewedQuery = useRecentlyViewed();
+
+  const refetch = useCallback(() => {
+    if (userId) {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'orders', userId] });
     }
-
-    if (inflightPromise && !force) {
-      try {
-        const data = await inflightPromise;
-        setOrders(data.orders);
-        setAddresses(data.addresses);
-        setRecentlyViewed(data.recentlyViewed);
-      } catch (err) {
-        logger.error('Dashboard deduped fetch failed:', err);
-      }
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    inflightPromise = Promise.all([
-      orderService.getMyOrders(),
-      userService.getAddresses(),
-      userService.getRecentlyViewed(),
-    ])
-      .then(([ordersRes, addressesRes, recentRes]) => {
-        const payload = {
-          orders: ordersRes?.data ?? ordersRes ?? [],
-          addresses: addressesRes?.data ?? addressesRes ?? [],
-          recentlyViewed: recentRes?.data ?? recentRes ?? [],
-        };
-        cachedPayload = payload;
-        cacheTimestamp = Date.now();
-        return payload;
-      })
-      .finally(() => {
-        inflightPromise = null;
-      });
-
-    try {
-      const payload = await inflightPromise;
-      setOrders(payload.orders);
-      setAddresses(payload.addresses);
-      setRecentlyViewed(payload.recentlyViewed);
-    } catch (err) {
-      logger.error('Dashboard parallel fetch failed:', err);
-      setError(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const refetch = useCallback(() => load(true), [load]);
+    queryClient.invalidateQueries({ queryKey: ['user', 'addresses'] });
+    queryClient.invalidateQueries({ queryKey: ['user', 'recentlyViewed'] });
+  }, [queryClient, userId]);
 
   return {
-    orders,
-    addresses,
-    recentlyViewed,
-    isOrdersLoading: isLoading,
-    isAddressesLoading: isLoading,
-    isLoadingRecentlyViewed: isLoading,
-    error,
+    orders: ordersQuery.data || [],
+    addresses: addressesQuery.data || [],
+    recentlyViewed: recentlyViewedQuery.data || [],
+    isOrdersLoading: ordersQuery.isLoading,
+    isAddressesLoading: addressesQuery.isLoading,
+    isLoadingRecentlyViewed: recentlyViewedQuery.isLoading,
+    error: ordersQuery.error || addressesQuery.error || recentlyViewedQuery.error,
     refetch,
-    setOrders,
-    setAddresses,
-    setRecentlyViewed,
+    // Keep setter functions for signature compatibility (unused in page but mockable)
+    setOrders: (data) => {
+      if (userId) {
+        queryClient.setQueryData(['dashboard', 'orders', userId], data);
+      }
+    },
+    setAddresses: (data) => {
+      queryClient.setQueryData(['user', 'addresses'], data);
+    },
+    setRecentlyViewed: (data) => {
+      queryClient.setQueryData(['user', 'recentlyViewed'], data);
+    },
   };
 }

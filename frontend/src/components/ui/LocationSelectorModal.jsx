@@ -458,7 +458,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
                     >
                       {isLoadingSuggestions && (
                         <div className="p-4 text-center text-xs text-black/40 flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                          <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
                           <span>Searching landmarks...</span>
                         </div>
                       )}
@@ -482,7 +482,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
               <div className="relative flex-1 rounded-[2rem] overflow-hidden border border-[#C4A87C]/20 bg-stone-100 shadow-inner h-[280px] min-h-[250px]">
                 {isMapLoading && (
                   <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-3">
-                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <div className="skeleton-box inline-block w-10 h-10 rounded-md" />
                     <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">Rendering Live Canvas...</span>
                   </div>
                 )}

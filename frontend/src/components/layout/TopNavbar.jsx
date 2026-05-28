@@ -9,6 +9,8 @@ import { adminInviteService } from "../../services/domainServices";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { useSearchOverlay } from "../../hooks/useSearchOverlay";
 import { IntelligentSearchOverlay } from "../search/IntelligentSearchOverlay";
+import { prefetchManager } from "../../utils/prefetchManager";
+import { useScrollDirection } from "../../hooks/useScrollDirection";
 // Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {
@@ -28,6 +30,8 @@ export function TopNavbar() {
   const isMobile = useMediaQuery("(max-width: 767px)");
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [hasPendingInvite, setHasPendingInvite] = useState(false);
+  
+  const { scrollDirection, isAtTop } = useScrollDirection();
 
   const adminRoles = ['owner', 'super_admin', 'main_admin', 'moderator', 'support_admin', 'support', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
 
@@ -100,13 +104,6 @@ export function TopNavbar() {
     }
   }, [isOpen, isMobile]);
 
-  // Premium glass floating behavior on scroll
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 30);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   // Purely dynamic, CMS-driven links. No hardcoded fallbacks.
   const dbLinks = navigation?.mainLinks?.filter(link => link.isVisible).map(link => ({
     label: link.label,
@@ -124,11 +121,11 @@ export function TopNavbar() {
     <>
       <nav
         className={`top-navbar fixed top-0 w-full transition-all duration-500 ${
-          scrolled
+          !isAtTop
             ? "bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-3"
             : "bg-surface/90 backdrop-blur-md py-4 border-b border-outline-variant/10"
-        }`}
-        style={{ zIndex: 'var(--z-sticky)', boxShadow: scrolled ? 'var(--shadow-md)' : 'var(--shadow-xs)' }}
+        } ${!isAtTop && scrollDirection === "down" ? "-translate-y-full" : "translate-y-0"}`}
+        style={{ zIndex: 'var(--z-sticky)', boxShadow: !isAtTop ? 'var(--shadow-md)' : 'var(--shadow-xs)' }}
       >
         <h1 className="sr-only">Siri Arts & Crafts</h1>
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
@@ -294,6 +291,7 @@ export function TopNavbar() {
 
                 <button
                   id="cart-trigger-desktop"
+                  onMouseEnter={() => prefetchManager.prefetchRoute("/cart", { kind: "hover" })}
                   onClick={() => setIsCartOpen(true)}
                   className="text-on-surface hover:text-[#d4af37] transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#d4af37]/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
                   aria-label="View Shopping Bag"
@@ -330,6 +328,7 @@ export function TopNavbar() {
                   <div className="relative hidden md:block">
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                      onMouseEnter={() => prefetchManager.prefetchRoute("/dashboard", { kind: "hover" })}
                       className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square min-h-0"
                       aria-label="User Dropdown"
                     >
@@ -427,6 +426,7 @@ export function TopNavbar() {
               </div>
 
               <button
+                onMouseEnter={() => prefetchManager.prefetchRoute("/collections", { kind: "hover" })}
                 onClick={() => setIsOpen(true)}
                 className="md:hidden flex flex-col items-center justify-center gap-[4.5px] w-9 h-9 rounded-full hover:bg-primary-container/10 hover:text-primary transition-all duration-300 hover:scale-110 cursor-pointer text-on-surface min-h-0 icon-button-touch-target"
                 aria-label="Open navigation menu"

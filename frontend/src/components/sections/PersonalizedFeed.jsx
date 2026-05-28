@@ -3,10 +3,9 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SectionWrapper } from '../layout';
 import { ProductCard } from '../ui/ProductCard';
-import { RecommendationCarousel } from '../ui/RecommendationCarousel'; // Fallback if needed
 import { MandalaElement } from "../ui/MandalaElement";
 import { MandalaArtDecor } from "../ui/MandalaArtDecor";
-import { recommendationService } from '../../services/recommendationService';
+import { usePersonalizedFeed } from '../../hooks/useRecommendationQueries';
 import { useAuth } from '../../context/AuthContext';
 import logger from '../../utils/logger';
 
@@ -17,35 +16,35 @@ export function PersonalizedFeed({
   limit = 10
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState('');
   const scrollRef = useRef(null);
   const containerRef = useRef(null);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const [shouldFetch, setShouldFetch] = useState(false);
 
+  // Progressive rendering: defer execution slightly to allow main page content to render first
   useEffect(() => {
-    const fetchFeed = async () => {
-      try {
-        const res = await recommendationService.getFeed({
-          page: 'homepage',
-          limit,
-          offset: 0,
-        });
+    const timer = setTimeout(() => {
+      setShouldFetch(true);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
 
-        if (res?.success && res.data?.items) {
-          setItems(res.data.items);
-          setSource(res.data.source || 'recommended');
-        }
-      } catch (err) {
-        logger.error('Failed to fetch personalized feed', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { data: feedData, isPending } = usePersonalizedFeed({
+    page: 'homepage',
+    limit,
+    offset: 0,
+  }, { enabled: shouldFetch });
 
-    fetchFeed();
-  }, [isAuthenticated, limit]);
+  const items = feedData?.items || feedData || [];
+  const source = feedData?.source || 'recommended';
+
+  // Only show loading if we started fetching and have no items cached
+  const loading = shouldFetch && isPending && items.length === 0;
+
+  if (!shouldFetch) {
+    // Return empty placeholder with correct height to prevent layout shifts
+    return <div className="py-16 min-h-[400px] bg-surface-bright" />;
+  }
 
   if (!loading && items.length === 0) return null;
 
@@ -185,7 +184,17 @@ export function PersonalizedFeed({
         <AnimatePresence>
           {loading ? (
              <div className="absolute w-[75vw] sm:w-[65vw] h-full flex items-center justify-center">
-                <div className="w-full aspect-[3/4] bg-surface-container-high rounded-[20px] animate-pulse" />
+                <div className="w-full aspect-[3/4] p-4 bg-white/40 backdrop-blur-md border border-white/20 rounded-[24px] shadow-sm flex flex-col gap-4">
+                  <div className="relative overflow-hidden aspect-[3/4] w-full bg-stone-100 rounded-[18px]">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
+                  </div>
+                  <div className="relative overflow-hidden h-4 w-1/4 bg-stone-100 rounded-full">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
+                  </div>
+                  <div className="relative overflow-hidden h-6 w-3/4 bg-stone-100 rounded-lg">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
+                  </div>
+                </div>
              </div>
           ) : (
             items.map((item, idx) => {
@@ -234,35 +243,59 @@ export function PersonalizedFeed({
       </div>
 
       {/* Desktop Horizontal Scroll */}
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="hidden md:flex gap-9 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-11 -mx-[var(--spacing-margin-desktop)] px-[var(--spacing-margin-desktop)] relative z-10"
-      >
-        {!loading && items.map((product, idx) => (
-          <motion.div
-            key={product._id || product.id}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{
-              type: "spring",
-              stiffness: 70,
-              damping: 15,
-              delay: idx * 0.05,
-            }}
-            className="min-w-[360px] xl:min-w-[405px] snap-start"
-          >
-            <ProductCard
-              {...product}
-              id={product.id || product._id}
-              imageSrc={product.imageSrc || product.image}
-              price={product.price || product.basePrice}
-              eager={idx < 4}
-            />
-          </motion.div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="hidden md:flex gap-9 pb-11 overflow-x-auto no-scrollbar -mx-[var(--spacing-margin-desktop)] px-[var(--spacing-margin-desktop)]">
+          {[...Array(4)].map((_, i) => (
+            <div 
+              key={i} 
+              className="min-w-[360px] xl:min-w-[405px] flex flex-col gap-4 p-4 rounded-[28px] bg-white/40 backdrop-blur-md border border-white/20 shadow-sm"
+            >
+              <div className="relative overflow-hidden aspect-[3/4] w-full bg-stone-100 rounded-[20px]">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
+              </div>
+              <div className="relative overflow-hidden h-4 w-1/4 bg-stone-100 rounded-full">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
+              </div>
+              <div className="relative overflow-hidden h-6 w-3/4 bg-stone-100 rounded-lg">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
+              </div>
+              <div className="relative overflow-hidden h-5 w-1/3 bg-stone-100 rounded-md">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="hidden md:flex gap-9 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-11 -mx-[var(--spacing-margin-desktop)] px-[var(--spacing-margin-desktop)] relative z-10"
+        >
+          {items.map((product, idx) => (
+            <motion.div
+              key={product._id || product.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{
+                type: "spring",
+                stiffness: 70,
+                damping: 15,
+                delay: idx * 0.05,
+              }}
+              className="min-w-[360px] xl:min-w-[405px] snap-start"
+            >
+              <ProductCard
+                {...product}
+                id={product.id || product._id}
+                imageSrc={product.imageSrc || product.image}
+                price={product.price || product.basePrice}
+                eager={idx < 4}
+              />
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Mobile Scroll Indicators & CTA */}
       <div className="md:hidden mt-4 flex flex-col items-center gap-6 relative z-20">

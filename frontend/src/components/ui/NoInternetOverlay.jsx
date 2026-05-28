@@ -210,7 +210,7 @@ export function NoInternetOverlay() {
                 }`}
               >
                 <RefreshCw 
-                  className={`w-4 h-4 tracking-widest ${isVerifying ? "animate-spin" : ""}`} 
+                  className={`w-4 h-4 tracking-widest `} 
                   strokeWidth={2}
                 />
                 {isVerifying ? "Verifying..." : "Verify Connection"}

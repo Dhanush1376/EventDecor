@@ -110,7 +110,7 @@ export default function ProfileTab({
             className="btn-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[10px] inline-flex items-center gap-2 cursor-pointer shadow-md"
           >
             {isUpdatingProfile ? (
-              <div className="w-3.5 h-3.5 border-2 border-surface/20 border-t-surface rounded-full animate-spin" />
+              <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
             ) : (
               <>
                 <span className="material-symbols-outlined text-[13px]">save</span>

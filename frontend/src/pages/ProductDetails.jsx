@@ -6,22 +6,28 @@ import { ProductGallery } from "../components/ui/ProductGallery";
 import { ProductInfo } from "../components/ui/ProductInfo";
 import { Skeleton, ProductDetailSkeleton } from "../components/ui/Skeleton";
 
-import { RecommendationSystem } from "../components/sections/RecommendationSystem";
 import { ProductReviews } from "../components/sections/ProductReviews";
 import { SEO } from "../components/seo/SEO";
 import { MandalaElement } from "../components/ui/MandalaElement";
 import { productService, userService } from "../services/domainServices";
-import { useApi } from "../hooks/useApi";
+import { useProduct } from "../hooks/useProductQueries";
 import { useAuth } from "../context/AuthContext";
 import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
+import { useQueryClient } from "@tanstack/react-query";
+import recommendationService from "../services/recommendationService";
 
 import logger from '../utils/logger';
+
+const RecommendationSystem = React.lazy(() =>
+  import("../components/sections/RecommendationSystem").then((m) => ({ default: m.RecommendationSystem }))
+);
 export function ProductDetails() {
   const { id } = useParams();
   const atcRef = useRef(null);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const { data: product, loading, error, request: fetchProduct } = useApi(productService.getById);
+  const { data: product, isLoading: loading, error } = useProduct(id);
 
   // Track product view, dwell time, and scroll depth
   useRecommendationTracker({
@@ -32,11 +38,28 @@ export function ProductDetails() {
     tags: product?.tags,
   });
 
+  // Prefetch recommendations to prevent waterfalls
   useEffect(() => {
-    if (id) {
-      fetchProduct(id);
+    if (product) {
+      const productId = product._id || product.id;
+      // Similar
+      queryClient.prefetchQuery({
+        queryKey: ['recommendations', 'similar', 'product', productId, 8],
+        queryFn: async () => {
+          const res = await recommendationService.getSimilar('product', productId, 8);
+          return res.success ? res.data : res;
+        }
+      }).catch(() => {});
+      // Also viewed
+      queryClient.prefetchQuery({
+        queryKey: ['recommendations', 'alsoViewed', productId, 'product', 8],
+        queryFn: async () => {
+          const res = await recommendationService.getAlsoViewed(productId, 'product', 8);
+          return res.success ? res.data : res;
+        }
+      }).catch(() => {});
     }
-  }, [id, fetchProduct]);
+  }, [product, queryClient]);
 
   useEffect(() => {
     if (product && user) {
@@ -156,7 +179,15 @@ export function ProductDetails() {
         productTitle={product.title}
       />
 
-      <RecommendationSystem category={product.category} currentProductId={product._id || product.id} />
+      <React.Suspense
+        fallback={
+          <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8">
+            <Skeleton className="h-44 w-full rounded-2xl" />
+          </div>
+        }
+      >
+        <RecommendationSystem category={product.category} currentProductId={product._id || product.id} />
+      </React.Suspense>
     </div>
   );
 }

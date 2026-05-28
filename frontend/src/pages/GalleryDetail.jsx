@@ -8,6 +8,8 @@ import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { ShareButton } from "../components/ui/ShareButton";
 import { galleryService, productService } from "../services/domainServices";
 import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
+import { CloudinaryImage } from "../components/ui/CloudinaryImage";
+
 
 import logger from '../utils/logger';
 export function GalleryDetail() {
@@ -83,7 +85,7 @@ export function GalleryDetail() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="skeleton-box inline-block w-12 h-12 rounded-md" />
       </div>
     );
   }
@@ -227,14 +229,16 @@ export function GalleryDetail() {
                     poster={item.image}
                   />
                 ) : (
-                  <img
-                    onError={handleImageError}
+                  <CloudinaryImage
                     src={item.image}
                     alt={item.title}
                     className="w-full h-auto object-cover max-h-[85vh] md:max-h-[55vh] mx-auto block"
+                    containerClassName="w-full h-auto max-h-[85vh] md:max-h-[55vh] mx-auto block"
                     loading="eager"
+                    eager={true}
                     width={1200}
                     height={800}
+                    sizes="(max-width: 1024px) 100vw, 75vw"
                   />
                 )}
 
@@ -362,14 +366,15 @@ export function GalleryDetail() {
                   className="block group mb-4"
                 >
                   <div className="relative rounded-[20px] overflow-hidden bg-white shadow-lg aspect-[3/4]">
-                    <img
-                      onError={handleImageError}
+                    <CloudinaryImage
                       src={sim.image}
                       alt={sim.title}
                       className="w-full h-full object-cover transition-transform duration-[1s] group-hover:scale-110"
+                      containerClassName="w-full h-full"
                       loading="lazy"
                       width={400}
                       height={533}
+                      sizes="(max-width: 640px) 50vw, 200px"
                     />
 
                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />

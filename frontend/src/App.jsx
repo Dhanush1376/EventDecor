@@ -6,8 +6,8 @@ import { AnimatePresence } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "react-hot-toast";
 
-import { SplashScreen } from "./components/ui/SplashScreen";
 import { PageLoader } from "./components/ui/PageLoader";
+import { RouteSkeleton } from "./components/ui/RouteSkeleton";
 import { CartProvider } from "./context/CartProvider";
 import { WishlistProvider } from "./context/WishlistProvider";
 import { AuthProvider } from "./context/AuthProvider";
@@ -21,12 +21,15 @@ import { PwaUpdatePrompt } from "./components/ui/PwaUpdatePrompt";
 import { SlowConnectionBanner } from "./components/ui/SlowConnectionBanner";
 import { safeSessionStorage } from "./utils/storage";
 import { GlobalTracker } from "./components/ui/GlobalTracker";
+import { NavigationOrchestrator } from "./components/ui/NavigationOrchestrator";
+import { prefetchManager } from "./utils/prefetchManager";
 import { useAuth } from "./context/AuthContext";
+import { getRouteSkeletonVariant } from "./components/ui/RouteSkeleton";
 
-function AuthGate({ children }) {
-  const { isAuthInitialized } = useAuth();
-  if (!isAuthInitialized) return <PageLoader />;
-  return children;
+function AppRouteFallback() {
+  const location = useLocation();
+  const variant = getRouteSkeletonVariant(location.pathname);
+  return <RouteSkeleton variant={variant} />;
 }
 
 // Lazy load heavy auth modal to remove it from initial load bundle
@@ -93,10 +96,13 @@ const AdminSystemUsers = lazy(() => import("./admin/pages/AdminSystemUsers").the
 const AdminCategories = lazy(() => import("./admin/pages/AdminCategories").then((m) => ({ default: m.AdminCategories })));
 const AdminConfig = lazy(() => import("./admin/pages/AdminConfig").then((m) => ({ default: m.AdminConfig })));
 const AdminLayouts = lazy(() => import("./admin/pages/AdminLayouts").then((m) => ({ default: m.AdminLayouts })));
+const AdminPolicies = lazy(() => import("./admin/pages/AdminPolicies").then((m) => ({ default: m.AdminPolicies })));
+const AdminPolicyEditor = lazy(() => import("./admin/pages/AdminPolicyEditor").then((m) => ({ default: m.AdminPolicyEditor })));
 
 // All /admin/* pages are React.lazy() — not in the storefront initial JS bundle (see npm run build:report).
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { hydrateQueryClientCache, subscribeToQueryCache } from "./utils/queryPersister";
 
 function RouteDiagnostics() {
   const location = useLocation();
@@ -110,56 +116,79 @@ function RouteDiagnostics() {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes global cache time
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
+      networkMode: 'offlineFirst',
+      refetchOnMount: true,
       refetchOnWindowFocus: false,
-      retry: 1,
+      refetchOnReconnect: true,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retry: (failureCount, error) => {
+        if (failureCount >= 3) return false;
+        const status = error?.response?.status || error?.normalized?.status;
+        if (status && [400, 401, 403, 404, 422].includes(status)) {
+          return false;
+        }
+        return true;
+      },
     },
   },
 });
 
+queryClient.setQueryDefaults(['product'], { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 30 });
+queryClient.setQueryDefaults(['products'], { staleTime: 1000 * 60 * 10, gcTime: 1000 * 60 * 60 });
+queryClient.setQueryDefaults(['cart'], { staleTime: 1000 * 30, gcTime: 1000 * 60 * 5 });
+queryClient.setQueryDefaults(['profile'], { staleTime: 1000 * 60 * 2, gcTime: 1000 * 60 * 10 });
+queryClient.setQueryDefaults(['cms'], { staleTime: 1000 * 60 * 15, gcTime: 1000 * 60 * 60 });
+queryClient.setQueryDefaults(['recommendations'], { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 30 });
+
+hydrateQueryClientCache(queryClient);
+
 function App() {
-  const [showSplash, setShowSplash] = useState(() => !safeSessionStorage.getItem("siri_splash_shown"));
   const [isMounted, setIsMounted] = useState(false);
 
   React.useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-    safeSessionStorage.setItem("siri_splash_shown", "true");
-  };
+  React.useEffect(() => {
+    prefetchManager.setQueryClient(queryClient);
+  }, []);
+
+  React.useEffect(() => {
+    const unsubscribe = subscribeToQueryCache(queryClient);
+    return () => unsubscribe();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <NetworkProvider>
         <ConfigProvider>
-          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-surface focus:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary">
-            Skip to main content
-          </a>
+          {isMounted && (
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-surface focus:text-on-surface focus:outline-none focus:ring-2 focus:ring-primary">
+              Skip to main content
+            </a>
+          )}
           <SlowConnectionBanner />
           <HelmetProvider>
             <AuthProvider>
               <CartProvider>
                 <WishlistProvider>
-                {isMounted && <Toaster position="bottom-center" toastOptions={{ duration: 4000, style: { background: 'rgba(255, 255, 255, 0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(208, 197, 175, 0.15)', color: 'var(--color-on-surface)', fontSize: 'var(--font-size-sm)', fontFamily: 'var(--font-body)', fontWeight: '600', borderRadius: 'var(--radius-full)', padding: '12px 24px', boxShadow: 'var(--shadow-xl)' } }} />}
+                 {isMounted && <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: 'rgba(255, 255, 255, 0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(208, 197, 175, 0.15)', color: 'var(--color-on-surface)', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: '600', borderRadius: 'var(--radius-full)', padding: '8px 16px', boxShadow: 'var(--shadow-xl)' } }} />}
 
-                <AnimatePresence>
-                  {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
-                </AnimatePresence>
                 {isMounted && (
                   <Suspense fallback={null}>
                     <AuthModal />
                   </Suspense>
                 )}
                 {isMounted && <AdminInviteModal />}
-                <AuthGate>
                   <Router>
                     <RouteDiagnostics />
+                    <NavigationOrchestrator />
                     <GlobalTracker />
                     <PwaUpdatePrompt />
                     <ErrorBoundary>
-                      <Suspense fallback={<PageLoader />}>
+                      <Suspense fallback={<AppRouteFallback />}>
                         <Routes>
                           <Route element={<MainLayout />}>
                             <Route path="/" element={<Home />} />
@@ -227,16 +256,17 @@ function App() {
                             <Route path="team" element={<AdminTeam />} />
                             <Route path="system-users" element={<AdminSystemUsers />} />
                             <Route path="settings" element={<AdminSettings />} />
+                            <Route path="policies" element={<AdminPolicies />} />
+                            <Route path="policies/:id" element={<AdminPolicyEditor />} />
                           </Route>
                         </Routes>
                       </Suspense>
                     </ErrorBoundary>
                   </Router>
-                </AuthGate>
-              </WishlistProvider>
-            </CartProvider>
-          </AuthProvider>
-        </HelmetProvider>
+                </WishlistProvider>
+              </CartProvider>
+            </AuthProvider>
+          </HelmetProvider>
         </ConfigProvider>
       </NetworkProvider>
     </QueryClientProvider>

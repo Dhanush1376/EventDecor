@@ -14,9 +14,12 @@ import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { LocationSelectorModal } from "../components/ui/LocationSelectorModal";
 import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
-import { RecommendationSystem } from "../components/sections/RecommendationSystem";
 
 import logger from '../utils/logger';
+
+const RecommendationSystem = React.lazy(() =>
+  import("../components/sections/RecommendationSystem").then((m) => ({ default: m.RecommendationSystem }))
+);
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -1263,7 +1266,15 @@ export function EventDetail() {
       </section>
 
       {/* Smart Recommendations */}
-      <RecommendationSystem category={event.category} currentProductId={event._id || event.id} targetType="event" />
+      <React.Suspense
+        fallback={
+          <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8">
+            <div className="h-44 w-full rounded-2xl bg-surface-container animate-pulse" />
+          </div>
+        }
+      >
+        <RecommendationSystem category={event.category} currentProductId={event._id || event.id} targetType="event" />
+      </React.Suspense>
 
       {/* 4. STICKY MOBILE PRICE CARD (Floats above mobile bottom navigation) */}
       <AnimatePresence>

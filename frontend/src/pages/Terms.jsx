@@ -6,8 +6,22 @@ import {
   MobilePolicyNav,
 } from "../components/layout/PolicySidebar";
 import { SEO } from "../components/seo/SEO";
+import { useQuery } from "@tanstack/react-query";
+import { policyService } from "../services/domainServices";
+import { createSafeHtml } from "../utils/sanitize";
+import { Skeleton } from "../components/ui";
 
 export function Terms() {
+  const { data: response, isLoading, isError } = useQuery({
+    queryKey: ['policy', 'terms-and-conditions'],
+    queryFn: () => policyService.getBySlug('terms-and-conditions'),
+  });
+
+  const terms = response?.data || {
+    title: "Terms & Conditions",
+    content: "<p>Policy content is not available.</p>",
+    updatedAt: new Date().toISOString()
+  };
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -32,11 +46,11 @@ export function Terms() {
             <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
             <span className="text-on-surface">Terms & Conditions</span>
           </nav>
-          <h2 className="text-4xl md:text-6xl lg:text-[72px] font-display font-light text-on-surface tracking-tight leading-none mb-6">
-            Terms & Conditions
+          <h2 className="text-2xl md:text-3xl font-body font-semibold text-on-surface mb-4">
+            {isLoading ? <Skeleton className="h-10 w-64" /> : terms.title}
           </h2>
           <p className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">
-            Last updated: May 15, 2026
+            {isLoading ? <Skeleton className="h-4 w-40" /> : `Last updated: ${new Date(terms.updatedAt).toLocaleDateString()}`}
           </p>
         </div>
 
@@ -47,64 +61,21 @@ export function Terms() {
 
           {/* Main Content Area - Editorial Flow */}
           <main className="lg:col-span-8 xl:col-span-7">
-            <div className="prose prose-sm md:prose-base max-w-none prose-headings:font-display prose-headings:font-normal prose-headings:tracking-tight prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-loose prose-p:font-light prose-li:text-on-surface/80 prose-li:font-light prose-li:leading-loose space-y-16">
-              
-              <section className="scroll-mt-32">
-                <h3 className="text-2xl md:text-3xl text-on-surface mb-6">
-                  1. Use of Platform
-                </h3>
-                <div className="text-[15px] text-on-surface/80 leading-[1.8] font-light space-y-4">
-                  <p>
-                    By accessing the Siri Arts & Crafts studio, you agree to
-                    utilize our services for lawful procurement and bespoke
-                    consultations only. Unauthorized scraping, imitation of design
-                    patterns, or system interference is strictly prohibited.
-                  </p>
+            <div className="prose prose-sm max-w-none prose-headings:font-body prose-headings:font-semibold prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-relaxed prose-p:font-normal prose-li:text-on-surface/80 prose-li:font-normal prose-li:leading-relaxed space-y-8">
+              {isLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-5/6" />
+                  <Skeleton className="h-6 w-4/6" />
                 </div>
-              </section>
-
-              <section className="scroll-mt-32">
-                <h3 className="text-2xl md:text-3xl text-on-surface mb-6">
-                  2. Intellectual Property
-                </h3>
-                <div className="text-[15px] text-on-surface/80 leading-[1.8] font-light space-y-4">
-                  <p>
-                    All design motifs, artisanal photographs, and product
-                    descriptions are the exclusive intellectual property of Siri
-                    Arts & Crafts. Reproduction of hand-carved patterns or digital
-                    assets without prior written consent is actionable under IP
-                    laws.
-                  </p>
-                </div>
-              </section>
-
-              <section className="scroll-mt-32">
-                <h3 className="text-2xl md:text-3xl text-on-surface mb-6">
-                  3. Bespoke Commissioning
-                </h3>
-                <div className="text-[15px] text-on-surface/80 leading-[1.8] font-light space-y-4">
-                  <p>
-                    Orders for custom-crafted items require a 50% non-refundable
-                    deposit to initiate artisan work. Variations in natural
-                    materials (wood grain, stone texture) are hallmarks of
-                    authenticity and do not qualify as defects.
-                  </p>
-                </div>
-              </section>
-
-              <section className="scroll-mt-32">
-                <h3 className="text-2xl md:text-3xl text-on-surface mb-6">
-                  4. Limitation of Liability
-                </h3>
-                <div className="text-[15px] text-on-surface/80 leading-[1.8] font-light space-y-4">
-                  <p>
-                    Siri Arts & Crafts is not liable for indirect or consequential
-                    damages arising from transit delays caused by third-party
-                    logistics or force majeure events affecting artisan workshops.
-                  </p>
-                </div>
-              </section>
-
+              ) : isError ? (
+                <div className="text-red-500">Failed to load policy. Please try again later.</div>
+              ) : (
+                <div 
+                  className="text-[13px] text-on-surface/80 leading-relaxed font-normal space-y-3"
+                  dangerouslySetInnerHTML={createSafeHtml(terms.content)}
+                />
+              )}
             </div>
 
             <div className="mt-24 pt-12 border-t border-outline-variant/20 text-[10px] text-on-surface-variant uppercase tracking-[0.2em] text-center md:text-left">

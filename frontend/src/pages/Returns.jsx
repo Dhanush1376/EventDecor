@@ -6,15 +6,21 @@ import {
   MobilePolicyNav,
 } from "../components/layout/PolicySidebar";
 import { SEO } from "../components/seo/SEO";
-import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import { useQuery } from "@tanstack/react-query";
+import { policyService } from "../services/domainServices";
 import { createSafeHtml } from "../utils/sanitize";
+import { Skeleton } from "../components/ui";
 
 export function Returns() {
-  const { policies } = useWebsiteContent();
-  const returns = policies?.returns || {
+  const { data: response, isLoading, isError } = useQuery({
+    queryKey: ['policy', 'return-policy'],
+    queryFn: () => policyService.getBySlug('return-policy'),
+  });
+
+  const returns = response?.data || {
     title: "Returns & Refunds",
-    lastUpdated: "May 15, 2026",
-    sections: []
+    content: "<p>Policy content is not available.</p>",
+    updatedAt: new Date().toISOString()
   };
   return (
     <motion.div
@@ -40,11 +46,11 @@ export function Returns() {
             <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
             <span className="text-on-surface">Returns</span>
           </nav>
-          <h2 className="text-4xl md:text-6xl lg:text-[72px] font-display font-light text-on-surface tracking-tight leading-none mb-6">
-            {returns.title}
+          <h2 className="text-2xl md:text-3xl font-body font-semibold text-on-surface mb-4">
+            {isLoading ? <Skeleton className="h-10 w-64" /> : returns.title}
           </h2>
           <p className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">
-            Last updated: {returns.lastUpdated}
+            {isLoading ? <Skeleton className="h-4 w-40" /> : `Last updated: ${new Date(returns.updatedAt).toLocaleDateString()}`}
           </p>
         </div>
 
@@ -55,20 +61,21 @@ export function Returns() {
 
           {/* Main Content Area - Editorial Flow */}
           <main className="lg:col-span-8 xl:col-span-7">
-            <div className="prose prose-sm md:prose-base max-w-none prose-headings:font-display prose-headings:font-normal prose-headings:tracking-tight prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-loose prose-p:font-light prose-li:text-on-surface/80 prose-li:font-light prose-li:leading-loose space-y-16">
-              
-              {returns.sections?.map((section, idx) => (
-                <section key={idx} className="scroll-mt-32">
-                  <h3 className="text-2xl md:text-3xl text-on-surface mb-6">
-                    {section.title}
-                  </h3>
-                  <div 
-                    className="text-[15px] text-on-surface/80 leading-[1.8] font-light space-y-4"
-                    dangerouslySetInnerHTML={createSafeHtml(section.content)}
-                  />
-                </section>
-              ))}
-
+            <div className="prose prose-sm max-w-none prose-headings:font-body prose-headings:font-semibold prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-relaxed prose-p:font-normal prose-li:text-on-surface/80 prose-li:font-normal prose-li:leading-relaxed space-y-8">
+              {isLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-5/6" />
+                  <Skeleton className="h-6 w-4/6" />
+                </div>
+              ) : isError ? (
+                <div className="text-red-500">Failed to load policy. Please try again later.</div>
+              ) : (
+                <div 
+                  className="text-[13px] text-on-surface/80 leading-relaxed font-normal space-y-3"
+                  dangerouslySetInnerHTML={createSafeHtml(returns.content)}
+                />
+              )}
             </div>
 
             <div className="mt-24 pt-12 border-t border-outline-variant/20 text-[10px] text-on-surface-variant uppercase tracking-[0.2em] text-center md:text-left">

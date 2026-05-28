@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import "./styles/globals.css";
+import "material-symbols";
 import App from "./App.jsx";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { runAppBootstrap } from "./utils/bootstrap";
@@ -26,6 +27,7 @@ if (typeof requestIdleCallback === 'function') {
 }
 
 if (!isPrerendering()) {
+  performance.mark('app-startup');
   runAppBootstrap();
   logStartupDiagnostics();
 }
@@ -81,11 +83,8 @@ const warmBackend = () => {
   });
 };
 if (!isPrerendering()) {
-  if (typeof requestIdleCallback === 'function') {
-    requestIdleCallback(warmBackend, { timeout: 3000 });
-  } else {
-    setTimeout(warmBackend, 100);
-  }
+  // Start backend warmup instantly since cold-start is the biggest latency bottleneck
+  warmBackend();
 }
 
 const rootEl = document.getElementById("root");
@@ -124,6 +123,13 @@ setTimeout(() => {
 }, 5000);
 
 if (shellEl) {
-  // Hide it immediately if rendering succeeds
-  shellEl.style.display = 'none';
+  // Smoothly fade out the app shell after React hydrates/renders
+  requestAnimationFrame(() => {
+    shellEl.style.transition = 'opacity 0.2s ease-out';
+    shellEl.style.opacity = '0';
+    setTimeout(() => {
+      shellEl.remove();
+      performance.measure('app-startup-duration', 'app-startup');
+    }, 250);
+  });
 }

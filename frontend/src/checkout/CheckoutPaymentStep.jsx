@@ -346,7 +346,7 @@ export default function CheckoutPaymentStep() {
            disabled={isButtonDisabled()}
            className="flex-1 bg-[#f26a10] hover:bg-[#d85d0d] text-white py-3 rounded text-[12px] font-extrabold uppercase tracking-widest shadow-md transition-all text-center disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
          >
-           {isProcessing && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />}
+           {isProcessing && <div className="skeleton-box inline-block w-4 h-4 rounded-md" />}
            <span>{getSubmitButtonLabel()}</span>
          </button>
       </div>

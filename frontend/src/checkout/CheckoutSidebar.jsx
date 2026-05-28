@@ -276,7 +276,7 @@ export default function CheckoutSidebar() {
                   >
                     {isProcessing ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        <div className="skeleton-box inline-block w-5 h-5 rounded-md" />
                         <span>Processing...</span>
                       </>
                     ) : (

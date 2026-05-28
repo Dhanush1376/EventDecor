@@ -488,7 +488,7 @@ export function EventBookingWizard() {
                 </div>
 
                 {loading ? (
-                  <div className="h-48 flex items-center justify-center"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
+                  <div className="h-48 flex items-center justify-center"><div className="skeleton-box inline-block w-10 h-10 rounded-md" /></div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {/* Custom Preset */}
@@ -762,7 +762,7 @@ export function EventBookingWizard() {
                       {isAiAnalyzing ? (
                         <div className="space-y-4 text-center py-6">
                           <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-                            <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin border-t-primary" />
+                            <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
                             <span className="material-symbols-outlined text-[20px] text-primary animate-pulse">insights</span>
                           </div>
                           <div className="space-y-1.5">

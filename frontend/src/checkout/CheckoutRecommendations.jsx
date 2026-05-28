@@ -6,6 +6,9 @@ import { useAuth } from "../context/AuthContext";
 import { productService } from "../services/domainServices";
 import toast from "react-hot-toast";
 import logger from "../utils/logger";
+import { RecommendationGridSkeleton } from "../components/ui/Skeleton";
+import { CloudinaryImage } from "../components/ui/CloudinaryImage";
+
 
 // Helper utilities matching ProductCard.jsx
 const parseNumericPrice = (val) => {
@@ -87,15 +90,15 @@ function CheckoutRecommendationCard({ product }) {
     >
       {/* Product Image and overlay utilities */}
       <div className="aspect-square w-full rounded-lg overflow-hidden bg-[#FAF9F6] border border-black/5 relative">
-        <img
+        <CloudinaryImage
           src={product.imageSrc}
           alt={product.title}
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=300&auto=format&fit=crop";
-          }}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          containerClassName="w-full h-full"
           loading="lazy"
+          width={300}
+          height={300}
+          sizes="(max-width: 640px) 50vw, 20vw"
         />
 
         {/* Small discount indicator */}
@@ -179,17 +182,7 @@ export default function CheckoutRecommendations({ containerClassName = "mb-4" })
   if (isLoading) {
     return (
       <div className={`bg-surface-bright border border-outline-variant/40 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-4 sm:p-5 ${containerClassName}`}>
-        {/* Loading skeleton */}
-        <div className="grid grid-cols-2 gap-3 pb-2 pt-1">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="w-full flex flex-col gap-2 animate-pulse opacity-60">
-              <div className="aspect-square w-full bg-surface-container-high rounded-xl" />
-              <div className="h-3 w-1/3 bg-surface-container-high rounded" />
-              <div className="h-4 w-3/4 bg-surface-container-high rounded" />
-              <div className="h-4 w-1/2 bg-surface-container-high rounded" />
-            </div>
-          ))}
-        </div>
+        <RecommendationGridSkeleton cards={4} />
       </div>
     );
   }

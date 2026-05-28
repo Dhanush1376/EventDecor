@@ -6,6 +6,8 @@ import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { handleImageError } from "../../utils/imageUtils";
 import toast from "react-hot-toast";
+import { CloudinaryImage } from "./CloudinaryImage";
+
 
 export const QuickViewModal = ({ isOpen, onClose, product }) => {
   const modalRef = React.useRef(null);
@@ -143,11 +145,15 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
             </button>
 
             <div className="w-full md:w-1/2 relative bg-surface-container-low overflow-hidden aspect-[4/3] md:aspect-auto h-[300px] md:h-auto shrink-0">
-              <img
-                onError={handleImageError}
+              <CloudinaryImage
                 src={product.imageSrc}
-                className="w-full h-full object-cover"
                 alt={product.title}
+                className="w-full h-full object-cover"
+                containerClassName="w-full h-full"
+                loading="eager"
+                width={600}
+                height={800}
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
               <div className="absolute top-6 left-6 md:top-8 md:left-8 flex flex-col gap-2">
                 <span className="bg-primary-container text-on-primary-container px-3 py-1 md:px-4 md:py-1.5 rounded-full font-label text-[10px] md:text-[11px] uppercase tracking-widest shadow-lg font-bold">

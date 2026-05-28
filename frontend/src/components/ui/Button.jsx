@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { EASE } from "../../constants/design-tokens";
+import { Skeleton } from "./Skeleton";
 
 /**
  * Premium button component — unified across the entire design system.
@@ -38,15 +39,15 @@ export function Button({
   };
 
   const widthClass = fullWidth ? "w-full" : "";
-  const disabledClass = loading ? "opacity-70 pointer-events-none" : "";
+  const disabledClass = loading ? "opacity-90 pointer-events-none" : "";
 
   const buttonContent = (
     <>
-      {/* Loading spinner */}
-      {loading && (
-        <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+      {loading ? (
+        <Skeleton className="h-4 w-16 !bg-current/20 !border-transparent !rounded-full" />
+      ) : (
+        <span className="relative z-10">{children}</span>
       )}
-      <span className="relative z-10">{!loading && children}</span>
       {!loading && icon && (
         <span className="material-symbols-outlined text-[18px] font-light relative z-10 group-hover:translate-x-0.5 transition-transform">
           {icon}

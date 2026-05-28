@@ -5,6 +5,7 @@ import { useWishlistState, useWishlistDispatch } from "../../context/WishlistCon
 import { useCartDispatch } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { CloudinaryImage } from "./CloudinaryImage";
+import { prefetchManager } from "../../utils/prefetchManager";
 
 export const ProductCard = React.memo(function ProductCard({
   id,
@@ -118,6 +119,7 @@ export const ProductCard = React.memo(function ProductCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ type: "spring", stiffness: 70, damping: 15 }}
+      onMouseEnter={() => prefetchManager.prefetchRoute(`/product/${productId}`, { kind: "hover", productId })}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}

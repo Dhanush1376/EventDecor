@@ -5,16 +5,16 @@ import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
 
 import { SEO } from "../components/seo/SEO";
 import { FAQAccordion } from "../components/seo/FAQAccordion";
-import fallbackFaqsData from "../content/faqs.json";
-
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
 import { SITE_URL, OG_IMAGE_URL, buildSameAsLinks } from "../constants/brandEnv";
+import { PageLoader } from "../components/ui/PageLoader";
 import {
   HeroSkeleton,
   NavigationHubSkeleton,
   BestsellerSkeleton,
   StorySkeleton,
   GallerySkeleton,
+  FAQSkeleton,
 } from "../components/ui";
 
 
@@ -24,7 +24,6 @@ export function Home() {
   useRecommendationTracker({ targetType: 'page', targetId: 'home', source: 'homepage' });
 
   const { homepageSections, seo, contact, footer, faqs, loading } = useWebsiteContent();
-  const faqsData = faqs || fallbackFaqsData;
   const siteUrl = SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
   const sameAs = buildSameAsLinks(footer?.socialLinks);
 
@@ -61,13 +60,16 @@ export function Home() {
             "Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor."
           }
           schema={homeSchema}
-          faq={faqsData.homepage}
+          faq={faqs?.homepage || []}
         />
         <HeroSkeleton />
         <NavigationHubSkeleton />
         <BestsellerSkeleton />
         <StorySkeleton />
         <GallerySkeleton />
+        <div className="bg-surface relative z-10 w-full pt-12 pb-24 rounded-b-[40px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] border-x border-b border-outline-variant/10 max-w-[1920px] mx-auto">
+          <FAQSkeleton />
+        </div>
       </>
     );
   }
@@ -85,12 +87,12 @@ export function Home() {
           "Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor."
         }
         schema={homeSchema}
-        faq={faqsData.homepage}
+        faq={faqs?.homepage || []}
       />
       <DynamicSectionRenderer pagePath="/" />
 
       <div className="bg-surface relative z-10 w-full pt-12 pb-24 rounded-b-[40px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] border-x border-b border-outline-variant/10 max-w-[1920px] mx-auto">
-        <FAQAccordion faqs={faqsData.homepage} title="Frequently Asked Questions" />
+        <FAQAccordion faqs={faqs?.homepage || []} title="Frequently Asked Questions" />
       </div>
     </>
   );

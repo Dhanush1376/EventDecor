@@ -133,6 +133,7 @@
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
     overflow-x: clip;
+    background: var(--color-surface);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -160,6 +161,11 @@
     overflow-x: clip;
     font-family: var(--font-body);
     font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  #root {
+    min-height: 100vh;
+    background: var(--color-surface);
   }
 
   *,
@@ -253,7 +259,13 @@
     /* Box shadow is kept for accessibility focus */
   }
 
-  /* Disable focus box shadow/border for the premium search portal input to prevent square box overlays */
+  /* Disable focus box shadow/border for all search inputs/portals to prevent square box overlays */
+  input[type="search"]:focus,
+  input[type="search"]:focus-visible,
+  input[placeholder*="Search"]:focus,
+  input[placeholder*="Search"]:focus-visible,
+  input[placeholder*="search"]:focus,
+  input[placeholder*="search"]:focus-visible,
   input.search-portal-input:focus,
   input.search-portal-input:focus-visible {
     outline: none !important;
@@ -281,6 +293,48 @@
       "wght" 400,
       "GRAD" 0,
       "opsz" 24;
+  }
+
+  /* Shimmer placeholder state to prevent FOUT and layout shifts during hydration/loading */
+  html.fonts-loading .material-symbols-outlined {
+    color: transparent !important;
+    background-color: rgba(115, 92, 0, 0.08) !important;
+    border-radius: 6px !important;
+    width: 1em !important;
+    height: 1em !important;
+    overflow: hidden !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    white-space: nowrap !important;
+    text-shadow: none !important;
+    user-select: none !important;
+    /* BULLETPROOF TEXT HIDING: Push the raw text completely out of the box */
+    text-indent: 100% !important;
+  }
+
+  html.fonts-loading .material-symbols-outlined::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    transform: translateX(-100%) !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent) !important;
+    animation: font-shimmer 1.5s infinite !important;
+  }
+
+  /* Failure state to prevent leaking raw ligature names if the user is offline/slow network */
+  html.fonts-failed .material-symbols-outlined {
+    color: transparent !important;
+    background-color: rgba(115, 92, 0, 0.05) !important;
+    border-radius: 6px !important;
+    width: 1em !important;
+    height: 1em !important;
+    overflow: hidden !important;
+    vertical-align: middle !important;
+    user-select: none !important;
+    text-shadow: none !important;
+    /* BULLETPROOF TEXT HIDING */
+    text-indent: 100% !important;
+    white-space: nowrap !important;
   }
 }
 
@@ -473,6 +527,7 @@
   .skeleton-box {
     @apply relative overflow-hidden bg-surface-container-high;
     border-radius: var(--radius-lg);
+    contain: layout paint;
   }
 
   .skeleton-box::after {
@@ -483,6 +538,7 @@
         rgba(255, 255, 255, 0.6),
         transparent);
     animation: skeleton-shimmer 2s infinite;
+    will-change: transform;
   }
 }
 
@@ -571,6 +627,7 @@
       rgba(212, 175, 55, 0.15),
       transparent);
   animation: shimmer 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: transform;
 }
 
 @keyframes shimmer {
@@ -580,6 +637,15 @@
 
   100% {
     transform: translateX(100%);
+  }
+}
+
+@keyframes nav-progress-shimmer {
+  0% {
+    transform: translateX(-65%);
+  }
+  100% {
+    transform: translateX(65%);
   }
 }
 
@@ -875,4 +941,30 @@ body.filters-open img[src*="mandala"] {
   opacity: 0 !important;
   pointer-events: none !important;
   transition: opacity 0.2s ease-out !important;
+}
+
+/* ─── Admin Focus Colors Override ─── */
+.admin-section-root input:focus,
+.admin-section-root input:focus-visible,
+.admin-section-root textarea:focus,
+.admin-section-root textarea:focus-visible,
+.admin-section-root select:focus,
+.admin-section-root select:focus-visible,
+.admin-section-root [type="text"]:focus,
+.admin-section-root [type="text"]:focus-visible,
+.admin-section-root [type="number"]:focus,
+.admin-section-root [type="number"]:focus-visible,
+.admin-section-root [type="email"]:focus,
+.admin-section-root [type="email"]:focus-visible,
+.admin-section-root [type="url"]:focus,
+.admin-section-root [type="url"]:focus-visible,
+.admin-section-root [type="password"]:focus,
+.admin-section-root [type="password"]:focus-visible,
+.admin-section-root [type="search"]:focus,
+.admin-section-root [type="search"]:focus-visible,
+.admin-section-root [type="tel"]:focus,
+.admin-section-root [type="tel"]:focus-visible {
+  border-color: var(--admin-accent) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+  outline: none !important;
 }

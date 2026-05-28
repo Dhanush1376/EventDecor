@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
+import { SearchSuggestionsSkeleton } from "../ui/Skeleton";
 
 /**
  * IntelligentSearchOverlay — premium luxury search portal experience.
@@ -155,11 +156,6 @@ export function IntelligentSearchOverlay({
                   aria-controls="search-suggestions-list"
                 />
 
-                {/* Loading spinner */}
-                {loading && (
-                  <div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin flex-shrink-0" />
-                )}
-
                 {/* Clear button */}
                 {query && !loading && (
                   <button
@@ -225,6 +221,8 @@ export function IntelligentSearchOverlay({
                     </span>
                   </div>
                 )}
+
+                {loading && query.trim().length >= 2 && <SearchSuggestionsSkeleton />}
 
                 {/* ── Suggestions ── */}
                 {showSuggestions && (

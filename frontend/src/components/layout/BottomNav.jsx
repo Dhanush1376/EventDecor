@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { prefetchManager } from "../../utils/prefetchManager";
 
 export function BottomNav() {
   const location = useLocation();
@@ -42,6 +43,7 @@ export function BottomNav() {
           >
             {item.isCart ? (
               <button
+                onMouseEnter={() => prefetchManager.prefetchRoute("/cart", { kind: "hover" })}
                 onClick={() => setIsCartOpen(true)}
                 aria-label="Open shopping bag"
                 className="relative flex flex-col items-center justify-center w-12 h-12 group cursor-pointer active:scale-[0.96] transition-transform"
@@ -60,6 +62,7 @@ export function BottomNav() {
             ) : (
               <Link
                 to={item.path}
+                onMouseEnter={() => prefetchManager.prefetchRoute(item.path, { kind: "hover" })}
                 aria-label={`Navigate to ${item.label}`}
                 className="flex flex-col items-center justify-center w-12 h-12 group active:scale-[0.96] transition-transform cursor-pointer"
               >

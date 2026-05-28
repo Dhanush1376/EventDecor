@@ -160,7 +160,7 @@ export function AdminInviteModal() {
                   className="flex-1 h-12 bg-primary text-white rounded-full flex items-center justify-center gap-2 font-bold text-[12px] uppercase tracking-wider hover:bg-[#0F172A] dark:hover:bg-white dark:hover:text-black transition-all shadow-md shadow-primary/10 disabled:opacity-40 cursor-pointer"
                 >
                   {submitting ? (
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-[16px]">how_to_reg</span>

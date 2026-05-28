@@ -208,6 +208,16 @@
     </image:image>
   </url>
   <url>
+    <loc>http://localhost:3000/gallery/6a0c781bb048b5d5827cdf8a</loc>
+    <lastmod>2026-05-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://i.pinimg.com/736x/35/6a/23/356a2307927067b644d13761ed953f77.jpg</image:loc>
+      <image:title>Pearl Pooja Set</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>http://localhost:3000/gallery/6a0d5fc7c3d372d183e2958a</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>weekly</changefreq>
@@ -225,16 +235,6 @@
     <image:image>
       <image:loc>https://i1-c.pinimg.com/1200x/47/4b/1a/474b1ab17dbe517a24e6e3686b55400d.jpg</image:loc>
       <image:title>Jute Jewelry Cart</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>http://localhost:3000/gallery/6a0c781bb048b5d5827cdf8a</loc>
-    <lastmod>2026-05-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://i.pinimg.com/736x/35/6a/23/356a2307927067b644d13761ed953f77.jpg</image:loc>
-      <image:title>Pearl Pooja Set</image:title>
     </image:image>
   </url>
   <url>

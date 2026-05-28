@@ -1,144 +1,72 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductCard } from "../ui/ProductCard";
-import { recommendationService } from "../../services/recommendationService";
-import { userService } from "../../services/domainServices";
+import { RecommendationSkeleton } from "../ui/Skeleton";
+import { 
+  useSimilarRecommendations, 
+  useCompleteSetup, 
+  useAlsoViewed 
+} from "../../hooks/useRecommendationQueries";
+import { useRecentlyViewed } from "../../hooks/useUserQueries";
 import { useAuth } from "../../context/AuthContext";
 
-import logger from '../../utils/logger';
-
-const isCanceledRequest = (err) =>
-  err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED' || err?.message === 'canceled';
-
-export function RecommendationSystem({ category, currentProductId, targetType = 'product', hideHeader = false, compact = false, horizontalScroll = false }) {
+export function RecommendationSystem({ 
+  category, 
+  currentProductId, 
+  targetType = 'product', 
+  hideHeader = false, 
+  compact = false, 
+  horizontalScroll = false 
+}) {
   const { isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState("similar");
-  const [similarList, setSimilarList] = useState([]);
-  const [completeSetupList, setCompleteSetupList] = useState([]);
-  const [alsoViewedList, setAlsoViewedList] = useState([]);
-  const [recentlyViewedList, setRecentlyViewedList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [shouldFetch, setShouldFetch] = useState(false);
 
+  // Progressive rendering: defer execution slightly to allow main page content to render first
   useEffect(() => {
-    const controller = new AbortController();
-    let isMounted = true;
+    const timer = setTimeout(() => {
+      setShouldFetch(true);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
 
-    const fetchAll = async () => {
-      setLoading(true);
+  const similarQuery = useSimilarRecommendations(targetType, currentProductId, 8, { enabled: shouldFetch });
+  const completeQuery = useCompleteSetup(currentProductId, 8, { enabled: shouldFetch });
+  const alsoViewedQuery = useAlsoViewed(currentProductId, targetType, 8, { enabled: shouldFetch });
+  const recentlyViewedQuery = useRecentlyViewed();
 
-      try {
-        const promises = [];
+  const similarList = similarQuery.data?.items || similarQuery.data || [];
+  const completeSetupList = completeQuery.data?.items || completeQuery.data || [];
+  const alsoViewedList = alsoViewedQuery.data?.items || alsoViewedQuery.data || [];
 
-        if (currentProductId) {
-          promises.push(
-            recommendationService.getSimilar(targetType, currentProductId, 8, { signal: controller.signal })
-              .then((res) => {
-                if (isMounted && res?.success && res.data?.items) {
-                  setSimilarList(res.data.items);
-                }
-              })
-              .catch((err) => {
-                if (!isCanceledRequest(err)) logger.warn("Failed to fetch similar items", err);
-              })
-          );
+  const recentlyViewedList = useMemo(() => {
+    if (!isAuthenticated || !recentlyViewedQuery.data) return [];
+    const list = recentlyViewedQuery.data.data || recentlyViewedQuery.data.items || (Array.isArray(recentlyViewedQuery.data) ? recentlyViewedQuery.data : []);
+    return list
+      .filter((item) => item.product)
+      .map((item) => ({
+        id: item.product._id || item.product.id,
+        _id: item.product._id || item.product.id,
+        title: item.product.title,
+        price: item.product.price,
+        oldPrice: item.product.oldPrice,
+        imageSrc: item.product.imageSrc,
+        category: item.product.category,
+        rating: item.product.rating || 4.8,
+        slug: item.product.slug,
+      }))
+      .filter((p) => p.id !== currentProductId)
+      .slice(0, 8);
+  }, [recentlyViewedQuery.data, isAuthenticated, currentProductId]);
 
-          if (targetType === 'product') {
-            promises.push(
-              recommendationService.getCompleteSetup(currentProductId, 8, { signal: controller.signal })
-                .then((res) => {
-                  if (isMounted && res?.success && res.data?.items) {
-                    setCompleteSetupList(res.data.items);
-                  }
-                })
-                .catch((err) => {
-                  if (!isCanceledRequest(err)) logger.warn("Failed to fetch complementary items", err);
-                })
-            );
-          }
-
-          promises.push(
-            recommendationService.getAlsoViewed(currentProductId, targetType, 8, { signal: controller.signal })
-              .then((res) => {
-                if (isMounted && res?.success && res.data?.items) {
-                  setAlsoViewedList(res.data.items);
-                }
-              })
-              .catch((err) => {
-                if (!isCanceledRequest(err)) logger.warn("Failed to fetch also-viewed items", err);
-              })
-          );
-        }
-
-        if (isAuthenticated) {
-          promises.push(
-            userService.getRecentlyViewed()
-              .then((res) => {
-                if (isMounted && res.success && res.data) {
-                  const list = res.data.data || res.data.items || (Array.isArray(res.data) ? res.data : []);
-                  const formatted = list
-                    .filter((item) => item.product)
-                    .map((item) => ({
-                      id: item.product._id || item.product.id,
-                      _id: item.product._id || item.product.id,
-                      title: item.product.title,
-                      price: item.product.price,
-                      oldPrice: item.product.oldPrice,
-                      imageSrc: item.product.imageSrc,
-                      category: item.product.category,
-                      rating: item.product.rating || 4.8,
-                      slug: item.product.slug,
-                    }))
-                    .filter((p) => p.id !== currentProductId);
-                  setRecentlyViewedList(formatted.slice(0, 8));
-                }
-              })
-              .catch((err) => logger.warn("Failed to fetch recently viewed", err))
-          );
-        }
-
-        await Promise.allSettled(promises);
-      } catch (err) {
-        logger.warn("Failed to fetch recommendations", err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    setSimilarList([]);
-    setCompleteSetupList([]);
-    setAlsoViewedList([]);
-    setRecentlyViewedList([]);
-    fetchAll();
-
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [category, currentProductId, isAuthenticated, targetType]);
-
-  const tabs = [];
-
-  if (similarList.length > 0) {
-    tabs.push({ key: 'similar', label: 'Inspired By Your Style', icon: 'style', count: similarList.length });
-  }
-  if (completeSetupList.length > 0) {
-    tabs.push({ key: 'complete', label: 'Complete the Setup', icon: 'add_circle', count: completeSetupList.length });
-  }
-  if (alsoViewedList.length > 0) {
-    tabs.push({ key: 'alsoViewed', label: 'Other Designer Picks', icon: 'group', count: alsoViewedList.length });
-  }
-  if (recentlyViewedList.length > 0) {
-    tabs.push({ key: 'recent', label: 'Recently Explored', icon: 'history', count: recentlyViewedList.length });
-  }
-
-  if (!loading && tabs.length === 0) {
-    return null;
-  }
-
-  const validTab = tabs.find((t) => t.key === activeTab) ? activeTab : tabs[0]?.key || 'similar';
+  // Determine if we should show the loading skeleton
+  // We only show loading if we have started fetching AND we don't have any cached placeholder data
+  const loading = shouldFetch && (
+    (similarQuery.isPending && similarList.length === 0) ||
+    (completeQuery.isPending && completeSetupList.length === 0) ||
+    (alsoViewedQuery.isPending && alsoViewedList.length === 0)
+  );
 
   const getActiveList = () => {
-    // Combine lists and remove duplicates, or just use the first non-empty list.
     const combined = [...similarList, ...completeSetupList, ...alsoViewedList, ...recentlyViewedList];
     const uniqueIds = new Set();
     const uniqueList = [];
@@ -149,19 +77,37 @@ export function RecommendationSystem({ category, currentProductId, targetType = 
         uniqueList.push(item);
       }
     }
-    return uniqueList.slice(0, 16); // Increased to 16 so "the rest" can show up below
+    return uniqueList.slice(0, 16);
   };
 
   const activeList = getActiveList();
 
+  if (!shouldFetch) {
+    // Return empty placeholder with correct height to prevent layout shifts
+    return <div className="py-8 min-h-[300px] bg-transparent" />;
+  }
+
+  if (!loading && activeList.length === 0) {
+    return null;
+  }
+
   return (
-    <section className={`py-8 bg-transparent relative overflow-hidden`}>
+    <section className="py-12 bg-transparent relative overflow-hidden">
+      {/* Subtle Glow Accent */}
+      <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
+
       <div className="max-w-max-width mx-auto px-4 md:px-6 lg:px-8 relative z-10">
-        <div className="mb-6">
-          <h3 className="font-body text-lg md:text-xl text-stone-800 font-bold tracking-tight">
-            You May Also Like
-          </h3>
-        </div>
+        {!hideHeader && (
+          <div className="mb-8 flex flex-col items-center md:items-start">
+            <span className="font-label text-[10px] text-primary uppercase tracking-[0.3em] font-semibold mb-2">
+              Artisan Curation
+            </span>
+            <h3 className="font-headline text-2xl md:text-3xl text-on-surface leading-tight tracking-tight">
+              You May Also Like
+            </h3>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {loading ? (
             <motion.div
@@ -169,32 +115,25 @@ export function RecommendationSystem({ category, currentProductId, targetType = 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={horizontalScroll ? "flex gap-4 md:gap-6 pb-4 overflow-x-auto overflow-y-hidden no-scrollbar" : "grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pb-4"}
             >
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className={`flex flex-col gap-4 animate-pulse opacity-50 ${horizontalScroll ? 'w-[170px] sm:w-[200px] md:w-[240px] flex-shrink-0' : 'w-full'}`} style={{ animationDelay: `${i * 100}ms` }}>
-                  <div className={`aspect-[3/4] w-full bg-surface-container ${compact ? 'rounded' : 'rounded-[20px] md:rounded-[24px]'}`} />
-                  <div className={`h-3 w-1/4 bg-surface-container ${compact ? 'rounded' : 'rounded'}`} />
-                  <div className={`h-5 w-3/4 bg-surface-container ${compact ? 'rounded' : 'rounded'}`} />
-                </div>
-              ))}
+              <RecommendationSkeleton horizontal={horizontalScroll} />
             </motion.div>
           ) : activeList.length > 0 ? (
             <motion.div
               key="grid-list"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className={horizontalScroll ? "flex gap-4 md:gap-6 pb-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth no-scrollbar" : "grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pb-4"}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className={horizontalScroll ? "flex gap-6 pb-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar" : "grid grid-cols-2 md:grid-cols-4 gap-6 pb-6"}
             >
               {activeList.map((product, idx) => (
                 <motion.div
-                  key={product.id || product._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05, duration: 0.5 }}
-                  className={horizontalScroll ? "w-[170px] sm:w-[200px] md:w-[240px] flex-shrink-0 snap-start" : "w-full"}
+                  key={product.id || product._id || `reco-item-${idx}`}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.04, duration: 0.4 }}
+                  className={horizontalScroll ? "w-[200px] sm:w-[240px] md:w-[280px] flex-shrink-0 snap-start" : "w-full"}
                 >
                   <ProductCard
                     {...product}
@@ -212,3 +151,5 @@ export function RecommendationSystem({ category, currentProductId, targetType = 
     </section>
   );
 }
+
+export default RecommendationSystem;

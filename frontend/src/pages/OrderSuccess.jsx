@@ -178,7 +178,7 @@ export function OrderSuccess() {
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-container-low flex flex-col items-center justify-center pt-12 pb-32">
-        <div className="w-12 h-12 border-2 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+        <div className="skeleton-box inline-block w-12 h-12 rounded-md" />
         <p className="text-xs uppercase font-bold tracking-widest text-secondary">Securing Order Details...</p>
       </div>
     );

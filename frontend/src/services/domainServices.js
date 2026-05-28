@@ -10,6 +10,7 @@ export { userService } from './api/userService';
 export { analyticsService } from './api/analyticsService';
 export { uploadService } from './api/uploadService';
 export { inquiryService } from './api/inquiryService';
+export { policyService } from './api/policyService';
 export { notificationService } from './api/notificationService';
 export { customOrderService } from './api/customOrderService';
 export { loyaltyService } from './api/loyaltyService';

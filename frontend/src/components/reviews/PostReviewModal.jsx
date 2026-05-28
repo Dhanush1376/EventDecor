@@ -366,7 +366,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     >
                       {isAiPolishing ? (
                         <>
-                          <span className="w-2.5 h-2.5 border border-[var(--color-gold-dark)] border-t-transparent rounded-full animate-spin" />
+                          <div className="skeleton-box inline-block w-2.5 h-2.5 rounded-md" />
                           Polishing with AI...
                         </>
                       ) : (
@@ -590,7 +590,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
             >
               {isSubmitting ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
                   Publishing Story...
                 </>
               ) : (

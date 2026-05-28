@@ -4,10 +4,11 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useRazorpay } from "../hooks/useRazorpay";
 import { orderService, cmsService, userService, couponService } from "../services/domainServices";
-import { useApi } from "../hooks/useApi";
+import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import logger from "../utils/logger";
 import { PINCODE_MAP, UPI_REGEX } from "./checkoutConstants";
+import { persistentStorage } from "../utils/persistentStorage";
 
 const CheckoutContext = createContext(null);
 
@@ -39,8 +40,15 @@ export function CheckoutProvider({ children }) {
     }
   }, [isAuthenticated, navigate, openAuthModal]);
 
-  const { data: settingsData } = useApi(cmsService.getSection, "storeSettings");
-  const settings = settingsData?.data || {};
+  const { data: settingsData } = useQuery({
+    queryKey: ["cms", "section", "storeSettings"],
+    queryFn: async () => {
+      const res = await cmsService.getSection("storeSettings");
+      return res.success ? res.data : res;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+  const settings = settingsData || {};
 
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -58,50 +66,69 @@ export function CheckoutProvider({ children }) {
 
   // Multi-step vertical accordion state tracking
   const getInitialStep = () => {
-    try {
-      const saved = sessionStorage.getItem("siri_checkout_step");
-      if (saved) return parseInt(saved, 10);
-    } catch (e) {}
-    return 1;
+    return persistentStorage.getItem("siri_checkout_step", { session: true, fallback: 1 });
   };
   const [activeStep, setActiveStep] = useState(getInitialStep);
 
   React.useEffect(() => {
-    try {
-      sessionStorage.setItem("siri_checkout_step", activeStep);
-    } catch (e) {}
+    persistentStorage.setItem("siri_checkout_step", activeStep, { session: true });
   }, [activeStep]);
   const activeItems = items || [];
   const [savedAddresses, setSavedAddresses] = useState([]);
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [isAddingNewAddress, setIsAddingNewAddress] = useState(true);
+  const [selectedAddressId, setSelectedAddressId] = useState(() => {
+    return persistentStorage.getItem("siri_checkout_selected_address_id", { session: true, fallback: null });
+  });
+  const [isAddingNewAddress, setIsAddingNewAddress] = useState(() => {
+    return persistentStorage.getItem("siri_checkout_is_adding_address", { session: true, fallback: true });
+  });
+
+  React.useEffect(() => {
+    if (selectedAddressId) {
+      persistentStorage.setItem("siri_checkout_selected_address_id", selectedAddressId, { session: true });
+    } else {
+      persistentStorage.removeItem("siri_checkout_selected_address_id", { session: true });
+    }
+  }, [selectedAddressId]);
+
+  React.useEffect(() => {
+    persistentStorage.setItem("siri_checkout_is_adding_address", isAddingNewAddress, { session: true });
+  }, [isAddingNewAddress]);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
   // New Address Form State
-  const [newAddress, setNewAddress] = useState({
-    name: user?.name || "",
-    phone: user?.phone || "",
-    alternatePhone: "",
-    email: user?.email || "",
-    pincode: "",
-    locality: "",
-    address: "",
-    landmark: "",
-    city: "",
-    state: "",
-    country: "India",
-    type: "Home",
-    deliveryInstructions: "",
+  const [newAddress, setNewAddress] = useState(() => {
+    return persistentStorage.getItem("siri_checkout_new_address", {
+      session: true,
+      fallback: {
+        name: user?.name || "",
+        phone: user?.phone || "",
+        alternatePhone: "",
+        email: user?.email || "",
+        pincode: "",
+        locality: "",
+        address: "",
+        landmark: "",
+        city: "",
+        state: "",
+        country: "India",
+        type: "Home",
+        deliveryInstructions: "",
+      }
+    });
   });
+
+  React.useEffect(() => {
+    persistentStorage.setItem("siri_checkout_new_address", newAddress, { session: true });
+  }, [newAddress]);
 
   React.useEffect(() => {
     if (user) {
       const timer = setTimeout(() => {
         setNewAddress(prev => ({
           ...prev,
-          name: user.name || prev.name,
-          phone: user.phone || prev.phone,
-          email: user.email || prev.email,
+          name: prev.name || user.name || "",
+          phone: prev.phone || user.phone || "",
+          email: prev.email || user.email || "",
         }));
       }, 0);
       return () => clearTimeout(timer);
@@ -109,9 +136,27 @@ export function CheckoutProvider({ children }) {
   }, [user]);
 
   // Tracking notifications option
-  const [sendUpdatesToWhatsApp, setSendUpdatesToWhatsApp] = useState(true);
-  const [paymentOption, setPaymentOption] = useState("razorpay"); // Default to Razorpay
-  const [needByDate, setNeedByDate] = useState("");
+  const [sendUpdatesToWhatsApp, setSendUpdatesToWhatsApp] = useState(() => {
+    return persistentStorage.getItem("siri_checkout_whatsapp_updates", { session: true, fallback: true });
+  });
+  const [paymentOption, setPaymentOption] = useState(() => {
+    return persistentStorage.getItem("siri_checkout_payment_option", { session: true, fallback: "razorpay" });
+  });
+  const [needByDate, setNeedByDate] = useState(() => {
+    return persistentStorage.getItem("siri_checkout_need_by_date", { session: true, fallback: "" });
+  });
+
+  React.useEffect(() => {
+    persistentStorage.setItem("siri_checkout_whatsapp_updates", sendUpdatesToWhatsApp, { session: true });
+  }, [sendUpdatesToWhatsApp]);
+
+  React.useEffect(() => {
+    persistentStorage.setItem("siri_checkout_payment_option", paymentOption, { session: true });
+  }, [paymentOption]);
+
+  React.useEffect(() => {
+    persistentStorage.setItem("siri_checkout_need_by_date", needByDate, { session: true });
+  }, [needByDate]);
 
   // specific inputs per payment method
   const [upiId, setUpiId] = useState("");
@@ -133,8 +178,20 @@ export function CheckoutProvider({ children }) {
   const [addressError, setAddressError] = useState("");
 
   // Coupon state
-  const [couponInput, setCouponInput] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [couponInput, setCouponInput] = useState(() => {
+    return persistentStorage.getItem("siri_checkout_coupon_input", { session: true, fallback: "" });
+  });
+  const [appliedCoupon, setAppliedCoupon] = useState(() => {
+    return persistentStorage.getItem("siri_checkout_applied_coupon", { session: true, fallback: "" });
+  });
+
+  React.useEffect(() => {
+    persistentStorage.setItem("siri_checkout_coupon_input", couponInput, { session: true });
+  }, [couponInput]);
+
+  React.useEffect(() => {
+    persistentStorage.setItem("siri_checkout_applied_coupon", appliedCoupon, { session: true });
+  }, [appliedCoupon]);
   const [couponValid, setCouponValid] = useState(false);
   const [couponMessage, setCouponMessage] = useState("");
   const [availableCoupons, setAvailableCoupons] = useState([]);
@@ -146,7 +203,13 @@ export function CheckoutProvider({ children }) {
     platformFee: 0,
     total: 0
   });
-  const [useWallet, setUseWallet] = useState(false);
+  const [useWallet, setUseWallet] = useState(() => {
+    return persistentStorage.getItem("siri_checkout_use_wallet", { session: true, fallback: false });
+  });
+
+  React.useEffect(() => {
+    persistentStorage.setItem("siri_checkout_use_wallet", useWallet, { session: true });
+  }, [useWallet]);
 
   // Load addresses and active coupons from MongoDB on mount
   React.useEffect(() => {
@@ -154,12 +217,20 @@ export function CheckoutProvider({ children }) {
       userService.getAddresses().then((res) => {
         if (res.success && res.data) {
           setSavedAddresses(res.data);
-          const defaultAddr = res.data.find(a => a.isDefault) || res.data[0];
-          if (defaultAddr) {
-            setSelectedAddressId(defaultAddr._id || defaultAddr.id);
-            setIsAddingNewAddress(false);
+          const savedAddrId = persistentStorage.getItem("siri_checkout_selected_address_id", { session: true });
+          const savedIsAdding = persistentStorage.getItem("siri_checkout_is_adding_address", { session: true });
+
+          if (savedAddrId && res.data.some(a => String(a._id || a.id) === String(savedAddrId))) {
+            setSelectedAddressId(savedAddrId);
+            setIsAddingNewAddress(savedIsAdding === true);
           } else {
-            setIsAddingNewAddress(true);
+            const defaultAddr = res.data.find(a => a.isDefault) || res.data[0];
+            if (defaultAddr) {
+              setSelectedAddressId(defaultAddr._id || defaultAddr.id);
+              setIsAddingNewAddress(false);
+            } else {
+              setIsAddingNewAddress(true);
+            }
           }
         }
       }).catch(err => {
@@ -591,6 +662,19 @@ export function CheckoutProvider({ children }) {
       idempotencyKey: createIdempotencyKey(),
     };
 
+    const clearCheckoutSessionStorage = () => {
+      persistentStorage.removeItem("siri_checkout_step", { session: true });
+      persistentStorage.removeItem("siri_checkout_new_address", { session: true });
+      persistentStorage.removeItem("siri_checkout_payment_option", { session: true });
+      persistentStorage.removeItem("siri_checkout_need_by_date", { session: true });
+      persistentStorage.removeItem("siri_checkout_whatsapp_updates", { session: true });
+      persistentStorage.removeItem("siri_checkout_use_wallet", { session: true });
+      persistentStorage.removeItem("siri_checkout_selected_address_id", { session: true });
+      persistentStorage.removeItem("siri_checkout_is_adding_address", { session: true });
+      persistentStorage.removeItem("siri_checkout_coupon_input", { session: true });
+      persistentStorage.removeItem("siri_checkout_applied_coupon", { session: true });
+    };
+
     if (paymentOption === "razorpay") {
       processPayment(
         orderData,
@@ -598,6 +682,7 @@ export function CheckoutProvider({ children }) {
           orderCompleteRef.current = true;
           setIsProcessing(false);
           clearCart();
+          clearCheckoutSessionStorage();
           navigate("/order-success", { state: { orderDetails: order }, replace: true });
         },
         (error) => {
@@ -614,6 +699,7 @@ export function CheckoutProvider({ children }) {
           orderCompleteRef.current = true;
           const orderObj = response.data?.order || response.data || response;
           clearCart();
+          clearCheckoutSessionStorage();
           navigate("/order-success", { state: { orderDetails: orderObj }, replace: true });
         }
       } catch (err) {

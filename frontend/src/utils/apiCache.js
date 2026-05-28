@@ -16,7 +16,11 @@ const TTL_BY_PREFIX = [
   ['/gallery', 2 * 60 * 1000],
   ['/events', 2 * 60 * 1000],
   ['/showcase', 5 * 60 * 1000],
+  ['/recommendations', 3 * 60 * 1000],
+  ['/search', 1 * 60 * 1000],
 ];
+
+const MAX_CACHE_ENTRIES = 100;
 
 const NO_CACHE_PATHS = [
   '/auth/profile',
@@ -69,6 +73,18 @@ export const setCachedGet = (url, config, data) => {
   if (!ttl || data === undefined) return;
 
   const key = buildKey(url, config);
+  
+  if (cache.size >= MAX_CACHE_ENTRIES && !cache.has(key)) {
+    // Evict oldest entry (Map iterates in insertion order)
+    const oldestKey = cache.keys().next().value;
+    cache.delete(oldestKey);
+  }
+  
+  // Re-insert to update insertion order for LRU
+  if (cache.has(key)) {
+    cache.delete(key);
+  }
+  
   cache.set(key, { data, storedAt: Date.now() });
 };
 

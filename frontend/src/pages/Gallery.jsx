@@ -11,6 +11,7 @@ import { GallerySlideshow } from "../components/gallery/GallerySlideshow";
 import { GallerySkeleton } from "../components/ui/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useInfiniteGallery } from "../hooks/useInfiniteGallery";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 import toast from "react-hot-toast";
 
 import logger from '../utils/logger';
@@ -28,6 +29,9 @@ export function Gallery() {
   const [isSticky, setIsSticky] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
   const navRef = React.useRef(null);
+  
+  const { scrollDirection, isAtTop } = useScrollDirection();
+  const isNavbarHidden = !isAtTop && scrollDirection === "down";
 
   const {
     items: filteredItems,
@@ -210,7 +214,7 @@ export function Gallery() {
             ? "px-0" 
             : "px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto"
         }`}
-        style={{ top: `${navbarHeight}px` }}
+        style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
           <div
             className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${

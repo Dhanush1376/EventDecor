@@ -1,90 +1,112 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useMemo, useCallback } from "react";
 import { userService } from "../services/domainServices";
 import { useAuth } from "./AuthContext";
 import { WishlistStateContext, WishlistDispatchContext } from "./WishlistContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import logger from '../utils/logger';
 
 export function WishlistProvider({ children }) {
   const { user, isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-
+  const queryClient = useQueryClient();
   const userId = user?._id || user?.id;
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const loadWishlist = async () => {
-      if (!isAuthInitialized) return;
-      if (userId && isAuthenticated) {
-        setLoading(true);
-        try {
-          const res = await userService.getWishlist({ signal: controller.signal });
-          if (res.success) {
-            setItems(res.data || []);
-          }
-        } catch (error) {
-          const isUnauthenticated =
-            error?.response?.status === 401 ||
-            error?.code === 'ERR_NO_SESSION' ||
-            error?.message === 'Not authenticated';
+  const isQueryEnabled = Boolean(isAuthInitialized && userId && isAuthenticated);
 
-          if (error.name !== 'CanceledError' && !isUnauthenticated) {
-            logger.error("Failed to fetch wishlist:", error);
-            toast.error("Failed to load wishlist items");
-          }
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setItems([]);
+  // Fetch Wishlist via React Query
+  const { data: rawItems = [], isLoading: loading } = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: async ({ signal }) => {
+      const res = await userService.getWishlist({ signal });
+      return res.success ? (res.data || []) : [];
+    },
+    enabled: isQueryEnabled,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  const items = useMemo(() => {
+    if (!isAuthenticated || !rawItems) return [];
+    if (Array.isArray(rawItems)) return rawItems;
+    if (rawItems.data && Array.isArray(rawItems.data)) return rawItems.data;
+    if (rawItems.items && Array.isArray(rawItems.items)) return rawItems.items;
+    return [];
+  }, [rawItems, isAuthenticated]);
+
+  // Mutation with optimistic updates
+  const toggleMutation = useMutation({
+    mutationFn: async (product) => {
+      const res = await userService.toggleWishlist(product._id || product.id);
+      if (!res.success) {
+        throw new Error(res.message || "Failed to toggle wishlist");
       }
-    };
-    loadWishlist();
-    return () => controller.abort();
-  }, [userId, isAuthenticated, isAuthInitialized]);
+      return res;
+    },
+    onMutate: async (product) => {
+      await queryClient.cancelQueries({ queryKey: ['wishlist'] });
+      const previousWishlist = queryClient.getQueryData(['wishlist']) || [];
+      const isPresent = previousWishlist.some(
+        (item) => String(item._id || item.id) === String(product._id || product.id)
+      );
 
-  const toggleItem = useCallback(async (product) => {
-    runProtectedAction(async () => {
-      const isPresent = items.some(item => String(item._id || item.id) === String(product._id || product.id));
-      const previousItems = [...items];
-
+      let updatedWishlist;
       if (isPresent) {
-        setItems(prev => prev.filter(item => String(item._id || item.id) !== String(product._id || product.id)));
+        updatedWishlist = previousWishlist.filter(
+          (item) => String(item._id || item.id) !== String(product._id || product.id)
+        );
       } else {
-        setItems(prev => [...prev, product]);
+        updatedWishlist = [...previousWishlist, product];
       }
 
-      try {
-        const res = await userService.toggleWishlist(product._id || product.id);
-        if (res.success) {
-          toast.success(isPresent ? "Removed from Wishlist" : "Added to Wishlist");
-        } else {
-          throw new Error(res.message || "Failed to toggle wishlist");
-        }
-      } catch (error) {
-        logger.error("Failed to sync wishlist:", error);
-        setItems(previousItems);
-        toast.error("Failed to update wishlist. Please try again.");
-      }
-    });
-  }, [items, runProtectedAction]);
+      queryClient.setQueryData(['wishlist'], updatedWishlist);
+      return { previousWishlist, isPresent };
+    },
+    onError: (err, product, context) => {
+      queryClient.setQueryData(['wishlist'], context?.previousWishlist);
+      logger.error("Failed to sync wishlist:", err);
+      toast.error("Failed to update wishlist. Please try again.");
+    },
+    onSuccess: (data, product, context) => {
+      toast.success(context.isPresent ? "Removed from Wishlist" : "Added to Wishlist");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+    },
+  });
 
-  const addItem = useCallback((product) => {
-    const isPresent = items.some(item => String(item._id || item.id) === String(product._id || product.id));
-    if (!isPresent) toggleItem(product);
-  }, [items, toggleItem]);
+  const toggleItem = useCallback(
+    async (product) => {
+      runProtectedAction(() => {
+        toggleMutation.mutate(product);
+      });
+    },
+    [runProtectedAction, toggleMutation]
+  );
 
-  const removeItem = useCallback((id) => {
-    const item = items.find(i => String(i._id || i.id) === String(id));
-    if (item) toggleItem(item);
-  }, [items, toggleItem]);
+  const addItem = useCallback(
+    (product) => {
+      const isPresent = Array.isArray(items) && items.some(
+        (item) => String(item._id || item.id) === String(product._id || product.id)
+      );
+      if (!isPresent) toggleItem(product);
+    },
+    [items, toggleItem]
+  );
+
+  const removeItem = useCallback(
+    (id) => {
+      const item = items.find((i) => String(i._id || i.id) === String(id));
+      if (item) toggleItem(item);
+    },
+    [items, toggleItem]
+  );
 
   const isWishlisted = useCallback(
     (id) => {
+      if (!Array.isArray(items)) return false;
       return items.some((item) => String(item._id || item.id) === String(id));
     },
-    [items],
+    [items]
   );
 
   const stateValue = useMemo(
@@ -94,7 +116,7 @@ export function WishlistProvider({ children }) {
       count: items.length,
       isWishlisted,
     }),
-    [items, loading, isWishlisted],
+    [items, loading, isWishlisted]
   );
 
   const dispatchValue = useMemo(
@@ -103,7 +125,7 @@ export function WishlistProvider({ children }) {
       removeItem,
       toggleItem,
     }),
-    [addItem, removeItem, toggleItem],
+    [addItem, removeItem, toggleItem]
   );
 
   return (

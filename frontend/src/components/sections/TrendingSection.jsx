@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SectionWrapper } from '../layout';
 import { RecommendationCarousel } from '../ui/RecommendationCarousel';
 import { ProductCard } from '../ui/ProductCard';
-import { recommendationService } from '../../services/recommendationService';
+import { RecommendationSkeleton } from '../ui/Skeleton';
+import { useTrendingRecommendations } from '../../hooks/useRecommendationQueries';
 import logger from '../../utils/logger';
 
 const FEED_TABS = [
@@ -19,39 +20,18 @@ export function TrendingSection({
   limit = 12
 }) {
   const [activeTab, setActiveTab] = useState('trendingNow');
-  const [feeds, setFeeds] = useState({});
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchTrending = async () => {
-      try {
-        const [res, bookedRes, seasonRes] = await Promise.all([
-          recommendationService.getTrending({ limit }),
-          recommendationService.getTrending({ feed: 'mostBooked', limit: Math.max(10, limit - 2) }),
-          recommendationService.getTrending({ feed: 'popularThisSeason', limit })
-        ]);
+  const trendingQuery = useTrendingRecommendations({ limit });
+  const bookedQuery = useTrendingRecommendations({ feed: 'mostBooked', limit: Math.max(10, limit - 2) });
+  const seasonalQuery = useTrendingRecommendations({ feed: 'popularThisSeason', limit });
 
-        const newFeeds = {};
-        if (res?.success && res.data?.items) {
-          newFeeds.trendingNow = res.data.items;
-        }
-        if (bookedRes?.success && bookedRes.data?.items) {
-          newFeeds.mostBooked = bookedRes.data.items;
-        }
-        if (seasonRes?.success && seasonRes.data?.items) {
-          newFeeds.popularThisSeason = seasonRes.data.items;
-        }
-        
-        setFeeds(prev => ({ ...prev, ...newFeeds }));
-      } catch (err) {
-        logger.error('Failed to fetch trending data', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTrending();
-  }, [limit]);
+  const loading = trendingQuery.isLoading || bookedQuery.isLoading || seasonalQuery.isLoading;
+  
+  const feeds = {
+    trendingNow: trendingQuery.data?.items || trendingQuery.data || [],
+    mostBooked: bookedQuery.data?.items || bookedQuery.data || [],
+    popularThisSeason: seasonalQuery.data?.items || seasonalQuery.data || [],
+  };
 
   const currentItems = feeds[activeTab] || [];
 
@@ -120,15 +100,8 @@ export function TrendingSection({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex gap-6 overflow-hidden px-4 md:px-12"
             >
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="min-w-[300px] animate-pulse opacity-50" style={{ animationDelay: `${i * 100}ms` }}>
-                  <div className="bg-surface-container rounded-[24px] aspect-[3/4] mb-5" />
-                  <div className="h-3 bg-surface-container rounded w-1/4 mb-3" />
-                  <div className="h-5 bg-surface-container rounded w-3/4 mb-4" />
-                </div>
-              ))}
+              <RecommendationSkeleton horizontal={true} />
             </motion.div>
           ) : currentItems.length > 0 ? (
             <motion.div

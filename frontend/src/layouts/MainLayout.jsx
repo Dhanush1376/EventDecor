@@ -11,7 +11,8 @@ import { SEO } from "../components/seo/SEO";
 import { MandalaElement } from "../components/ui/MandalaElement";
 import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { WhatsAppWidget } from "../components/ui/WhatsAppWidget";
-import { PageLoader } from "../components/ui/PageLoader";
+import { getRouteSkeletonVariant, RouteSkeleton } from "../components/ui/RouteSkeleton";
+import { AuthGate } from "../components/auth/AuthGate";
 
 export function MainLayout() {
   const { pathname } = useLocation();
@@ -38,6 +39,8 @@ export function MainLayout() {
   }, [pathname]);
 
   const isHighDensityPage = pathname === "/auth" || pathname === "/checkout";
+
+  const fallbackVariant = getRouteSkeletonVariant(pathname);
 
   return (
     <div className="bg-surface text-on-surface min-h-screen flex flex-col relative overflow-x-clip">
@@ -77,12 +80,14 @@ export function MainLayout() {
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <main id="main-content" className="flex-1 relative" tabIndex={-1}>
         <ErrorBoundary>
-          <Suspense fallback={<PageLoader />}>
-            {/* Page transition: animate-page-enter on route change */}
-            <div key={pathname} className="animate-page-enter">
-              <Outlet />
-            </div>
-          </Suspense>
+          <AuthGate>
+            <Suspense fallback={<RouteSkeleton variant={fallbackVariant} />}>
+              {/* Page transition: animate-page-enter on route change */}
+              <div className="animate-content-reveal">
+                <Outlet />
+              </div>
+            </Suspense>
+          </AuthGate>
         </ErrorBoundary>
       </main>
       {pathname !== "/cart" && <Footer />}
@@ -115,7 +120,7 @@ export function MinimalLayout() {
 
       <CheckoutNavbar />
       <main id="main-content" className="flex-1" tabIndex={-1}>
-        <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={<RouteSkeleton variant={getRouteSkeletonVariant(pathname)} />}>
           <Outlet />
         </Suspense>
       </main>

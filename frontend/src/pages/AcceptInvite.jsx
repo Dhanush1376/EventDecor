@@ -69,7 +69,7 @@ export function AcceptInvite() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#faf9f6] flex flex-col items-center justify-center py-20 px-4">
-        <div className="w-12 h-12 border-3 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <div className="skeleton-box inline-block w-12 h-12 rounded-md" />
         <p className="text-[13px] text-outline font-medium uppercase tracking-widest font-body">
           Authenticating invite key...
         </p>
@@ -189,7 +189,7 @@ export function AcceptInvite() {
                 className="flex-1 py-4 bg-primary text-white hover:bg-primary-container font-bold rounded-2xl text-[12px] uppercase tracking-wider shadow-lg shadow-primary/15 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {actionLoading && (
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
                 )}
                 Yes, Accept Invite
               </button>

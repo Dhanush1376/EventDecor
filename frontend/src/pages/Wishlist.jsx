@@ -7,7 +7,7 @@ import { QuickViewModal, CustomDropdown, ProductCard, Skeleton } from "../compon
 import { SEO } from "../components/seo/SEO";
 import { handleImageError } from "../utils/imageUtils";
 import { productService } from "../services/domainServices";
-import { useApi } from "../hooks/useApi";
+import { useProducts } from "../hooks/useProductQueries";
 import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
 
 export function Wishlist() {
@@ -26,13 +26,8 @@ export function Wishlist() {
     source: 'wishlist'
   });
 
-  const { data: trendingData, loading: trendingLoading, request: fetchTrending } = useApi(productService.getAll);
-
-  useEffect(() => {
-    fetchTrending({ limit: 4, sort: "Popularity" });
-  }, [fetchTrending]);
-
-  const trendingProducts = trendingData?.data || [];
+  const { data: trendingData = {}, isLoading: trendingLoading } = useProducts({ limit: 4, sort: "Popularity" });
+  const trendingProducts = trendingData?.items || (Array.isArray(trendingData) ? trendingData : []);
 
   const sortOptions = [
     { value: "latest", label: "Latest Added" },

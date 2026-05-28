@@ -12,15 +12,13 @@ describe('Button Component', () => {
   it('applies primary variant classes by default', () => {
     render(<Button>Primary Button</Button>);
     const buttonEl = screen.getByRole('button', { name: /primary button/i });
-    expect(buttonEl).toHaveClass('bg-on-surface-variant');
-    expect(buttonEl).toHaveClass('text-surface');
+    expect(buttonEl).toHaveClass('btn-primary');
   });
 
   it('applies correct custom variant styling classes', () => {
     const { rerender } = render(<Button variant="outline">Outline Button</Button>);
     let buttonEl = screen.getByRole('button', { name: /outline button/i });
-    expect(buttonEl).toHaveClass('border');
-    expect(buttonEl).toHaveClass('border-outline-variant/50');
+    expect(buttonEl).toHaveClass('btn-outline');
 
     rerender(<Button variant="ghost">Ghost Button</Button>);
     buttonEl = screen.getByRole('button', { name: /ghost button/i });
@@ -31,13 +29,13 @@ describe('Button Component', () => {
   it('applies correct size classes', () => {
     const { rerender } = render(<Button size="sm">Small</Button>);
     let buttonEl = screen.getByRole('button', { name: /small/i });
-    expect(buttonEl).toHaveClass('px-6');
-    expect(buttonEl).toHaveClass('py-3');
+    expect(buttonEl).toHaveClass('!px-5');
+    expect(buttonEl).toHaveClass('!py-2.5');
 
     rerender(<Button size="lg">Large</Button>);
     buttonEl = screen.getByRole('button', { name: /large/i });
-    expect(buttonEl).toHaveClass('px-14');
-    expect(buttonEl).toHaveClass('py-5');
+    expect(buttonEl).toHaveClass('!px-14');
+    expect(buttonEl).toHaveClass('!py-5');
   });
 
   it('triggers onClick handler when clicked', () => {

@@ -1,43 +1,40 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { userService } from "../services/domainServices";
 import { useAuth } from "./AuthContext";
 import { CartStateContext, CartDispatchContext } from "./CartContext";
+import { useCartQuery, useCartMutations } from "../hooks/useCartQueries";
+import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import logger from '../utils/logger';
+import { persistentStorage } from "../utils/persistentStorage";
+import { userService } from "../services/domainServices";
 
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
+  const queryClient = useQueryClient();
+
   const getInitialCartState = () => {
-    try {
-      if (typeof window !== 'undefined') {
-        const cached = localStorage.getItem('siri_cart_cache');
-        if (cached) return JSON.parse(cached);
-      }
-    } catch (e) {}
-    return { items: [], summary: { subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 } };
+    return persistentStorage.getItem('siri_cart_cache', {
+      fallback: { items: [], summary: { subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 } }
+    });
   };
 
-  const initialState = getInitialCartState();
-  const [items, setItems] = useState(initialState.items);
+  // Guest mode in-memory states
+  const [guestItems, setGuestItems] = useState(() => {
+    const cached = getInitialCartState();
+    return cached.items;
+  });
+  const [guestSummary, setGuestSummary] = useState(() => {
+    const cached = getInitialCartState();
+    return cached.summary;
+  });
+
   const [claimedCoupon, setClaimedCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState("");
-  const itemsRef = useRef(initialState.items);
-  
-  const [summary, setSummary] = useState(initialState.summary);
-
-  useEffect(() => {
-    itemsRef.current = items;
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('siri_cart_cache', JSON.stringify({ items, summary }));
-      }
-    } catch (e) {}
-  }, [items, summary]);
-
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const syncTimeoutRef = useRef(null);
+  // TanStack Query hooks for authenticated user
+  const { data: cartData, isLoading: cartLoading } = useCartQuery();
+  const { addToCart, removeFromCart, syncCart } = useCartMutations();
 
   const transformDbCart = useCallback((dbCart) => {
     if (!dbCart || !Array.isArray(dbCart)) return [];
@@ -59,104 +56,180 @@ export function CartProvider({ children }) {
       }));
   }, []);
 
-  // 1. Initial Load and Synchronization on Auth State Changes
-  useEffect(() => {
-    const controller = new AbortController();
-    const initializeCart = async () => {
-      if (!isAuthInitialized) return;
-      setLoading(true);
-      try {
-        if (isAuthenticated) {
-          // Retrieve database cart
-          const res = await userService.getCart({ signal: controller.signal });
-          setItems(transformDbCart(res.data?.items));
-          setSummary(res.data?.summary || summary);
-        } else {
-          // Guest mode: Keep purely in-memory. 
-          // Do not reset to empty because we want to preserve localStorage cart.
-        }
-      } catch (err) {
-        if (err.name !== 'CanceledError' && err?.code !== 'ERR_NO_SESSION' && err?.message !== 'Not authenticated') {
-          logger.error("Cart synchronization failed:", err);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Derived state depending on auth
+  const items = useMemo(() => {
+    if (isAuthenticated && cartData?.items) {
+      return transformDbCart(cartData.items);
+    }
+    return guestItems;
+  }, [isAuthenticated, cartData, guestItems, transformDbCart]);
 
-    initializeCart();
-    return () => controller.abort();
-  }, [isAuthenticated, isAuthInitialized, transformDbCart]);
+  const summary = useMemo(() => {
+    if (isAuthenticated && cartData?.summary) {
+      return cartData.summary;
+    }
+    return guestSummary;
+  }, [isAuthenticated, cartData, guestSummary]);
+
+  // Sync back to persistentStorage for offline cache
+  useEffect(() => {
+    persistentStorage.setItem('siri_cart_cache', { items, summary });
+  }, [items, summary]);
+
+  // Automatic Guest-to-Auth Cart Merging upon Login
+  const lastAuthRef = useRef(isAuthenticated);
+
+  useEffect(() => {
+    if (isAuthenticated && !lastAuthRef.current) {
+      const mergeGuestCart = async () => {
+        try {
+          const guestCart = persistentStorage.getItem('siri_cart_cache');
+          if (guestCart && Array.isArray(guestCart.items) && guestCart.items.length > 0) {
+            logger.info('[Cart] Merging guest cart items with authenticated database cart upon sign-in:', guestCart.items);
+            
+            // Get current database cart items
+            const dbCartRes = await userService.getCart();
+            const dbItems = dbCartRes?.success ? dbCartRes.data?.items || [] : [];
+
+            // Merge items by combining quantities
+            const mergedPayloadMap = new Map();
+
+            // 1. Populate from DB cart
+            dbItems.forEach((item) => {
+              const pId = item.product?._id || item.product?.id || item.product;
+              if (pId) {
+                mergedPayloadMap.set(pId, item.quantity);
+              }
+            });
+
+            // 2. Add guest cart quantities
+            guestCart.items.forEach((item) => {
+              const pId = item._id || item.id;
+              if (pId) {
+                const existingQty = mergedPayloadMap.get(pId) || 0;
+                mergedPayloadMap.set(pId, existingQty + item.quantity);
+              }
+            });
+
+            // Convert map back to sync payload structure
+            const syncPayload = Array.from(mergedPayloadMap.entries()).map(([productId, quantity]) => ({
+              product: productId,
+              quantity,
+            }));
+
+            // Sync merged cart to server database
+            await syncCart({ cartItems: syncPayload });
+            toast.success('Your guest shopping bag was merged successfully!');
+          }
+          
+          // Clear guest states and cache
+          setGuestItems([]);
+          setGuestSummary({ subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 });
+          persistentStorage.removeItem('siri_cart_cache');
+        } catch (err) {
+          logger.error('[Cart] Guest-to-auth cart merge failed:', err);
+        }
+      };
+
+      mergeGuestCart();
+    }
+    lastAuthRef.current = isAuthenticated;
+  }, [isAuthenticated, syncCart]);
+
+  const syncTimeoutRef = useRef(null);
 
   const addItem = useCallback(async (product) => {
     const qty = product.quantity || 1;
+    const itemKey = product._id || product.id;
     
     const action = async () => {
-      // Optimistic UI update
-      setItems((prev) => {
-        const itemKey = product._id || product.id;
-        const existingIndex = prev.findIndex((item) => item.id === itemKey);
-        
-        if (existingIndex >= 0) {
-          const newItems = [...prev];
-          newItems[existingIndex] = { ...newItems[existingIndex], quantity: newItems[existingIndex].quantity + qty };
-          return newItems;
-        }
-        return [
-          ...prev,
-          {
-            id: itemKey,
-            _id: itemKey,
-            title: product.title,
-            price: product.price,
-            oldPrice: product.oldPrice || product.price,
-            stock: product.stock || 10,
-            seller: product.seller || "Assured Craft Teams",
-            rating: product.rating || 4.5,
-            imageSrc: product.imageSrc,
-            category: product.category,
+      if (isAuthenticated) {
+        setIsCartOpen(true);
+        try {
+          await addToCart({
+            productId: itemKey,
             quantity: qty,
-            variant: "Default",
-          },
-        ];
-      });
-
-      setIsCartOpen(true);
-
-      try {
-        const res = await userService.addToCart(product._id || product.id, qty);
-        setItems(transformDbCart(res.data?.items));
-        setSummary(res.data?.summary);
-      } catch (err) {
-        logger.error("Failed to add item to database cart:", err);
-        toast.error("Shopping bag synchronization failed");
+            productInfo: product,
+          });
+        } catch (err) {
+          logger.error("Failed to add item to database cart:", err);
+        }
+      } else {
+        // Guest mode: update locally
+        setGuestItems((prev) => {
+          const existingIndex = prev.findIndex((item) => item.id === itemKey);
+          let newItems = [];
+          if (existingIndex >= 0) {
+            newItems = [...prev];
+            newItems[existingIndex] = { 
+              ...newItems[existingIndex], 
+              quantity: newItems[existingIndex].quantity + qty 
+            };
+          } else {
+            newItems = [
+              ...prev,
+              {
+                id: itemKey,
+                _id: itemKey,
+                title: product.title,
+                price: product.price,
+                oldPrice: product.oldPrice || product.price,
+                stock: product.stock || 10,
+                seller: product.seller || "Assured Craft Teams",
+                rating: product.rating || 4.5,
+                imageSrc: product.imageSrc,
+                category: product.category,
+                quantity: qty,
+                variant: "Default",
+              },
+            ];
+          }
+          const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+          setGuestSummary({
+            subtotal,
+            shippingFee: 0,
+            platformFee: 0,
+            discount: 0,
+            total: subtotal,
+          });
+          return newItems;
+        });
+        setIsCartOpen(true);
       }
     };
 
     runProtectedAction(action);
-  }, [runProtectedAction, transformDbCart]);
+  }, [runProtectedAction, isAuthenticated, addToCart]);
 
   const removeItem = useCallback(async (id, variant) => {
     const action = async () => {
-      // Optimistic UI update
-      setItems((prev) => prev.filter((item) => item.id !== id));
-
-      try {
-        const res = await userService.removeFromCart(id);
-        setItems(transformDbCart(res.data?.items));
-        setSummary(res.data?.summary);
-      } catch (err) {
-        logger.error("Failed to remove item from database cart:", err);
-        toast.error("Failed to remove item from cloud bag");
+      if (isAuthenticated) {
+        try {
+          await removeFromCart({ productId: id });
+        } catch (err) {
+          logger.error("Failed to remove item from database cart:", err);
+        }
+      } else {
+        setGuestItems((prev) => {
+          const newItems = prev.filter((item) => item.id !== id);
+          const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+          setGuestSummary({
+            subtotal,
+            shippingFee: 0,
+            platformFee: 0,
+            discount: 0,
+            total: subtotal,
+          });
+          return newItems;
+        });
       }
     };
 
     runProtectedAction(action);
-  }, [runProtectedAction, transformDbCart]);
+  }, [runProtectedAction, isAuthenticated, removeFromCart]);
 
   const updateQuantity = useCallback((id, variantOrQuantity, maybeQuantity) => {
     const action = () => {
-      // Support both (id, quantity) and (id, variant, quantity) signatures
       const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
       const numericQuantity = Number(quantity) || 1;
       
@@ -165,52 +238,84 @@ export function CartProvider({ children }) {
         return;
       }
 
-      // Synchronous optimistic UI update utilizing itemsRef to prevent stale closure races
-      const currentItems = itemsRef.current;
-      const updatedItems = currentItems.map((item) => (item.id === id ? { ...item, quantity: numericQuantity } : item));
-      setItems(updatedItems);
-      itemsRef.current = updatedItems;
+      if (isAuthenticated) {
+        // 1. Instantly update React Query Cache for responsiveness
+        const previousCart = queryClient.getQueryData(['cart']);
+        if (previousCart) {
+          const updatedItems = previousCart.items.map((item) => {
+            const itemId = item.product?._id || item.product?.id;
+            if (itemId === id) {
+              return { ...item, quantity: numericQuantity };
+            }
+            return item;
+          });
+          const subtotal = updatedItems.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+          queryClient.setQueryData(['cart'], {
+            ...previousCart,
+            items: updatedItems,
+            summary: {
+              ...previousCart.summary,
+              subtotal,
+              total: subtotal + (previousCart.summary?.shippingFee || 0) + (previousCart.summary?.platformFee || 0),
+            }
+          });
+        }
 
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
-      }
+        // 2. Debounce server mutation to avoid spamming calls
+        if (syncTimeoutRef.current) {
+          clearTimeout(syncTimeoutRef.current);
+        }
 
-      syncTimeoutRef.current = setTimeout(async () => {
-        try {
-          const payload = itemsRef.current.map((item) => ({
-            product: item.id || item._id,
+        syncTimeoutRef.current = setTimeout(async () => {
+          const currentCart = queryClient.getQueryData(['cart']);
+          const currentItems = currentCart?.items || [];
+          const payload = currentItems.map((item) => ({
+            product: item.product?._id || item.product?.id,
             quantity: item.quantity,
           }));
-          const res = await userService.syncCart(payload);
-          const transformed = transformDbCart(res.data?.items);
-          setItems(transformed);
-          itemsRef.current = transformed;
-          setSummary(res.data?.summary);
-        } catch (err) {
-          logger.error("Failed to update cart quantity in database:", err);
-          toast.error("Failed to sync quantity update");
-        }
-      }, 500);
+          try {
+            await syncCart({ cartItems: payload });
+          } catch (err) {
+            logger.error("Failed to update cart quantity in database:", err);
+          }
+        }, 500);
+      } else {
+        setGuestItems((prev) => {
+          const newItems = prev.map((item) => (item.id === id ? { ...item, quantity: numericQuantity } : item));
+          const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+          setGuestSummary({
+            subtotal,
+            shippingFee: 0,
+            platformFee: 0,
+            discount: 0,
+            total: subtotal,
+          });
+          return newItems;
+        });
+      }
     };
 
     runProtectedAction(action);
-  }, [removeItem, runProtectedAction, transformDbCart]);
+  }, [removeItem, runProtectedAction, isAuthenticated, syncCart, queryClient]);
 
   const clearCart = useCallback(async () => {
     const action = async () => {
-      setItems([]);
-      setSummary({ subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 });
-      try {
-        await userService.syncCart([]);
-      } catch (err) {
-        logger.error("Failed to clear database cart:", err);
+      if (isAuthenticated) {
+        try {
+          await syncCart({ cartItems: [] });
+        } catch (err) {
+          logger.error("Failed to clear database cart:", err);
+        }
+      } else {
+        setGuestItems([]);
+        setGuestSummary({ subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 });
       }
     };
 
     if (isAuthenticated) {
       action();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, syncCart]);
 
   const cartCount = useMemo(
     () => items.reduce((acc, item) => acc + item.quantity, 0),
@@ -224,7 +329,6 @@ export function CartProvider({ children }) {
     [items]
   );
 
-  // O(1) lookup map derived from items array to prevent O(n) scans
   const itemsMap = useMemo(() => {
     const map = new Map();
     items.forEach(item => map.set(item.id, item));
@@ -243,12 +347,12 @@ export function CartProvider({ children }) {
       totalMRP,
       summary,
       isCartOpen,
-      loading,
+      loading: isAuthenticated ? cartLoading : false,
       claimedCoupon,
       appliedCoupon,
       isInCart,
     }),
-    [items, cartCount, subtotal, totalMRP, summary, isCartOpen, loading, claimedCoupon, appliedCoupon, isInCart]
+    [items, cartCount, subtotal, totalMRP, summary, isCartOpen, cartLoading, claimedCoupon, appliedCoupon, isInCart, isAuthenticated]
   );
 
   const dispatchValue = useMemo(

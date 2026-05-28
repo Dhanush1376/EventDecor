@@ -11,19 +11,23 @@ import {
   SearchBar,
   CategoryTabs,
   PromoBanner,
+  CloudinaryImage,
 } from "../components/ui";
 import { useCart } from "../context/CartContext";
 
 import { productService, userService, couponService } from "../services/domainServices";
 import toast from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useProducts, useCategories } from "../hooks/useProductQueries";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 import { FilterPanel } from "../components/ui/FilterPanel";
 import { MandalaElement } from "../components/ui/MandalaElement";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
 import { SEO } from "../components/seo/SEO";
 
 import logger from '../utils/logger';
+import { persistentStorage } from "../utils/persistentStorage";
+
 export function ProductListing() {
   const { setClaimedCoupon } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,12 +37,21 @@ export function ProductListing() {
 
   const [searchQuery, setSearchQuery] = useState(searchParam);
   const [activeCategory, setActiveCategory] = useState(categoryParam);
-  const [sortBy, setSortBy] = useState("Popularity");
+  const [sortBy, setSortBy] = useState(() => {
+    return persistentStorage.getItem("siri_product_sort", { fallback: "Popularity" });
+  });
+
+  useEffect(() => {
+    persistentStorage.setItem("siri_product_sort", sortBy);
+  }, [sortBy]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
   const [isStuck, setIsStuck] = useState(false);
   const navRef = React.useRef(null);
   const [activeProduct, setActiveProduct] = useState(null);
+  
+  const { scrollDirection, isAtTop } = useScrollDirection();
+  const isNavbarHidden = !isAtTop && scrollDirection === "down";
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(pageParam);
 
@@ -141,11 +154,25 @@ export function ProductListing() {
     }
   };
 
-  const [filters, setFilters] = useState({
-    price: [],
-    material: [],
-    collection: [],
+  const [filters, setFilters] = useState(() => {
+    const saved = persistentStorage.getItem("siri_product_filters");
+    if (saved && typeof saved === "object") {
+      return {
+        price: Array.isArray(saved.price) ? saved.price : [],
+        material: Array.isArray(saved.material) ? saved.material : [],
+        collection: Array.isArray(saved.collection) ? saved.collection : [],
+      };
+    }
+    return {
+      price: [],
+      material: [],
+      collection: [],
+    };
   });
+
+  useEffect(() => {
+    persistentStorage.setItem("siri_product_filters", filters);
+  }, [filters]);
 
   const sortMap = {
     Popularity: "rating",
@@ -187,14 +214,7 @@ export function ProductListing() {
     sort: sortMap[sortBy] || "newest",
   };
 
-  const { data: productsData, isLoading: loading, isError } = useQuery({
-    queryKey: ['products', queryParams],
-    queryFn: async () => {
-      const res = await productService.getAll(queryParams);
-      return res.success ? res.data : null;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: productsData, isLoading: loading, isError } = useProducts(queryParams);
 
   useEffect(() => {
     if (isError) {
@@ -205,21 +225,11 @@ export function ProductListing() {
   const totalPages = productsData?.totalPages || 1;
   const totalCount = productsData?.totalCount || 0;
 
-  // Fetch categories dynamically from API
-  const [categories, setCategories] = useState(["All"]);
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await userService.getCategories();
-        if (res.success && res.data) {
-          setCategories(res.data);
-        }
-      } catch (err) {
-        logger.warn("Failed to fetch categories", err);
-      }
-    };
-    fetchCategories();
-  }, []);
+  // Fetch categories dynamically from API via TanStack Query
+  const { data: categoriesData = [] } = useCategories();
+  const categories = useMemo(() => {
+    return ["All", ...categoriesData];
+  }, [categoriesData]);
 
   useEffect(() => {
     const measure = () => {
@@ -322,11 +332,17 @@ export function ProductListing() {
           transition={{ duration: 1.5 }}
           className="absolute inset-0"
         >
-          <img
-            onError={handleImageError}
+          <CloudinaryImage
             src={shopContent.hero.backgroundImage}
-            className="w-full h-full object-cover"
             alt="Hero Background"
+            className="w-full h-full object-cover"
+            containerClassName="w-full h-full"
+            loading="eager"
+            eager={true}
+            fetchPriority="high"
+            width={1600}
+            height={800}
+            sizes="100vw"
           />
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-surface" />
@@ -378,7 +394,7 @@ export function ProductListing() {
       <nav
         ref={navRef}
         className={`sticky -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${isStuck ? 'px-0' : 'px-margin-mobile md:px-margin-desktop'}`}
-        style={{ top: `${navbarHeight}px`, zIndex: 49 }}
+        style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px`, zIndex: 49 }}
       >
           <div
             className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${

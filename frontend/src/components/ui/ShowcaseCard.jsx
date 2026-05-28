@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { handleImageError } from "../../utils/imageUtils";
+import { CloudinaryImage } from "./CloudinaryImage";
+
 
 export function ShowcaseCard({
   id,
@@ -44,12 +46,15 @@ export function ShowcaseCard({
     >
       {/* 1. VISUAL CANVAS */}
       <div className="relative h-44 sm:h-56 md:h-72 w-full overflow-hidden bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5 shadow-2xs">
-        <img
-          onError={handleImageError}
+        <CloudinaryImage
           src={image || ""}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover:scale-110"
+          containerClassName="w-full h-full"
           loading="lazy"
+          width={400}
+          height={300}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
 
         {/* Floating Utility Actions */}

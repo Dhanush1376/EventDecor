@@ -149,7 +149,13 @@ api.interceptors.request.use(
       path.includes('/users/cart') ||
       path.includes('/users/wishlist') ||
       path.includes('/users/profile') ||
+      path.includes('/users/team') ||
       path.includes('/admin/') ||
+      path.includes('/layouts') ||
+      path.includes('/categories') ||
+      path.includes('/custom-orders') ||
+      path.includes('/notifications') ||
+      path.includes('/config') ||
       path.includes('/recommendations/for-you');
 
     const isAuthLifecycleRequest =

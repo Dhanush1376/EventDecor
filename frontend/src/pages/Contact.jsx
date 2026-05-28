@@ -285,7 +285,7 @@ export function Contact() {
               >
                 {formState === "sending" ? (
                   <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
                     Transmitting...
                   </>
                 ) : (

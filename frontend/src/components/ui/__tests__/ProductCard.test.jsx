@@ -11,11 +11,23 @@ vi.mock('../../../context/WishlistContext', () => ({
     toggleItem: vi.fn(),
     isWishlisted: () => false,
   }),
+  useWishlistState: () => ({
+    isWishlisted: () => false,
+  }),
+  useWishlistDispatch: () => ({
+    toggleItem: vi.fn(),
+  }),
   WishlistProvider: ({ children }) => <div>{children}</div>,
 }));
 
 vi.mock('../../../context/CartContext', () => ({
   useCart: () => ({
+    addItem: vi.fn(),
+  }),
+  useCartState: () => ({
+    isInCart: () => false,
+  }),
+  useCartDispatch: () => ({
     addItem: vi.fn(),
   }),
   CartProvider: ({ children }) => <div>{children}</div>,

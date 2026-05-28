@@ -26,9 +26,8 @@ try {
   logger.warn("Failed to load cached website content from localStorage", e);
 }
 
-if (!globalCache) {
-  globalCache = initialWebsiteContent;
-}
+// Start with empty cache if not found, to trigger skeletons
+// initialWebsiteContent will only be used if API explicitly fails
 
 const updateGlobalCache = (newContent) => {
   globalCache = newContent;
@@ -149,6 +148,9 @@ export function useWebsiteContent() {
       const res = await globalPromise;
       if (res) {
         handleUpdate(res);
+      } else if (!globalCache) {
+        // Fallback if API fails and cache is empty
+        handleUpdate(initialWebsiteContent);
       }
     };
 

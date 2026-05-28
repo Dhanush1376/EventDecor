@@ -1,9 +1,41 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { orderService } from '../services/domainServices';
 
 import logger from '../utils/logger';
 let razorpayPromise = null;
+
+const loadScript = async (src, retries = 2) => {
+  if (razorpayPromise) return razorpayPromise;
+
+  razorpayPromise = new Promise((resolve) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      if (window.Razorpay) return resolve(true);
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => resolve(true);
+    script.onerror = () => {
+      razorpayPromise = null;
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+
+  let result = await razorpayPromise;
+  
+  if (!result && retries > 0) {
+    logger.warn(`Retrying Razorpay SDK load. Retries left: ${retries}`);
+    await new Promise(r => setTimeout(r, 1000));
+    return loadScript(src, retries - 1);
+  }
+
+  return result;
+};
+
+export const preloadRazorpay = () => {
+  loadScript('https://checkout.razorpay.com/v1/checkout.js').catch(() => {});
+};
 
 const createIdempotencyKey = () => {
   if (window.crypto?.randomUUID) return window.crypto.randomUUID();
@@ -11,36 +43,28 @@ const createIdempotencyKey = () => {
 };
 
 export const useRazorpay = () => {
-  const loadScript = (src) => {
-    if (razorpayPromise) return razorpayPromise;
-
-    razorpayPromise = new Promise((resolve) => {
-      if (document.querySelector(`script[src="${src}"]`)) {
-        if (window.Razorpay) return resolve(true);
-      }
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = () => resolve(true);
-      script.onerror = () => {
-        razorpayPromise = null;
-        resolve(false);
-      };
-      document.body.appendChild(script);
-    });
-
-    return razorpayPromise;
-  };
+  const paymentInProgress = React.useRef(false);
 
   const processPayment = useCallback(async (orderData, onSuccess, onError) => {
-    const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
-
-    if (!res) {
-      toast.error('Razorpay SDK failed to load. Are you online?');
-      onError?.(new Error('Razorpay SDK failed to load'));
+    if (paymentInProgress.current) {
+      logger.warn('Payment already in progress, ignoring duplicate request');
       return;
     }
+    
+    paymentInProgress.current = true;
+    
+    const finalize = () => {
+      paymentInProgress.current = false;
+    };
 
     try {
+      const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+
+      if (!res) {
+        toast.error('Razorpay SDK failed to load. Are you online?');
+        onError?.(new Error('Razorpay SDK failed to load'));
+        return finalize();
+      }
       // 1. Create order on backend
       const response = await orderService.create(orderData, {
         idempotencyKey: orderData.idempotencyKey || createIdempotencyKey(),
@@ -102,11 +126,18 @@ export const useRazorpay = () => {
       };
 
       const paymentObject = new window.Razorpay(options);
+      
+      paymentObject.on('payment.failed', function (response){
+        logger.error('Payment failed event:', response.error);
+        finalize();
+      });
+      
       paymentObject.open();
     } catch (err) {
       logger.error('Payment error:', err);
       toast.error(err.response?.data?.message || 'Payment initiation failed');
       onError?.(err);
+      finalize();
     }
   }, []);
 

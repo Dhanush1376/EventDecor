@@ -1,33 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { searchService } from '../services/searchService';
+import { useAutocomplete, useTrendingSearches } from './useSearchQueries';
 
 const RECENT_SEARCHES_KEY = 'siri_recent_searches';
 const MAX_RECENT = 8;
 
 /**
  * useSearchOverlay — manages the intelligent floating search overlay.
- * 
- * Features:
- * - Global Cmd+K / Ctrl+K keyboard shortcut to open
- * - Debounced autocomplete with API calls
- * - Recent searches persistence (localStorage)
- * - Keyboard navigation (arrow keys, Enter, Escape)
- * - Category prediction from query intent
- * - Trending searches on empty state
  */
 export function useSearchOverlay() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [predictedCategories, setPredictedCategories] = useState([]);
-  const [correctedQuery, setCorrectedQuery] = useState('');
-  const [trendingSearches, setTrendingSearches] = useState([]);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const debounceRef = useRef(null);
-  const searchRequestIdRef = useRef(0);
   const navigate = useNavigate();
 
   // Load recent searches from localStorage on mount
@@ -42,39 +28,56 @@ export function useSearchOverlay() {
     }
   }, []);
 
-  // Fetch trending searches when overlay opens with empty query
+  // Debounce the search query to minimize API calls
   useEffect(() => {
-    if (isOpen && trendingSearches.length === 0) {
-      searchService.getTrending({ limit: 8 })
-        .then((res) => {
-          if (res?.success && res.data?.searches) {
-            setTrendingSearches(res.data.searches);
-          }
-        })
-        .catch(() => {});
-    }
-  }, [isOpen, trendingSearches.length]);
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-  // Global keyboard shortcut: Cmd+K / Ctrl+K
+  // Fetch trending searches via React Query
+  const trendingQuery = useTrendingSearches({ limit: 8, enabled: isOpen });
+  const trendingSearches = useMemo(() => {
+    return trendingQuery.data?.searches || [];
+  }, [trendingQuery.data]);
+
+  // Fetch autocomplete suggestions via React Query
+  const autocompleteQuery = useAutocomplete(debouncedQuery, { 
+    limit: 8, 
+    enabled: isOpen && debouncedQuery.trim().length >= 2 
+  });
+
+  const suggestions = useMemo(() => {
+    if (!debouncedQuery.trim()) return [];
+    const list = autocompleteQuery.data?.suggestions || [];
+    return list.filter((item) => item.type !== 'gallery');
+  }, [autocompleteQuery.data, debouncedQuery]);
+
+  const predictedCategories = useMemo(() => {
+    return autocompleteQuery.data?.predictedCategories || [];
+  }, [autocompleteQuery.data]);
+
+  const correctedQuery = useMemo(() => {
+    return autocompleteQuery.data?.correctedQuery || '';
+  }, [autocompleteQuery.data]);
+
+  const loading = autocompleteQuery.isLoading;
+
   const handleClose = useCallback(() => {
-    searchRequestIdRef.current += 1;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
     setIsOpen(false);
     setQuery('');
-    setSuggestions([]);
-    setPredictedCategories([]);
-    setCorrectedQuery('');
+    setDebouncedQuery('');
     setActiveIndex(-1);
-    setLoading(false);
   }, []);
 
+  // Global keyboard shortcut: Cmd+K / Ctrl+K
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsOpen(true);
       }
-      // Escape closes
       if (e.key === 'Escape' && isOpen) {
         handleClose();
       }
@@ -95,58 +98,6 @@ export function useSearchOverlay() {
       document.body.style.overflow = '';
     };
   }, [isOpen]);
-
-  // Debounced autocomplete
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (query.trim().length < 2) {
-      setSuggestions([]);
-      setPredictedCategories([]);
-      setCorrectedQuery('');
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setActiveIndex(-1);
-
-    // Cancel previous request if still pending
-    const abortController = new AbortController();
-    const requestId = searchRequestIdRef.current + 1;
-    searchRequestIdRef.current = requestId;
-
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await searchService.autocomplete(query, { 
-          limit: 8,
-          signal: abortController.signal 
-        });
-        
-        if (searchRequestIdRef.current === requestId && res?.success && res.data) {
-          const filtered = (res.data.suggestions || []).filter(item => item.type !== 'gallery');
-          setSuggestions(filtered);
-          setPredictedCategories(res.data.predictedCategories || []);
-          setCorrectedQuery(res.data.correctedQuery || '');
-        }
-      } catch (err) {
-        const canceled = err?.name === 'AbortError' || err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED' || err?.message === 'canceled';
-        if (!canceled && searchRequestIdRef.current === requestId) {
-          setSuggestions([]);
-          setCorrectedQuery('');
-        }
-      } finally {
-        if (searchRequestIdRef.current === requestId) {
-          setLoading(false);
-        }
-      }
-    }, 250); // 250ms debounce for fast feel but reduced API load
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      abortController.abort(); // Cancel request on unmount or query change
-    };
-  }, [query]);
 
   // Save a search to recent history
   const saveRecentSearch = useCallback((searchQuery) => {
@@ -205,7 +156,7 @@ export function useSearchOverlay() {
     }
 
     handleClose();
-  }, [navigate, query, saveRecentSearch]);
+  }, [navigate, query, saveRecentSearch, handleClose]);
 
   // Execute a full search
   const executeSearch = useCallback((searchQuery) => {
@@ -215,7 +166,7 @@ export function useSearchOverlay() {
     saveRecentSearch(q);
     navigate(`/collections?search=${encodeURIComponent(q)}`);
     handleClose();
-  }, [navigate, query, saveRecentSearch]);
+  }, [navigate, query, saveRecentSearch, handleClose]);
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback((e) => {
@@ -245,7 +196,7 @@ export function useSearchOverlay() {
       default:
         break;
     }
-  }, [suggestions, activeIndex, selectSuggestion, executeSearch, query]);
+  }, [suggestions, activeIndex, selectSuggestion, executeSearch, query, handleClose]);
 
   const handleOpen = useCallback(() => {
     setIsOpen(true);
