@@ -1,4 +1,5 @@
 import cloudImageMappings from '../assets/cloud_image_mappings.json';
+import { getApiRootUrl } from '../config/apiConfig';
 
 /**
  * Resolve a legacy local public path (e.g. /mandala_hero_art.png) to its Cloudinary URL.
@@ -45,7 +46,6 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
     // In production (Vercel), we must route image optimization to the actual backend API
     // rather than the frontend origin, because there is no proxy in production.
     if (!import.meta.env.DEV) {
-      const { getApiRootUrl } = require('../config/apiConfig');
       const apiRoot = getApiRootUrl();
       targetUrl = `${apiRoot}/v1/media/optimize?url=${encodeURIComponent(url)}`;
     }
@@ -76,7 +76,6 @@ export const getBlurredPlaceholder = (url) => {
     // Fetch 20px blurred WebP from backend media pipeline
     let backendUrl = window.location.origin;
     if (!import.meta.env.DEV) {
-      const { getApiRootUrl } = require('../config/apiConfig');
       backendUrl = getApiRootUrl().replace(/\/api$/, '');
     }
     return `${backendUrl}/api/v1/media/optimize?url=${encodeURIComponent(url)}&w=20&q=20&fmt=webp`;
