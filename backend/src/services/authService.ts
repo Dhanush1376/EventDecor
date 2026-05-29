@@ -398,7 +398,7 @@ class AuthService {
     try {
       sendDirectEmail({
         email: cleanEmail,
-        subject: 'Your Siri Arts Security Code',
+        subject: `Your Siri Arts Security Code - ${new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}`,
         customHtml: getOtpEmailTemplate(otp, expiryMinutes),
         type: 'security',
         action: 'otp_auth',
