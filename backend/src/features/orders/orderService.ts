@@ -140,22 +140,26 @@ class OrderService {
     let walletDeduction = 0;
     let user: any = null;
     let order: any = null;
+    const pendingOrderId = new mongoose.Types.ObjectId();
 
     try {
       let discount = 0;
       let couponValid = false;
 
       if (couponCode) {
-        // Validate coupon but do NOT increment usedCount yet — that happens on payment confirmation
-        // to prevent double-counting when both createOrder and verifyPayment run
-        const coupon = await Coupon.findOne({
+        // ATOMIC COUPON VALIDATION AND RESERVATION
+        const coupon = await Coupon.findOneAndUpdate({
           code: couponCode.toUpperCase(),
           isActive: true,
           $or: [
             { usageLimit: null },
             { $expr: { $lt: ['$usedCount', '$usageLimit'] } }
           ]
-        }).session(session);
+        }, {
+          $inc: { usedCount: 1 },
+          $push: { usedBy: { userId, orderId: pendingOrderId } }
+        }, { new: true, session });
+
         if (coupon && new Date() <= coupon.expiryDate && subtotal >= coupon.minOrderAmount) {
           couponValid = true;
           if (coupon.discountType === 'percentage') {
@@ -167,6 +171,15 @@ class OrderService {
             discount = coupon.discountValue;
           }
           discount = Math.round(discount);
+        } else {
+          // If coupon was valid but expired or didn't meet min amount, rollback the increment we just did
+          if (coupon) {
+            await Coupon.findByIdAndUpdate(coupon._id, {
+              $inc: { usedCount: -1 },
+              $pull: { usedBy: { orderId: pendingOrderId } }
+            }, { session });
+          }
+          throw new ApiError(400, 'Coupon is invalid, expired, or usage limit reached');
         }
       }
 
@@ -224,8 +237,6 @@ class OrderService {
       const courierPartner = 'Delhivery';
       const barcodeData = invoiceNumber;
       const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'http://localhost:5173';
-      
-      const pendingOrderId = new mongoose.Types.ObjectId();
       const publicTrackingToken = LogisticsService.generateTrackingToken(pendingOrderId.toString());
       const qrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
 
@@ -729,15 +740,6 @@ class OrderService {
     // Automatic COD Remittance Transitions
     if (order.paymentMethod?.toLowerCase() === 'cod') {
       if (finalStatus === 'Delivered') {
-        if (!order.codCollected && order.couponCode) {
-          await Coupon.findOneAndUpdate(
-            { code: order.couponCode.toUpperCase() }, 
-            { 
-              $inc: { usedCount: 1 },
-              $push: { usedBy: { userId: order.user, orderId: order._id } }
-            }
-          );
-        }
         order.codCollected = true;
         order.paymentStatus = 'COD Collected';
         order.settlementStatus = 'Pending';
@@ -750,15 +752,6 @@ class OrderService {
           note: 'Package delivered. Cash collected by courier agent. Reconciliation pending.' 
         });
       } else if (finalStatus === 'Settled') {
-        if (!order.codCollected && order.couponCode) {
-          await Coupon.findOneAndUpdate(
-            { code: order.couponCode.toUpperCase() }, 
-            { 
-              $inc: { usedCount: 1 },
-              $push: { usedBy: { userId: order.user, orderId: order._id } }
-            }
-          );
-        }
         order.codCollected = true;
         order.paymentStatus = 'paid';
         order.settlementStatus = 'Settled';
@@ -803,7 +796,22 @@ class OrderService {
             status: 'active'
           });
         } catch (walletErr) {
-          logger.error('Failed to refund wallet balance on status transition:', walletErr);
+          logger.error('Failed to refund wallet on order cancellation:', walletErr);
+        }
+      }
+
+      // Coupon Usage Rollback Logic
+      if (order.couponCode) {
+        try {
+          await Coupon.findOneAndUpdate(
+            { code: order.couponCode.toUpperCase() }, 
+            { 
+              $inc: { usedCount: -1 },
+              $pull: { usedBy: { orderId: order._id } }
+            }
+          );
+        } catch (couponErr) {
+          logger.error('Failed to rollback coupon usage on order cancellation:', couponErr);
         }
       }
 

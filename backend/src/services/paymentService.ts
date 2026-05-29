@@ -14,6 +14,8 @@ import { getAdminEmails } from '../config/adminConfig';
 import { bumpAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
 import getRazorpay from '../config/razorpay';
 import PaymentAudit from '../models/PaymentAudit';
+import WalletTransaction from '../models/WalletTransaction';
+import { creditWalletBalance } from '../utils/walletMutations';
 
 export class PaymentService {
   static verifyWebhookSignature(signature: string, rawBody: Buffer, webhookSecret: string): boolean {
@@ -58,7 +60,7 @@ export class PaymentService {
 
     try {
       order = await Order.findOneAndUpdate(
-        { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
+        { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed'] } } as any,
         { $set: { paymentStatus: 'processing' } },
         { new: true, session }
       );
@@ -120,8 +122,31 @@ export class PaymentService {
           }, { session });
         }
 
+        if (order.walletDeduction && order.walletDeduction > 0) {
+          await creditWalletBalance(order.user, order.walletDeduction, session);
+          await WalletTransaction.create([{
+            userId: order.user,
+            type: 'credit',
+            amount: order.walletDeduction,
+            source: 'refund',
+            description: 'Refund for failed Razorpay payment verification',
+            status: 'active'
+          }], { session });
+        }
+
+        if (order.couponCode) {
+          await Coupon.findOneAndUpdate(
+            { code: order.couponCode.toUpperCase() }, 
+            { 
+              $inc: { usedCount: -1 },
+              $pull: { usedBy: { orderId: order._id } }
+            },
+            { session }
+          );
+        }
+
         order.paymentStatus = 'failed';
-        order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Tampering/Mismatch) - Stock Released' });
+        order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Tampering/Mismatch) - Stock & Coupon Released' });
         await order.save({ session });
         await session.commitTransaction();
         session.endSession();
@@ -138,16 +163,7 @@ export class PaymentService {
 
       await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
 
-      if (order.couponCode) {
-        await Coupon.findOneAndUpdate(
-          { code: order.couponCode.toUpperCase() },
-          {
-            $inc: { usedCount: 1 },
-            $push: { usedBy: { userId: order.user, orderId: order._id } }
-          },
-          { session }
-        );
-      }
+      await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
 
       await session.commitTransaction();
       session.endSession();
@@ -269,7 +285,7 @@ export class PaymentService {
 
       try {
         let order: any = await Order.findOneAndUpdate(
-          { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
+          { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed'] } } as any,
           { $set: { paymentStatus: 'processing' } },
           { new: true, session }
         );
@@ -306,11 +322,22 @@ export class PaymentService {
         }], { session });
 
         if (!isValid) {
+          if (order.couponCode) {
+            await Coupon.findOneAndUpdate(
+              { code: order.couponCode.toUpperCase() }, 
+              { 
+                $inc: { usedCount: -1 },
+                $pull: { usedBy: { orderId: order._id } }
+              },
+              { session }
+            );
+          }
+
           order.paymentStatus = 'failed';
           order.statusHistory.push({
             status: 'Pending' as any,
             timestamp: new Date(),
-            note: `Payment validation failed via Webhook. Amount or Currency mismatch. Expected ₹${expectedAmount / 100}, Received ₹${paymentEntity.amount / 100} ${paymentEntity.currency}`,
+            note: `Payment validation failed via Webhook. Amount or Currency mismatch. Expected ₹${expectedAmount / 100}, Received ₹${paymentEntity.amount / 100} ${paymentEntity.currency} - Coupon Released`,
           });
           await order.save({ session });
           await session.commitTransaction();
@@ -329,17 +356,6 @@ export class PaymentService {
 
         await order.save({ session });
         await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
-
-        if (order.couponCode) {
-          await Coupon.findOneAndUpdate(
-            { code: order.couponCode.toUpperCase() },
-            {
-              $inc: { usedCount: 1 },
-              $push: { usedBy: { userId: order.user, orderId: order._id } }
-            },
-            { session }
-          );
-        }
 
         await session.commitTransaction();
       } catch (dbErr) {
@@ -368,11 +384,22 @@ export class PaymentService {
             for (const item of order.items) {
               await Product.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } }, { session });
             }
+            if (order.couponCode) {
+              await Coupon.findOneAndUpdate(
+                { code: order.couponCode.toUpperCase() }, 
+                { 
+                  $inc: { usedCount: -1 },
+                  $pull: { usedBy: { orderId: order._id } }
+                },
+                { session }
+              );
+            }
+
             order.paymentStatus = 'failed';
             order.statusHistory.push({
               status: 'Pending' as any,
               timestamp: new Date(),
-              note: `Razorpay Transaction Failed. Reserved stock returned.`,
+              note: `Razorpay Transaction Failed. Reserved stock and coupon returned.`,
             });
             logger.warn('[PAYMENT_FAILED] Webhook reported payment failure for order', {
               orderId: order._id,
