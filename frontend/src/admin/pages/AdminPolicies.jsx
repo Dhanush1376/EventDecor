@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { policyService } from '../../services/domainServices';
 import { Skeleton } from '../../components/ui';
+import { toast } from 'react-hot-toast';
 
 export function AdminPolicies() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export function AdminPolicies() {
       const data = await policyService.getAll();
       setPolicies(data.data || []);
     } catch (error) {
-      console.error('Failed to fetch policies', error);
+      toast.error(error.response?.data?.message || 'Failed to fetch policies');
     } finally {
       setLoading(false);
     }
@@ -30,7 +31,7 @@ export function AdminPolicies() {
         await policyService.delete(id);
         fetchPolicies();
       } catch (error) {
-        console.error('Failed to delete policy', error);
+        toast.error(error.response?.data?.message || 'Failed to delete policy');
       }
     }
   };
