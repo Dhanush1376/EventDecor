@@ -484,8 +484,10 @@ class AuthService {
     }
 
     let matchedRecord: (typeof otpRecords)[0] | null = null;
+    logger.info(`[OTP VERIFY DEBUG] Found ${otpRecords.length} active OTP records for ${cleanEmail}. Testing normalized OTP: '${normalizedOtp}'`);
     for (const record of otpRecords) {
       const isMatch = isBypassConfigured || (await bcrypt.compare(normalizedOtp, record.otpHash));
+      logger.info(`[OTP VERIFY DEBUG] Comparing against record ${record._id} (created at ${record.createdAt}). Match result: ${isMatch}`);
       if (isMatch) {
         matchedRecord = record;
         break;
@@ -493,6 +495,7 @@ class AuthService {
     }
 
     if (!matchedRecord) {
+      logger.error(`[OTP VERIFY DEBUG] No matches found for ${cleanEmail}. The provided OTP did not match any stored hashes.`);
       await OtpRequestLog.create({ ip, email: cleanEmail, action: 'verify_fail' });
       await recordOtpVerifyFailure(ip);
 
