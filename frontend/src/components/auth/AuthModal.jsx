@@ -393,7 +393,7 @@ export function AuthModal() {
                               onClick={() => setStep("identifier")}
                               className="font-label-sm text-[8px] text-primary uppercase tracking-[0.2em] font-bold hover:underline cursor-pointer"
                             >
-                              Use different email
+                              Not you? Change email
                             </button>
                           </div>
 

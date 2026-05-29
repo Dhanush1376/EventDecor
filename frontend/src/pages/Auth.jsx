@@ -525,7 +525,7 @@ export function Auth() {
                             onClick={() => setStep("identifier")}
                             className="font-label-sm text-[9px] text-primary uppercase tracking-[0.2em] font-bold hover:underline"
                           >
-                            Use different email
+                            Not you? Change email
                           </button>
                         </div>
 
