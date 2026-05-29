@@ -16,6 +16,8 @@ const CSRF_EXEMPT_PATHS = new Set([
 /** Auth routes that must work on cold load before CSRF cookie is established. */
 const CSRF_EXEMPT_SUFFIXES = [
   '/auth/refresh',
+  '/auth/send-otp',
+  '/tracking/session',
 ];
 
 const generateToken = (): string => crypto.randomBytes(32).toString('hex');

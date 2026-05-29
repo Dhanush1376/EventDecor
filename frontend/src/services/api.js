@@ -152,11 +152,8 @@ api.interceptors.request.use(
       path.includes('/users/team') ||
       path.includes('/orders') ||
       path.includes('/admin/') ||
-      path.includes('/layouts') ||
-      path.includes('/categories') ||
       path.includes('/custom-orders') ||
       path.includes('/notifications') ||
-      path.includes('/config') ||
       path.includes('/recommendations/for-you');
 
     const isAuthLifecycleRequest =
