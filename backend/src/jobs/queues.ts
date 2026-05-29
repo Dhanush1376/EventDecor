@@ -21,7 +21,15 @@ export const connection = new IORedis(redisUrl, {
   enableReadyCheck: false,
   connectTimeout: 10000,
   lazyConnect: true,
-  tls: redisUrl.startsWith('rediss://') || redisUrl.includes('upstash.io') ? { rejectUnauthorized: process.env.REDIS_REJECT_UNAUTHORIZED !== 'false' } : undefined
+  tls: redisUrl.startsWith('rediss://') || redisUrl.includes('upstash.io') ? { rejectUnauthorized: process.env.REDIS_REJECT_UNAUTHORIZED !== 'false' } : undefined,
+  retryStrategy: (retries: number) => {
+    const requireRedis = process.env.REQUIRE_REDIS === 'true';
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!requireRedis && !isProduction && retries > 5) {
+      return null; // Stop reconnecting after 5 attempts if not required
+    }
+    return Math.min(retries * 100, 3000);
+  }
 });
 
 connection.on('error', (err: any) => {

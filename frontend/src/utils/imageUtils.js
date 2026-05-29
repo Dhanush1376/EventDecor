@@ -40,8 +40,15 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
     }
     
     // Build local optimize endpoint URL
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
-    let targetUrl = `${backendUrl}/api/v1/media/optimize?url=${encodeURIComponent(url)}`;
+    let targetUrl = `${window.location.origin}/api/v1/media/optimize?url=${encodeURIComponent(url)}`;
+    
+    // In production (Vercel), we must route image optimization to the actual backend API
+    // rather than the frontend origin, because there is no proxy in production.
+    if (!import.meta.env.DEV) {
+      const { getApiRootUrl } = require('../config/apiConfig');
+      const apiRoot = getApiRootUrl();
+      targetUrl = `${apiRoot}/v1/media/optimize?url=${encodeURIComponent(url)}`;
+    }
     
     if (width) targetUrl += `&w=${width}`;
     if (height) targetUrl += `&h=${height}`;
@@ -67,7 +74,11 @@ export const getBlurredPlaceholder = (url) => {
   } else {
     if (url.startsWith('data:') || url.startsWith('blob:')) return url;
     // Fetch 20px blurred WebP from backend media pipeline
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+    let backendUrl = window.location.origin;
+    if (!import.meta.env.DEV) {
+      const { getApiRootUrl } = require('../config/apiConfig');
+      backendUrl = getApiRootUrl().replace(/\/api$/, '');
+    }
     return `${backendUrl}/api/v1/media/optimize?url=${encodeURIComponent(url)}&w=20&q=20&fmt=webp`;
   }
 };
@@ -88,9 +99,8 @@ export const handleImageError = (e) => {
   if (e.target.dataset.errorHandled) return;
   e.target.dataset.errorHandled = "true";
   e.target.onerror = null;
-  // Fallback inline SVG placeholder matching the Digital Studio theme
-  e.target.src =
-    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="100%" height="100%" fill="%23faf9f6"/><path d="M150 100 L250 100 L250 200 L150 200 Z" fill="none" stroke="%23d4af37" stroke-width="1" opacity="0.3"/><text x="50%" y="50%" font-family="Playfair Display, serif" font-size="12" fill="%23735c00" text-anchor="middle" letter-spacing="2">DIGITAL STUDIO</text><text x="50%" y="62%" font-family="Inter, sans-serif" font-size="8" fill="%237f7663" text-anchor="middle" opacity="0.6" letter-spacing="1">COLLECTION IMAGE</text></svg>';
+  // Use a transparent pixel instead of the hardcoded SVG
+  e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   e.target.classList.add("image-fallback-active");
 };
 

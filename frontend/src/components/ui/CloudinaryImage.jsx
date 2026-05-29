@@ -56,8 +56,6 @@ export function OptimizedImage({
 
   const aspectStyle = aspectRatio ? { aspectRatio } : undefined;
 
-  const fallbackSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="100%" height="100%" fill="%23faf9f6"/><path d="M150 100 L250 100 L250 200 L150 200 Z" fill="none" stroke="%23d4af37" stroke-width="1" opacity="0.3"/><text x="50%" y="50%" font-family="Playfair Display, serif" font-size="12" fill="%23735c00" text-anchor="middle" letter-spacing="2">DIGITAL STUDIO</text><text x="50%" y="62%" font-family="Inter, sans-serif" font-size="8" fill="%237f7663" text-anchor="middle" opacity="0.6" letter-spacing="1">COLLECTION IMAGE</text></svg>`;
-
   return (
     <div
       ref={containerRef}
@@ -72,21 +70,21 @@ export function OptimizedImage({
         />
       )}
       
-      {/* Skeleton fallback if there is no placeholder url */}
-      {!isLoaded && !hasError && !placeholderUrl && (
+      {/* Skeleton fallback if there is no placeholder url OR if the image errored */}
+      {((!isLoaded && !placeholderUrl) || hasError) && (
         <div className="absolute inset-0 skeleton-box rounded-[inherit]" />
       )}
 
       {/* Picture tag for AVIF, WebP and Fallback support */}
-      {isInView && (
+      {isInView && !hasError && (
         <picture>
-          {!hasError && avifSrcSet && <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} />}
-          {!hasError && webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} />}
-          {!hasError && fallbackSrcSet && <source srcSet={fallbackSrcSet} sizes={sizes} />}
+          {avifSrcSet && <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} />}
+          {webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} />}
+          {fallbackSrcSet && <source srcSet={fallbackSrcSet} sizes={sizes} />}
           
           <img
-            src={hasError ? fallbackSvg : optimizedUrl}
-            alt={hasError ? "Image unavailable" : alt}
+            src={optimizedUrl}
+            alt={alt}
             width={width}
             height={height}
             loading={eager || loading === 'eager' ? "eager" : "lazy"}

@@ -359,11 +359,8 @@ class AuthService {
       logger.warn(`[FRONTEND DUPLICATE REQUEST DETECTED] Multiple OTP requests received for ${cleanEmail} within 2 seconds. This indicates frontend race conditions or duplicate click triggers!`);
     }
 
-    // Invalidate prior OTPs so only one active code exists per email (prevents confusion / race attacks)
-    const removed = await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
-    if (removed.deletedCount > 0) {
-      logger.info(`[OTP RESEND] Invalidated ${removed.deletedCount} prior OTP record(s) for ${cleanEmail}`);
-    }
+    // We no longer delete prior OTPs. This allows users to use older OTPs if emails arrive out of order, 
+    // significantly improving UX. All OTPs will expire automatically via the TTL index.
 
     // 4. Generate cryptographically secure 6-digit OTP
     const otp = crypto.randomInt(100000, 999999).toString();
@@ -452,11 +449,9 @@ class AuthService {
       }
     }
 
+    // Generous clock skew allowance (5 minutes) to prevent issues with server time drifts
+    const otpClockSkewMs = 5 * 60 * 1000;
     const now = new Date();
-    const otpClockSkewMs = Math.max(
-      0,
-      parseInt(process.env.OTP_CLOCK_SKEW_SECONDS || '90', 10) * 1000
-    );
     const expiryGraceCutoff = new Date(now.getTime() - otpClockSkewMs);
 
     const otpRecords = await OtpVerification.find({
@@ -793,9 +788,6 @@ class AuthService {
 
     const cleanEmail = canonicalizeEmail(email);
 
-    // We no longer delete existing OTPs here to allow multiple valid OTPs (if clicked resend multiple times)
-    // await OtpVerification.deleteMany({ email: cleanEmail, type: 'cod' });
-
     // 2. Generate cryptographically secure 4-digit OTP
     const otp = crypto.randomInt(1000, 9999).toString();
 
@@ -825,7 +817,6 @@ class AuthService {
         action: 'cod_otp'
       });
     } catch (err: any) {
-      await OtpVerification.deleteOne({ email: cleanEmail, type: 'cod' });
       logger.error(`[COD OTP QUEUE ERROR] Failed to enqueue COD OTP email for ${cleanEmail}:`, err);
       throw new ApiError(500, `COD verification email queueing failed. Please try again.`);
     }
@@ -840,15 +831,17 @@ class AuthService {
 
     const cleanEmail = canonicalizeEmail(email);
 
-    const otpRecords = await OtpVerification.find({ email: cleanEmail, type: 'cod' }).sort({ createdAt: -1 });
+    // Generous clock skew allowance (5 minutes)
+    const otpClockSkewMs = 5 * 60 * 1000;
+    const expiryGraceCutoff = new Date(Date.now() - otpClockSkewMs);
+
+    const otpRecords = await OtpVerification.find({ 
+      email: cleanEmail, 
+      type: 'cod',
+      expiresAt: { $gt: expiryGraceCutoff }
+    }).sort({ createdAt: -1 });
+
     if (otpRecords.length === 0) {
-      throw new ApiError(400, 'Invalid or expired OTP');
-    }
-
-    const latestRecord = otpRecords[0];
-
-    if (new Date() > latestRecord.expiresAt) {
-      await OtpVerification.deleteMany({ email: cleanEmail, type: 'cod' });
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
@@ -856,6 +849,7 @@ class AuthService {
     const isBypassConfigured = process.env.NODE_ENV === 'development' && process.env.BYPASS_OTP_CODE && otp === process.env.BYPASS_OTP_CODE;
     
     let isMatch = false;
+    let latestRecord = otpRecords[0];
     for (const record of otpRecords) {
       if (new Date() > record.expiresAt) continue;
       if (isBypassConfigured || await bcrypt.compare(otp, record.otpHash)) {
