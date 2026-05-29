@@ -17,6 +17,7 @@ const CSRF_EXEMPT_PATHS = new Set([
 const CSRF_EXEMPT_SUFFIXES = [
   '/auth/refresh',
   '/auth/send-otp',
+  '/auth/verify-otp',
   '/tracking/session',
 ];
 
