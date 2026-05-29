@@ -1,6 +1,7 @@
 import api from "../services/api";
 import { productService, orderService, userService } from "../services/domainServices";
 import logger from './logger';
+import { hasSessionMarker } from "./authStorage";
 
 /**
  * PrefetchManager handles intelligent background loading of data and assets
@@ -57,11 +58,13 @@ class PrefetchManager {
           }
         });
       } else if (route === '/wishlist') {
-        await this.queryClient.prefetchQuery({
-          queryKey: ['wishlist'],
-          queryFn: async () => userService.getWishlist(),
-          staleTime: 1000 * 60 * 2,
-        });
+        if (hasSessionMarker()) {
+          await this.queryClient.prefetchQuery({
+            queryKey: ['wishlist'],
+            queryFn: async () => userService.getWishlist(),
+            staleTime: 1000 * 60 * 2,
+          });
+        }
       } else if (route === '/events' || route.startsWith('/events?')) {
         await this.queryClient.prefetchQuery({
           queryKey: ['events', 'list'],
@@ -84,17 +87,21 @@ class PrefetchManager {
           staleTime: 1000 * 60 * 5,
         });
       } else if (route === "/checkout") {
-        await this.queryClient.prefetchQuery({
-          queryKey: ["checkout", "addresses"],
-          queryFn: async () => userService.getAddresses(),
-          staleTime: 1000 * 60 * 3,
-        });
+        if (hasSessionMarker()) {
+          await this.queryClient.prefetchQuery({
+            queryKey: ["checkout", "addresses"],
+            queryFn: async () => userService.getAddresses(),
+            staleTime: 1000 * 60 * 3,
+          });
+        }
       } else if (route === "/dashboard" || route.startsWith("/dashboard")) {
-        await this.queryClient.prefetchQuery({
-          queryKey: ["dashboard", "orders"],
-          queryFn: async () => orderService.getMyOrders({ limit: 10 }),
-          staleTime: 1000 * 60 * 2,
-        });
+        if (hasSessionMarker()) {
+          await this.queryClient.prefetchQuery({
+            queryKey: ["dashboard", "orders"],
+            queryFn: async () => orderService.getMyOrders({ limit: 10 }),
+            staleTime: 1000 * 60 * 2,
+          });
+        }
       }
     } catch (e) {
       if (kind !== "silent") {

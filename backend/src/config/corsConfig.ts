@@ -99,7 +99,8 @@ export const corsOptions = (req: any, callback: any) => {
       'Content-Type',
       'Accept',
       'Authorization',
-      'x-csrf-token'
+      'x-csrf-token',
+      'Cache-Control'
     ]
   };
 

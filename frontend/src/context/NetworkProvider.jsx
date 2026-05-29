@@ -76,7 +76,6 @@ export function NetworkProvider({ children }) {
         method: "GET",
         credentials: 'include',
         headers: {
-          "Cache-Control": "no-cache",
           "Accept": "application/json"
         },
         signal: controller.signal,

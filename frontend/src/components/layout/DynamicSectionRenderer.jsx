@@ -23,6 +23,8 @@ const componentRegistry = {
   BestsellerSection,
 };
 
+import { HeroSkeleton, NavigationHubSkeleton, BestsellerSkeleton, StorySkeleton, GallerySkeleton } from '../ui';
+
 export const DynamicSectionRenderer = ({ pagePath }) => {
   const [layout, setLayout] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,17 @@ export const DynamicSectionRenderer = ({ pagePath }) => {
   }, [pagePath]);
 
   if (loading) {
+    if (pagePath === '/') {
+      return (
+        <>
+          <HeroSkeleton />
+          <NavigationHubSkeleton />
+          <BestsellerSkeleton />
+          <StorySkeleton />
+          <GallerySkeleton />
+        </>
+      );
+    }
     return <div className="animate-pulse bg-surface-container w-full h-[60vh]" />;
   }
 

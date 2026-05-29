@@ -15,7 +15,6 @@ const api = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache',
   },
 });
 
@@ -149,7 +148,9 @@ api.interceptors.request.use(
       path.includes('/users/cart') ||
       path.includes('/users/wishlist') ||
       path.includes('/users/profile') ||
+      path.includes('/users/addresses') ||
       path.includes('/users/team') ||
+      path.includes('/orders') ||
       path.includes('/admin/') ||
       path.includes('/layouts') ||
       path.includes('/categories') ||
@@ -291,8 +292,12 @@ api.interceptors.response.use(
     const method = originalRequest?.method?.toLowerCase() || 'get';
     const isGet = method === 'get';
     const status = error.response?.status;
+    const isDatabaseDown = status === 503 && error.response?.data?.message?.includes('Database is currently starting up');
+    
+    // Don't treat database readiness guard 503s as generic transient errors to avoid 2-minute UI hangs
     const isTransientError =
-      !error.response || TRANSIENT_STATUSES.has(status) || normalized.isTimeout;
+      (!error.response || TRANSIENT_STATUSES.has(status) || normalized.isTimeout) && !isDatabaseDown;
+      
     const maxRetries = isGet ? MAX_GET_RETRIES : MAX_MUTATION_RETRIES;
     const hasRetryAttemptsLeft =
       originalRequest && (!originalRequest._retryCount || originalRequest._retryCount < maxRetries);
@@ -318,8 +323,8 @@ api.interceptors.response.use(
     ) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
       const backoffDelay =
-        Math.pow(2, originalRequest._retryCount) * 1000 +
-        Math.random() * 500 +
+        Math.pow(2, originalRequest._retryCount) * 500 + // Reduced from 1000 to 500 for faster failure
+        Math.random() * 200 +
         (status === 429 ? 2000 : 0);
 
       logger.warn(
@@ -335,7 +340,9 @@ api.interceptors.response.use(
       !accessToken &&
       (originalRequest?.url?.includes('/auth/profile') ||
         originalRequest?.url?.includes('/users/cart') ||
-        originalRequest?.url?.includes('/users/wishlist'));
+        originalRequest?.url?.includes('/users/wishlist') ||
+        originalRequest?.url?.includes('/users/addresses') ||
+        originalRequest?.url?.includes('/orders'));
 
     if (isProtectedWithoutSession) {
       return Promise.reject(error);
