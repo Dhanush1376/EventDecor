@@ -46,6 +46,7 @@ export function getRouteSkeletonVariant(path) {
   if (path === "/order-success") return "order-success";
   if (["/shipping", "/returns", "/privacy", "/terms"].includes(path)) return "policy";
   if (path.match(/^\/(wedding-decorations|event-decorators)-[a-z]+$/)) return "location";
+  if (path.startsWith("/admin")) return "admin";
   
   return "page";
 }
@@ -85,6 +86,7 @@ export function RouteSkeleton({ variant = "page" }) {
   if (variant === "order-tracking") return <OrderTrackingSkeleton />;
   if (variant === "policy") return <PolicySkeleton />;
   if (variant === "auth") return <AuthSkeleton />;
+  if (variant === "admin") return <div className="py-20 flex justify-center"><div className="w-10 h-10 border-4 border-black/10 border-t-black rounded-full animate-spin" /></div>;
 
   return (
     <>

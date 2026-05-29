@@ -6,9 +6,9 @@ import { useAdmin } from "../context/AdminContext";
 import toast from "react-hot-toast";
 import logger from '../../utils/logger';
 import {
-  PageHeader,
   fadeUp,
   stagger,
+  SkeletonDashboard,
 } from "../components/AdminUIKit";
 
 export function AdminSettings() {
@@ -285,14 +285,7 @@ export function AdminSettings() {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 space-y-4">
-        <div className="w-10 h-10 border-4 border-[var(--admin-border-strong)] border-t-[var(--admin-accent)] rounded-full animate-spin" />
-        <p className="text-[12px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest">
-          Syncing profile & configurations...
-        </p>
-      </div>
-    );
+    return <SkeletonDashboard />;
   }
 
   // Settings structural layout

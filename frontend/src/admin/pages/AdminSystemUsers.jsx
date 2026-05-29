@@ -10,6 +10,7 @@ import {
   Edit2
 } from 'lucide-react';
 import api from '../../services/api';
+import { SkeletonDashboard } from '../components/AdminUIKit';
 
 export const AdminSystemUsers = () => {
   const { user } = useAuth();
@@ -125,7 +126,7 @@ export const AdminSystemUsers = () => {
 
       <div className="admin-card shadow-sm border border-stone-100 overflow-hidden">
         {loading ? (
-          <div className="p-10 text-center text-[var(--admin-text-tertiary)]">Loading system users...</div>
+          <SkeletonDashboard />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">

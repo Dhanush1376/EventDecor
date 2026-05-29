@@ -6,7 +6,7 @@ import { productService, uploadService } from"../../services/domainServices";
 import { useAdmin } from"../context/AdminContext";
 import { ImageUpload } from"../components/ImageUpload";
 import toast from"react-hot-toast";
-import { AdminToggle } from"../components/AdminUIKit";
+import { AdminToggle, SkeletonForm } from "../components/AdminUIKit";
 
 import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
@@ -427,6 +427,14 @@ export function AdminAddProduct() {
       c.toLowerCase().includes(formData.category.toLowerCase())
     );
   }, [formData.category, categoriesList]);
+
+  if (isLoading && isEditMode && !formData.title) {
+    return (
+      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-6">
+        <SkeletonForm fields={6} />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1280px] mx-auto space-y-6 pb-20">

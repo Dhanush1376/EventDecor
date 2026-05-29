@@ -4,6 +4,7 @@ import { customOrderService } from"../../services/domainServices";
 import { useAdmin } from"../context/AdminContext";
 import toast from"react-hot-toast";
 import logger from "../../utils/logger";
+import { SkeletonDashboard } from "../components/AdminUIKit";
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
@@ -250,7 +251,11 @@ export function AdminInquiries() {
       className="max-w-[1440px] mx-auto space-y-6  text-[var(--admin-text-primary)]"
     >
       
-      {/* Page Header Area */}
+      {loading ? (
+        <SkeletonDashboard />
+      ) : (
+        <>
+          {/* Page Header Area */}
       <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--admin-border)] pb-5">
         <div>
           <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">

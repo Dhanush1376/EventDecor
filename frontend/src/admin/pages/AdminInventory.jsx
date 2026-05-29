@@ -10,13 +10,14 @@ import {
   StatCard,
   StatusBadge,
   SkeletonTable,
+  SkeletonDashboard,
   formatCurrency,
   fadeUp,
   stagger,
 } from "../components/AdminUIKit";
 
 export function AdminInventory() {
-  const { products, setProducts, refreshProducts } = useAdmin();
+  const { products, setProducts, refreshProducts, dataLoading } = useAdmin();
   const [restockingProductId, setRestockingProductId] = useState(null);
   const [restockAmount, setRestockAmount] = useState(10);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -81,8 +82,12 @@ export function AdminInventory() {
       variants={stagger}
       className="space-y-6"
     >
-      <PageHeader
-        title="Inventory"
+      {dataLoading ? (
+        <SkeletonDashboard />
+      ) : (
+        <>
+          <PageHeader
+            title="Inventory"
         subtitle="Stock levels across all products"
       >
         <button 
@@ -246,6 +251,8 @@ export function AdminInventory() {
           </table>
         </div>
       </motion.div>
+        </>
+      )}
     </motion.div>
   );
 }

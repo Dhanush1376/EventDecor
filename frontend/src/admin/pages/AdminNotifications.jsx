@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from"react";
 import { motion, AnimatePresence } from"framer-motion";
 import { useAdmin } from"../context/AdminContext";
-import { useNavigate } from"react-router-dom";
-import toast from"react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { SkeletonDashboard } from "../components/AdminUIKit";
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const listContainer = {
@@ -36,7 +37,8 @@ export function AdminNotifications() {
     notifications, 
     unreadNotifications: unreadCount, 
     markNotificationRead, 
-    markAllNotificationsRead 
+    markAllNotificationsRead,
+    dataLoading
   } = useAdmin();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
@@ -68,6 +70,14 @@ export function AdminNotifications() {
     }
     return list.filter(n => n.type === activeTab);
   }, [notifications, activeTab]);
+
+  if (dataLoading) {
+    return (
+      <div className="max-w-[1000px] mx-auto">
+        <SkeletonDashboard />
+      </div>
+    );
+  }
 
   return (
     <motion.div

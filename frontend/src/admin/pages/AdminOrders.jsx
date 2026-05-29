@@ -11,6 +11,8 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  SkeletonTable,
+  SkeletonList,
 } from "../components/AdminUIKit";
 
 const slideDrawer = {
@@ -47,7 +49,7 @@ const statusIcons = {
 
 export function AdminOrders() {
   const navigate = useNavigate();
-  const { orders, updateOrderStatus, updateOrderNotes, searchQuery } = useAdmin();
+  const { orders, dataLoading, updateOrderStatus, updateOrderNotes, searchQuery } = useAdmin();
   
   const [viewMode, setViewMode] = useState("table"); // 'table' or 'kanban'
   const [filterStatus, setFilterStatus] = useState("All");
@@ -271,7 +273,27 @@ export function AdminOrders() {
 
       {/* CONTENT SWITCHER */}
       <AnimatePresence mode="wait">
-        {viewMode === "table" ? (
+        {dataLoading ? (
+          <motion.div
+            key="loading"
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            variants={fadeUp}
+          >
+            {viewMode === "table" ? (
+              <SkeletonTable rows={10} cols={8} />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 items-start">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[600px]">
+                     <SkeletonList items={5} className="border-none shadow-none bg-transparent" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        ) : viewMode === "table" ? (
           /* TABLE VIEW */
           <motion.div
             key="table"

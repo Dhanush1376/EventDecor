@@ -6,6 +6,7 @@ import {
   StatusBadge,
   fadeUp,
   stagger,
+  SkeletonDashboard,
 } from "../components/AdminUIKit";
 
 const statusIcons = {
@@ -18,8 +19,16 @@ const statusIcons = {
 export function AdminBookingDetail() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
-  const { eventBookings, updateBookingStatus } = useAdmin();
+  const { eventBookings, updateBookingStatus, dataLoading } = useAdmin();
   const booking = eventBookings.find((b) => b.id === bookingId);
+
+  if (dataLoading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8">
+        <SkeletonDashboard />
+      </div>
+    );
+  }
 
   if (!booking) {
     return (

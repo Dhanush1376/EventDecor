@@ -178,6 +178,16 @@
     </image:image>
   </url>
   <url>
+    <loc>http://localhost:3000/product/6a1982f6594e9ef6fa074f28</loc>
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://i.pinimg.com/1200x/b4/2b/17/b42b171791750a417ac70f1fcd7c1aec.jpg</image:loc>
+      <image:title>Pearl Engagement Tray</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>http://localhost:3000/gallery/6a0d5c8fc725a13dd9a95619</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>weekly</changefreq>
@@ -255,6 +265,16 @@
     <image:image>
       <image:loc>https://i1-c.pinimg.com/736x/91/27/80/912780ebea97cf7fd5cd2bce6f47124e.jpg</image:loc>
       <image:title>Floral Jewelry Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost:3000/gallery/6a1982f7594e9ef6fa074f29</loc>
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://i.pinimg.com/1200x/b4/2b/17/b42b171791750a417ac70f1fcd7c1aec.jpg</image:loc>
+      <image:title>Pearl Engagement Tray</image:title>
     </image:image>
   </url>
 </urlset>

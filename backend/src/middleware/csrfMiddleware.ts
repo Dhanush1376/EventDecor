@@ -19,6 +19,8 @@ const CSRF_EXEMPT_SUFFIXES = [
   '/auth/send-otp',
   '/auth/verify-otp',
   '/tracking/session',
+  '/tracking/event',
+  '/tracking/batch',
 ];
 
 const generateToken = (): string => crypto.randomBytes(32).toString('hex');

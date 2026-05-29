@@ -12,7 +12,7 @@ import {
 
 export function AdminCustomers() {
   const navigate = useNavigate();
-  const { customers, searchQuery } = useAdmin();
+  const { customers, dataLoading, searchQuery } = useAdmin();
   const [segmentFilter, setSegmentFilter] = useState("All");
 
   const filtered = useMemo(() => {
@@ -52,7 +52,20 @@ export function AdminCustomers() {
       </motion.div>
 
       <AnimatePresence mode="wait">
-        {filtered.length === 0 ? (
+        {dataLoading ? (
+          <motion.div
+            key="loading"
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+          >
+            {[...Array(6)].map((_, i) => (
+               <div key={i} className="admin-skeleton admin-card h-[280px]" />
+            ))}
+          </motion.div>
+        ) : filtered.length === 0 ? (
           <motion.div
             key="empty"
             initial="hidden"

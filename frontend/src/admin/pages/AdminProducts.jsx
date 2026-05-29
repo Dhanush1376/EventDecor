@@ -10,11 +10,14 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  SkeletonTable,
+  SkeletonList,
+  SkeletonDashboard,
 } from "../components/AdminUIKit";
 
 export function AdminProducts() {
   const navigate = useNavigate();
-  const { products, deleteProduct, toggleProductFeatured, searchQuery } = useAdmin();
+  const { products, dataLoading, deleteProduct, toggleProductFeatured, searchQuery } = useAdmin();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [viewMode, setViewMode] = useState("table");
@@ -136,7 +139,25 @@ export function AdminProducts() {
 
       {/* Table / Grid Render */}
       <AnimatePresence mode="wait">
-        {filteredProducts.length === 0 ? (
+        {dataLoading ? (
+          <motion.div
+            key="loading"
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            variants={fadeUp}
+          >
+            {viewMode === "table" ? (
+              <SkeletonTable rows={10} cols={8} />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="admin-skeleton admin-card aspect-[3/4]" />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        ) : filteredProducts.length === 0 ? (
           <motion.div
             key="empty"
             initial="hidden"

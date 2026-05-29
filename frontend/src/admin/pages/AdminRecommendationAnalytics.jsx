@@ -21,7 +21,7 @@ import {
   StatCard,
   ChartCard,
   ChartTooltip,
-  SkeletonPage,
+  SkeletonDashboard,
   fadeUp,
   stagger,
   CHART_COLORS,
@@ -93,7 +93,7 @@ export function AdminRecommendationAnalytics() {
   if (loading || !stats) {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
-        <SkeletonPage />
+        <SkeletonDashboard />
       </div>
     );
   }

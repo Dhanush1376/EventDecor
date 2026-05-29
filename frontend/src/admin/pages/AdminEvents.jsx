@@ -15,6 +15,7 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  SkeletonDashboard,
 } from "../components/AdminUIKit";
 
 const EVENT_CATEGORIES = [
@@ -934,7 +935,7 @@ export function AdminEvents() {
         {activeTab === "bookings" && (
           <motion.div key="bookings" initial="hidden" animate="show" variants={fadeUp} className="admin-card overflow-hidden">
             {loadingBookings ? (
-               <div className="py-20 flex justify-center"><div className="w-10 h-10 border-4 border-[var(--admin-border-strong)] border-t-[var(--admin-accent)] rounded-full animate-spin" /></div>
+               <SkeletonDashboard />
             ) : bookings.length === 0 ? (
               <div className="py-20 text-center text-[var(--admin-text-tertiary)] text-[12px]">No active custom bookings logged.</div>
             ) : (
@@ -1160,7 +1161,7 @@ export function AdminEvents() {
             </AnimatePresence>
 
             {loadingPortfolio ? (
-              <div className="py-20 flex justify-center"><div className="w-10 h-10 border-4 border-[var(--admin-border-strong)] border-t-[var(--admin-accent)] rounded-full animate-spin" /></div>
+              <SkeletonDashboard />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {events.map((ev) => (
@@ -1205,7 +1206,7 @@ export function AdminEvents() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 {operationsLoading ? (
-                  <div className="col-span-full py-10 text-center text-[var(--admin-text-tertiary)] text-[12px]">Loading live inventory...</div>
+                  <SkeletonDashboard />
                 ) : inventoryItems.length > 0 ? inventoryItems.map((prop, idx) => (
                   <div key={idx} className="p-5 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] flex flex-col justify-between h-36">
                     <div>
@@ -1235,7 +1236,7 @@ export function AdminEvents() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {operationsLoading ? (
-                  <div className="col-span-full py-10 text-center text-[var(--admin-text-tertiary)] text-[12px]">Loading live staff list...</div>
+                  <SkeletonDashboard />
                 ) : teamMembers.length > 0 ? teamMembers.map((team, idx) => (
                   <div key={idx} className="p-5 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] flex items-center justify-between">
                     <div>
@@ -1324,7 +1325,7 @@ export function AdminEvents() {
             <div className="admin-card p-6 space-y-6">
               <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)]">Tambulam & Gift Presentation Designs</h4>
               {loadingShowcases ? (
-                 <div className="py-20 flex justify-center"><div className="w-10 h-10 border-4 border-[var(--admin-border-strong)] border-t-[var(--admin-accent)] rounded-full animate-spin" /></div>
+                 <SkeletonDashboard />
               ) : showcases.length === 0 ? (
                 <div className="py-20 text-center text-[var(--admin-text-tertiary)] text-[12px]">No tambulam or gift designs have been created yet.</div>
               ) : (

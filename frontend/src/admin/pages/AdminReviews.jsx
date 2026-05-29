@@ -4,6 +4,7 @@ import { loyaltyService } from"../../services/domainServices";
 import toast from"react-hot-toast";
 
 import logger from '../../utils/logger';
+import { SkeletonDashboard } from '../components/AdminUIKit';
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export function AdminReviews() {
@@ -118,12 +119,7 @@ export function AdminReviews() {
       {/* Reviews feed */}
       <motion.div variants={fadeUp} className="space-y-4">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-3">
-            <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
-            <span className="text-[11px] sm:text-[11px] uppercase tracking-widest text-secondary font-semibold">
-              Loading Review Ledger...
-            </span>
-          </div>
+          <SkeletonDashboard />
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center admin-card flex flex-col items-center justify-center p-6 shadow-sm">
             <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-secondary)]/40 mb-2 block">search_off</span>

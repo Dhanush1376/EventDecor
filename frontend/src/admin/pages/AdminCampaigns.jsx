@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { notificationService } from "../../services/domainServices";
 import toast from "react-hot-toast";
-import { AdminToggle } from "../components/AdminUIKit";
+import { AdminToggle, SkeletonDashboard } from "../components/AdminUIKit";
 import { createSafeHtml } from "../../utils/sanitize";
 
 import logger from '../../utils/logger';
@@ -253,10 +253,7 @@ export function AdminCampaigns() {
       {/* Tab Content Panels */}
       <AnimatePresence mode="wait">
         {isLoading ? (
-          <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-20 rounded-3xl text-center space-y-3 shadow-sm">
-            <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
-            <p className="text-black/55 font-label text-[9px] uppercase tracking-widest font-bold">Decrypting campaign analytics...</p>
-          </div>
+          <SkeletonDashboard />
         ) : activeTab === "broadcasts" ? (
           <motion.div
             key="broadcasts"

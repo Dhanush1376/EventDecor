@@ -34,10 +34,10 @@ export function useSimilarRecommendations(targetType, targetId, limit = 8, optio
       const res = await recommendationService.getSimilar(targetType, targetId, limit, { signal });
       return res.success ? res.data : res;
     },
-    enabled: Boolean(targetType && targetId) && (options.enabled !== false),
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    ...options
+    ...options,
+    enabled: Boolean(targetType && targetId) && (options.enabled !== false),
   });
 }
 
@@ -48,10 +48,10 @@ export function useCompleteSetup(targetId, limit = 6, options = {}) {
       const res = await recommendationService.getCompleteSetup(targetId, limit, { signal });
       return res.success ? res.data : res;
     },
-    enabled: Boolean(targetId) && (options.enabled !== false),
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    ...options
+    ...options,
+    enabled: Boolean(targetId) && (options.enabled !== false),
   });
 }
 
@@ -62,9 +62,9 @@ export function useAlsoViewed(targetId, targetType = 'product', limit = 8, optio
       const res = await recommendationService.getAlsoViewed(targetId, targetType, limit, { signal });
       return res.success ? res.data : res;
     },
-    enabled: Boolean(targetId) && (options.enabled !== false),
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    ...options
+    ...options,
+    enabled: Boolean(targetId) && (options.enabled !== false),
   });
 }

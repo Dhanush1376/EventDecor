@@ -13,6 +13,7 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  SkeletonDashboard,
 } from "../components/AdminUIKit";
 
 const allStatuses = [
@@ -30,7 +31,7 @@ const statusIcons = {
 export function AdminOrderDetail() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { orders, updateOrderStatus } = useAdmin();
+  const { orders, dataLoading, updateOrderStatus } = useAdmin();
   const order = orders.find((o) => o.id === orderId);
 
   const [showStickerModal, setShowStickerModal] = React.useState(false);
@@ -125,6 +126,14 @@ export function AdminOrderDetail() {
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [order, updateOrderStatus]);
+
+  if (dataLoading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8">
+        <SkeletonDashboard />
+      </div>
+    );
+  }
 
   if (!order) {
     return (

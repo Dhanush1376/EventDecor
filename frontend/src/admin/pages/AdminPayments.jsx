@@ -18,6 +18,7 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  SkeletonDashboard,
 } from "../components/AdminUIKit";
 
 function ChartTooltip({ active, payload, label }) {
@@ -152,10 +153,7 @@ export function AdminPayments() {
       </PageHeader>
 
       {dataLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <div className="w-10 h-10 border-4 border-[var(--admin-border-strong)] border-t-[var(--admin-accent)] rounded-full animate-spin" />
-          <p className="text-[12px] font-bold text-[var(--admin-text-secondary)]">Syncing live payments from gateway...</p>
-        </div>
+        <SkeletonDashboard />
       ) : (
         <>
           <div className="admin-grid-stats">

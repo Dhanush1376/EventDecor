@@ -30,6 +30,7 @@ import {
   fadeUp,
   stagger,
   CHART_COLORS,
+  SkeletonDashboard,
 } from "../components/AdminUIKit";
 
 const FALLBACK_DATE = new Date("2026-05-20T00:00:00Z");
@@ -50,6 +51,7 @@ export function AdminDashboard() {
     lastDataRefresh,
     refreshDashboard,
     refreshOrders,
+    dataLoading,
   } = useAdmin();
   const navigate = useNavigate();
   const [chartPeriod, setChartPeriod] = useState("yearly");
@@ -67,6 +69,8 @@ export function AdminDashboard() {
   const pendingOrders = orders.filter((o) => o.status === "Pending").length;
   const lowStockProducts = products.filter((p) => p.stock > 0 && p.stock <= 5).length;
   const outOfStock = products.filter((p) => p.stock === 0).length;
+
+
 
   // Prepare Revenue Overview data
   const revenueChartData = useMemo(() => {
@@ -209,6 +213,10 @@ export function AdminDashboard() {
     { icon: "shopping_bag", label: "Orders", path: "/admin/orders", color: "var(--admin-success)" },
     { icon: "analytics", label: "Analytics", path: "/admin/analytics", color: "var(--admin-warning)" },
   ];
+
+  if (dataLoading) {
+    return <SkeletonDashboard />;
+  }
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">

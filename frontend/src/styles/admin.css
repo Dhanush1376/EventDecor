@@ -706,20 +706,44 @@
   overflow: hidden;
   background: var(--admin-surface-muted);
   border-radius: var(--admin-radius-md);
+  /* Hardware acceleration for smooth shimmer */
+  transform: translateZ(0);
 }
 
 .admin-section-root .admin-skeleton::after {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
+  background-image: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.5) 50%,
-    transparent 100%
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0.4) 60%,
+    rgba(255, 255, 255, 0) 100%
   );
-  animation: admin-skeleton-shimmer 1.8s ease-in-out infinite;
+  animation: admin-skeleton-shimmer 1.5s infinite linear;
+}
+
+/* Dark mode adjustment for shimmer */
+.admin-section-root.dark .admin-skeleton::after {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.03) 20%,
+    rgba(255, 255, 255, 0.08) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+/* Accessibility: reduce motion support */
+@media (prefers-reduced-motion: reduce) {
+  .admin-section-root .admin-skeleton::after {
+    animation: none;
+  }
 }
 
 .admin-section-root .admin-skeleton-text {
@@ -968,6 +992,9 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @keyframes admin-skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
   100% {
     transform: translateX(100%);
   }

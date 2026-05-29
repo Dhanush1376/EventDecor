@@ -7,7 +7,8 @@ import {
   AdminInput,
   AdminTextarea,
   AdminToggle,
-  PublishBar
+  PublishBar,
+  SkeletonDashboard
 } from"../components/AdminUIKit";
 import { ImageUpload } from"../components/ImageUpload";
 import toast from"react-hot-toast";
@@ -1572,7 +1573,8 @@ export function AdminContent() {
     autoPublish,
     toggleAutoPublish,
     auxContent,
-    handleUpdate
+    handleUpdate,
+    dataLoading
   } = useAdmin();
 
   const [activeSection, setActiveSection] = useState("hero");
@@ -1591,7 +1593,11 @@ export function AdminContent() {
       variants={stagger}
       className="max-w-[1500px] mx-auto space-y-6 relative font-sans text-[var(--admin-text-primary)] text-[12px] leading-normal"
     >
-      {/* Sleek Minimal Command Header */}
+      {dataLoading ? (
+        <SkeletonDashboard />
+      ) : (
+        <>
+          {/* Sleek Minimal Command Header */}
       <motion.div
         variants={fadeUp}
         className="flex items-center justify-between pb-4.5 border-b border-[var(--admin-border)] gap-4"
@@ -1850,6 +1856,8 @@ export function AdminContent() {
         onPublish={publishAllContent}
         onReset={() => {}}
       />
+        </>
+      )}
     </motion.div>
   );
 }

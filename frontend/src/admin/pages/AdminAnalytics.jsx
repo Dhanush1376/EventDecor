@@ -17,7 +17,7 @@ import {
   StatCard,
   ChartCard,
   ChartTooltip,
-  SkeletonPage,
+  SkeletonDashboard,
   formatCurrency,
   fadeUp,
   stagger,
@@ -60,7 +60,7 @@ export function AdminAnalytics() {
   if (dataLoading) {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
-        <SkeletonPage />
+        <SkeletonDashboard />
       </div>
     );
   }

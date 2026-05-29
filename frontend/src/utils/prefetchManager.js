@@ -73,7 +73,7 @@ class PrefetchManager {
         });
       } else if (route.startsWith('/product/') || kind === "product") {
         const id = productId || route.split('/')[2];
-        if (id) {
+        if (id && id !== ':id') {
           await this.queryClient.prefetchQuery({
             queryKey: ['product', id],
             queryFn: async () => productService.getById(id),
