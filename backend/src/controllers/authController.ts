@@ -20,6 +20,7 @@ import {
   CUSTOMER_REFRESH_COOKIE,
   ADMIN_REFRESH_COOKIE,
   clearAdminRefreshCookie,
+  setAdminRefreshCookie,
 } from '../utils/authCookies';
 import { regenerateCsrfToken, clearCsrfCookie } from '../middleware/csrfMiddleware';
 
@@ -109,7 +110,23 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
 
   const userAgent = req.headers['user-agent'] || '';
   const result = await AuthService.refreshSession(refreshToken, userAgent);
-  setCustomerRefreshCookie(res, result.refreshToken);
+
+  const adminRoles = [
+    'super_admin',
+    'main_admin',
+    'moderator',
+    'support_admin',
+    'order_manager',
+    'content_manager',
+    'admin',
+    'manager',
+    'coordinator',
+  ];
+  if (adminRoles.includes(result.user.role)) {
+    setAdminRefreshCookie(res, result.refreshToken);
+  } else {
+    setCustomerRefreshCookie(res, result.refreshToken);
+  }
 
   res.status(200).json(
     new ApiResponse(true, 'Session refreshed', {
