@@ -7,7 +7,7 @@ import {
   PageHeader,
   SectionHeader,
   AdminToggle,
-  SkeletonPage,
+  SkeletonDashboard,
   fadeUp,
   stagger,
 } from "../components/AdminUIKit";
@@ -219,7 +219,7 @@ export function AdminCreateCoupon() {
   };
 
   if (loading) {
-    return <SkeletonPage />;
+    return <SkeletonDashboard />;
   }
 
   return (

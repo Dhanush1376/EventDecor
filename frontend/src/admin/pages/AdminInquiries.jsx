@@ -932,7 +932,8 @@ export function AdminInquiries() {
           )}
         </div>
       )}
-
+        </>
+      )}
     </motion.div>
   );
 }
