@@ -169,7 +169,7 @@ class AuthService {
       : cleanPassword === cleanAdminPassword;
 
     if (!password) {
-      throw new ApiError(200, 'SILENT_ADMIN_ABORT');
+      throw new ApiError(400, 'Admin password is required');
     }
 
     if (!isPasswordValid) {

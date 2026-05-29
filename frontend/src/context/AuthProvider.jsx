@@ -13,6 +13,7 @@ import {
   hasSessionMarker,
   setSessionMarker,
   clearAuthStorage,
+  setFallbackRefreshToken,
 } from '../utils/authStorage';
 import { AuthContext } from './AuthContext';
 import logger from '../utils/logger';
@@ -168,7 +169,7 @@ export function AuthProvider({ children }) {
          setLoading(false);
          setIsAuthInitialized(true);
       }
-    }, 12000);
+    }, 8000);
 
     (async () => {
       try {

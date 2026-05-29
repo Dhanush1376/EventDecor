@@ -47,3 +47,17 @@ export const logoutSchema = z.object({
       .or(z.literal('')),
   }).strict(),
 });
+
+export const twoFactorVerifyLoginSchema = z.object({
+  body: z.object({
+    userId: z
+      .string({ message: 'userId is required' })
+      .min(1, 'userId is required')
+      .max(64, 'userId must be a valid identifier'),
+    token: z
+      .string({ message: 'Authenticator code is required' })
+      .min(6, 'Authenticator code must be 6 digits')
+      .max(6, 'Authenticator code must be 6 digits')
+      .regex(/^\d{6}$/, 'Authenticator code must be exactly 6 digits'),
+  }).strict(),
+});

@@ -18,6 +18,7 @@ class DatabaseManager {
   private static instance: DatabaseManager | null = null;
   private cachedConnectionPromise: Promise<typeof mongoose> | null = null;
   private healthCheckInterval: NodeJS.Timeout | null = null;
+  private isReconnecting = false;
   
   // Metrics tracking
   private lastPingSuccess: boolean | null = null;
@@ -286,14 +287,25 @@ class DatabaseManager {
    * Attempts to self-heal the connection if it fails health checks or gets disconnected.
    */
   private triggerSelfHealing() {
+    if (this.isReconnecting) {
+      logger.info('🟡 [DATABASE] Self-healing already in progress. Skipping duplicate trigger.');
+      return;
+    }
+
     if (mongoose.connection.readyState === 0) {
+      this.isReconnecting = true;
       this.reconnectAttempts++;
       logger.info(`[DATABASE] Self-healing: Connection is disconnected. Attempting to reconnect (Attempt ${this.reconnectAttempts})...`);
       
       this.cachedConnectionPromise = null;
-      this.connect().catch((err) => {
-        logger.error(`[DATABASE] Self-healing reconnect attempt ${this.reconnectAttempts} failed: ${err.message}`);
-      });
+      this.connect()
+        .then(() => {
+          this.isReconnecting = false;
+        })
+        .catch((err) => {
+          this.isReconnecting = false;
+          logger.error(`[DATABASE] Self-healing reconnect attempt ${this.reconnectAttempts} failed: ${err.message}`);
+        });
     }
   }
 

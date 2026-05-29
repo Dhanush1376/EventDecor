@@ -32,7 +32,7 @@ export function ProductDetails() {
   // Track product view, dwell time, and scroll depth
   useRecommendationTracker({
     targetType: 'product',
-    targetId: product?._id || product?.id,
+    targetId: product?._id || product?.id || id,
     category: product?.category,
     price: product?.price || product?.basePrice,
     tags: product?.tags,
@@ -41,7 +41,7 @@ export function ProductDetails() {
   // Prefetch recommendations to prevent waterfalls
   useEffect(() => {
     if (product) {
-      const productId = product._id || product.id;
+      const productId = product._id || product.id || id;
       // Similar
       queryClient.prefetchQuery({
         queryKey: ['recommendations', 'similar', 'product', productId, 8],
@@ -63,7 +63,7 @@ export function ProductDetails() {
 
   useEffect(() => {
     if (product && user) {
-      userService.trackRecentlyViewed(product._id || product.id).catch((err) => {
+      userService.trackRecentlyViewed(product._id || product.id || id).catch((err) => {
         logger.error("Failed to track recently viewed masterpiece:", err);
       });
     }
@@ -175,7 +175,7 @@ export function ProductDetails() {
 
       {/* Verified Purchaser Reviews */}
       <ProductReviews
-        productId={product._id || product.id}
+        productId={product._id || product.id || id}
         productTitle={product.title}
       />
 
@@ -186,7 +186,7 @@ export function ProductDetails() {
           </div>
         }
       >
-        <RecommendationSystem category={product.category} currentProductId={product._id || product.id} />
+        <RecommendationSystem category={product.category} currentProductId={product._id || product.id || id} />
       </React.Suspense>
     </div>
   );

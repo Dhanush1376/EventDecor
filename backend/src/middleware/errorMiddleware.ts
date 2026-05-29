@@ -14,12 +14,11 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
     message = 'CORS Policy Violation: Request from origin is not allowed.';
   }
 
-  // Handle Mongoose duplicate key
+  // Handle Mongoose duplicate key — redact value to prevent PII leakage (SEC-08)
   else if (err.code === 11000) {
     statusCode = 400;
     const duplicateField = Object.keys(err.keyPattern || {}).join(', ') || 'field';
-    const duplicateValue = Object.values(err.keyValue || {}).join(', ') || '';
-    message = `A record with this ${duplicateField} (${duplicateValue}) already exists. Please choose a unique name/value.`;
+    message = `A record with this ${duplicateField} already exists. Please choose a different value.`;
   }
 
   // Handle Mongoose Connection / MongoDB offline errors

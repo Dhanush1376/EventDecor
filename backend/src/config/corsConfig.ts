@@ -65,11 +65,8 @@ export const isOriginAllowed = (origin: string): boolean => {
       return true;
     }
 
-    // Support wildcard Vercel previews securely without regex bypass
-    if (
-      ALLOWED_VERCEL_PREVIEWS.has(parsedOrigin) || 
-      (parsedOrigin.endsWith('.vercel.app') && !process.env.JEST_WORKER_ID)
-    ) {
+    // Support explicitly-listed Vercel preview deployments (no wildcard)
+    if (ALLOWED_VERCEL_PREVIEWS.has(parsedOrigin)) {
       return true;
     }
 

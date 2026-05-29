@@ -42,6 +42,26 @@ export const ADMIN_ROLES = [
 export type AdminRole = typeof ADMIN_ROLES[number];
 
 /**
+ * All staff/admin roles (superset of ADMIN_ROLES).
+ * Use this for any check that should include moderators, managers, etc.
+ * Single source of truth — do NOT hardcode role arrays elsewhere.
+ */
+export const STAFF_ROLES = [
+  'owner',
+  'super_admin',
+  'main_admin',
+  'admin',
+  'moderator',
+  'support_admin',
+  'support',
+  'order_manager',
+  'content_manager',
+  'manager',
+  'coordinator',
+] as const;
+export type StaffRole = typeof STAFF_ROLES[number];
+
+/**
  * Role weight hierarchy mapping for security access checks (higher = more privileged).
  */
 export const ROLE_HIERARCHY: Record<string, number> = {

@@ -188,6 +188,16 @@
     </image:image>
   </url>
   <url>
+    <loc>http://localhost:3000/product/6a19cb169875c9a89386d920</loc>
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://i.pinimg.com/736x/17/6b/9c/176b9c8456e0bcfa87c868f6ed38b9e4.jpg</image:loc>
+      <image:title>Wooden Wedding Ring Tray</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>http://localhost:3000/gallery/6a0d5c8fc725a13dd9a95619</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>weekly</changefreq>

@@ -11,6 +11,22 @@ export const sessionKeys = {
   wishlist: (userId: string) => `session:wishlist:${userId}`,
 };
 
+// In-flight request coalescing map to prevent cache stampedes
+const inFlightRequests = new Map<string, Promise<any>>();
+
+export const coalesceRequest = async <T>(key: string, fetcher: () => Promise<T>): Promise<T> => {
+  if (inFlightRequests.has(key)) {
+    return inFlightRequests.get(key) as Promise<T>;
+  }
+
+  const promise = fetcher().finally(() => {
+    inFlightRequests.delete(key);
+  });
+
+  inFlightRequests.set(key, promise);
+  return promise;
+};
+
 export const getCachedSessionJson = async <T>(key: string): Promise<T | null> => {
   if (!redisClient || !redisClient.isReady) return null;
   try {

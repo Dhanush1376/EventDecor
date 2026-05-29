@@ -12,6 +12,7 @@ import {
   orderNotesSchema,
 } from '../../validators/orderSchema';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
+import { createRateLimiter, accountKeyGenerator } from '../../middleware/rateLimiter';
 
 const router = Router();
 
@@ -23,14 +24,29 @@ const trackingLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Prevent stock-exhaustion and payment replay attacks
+const orderCreationLimiter = createRateLimiter('orderCreation', {
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  message: 'Too many order creation attempts. Please try again after 15 minutes.',
+  keyGenerator: accountKeyGenerator,
+});
+
+const paymentVerifyLimiter = createRateLimiter('paymentVerify', {
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  message: 'Too many payment verification attempts. Please try again after 15 minutes.',
+  keyGenerator: accountKeyGenerator,
+});
+
 // Public Logistics Tracking Scan Routes (token required)
 router.get('/:id/public-track', trackingLimiter, getOrderPublicTrack);
 router.patch('/:id/public-status', optionalAuth, publicTrackingAuth, validateRequest(updateStatusSchema), updateOrderPublicStatus);
 
 
 
-router.post('/', requireAuth, validateRequest(createOrderSchema), createOrder);
-router.post('/verify-payment', requireAuth, validateRequest(verifyPaymentSchema), verifyPayment);
+router.post('/', requireAuth, orderCreationLimiter, validateRequest(createOrderSchema), createOrder);
+router.post('/verify-payment', requireAuth, paymentVerifyLimiter, validateRequest(verifyPaymentSchema), verifyPayment);
 router.post('/validate-totals', requireAuth, validateRequest(validateTotalsSchema), validateTotals);
 router.get('/my-orders', requireAuth, getMyOrders);
 

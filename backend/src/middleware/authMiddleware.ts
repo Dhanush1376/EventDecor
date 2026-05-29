@@ -10,7 +10,7 @@ import { updateRequestContext } from './requestTracker';
 import { getAdminEmails, ADMIN_ROLES } from '../config/adminConfig';
 import { isSameEmail } from '../utils/emailHelper';
 import { getSafetyLockDocument } from '../utils/safetyLockCache';
-import { getCachedSessionJson, setCachedSessionJson, sessionKeys } from '../utils/userSessionCache';
+import { getCachedSessionJson, setCachedSessionJson, sessionKeys, coalesceRequest } from '../utils/userSessionCache';
 
 interface JwtPayload {
   id: string;
@@ -37,12 +37,25 @@ if (!JWT_SECRET) {
   }
 }
 const jwtSecrets = JWT_SECRET ? JWT_SECRET.split(',').map(s => s.trim()) : [];
+let activeSecretIndex = 0;
 
 const verifyTokenWithRotation = (token: string): JwtPayload => {
+  // Fast fail structural validation to prevent CPU starvation on garbage tokens
+  if (!token || token.split('.').length !== 3) {
+    throw new Error('Invalid token structure');
+  }
+
   let lastError: any = null;
-  for (const secret of jwtSecrets) {
+  const numSecrets = jwtSecrets.length;
+
+  for (let i = 0; i < numSecrets; i++) {
+    // Start with the last known good secret index to optimize verification speed
+    const currentIndex = (activeSecretIndex + i) % numSecrets;
     try {
-      return jwt.verify(token, secret) as JwtPayload;
+      const payload = jwt.verify(token, jwtSecrets[currentIndex]) as JwtPayload;
+      // On success, cache this index as the active secret
+      activeSecretIndex = currentIndex;
+      return payload;
     } catch (err) {
       lastError = err;
     }
@@ -124,18 +137,21 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     let user: any = await getCachedSessionJson(cacheKey);
 
     if (!user) {
-      // Promise.race to enforce a strict timeout (3 seconds) if MongoDB is hanging
-      const mongoQuery = User.findById(decoded.id).select('role email isVerified passwordChangedAt').lean().exec();
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('MongoDB Auth Lookup Timeout')), 10000));
-      
-      try {
-        user = await Promise.race([mongoQuery, timeout]);
-      } catch (dbErr: any) {
-        if (dbErr.message === 'MongoDB Auth Lookup Timeout') {
-          throw new ApiError(503, 'Authentication service temporarily unavailable');
+      // Coalesce concurrent requests for the same user profile (Cache Stampede mitigation)
+      user = await coalesceRequest(`mongo:profile:${decoded.id}`, async () => {
+        // Promise.race to enforce a strict timeout (10 seconds) if MongoDB is hanging
+        const mongoQuery = User.findById(decoded.id).select('role email isVerified passwordChangedAt').lean().exec();
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('MongoDB Auth Lookup Timeout')), 10000));
+        
+        try {
+          return await Promise.race([mongoQuery, timeout]);
+        } catch (dbErr: any) {
+          if (dbErr.message === 'MongoDB Auth Lookup Timeout') {
+            throw new ApiError(503, 'Authentication service temporarily unavailable');
+          }
+          throw dbErr;
         }
-        throw dbErr;
-      }
+      });
 
       if (user) {
         // Cache user profile in Redis for 60 seconds
@@ -189,14 +205,18 @@ export const optionalAuth = asyncHandler(async (req: Request, res: Response, nex
     let user: any = await getCachedSessionJson(cacheKey);
 
     if (!user) {
-      const mongoQuery = User.findById(decoded.id).select('role email isVerified passwordChangedAt').lean().exec();
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('MongoDB Auth Lookup Timeout')), 10000));
-      
-      try {
-        user = await Promise.race([mongoQuery, timeout]);
-      } catch (dbErr: any) {
-        // Ignored: auth is optional
-      }
+      // Coalesce concurrent requests for the same user profile (Cache Stampede mitigation)
+      user = await coalesceRequest(`mongo:profile:${decoded.id}`, async () => {
+        const mongoQuery = User.findById(decoded.id).select('role email isVerified passwordChangedAt').lean().exec();
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('MongoDB Auth Lookup Timeout')), 10000));
+        
+        try {
+          return await Promise.race([mongoQuery, timeout]);
+        } catch (dbErr: any) {
+          // Ignored: auth is optional
+          return null;
+        }
+      });
 
       if (user) {
         // Cache user profile in Redis for 60 seconds

@@ -14,6 +14,7 @@ import {
   verifyOtpSchema,
   refreshSessionSchema,
   logoutSchema,
+  twoFactorVerifyLoginSchema,
 } from '../validators/authSchema';
 import { authLimiter, otpSendLimiter, otpVerifyLimiter } from '../middleware/rateLimiter';
 
@@ -25,13 +26,13 @@ router.post('/send-otp', otpSendLimiter, validateRequest(sendOtpSchema), sendOTP
 router.post('/verify-otp', otpVerifyLimiter, validateRequest(verifyOtpSchema), verifyOTP);
 router.post('/refresh', authLimiter, validateRequest(refreshSessionSchema), refreshSession);
 router.post('/logout', authLimiter, validateRequest(logoutSchema), logout);
-router.post('/logout-all', requireAuth, logoutAllDevices);
+router.post('/logout-all', authLimiter, requireAuth, logoutAllDevices);
 router.get('/profile', requireAuth, getProfile);
 
 router.get('/2fa/status', requireAuth, getTwoFactorStatus);
 router.post('/2fa/setup', authLimiter, requireAuth, setupTwoFactor);
 router.post('/2fa/enable', authLimiter, requireAuth, enableTwoFactor);
 router.post('/2fa/disable', authLimiter, requireAuth, disableTwoFactor);
-router.post('/2fa/verify-login', authLimiter, verifyTwoFactorLogin);
+router.post('/2fa/verify-login', authLimiter, validateRequest(twoFactorVerifyLoginSchema), verifyTwoFactorLogin);
 
 export default router;

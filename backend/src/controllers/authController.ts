@@ -6,6 +6,7 @@ import ApiError from '../utils/ApiError';
 import User from '../models/User';
 import { canonicalizeEmail, isSameEmail } from '../utils/emailHelper';
 import { getAdminEmails } from '../config/adminConfig';
+import { STAFF_ROLES } from '../config/adminConfig';
 import logger from '../config/logger';
 import {
   cacheProfile,
@@ -111,18 +112,7 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
   const userAgent = req.headers['user-agent'] || '';
   const result = await AuthService.refreshSession(refreshToken, userAgent);
 
-  const adminRoles = [
-    'super_admin',
-    'main_admin',
-    'moderator',
-    'support_admin',
-    'order_manager',
-    'content_manager',
-    'admin',
-    'manager',
-    'coordinator',
-  ];
-  if (adminRoles.includes(result.user.role)) {
+  if ((STAFF_ROLES as readonly string[]).includes(result.user.role)) {
     setAdminRefreshCookie(res, result.refreshToken);
   } else {
     setCustomerRefreshCookie(res, result.refreshToken);

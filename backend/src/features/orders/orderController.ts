@@ -9,6 +9,7 @@ import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
 import Order from '../../models/Order';
+import { STAFF_ROLES } from '../../config/adminConfig';
 
 import redisClient from '../../utils/redis';
 
@@ -70,7 +71,7 @@ export const getOrderById = asyncHandler(async (req: Request, res: Response) => 
   const order = await Order.findById(req.params.id);
   if (!order) throw new ApiError(404, 'Order not found');
 
-  if (order.user.toString() !== req.user!.id && !['admin', 'manager', 'coordinator'].includes(req.user!.role)) {
+  if (order.user.toString() !== req.user!.id && !(STAFF_ROLES as readonly string[]).includes(req.user!.role)) {
     throw new ApiError(403, 'You are not authorized to view this order');
   }
 
@@ -110,7 +111,7 @@ export const updateOrderPublicStatus = asyncHandler(async (req: Request, res: Re
 
   // Customers/Unauthenticated clients with publicTrackingToken are only allowed to self-cancel or return
   const allowedPublicStatuses = ['Cancelled', 'Returned'];
-  const isPrivileged = req.user && ['admin', 'manager', 'coordinator'].includes(req.user.role) || (req as any).isLogisticsToken;
+  const isPrivileged = req.user && (STAFF_ROLES as readonly string[]).includes(req.user.role) || (req as any).isLogisticsToken;
 
   if (!isPrivileged && !allowedPublicStatuses.includes(status)) {
     throw new ApiError(400, `Logistics tracking only permits self-cancellation or returns. Target status '${status}' is disallowed.`);
