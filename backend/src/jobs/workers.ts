@@ -51,7 +51,7 @@ export const initWorkers = async () => {
     emailWorker.on('completed', (job) => logger.info(`[WORKER] Email job ${job.id} completed.`));
     emailWorker.on('failed', (job, err) => logger.error(`[WORKER] Email job ${job?.id} failed:`, err));
     emailWorker.on('error', (err: any) => {
-      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') return;
+      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND' || err.name === 'ConnectionClosedError' || err.message?.includes('max requests limit exceeded')) return;
       logger.error(`[WORKER email] Error:`, err);
     });
 
@@ -69,7 +69,7 @@ export const initWorkers = async () => {
     );
 
     notificationWorker.on('error', (err: any) => {
-      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') return;
+      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND' || err.name === 'ConnectionClosedError' || err.message?.includes('max requests limit exceeded')) return;
       logger.error(`[WORKER notification] Error:`, err);
     });
 
@@ -87,7 +87,7 @@ export const initWorkers = async () => {
     );
 
     loyaltyWorker.on('error', (err: any) => {
-      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') return;
+      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND' || err.name === 'ConnectionClosedError' || err.message?.includes('max requests limit exceeded')) return;
       logger.error(`[WORKER loyalty] Error:`, err);
     });
 
@@ -224,7 +224,7 @@ export const initWorkers = async () => {
       logger.error(`[WORKER] Recommendation job ${job?.id} failed:`, err)
     );
     recommendationWorker.on('error', (err: any) => {
-      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') return;
+      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND' || err.name === 'ConnectionClosedError' || err.message?.includes('max requests limit exceeded')) return;
       logger.error(`[WORKER recommendation] Error:`, err);
     });
 
