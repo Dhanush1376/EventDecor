@@ -7,6 +7,7 @@ import {
   hasSessionMarker,
   setSessionMarker,
   clearAuthStorage,
+  getFallbackRefreshToken,
 } from '../utils/authStorage';
 import { clearCachedProfile } from '../utils/authSessionCache';
 
@@ -69,7 +70,8 @@ const applyRefreshPayload = (payload) => {
 };
 
 const buildRefreshBody = () => {
-  return {};
+  const fallbackToken = getFallbackRefreshToken();
+  return fallbackToken ? { refreshToken: fallbackToken } : {};
 };
 
 // Helper to identify queueable mutating requests

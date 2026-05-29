@@ -230,6 +230,7 @@ export function AuthProvider({ children }) {
 
     setAccessToken(accessToken);
     setSessionMarker();
+    setFallbackRefreshToken(refreshToken);
 
     setUser(userData);
     setIsAuthenticated(true);
