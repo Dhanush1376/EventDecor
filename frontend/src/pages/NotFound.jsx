@@ -5,7 +5,7 @@ import { SEO } from "../components/seo/SEO";
 
 export function NotFound() {
   return (
-    <div className="min-h-[80vh] relative flex flex-col items-center justify-center px-4 overflow-hidden">
+    <div className="min-h-[80vh] relative flex flex-col items-center justify-center px-4 overflow-hidden pt-24 md:pt-32">
       <SEO
         title="Page Not Found | Siri Arts & Crafts"
         description="The heritage masterpiece or custom ceremony styling selection you are looking for has either found a new home or is currently unavailable."
