@@ -1559,13 +1559,12 @@
 
 /* ── Table Scroll Indicator (Mobile) ───────────────────────────────────── */
 @media (max-width: 768px) {
-  .admin-section-root .overflow-x-auto {
+  .admin-section-root .admin-card:has(.overflow-x-auto) {
     position: relative;
   }
 
   /* Right-edge fade gradient to hint at horizontal scrollability */
-  .admin-section-root .admin-card.overflow-x-auto::after,
-  .admin-section-root .admin-card > .overflow-x-auto::after {
+  .admin-section-root .admin-card:has(.overflow-x-auto)::after {
     content: "";
     position: absolute;
     top: 0;
@@ -1601,9 +1600,9 @@
 
 /* ── Narrow Screen Adjustments (320px–400px) ───────────────────────────── */
 @media (max-width: 400px) {
-  /* Stat cards: stack to single column on very narrow screens */
+  /* Stat cards: keep 2 columns even on very narrow screens */
   .admin-section-root .admin-grid-stats {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 12px;
   }
 

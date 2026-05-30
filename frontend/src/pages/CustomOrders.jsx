@@ -518,7 +518,7 @@ export function CustomOrders() {
               Custom Event Decor Studio
             </h2>
             <p className="text-[12px] md:text-[13px] text-[#685C57] mt-1 font-light tracking-wide max-w-lg">
-              Design your dream event decor with us! Submit your ideas, get custom prices, and track your order's progress easily.
+              Design your custom decor, get price estimates, and track your orders.
             </p>
           </div>
 
@@ -569,7 +569,7 @@ export function CustomOrders() {
                 <div className="flex items-center gap-2.5">
                   <span className="material-symbols-outlined text-[var(--color-gold)] text-[20px]">info</span>
                   <p className="text-[#685C57] font-light">
-                    <strong className="text-[var(--color-on-surface)] font-medium">Bespoke Guest Session:</strong> You can draft your decor request offline. Sign in to seamlessly submit your details and track quotes in real time.
+                    <strong className="text-[var(--color-on-surface)] font-medium">Guest Session:</strong> Draft your request now. Sign in later to submit and track quotes.
                   </p>
                 </div>
                 <button

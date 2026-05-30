@@ -19,6 +19,7 @@ export function OptimizedImage({
   const [hasError, setHasError] = useState(false);
   const [isInView, setIsInView] = useState(eager || loading === 'eager');
   const containerRef = useRef(null);
+  const imgRef = useRef(null);
   
   useEffect(() => {
     if (eager || loading === 'eager' || !containerRef.current) {
@@ -40,6 +41,22 @@ export function OptimizedImage({
     return () => observer.disconnect();
   }, [eager, loading]);
 
+  useEffect(() => {
+    setIsLoaded(eager || loading === 'eager');
+    setHasError(false);
+
+    const checkComplete = () => {
+      if (imgRef.current && imgRef.current.complete) {
+        setIsLoaded(true);
+      }
+    };
+
+    checkComplete();
+    const timer = setTimeout(checkComplete, 50);
+
+    return () => clearTimeout(timer);
+  }, [src, eager, loading]);
+
   if (!src) return null;
 
   const isDataUrl = src.startsWith('data:') || src.startsWith('blob:');
@@ -53,6 +70,8 @@ export function OptimizedImage({
                          containerClassName.includes('fixed') || 
                          containerClassName.includes('relative') ||
                          containerClassName.includes('sticky');
+
+  const isImageAutoHeight = className && (className.includes('h-auto') || className.includes('h-fit'));
 
   const aspectStyle = aspectRatio ? { aspectRatio } : undefined;
 
@@ -83,6 +102,7 @@ export function OptimizedImage({
           {fallbackSrcSet && <source srcSet={fallbackSrcSet} sizes={sizes} />}
           
           <img
+            ref={imgRef}
             src={optimizedUrl}
             alt={alt}
             width={width}
@@ -96,7 +116,7 @@ export function OptimizedImage({
               setHasError(true);
               setIsLoaded(true);
             }}
-            className={`w-full h-full object-cover rounded-[inherit] transition-all duration-700 ease-out ${className} ${
+            className={`w-full ${isImageAutoHeight ? 'h-auto block' : 'h-full object-cover'} rounded-[inherit] transition-all duration-700 ease-out will-change-transform transform-gpu ${className} ${
               isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.03]'
             }`}
             {...props}

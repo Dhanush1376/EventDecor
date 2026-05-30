@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { couponService, productService } from "../../services/domainServices";
 import toast from "react-hot-toast";
@@ -27,10 +28,12 @@ const DISPLAY_LOCATIONS = [
   { value:"wallet", label:"Loyalty Wallet Dashboard" }
 ];
 
-export function AdminCreateCoupon() {
+export function AdminCreateCoupon({ isOpen, onClose, editId }) {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id: routeId } = useParams();
+  const id = editId || routeId;
   const isEdit = Boolean(id);
+  const isDrawerMode = isOpen !== undefined;
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -118,6 +121,33 @@ export function AdminCreateCoupon() {
       loadCoupon();
     }
   }, [id, isEdit, navigate]);
+
+  useEffect(() => {
+    if (!isEdit) {
+      setFormData({
+        code:"",
+        discountType:"percentage",
+        discountValue:"",
+        minOrderAmount:"",
+        maxDiscount:"",
+        startDate: new Date().toISOString().split("T")[0],
+        expiryDate:"",
+        usageLimit:"",
+        isActive: true,
+        targetType:"all",
+        targetProductIds: [],
+        targetCategories: [],
+        targetUserTiers: [],
+        displayLocations: ["checkout"],
+        isFeatured: false,
+        isAutoApply: false,
+        cashbackPercentage:"",
+        cashbackFixed:"",
+        stackingRule:"exclusive",
+        priority:"1",
+      });
+    }
+  }, [id, isEdit]);
 
   const toggleProductSelect = (productId) => {
     setFormData((prev) => {
@@ -209,7 +239,7 @@ export function AdminCreateCoupon() {
 
       if (res.success) {
         toast.success(isEdit ? "Coupon updated" : "Campaign published");
-        navigate("/admin/coupons");
+        handleSuccessAction();
       }
     } catch (err) {
       toast.error(err.response?.data?.message ||"Failed to save coupon campaign");
@@ -218,40 +248,32 @@ export function AdminCreateCoupon() {
     }
   };
 
-  if (loading) {
+  const handleCancelAction = () => {
+    if (isDrawerMode) {
+      onClose();
+    } else {
+      navigate("/admin/coupons");
+    }
+  };
+
+  const handleSuccessAction = () => {
+    if (isDrawerMode) {
+      onClose();
+    } else {
+      navigate("/admin/coupons");
+    }
+  };
+
+  if (loading && !isDrawerMode) {
     return <SkeletonDashboard />;
   }
 
-  return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={stagger}
-      className="max-w-[850px] mx-auto space-y-6 pb-16"
+  const formElement = (
+    <motion.form
+      onSubmit={handleSubmit}
+      variants={fadeUp}
+      className={isDrawerMode ? "space-y-6 flex-1 pb-4" : "admin-card p-6 md:p-8 space-y-8"}
     >
-      {/* Header */}
-      <motion.div variants={fadeUp} className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/admin/coupons")}
-          className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)]"
-        >
-          <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-        </button>
-        <div>
-          <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
-            {isEdit ?"Edit Premium Promo Campaign" :"Configure Advanced Promotion Code"}
-          </h2>
-          <p className="text-[13px] text-[var(--admin-text-secondary)] mt-0.5">
-            {isEdit ?"Refine segmentation rules, wallet loyalty parameters, and exclusions" :"Set up high-fidelity checkout coupons with custom targeting models"}
-          </p>
-        </div>
-      </motion.div>
-
-      <motion.form
-        onSubmit={handleSubmit}
-        variants={fadeUp}
-        className="admin-card p-6 md:p-8 space-y-8"
-      >
         {/* SECTION 1: BASIC DETAILS */}
         <div className="space-y-5">
           <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
@@ -606,7 +628,7 @@ export function AdminCreateCoupon() {
         <div className="pt-6 flex items-center justify-end gap-3 border-t border-[var(--admin-border-subtle)]">
           <button
             type="button"
-            onClick={() => navigate("/admin/coupons")}
+            onClick={handleCancelAction}
             className="admin-btn admin-btn-outline"
           >
             Cancel
@@ -616,10 +638,100 @@ export function AdminCreateCoupon() {
             disabled={saving}
             className="admin-btn admin-btn-primary disabled:opacity-50"
           >
-            {saving ?"Saving..." : isEdit ?"Update Campaign" :"Launch Promotion Campaign"}
+            {saving ?"Saving..." : isEdit ?"Update Coupon" :"Create Coupon"}
           </button>
         </div>
       </motion.form>
-    </motion.div>
-  );
+    );
+
+    if (isDrawerMode) {
+      return typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
+            >
+              {/* Backdrop Blur overlay */}
+              <div
+                onClick={handleCancelAction}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+              />
+              
+              {/* Slide-Up Bottom Drawer Sheet */}
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 26, stiffness: 220 }}
+                className="relative w-full max-w-3xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+              >
+                {/* Grab Handle */}
+                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
+
+                {/* Form Title & Subtitle */}
+                <div className="mb-5 pb-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0">
+                  <div>
+                    <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
+                        {isEdit ? "edit_note" : "sell"}
+                      </span>
+                      {isEdit ? "Edit Coupon Campaign" : "Configure Coupon Campaign"}
+                    </h3>
+                    <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5">
+                      {isEdit ? "Update targeting rules and discount caps" : "Define coupon metadata, display locations, and cashback perks"}
+                    </p>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={handleCancelAction}
+                    className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </div>
+
+                {loading ? (
+                  <div className="py-12 flex justify-center items-center">
+                    <div className="w-8 h-8 rounded-full border-2 border-[var(--admin-accent)] border-t-transparent animate-spin" />
+                  </div>
+                ) : formElement}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      );
+    }
+
+    return (
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={stagger}
+        className="max-w-[850px] mx-auto space-y-6 pb-16"
+      >
+        {/* Header */}
+        <motion.div variants={fadeUp} className="flex items-center gap-4">
+          <button
+            onClick={handleCancelAction}
+            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)]"
+          >
+            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+          </button>
+          <div>
+            <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
+              {isEdit ?"Edit Coupon" :"Create Coupon"}
+            </h2>
+            <p className="text-[13px] text-[var(--admin-text-secondary)] mt-0.5">
+              {isEdit ?"Update coupon settings" :"Set up a new coupon"}
+            </p>
+          </div>
+        </motion.div>
+
+        {formElement}
+      </motion.div>
+    );
 }

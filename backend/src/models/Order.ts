@@ -38,7 +38,7 @@ export interface IOrder extends Document {
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
   paymentMethod: string;
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'Pending COD' | 'COD Collected' | 'refunded';
+  paymentStatus: 'pending' | 'processing' | 'paid' | 'failed' | 'Pending COD' | 'COD Collected' | 'refunded';
   orderStatus: 'Pending' | 'Confirmed' | 'Packed' | 'Ready to Ship' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled' | 'Returned' | 'Refunded';
   statusHistory: IOrderStatusHistory[];
   subtotal: number;
@@ -108,7 +108,7 @@ const OrderSchema: Schema = new Schema(
     paymentMethod: { type: String, default: 'Razorpay' },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'paid', 'failed', 'Pending COD', 'COD Collected', 'refunded'],
+      enum: ['pending', 'processing', 'paid', 'failed', 'Pending COD', 'COD Collected', 'refunded'],
       default: 'pending',
     },
     orderStatus: {
@@ -161,6 +161,7 @@ const OrderSchema: Schema = new Schema(
     qrCodeData: { type: String },
     notes: { type: String },
     needByDate: { type: String },
+    publicTrackingToken: { type: String, select: false },
     codCollected: { type: Boolean, default: false },
     settlementStatus: { type: String, enum: ['Pending', 'Settled', 'Not Applicable'], default: 'Not Applicable' },
     settledAmount: { type: Number, default: 0 },

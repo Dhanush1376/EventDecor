@@ -30,7 +30,7 @@ const ReviewSchema: Schema = new Schema(
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],
-      default: 'approved', // Usually auto-approved in simpler setups
+      default: 'pending',
     },
     location: { type: String, default: 'Ongole' },
     eventType: { type: String, default: 'Traditional Celebration' },
@@ -42,7 +42,7 @@ const ReviewSchema: Schema = new Schema(
       enum: ['showcase', 'event', 'product'],
       default: 'product',
     },
-    verified: { type: Boolean, default: true },
+    verified: { type: Boolean, default: false },
     isMock: { type: Boolean, default: false },
   },
   { timestamps: true }

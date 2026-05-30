@@ -10,11 +10,16 @@ import {
   fadeUp,
   stagger
 } from '../components/AdminUIKit';
+import { AdminPolicyEditor } from './AdminPolicyEditor';
 
 export function AdminPolicies() {
   const navigate = useNavigate();
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Drawer modal states
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [activeEditId, setActiveEditId] = useState(null);
 
   useEffect(() => {
     fetchPolicies();
@@ -63,7 +68,10 @@ export function AdminPolicies() {
       render: (_, row) => (
         <div className="flex gap-3">
           <button
-            onClick={() => navigate(`/admin/policies/${row._id}`)}
+            onClick={() => {
+              setActiveEditId(row._id);
+              setShowDrawer(true);
+            }}
             className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:underline text-xs font-bold tracking-wider cursor-pointer bg-transparent border-none p-0"
           >
             EDIT
@@ -86,8 +94,11 @@ export function AdminPolicies() {
         subtitle="Manage legal and storefront policies across your platform."
       >
         <button
-          onClick={() => navigate('/admin/policies/new')}
-          className="admin-btn admin-btn-primary"
+          onClick={() => {
+            setActiveEditId(null);
+            setShowDrawer(true);
+          }}
+          className="admin-btn admin-btn-primary h-9"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           Create Policy
@@ -129,6 +140,16 @@ export function AdminPolicies() {
           </div>
         )}
       </motion.div>
+
+      {/* Slide-Up Bottom Drawer Sheet */}
+      <AdminPolicyEditor
+        isOpen={showDrawer}
+        editId={activeEditId}
+        onClose={() => {
+          setShowDrawer(false);
+          fetchPolicies();
+        }}
+      />
     </motion.div>
   );
 }

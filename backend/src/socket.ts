@@ -212,10 +212,8 @@ export const initSocket = (server: HttpServer) => {
     next();
   });
 
-  // JWT required on all namespace connections (handshake auth.token or Authorization header)
-  io.use(socketAuthMiddleware);
 
-  // Default namespace is not used — reject stray unauthenticated connections
+  // Default namespace is not used — reject stray connections immediately
   io.on('connection', (socket) => {
     logger.warn('[SOCKET] Rejected connection on default namespace', { socketId: socket.id });
     socket.disconnect(true);

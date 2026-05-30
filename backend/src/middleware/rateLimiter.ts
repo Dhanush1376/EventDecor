@@ -28,9 +28,9 @@ export const skipRateLimit = (req: Request) => {
 // Custom key generator for account-based throttling
 export const accountKeyGenerator = (req: Request, res: Response): string => {
   // @ts-ignore (Assuming req.user is populated by authMiddleware)
-  if (req.user && req.user._id) {
+  if (req.user && req.user.id) {
     // @ts-ignore
-    return `user_${req.user._id}`;
+    return `user_${req.user.id}`;
   }
   
   const ip = req.ip || req.socket.remoteAddress;

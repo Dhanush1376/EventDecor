@@ -57,7 +57,7 @@ function AdminLayoutInner() {
   }, [setSearchPaletteOpen]);
 
   return (
-    <div className="min-h-screen relative overflow-x-clip selection:bg-[var(--admin-accent-muted)] admin-section-root" style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div className="min-h-screen relative overflow-x-clip selection:bg-[#a08633] selection:text-white admin-section-root" style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif" }}>
       {/* Status Banners */}
       <div className="relative z-[400] flex flex-col text-[10px] font-bold tracking-wider uppercase select-none">
         <AnimatePresence>

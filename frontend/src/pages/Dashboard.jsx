@@ -495,7 +495,7 @@ export function Dashboard() {
                       onClick={openAuthModal}
                       className="text-xs font-bold text-primary hover:underline mt-1 block w-full text-center cursor-pointer bg-transparent border-none outline-none"
                     >
-                      Access Bespoke Studio
+                      Login
                     </button>
                   </>
                 ) : (
@@ -538,7 +538,7 @@ export function Dashboard() {
                   <span className="material-symbols-outlined text-sm text-primary">
                     shopping_bag
                   </span>
-                  Orders Suite
+                  Orders
                 </div>
 
                 <motion.button
@@ -568,7 +568,7 @@ export function Dashboard() {
                   <span className="material-symbols-outlined text-sm text-primary">
                     person
                   </span>
-                  Profile Suite
+                  Profile
                 </div>
 
                 <motion.button
@@ -625,7 +625,7 @@ export function Dashboard() {
                       : "text-on-surface hover:bg-surface-container-low"
                   }`}
                 >
-                  <span>Manage Delivery Sites</span>
+                  <span>Addresses</span>
                   <span className="text-[11px] text-secondary font-bold">
                     ({addresses.length})
                   </span>
@@ -645,7 +645,7 @@ export function Dashboard() {
                       : "text-on-surface hover:bg-surface-container-low"
                   }`}
                 >
-                  <span>Notifications & Settings</span>
+                  <span>Settings</span>
                   <span className="material-symbols-outlined text-xs">
                     chevron_right
                   </span>
@@ -657,7 +657,7 @@ export function Dashboard() {
                   <span className="material-symbols-outlined text-sm text-primary">
                     folder_special
                   </span>
-                  My Collections & Stuff
+                  Collections
                 </div>
 
                 <motion.button
@@ -756,14 +756,14 @@ export function Dashboard() {
                 <span className="material-symbols-outlined text-sm">
                   logout
                 </span>
-                Terminate Secure Session
+                Logout
               </motion.button>
 
               <div className="flex flex-col gap-1.5 p-4 text-on-surface-variant/40 font-label-sm text-[10px] uppercase tracking-widest font-bold border-t border-surface-container">
                 <span className="max-w-md">
-                  Studio Headquarters: {addressText}
+                  Address: {addressText}
                 </span>
-                <span>Inquiry Line: +91 {phoneText}</span>
+                <span>Phone: +91 {phoneText}</span>
               </div>
             </div>
           </div>

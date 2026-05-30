@@ -56,12 +56,30 @@ const navSections = [
   },
 ];
 
+// Module-level variable to persist scroll position across mount/unmount of sidebar drawer
+let preservedSidebarScrollTop = 0;
+
 export function AdminSidebar() {
   const { sidebarOpen, sidebarMobileOpen, setSidebarMobileOpen, products } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
   const mobileSidebarRef = React.useRef(null);
   const [sidebarSearch, setSidebarSearch] = useState("");
+
+  // Restore scroll position whenever a nav element (desktop or mobile) mounts
+  const handleNavRef = React.useCallback((node) => {
+    if (node) {
+      const savedScroll = sessionStorage.getItem("adminSidebarScroll");
+      if (savedScroll) preservedSidebarScrollTop = parseInt(savedScroll, 10);
+      node.scrollTop = preservedSidebarScrollTop;
+    }
+  }, []);
+
+  // Save scroll position on scroll
+  const handleScroll = (e) => {
+    preservedSidebarScrollTop = e.currentTarget.scrollTop;
+    sessionStorage.setItem("adminSidebarScroll", preservedSidebarScrollTop.toString());
+  };
 
   // Filter sections by search query
   const filteredNavSections = useMemo(() => {
@@ -113,13 +131,7 @@ export function AdminSidebar() {
           onClick={() => navigate("/admin")}
           className="flex items-center gap-3 cursor-pointer group outline-none overflow-hidden shrink-0 text-left min-h-0"
         >
-          <div className="relative w-8 h-8 shrink-0 flex items-center justify-center">
-            <div className="w-full h-full rounded-[var(--admin-radius-md)] flex items-center justify-center shadow-[var(--admin-shadow-xs)]" style={{ background: "var(--admin-accent)" }}>
-              <span className="text-white font-bold text-[14px] tracking-tight">
-                S
-              </span>
-            </div>
-          </div>
+          <SiriLogo size="32px" showSubtitle={false} className="shrink-0" />
 
           <AnimatePresence>
             {sidebarOpen && (
@@ -129,7 +141,12 @@ export function AdminSidebar() {
                 exit={{ opacity: 0, x: -8, width: 0 }}
                 className="flex flex-col whitespace-nowrap overflow-hidden"
               >
-                <SiriLogo size="20px" showSubtitle={false} />
+                <span 
+                  className="font-semibold text-[13px] tracking-wide text-[var(--admin-text-primary)]"
+                  style={{ fontFamily: "'Playfair Display', 'Georgia', 'Times New Roman', serif" }}
+                >
+                  Siri arts & crafts
+                </span>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-[9px] tracking-wider uppercase text-[var(--admin-text-tertiary)] font-medium">
                     Enterprise
@@ -179,7 +196,11 @@ export function AdminSidebar() {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 custom-scrollbar space-y-3">
+      <nav 
+        ref={handleNavRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto py-2 px-2 custom-scrollbar space-y-3"
+      >
         {filteredNavSections.map((section, si) => (
           <div key={si} className="space-y-0.5">
             {sidebarOpen && (
@@ -400,13 +421,6 @@ export function AdminSidebar() {
               onClick={() => navigate(item.path)}
               className="flex flex-col items-center justify-center gap-0.5 w-14 h-full relative cursor-pointer group min-h-0"
             >
-              {isActive && (
-                <motion.div
-                  layoutId="mobileBottomIndicator"
-                  className="absolute top-0 w-8 h-0.5 rounded-full"
-                  style={{ background: "var(--admin-accent)" }}
-                />
-              )}
               <span
                 className={`material-symbols-outlined text-[19px] transition-colors ${
                   isActive ? "text-[var(--admin-accent)]" : "text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-secondary)]"

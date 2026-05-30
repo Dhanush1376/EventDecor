@@ -219,7 +219,7 @@ EventBookingSchema.index(
   { 
     unique: true, 
     partialFilterExpression: { 
-      status: { $in: ['confirmed', 'payment_processing', 'setup_in_progress'] } 
+      status: { $in: ['confirmed', 'payment_processing', 'pending_payment', 'setup_in_progress', 'team_assigned'] } 
     }
   }
 );

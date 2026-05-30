@@ -14,8 +14,13 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager
       transition={{ duration: 0.5 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{ minHeight: minH || 200 }}
-      className="break-inside-avoid mb-3 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
+      style={{ 
+        minHeight: minH,
+        isolation: 'isolate',
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden'
+      }}
+      className="break-inside-avoid mb-2 relative group cursor-pointer rounded-xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
     >
       {/* Background Image/Video — natural height, no forced aspect ratio */}
       {isHovered && item.video ? (

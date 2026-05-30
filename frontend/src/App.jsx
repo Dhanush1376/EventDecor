@@ -97,6 +97,7 @@ const AdminConfig = lazy(() => import("./admin/pages/AdminConfig").then((m) => (
 const AdminLayouts = lazy(() => import("./admin/pages/AdminLayouts").then((m) => ({ default: m.AdminLayouts })));
 const AdminPolicies = lazy(() => import("./admin/pages/AdminPolicies").then((m) => ({ default: m.AdminPolicies })));
 const AdminPolicyEditor = lazy(() => import("./admin/pages/AdminPolicyEditor").then((m) => ({ default: m.AdminPolicyEditor })));
+const AdminReviews = lazy(() => import("./admin/pages/AdminReviews").then((m) => ({ default: m.AdminReviews })));
 
 // All /admin/* pages are React.lazy() — not in the storefront initial JS bundle (see npm run build:report).
 
@@ -256,6 +257,7 @@ function App() {
                             <Route path="settings" element={<AdminSettings />} />
                             <Route path="policies" element={<AdminPolicies />} />
                             <Route path="policies/:id" element={<AdminPolicyEditor />} />
+                            <Route path="reviews" element={<AdminReviews />} />
                           </Route>
                         </Routes>
                       </Suspense>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from"react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from"framer-motion";
 import { useNavigate, useParams } from"react-router-dom";
 import { productCategories } from"../data/adminData";
@@ -25,11 +26,13 @@ const WIZARD_STEPS = [
   { id:"review", label:"Review & Publish", icon:"verified" },
 ];
 
-export function AdminAddProduct() {
-  const { id } = useParams();
+export function AdminAddProduct({ isOpen, onClose, editId }) {
+  const { id: routeId } = useParams();
+  const id = editId || routeId;
   const navigate = useNavigate();
   const { refreshProducts } = useAdmin();
   const isEditMode = Boolean(id);
+  const isDrawerMode = isOpen !== undefined;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [mobileTab, setMobileTab] = useState("form");
@@ -250,6 +253,51 @@ export function AdminAddProduct() {
     }
   }, [id, isEditMode]);
 
+  useEffect(() => {
+    if (!isEditMode) {
+      setFormData({
+        title:"",
+        teluguTitle:"",
+        slug:"",
+        category:"",
+        material:"",
+        tags:"",
+        price:"",
+        oldPrice:"",
+        stock:"",
+        imageSrc:"",
+        images: [],
+        badges:"",
+        description:"",
+        dimensions:"",
+        weight:"",
+        seoTitle:"",
+        seoDescription:"",
+        featured: false,
+        isActive: true,
+        showInGallery: false,
+        variants: [],
+      });
+      setCurrentStep(0);
+    }
+  }, [id, isEditMode]);
+
+  const handleCancelAction = () => {
+    if (isDrawerMode) {
+      onClose();
+    } else {
+      navigate("/admin/products");
+    }
+  };
+
+  const handleSuccessAction = () => {
+    if (isDrawerMode) {
+      onClose();
+    } else {
+      navigate("/admin/products");
+    }
+  };
+
   // Auto-save status tracking (in-memory only)
   const [lastDraftSaved, setLastDraftSaved] = useState(null);
 
@@ -321,7 +369,7 @@ export function AdminAddProduct() {
       }
       // Escape to go back
       if (e.key ==="Escape" && !showAIHUD) {
-        navigate("/admin/products");
+        handleCancelAction();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -411,7 +459,7 @@ export function AdminAddProduct() {
             logger.error("Failed to refresh products state", err);
           }
         }
-        navigate("/admin/products");
+        handleSuccessAction();
       }
     } catch (err) {
       toast.error(err.response?.data?.message ||"Failed to save product listing");
@@ -428,7 +476,7 @@ export function AdminAddProduct() {
     );
   }, [formData.category, categoriesList]);
 
-  if (isLoading && isEditMode && !formData.title) {
+  if (isLoading && isEditMode && !formData.title && !isDrawerMode) {
     return (
       <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-6">
         <SkeletonForm fields={6} />
@@ -436,8 +484,8 @@ export function AdminAddProduct() {
     );
   }
 
-  return (
-    <div className="max-w-[1280px] mx-auto space-y-6 pb-20">
+  const mainLayout = (
+    <div className={isDrawerMode ? "space-y-6 flex-1 pb-4" : "max-w-[1280px] mx-auto space-y-6 pb-20"}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -449,12 +497,12 @@ export function AdminAddProduct() {
           </button>
           <div>
             <h2 className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)]">
-              {isEditMode ?"Edit Product Curation" :"New Craft Curation"}
+              {isEditMode ?"Edit Product" :"New Product"}
             </h2>
             <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]">
               {isEditMode
                 ? `Modifying #${id.substring(id.length - 8).toUpperCase()}`
-                :"Guided step-by-step product catalog publisher"}
+                :"Add or update product"}
             </p>
           </div>
         </div>
@@ -572,7 +620,7 @@ export function AdminAddProduct() {
               :"text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
           }`}
         >
-          Edit Curation
+          Edit Product
         </button>
         <button
           type="button"
@@ -583,7 +631,7 @@ export function AdminAddProduct() {
               :"text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
           }`}
         >
-          Storefront Preview
+          Preview
         </button>
       </div>
 
@@ -601,8 +649,8 @@ export function AdminAddProduct() {
                 className="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-8 text-center"
               >
                 <div className="skeleton-box inline-block w-16 h-16 rounded-md" />
-                <h3 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Optimizing Curation Media</h3>
-                <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1 max-w-[280px]">Simulating advanced lossless compression & Cloudinary upload...</p>
+                <h3 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Optimizing Image</h3>
+                <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1 max-w-[280px]">Compressing & Uploading...</p>
                 <div className="w-48 bg-[#E5E7EB] h-1.5 rounded-full mt-4 overflow-hidden">
                   <div className="bg-[var(--admin-accent)] h-full transition-all" style={{ width: `${compressionProgress}%` }} />
                 </div>
@@ -626,20 +674,20 @@ export function AdminAddProduct() {
                 {currentStep === 0 && (
                   <div className="space-y-5">
                     <div>
-                      <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Curation Assets & Media</h2>
-                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Provide image links directly or upload multiple files at once. The first image acts as the primary cover.</p>
+                      <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Product Media</h2>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Upload images or paste URLs. The first image acts as the primary cover.</p>
                     </div>
 
                     <div className="space-y-4">
                       
                       {/* URL Paste Box */}
                       <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
-                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest">Option 1: Paste Image URLs</label>
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest">Paste Image URLs</label>
                         <div className="flex gap-2">
                           <input 
                             type="text" 
                             id="directUrlInput"
-                            placeholder="https://example.com/image.jpg"
+                            placeholder="Image URL"
                             className="flex-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-lg px-3 py-2 text-[11px] outline-none focus:border-[var(--admin-accent)]/40"
                           />
                           <button 
@@ -662,8 +710,8 @@ export function AdminAddProduct() {
                       {/* Multi Upload Box */}
                       <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
                         <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest flex justify-between items-center">
-                          <span>Option 2: Bulk Upload Files</span>
-                          {isCompressing && <span className="text-[var(--admin-accent)] text-[11px] animate-pulse">Uploading to Cloudinary...</span>}
+                          <span>Upload Files</span>
+                          {isCompressing && <span className="text-[var(--admin-accent)] text-[11px] animate-pulse">Uploading...</span>}
                         </label>
                         <input 
                           type="file" 
@@ -746,8 +794,8 @@ export function AdminAddProduct() {
                   <div className="space-y-5">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div>
-                        <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">General Specifications</h2>
-                        <p className="text-[11px] text-[var(--admin-text-secondary)]">Detail the craftsmanship elements, Telugu translation title, and materials used.</p>
+                        <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Product Info</h2>
+                        <p className="text-[11px] text-[var(--admin-text-secondary)]">Detail product info, category, and materials.</p>
                       </div>
                       <button
                         type="button"
@@ -774,7 +822,7 @@ export function AdminAddProduct() {
                           required
                           value={formData.title}
                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                          placeholder="e.g. Vintage Teak Jharokha Mirror"
+                          placeholder="Product title"
                           className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                         />
                       </div>
@@ -800,7 +848,7 @@ export function AdminAddProduct() {
                           type="text"
                           value={formData.slug}
                           onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                          placeholder="vintage-teak-jharokha"
+                          placeholder="vintage-teak-mirror"
                           className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                         />
                       </div>
@@ -841,7 +889,7 @@ export function AdminAddProduct() {
                             required
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            placeholder="e.g. Traditional Urlis, Brass Lamps"
+                            placeholder="Traditional Urlis, Brass Lamps"
                             className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                           />
                         ) : (
@@ -869,7 +917,7 @@ export function AdminAddProduct() {
                           type="text"
                           value={formData.dimensions}
                           onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
-                          placeholder='e.g. 18" x 4" x 24"'
+                          placeholder='Dimensions (e.g. 18" x 4" x 24")'
                           className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
                         />
                       </div>
@@ -882,7 +930,7 @@ export function AdminAddProduct() {
                           rows={4}
                           value={formData.description}
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                          placeholder="Detail the story, craftsmanship techniques, and ritual significance of this piece..."
+                          placeholder="Enter product description..."
                           className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20 resize-none"
                         />
                       </div>
@@ -895,8 +943,8 @@ export function AdminAddProduct() {
                   <div className="space-y-5">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div>
-                        <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Attributes & Custom Variants</h2>
-                        <p className="text-[11px] text-[var(--admin-text-secondary)]">Define custom colors, sizes, or wood variations with their own inventory adjustments.</p>
+                        <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Variants & Tags</h2>
+                        <p className="text-[11px] text-[var(--admin-text-secondary)]">Define attributes, variations, and storefront badges.</p>
                       </div>
                       <button
                         type="button"
@@ -923,7 +971,7 @@ export function AdminAddProduct() {
                           type="text"
                           value={formData.badges}
                           onChange={(e) => setFormData({ ...formData, badges: e.target.value })}
-                          placeholder="e.g. Best Seller, Heritage Craft"
+                          placeholder="Best Seller, Heritage Craft"
                           className="w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white transition-all "
                         />
                       </div>
@@ -1010,7 +1058,7 @@ export function AdminAddProduct() {
                   <div className="space-y-5">
                     <div>
                       <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">SEO Meta Configuration</h2>
-                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Perfect your organic reach titles. Renders live search engine preview results below.</p>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Configure title and description for search engines.</p>
                     </div>
 
                     <div className="space-y-4">
@@ -1022,7 +1070,7 @@ export function AdminAddProduct() {
                           type="text"
                           value={formData.seoTitle}
                           onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
-                          placeholder="e.g. Antique Brass Urli Bowl with Bells | Siri Arts & Crafts"
+                          placeholder="SEO Page Title"
                           className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all  ${
                             focusedField ==="seoTitle" 
                               ?"border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]" 
@@ -1039,7 +1087,7 @@ export function AdminAddProduct() {
                           rows={3}
                           value={formData.seoDescription}
                           onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
-                          placeholder="Exquisite handmade floating flower urli bowl. Ideal for festive entryways, home decor gifts, and pujas. Free shipping across India..."
+                          placeholder="SEO Meta Description"
                           className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all  resize-none ${
                             focusedField ==="seoDescription" 
                               ?"border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]" 
@@ -1071,7 +1119,7 @@ export function AdminAddProduct() {
                   <div className="space-y-5">
                     <div>
                       <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Pricing & Inventory</h2>
-                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Set list price, optional higher old striking price (to show sale discounts), and warehouse stock.</p>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Define stock and list prices.</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -1140,8 +1188,8 @@ export function AdminAddProduct() {
                 {currentStep === 5 && (
                   <div className="space-y-5">
                     <div>
-                      <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Catalog Validation Curation</h2>
-                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Review publishing credentials. Check visibility status and home curation locks.</p>
+                      <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Validation & Curation</h2>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)]">Review details and set visibility preferences before publishing.</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1563,5 +1611,69 @@ export function AdminAddProduct() {
       )}
     </div>
   );
+
+  if (isDrawerMode) {
+    return typeof document !== "undefined" && createPortal(
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
+          >
+            {/* Backdrop Blur overlay */}
+            <div
+              onClick={handleCancelAction}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+            />
+            
+            {/* Slide-Up Bottom Drawer Sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 26, stiffness: 220 }}
+              className="relative w-full max-w-7xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 h-[95vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+            >
+              {/* Grab Handle */}
+              <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
+
+              {/* Title & Subtitle */}
+              <div className="mb-4 pb-2 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0">
+                <div>
+                  <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
+                      {isEditMode ? "edit_note" : "add_box"}
+                    </span>
+                    {isEditMode ? "Edit Product Catalog Item" : "Create Product Catalog Item"}
+                  </h3>
+                  <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5">
+                    {isEditMode ? "Update pricing, specifications, variants, and listing cover" : "Add new listing with advanced configurations, SEO metadata, and AI autofill features"}
+                  </p>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={handleCancelAction}
+                  className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
+
+              {isLoading ? (
+                <div className="py-12 flex justify-center items-center">
+                  <div className="w-8 h-8 rounded-full border-2 border-[var(--admin-accent)] border-t-transparent animate-spin" />
+                </div>
+              ) : mainLayout}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>,
+      document.body
+    );
+  }
+
+  return mainLayout;
 }
 

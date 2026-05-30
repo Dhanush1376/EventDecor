@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,11 +14,16 @@ import {
   fadeUp,
   stagger,
 } from "../components/AdminUIKit";
+import { AdminCreateCoupon } from "./AdminCreateCoupon";
 
 export function AdminCoupons() {
   const navigate = useNavigate();
   const { searchQuery } = useAdmin();
   const queryClient = useQueryClient();
+
+  // Drawer modal states
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [activeEditId, setActiveEditId] = useState(null);
 
   const { data: coupons = [], isLoading: loading } = useQuery({
     queryKey: ["adminCoupons"],
@@ -79,8 +84,11 @@ export function AdminCoupons() {
         subtitle={`${coupons.filter((c) => c.isActive).length} active coupons in store catalog`}
       >
         <button
-          onClick={() => navigate("/admin/coupons/create")}
-          className="admin-btn admin-btn-primary"
+          onClick={() => {
+            setActiveEditId(null);
+            setShowDrawer(true);
+          }}
+          className="admin-btn admin-btn-primary h-9"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           Create Coupon
@@ -98,13 +106,16 @@ export function AdminCoupons() {
         <EmptyState
           icon="sell"
           title="No Coupons"
-          description="No promotional coupons exist. Create marketing codes to attract checkout volumes."
+          description="No coupons exist. Create some to attract customers."
           action={
             <button
-              onClick={() => navigate("/admin/coupons/create")}
+              onClick={() => {
+                setActiveEditId(null);
+                setShowDrawer(true);
+              }}
               className="admin-btn admin-btn-primary admin-btn-sm"
             >
-              Generate Coupon Code
+              Create Coupon
             </button>
           }
         />
@@ -208,7 +219,10 @@ export function AdminCoupons() {
                   </span>
                   <div className="flex gap-1">
                     <button
-                      onClick={() => navigate(`/admin/coupons/edit/${c._id || c.id}`)}
+                      onClick={() => {
+                        setActiveEditId(c._id || c.id);
+                        setShowDrawer(true);
+                      }}
                       className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
                       title="Edit Coupon"
                     >
@@ -232,6 +246,16 @@ export function AdminCoupons() {
           })}
         </motion.div>
       )}
+
+      {/* Slide-Up Bottom Drawer Sheet */}
+      <AdminCreateCoupon
+        isOpen={showDrawer}
+        editId={activeEditId}
+        onClose={() => {
+          setShowDrawer(false);
+          queryClient.invalidateQueries({ queryKey: ["adminCoupons"] });
+        }}
+      />
     </motion.div>
   );
 }

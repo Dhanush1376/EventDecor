@@ -337,17 +337,17 @@ export function AuthModal() {
                     </span>
                     <h2 className="font-display text-[28px] sm:text-[32px] leading-tight text-on-surface-variant font-light">
                       {step === "2fa"
-                        ? "Authenticator"
+                        ? "Enter Authenticator Code"
                         : step === "otp"
-                        ? "Enter Security Key"
-                        : "Access Studio"}
+                        ? "Enter Verification Code"
+                        : "Login or Sign Up"}
                     </h2>
                     <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
                       {step === "2fa"
                         ? "Enter the 6-digit code from your authenticator app."
                         : step === "otp"
-                        ? "A secure verification code has been dispatched to your inbox."
-                        : "Experience passwordless, secure entry. Browse, curate collections, and secure your event masterpieces."
+                        ? "A secure verification code has been sent to your email."
+                        : "Experience passwordless, secure entry to our store."
                       }
                     </p>
                   </div>
@@ -399,7 +399,7 @@ export function AuthModal() {
                               <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
                             ) : (
                               <>
-                                <span>Get Verification Key</span>
+                                <span>Send Verification Code</span>
                                 <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
                                   arrow_forward
                                 </span>
@@ -510,7 +510,7 @@ export function AuthModal() {
                               {isLoading ? (
                                 <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
                               ) : (
-                                <span>Verify and Open Gateway</span>
+                                <span>Verify and Login</span>
                               )}
                             </button>
 

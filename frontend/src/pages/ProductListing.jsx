@@ -139,13 +139,13 @@ export function ProductListing() {
     hero: {
       title: "Heritage Collection",
       subtitle: "Handcrafted Decor",
-      description: "Discover masterfully crafted decor pieces that honor ancient traditions with contemporary luxury sensibilities.",
+      description: "Handcrafted luxury event decor blending tradition with contemporary design.",
       backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204",
     },
     promo: {
       title: "",
       highlightText: "Up to 40% Off",
-      description: "Bring home heritage-inspired elegance with our exclusive handcrafted seasonal collections. Limited stock available for high-fidelity pieces.",
+      description: "Exclusive handcrafted seasonal collections. Limited stock available.",
       backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w",
       badgeText: "Limited Time Offer",
       statusText: "Ends Soon",
@@ -471,7 +471,7 @@ export function ProductListing() {
           statusText={shopContent.promo.statusText}
           title="Limited Time Offer — "
           highlightText={promoCoupon.discountType === "percentage" ? `${promoCoupon.discountValue}% Off` : `₹${promoCoupon.discountValue} Off`}
-          description={`Claim coupon code ${promoCoupon.code} for immediate savings on your checkout selections.`}
+          description={`Use code ${promoCoupon.code} at checkout to save.`}
           ctaText="Claim Offer"
           onCtaClick={handleClaimOffer}
           timer={[
@@ -628,12 +628,10 @@ export function ProductListing() {
                   </span>
                 </div>
                 <h3 className="font-headline-sm text-on-surface mb-3">
-                  No masterworks found
+                  No products found
                 </h3>
                 <p className="font-body-md text-on-surface-variant/50 font-light mb-10 max-w-md mx-auto">
-                  Our artisans are constantly creating. Try adjusting your
-                  filters or search terms to discover other unique pieces in our
-                  collection.
+                  Try adjusting your filters or search terms to find what you're looking for.
                 </p>
                 <button onClick={clearAllFilters} className="btn-primary">
                   Clear All Filters

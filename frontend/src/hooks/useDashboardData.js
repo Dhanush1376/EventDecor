@@ -14,7 +14,8 @@ export function useDashboardData(userId) {
     queryKey: ['dashboard', 'orders', userId],
     queryFn: async () => {
       const res = await orderService.getMyOrders();
-      return res.data ?? res ?? [];
+      const payload = res.data ?? res ?? [];
+      return Array.isArray(payload) ? payload : (payload.data || []);
     },
     enabled: Boolean(userId),
     staleTime: 30 * 1000, // 30 seconds dashboard order cache

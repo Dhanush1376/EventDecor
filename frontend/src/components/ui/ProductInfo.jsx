@@ -103,23 +103,35 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
             )}
           </h2>
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-0.5 text-primary-container">
-              {[...Array(5)].map((_, i) => (
-                <span
-                  key={i}
-                  className="material-symbols-outlined text-[13px] sm:text-[14px]"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  star
+            {(product.reviewCount || product.reviews || 0) > 0 && (
+              <button
+                onClick={() => {
+                  const el = document.getElementById("reviews-section");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="flex items-center gap-2.5 hover:opacity-80 active:scale-98 transition-all cursor-pointer text-left outline-none"
+              >
+                <div className="flex items-center gap-0.5 text-primary-container">
+                  {[...Array(5)].map((_, i) => (
+                    <span
+                      key={i}
+                      className="material-symbols-outlined text-[13px] sm:text-[14px]"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      star
+                    </span>
+                  ))}
+                </div>
+                <span className="font-body-sm text-on-surface/60 font-semibold text-[12px] sm:text-[13px] underline decoration-dotted decoration-primary/45 hover:text-primary transition-colors">
+                  {product.reviewCount || product.reviews} Verified Reviews
                 </span>
-              ))}
-            </div>
-            <span className="font-body-sm text-on-surface/60 font-medium text-[12px] sm:text-[13px]">
-              {(product.reviewCount || product.reviews || 0) > 0 
-                ? `${product.reviewCount || product.reviews} Verified Reviews` 
-                : "Be the first to review"}
-            </span>
-            <span className="w-1 h-1 rounded-full bg-on-surface/20"></span>
+              </button>
+            )}
+            
+            {(product.reviewCount || product.reviews || 0) > 0 && product.isFeatured && (
+              <span className="w-1 h-1 rounded-full bg-on-surface/20"></span>
+            )}
+            
             {product.isFeatured && (
               <span className="font-label-sm text-[11px] sm:text-[12px] text-green-700 font-bold flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>

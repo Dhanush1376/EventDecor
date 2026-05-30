@@ -16,7 +16,22 @@ export const getGalleryItems = asyncHandler(async (req: Request, res: Response) 
   if (category) filter.category = category;
   if (event) filter.event = event;
   if (type) filter.type = type;
-  if (search) filter.$text = { $search: search as string };
+  if (search) {
+    const cleanSearch = (search as string).trim();
+    if (cleanSearch) {
+      const escapedSearch = cleanSearch.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { teluguTitle: searchRegex },
+        { category: searchRegex },
+        { event: searchRegex },
+        { style: searchRegex },
+        { tags: searchRegex },
+        { description: searchRegex }
+      ];
+    }
+  }
 
   const [items, totalCount] = await Promise.all([
     Gallery.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),

@@ -22,7 +22,7 @@ export function PromoBanner({
         initial={{ opacity: 0, y: 15 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="rounded-2xl md:rounded-full overflow-hidden relative min-h-[70px] md:min-h-[90px] flex flex-row items-center justify-between p-3 md:p-4 md:px-10 gap-4 border border-white/10 shadow-luxury bg-[#0a0a0a] group-hover:shadow-luxury-hover transition-all duration-700"
+        className="rounded-full overflow-hidden relative min-h-[54px] sm:min-h-[90px] flex flex-row items-center justify-between p-2 sm:p-4 px-3 sm:px-10 gap-2 sm:gap-6 border border-white/10 shadow-luxury bg-[#0a0a0a] group-hover:shadow-luxury-hover transition-all duration-700"
       >
         {/* Cinematic Background Layer */}
         <div className="absolute inset-0 overflow-hidden">
@@ -32,28 +32,29 @@ export function PromoBanner({
             transition={{ duration: 10, ease: "linear" }}
             onError={handleImageError}
             src={backgroundImage}
-            className="w-full h-full object-cover opacity-40 select-none pointer-events-none"
+            className="w-full h-full object-cover opacity-45 select-none pointer-events-none"
             alt="Promo Backdrop"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-transparent" />
         </div>
 
         {/* Content Side */}
-        <div className="relative z-10 flex-1 flex flex-row items-center gap-4 md:gap-8 min-w-0">
-          <div className="flex-shrink-0">
-            <span className="px-2.5 py-1 rounded-full bg-primary/20 backdrop-blur-xl text-gold font-label-sm text-[8px] md:text-[10px] uppercase tracking-[0.1em] font-bold border border-primary/20 shadow-lg">
+        <div className="relative z-10 flex-1 flex flex-row items-center gap-3 sm:gap-8 min-w-0">
+          {/* Hide badge on mobile to save space, show only on tablet/desktop */}
+          <div className="hidden md:block flex-shrink-0">
+            <span className="px-3.5 py-1.5 rounded-full bg-primary/20 backdrop-blur-xl text-gold font-label-sm text-[10px] uppercase tracking-[0.15em] font-bold border border-primary/20 shadow-lg">
               {badgeText}
             </span>
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 min-w-0">
-            <h3 className="font-display text-[12px] sm:text-[14px] md:text-[18px] lg:text-[22px] text-white font-medium leading-tight">
+          <div className="flex flex-row items-center gap-2 sm:gap-4 min-w-0">
+            <h3 className="font-display text-[9.5px] xs:text-[11px] sm:text-[16px] md:text-[18px] lg:text-[22px] text-white font-medium leading-none truncate">
               {title}{" "}
-              <span className="text-gold italic ml-1 whitespace-nowrap">{highlightText}</span>
+              <span className="text-gold italic ml-0.5 sm:ml-1 whitespace-nowrap">{highlightText}</span>
             </h3>
             {statusText && (
-              <span className="text-white/40 font-label-sm text-[8px] md:text-[10px] uppercase tracking-[0.2em] flex items-center gap-1.5 font-bold whitespace-nowrap">
-                <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse" />
+              <span className="hidden sm:inline-flex text-white/40 font-label-sm text-[10px] uppercase tracking-[0.2em] flex items-center gap-1.5 font-bold whitespace-nowrap">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                 {statusText}
               </span>
             )}
@@ -61,7 +62,7 @@ export function PromoBanner({
         </div>
 
         {/* Action Side */}
-        <div className="relative z-10 flex flex-row items-center gap-4 md:gap-10 flex-shrink-0">
+        <div className="relative z-10 flex flex-row items-center gap-4 sm:gap-10 shrink-0">
           {timer && (
             <div className="hidden lg:flex gap-6 border-l border-white/10 pl-10">
               {timer.map((t) => (
@@ -81,7 +82,7 @@ export function PromoBanner({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
             onClick={onCtaClick}
-            className="group/btn bg-primary text-surface font-label-sm text-[9px] md:text-[11px] uppercase tracking-[0.1em] md:tracking-[0.2em] font-bold px-5 py-2.5 md:px-10 md:py-3.5 rounded-full hover:bg-gold transition-all cursor-pointer shadow-luxury relative overflow-hidden whitespace-nowrap"
+            className="group/btn bg-primary text-surface font-label-sm text-[8px] sm:text-[11px] uppercase tracking-[0.1em] sm:tracking-[0.2em] font-bold px-3.5 py-2 sm:px-10 sm:py-3.5 rounded-full hover:bg-gold transition-all cursor-pointer shadow-luxury relative overflow-hidden whitespace-nowrap text-center"
           >
             <span className="relative z-10">{ctaText}</span>
           </motion.button>

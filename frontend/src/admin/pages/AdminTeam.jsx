@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import { adminInviteService } from "../../services/domainServices";
@@ -500,46 +501,51 @@ export function AdminTeam() {
         </AnimatePresence>
       )}
 
-      {/* Dynamic Slide-Over Invitation Drawer */}
-      <AnimatePresence>
-        {isInviteOpen && (
-          <div className="fixed inset-0 z-[100] flex justify-end">
+      {/* Dynamic Slide-Up Bottom-Sheet Curation Drawer */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {isInviteOpen && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsInviteOpen(false)}
-              className="absolute inset-0"
-              style={{ background: "var(--admin-surface-overlay)", backdropFilter: "blur(4px)" }}
-            />
-
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-[460px] bg-[var(--admin-surface)] h-full shadow-[var(--admin-shadow-2xl)] p-5 sm:p-8 flex flex-col justify-between border-l border-[var(--admin-border)] overflow-hidden"
+              className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
             >
-              <div className="space-y-6 overflow-y-auto custom-scrollbar">
-                <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-5">
+              <div
+                onClick={() => setIsInviteOpen(false)}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+              />
+
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 26, stiffness: 220 }}
+                className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+              >
+                {/* Grab Handle */}
+                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
+
+                <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
                   <div>
-                    <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)]">
-                      Invite Member Access
+                    <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">person_add</span>
+                      Invite Team Member
                     </h3>
-                    <p className="text-[12px] text-[var(--admin-text-secondary)] mt-1">
+                    <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5 leading-normal">
                       Grants admin access to an existing user email.
                     </p>
                   </div>
                   <button
                     onClick={() => setIsInviteOpen(false)}
-                    className="admin-btn-icon w-8 h-8 min-h-0 bg-[var(--admin-surface-muted)]"
+                    className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[18px]">close</span>
+                    <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 </div>
 
-                <form onSubmit={handleSendInvite} className="space-y-5">
-                  <div className="space-y-2">
+                <form onSubmit={handleSendInvite} className="space-y-4 flex-1">
+                  <div className="space-y-1">
                     <label className="admin-label">
                       Member Registered Email *
                     </label>
@@ -553,7 +559,7 @@ export function AdminTeam() {
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="admin-label">
                       Team Role Designation *
                     </label>
@@ -570,7 +576,7 @@ export function AdminTeam() {
                     </select>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="admin-label">
                       Access Scope Permissions
                     </label>
@@ -586,21 +592,22 @@ export function AdminTeam() {
                   <button
                     disabled={submitting}
                     type="submit"
-                    className="admin-btn w-full h-11 mt-6"
+                    className="admin-btn admin-btn-primary w-full py-3 text-[11px] font-bold uppercase tracking-wider mt-6 active:scale-95 shadow-sm"
                   >
                     {submitting ? "Sending..." : "Send Invitation Request"}
                   </button>
                 </form>
-              </div>
 
-              <div className="border-t border-[var(--admin-border-subtle)] pt-5 text-[11px] text-[var(--admin-text-tertiary)] leading-relaxed">
-                <strong>SMTP Security Note:</strong> Members invited receive an explicit secure email.
-                Access rights to the studio panel are pending until the user logs into their account and clicks accept.
-              </div>
+                <div className="border-t border-[var(--admin-border-subtle)] pt-4 mt-5 text-[10.5px] text-[var(--admin-text-tertiary)] leading-relaxed shrink-0">
+                  <strong>SMTP Security Note:</strong> Members invited receive an explicit secure email.
+                  Access rights to the studio panel are pending until the user logs into their account and clicks accept.
+                </div>
+              </motion.div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </motion.div>
   );
 }

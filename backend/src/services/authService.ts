@@ -852,11 +852,13 @@ class AuthService {
     const isBypassConfigured = process.env.NODE_ENV === 'development' && process.env.BYPASS_OTP_CODE && otp === process.env.BYPASS_OTP_CODE;
     
     let isMatch = false;
+    let matchedRecord: (typeof otpRecords)[0] | null = null;
     let latestRecord = otpRecords[0];
     for (const record of otpRecords) {
       if (new Date() > record.expiresAt) continue;
       if (isBypassConfigured || await bcrypt.compare(otp, record.otpHash)) {
         isMatch = true;
+        matchedRecord = record;
         break;
       }
     }
@@ -872,6 +874,19 @@ class AuthService {
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
+    // Atomic consume: prevent race condition where parallel requests verify the same OTP
+    const consumed = await OtpVerification.findOneAndDelete({
+      _id: matchedRecord!._id,
+      email: cleanEmail,
+      type: 'cod',
+    });
+
+    if (!consumed) {
+      logger.warn(`[COD OTP RACE] OTP already consumed for ${cleanEmail}`);
+      throw new ApiError(400, 'Verification code already used. Please request a new one.');
+    }
+
+    // Clean up remaining COD OTPs for this email
     await OtpVerification.deleteMany({ email: cleanEmail, type: 'cod' });
     return true;
   }

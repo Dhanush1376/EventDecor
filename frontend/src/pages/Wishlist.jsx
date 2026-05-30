@@ -196,10 +196,10 @@ export function Wishlist() {
               </div>
 
               <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
-                You haven't saved anything yet.
+                Your wishlist is empty.
               </h2>
               <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-8">
-                Explore what our artisans have crafted for your special occasions and save your favorites here.
+                Explore our collections and save your favorite items here.
               </p>
 
               <div className="flex justify-center">
@@ -277,7 +277,7 @@ export function Wishlist() {
             animate={{ opacity: 1 }}
             className="text-center py-12 text-[#685c57] text-sm"
           >
-            No saved items match your search query "{searchQuery}".
+            No items match "{searchQuery}".
           </motion.div>
         )}
       </div>

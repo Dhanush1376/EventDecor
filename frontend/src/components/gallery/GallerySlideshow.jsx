@@ -3,29 +3,23 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { OptimizedImage } from "../ui/OptimizedImage";
+import { SearchBar } from "../ui/SearchBar";
 import { handleImageError } from "../../utils/imageUtils";
 import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../context/CartContext";
 
 const slideVariants = {
-  enter: (direction) => {
-    return {
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0
-    };
-  },
+  enter: (direction) => ({
+    x: direction > 0 ? 500 : -500
+  }),
   center: {
     zIndex: 1,
-    x: 0,
-    opacity: 1
+    x: 0
   },
-  exit: (direction) => {
-    return {
-      zIndex: 0,
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0
-    };
-  }
+  exit: (direction) => ({
+    zIndex: 0,
+    x: direction < 0 ? 500 : -500
+  })
 };
 
 export function GallerySlideshow({
@@ -35,8 +29,11 @@ export function GallerySlideshow({
   onPrev,
   onNext,
   onSelect,
+  searchQuery = "",
+  onSearchChange,
 }) {
   const currentItem = items[currentIndex];
+  const currentId = currentItem ? (currentItem._id || currentItem.id) : null;
   const thumbnailContainerRef = useRef(null);
   const [direction, setDirection] = useState(0);
 
@@ -44,6 +41,13 @@ export function GallerySlideshow({
   const { addItem } = useCart();
 
   const actionSource = useRef('external');
+
+  // Clamp active index dynamically when items length changes (e.g. during search/filtering)
+  useEffect(() => {
+    if (items.length > 0 && currentIndex >= items.length) {
+      if (onSelect) onSelect(0);
+    }
+  }, [items.length, currentIndex, onSelect]);
 
   const handleNext = useCallback(() => {
     actionSource.current = 'external';
@@ -133,9 +137,9 @@ export function GallerySlideshow({
     }
   }, [currentIndex, onSelect]);
 
-  if (!currentItem) return null;
+  if (!currentItem && items.length > 0) return null;
 
-  const displayImage = currentItem.image || currentItem.imageSrc;
+  const displayImage = currentItem ? (currentItem.image || currentItem.imageSrc) : "";
 
   return typeof document !== "undefined" ? createPortal(
     <motion.div
@@ -150,13 +154,23 @@ export function GallerySlideshow({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Controls */}
-        <div className="w-full flex justify-between items-center px-4 pt-2 shrink-0 z-10">
-          <span className="text-black/40 font-label-sm text-[10px] md:text-[12px] uppercase tracking-[0.4em] font-bold">
-            {currentIndex + 1} <span className="mx-2 opacity-20">/</span> {items.length}
+        <div className="w-full flex justify-between items-center px-4 pt-2 shrink-0 z-10 gap-4">
+          <span className="text-black/40 font-label-sm text-[10px] md:text-[12px] uppercase tracking-[0.4em] font-bold whitespace-nowrap">
+            {items.length > 0 ? `${currentIndex + 1} / ${items.length}` : "0 / 0"}
           </span>
+          
+          <div className="flex-1 max-w-md h-10">
+            <SearchBar
+              value={searchQuery}
+              onChange={onSearchChange}
+              placeholder="Search themes, colors..."
+              className="w-full !h-full !rounded-full bg-[#fcfbf9]/90 backdrop-blur-md shadow-sm !px-5 text-[12px] flex items-center border border-black/10 outline-none focus:outline-none"
+            />
+          </div>
+
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors"
+            className="w-10 h-10 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors shrink-0"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
@@ -164,164 +178,193 @@ export function GallerySlideshow({
 
         {/* Main Image Container */}
         <div className="relative w-full flex-1 flex items-center justify-center overflow-hidden my-3 min-h-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentItem.id + currentItem.type}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.25 }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
-              onDragEnd={(e, { offset, velocity }) => {
-                const swipe = offset.x;
-                if (swipe < -80) {
-                  handleNext();
-                } else if (swipe > 80) {
-                  handlePrev();
-                }
-              }}
-              className="w-full h-full flex items-center justify-center px-4 cursor-grab active:cursor-grabbing"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {currentItem.video ? (
-                <video
-                  src={currentItem.video}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="max-w-full max-h-full object-contain rounded-2xl shadow-md"
-                />
-              ) : (
-                <OptimizedImage
-                  src={displayImage.includes('cloudinary.com') ? displayImage.replace('/upload/', '/upload/f_auto,q_auto,dpr_auto,w_1200/') : displayImage}
-                  alt={currentItem.title}
-                  className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
-                  width={1200}
-                  height={1200}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
+          {items.length === 0 ? (
+            <div className="text-center py-20 px-6 max-w-md">
+              <span className="material-symbols-outlined text-[48px] text-[#C4A87C] mb-4 block">
+                search_off
+              </span>
+              <h3 className="font-headline-sm text-black mb-2 font-normal">
+                No designs found.
+              </h3>
+              <p className="text-black/50 font-body text-[13px] leading-relaxed mb-6 font-light">
+                Try searching for a different keyword or color to find event inspiration.
+              </p>
+              <button
+                onClick={() => onSearchChange?.({ target: { value: "" } })}
+                className="px-6 py-2.5 bg-black text-white rounded-full font-bold text-[10px] uppercase tracking-widest hover:bg-black/80 transition-all shadow-sm active:scale-95"
+              >
+                Clear Search
+              </button>
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                key={currentId + (currentItem?.type || "")}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "tween", ease: "easeInOut", duration: 0.15 }
+                }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(e, { offset, velocity }) => {
+                  const swipe = offset.x;
+                  if (swipe < -80) {
+                    handleNext();
+                  } else if (swipe > 80) {
+                    handlePrev();
+                  }
+                }}
+                className="w-full h-full flex items-center justify-center px-4 cursor-grab active:cursor-grabbing"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {currentItem?.video ? (
+                  <video
+                    src={currentItem.video}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="max-w-full max-h-full object-contain rounded-none shadow-md"
+                  />
+                ) : (
+                  <OptimizedImage
+                    src={displayImage}
+                    alt={currentItem?.title || ""}
+                    className="max-w-full max-h-full object-contain rounded-none shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
+                    width={1200}
+                    height={1200}
+                    priority={true}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
 
           {/* Navigation Arrows - Tablet/Desktop only */}
-          <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 hidden md:flex justify-between pointer-events-none z-10">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrev();
-              }}
-              className="w-10 h-10 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
-            >
-              <span className="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">
-                arrow_back_ios_new
-              </span>
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-              className="w-10 h-10 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
-            >
-              <span className="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">
-                arrow_forward_ios
-              </span>
-            </button>
-          </div>
+          {items.length > 1 && (
+            <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 hidden md:flex justify-between pointer-events-none z-10">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrev();
+                }}
+                className="w-10 h-10 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
+              >
+                <span className="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">
+                  arrow_back_ios_new
+                </span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNext();
+                }}
+                className="w-10 h-10 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
+              >
+                <span className="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">
+                  arrow_forward_ios
+                </span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Bottom Information & Thumbnails Strip */}
-        <div 
-          className="w-full flex flex-col items-center gap-4 px-4 pb-2 shrink-0 z-10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex flex-col items-center gap-3 w-full">
-            <div className="flex flex-col items-center text-center gap-1.5">
-              <span className="px-3 py-0.5 rounded-full bg-[#FAF6F0] border border-[#C4A87C]/30 text-[#C4A87C] text-[9px] uppercase tracking-[0.2em] font-bold">
-                {currentItem.category}
-              </span>
-              <h2 className="text-black font-display text-xl md:text-2xl font-normal tracking-tight">
-                {currentItem.title}
-              </h2>
-            </div>
-            
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={() => toggleItem(currentItem)}
-                aria-label="Toggle wishlist"
-                className="w-9 h-9 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-all shadow-sm active:scale-95 bg-white"
-              >
-                <span className={`material-symbols-outlined text-[16px] transition-colors ${isWishlisted(currentItem.id) ? 'text-red-500 font-fill' : 'text-black/60'}`}>
-                  favorite
-                </span>
-              </button>
-              
-              {currentItem.type === "product" && (
-                <button
-                  onClick={() => addItem(currentItem, 1, currentItem.variants?.[0] || null)}
-                  className="h-9 px-5 rounded-full bg-black text-white text-[9px] font-bold tracking-widest uppercase hover:bg-black/80 transition-all shadow-sm active:scale-95 flex items-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-[14px]">local_mall</span>
-                  Shop
-                </button>
-              )}
-
-              <Link
-                to={`/gallery/${currentItem.id}`}
-                onClick={onClose}
-                className="h-9 px-5 rounded-full border border-black/10 bg-white text-black text-[9px] font-bold tracking-[0.15em] uppercase hover:border-primary transition-all shadow-sm group flex items-center gap-2 active:scale-95"
-              >
-                Details 
-                <span className="material-symbols-outlined text-[12px] group-hover:translate-x-0.5 transition-transform">east</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Thumbnails Container */}
+        {items.length > 0 && currentItem && (
           <div 
-            ref={thumbnailContainerRef}
-            onScroll={handleThumbnailScroll}
-            className="w-full flex items-center gap-2.5 overflow-x-auto no-scrollbar py-2 snap-x snap-mandatory px-[calc(50vw-24px)] md:px-[calc(50%-20px)] border-t border-black/5 mt-1"
+            className="w-full flex flex-col items-center gap-4 px-4 pb-2 shrink-0 z-10"
+            onClick={(e) => e.stopPropagation()}
           >
-            {items.map((item, idx) => {
-              const isSelected = idx === currentIndex;
-              const thumbImage = item.image || item.imageSrc;
-              return (
+            <div className="flex flex-col items-center gap-3 w-full">
+              <div className="flex flex-col items-center text-center gap-1.5">
+                <span className="px-3 py-0.5 rounded-full bg-[#FAF6F0] border border-[#C4A87C]/30 text-[#C4A87C] text-[9px] uppercase tracking-[0.2em] font-bold">
+                  {currentItem.category}
+                </span>
+                <h2 className="text-black font-display text-xl md:text-2xl font-normal tracking-tight">
+                  {currentItem.title}
+                </h2>
+              </div>
+              
+              <div className="flex items-center justify-center gap-3">
                 <button
-                  key={idx}
-                  onClick={() => {
-                    setDirection(idx > currentIndex ? 1 : -1);
-                    if (onSelect) onSelect(idx);
-                  }}
-                  className={`relative shrink-0 w-11 h-11 rounded-lg overflow-hidden border-2 transition-all duration-300 snap-center ${
-                    isSelected ? "border-[#C4A87C] scale-105 shadow-sm" : "border-transparent opacity-50 hover:opacity-100"
-                  }`}
+                  onClick={() => toggleItem(currentItem)}
+                  aria-label="Toggle wishlist"
+                  className="w-9 h-9 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-all shadow-sm active:scale-95 bg-white"
                 >
-                  {item.video ? (
-                    <video 
-                      src={item.video} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <OptimizedImage
-                      src={thumbImage}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      width={100}
-                      height={100}
-                    />
-                  )}
-                  {isSelected && (
-                    <div className="absolute inset-0 bg-black/5" />
-                  )}
+                  <span className={`material-symbols-outlined text-[16px] transition-colors ${isWishlisted(currentId) ? 'text-red-500 font-fill' : 'text-black/60'}`}>
+                    favorite
+                  </span>
                 </button>
-              );
-            })}
+                
+                {currentItem.type === "product" && (
+                  <button
+                    onClick={() => addItem(currentItem, 1, currentItem.variants?.[0] || null)}
+                    className="h-9 px-5 rounded-full bg-black text-white text-[9px] font-bold tracking-widest uppercase hover:bg-black/80 transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">local_mall</span>
+                    Shop
+                  </button>
+                )}
+
+                <Link
+                  to={`/gallery/${currentId}`}
+                  onClick={onClose}
+                  className="h-9 px-5 rounded-full border border-black/10 bg-white text-black text-[9px] font-bold tracking-[0.15em] uppercase hover:border-primary transition-all shadow-sm group flex items-center gap-2 active:scale-95"
+                >
+                  Details 
+                  <span className="material-symbols-outlined text-[12px] group-hover:translate-x-0.5 transition-transform">east</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Thumbnails Container */}
+            <div 
+              ref={thumbnailContainerRef}
+              onScroll={handleThumbnailScroll}
+              className="w-full flex items-center gap-2.5 overflow-x-auto no-scrollbar py-2 snap-x snap-mandatory px-[calc(50vw-24px)] md:px-[calc(50%-20px)] border-t border-black/5 mt-1"
+            >
+              {items.map((item, idx) => {
+                const isSelected = idx === currentIndex;
+                const thumbImage = item.image || item.imageSrc;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setDirection(idx > currentIndex ? 1 : -1);
+                      if (onSelect) onSelect(idx);
+                    }}
+                    className={`relative shrink-0 w-11 h-11 rounded-lg overflow-hidden border-2 transition-all duration-300 snap-center ${
+                      isSelected ? "border-[#C4A87C] scale-105 shadow-sm" : "border-transparent opacity-50 hover:opacity-100"
+                    }`}
+                  >
+                    {item.video ? (
+                      <video 
+                        src={item.video} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <OptimizedImage
+                        src={thumbImage}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        width={100}
+                        height={100}
+                      />
+                    )}
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-black/5" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </motion.div>,
     document.body

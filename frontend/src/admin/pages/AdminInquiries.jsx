@@ -34,6 +34,14 @@ export function AdminInquiries() {
   const [quoteShipping, setQuoteShipping] = useState(0);
   const [quoteNotes, setQuoteNotes] = useState("");
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Sync active lists and form options
   const fetchAdminWorkspaceData = async () => {
     setLoading(true);
@@ -528,11 +536,11 @@ export function AdminInquiries() {
 
                 {/* Sliding Content Drawer */}
                 <motion.div
-                  initial={{ x:"100%" }}
-                  animate={{ x: 0 }}
-                  exit={{ x:"100%" }}
+                  initial={isMobile ? { y: "100%" } : { x: "100%" }}
+                  animate={isMobile ? { y: 0 } : { x: 0 }}
+                  exit={isMobile ? { y: "100%" } : { x: "100%" }}
                   transition={{ type:"spring", damping: 25, stiffness: 200 }}
-                  className="fixed top-0 right-0 h-full w-full max-w-[540px] bg-[var(--admin-surface)] z-50 shadow-2xl flex flex-col border-l border-[var(--admin-border)]"
+                  className={isMobile ? "fixed bottom-0 left-0 right-0 h-[92vh] w-full bg-[var(--admin-surface)] z-50 shadow-2xl flex flex-col rounded-t-[var(--admin-radius-2xl)] border-t border-[var(--admin-border)]" : "fixed top-0 right-0 h-full w-full max-w-[540px] bg-[var(--admin-surface)] z-50 shadow-2xl flex flex-col border-l border-[var(--admin-border)]"}
                 >
                   {/* Drawer Header details */}
                   <div className="p-4 sm:p-6 border-b border-[var(--admin-border-subtle)] flex items-start justify-between bg-[var(--admin-bg-subtle)] gap-2">
@@ -573,7 +581,7 @@ export function AdminInquiries() {
                   </div>
 
                   {/* Drawer Content */}
-                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6">
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 pb-[calc(32px+env(safe-area-inset-bottom))]">
                     
                     {/* Metadata Card grids */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[var(--admin-bg-subtle)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">

@@ -156,57 +156,6 @@ export function GalleryDetail() {
         <span className="text-black font-bold">{item.title}</span>
       </nav>
 
-      {/* Mobile-Only Navigation - Moved below the navbar to prevent overlap */}
-      <nav className="md:hidden fixed top-[72px] left-0 right-0 z-[110] px-4 py-2 flex items-center justify-between pointer-events-none">
-        <button
-          onClick={() => navigate(-1)}
-          className="pointer-events-auto w-9 h-9 rounded-full bg-white/90 backdrop-blur-md hover:bg-gray-100 flex items-center justify-center transition-all shadow-md"
-        >
-          <span className="material-symbols-outlined text-black text-[20px]">
-            arrow_back
-          </span>
-        </button>
-
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <button
-            onClick={handleWishlistLook}
-            className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-md transition-all active:scale-[0.96]"
-          >
-            <motion.span
-              animate={{
-                scale:
-                  linkedProdId && isWishlisted(linkedProdId)
-                    ? [1, 1.3, 1]
-                    : 1,
-                color:
-                  linkedProdId && isWishlisted(linkedProdId)
-                    ? "#ff2d55"
-                    : "#1a1817",
-              }}
-              transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-              className="material-symbols-outlined text-[20px]"
-              style={{
-                fontVariationSettings:
-                  linkedProdId && isWishlisted(linkedProdId)
-                    ? "'FILL' 1"
-                    : "'FILL' 0",
-              }}
-            >
-              favorite
-            </motion.span>
-          </button>
-          <ShareButton 
-            url={pageUrl} 
-            title={`${item.title} - Siri Arts & Crafts Gallery`}
-            description={item.description}
-            variant="custom"
-            size="custom"
-            iconOnly={true}
-            className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-md text-black transition-all"
-          />
-        </div>
-      </nav>
-
       <main className="max-w-[1200px] mx-auto md:px-4">
         <div className="flex flex-col lg:flex-row gap-8 items-start relative">
           {/* Main Focus Card (Standard Laptop Scale, No z-index overlapping) */}
@@ -239,8 +188,59 @@ export function GalleryDetail() {
                   />
                 )}
 
-                {/* Desktop Only Actions - Inlined to avoid navbar overlap */}
-                <div className="hidden md:flex absolute top-4 right-4 flex-col gap-2">
+                {/* Back Button (Mobile Only) */}
+                <button
+                  onClick={() => navigate(-1)}
+                  className="md:hidden absolute top-6 left-4 z-10 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md hover:bg-gray-100 flex items-center justify-center transition-all shadow-lg active:scale-95 text-black cursor-pointer"
+                  aria-label="Go back"
+                >
+                  <span className="material-symbols-outlined text-black text-[20px] font-bold">
+                    arrow_back
+                  </span>
+                </button>
+
+                {/* Mobile Only Actions (Horizontal layout) */}
+                <div className="flex md:hidden absolute top-6 right-4 z-10 gap-2">
+                  <button
+                    onClick={handleWishlistLook}
+                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg active:scale-[0.96]"
+                  >
+                    <motion.span
+                      animate={{
+                        scale:
+                          linkedProdId && isWishlisted(linkedProdId)
+                            ? [1, 1.3, 1]
+                            : 1,
+                        color:
+                          linkedProdId && isWishlisted(linkedProdId)
+                            ? "#ff2d55"
+                            : "#1a1817",
+                      }}
+                      transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+                      className="material-symbols-outlined text-[20px]"
+                      style={{
+                        fontVariationSettings:
+                          linkedProdId && isWishlisted(linkedProdId)
+                            ? "'FILL' 1"
+                            : "'FILL' 0",
+                      }}
+                    >
+                      favorite
+                    </motion.span>
+                  </button>
+                  <ShareButton 
+                    url={pageUrl} 
+                    title={`${item.title} - Siri Arts & Crafts Gallery`}
+                    description={item.description}
+                    variant="custom"
+                    size="custom"
+                    iconOnly={true}
+                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg text-black transition-all"
+                  />
+                </div>
+
+                {/* Desktop Only Actions - Inlined to avoid navbar overlap (Vertical layout) */}
+                <div className="hidden md:flex absolute top-6 right-4 flex-col gap-2 z-10">
                   <button
                     onClick={handleWishlistLook}
                     className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg hover:bg-primary/10 transition-all text-black active:scale-90"
@@ -314,7 +314,7 @@ export function GalleryDetail() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 border-t border-black/5 pt-8 mt-6">
                   <div className="space-y-6">
                     <div className="relative p-6 md:p-8 bg-surface-bright rounded-[28px] border border-outline-variant/10">
                       <span className="material-symbols-outlined absolute -top-3 -left-3 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-md border-4 border-white text-[12px]">
@@ -416,7 +416,7 @@ export function GalleryDetail() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 150, opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 220 }}
-            className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[150] bg-white/95 backdrop-blur-3xl border border-black/5 p-1.5 flex items-center gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full select-none"
+            className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[100] bg-white/95 backdrop-blur-3xl border border-black/5 p-1.5 flex items-center gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full select-none"
           >
             <button
               onClick={handleWishlistLook}

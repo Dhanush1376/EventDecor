@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { notificationService } from "../../services/domainServices";
 import toast from "react-hot-toast";
@@ -9,13 +10,17 @@ import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export function AdminCampaigns() {
-  const [activeTab, setActiveTab] = useState("broadcasts"); // broadcasts | templates | new
+  const [activeTab, setActiveTab] = useState("broadcasts"); // broadcasts | templates
   const [campaigns, setCampaigns] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Drawer states
+  const [showLaunchDrawer, setShowLaunchDrawer] = useState(false);
+  const [showTemplateDrawer, setShowTemplateDrawer] = useState(false);
 
   // Form State for New Campaign
   const [campaignForm, setCampaignForm] = useState({
@@ -90,15 +95,7 @@ export function AdminCampaigns() {
 
       const res = await notificationService.createCampaign(payload);
       if (res.success) {
-        toast.success("Draft created", {
-          icon: "✦",
-          style: {
-            background: "#FFFFFF",
-            color: "#000000",
-            border: "1px solid rgba(0, 0, 0, 0.05)",
-            fontFamily: "inherit",
-          },
-        });
+        toast.success("Draft created successfully");
         
         // Reset form & transition
         setCampaignForm({
@@ -109,7 +106,9 @@ export function AdminCampaigns() {
           targetRole: "all",
           consentedOnly: true,
         });
-        setActiveTab("broadcasts");
+        setPreviewHtml("");
+        setShowLaunchDrawer(false);
+        fetchData();
       }
     } catch (err) {
       logger.error("Failed to create campaign draft", err);
@@ -154,6 +153,7 @@ export function AdminCampaigns() {
         toast.success(isEditingTemplate?._id ? "Template updated" : "Template created");
         setIsEditingTemplate(null);
         setTemplateForm({ name: "", subjectLine: "", htmlContent: "", type: "marketing" });
+        setShowTemplateDrawer(false);
         fetchData();
       }
     } catch (err) {
@@ -179,6 +179,16 @@ export function AdminCampaigns() {
     }
   };
 
+  const handleCloseLaunchDrawer = () => {
+    setShowLaunchDrawer(false);
+  };
+
+  const handleCloseTemplateDrawer = () => {
+    setShowTemplateDrawer(false);
+    setIsEditingTemplate(null);
+    setTemplateForm({ name: "", subjectLine: "", htmlContent: "", type: "marketing" });
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -197,15 +207,14 @@ export function AdminCampaigns() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 self-start sm:self-auto w-full sm:w-auto">
+        <div className="flex items-center gap-3 self-start sm:self-auto w-full sm:w-auto justify-end">
           <div
-            className="flex overflow-x-auto gap-1.5 bg-[var(--admin-surface-muted)] p-1 rounded-full text-xs -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none flex-nowrap w-full sm:w-auto"
+            className="flex overflow-x-auto gap-1.5 bg-[var(--admin-surface-muted)] p-1 rounded-full text-xs scrollbar-none flex-nowrap"
             style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
           >
             {[
-              { id: "broadcasts", label: "Broadcast Hub", icon: "campaign" },
-              { id: "templates", label: "Design Curation", icon: "brush" },
-              { id: "new", label: "Launch Terminal", icon: "add_circle" }
+              { id: "broadcasts", label: "Campaigns", icon: "campaign" },
+              { id: "templates", label: "Templates", icon: "brush" }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -213,7 +222,7 @@ export function AdminCampaigns() {
                   setActiveTab(tab.id);
                   setIsEditingTemplate(null);
                 }}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-label uppercase text-[9px] tracking-wider font-bold transition-all duration-300 cursor-pointer whitespace-nowrap shrink-0 snap-align-start ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-label uppercase text-[9px] tracking-wider font-bold transition-all duration-300 cursor-pointer whitespace-nowrap shrink-0 ${
                   activeTab === tab.id
                     ? "bg-[var(--admin-surface)] text-black shadow-sm"
                     : "text-black/55 hover:text-black"
@@ -224,6 +233,24 @@ export function AdminCampaigns() {
               </button>
             ))}
           </div>
+
+          <button
+            onClick={() => {
+              if (activeTab === "templates") {
+                setIsEditingTemplate(null);
+                setTemplateForm({ name: "", subjectLine: "", htmlContent: "", type: "marketing" });
+                setShowTemplateDrawer(true);
+              } else {
+                setShowLaunchDrawer(true);
+              }
+            }}
+            className="admin-btn admin-btn-primary h-9 shrink-0"
+          >
+            <span className="material-symbols-outlined text-[16px]">
+              add
+            </span>
+            {activeTab === "templates" ? "New Template" : "New Campaign"}
+          </button>
         </div>
       </div>
 
@@ -271,7 +298,7 @@ export function AdminCampaigns() {
                 <h3 className="text-sm font-bold text-black font-display">Data Not Found</h3>
                 <p className="text-[12px] text-black/40 font-light mt-1 mb-4">No campaigns designed yet. You can easily craft a customized broadcast using our pre-seeded premium templates.</p>
                 <button
-                  onClick={() => setActiveTab("new")}
+                  onClick={() => setShowLaunchDrawer(true)}
                   className="bg-[var(--admin-accent)] text-white hover:bg-[var(--admin-text-primary)] rounded-full px-5 py-2.5 font-label uppercase text-[9px] tracking-wider font-bold shadow-md hover:shadow-lg transition-colors cursor-pointer active:scale-95"
                 >
                   Create Campaign
@@ -402,7 +429,7 @@ export function AdminCampaigns() {
 
                       <div className="flex items-center justify-between gap-2 pt-1">
                         {camp.status === "draft" ? (
-                          <span className="text-[10px] text-black/40 font-light italic">Draft Campaign</span>
+                           <span className="text-[10px] text-black/40 font-light italic">Draft Campaign</span>
                         ) : (
                           <div className="flex gap-4 text-center">
                             <div>
@@ -443,99 +470,19 @@ export function AdminCampaigns() {
               </>
             )}
           </motion.div>
-        ) : activeTab === "templates" ? (
+        ) : (
           <motion.div
             key="templates"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            className="space-y-4"
           >
-            {/* Template Form / Editor */}
-            <div className="lg:col-span-1 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-[var(--admin-radius-lg)] space-y-4 shadow-sm self-start">
-              <div className="flex items-center justify-between border-b border-[var(--admin-border-subtle)] pb-2">
-                <h3 className="font-display font-bold text-base text-black">
-                  {isEditingTemplate ? "Edit Template Copies" : "Seed Custom Design"}
-                </h3>
-                {isEditingTemplate && (
-                  <button
-                    onClick={() => {
-                      setIsEditingTemplate(null);
-                      setTemplateForm({ name: "", subjectLine: "", htmlContent: "", type: "marketing" });
-                    }}
-                    className="text-[9px] uppercase tracking-wider text-black/40 hover:text-black font-bold"
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-
-              <form onSubmit={handleTemplateUpdate} className="space-y-3.5">
-                <div>
-                  <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Template Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={templateForm.name}
-                    onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
-                    placeholder="e.g. Festive Urli Launch"
-                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Subject Fallback</label>
-                  <input
-                    type="text"
-                    value={templateForm.subjectLine}
-                    onChange={(e) => setTemplateForm({ ...templateForm, subjectLine: e.target.value })}
-                    placeholder="e.g. ✦ Unveiling Timeless Diya Curations"
-                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Template Category</label>
-                  <select
-                    value={templateForm.type}
-                    onChange={(e) => setTemplateForm({ ...templateForm, type: e.target.value })}
-                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
-                  >
-                    <option value="marketing">Marketing Broadcast</option>
-                    <option value="transactional">Transactional Notification</option>
-                    <option value="engagement">Engagement Reminder</option>
-                    <option value="system">Core System Code</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Template HTML Content</label>
-                  <textarea
-                    required
-                    rows={8}
-                    value={templateForm.htmlContent}
-                    onChange={(e) => setTemplateForm({ ...templateForm, htmlContent: e.target.value })}
-                    placeholder="<!-- Write HTML boilerplate with placeholder variables like {{name}} -->"
-                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-mono"
-                  />
-                  <p className="text-[9px] text-black/40 font-light mt-1">Available placeholders: <code>{"{{name}}"}</code>, <code>{"{{orderId}}"}</code>, <code>{"{{totalAmount}}"}</code>, <code>{"{{shippingAddress}}"}</code>, <code>{"{{frontend_url}}"}</code></p>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-black hover:bg-[var(--admin-text-primary)] text-white rounded-full py-3 font-label uppercase text-[10px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95 text-center"
-                >
-                  {isSubmitting ? "Saving..." : isEditingTemplate ? "Update Template" : "Add Design Template"}
-                </button>
-              </form>
-            </div>
-
             {/* Seeded Templates Grid */}
-            <div className="lg:col-span-2 space-y-4">
-              <h3 className="font-display font-bold text-base text-black px-1">Seeded Luxury Layouts</h3>
+            <div className="space-y-4">
+              <h3 className="font-display font-bold text-base text-black px-1">Seeded Luxury Layouts ({templates.length})</h3>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {templates.map((temp) => (
                   <div key={temp._id} className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-5 flex flex-col justify-between shadow-sm">
                     <div>
@@ -564,6 +511,7 @@ export function AdminCampaigns() {
                             htmlContent: temp.htmlContent,
                             type: temp.type,
                           });
+                          setShowTemplateDrawer(true);
                         }}
                         className="px-3 py-2 rounded-xl border border-[var(--admin-border)] hover:border-black text-[9px] font-label uppercase tracking-wider font-bold transition-all text-black hover:bg-black hover:text-white flex-1 text-center cursor-pointer"
                       >
@@ -586,143 +534,315 @@ export function AdminCampaigns() {
               </div>
             </div>
           </motion.div>
-        ) : (
-          <motion.div
-            key="new"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-          >
-            {/* Form */}
-            <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-[var(--admin-radius-lg)] shadow-sm self-start space-y-4">
-              <h3 className="font-display font-bold text-base text-black border-b border-[var(--admin-border-subtle)] pb-2">
-                Draft Marketing Campaign
-              </h3>
-              
-              <form onSubmit={handleLaunchCampaign} className="space-y-4">
-                <div>
-                  <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Campaign Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={campaignForm.title}
-                    onChange={(e) => setCampaignForm({ ...campaignForm, title: e.target.value })}
-                    placeholder="e.g. Diwali Urli Launch & Diyas Promo"
-                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Email Subject Header</label>
-                  <input
-                    type="text"
-                    required
-                    value={campaignForm.subject}
-                    onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })}
-                    placeholder="e.g. Unveiling Siri Arts Festive Splendors ✦ 50% Early Access"
-                    className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Audience Type</label>
-                    <select
-                      value={campaignForm.targetRole}
-                      onChange={(e) => setCampaignForm({ ...campaignForm, targetRole: e.target.value })}
-                      className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
-                    >
-                      <option value="all">All Registered Accounts (Customers + Admins)</option>
-                      <option value="customer">Customers Only</option>
-                      <option value="admin">Administrators Only</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Select Seeding Template</label>
-                    <select
-                      value={campaignForm.templateId}
-                      onChange={handleSelectTemplateForForm}
-                      className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
-                    >
-                      <option value="">-- Custom HTML / No Template --</option>
-                      {templates.map(t => (
-                        <option key={t._id} value={t._id}>{t.name} ({t.type})</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] px-4.5 py-3 rounded-2xl">
-                  <AdminToggle
-                    label="Enforce GDPR/ePrivacy Consent"
-                    description="Highly Recommended. Only sends marketing alerts to visitors who explicitly checked marketingEmails or accepted notifications."
-                    checked={campaignForm.consentedOnly}
-                    onChange={() => setCampaignForm({ ...campaignForm, consentedOnly: !campaignForm.consentedOnly })}
-                  />
-                </div>
-
-                {!campaignForm.templateId && (
-                  <div>
-                    <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Custom Newsletter HTML Copy</label>
-                    <textarea
-                      rows={6}
-                      value={campaignForm.customHtml}
-                      onChange={(e) => setCampaignForm({ ...campaignForm, customHtml: e.target.value })}
-                      placeholder="<!-- Paste complete raw HTML email newsletter copy here -->"
-                      className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-mono"
-                    />
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-black hover:bg-[var(--admin-text-primary)] text-white rounded-full py-3 font-label uppercase text-[10px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95 text-center"
-                >
-                  {isSubmitting ? "Compiling..." : "Save Campaign Draft"}
-                </button>
-              </form>
-            </div>
-
-            {/* Live Canvas Preview */}
-            <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-[var(--admin-radius-lg)] shadow-sm flex flex-col justify-between">
-              <div>
-                <h3 className="font-display font-bold text-base text-black border-b border-[var(--admin-border-subtle)] pb-2 mb-4">
-                  Visual Canvas Preview
-                </h3>
-                
-                {previewHtml ? (
-                  <div className="border border-[var(--admin-border-subtle)] rounded-2xl overflow-hidden bg-[var(--admin-bg-subtle)] p-4">
-                    <div className="bg-[var(--admin-surface)] rounded-xl p-2.5 mb-3 border border-[var(--admin-border-subtle)]">
-                      <p className="text-[10px] text-black/40 font-mono">
-                        <span className="font-bold text-black">Subject:</span> {campaignForm.subject || "✦ Siri Arts Splendors"}
-                      </p>
-                    </div>
-                    <div 
-                      className="border border-[var(--admin-border-subtle)] rounded-xl overflow-y-auto max-h-[350px] bg-[var(--admin-surface)] shadow-inner"
-                      dangerouslySetInnerHTML={createSafeHtml(previewHtml)}
-                    />
-                  </div>
-                ) : (
-                  <div className="border border-dashed border-[var(--admin-border)] rounded-2xl p-16 text-center text-black/40 font-light text-xs">
-                    <span className="material-symbols-outlined text-[36px] mb-2 text-black/20">visibility</span>
-                    <p>Select a pre-seeded template or type custom HTML to generate an instant visual canvas review.</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-[var(--admin-bg-subtle)] p-4 rounded-2xl border border-[var(--admin-border-subtle)] mt-6">
-                <span className="text-[9px] font-bold text-black uppercase tracking-wider block font-sans">Auto-rewriter active</span>
-                <p className="text-[9.5px] text-black/40 font-light leading-relaxed mt-1">
-                  On broadcast, Siri Arts Campaign dispatcher will automatically inject a unique 1x1 tracking pixel to compute open rates and rewrite all anchor links to support secure tracking redirects.
-                </p>
-              </div>
-            </div>
-          </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ─── Launch Campaign Drawer Portal ─── */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {showLaunchDrawer && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
+            >
+              {/* Backdrop */}
+              <div
+                onClick={handleCloseLaunchDrawer}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+              />
+
+              {/* Wide Drawer Sheet */}
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 26, stiffness: 220 }}
+                className="relative w-full max-w-7xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+              >
+                {/* Grab Handle */}
+                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
+
+                {/* Form Title */}
+                <div className="mb-5 pb-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0">
+                  <div>
+                    <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">campaign</span>
+                      Draft Marketing Campaign
+                    </h3>
+                    <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5">
+                      Target segment groups and preview email dispatch newsletter layouts
+                    </p>
+                  </div>
+                  <button 
+                    onClick={handleCloseLaunchDrawer}
+                    className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </div>
+
+                {/* Main side-by-side editing canvas workspace */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 items-start min-h-0 overflow-y-auto custom-scrollbar pr-1">
+                  {/* Left Column - Form fields */}
+                  <div className="space-y-4">
+                    <form onSubmit={handleLaunchCampaign} className="space-y-4">
+                      <div>
+                        <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Campaign Title</label>
+                        <input
+                          type="text"
+                          required
+                          value={campaignForm.title}
+                          onChange={(e) => setCampaignForm({ ...campaignForm, title: e.target.value })}
+                          placeholder="e.g. Diwali Urli Launch & Diyas Promo"
+                          className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Email Subject Header</label>
+                        <input
+                          type="text"
+                          required
+                          value={campaignForm.subject}
+                          onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })}
+                          placeholder="e.g. Unveiling Siri Arts Festive Splendors ✦ 50% Early Access"
+                          className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Audience Type</label>
+                          <select
+                            value={campaignForm.targetRole}
+                            onChange={(e) => setCampaignForm({ ...campaignForm, targetRole: e.target.value })}
+                            className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
+                          >
+                            <option value="all">All Registered Accounts (Customers + Admins)</option>
+                            <option value="customer">Customers Only</option>
+                            <option value="admin">Administrators Only</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Select Seeding Template</label>
+                          <select
+                            value={campaignForm.templateId}
+                            onChange={handleSelectTemplateForForm}
+                            className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
+                          >
+                            <option value="">-- Custom HTML / No Template --</option>
+                            {templates.map(t => (
+                              <option key={t._id} value={t._id}>{t.name} ({t.type})</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] px-4.5 py-3 rounded-2xl">
+                        <AdminToggle
+                          label="Enforce GDPR/ePrivacy Consent"
+                          description="Only sends marketing alerts to visitors who explicitly checked marketingEmails or accepted notifications."
+                          checked={campaignForm.consentedOnly}
+                          onChange={() => setCampaignForm({ ...campaignForm, consentedOnly: !campaignForm.consentedOnly })}
+                        />
+                      </div>
+
+                      {!campaignForm.templateId && (
+                        <div>
+                          <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Custom Newsletter HTML Copy</label>
+                          <textarea
+                            rows={8}
+                            value={campaignForm.customHtml}
+                            onChange={(e) => setCampaignForm({ ...campaignForm, customHtml: e.target.value })}
+                            placeholder="<!-- Paste complete raw HTML email newsletter copy here -->"
+                            className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-mono"
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex gap-3 pt-4 border-t border-[var(--admin-border-subtle)] mt-6">
+                        <button
+                          type="button"
+                          onClick={handleCloseLaunchDrawer}
+                          className="admin-btn admin-btn-outline flex-1 py-3 text-[11px] font-bold uppercase tracking-wider"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="admin-btn admin-btn-primary flex-[2] py-3 text-[11px] font-bold uppercase tracking-wider"
+                        >
+                          {isSubmitting ? "Compiling..." : "Save Campaign Draft"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* Right Column - Visual Canvas Preview */}
+                  <div className="border border-[var(--admin-border-subtle)] rounded-2xl p-5 bg-[var(--admin-bg-subtle)] space-y-4 self-stretch flex flex-col min-h-[450px]">
+                    <div className="flex-1">
+                      <h4 className="font-display font-bold text-xs text-black border-b border-[var(--admin-border-subtle)] pb-2 mb-3">
+                        Visual Canvas Preview
+                      </h4>
+                      
+                      {previewHtml || campaignForm.customHtml ? (
+                        <div className="space-y-3 flex flex-col h-[calc(100%-35px)]">
+                          <div className="bg-[var(--admin-surface)] rounded-xl p-2.5 border border-[var(--admin-border-subtle)] shrink-0">
+                            <p className="text-[10px] text-black/40 font-mono truncate">
+                              <span className="font-bold text-black">Subject:</span> {campaignForm.subject || "✦ Siri Arts Splendors"}
+                            </p>
+                          </div>
+                          <div 
+                            className="border border-[var(--admin-border-subtle)] rounded-xl overflow-y-auto flex-1 bg-[var(--admin-surface)] shadow-inner p-4 max-h-[360px]"
+                            dangerouslySetInnerHTML={createSafeHtml(previewHtml || campaignForm.customHtml)}
+                          />
+                        </div>
+                      ) : (
+                        <div className="border border-dashed border-[var(--admin-border)] rounded-2xl p-16 text-center text-black/40 font-light text-xs flex flex-col items-center justify-center h-full min-h-[300px]">
+                          <span className="material-symbols-outlined text-[36px] mb-2 text-black/20">visibility</span>
+                          <p className="max-w-[280px]">Select a pre-seeded template or type custom HTML to generate an instant visual canvas review.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-[var(--admin-surface)] p-3.5 rounded-xl border border-[var(--admin-border-subtle)] shrink-0">
+                      <span className="text-[9px] font-bold text-black uppercase tracking-wider block font-sans">Secure Dispatch Redirection Active</span>
+                      <p className="text-[9px] text-black/45 font-light leading-relaxed mt-0.5">
+                        On send trigger, Siri Arts Campaign dispatcher will automatically inject pixel tracking logs and secure redirect headers.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* ─── Template Creator Drawer Portal ─── */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {showTemplateDrawer && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
+            >
+              {/* Backdrop */}
+              <div
+                onClick={handleCloseTemplateDrawer}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+              />
+
+              {/* Drawer Sheet */}
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 26, stiffness: 220 }}
+                className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+              >
+                {/* Grab Handle */}
+                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
+
+                <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
+                  <div>
+                    <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">brush</span>
+                      {isEditingTemplate ? "Modify Seeded Layout" : "Seed Design Template"}
+                    </h3>
+                    <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5">
+                      Draft rich HTML email templates with core system variables
+                    </p>
+                  </div>
+                  <button 
+                    onClick={handleCloseTemplateDrawer}
+                    className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </div>
+
+                <form onSubmit={handleTemplateUpdate} className="space-y-4 flex-1">
+                  <div>
+                    <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Template Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={templateForm.name}
+                      onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
+                      placeholder="e.g. Festive Urli Launch"
+                      className="admin-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Subject Fallback</label>
+                    <input
+                      type="text"
+                      value={templateForm.subjectLine}
+                      onChange={(e) => setTemplateForm({ ...templateForm, subjectLine: e.target.value })}
+                      placeholder="e.g. ✦ Unveiling Timeless Diya Curations"
+                      className="admin-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Template Category *</label>
+                    <select
+                      value={templateForm.type}
+                      onChange={(e) => setTemplateForm({ ...templateForm, type: e.target.value })}
+                      className="admin-select"
+                    >
+                      <option value="marketing">Marketing Broadcast</option>
+                      <option value="transactional">Transactional Notification</option>
+                      <option value="engagement">Engagement Reminder</option>
+                      <option value="system">Core System Code</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Template HTML Content *</label>
+                    <textarea
+                      required
+                      rows={10}
+                      value={templateForm.htmlContent}
+                      onChange={(e) => setTemplateForm({ ...templateForm, htmlContent: e.target.value })}
+                      placeholder="<!-- Write HTML boilerplate with placeholder variables like {{name}} -->"
+                      className="admin-textarea font-mono text-[12px]"
+                    />
+                    <p className="text-[9px] text-black/40 font-light mt-1">Available placeholders: <code>{"{{name}}"}</code>, <code>{"{{orderId}}"}</code>, <code>{"{{totalAmount}}"}</code>, <code>{"{{shippingAddress}}"}</code></p>
+                  </div>
+
+                  <div className="flex gap-3 pt-4 border-t border-[var(--admin-border-subtle)] mt-6">
+                    <button
+                      type="button"
+                      onClick={handleCloseTemplateDrawer}
+                      className="admin-btn admin-btn-outline flex-1 py-3 text-[11px] font-bold uppercase tracking-wider"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="admin-btn admin-btn-primary flex-[2] py-3 text-[11px] font-bold uppercase tracking-wider"
+                    >
+                      {isSubmitting ? "Saving..." : isEditingTemplate ? "Update Template" : "Add Design Template"}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </motion.div>
   );
 }

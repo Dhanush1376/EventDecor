@@ -14,9 +14,15 @@ export function SearchBar({
     setLocalValue(value);
   }, [value]);
 
+  const onChangeRef = React.useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // eslint-disable-next-line react-hooks/refs
   const debouncedOnChange = useMemo(
-    () => debounce((newVal) => onChange?.({ target: { value: newVal } }), 400),
-    [onChange]
+    () => debounce((newVal) => onChangeRef.current?.({ target: { value: newVal } }), 200),
+    []
   );
 
   useEffect(() => {

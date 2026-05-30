@@ -35,11 +35,11 @@ export function AdminCustomers() {
     >
       <PageHeader
         title="Customers"
-        subtitle={`${customers.length} registered customers`}
+        subtitle={`${customers.length} customers`}
+        mobileRow={true}
       >
-        <button className="admin-btn admin-btn-outline h-9">
-          <span className="material-symbols-outlined text-[16px]">download</span>
-          Export Customers
+        <button className="admin-btn admin-btn-ghost" title="Export Customers">
+          <span className="material-symbols-outlined text-[20px]">download</span>
         </button>
       </PageHeader>
 
@@ -78,7 +78,7 @@ export function AdminCustomers() {
               search_off
             </span>
             <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">Data Not Found</p>
-            <p className="text-[12px] text-[var(--admin-text-secondary)]">No customers matched your search query or segment filters.</p>
+            <p className="text-[12px] text-[var(--admin-text-secondary)]">No customers found.</p>
           </motion.div>
         ) : (
           <motion.div
@@ -95,34 +95,34 @@ export function AdminCustomers() {
                 variants={fadeUp}
                 className="admin-card p-6 group hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-300"
               >
-                <div className="flex items-start justify-between mb-5">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-start justify-between gap-3 mb-5">
+                  <div className="flex items-start gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] flex items-center justify-center shrink-0 group-hover:border-[var(--admin-accent)] group-hover:text-[var(--admin-accent)] transition-colors">
                       <span className="text-[14px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)]">
                         {c.name.split(" ").filter(Boolean).map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                       </span>
                     </div>
-                    <div>
-                      <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-tight">
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-tight truncate">
                         {c.name}
                       </p>
                       <p className="text-[11px] text-[var(--admin-text-tertiary)] font-medium uppercase tracking-wider mt-0.5">{c.city || "Ongole"}</p>
                       
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="admin-badge admin-badge-success h-6 px-2 border-none font-bold text-[10px]">
-                          <span className="material-symbols-outlined text-[12px] mr-1">account_balance_wallet</span>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className="admin-badge admin-badge-success h-5 px-1.5 border-none font-bold text-[9px] shrink-0">
+                          <span className="material-symbols-outlined text-[11px] mr-1">account_balance_wallet</span>
                           {formatCurrency(c.walletBalance || 0)}
                         </span>
-                        <span className="admin-badge admin-badge-neutral h-6 px-2 font-bold text-[10px]">
-                          <span className="material-symbols-outlined text-[12px] mr-1">stars</span>
-                          {c.siriCoins || 0} Coins
+                        <span className="admin-badge admin-badge-neutral h-5 px-1.5 font-bold text-[9px] shrink-0">
+                          <span className="material-symbols-outlined text-[11px] mr-1">stars</span>
+                          {c.siriCoins || 0}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <span
-                      className={`admin-badge h-6 px-2.5 font-bold text-[9px] border-none shadow-sm ${
+                      className={`admin-badge h-5 px-2 font-bold text-[8px] border-none shadow-sm ${
                         c.segment === "VIP" ? "bg-[var(--admin-text-primary)] text-white" :
                         c.segment === "New" ? "bg-[var(--admin-success-light)] text-[var(--admin-success)]" :
                         "bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]"
@@ -131,7 +131,7 @@ export function AdminCustomers() {
                       {c.segment}
                     </span>
                     <span
-                      className={`admin-badge h-6 px-2.5 font-bold text-[9px] shadow-sm ${
+                      className={`admin-badge h-5 px-2 font-bold text-[8px] shadow-sm ${
                         c.loyaltyTier === 'Platinum' ? 'bg-[#f0f9ff] text-[#0284c7] border-[#bae6fd]' :
                         c.loyaltyTier === 'Gold' ? 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border-[var(--admin-border-strong)]' :
                         c.loyaltyTier === 'Silver' ? 'bg-[#f8fafc] text-[var(--admin-text-secondary)] border-[#e2e8f0]' :
@@ -164,26 +164,29 @@ export function AdminCustomers() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2 pt-4 border-t border-[var(--admin-border-subtle)]">
+                <div className="grid grid-cols-3 gap-2 pt-4 border-t border-[var(--admin-border-subtle)]">
                   <a
                     href={`mailto:${c.email}`}
-                    className="admin-btn admin-btn-outline flex-1 min-h-[36px] h-8 text-[10px] px-2 hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)]"
+                    className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-1 hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] justify-center gap-1"
                   >
-                    <span className="material-symbols-outlined text-[14px]">mail</span> Email
+                    <span className="material-symbols-outlined text-[13px] shrink-0">mail</span>
+                    <span className="truncate">Email</span>
                   </a>
                   <a
                     href={`https://wa.me/${c.phone.replace(/[^0-9]/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="admin-btn admin-btn-outline flex-1 min-h-[36px] h-8 text-[10px] px-2 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)]"
+                    className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-1 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)] justify-center gap-1"
                   >
-                    <span className="material-symbols-outlined text-[14px]">chat</span> WhatsApp
+                    <span className="material-symbols-outlined text-[13px] shrink-0">chat</span>
+                    <span className="truncate">WhatsApp</span>
                   </a>
                   <button
                     onClick={() => navigate(`/admin/customers/${c.id}`)}
-                    className="admin-btn flex-1 min-h-[36px] h-8 text-[10px] px-2 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)]"
+                    className="admin-btn min-h-[36px] h-8 text-[10px] px-1 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)] justify-center gap-1"
                   >
-                    <span className="material-symbols-outlined text-[14px]">visibility</span> Profile
+                    <span className="material-symbols-outlined text-[13px] shrink-0">visibility</span>
+                    <span className="truncate">Profile</span>
                   </button>
                 </div>
               </motion.div>

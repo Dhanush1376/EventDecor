@@ -174,8 +174,8 @@ function HeroSectionEditor({ content, onUpdate }) {
       
       <SectionHeader
         icon="aspect_ratio"
-        title="Hero Banner Curation"
-        description="Configure titles, subtitles, and gilded calls-to-action for the primary entrance showcase"
+        title="Hero Banner"
+        description="Configure text and buttons for the homepage banner"
       />
       <div className="space-y-5">
         <AdminField label="Primary Headline" description="The main premium bold text welcoming storefront patrons">
@@ -400,8 +400,8 @@ function StoryTeaserEditor({ content, onUpdate }) {
       
       <SectionHeader
         icon="history_edu"
-        title="Artisan Story Editorial"
-        description="Share the sacred studio lineage and design chronicle with digital storefront visitors"
+        title="Artisan Story"
+        description="Share the brand story with visitors"
       />
       <div className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -472,8 +472,8 @@ function BestsellerStripEditor({ content, onUpdate }) {
       
       <SectionHeader
         icon="stars"
-        title="Bestsellers Carousel Strip"
-        description="Control product display quantities and heading labels on the homepage bestselling shelf"
+        title="Bestsellers"
+        description="Control settings for the homepage bestsellers section"
       />
       <div className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -1610,18 +1610,18 @@ export function AdminContent() {
           <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
             Storefront CMS Editor
           </h2>
-          <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)] uppercase tracking-[0.25em] font-semibold mt-1 block">
-            Bespoke Website Layout & Theme Styling Studio
+          <p className="text-[10px] text-[var(--admin-text-secondary)] tracking-wide mt-1 block">
+            Website Layout & Theme Styling
           </p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
+        <div className="flex items-center gap-2 sm:gap-3 flex-nowrap sm:w-auto justify-end shrink-0">
           <div className="hidden sm:flex items-center gap-2 text-[11px] text-[var(--admin-success)] font-semibold uppercase tracking-wider bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] px-4 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-success)] animate-pulse " />
             Live Sync Mode
           </div>
 
           {/* Quick Auto-Publish Toggle Switch */}
-          <div className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-3 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)] min-h-[38px]">
+          <div className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-3 rounded-full shadow-[var(--admin-shadow-xs)] h-[34px] shrink-0">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">Auto-Publish</span>
             <AdminToggle
               checked={autoPublish}
@@ -1632,14 +1632,14 @@ export function AdminContent() {
           </div>
           
           {autoPublish ? (
-            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] rounded-full text-[11px] font-bold uppercase tracking-wider min-h-[38px]">
+            <div className="flex items-center gap-2 px-3 bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] rounded-full text-[11px] font-bold uppercase tracking-wider h-[34px] shrink-0">
               <span className="material-symbols-outlined text-[14px] animate-spin-slow">sync</span>
               <span>Auto-Publishing</span>
             </div>
           ) : (
             <button 
               onClick={publishAllContent} 
-              className="flex items-center gap-2 px-5 py-2.5 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent-hover)] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[var(--admin-shadow-sm)] hover:shadow-[var(--admin-shadow-md)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[var(--admin-accent)]/40 min-h-[38px]"
+              className="flex items-center gap-2 px-4 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent-hover)] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[var(--admin-shadow-sm)] hover:shadow-[var(--admin-shadow-md)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[var(--admin-accent)]/40 h-[34px]"
             >
               <span className="material-symbols-outlined text-[14px] font-bold">publish</span>
               <span>Publish</span>

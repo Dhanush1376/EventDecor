@@ -7,7 +7,7 @@ import User from '../models/User';
 import AdminAuditLog from '../models/AdminAuditLog';
 import logger from '../config/logger';
 import { updateRequestContext } from './requestTracker';
-import { getAdminEmails, ADMIN_ROLES } from '../config/adminConfig';
+import { getAdminEmails, ADMIN_ROLES, STAFF_ROLES } from '../config/adminConfig';
 import { isSameEmail } from '../utils/emailHelper';
 import { getSafetyLockDocument } from '../utils/safetyLockCache';
 import { getCachedSessionJson, setCachedSessionJson, sessionKeys, coalesceRequest } from '../utils/userSessionCache';
@@ -305,7 +305,7 @@ export const requireAdmin = asyncHandler(async (req: Request, res: Response, nex
     throw new ApiError(401, 'Authentication required');
   }
 
-  if (ADMIN_ROLES.includes(req.user.role as any)) {
+  if (STAFF_ROLES.includes(req.user.role as any)) {
     await checkSafetyLock(req);
     logAdminAudit(req, res);
     next();

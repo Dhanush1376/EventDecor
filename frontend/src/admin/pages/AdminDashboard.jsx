@@ -252,10 +252,9 @@ export function AdminDashboard() {
         <PeriodSelector value={chartPeriod} onChange={setChartPeriod} periods={["weekly", "monthly", "yearly"]} />
       </PageHeader>
 
-      {/* Website Control Center Highlight */}
       <motion.div
         variants={fadeUp}
-        className="admin-card-interactive bg-[var(--admin-surface-muted)] flex flex-col sm:flex-row items-center justify-between gap-4 p-5"
+        className="admin-card-interactive bg-[var(--admin-surface-muted)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5"
         onClick={() => navigate("/admin/content")}
       >
         <div className="flex items-center gap-4">
@@ -267,11 +266,11 @@ export function AdminDashboard() {
               Website Layout & Content
             </h2>
             <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">
-              Manage your website pages, layouts, and photos visually.
+              Manage website layout and content.
             </p>
           </div>
         </div>
-        <button className="admin-btn admin-btn-outline bg-[var(--admin-surface)] min-h-[36px]">
+        <button className="admin-btn admin-btn-outline bg-[var(--admin-surface)] min-h-[36px] self-end sm:self-auto">
           Launch Editor
           <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
         </button>
@@ -289,7 +288,7 @@ export function AdminDashboard() {
                 Global Safety Lock
                 {safetyLock && <span className="admin-badge admin-badge-error text-[9px]">Restricted</span>}
               </h3>
-              <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">Blocks all database writes</p>
+              <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">Block database writes</p>
             </div>
           </div>
           <AdminToggle
@@ -310,7 +309,7 @@ export function AdminDashboard() {
                 Maintenance Shield
                 {maintenanceMode && <span className="admin-badge admin-badge-warning text-[9px]">Active</span>}
               </h3>
-              <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">Redirects storefront traffic</p>
+              <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">Redirect storefront traffic</p>
             </div>
           </div>
           <AdminToggle
@@ -564,7 +563,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Weekly Order & Sales Volume Chart */}
-      <ChartCard title="Weekly Order Velocity" subtitle="Real-time orders placed & products sold this past week" className="p-4 sm:p-6">
+      <ChartCard title="Weekly Order Velocity" subtitle="Orders and sales this week" className="p-4 sm:p-6">
         <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
           <BarChart data={weeklyOrderStats} barGap={isMobile ? 4 : 6} margin={{ top: 10, right: 5, left: isMobile ? -20 : -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--admin-border-subtle)" vertical={false} />
@@ -661,7 +660,7 @@ export function AdminDashboard() {
                 <span className="material-symbols-outlined text-[20px]">calendar_today</span>
               </div>
               <span className="text-[11px] uppercase font-bold tracking-wider text-[var(--admin-text-secondary)]">No Bookings Found</span>
-              <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-1 font-medium">Your event schedule is clear</p>
+              <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-1 font-medium">No upcoming events.</p>
             </div>
           ) : (
             <div className="space-y-2.5">

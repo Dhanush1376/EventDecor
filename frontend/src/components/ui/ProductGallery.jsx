@@ -228,7 +228,7 @@ export function ProductGallery({ images = [], product }) {
                         <OptimizedImage
                           src={img}
                           alt={`Lightbox view ${idx + 1}`}
-                          className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+                          className="max-w-full max-h-full object-contain rounded-none shadow-2xl"
                           width={1200}
                           height={1200}
                         />

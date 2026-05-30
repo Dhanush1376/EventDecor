@@ -393,11 +393,24 @@ export class PaymentService {
               );
             }
 
+            // Restore wallet deduction if customer used wallet balance
+            if (order.walletDeduction && order.walletDeduction > 0) {
+              await creditWalletBalance(order.user, order.walletDeduction, session);
+              await WalletTransaction.create([{
+                userId: order.user,
+                type: 'credit',
+                amount: order.walletDeduction,
+                source: 'refund',
+                description: 'Refund for failed Razorpay payment (webhook)',
+                status: 'active'
+              }], { session });
+            }
+
             order.paymentStatus = 'failed';
             order.statusHistory.push({
               status: 'Pending' as any,
               timestamp: new Date(),
-              note: `Razorpay Transaction Failed. Reserved stock and coupon returned.`,
+              note: `Razorpay Transaction Failed. Reserved stock, coupon, and wallet balance returned.`,
             });
             logger.warn('[PAYMENT_FAILED] Webhook reported payment failure for order', {
               orderId: order._id,

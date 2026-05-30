@@ -129,7 +129,7 @@ export function VirtualizedMasonry({
               delay: Math.min(index * 0.03, 0.3), // Stagger with cap
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
-            className="break-inside-avoid mb-4 sm:mb-6"
+            className="break-inside-avoid mb-2 sm:mb-3"
           >
             {renderItem(item, index)}
           </motion.div>

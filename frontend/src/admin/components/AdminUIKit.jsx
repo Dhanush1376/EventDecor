@@ -46,13 +46,13 @@ export function getRelativeTime(date) {
 // ═══════════════════════════════════════════════════════════════
 // PAGE HEADER — unified page title across all admin pages
 // ═══════════════════════════════════════════════════════════════
-export function PageHeader({ title, subtitle, children, className = "" }) {
+export function PageHeader({ title, subtitle, children, className = "", mobileRow = false }) {
   return (
     <motion.div
       variants={fadeUp}
-      className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--admin-border-subtle)] pb-5 ${className}`}
+      className={`flex ${mobileRow ? 'flex-row' : 'flex-col sm:flex-row'} justify-between items-start sm:items-center gap-3 sm:gap-4 border-b border-[var(--admin-border-subtle)] pb-5 ${className}`}
     >
-      <div>
+      <div className={mobileRow ? "flex-1 min-w-0 pr-2" : "w-full sm:w-auto"}>
         <h1 className="text-[20px] sm:text-[26px] font-bold text-[var(--admin-text-primary)] font-display tracking-tight leading-tight">
           {title}
         </h1>
@@ -63,23 +63,29 @@ export function PageHeader({ title, subtitle, children, className = "" }) {
         )}
       </div>
       {children && (
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2 shrink-0">
+        <div className={`${mobileRow ? 'w-auto flex flex-row gap-0.5' : 'w-full sm:w-auto flex flex-col sm:flex-row gap-2'} shrink-0`}>
           {React.Children.map(children, (child) => {
             if (React.isValidElement(child)) {
               const isBtn = child.type === "button" || child.props?.className?.includes("admin-btn");
               if (isBtn) {
                 const isOutline = child.props.className?.includes("admin-btn-outline");
                 const isSecondary = child.props.className?.includes("admin-btn-secondary");
+                const isGhost = child.props.className?.includes("admin-btn-ghost");
                 
-                let extraClasses = "w-full sm:w-auto justify-center text-[11px] font-bold uppercase tracking-wider rounded-[var(--admin-radius-lg)] active:scale-95 transition-all shadow-none hover:shadow-none py-2.5 min-h-[44px] sm:min-h-[36px] flex items-center gap-2";
+                let extraClasses = `${isGhost ? 'w-auto' : 'w-full sm:w-auto'} justify-center text-[11px] font-bold uppercase tracking-wider rounded-[var(--admin-radius-lg)] active:scale-95 transition-all shadow-none hover:shadow-none min-h-[36px] flex items-center gap-2`;
                 
-                if (!isOutline && !isSecondary) {
-                  // Style as minimal soft gold
-                  extraClasses += " bg-[var(--admin-accent-light)] hover:bg-[var(--admin-accent-muted)] text-[var(--admin-accent)] border border-[rgba(139,115,64,0.18)] hover:border-[rgba(139,115,64,0.3)]";
-                } else if (isOutline) {
-                  extraClasses += " bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]";
-                } else if (isSecondary) {
-                  extraClasses += " bg-[var(--admin-text-primary)] hover:bg-[#27272A] text-white border-none";
+                if (isGhost) {
+                  extraClasses += " rounded-full p-1.5 bg-transparent text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] border-none";
+                } else {
+                  extraClasses += " px-3 py-2 sm:py-2.5";
+                  if (!isOutline && !isSecondary) {
+                    // Style as minimal soft gold
+                    extraClasses += " bg-[var(--admin-accent-light)] hover:bg-[var(--admin-accent-muted)] text-[var(--admin-accent)] border border-[rgba(139,115,64,0.18)] hover:border-[rgba(139,115,64,0.3)]";
+                  } else if (isOutline) {
+                    extraClasses += " bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]";
+                  } else if (isSecondary) {
+                    extraClasses += " bg-[var(--admin-text-primary)] hover:bg-[#27272A] text-white border-none";
+                  }
                 }
                 
                 return React.cloneElement(child, {
@@ -137,12 +143,12 @@ export function StatCard({
           <span
             className={`admin-badge ${
               changeType === "up" ? "admin-badge-success" : "admin-badge-error"
-            } text-[8px] sm:text-[9px]`}
+            } text-[8px] sm:text-[9px] max-w-[75px] sm:max-w-none px-1.5 sm:px-2`}
           >
-            <span className="material-symbols-outlined text-[9px] sm:text-[10px] font-bold">
+            <span className="material-symbols-outlined text-[9px] sm:text-[10px] font-bold shrink-0">
               {changeType === "up" ? "trending_up" : "trending_down"}
             </span>
-            {change}
+            <span className="truncate">{change}</span>
           </span>
         )}
       </div>
@@ -364,12 +370,12 @@ export function EmptyState({ icon = "inbox", title, description, action, classNa
 // ═══════════════════════════════════════════════════════════════
 export function PeriodSelector({ periods = ["weekly", "monthly", "yearly"], value, onChange }) {
   return (
-    <div className="flex bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)]">
+    <div className="flex w-full sm:w-auto bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)]">
       {periods.map((p) => (
         <button
           key={p}
           onClick={() => onChange(p)}
-          className={`px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold capitalize cursor-pointer transition-all min-h-0 ${
+          className={`flex-1 text-center px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold capitalize cursor-pointer transition-all min-h-0 ${
             value === p
               ? "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]"
               : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
@@ -381,6 +387,7 @@ export function PeriodSelector({ periods = ["weekly", "monthly", "yearly"], valu
     </div>
   );
 }
+
 
 // ═══════════════════════════════════════════════════════════════
 // FILTER BAR — unified filter tabs

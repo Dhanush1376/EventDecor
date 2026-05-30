@@ -225,10 +225,10 @@ export function Cart() {
                </span>
             </div>
             <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
-              Hey, it feels too light!
+              Your bag is empty
             </h2>
             <p className="font-body text-[13px] text-secondary/60 max-w-[220px] mx-auto leading-relaxed mb-8">
-              There is nothing in your bag. Let's add some items.
+              Looks like you haven't added anything yet.
             </p>
             <Link
               to="/collections"
@@ -253,10 +253,10 @@ export function Cart() {
 
               {/* Special Offer Banner Placeholder */}
               <div className="bg-surface-bright border border-outline-variant/60 rounded-lg p-4 flex gap-4 shadow-sm relative overflow-hidden">
-                 <div className="absolute -right-4 -top-4 w-24 h-24 bg-[#c29b38]/10 rounded-full opacity-50 blur-xl"></div>
+                  <div className="absolute -right-4 -top-4 w-24 h-24 bg-[#c29b38]/10 rounded-full opacity-50 blur-xl"></div>
                  <div className="flex-1 z-10">
-                    <h3 className="text-on-surface font-bold text-[13px] mb-1">Shop for ₹101 more to unlock items at special price</h3>
-                    <p className="text-secondary text-[11px]">Add more items from our special collection to avail the offer.</p>
+                    <h3 className="text-on-surface font-bold text-[13px] mb-1">Add ₹101 to unlock special prices</h3>
+                    <p className="text-secondary text-[11px]">Add special collection items to unlock.</p>
                  </div>
                  <span className="material-symbols-outlined text-[#c29b38] text-3xl">redeem</span>
               </div>
@@ -609,7 +609,7 @@ export function Cart() {
                         })}
                         className="w-full mt-5 bg-[#f26a10] hover:bg-[#d85d0d] text-white cursor-pointer py-3 rounded text-[13px] font-extrabold uppercase tracking-widest shadow-sm transition-colors text-center hidden lg:block"
                      >
-                        Place Order
+                        Checkout
                      </button>
                    </div>
                 </div>
@@ -624,8 +624,8 @@ export function Cart() {
               {/* Trust Badges and Policy */}
               <div className="pt-2 text-center text-[10px] text-secondary space-y-2">
                  <p>
-                    By placing the order, you agree to EventDecor's 
-                    <span className="text-[#c29b38] font-bold ml-1 cursor-pointer">Terms of Use</span> and 
+                    By placing the order, you agree to our 
+                    <span className="text-[#c29b38] font-bold ml-1 cursor-pointer">Terms</span> and 
                     <span className="text-[#c29b38] font-bold ml-1 cursor-pointer">Privacy Policy</span>
                  </p>
               </div>
@@ -654,7 +654,7 @@ export function Cart() {
               })}
               className="bg-[#f26a10] hover:bg-[#d85d0d] text-white cursor-pointer px-8 py-2.5 rounded-[4px] text-[12px] font-extrabold uppercase tracking-widest shadow-sm transition-colors text-center block"
             >
-              Place Order
+              Checkout
             </button>
           </div>
         </motion.div>,

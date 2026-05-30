@@ -325,7 +325,7 @@ export function ProductReviews({ productId, productTitle }) {
   }
 
   return (
-    <section className="relative z-10 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16">
+    <section id="reviews-section" className="relative z-10 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16">
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 md:mb-10">
         <div>

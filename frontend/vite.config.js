@@ -18,7 +18,8 @@ export default defineConfig({
   ],
 
   esbuild: {
-    drop: ['console', 'debugger'],
+    drop: ['debugger'],
+    pure: ['console.log'],
   },
 
   build: {

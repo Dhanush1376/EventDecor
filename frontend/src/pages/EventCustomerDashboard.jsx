@@ -225,9 +225,9 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
               <span className="material-symbols-outlined text-[36px] normal-case">event_busy</span>
             </div>
             <div className="space-y-2">
-              <h3 className="font-display text-xl text-black font-bold">No Active Visual Workspaces</h3>
+              <h3 className="font-display text-xl text-black font-bold">No Active Events</h3>
               <p className="font-body text-black/45 text-xs max-w-sm mx-auto leading-relaxed">
-                You do not have any active side-stage event setups logged. Explore traditional Telugu presentations, jewelry tray packages, or coconut carving sets today.
+                You have no active event setups. Explore our collections today.
               </p>
             </div>
             <Link

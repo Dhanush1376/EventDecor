@@ -415,7 +415,7 @@ const clearPendingGets = () => {
 };
 
 api.get = function (url, config) {
-  const requestKey = `${url}?${JSON.stringify(config || {})}`;
+  const requestKey = `${url}?${JSON.stringify(config?.params || {})}`;
 
   const cached = getCachedGet(url, config);
   if (cached && !cached.stale) {

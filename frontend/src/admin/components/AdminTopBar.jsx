@@ -200,7 +200,7 @@ export function AdminTopBar() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.96 }}
                   transition={{ duration: 0.12 }}
-                  className="admin-dropdown absolute right-0 top-full mt-2 w-[calc(100vw-32px)] sm:w-[360px] max-w-[360px] z-[300]"
+                  className="admin-dropdown fixed left-4 right-4 top-[calc(var(--admin-topbar-height)+8px)] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:w-[360px] max-w-[360px] z-[300]"
                 >
                   <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--admin-border-subtle)", background: "var(--admin-bg-subtle)" }}>
                     <h3 className="text-[13px] font-semibold text-[var(--admin-text-primary)]">

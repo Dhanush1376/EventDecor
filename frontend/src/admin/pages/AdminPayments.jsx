@@ -144,11 +144,11 @@ export function AdminPayments() {
     >
       <PageHeader
         title="Payments"
-        subtitle="Real-time transaction tracking and sales revenue aggregations"
+        subtitle="Track payments and sales revenue"
+        mobileRow={true}
       >
-        <button className="admin-btn admin-btn-outline h-9">
-          <span className="material-symbols-outlined text-[16px]">download</span>
-          Export Report
+        <button className="admin-btn admin-btn-ghost" title="Export Report">
+          <span className="material-symbols-outlined text-[20px]">download</span>
         </button>
       </PageHeader>
 
@@ -229,9 +229,9 @@ export function AdminPayments() {
             <div className="p-5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
               <div>
                 <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)]">
-                  Recent Checkout Transactions
+                  Recent Transactions
                 </h3>
-                <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-1">Payments registered through credit/debit card, UPI, and net banking</p>
+                <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-1">Payments received across all methods.</p>
               </div>
               <span className="admin-badge admin-badge-neutral font-bold uppercase tracking-wider">
                 {metrics.transactions.length} total
@@ -249,8 +249,8 @@ export function AdminPayments() {
                     className="p-16 text-center flex flex-col items-center justify-center"
                   >
                     <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">search_off</span>
-                    <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">Data Not Found</p>
-                    <p className="text-[12px] text-[var(--admin-text-secondary)]">No checkouts or transactions matched your search or filters.</p>
+                    <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">No results</p>
+                    <p className="text-[12px] text-[var(--admin-text-secondary)]">No transactions matched your search.</p>
                   </motion.div>
                 ) : (
                   <motion.table

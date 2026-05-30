@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 import Category from '../models/Category';
+import Product from '../models/Product';
+import Gallery from '../models/Gallery';
+import Event from '../models/Event';
 import logger from '../config/logger';
 
 export const getActiveCategories = async (req: Request, res: Response) => {
@@ -39,10 +42,33 @@ export const createCategory = async (req: Request, res: Response) => {
 
 export const updateCategory = async (req: Request, res: Response) => {
   try {
+    const existing = await Category.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+
+    const oldName = existing.name;
     const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!category) {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
+
+    // Cascade category name change to all entities that store category as a string
+    if (req.body.name && req.body.name !== oldName) {
+      const cascadeOps = [
+        Product.updateMany({ category: oldName }, { $set: { category: req.body.name } }),
+        Gallery.updateMany({ category: oldName }, { $set: { category: req.body.name } }),
+        Event.updateMany({ category: oldName }, { $set: { category: req.body.name } }),
+      ];
+      const results = await Promise.allSettled(cascadeOps);
+      const cascadedCount = results
+        .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
+        .reduce((sum, r) => sum + (r.value?.modifiedCount || 0), 0);
+      if (cascadedCount > 0) {
+        logger.info(`[CATEGORY] Cascaded rename "${oldName}" → "${req.body.name}" across ${cascadedCount} document(s)`);
+      }
+    }
+
     res.status(200).json({ success: true, data: category });
   } catch (error: any) {
     logger.error('Error updating category', error);

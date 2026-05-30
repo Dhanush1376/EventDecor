@@ -241,25 +241,22 @@ export default function CheckoutSidebar() {
               </div>
 
               {/* Instant calculation validation bottom message */}
-              {backendTotals.discount > 0 && (
                 <div className="bg-[#c29b38]/10 text-[#a17e2b] text-[12px] font-bold rounded p-2.5 mt-4 text-center border border-[#c29b38]/20">
-                  Your Total Savings on this order sequence is ₹{backendTotals.discount.toLocaleString()}
+                  Total Savings: ₹{backendTotals.discount.toLocaleString()}
                 </div>
-              )}
 
-              {/* Bottom return policy tags */}
               <div className="mt-4 pt-3 border-t border-surface-container-low text-[11px] text-secondary space-y-1.5">
                 <p className="flex items-center gap-1.5 font-medium">
                   <span className="material-symbols-outlined text-sm text-[#c29b38]">
                     verified
                   </span>
-                  Safe and protected order transit
+                  Secure delivery
                 </p>
                 <p className="flex items-center gap-1.5 font-medium">
                   <span className="material-symbols-outlined text-sm text-[#c29b38]">
                     change_circle
                   </span>
-                  Easy 7-day money back arrival check
+                  Easy 7-day returns
                 </p>
               </div>
 

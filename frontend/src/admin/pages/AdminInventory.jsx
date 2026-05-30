@@ -88,17 +88,20 @@ export function AdminInventory() {
         <>
           <PageHeader
             title="Inventory"
-        subtitle="Stock levels across all products"
-      >
-        <button 
-          onClick={handleRefreshStock}
-          disabled={isRefreshing}
-          className="admin-btn admin-btn-outline"
-        >
-          <span className={`material-symbols-outlined text-[16px] ${isRefreshing ? 'animate-spin' : ''}`}>sync</span>
-          Refresh Stock
-        </button>
-      </PageHeader>
+            subtitle="Stock levels across all products"
+            className="relative"
+          >
+            <div className="absolute top-1 right-0 sm:relative sm:top-auto sm:right-auto shrink-0">
+              <button 
+                onClick={handleRefreshStock}
+                disabled={isRefreshing}
+                className="w-9 h-9 rounded-full bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] border border-[var(--admin-border)] flex items-center justify-center cursor-pointer transition-all active:scale-95 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)]"
+                title="Refresh Stock"
+              >
+                <span className={`material-symbols-outlined text-[18px] ${isRefreshing ? 'animate-spin' : ''}`}>sync</span>
+              </button>
+            </div>
+          </PageHeader>
 
       {/* Summary Cards */}
       <motion.div variants={stagger} className="grid grid-cols-3 gap-2.5 sm:gap-4">

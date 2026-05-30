@@ -24,7 +24,7 @@ export function CheckoutNavbar() {
         {/* Center: Branding (Visible on sm+) */}
         <div className="hidden md:block flex-1 text-center">
           <Link to="/" className="inline-block group">
-            <SiriLogo size="24px" showSubtitle={false} />
+            <SiriLogo size="36px" showSubtitle={false} />
           </Link>
         </div>
 

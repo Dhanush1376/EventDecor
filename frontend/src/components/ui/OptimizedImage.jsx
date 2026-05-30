@@ -95,19 +95,39 @@ export function OptimizedImage({
   // Final src to use
   const finalSrc = hasError ? fallbackSrc : (isCloudinary ? getOptimizedUrl(src, width) : src);
   const blurSrc = !priority && !isLoaded && isCloudinary && !hasError ? getBlurPlaceholder() : undefined;
+  
+  const isImageAutoHeight = className && (className.includes('h-auto') || className.includes('h-fit'));
+
+  const finalObjectFit = (className && className.includes('object-contain')) 
+    ? 'contain' 
+    : (className && className.includes('object-fill')) 
+      ? 'fill' 
+      : objectFit;
 
   useEffect(() => {
     // Reset state if src changes
     setIsLoaded(priority);
     setHasError(false);
+
+    // If the image is already complete (cached), set loaded state immediately
+    const checkComplete = () => {
+      if (imgRef.current && imgRef.current.complete) {
+        setIsLoaded(true);
+      }
+    };
+
+    checkComplete();
+    const timer = setTimeout(checkComplete, 50);
+
+    return () => clearTimeout(timer);
   }, [src, priority]);
 
   return (
     <div 
       className={`relative overflow-hidden bg-surface-variant flex items-center justify-center ${className || ""}`}
       style={{ 
-        width: width || '100%', 
-        height: height || '100%',
+        width: (width && typeof width === 'string') ? width : '100%', 
+        height: isImageAutoHeight ? 'auto' : ((height && typeof height === 'string') ? height : '100%'),
       }}
     >
       {/* Blurred Placeholder */}
@@ -131,14 +151,14 @@ export function OptimizedImage({
         decoding={priority ? 'sync' : 'async'}
         width={width}
         height={height}
-        className={`w-full h-full transition-all duration-[800ms] z-10 relative ${
+        className={`w-full ${isImageAutoHeight ? 'h-auto block' : 'h-full'} ${priority ? '' : 'transition-all duration-[800ms]'} z-10 relative ${
           isLoaded 
             ? "opacity-100 scale-100 filter-none" 
             : "opacity-0 scale-105 blur-md"
         } ${
-          objectFit === 'cover' ? 'object-cover' : 
-          objectFit === 'contain' ? 'object-contain' : 
-          objectFit === 'fill' ? 'object-fill' : 'object-none'
+          finalObjectFit === 'cover' ? 'object-cover' : 
+          finalObjectFit === 'contain' ? 'object-contain' : 
+          finalObjectFit === 'fill' ? 'object-fill' : 'object-none'
         }`}
         onLoad={(e) => {
           setIsLoaded(true);

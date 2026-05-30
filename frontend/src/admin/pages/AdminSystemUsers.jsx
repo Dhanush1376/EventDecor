@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { 
@@ -274,83 +276,126 @@ export const AdminSystemUsers = () => {
         </>
       )}
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--admin-surface-overlay)] backdrop-blur-sm">
-          <div className="admin-card p-6 w-full max-w-md shadow-xl border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)]">
-            <h2 className="text-[15px] font-bold text-[var(--admin-text-primary)] mb-4">
-              {modalMode === 'add' ? 'Add New System User' : 'Edit User Role'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {modalMode === 'add' && (
-                <>
-                  <div>
-                    <label className="admin-label">Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="admin-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="admin-label">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="admin-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="admin-label">Temporary Password</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="admin-input font-mono"
-                    />
-                    <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-1.5 leading-normal font-light">User must use this password to login initially.</p>
-                  </div>
-                </>
-              )}
-              
-              <div>
-                <label className="admin-label">Role & Permissions</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="admin-select"
-                >
-                  <option value="manager">Manager (General Store Ops)</option>
-                  <option value="main_admin">Main Admin (Store Setup & Settings)</option>
-                  <option value="order_manager">Order Manager (Fulfillment)</option>
-                  <option value="content_manager">Content Manager (CMS & Blogs)</option>
-                  <option value="support_admin">Support Admin (Inquiries & Chat)</option>
-                  <option value="moderator">Moderator (Reviews)</option>
-                </select>
-              </div>
+      {/* Dynamic Slide-Up Bottom-Sheet Curation Drawer */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {showModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
+            >
+              <div
+                onClick={() => setShowModal(false)}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+              />
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-[var(--admin-border-subtle)]">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-bg-subtle)] transition-all text-[11px] font-bold uppercase tracking-wider active:scale-95 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white rounded-[var(--admin-radius-lg)] transition-all text-[11px] font-bold uppercase tracking-wider active:scale-95 shadow-sm hover:shadow-md cursor-pointer"
-                >
-                  {modalMode === 'add' ? 'Create Admin' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 26, stiffness: 220 }}
+                className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+              >
+                {/* Grab Handle */}
+                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
+
+                <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
+                  <div>
+                    <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">shield</span>
+                      {modalMode === 'add' ? 'Add New System User' : 'Edit User Role'}
+                    </h3>
+                    <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5 leading-normal">
+                      Adjust system privileges and admin permissions
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4 flex-1">
+                  {modalMode === 'add' && (
+                    <>
+                      <div className="space-y-1">
+                        <label className="admin-label">Full Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="admin-input"
+                          placeholder="e.g. John Doe"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="admin-label">Email Address</label>
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="admin-input"
+                          placeholder="e.g. admin@siriarts.com"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="admin-label">Temporary Password</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          className="admin-input font-mono"
+                          placeholder="Generate secure temp password"
+                        />
+                        <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-1.5 leading-normal font-light">User must use this password to login initially.</p>
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="space-y-1">
+                    <label className="admin-label">Role & Permissions</label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      className="admin-select text-[12px] font-semibold"
+                    >
+                      <option value="manager">Manager (General Store Ops)</option>
+                      <option value="main_admin">Main Admin (Store Setup & Settings)</option>
+                      <option value="order_manager">Order Manager (Fulfillment)</option>
+                      <option value="content_manager">Content Manager (CMS & Blogs)</option>
+                      <option value="support_admin">Support Admin (Inquiries & Chat)</option>
+                      <option value="moderator">Moderator (Reviews)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-[var(--admin-border-subtle)] mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="admin-btn admin-btn-outline w-full sm:flex-1 py-3 text-[11px] font-bold uppercase tracking-wider"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="admin-btn admin-btn-primary w-full sm:flex-[2] py-3 text-[11px] font-bold uppercase tracking-wider"
+                    >
+                      {modalMode === 'add' ? 'Create Admin' : 'Save Changes'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

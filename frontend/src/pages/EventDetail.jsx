@@ -1210,7 +1210,7 @@ export function EventDetail() {
       {/* 4. FURTHER DISCOVERY JOURNEYS */}
       <section className="pt-12 pb-0 md:pt-24 md:pb-8">
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
-          <div className="flex items-end justify-between mb-12 md:mb-16">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4 mb-8 md:mb-16">
             <h2 className="font-display text-[28px] md:text-[48px] text-black font-normal leading-none">
               Further Discovery.
             </h2>
@@ -1284,7 +1284,7 @@ export function EventDetail() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 150, opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 220 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[150] md:hidden bg-white/95 backdrop-blur-3xl border border-[#C4A87C]/20 px-6 flex items-center justify-between gap-3 shadow-[0_20px_60px_rgba(115,92,0,0.10)] rounded-full select-none overflow-hidden"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[100] md:hidden bg-white/95 backdrop-blur-3xl border border-[#C4A87C]/20 px-6 flex items-center justify-between gap-3 shadow-[0_20px_60px_rgba(115,92,0,0.10)] rounded-full select-none overflow-hidden"
           >
             {/* Elegant Floral Mandala Watermark backdrop */}
             <div className="absolute right-0 top-0 bottom-0 w-20 overflow-hidden pointer-events-none rounded-r-[28px] flex items-center justify-end z-0">

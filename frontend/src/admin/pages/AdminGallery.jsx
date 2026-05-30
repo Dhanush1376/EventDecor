@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { galleryService, productService } from "../../services/domainServices";
 import { ImageUpload } from "../components/ImageUpload";
@@ -171,192 +172,245 @@ export function AdminGallery() {
         </button>
       </PageHeader>
 
-      {/* ─── Upload / Edit Form ─── */}
-      <AnimatePresence>
-        {showUpload && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="admin-card p-6 lg:p-8 overflow-hidden"
-          >
-            <form onSubmit={handleUpload} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Left Column — Media */}
-              <div className="lg:col-span-5 space-y-6">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="admin-label mb-0">Image Asset</label>
-                    {newItem.image && (
-                      <span className="admin-badge admin-badge-success">✓ Active</span>
-                    )}
-                  </div>
-                  <ImageUpload
-                    value={newItem.image}
-                    onChange={(val) => {
-                      setNewItem({ ...newItem, image: val });
-                      toast.success("Photo uploaded! Click AI Autofill to populate details.");
-                    }}
-                    folder="gallery"
-                  />
-                </div>
+      {/* ─── Upload / Edit Form Bottom-Sheet ─── */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {showUpload && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
+            >
+              {/* Backdrop Blur overlay */}
+              <div
+                onClick={handleCancel}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+              />
+              
+              {/* Slide-Up Bottom Drawer Sheet */}
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 26, stiffness: 220 }}
+                className="relative w-full max-w-4xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+              >
+                {/* Grab Handle (Indicates slide-ability) */}
+                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="admin-label mb-0">Video (Optional)</label>
-                    {newItem.video && (
-                      <span className="admin-badge admin-badge-warning">✓ Video</span>
-                    )}
+                {/* Form Title & Subtitle for Mobile Orientation */}
+                <div className="mb-5 pb-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0">
+                  <div>
+                    <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
+                        {editingId ? "edit_note" : "add_photo_alternate"}
+                      </span>
+                      {editingId ? "Edit Gallery Item" : "Curate Gallery Item"}
+                    </h3>
+                    <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5">
+                      {editingId ? "Update showcase assets and details" : "Upload design inspiration or real event details"}
+                    </p>
                   </div>
-                  <VideoUpload
-                    value={newItem.video}
-                    onChange={(val) => setNewItem({ ...newItem, video: val })}
-                    folder="gallery"
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleAiAutofill}
-                    className="admin-btn admin-btn-outline admin-btn-sm"
+                  <button 
+                    type="button" 
+                    onClick={handleCancel}
+                    className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[15px]">auto_awesome</span>
-                    AI Autofill from Photo
+                    <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 </div>
 
-                {/* Linked Products */}
-                <div className="space-y-2">
-                  <label className="admin-label">Link Storefront Products</label>
-                  <p className="text-[11px] text-[var(--admin-text-tertiary)] leading-relaxed -mt-1">
-                    Tag catalog items onto this image so visitors can shop directly.
-                  </p>
-                  <div className="admin-card-inset p-3 max-h-[220px] overflow-y-auto custom-scrollbar space-y-1">
-                    {products.length === 0 ? (
-                      <p className="text-[11px] text-[var(--admin-text-tertiary)] italic">No products in store</p>
-                    ) : products.map((p) => {
-                      const isChecked = newItem.linkedProducts?.includes(p._id || p.id);
-                      return (
-                        <label key={p._id || p.id} className="flex items-center gap-2.5 p-2 hover:bg-[var(--admin-surface-hover)] rounded-[var(--admin-radius-md)] cursor-pointer transition-colors text-[12px] font-medium text-[var(--admin-text-secondary)]">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const list = newItem.linkedProducts || [];
-                              const id = p._id || p.id;
-                              if (e.target.checked) setNewItem({ ...newItem, linkedProducts: [...list, id] });
-                              else setNewItem({ ...newItem, linkedProducts: list.filter(x => x !== id) });
-                            }}
-                            className="accent-[var(--admin-accent)] w-4 h-4 rounded"
-                          />
-                          <span className="truncate">{p.title}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+                <form onSubmit={handleUpload} className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1">
+                  {/* Left Column — Media Uploads & Linked Products */}
+                  <div className="lg:col-span-5 space-y-5 sm:space-y-6">
+                    {/* Image Upload Area */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="admin-label mb-0">Image Asset *</label>
+                        {newItem.image && (
+                          <span className="px-2 py-0.5 rounded-full text-[8.5px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/10 flex items-center gap-0.5">
+                            <span className="material-symbols-outlined text-[10px] leading-none">check_circle</span>
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <ImageUpload
+                        value={newItem.image}
+                        onChange={(val) => {
+                          setNewItem({ ...newItem, image: val });
+                          toast.success("Photo uploaded! Click AI Autofill to populate details.");
+                        }}
+                        folder="gallery"
+                      />
+                    </div>
 
-              {/* Right Column — Fields */}
-              <div className="lg:col-span-7 space-y-5">
-                {/* Classification Type */}
-                <div className="admin-card-inset p-4 space-y-3">
-                  <label className="admin-label">Classification Type</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {[
-                      { id: "inspiration", icon: "palette", label: "Design Inspiration" },
-                      { id: "real-event", icon: "auto_awesome", label: "Real Event Showcase" },
-                    ].map(t => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => setNewItem({ ...newItem, type: t.id })}
-                        className={`p-3 rounded-[var(--admin-radius-lg)] text-[11px] font-semibold uppercase tracking-wider border transition-all flex flex-col items-center justify-center gap-1.5 ${
-                          newItem.type === t.id
-                            ? "bg-[var(--admin-accent)] text-white border-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]"
-                            : "bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]"
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[18px]">{t.icon}</span>
-                        <span>{t.label}</span>
+                    {/* Video Upload Area */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="admin-label mb-0">Video Reel (Optional)</label>
+                        {newItem.video && (
+                          <span className="px-2 py-0.5 rounded-full text-[8.5px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/10 flex items-center gap-0.5">
+                            <span className="material-symbols-outlined text-[10px] leading-none">videocam</span>
+                            Reel Active
+                          </span>
+                        )}
+                      </div>
+                      <VideoUpload
+                        value={newItem.video}
+                        onChange={(val) => setNewItem({ ...newItem, video: val })}
+                        folder="gallery"
+                      />
+                    </div>
+
+                    {/* AI Autofill trigger (styled beautifully for mobile tap ease) */}
+                    <button
+                      type="button"
+                      onClick={handleAiAutofill}
+                      className="w-full py-2.5 rounded-[var(--admin-radius-lg)] bg-[var(--admin-accent)]/10 hover:bg-[var(--admin-accent)] hover:text-white text-[var(--admin-accent)] border border-[var(--admin-accent)]/20 transition-all font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98]"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">auto_awesome</span>
+                      AI Autofill from Photo
+                    </button>
+
+                    {/* Linked Products */}
+                    <div className="space-y-1.5">
+                      <label className="admin-label">Link Storefront Products</label>
+                      <p className="text-[10.5px] text-[var(--admin-text-tertiary)] leading-normal -mt-0.5">
+                        Tag catalog items onto this image so visitors can shop directly.
+                      </p>
+                      <div className="admin-card-inset p-2.5 max-h-[180px] overflow-y-auto custom-scrollbar space-y-1 border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)]">
+                        {products.length === 0 ? (
+                          <p className="text-[11px] text-[var(--admin-text-tertiary)] italic p-2 text-center">No products in store</p>
+                        ) : products.map((p) => {
+                          const isChecked = newItem.linkedProducts?.includes(p._id || p.id);
+                          return (
+                            <label key={p._id || p.id} className="flex items-center gap-2.5 p-2 hover:bg-[var(--admin-surface-hover)] rounded-[var(--admin-radius-md)] cursor-pointer transition-colors text-[11.5px] font-medium text-[var(--admin-text-secondary)]">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  const list = newItem.linkedProducts || [];
+                                  const id = p._id || p.id;
+                                  if (e.target.checked) setNewItem({ ...newItem, linkedProducts: [...list, id] });
+                                  else setNewItem({ ...newItem, linkedProducts: list.filter(x => x !== id) });
+                                }}
+                                className="accent-[var(--admin-accent)] w-4 h-4 rounded"
+                              />
+                              <span className="truncate">{p.title}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column — Classification & Text Fields */}
+                  <div className="lg:col-span-7 space-y-4 sm:space-y-5">
+                    {/* Classification Type Selection */}
+                    <div className="admin-card-inset p-3.5 space-y-2.5 border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)]">
+                      <label className="admin-label mb-0">Classification Type</label>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {[
+                          { id: "inspiration", icon: "palette", label: "Design Inspiration" },
+                          { id: "real-event", icon: "auto_awesome", label: "Real Event" },
+                        ].map(t => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setNewItem({ ...newItem, type: t.id })}
+                            className={`p-2.5 rounded-[var(--admin-radius-md)] text-[10px] font-bold uppercase tracking-wider border transition-all flex flex-col items-center justify-center gap-1 ${
+                              newItem.type === t.id
+                                ? "bg-[var(--admin-accent)] text-white border-[var(--admin-accent)] shadow-sm"
+                                : "bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]"
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
+                            <span className="truncate w-full text-center">{t.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Form Inputs Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="admin-label">Title *</label>
+                        <input type="text" required value={newItem.title} onChange={(e) => setNewItem({ ...newItem, title: e.target.value })} className="admin-input" placeholder="Enter catalog title" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="admin-label">Telugu Title (Optional)</label>
+                        <input type="text" value={newItem.teluguTitle} onChange={(e) => setNewItem({ ...newItem, teluguTitle: e.target.value })} className="admin-input" placeholder="సిరి వివాహ అలంకరణ" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="admin-label mb-0">Category *</label>
+                        <button type="button" onClick={() => setShowCatModal(true)} className="text-[10px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-[12px]">add_circle</span> Manage Categories
+                        </button>
+                      </div>
+                      <select required value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })} className="admin-select">
+                        <option value="">Select Category</option>
+                        <option value="Traditional">Traditional</option>
+                        <option value="Floral">Floral</option>
+                        <option value="Modern">Modern</option>
+                        <option value="Royal">Royal</option>
+                        <option value="Minimalist">Minimalist</option>
+                        <option value="Rustic">Rustic</option>
+                        {customCategories?.events?.map(c => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="admin-label">Event Tag</label>
+                        <input type="text" value={newItem.event} onChange={(e) => setNewItem({ ...newItem, event: e.target.value })} className="admin-input" placeholder="Wedding, Haldi, Reception" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="admin-label">Style Accent</label>
+                        <input type="text" value={newItem.style} onChange={(e) => setNewItem({ ...newItem, style: e.target.value })} className="admin-input" placeholder="Temple Heritage, Floral Arch" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="admin-label">Search Tags (Comma separated)</label>
+                      <input type="text" value={newItem.tags} onChange={(e) => setNewItem({ ...newItem, tags: e.target.value })} className="admin-input" placeholder="wedding, gold, botanical, mandap" />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-1">
+                        <label className="admin-label">Description</label>
+                        <textarea value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} className="admin-textarea" rows={2} placeholder="Brief design concept..." />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="admin-label">Story & Crafting Details (Optional)</label>
+                        <textarea value={newItem.story} onChange={(e) => setNewItem({ ...newItem, story: e.target.value })} className="admin-textarea" rows={2} placeholder="Studio story or floral crafting journey..." />
+                      </div>
+                    </div>
+
+                    {/* Form Action Controls */}
+                    <div className="flex flex-col sm:flex-row gap-2.5 pt-3">
+                      {editingId && (
+                        <button type="button" onClick={handleCancel} className="admin-btn admin-btn-outline w-full sm:flex-1 py-3 text-[11px] font-bold uppercase tracking-wider">
+                          Cancel Edit
+                        </button>
+                      )}
+                      <button type="submit" className="admin-btn admin-btn-primary w-full sm:flex-[2] py-3 text-[11px] font-bold uppercase tracking-wider">
+                        {editingId ? "Save Changes" : "Confirm Curation"}
                       </button>
-                    ))}
+                    </div>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="admin-label">Title *</label>
-                    <input type="text" required value={newItem.title} onChange={(e) => setNewItem({ ...newItem, title: e.target.value })} className="admin-input" placeholder="Enter catalog title" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="admin-label">Telugu Title (Optional)</label>
-                    <input type="text" value={newItem.teluguTitle} onChange={(e) => setNewItem({ ...newItem, teluguTitle: e.target.value })} className="admin-input" placeholder="e.g., సిరి వివాహం" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="admin-label mb-0">Category *</label>
-                    <button type="button" onClick={() => setShowCatModal(true)} className="text-[10px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer flex items-center gap-0.5">
-                      <span className="material-symbols-outlined text-[12px]">add_circle</span> Manage
-                    </button>
-                  </div>
-                  <select required value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })} className="admin-select">
-                    <option value="">Select Category</option>
-                    <option value="Traditional">Traditional</option>
-                    <option value="Floral">Floral</option>
-                    <option value="Modern">Modern</option>
-                    <option value="Royal">Royal</option>
-                    <option value="Minimalist">Minimalist</option>
-                    <option value="Rustic">Rustic</option>
-                    {customCategories?.events?.map(c => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="admin-label">Event</label>
-                    <input type="text" value={newItem.event} onChange={(e) => setNewItem({ ...newItem, event: e.target.value })} className="admin-input" placeholder="e.g., Wedding, Haldi" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="admin-label">Style Variant</label>
-                    <input type="text" value={newItem.style} onChange={(e) => setNewItem({ ...newItem, style: e.target.value })} className="admin-input" placeholder="e.g., Royal Marigold" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="admin-label">Search Tags (Comma separated)</label>
-                  <input type="text" value={newItem.tags} onChange={(e) => setNewItem({ ...newItem, tags: e.target.value })} className="admin-input" placeholder="wedding, gold, botanical, mandap" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="admin-label">Description</label>
-                  <textarea value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} className="admin-textarea" rows={2} placeholder="Elegant mandap with fresh jasmine garlands..." />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="admin-label">Story (Optional)</label>
-                  <textarea value={newItem.story} onChange={(e) => setNewItem({ ...newItem, story: e.target.value })} className="admin-textarea" rows={2} placeholder="Handcrafted in our studio over 48 hours..." />
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  {editingId && (
-                    <button type="button" onClick={handleCancel} className="admin-btn admin-btn-outline flex-1">
-                      Cancel Edit
-                    </button>
-                  )}
-                  <button type="submit" className="admin-btn admin-btn-primary flex-[2]">
-                    {editingId ? "Save Changes" : "Confirm Curation"}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* ─── Filters ─── */}
       <motion.div variants={fadeUp} className="space-y-4">
@@ -415,93 +469,74 @@ export function AdminGallery() {
           <motion.div
             key={item._id || item.id}
             layout
-            className="relative admin-card overflow-hidden group flex flex-col"
+            className="relative admin-card overflow-hidden group flex flex-col hover:shadow-[var(--admin-shadow-md)] transition-all duration-300 border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] bg-[var(--admin-surface)]"
           >
-            {/* Type Badge */}
-            <div className="absolute top-2.5 left-2.5 lg:top-3 lg:left-3 z-10 flex flex-col gap-1.5">
-              <span className="admin-badge admin-badge-primary text-[9px]">
-                {item.type === "real-event" ? "Real Event" : "Inspiration"}
-              </span>
-              {item.video && (
-                <span className="admin-badge admin-badge-warning text-[9px]">
-                  <span className="material-symbols-outlined text-[10px]">play_circle</span>
-                  Video
-                </span>
-              )}
-            </div>
-
-            {/* Image */}
-            <div className="relative overflow-hidden aspect-[4/3] bg-[var(--admin-bg-subtle)]">
+            {/* Top Image Casing - 100% UNCLUTTERED & CLEAN */}
+            <div className="relative overflow-hidden aspect-[4/3] bg-[var(--admin-bg-subtle)] border-b border-[var(--admin-border-subtle)]">
               <img
                 onError={handleImageError}
                 src={item.image}
                 alt={item.title}
-                className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
               />
-              {/* Action Buttons — Mobile: permanent top-right, Desktop: hover overlay */}
-              <div className="absolute top-2.5 right-2.5 lg:top-0 lg:right-0 lg:inset-0 z-20 flex gap-1 lg:gap-2 items-center justify-end lg:justify-center p-0 bg-transparent lg:bg-[var(--admin-surface-overlay)] opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
-                <button
-                  onClick={() => handleEdit(item)}
-                  className="w-7 h-7 lg:w-10 lg:h-10 rounded-full bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-accent)] hover:text-white flex items-center justify-center cursor-pointer shadow-[var(--admin-shadow-lg)] active:scale-90 transition-all border border-[var(--admin-border-subtle)] lg:border-none"
-                  title="Edit"
-                >
-                  <span className="material-symbols-outlined text-[13px] lg:text-[18px]">edit</span>
-                </button>
-                <button
-                  onClick={() => handleDelete(item._id || item.id)}
-                  className="w-7 h-7 lg:w-10 lg:h-10 rounded-full bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-error)] hover:text-white flex items-center justify-center cursor-pointer shadow-[var(--admin-shadow-lg)] active:scale-90 transition-all border border-[var(--admin-border-subtle)] lg:border-none"
-                  title="Delete"
-                >
-                  <span className="material-symbols-outlined text-[13px] lg:text-[18px]">delete</span>
-                </button>
-              </div>
             </div>
 
-            {/* Card Content */}
-            <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider">
-                  <span>{item.category}</span>
-                  {item.event && (
-                    <>
-                      <span className="text-[var(--admin-text-tertiary)]">·</span>
-                      <span className="text-[var(--admin-text-tertiary)]">{item.event}</span>
-                    </>
-                  )}
+            {/* Card Content Area (Beautiful, Clean, 100% Symmetrical below the image) */}
+            <div className="p-3 flex-1 flex flex-col justify-between space-y-2.5">
+              {/* Category, Event & Actions row */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[9px] font-bold text-[var(--admin-accent)] uppercase tracking-widest truncate">
+                  {item.category} {item.event ? `· ${item.event}` : ""}
+                </span>
+                
+                {/* Minimal inline Actions */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => handleEdit(item)}
+                    className="w-6 h-6 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-accent)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                    title="Edit"
+                  >
+                    <span className="material-symbols-outlined text-[12.5px]">edit</span>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item._id || item.id)}
+                    className="w-6 h-6 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-error)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                    title="Delete"
+                  >
+                    <span className="material-symbols-outlined text-[12.5px]">delete</span>
+                  </button>
                 </div>
-                <h3 className="text-[13px] font-semibold text-[var(--admin-text-primary)] line-clamp-1 leading-snug">
-                  {item.title}
-                </h3>
-                {item.teluguTitle && (
-                  <p className="text-[11px] text-[var(--admin-accent)] font-medium italic">{item.teluguTitle}</p>
-                )}
-                {item.style && (
-                  <span className="admin-badge admin-badge-neutral text-[9px] mt-1">{item.style}</span>
-                )}
               </div>
 
-              {item.description && (
-                <p className="text-[11px] text-[var(--admin-text-tertiary)] leading-relaxed line-clamp-2 pl-2 border-l-2 border-[var(--admin-border-strong)] italic">
-                  "{item.description}"
-                </p>
-              )}
+              {/* Title */}
+              <div className="space-y-1">
+                <h3 className="text-[12.5px] font-semibold text-[var(--admin-text-primary)] line-clamp-1 leading-snug group-hover:text-[var(--admin-accent)] transition-colors duration-200" title={item.title}>
+                  {item.title}
+                </h3>
+              </div>
 
-              {/* Footer Stats */}
-              <div className="pt-2 sm:pt-3 border-t border-[var(--admin-border-subtle)] flex items-center justify-between flex-wrap gap-2 text-[10px] sm:text-[11px] text-[var(--admin-text-tertiary)]">
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px]">visibility</span>
-                    {item.views || 0}
+              {/* Sub-Badges (Type, Video, Linked) */}
+              <div className="flex items-center justify-between flex-nowrap gap-1.5 pt-2 border-t border-[var(--admin-border-subtle)] w-full">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {/* Classification Type Tag */}
+                  <span className="h-5 px-2 rounded bg-[var(--admin-surface-muted)] text-[8px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider flex items-center justify-center shrink-0">
+                    {item.type === "real-event" ? "Real Event" : "Inspiration"}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1", color: "var(--admin-error)" }}>favorite</span>
-                    {item.likes || 0}
-                  </span>
+
+                  {/* Video Tag if active */}
+                  {item.video && (
+                    <span className="h-5 px-2 rounded bg-[var(--admin-accent-light)] text-[8px] font-bold text-[var(--admin-accent)] uppercase tracking-wider flex items-center justify-center gap-0.5 shrink-0">
+                      <span className="material-symbols-outlined text-[10px] leading-none">play_circle</span>
+                      Video
+                    </span>
+                  )}
                 </div>
+
+                {/* Linked Products Count tag */}
                 {item.linkedProducts && item.linkedProducts.length > 0 && (
-                  <span className="admin-badge admin-badge-neutral text-[9px]">
-                    <span className="material-symbols-outlined text-[10px] text-[var(--admin-accent)]">link</span>
-                    {item.linkedProducts.length} linked
+                  <span className="h-5 px-2 rounded bg-[var(--admin-surface-muted)] text-[8px] font-bold text-[var(--admin-text-secondary)] flex items-center justify-center gap-0.5 shrink-0">
+                    <span className="material-symbols-outlined text-[10px] text-[var(--admin-accent)] leading-none">link</span>
+                    {item.linkedProducts.length} Linked
                   </span>
                 )}
               </div>

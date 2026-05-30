@@ -137,12 +137,12 @@ export function TopNavbar() {
                 <div className="flex flex-col justify-center">
                   {/* Desktop Layout: Side-by-side */}
                   <div className="hidden md:flex items-center">
-                    <SiriLogo size="40px" />
+                    <SiriLogo size="36px" />
                   </div>
 
                   {/* Mobile Layout: Stacked */}
                   <div className="flex md:hidden flex-col leading-none">
-                    <SiriLogo size="24px" showSubtitle={false} />
+                    <SiriLogo size="36px" showSubtitle={false} />
                   </div>
                 </div>
               </Link>
@@ -456,7 +456,7 @@ export function TopNavbar() {
             >
               <div className="flex justify-between items-center mb-5 pb-3 border-b border-outline-variant/10">
                 <div className="flex items-center">
-                  <SiriLogo size="32px" />
+                  <SiriLogo size="36px" />
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}

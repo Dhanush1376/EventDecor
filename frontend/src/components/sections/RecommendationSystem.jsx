@@ -70,10 +70,15 @@ export function RecommendationSystem({
     const combined = [...similarList, ...completeSetupList, ...alsoViewedList, ...recentlyViewedList];
     const uniqueIds = new Set();
     const uniqueList = [];
+    const currentIdStr = currentProductId ? String(currentProductId) : "";
+    
     for (const item of combined) {
-      const id = item.id || item._id;
-      if (!uniqueIds.has(id) && id !== currentProductId) {
-        uniqueIds.add(id);
+      const rawId = item.id || item._id;
+      if (!rawId) continue;
+      const idStr = String(rawId);
+      
+      if (!uniqueIds.has(idStr) && idStr !== currentIdStr) {
+        uniqueIds.add(idStr);
         uniqueList.push(item);
       }
     }

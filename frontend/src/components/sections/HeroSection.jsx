@@ -151,24 +151,24 @@ export function HeroSection({
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col gap-4 items-start w-full mt-2">
+            <div className="flex flex-col gap-3 items-start w-full mt-2">
               {hero.ctaPrimary && (
                 <Link
                   to={hero.ctaPrimary.link || "/collections"}
-                  className="w-full justify-center bg-[#d4af37] text-[#0f0e0c] font-bold text-[12px] uppercase tracking-[0.2em] px-7 py-4 rounded-full inline-flex items-center gap-2.5 active:scale-95 transition-all shadow-lg hover:bg-[#c4a030]"
+                  className="w-fit justify-start bg-[#d4af37] text-[#0f0e0c] font-bold text-[10.5px] uppercase tracking-[0.18em] px-6 py-2.5 rounded-full inline-flex items-center gap-2 active:scale-95 transition-all shadow-md hover:bg-[#c4a030]"
                 >
                   {hero.ctaPrimary.text?.toUpperCase() || "EXPLORE COLLECTIONS"}
-                  <span className="material-symbols-outlined text-[15px] font-bold">arrow_forward</span>
+                  <span className="material-symbols-outlined text-[13px] font-bold">arrow_forward</span>
                 </Link>
               )}
 
               {hero.ctaSecondary && (
                 <Link
                   to={hero.ctaSecondary.link || "/about"}
-                  className="inline-flex items-center justify-center w-full gap-3.5 text-white/90 font-bold text-[11px] uppercase tracking-[0.2em] active:scale-95 transition-all py-3"
+                  className="inline-flex items-center justify-start gap-2.5 text-white/90 font-bold text-[10px] uppercase tracking-[0.18em] active:scale-95 transition-all py-2"
                 >
-                  <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-md">
-                    <span className="material-symbols-outlined text-[15px] text-white fill-current">
+                  <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-md">
+                    <span className="material-symbols-outlined text-[13px] text-white fill-current">
                       {(hero.ctaSecondary.link?.includes("about") || hero.ctaSecondary.link?.includes("story") || hero.ctaSecondary.text?.toLowerCase().includes("story") || hero.ctaSecondary.text?.toLowerCase().includes("watch")) ? "play_arrow" : "arrow_forward"}
                     </span>
                   </div>
@@ -180,33 +180,6 @@ export function HeroSection({
             </div>
           </div>
 
-          {/* Bottom-Right Rotating Mandala Seal */}
-          <div className="absolute right-4 bottom-20 w-24 h-24 z-20 pointer-events-none">
-            <div className="relative w-full h-full flex items-center justify-center">
-              {/* Outer rotating ring */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 w-full h-full rounded-full"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
-                    `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path id="circlePath" d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" fill="none"/><text fill="%23d4af37" font-size="5.5" font-family="serif" letter-spacing="1.5"><textPath href="%23circlePath">${hero.rotatingSealText || "• HANDCRAFTED LUXURY • HERITAGE ARTISTRY •"}</textPath></text></svg>`
-                  )}")`,
-                  backgroundSize: "contain",
-                }}
-              />
-              {/* Inner counter-rotating mandala artwork */}
-              <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-                className="w-13 h-13 rounded-full bg-[#1c1a17]/95 border border-[#d4af37] flex items-center justify-center shadow-lg shadow-black/50"
-              >
-                <span className="material-symbols-outlined text-[20px] text-[#d4af37]">
-                  filter_vintage
-                </span>
-              </motion.div>
-            </div>
-          </div>
 
           {/* Gold-Stroked Wavy Bottom Mask SVG */}
           <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-10 translate-y-[1px]">

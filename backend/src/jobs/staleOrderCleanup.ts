@@ -1,6 +1,7 @@
 import Order from '../models/Order';
 import Product from '../models/Product';
 import logger from '../config/logger';
+import { emitAdminNotification, emitUserEvent } from '../socket';
 import type { Types } from 'mongoose';
 
 const BATCH_SIZE = 50;
@@ -8,6 +9,7 @@ const STALE_NOTE = 'Order cancelled due to payment timeout — stock released';
 
 type StaleOrderRow = {
   _id: Types.ObjectId;
+  user: Types.ObjectId;
   items: Array<{ productId: Types.ObjectId; quantity: number }>;
 };
 
@@ -18,12 +20,20 @@ type StaleOrderRow = {
 export const releaseStalePendingOrders = async (): Promise<number> => {
   const cutoff = new Date(Date.now() - 30 * 60 * 1000);
   const filter = {
-    paymentStatus: 'pending' as const,
-    orderStatus: 'Pending' as const,
-    createdAt: { $lt: cutoff },
+    $or: [
+      {
+        paymentStatus: 'pending' as const,
+        orderStatus: 'Pending' as const,
+        createdAt: { $lt: cutoff },
+      },
+      {
+        paymentStatus: 'processing' as const,
+        createdAt: { $lt: new Date(Date.now() - 5 * 60 * 1000) },
+      },
+    ],
   };
 
-  const cursor = Order.find(filter).select('_id items').lean().cursor();
+  const cursor = Order.find(filter).select('_id items user').lean().cursor();
   let processed = 0;
   let batch: StaleOrderRow[] = [];
 
@@ -65,6 +75,27 @@ export const releaseStalePendingOrders = async (): Promise<number> => {
     processed += cancelResult.modifiedCount;
     if (cancelResult.modifiedCount > 0) {
       logger.info(`[CRON] Stale-order batch cancelled ${cancelResult.modifiedCount} order(s)`);
+
+      // Notify admin dashboard of stale order cancellations
+      try {
+        emitAdminNotification({
+          type: 'stale_order_cleanup',
+          message: `${cancelResult.modifiedCount} stale order(s) cancelled — stock released`,
+          count: cancelResult.modifiedCount,
+          timestamp: new Date().toISOString(),
+        });
+      } catch { /* Socket may not be initialized */ }
+
+      // Notify affected customers
+      for (const order of orders) {
+        try {
+          emitUserEvent(order.user.toString(), 'order_status_update', {
+            orderId: order._id.toString(),
+            status: 'Cancelled',
+            note: STALE_NOTE,
+          });
+        } catch { /* Best-effort delivery */ }
+      }
     }
   };
 

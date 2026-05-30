@@ -20,6 +20,7 @@ export function Gallery() {
   const [activeEvent, setActiveEvent] = useState("All");
   const [activeStyle, setActiveStyle] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [filterType, setFilterType] = useState("all"); // all, inspiration, product
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
@@ -32,6 +33,14 @@ export function Gallery() {
   
   const { scrollDirection, isAtTop } = useScrollDirection();
   const isNavbarHidden = !isAtTop && scrollDirection === "down";
+
+  // Debounce search input to match product and events pages behavior
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const {
     items: filteredItems,
@@ -46,7 +55,7 @@ export function Gallery() {
     event: activeEvent,
     style: activeStyle,
     type: filterType,
-    search: searchQuery,
+    search: debouncedSearch,
   });
 
   const { data: categories = ["All"], isLoading: isCategoriesLoading, isError: isCategoriesError } = useQuery({
@@ -72,6 +81,13 @@ export function Gallery() {
       toast.error("Failed to load some gallery resources.");
     }
   }, [isGalleryError, isCategoriesError, isProductsError]);
+
+  // Keep slideshow index within bounds of filtered items list (e.g. during search query updates)
+  useEffect(() => {
+    if (slideshowIndex !== -1 && filteredItems.length > 0 && slideshowIndex >= filteredItems.length) {
+      setSlideshowIndex(0);
+    }
+  }, [filteredItems.length, slideshowIndex]);
 
   const isLoading = isGalleryLoading || isCategoriesLoading || isProductsLoading;
 
@@ -337,7 +353,7 @@ export function Gallery() {
                 />
               )}
               columns={{ sm: 2, md: 2, lg: 4, xl: 5 }}
-              gap="gap-4 sm:gap-6"
+              gap="gap-2 sm:gap-3"
               batchSize={20}
             />
 
@@ -380,6 +396,8 @@ export function Gallery() {
               )
             }
             onSelect={setSlideshowIndex}
+            searchQuery={searchQuery}
+            onSearchChange={(e) => setSearchQuery(e.target.value)}
           />
         )}
       </AnimatePresence>

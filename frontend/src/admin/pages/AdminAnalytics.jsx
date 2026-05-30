@@ -75,18 +75,18 @@ export function AdminAnalytics() {
       <PageHeader
         title="Business Analytics"
         subtitle={`Real-time performance metrics and growth insights · Last synced ${lastDataRefresh ? lastDataRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`}
+        mobileRow={true}
       >
         <button 
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="admin-btn admin-btn-outline"
+          className="admin-btn admin-btn-ghost"
+          title="Refresh Data"
         >
-          <span className={`material-symbols-outlined text-[16px] ${isRefreshing ? 'animate-spin' : ''}`}>sync</span>
-          {isMobile ? '' : 'Refresh'}
+          <span className={`material-symbols-outlined text-[20px] ${isRefreshing ? 'animate-spin' : ''}`}>sync</span>
         </button>
-        <button className="admin-btn admin-btn-outline">
-          <span className="material-symbols-outlined text-[16px]">download</span>
-          {isMobile ? '' : 'Export'}
+        <button className="admin-btn admin-btn-ghost" title="Export Data">
+          <span className="material-symbols-outlined text-[20px]">download</span>
         </button>
       </PageHeader>
 

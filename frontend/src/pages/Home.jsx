@@ -57,7 +57,7 @@ export function Home() {
           }
           description={
             seo?.pages?.home?.description ||
-            "Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor."
+            "Handcrafted luxury event decor blending tradition with contemporary design."
           }
           schema={homeSchema}
           faq={faqs?.homepage || []}
@@ -84,7 +84,7 @@ export function Home() {
         }
         description={
           seo?.pages?.home?.description ||
-          "Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor."
+          "Handcrafted luxury event decor blending tradition with contemporary design."
         }
         schema={homeSchema}
         faq={faqs?.homepage || []}
