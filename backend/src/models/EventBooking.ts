@@ -218,6 +218,7 @@ EventBookingSchema.index(
   { bookingDateStr: 1, 'venue.address': 1 },
   { 
     unique: true, 
+    name: 'unique_booking_venue_date_v2',
     partialFilterExpression: { 
       status: { $in: ['confirmed', 'payment_processing', 'pending_payment', 'setup_in_progress', 'team_assigned'] } 
     }

@@ -125,8 +125,8 @@ export const initJobs = () => {
     });
   });
 
-  // 9. Recommendation: Update trending rankings every 15 minutes
-  cron.schedule('*/15 * * * *', async () => {
+  // 9. Recommendation: Update trending rankings (daily)
+  cron.schedule('0 0 * * *', async () => {
     if (!isQueuesReady()) return;
     await withCronLock('reco-trending-update', 14 * 60, async () => {
       try {
@@ -138,8 +138,8 @@ export const initJobs = () => {
     });
   });
 
-  // 10. Recommendation: Rebuild stale user profiles and active user feeds every 6 hours
-  cron.schedule('0 */6 * * *', async () => {
+  // 10. Recommendation: Rebuild stale user profiles and active user feeds (daily)
+  cron.schedule('0 0 * * *', async () => {
     if (!isQueuesReady()) return;
     await withCronLock('reco-profile-rebuild', 5 * 60 * 60, async () => {
       try {
@@ -165,8 +165,8 @@ export const initJobs = () => {
     });
   });
 
-  // 12. Recommendation: Take trending snapshot (hourly)
-  cron.schedule('0 * * * *', async () => {
+  // 12. Recommendation: Take trending snapshot (daily)
+  cron.schedule('0 0 * * *', async () => {
     if (!isQueuesReady()) return;
     await withCronLock('reco-trending-snapshot', 55 * 60, async () => {
       try {

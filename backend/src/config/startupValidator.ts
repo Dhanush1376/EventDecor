@@ -25,7 +25,7 @@ export const runStartupValidation = (): void => {
   // ── 1. NODE_ENV ──
   results.push({
     name: 'NODE_ENV',
-    status: isProd ? 'PASS' : 'WARN',
+    status: 'PASS',
     detail: `NODE_ENV=${process.env.NODE_ENV || 'undefined'}`,
   });
 
@@ -95,7 +95,7 @@ export const runStartupValidation = (): void => {
   const maxOldSpace = process.execArgv.find(arg => arg.includes('--max-old-space-size'));
   const nodeOptions = process.env.NODE_OPTIONS || '';
   if (!maxOldSpace && !nodeOptions.includes('--max-old-space-size')) {
-    results.push({ name: 'MEMORY_LIMIT', status: 'WARN', detail: 'No --max-old-space-size set (risk of uncontrolled OOM crashes)' });
+    results.push({ name: 'MEMORY_LIMIT', status: isProd ? 'WARN' : 'PASS', detail: 'No --max-old-space-size set (risk of uncontrolled OOM crashes)' });
   } else {
     results.push({ name: 'MEMORY_LIMIT', status: 'PASS', detail: maxOldSpace || nodeOptions });
   }

@@ -77,14 +77,18 @@ export const ensureIndexes = async (): Promise<void> => {
           if (
             errMsg.includes('Index already exists') ||
             errMsg.includes('different name and options') ||
-            errMsg.includes('already exists with different')
+            errMsg.includes('already exists with different') ||
+            errMsg.includes('An existing index has the same name as the requested index')
           ) {
             logger.warn(`[DATABASE] Index conflict detected for ${model.modelName}: ${err.message}. Attempting self-healing...`);
             const indexes = await model.collection.listIndexes().toArray();
             let droppedCount = 0;
             for (const index of indexes) {
-              if (index.key && Object.values(index.key).includes('text') && index.name !== 'FullTextIndex') {
-                logger.info(`[DATABASE] Dropping conflicting text index "${index.name}" on ${model.modelName}...`);
+              if (
+                (index.key && Object.values(index.key).includes('text') && index.name !== 'FullTextIndex') ||
+                index.name === 'bookingDateStr_1_venue.address_1'
+              ) {
+                logger.info(`[DATABASE] Dropping conflicting index "${index.name}" on ${model.modelName}...`);
                 await model.collection.dropIndex(index.name);
                 droppedCount++;
               }
