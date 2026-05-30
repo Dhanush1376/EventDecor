@@ -31,10 +31,34 @@ import {
   stagger,
   CHART_COLORS,
   SkeletonDashboard,
+  AdminToggle,
 } from "../components/AdminUIKit";
 
 const FALLBACK_DATE = new Date("2026-05-20T00:00:00Z");
 const FALLBACK_PRODUCT_DATE = new Date("2026-05-17T00:00:00Z");
+
+const getInitials = (name) => {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  return parts.map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+};
+
+const getStatusIndicatorColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case "confirmed":
+    case "delivered":
+    case "completed":
+      return "bg-emerald-500";
+    case "cancelled":
+    case "failed":
+      return "bg-rose-500";
+    case "pending":
+    case "processing":
+      return "bg-amber-500";
+    default:
+      return "bg-blue-500";
+  }
+};
 
 export function AdminDashboard() {
   const {
@@ -268,15 +292,12 @@ export function AdminDashboard() {
               <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">Blocks all database writes</p>
             </div>
           </div>
-          <button
-            role="switch"
-            aria-checked={safetyLock}
-            onClick={toggleSafetyLock}
-            className="relative w-10 h-6 rounded-full transition-colors duration-200 cursor-pointer min-h-0 p-0"
-            style={{ background: safetyLock ? "var(--admin-error)" : "var(--admin-border-strong)" }}
-          >
-            <span className="absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-200 shadow-sm" style={{ transform: safetyLock ? "translateX(16px)" : "translateX(0)" }} />
-          </button>
+          <AdminToggle
+            checked={safetyLock}
+            onChange={toggleSafetyLock}
+            variant="error"
+            aria-label="Toggle Database Safety Lock"
+          />
         </div>
 
         <div className="admin-card-flush bg-[var(--admin-bg-subtle)] p-4 flex items-center justify-between gap-4">
@@ -292,15 +313,12 @@ export function AdminDashboard() {
               <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">Redirects storefront traffic</p>
             </div>
           </div>
-          <button
-            role="switch"
-            aria-checked={maintenanceMode}
-            onClick={toggleMaintenanceMode}
-            className="relative w-10 h-6 rounded-full transition-colors duration-200 cursor-pointer min-h-0 p-0"
-            style={{ background: maintenanceMode ? "var(--admin-warning)" : "var(--admin-border-strong)" }}
-          >
-            <span className="absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-200 shadow-sm" style={{ transform: maintenanceMode ? "translateX(16px)" : "translateX(0)" }} />
-          </button>
+          <AdminToggle
+            checked={maintenanceMode}
+            onChange={toggleMaintenanceMode}
+            variant="warning"
+            aria-label="Toggle Maintenance Shield"
+          />
         </div>
       </motion.div>
 
@@ -426,42 +444,58 @@ export function AdminDashboard() {
       {/* Middle Row */}
       <div className="admin-grid-content">
         {/* Quick Actions */}
-        <motion.div variants={fadeUp} className="admin-card p-6">
+        <motion.div variants={fadeUp} className="admin-card p-4 sm:p-6">
           <h3 className="text-[14px] font-semibold text-[var(--admin-text-primary)] mb-5">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map((a, i) => (
-              <button
+              <motion.button
                 key={i}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => navigate(a.path)}
-                className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-hover)] hover:shadow-[var(--admin-shadow-sm)] cursor-pointer transition-all group min-h-0"
+                className="flex items-center sm:flex-col sm:justify-center gap-3 sm:gap-2.5 p-3 sm:p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-hover)] hover:shadow-[var(--admin-shadow-sm)] cursor-pointer transition-all group min-h-[56px] sm:min-h-0 w-full text-left sm:text-center bg-[var(--admin-surface)]"
               >
-                <div className="w-10 h-10 rounded-[var(--admin-radius-md)] flex items-center justify-center transition-colors" style={{ backgroundColor: `${a.color}15`, color: a.color }}>
-                  <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">{a.icon}</span>
+                <div 
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-[var(--admin-radius-md)] flex items-center justify-center shrink-0 transition-colors" 
+                  style={{ backgroundColor: `${a.color}12`, color: a.color }}
+                >
+                  <span className="material-symbols-outlined text-[18px] sm:text-[20px] group-hover:scale-110 transition-transform">{a.icon}</span>
                 </div>
-                <span className="text-[11px] font-semibold text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)] transition-colors">{a.label}</span>
-              </button>
+                <span className="text-[12px] sm:text-[11px] font-bold sm:font-semibold text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)] transition-colors leading-tight">{a.label}</span>
+              </motion.button>
             ))}
           </div>
         </motion.div>
 
         {/* Recent Activity */}
-        <motion.div variants={fadeUp} className="admin-card p-6 flex flex-col">
+        <motion.div variants={fadeUp} className="admin-card p-4 sm:p-6 flex flex-col">
           <h3 className="text-[14px] font-semibold text-[var(--admin-text-primary)] mb-5">Recent Activity</h3>
           {dynamicRecentActivity.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
+            <div className="flex-1 flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)] p-6 text-center">
               <span className="material-symbols-outlined text-[28px] text-[var(--admin-text-tertiary)] mb-2">history</span>
-              <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No Recent Activity</span>
+              <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No Recent Activity</span>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="relative pl-1">
               {dynamicRecentActivity.slice(0, 5).map((a, i) => (
-                <div key={i} className="flex items-center gap-3 py-2.5 border-b border-[var(--admin-border-subtle)] last:border-0">
-                  <div className="w-8 h-8 rounded-[var(--admin-radius-md)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center shrink-0 text-[var(--admin-text-secondary)]">
-                    <span className="material-symbols-outlined text-[16px]">{a.icon}</span>
+                <div key={i} className="relative flex items-start gap-3.5 pb-5 last:pb-0 group">
+                  {/* Timeline connector line */}
+                  {i < Math.min(dynamicRecentActivity.length, 5) - 1 && (
+                    <span 
+                      className="absolute left-[15px] top-8 bottom-0 w-[1.5px] bg-[var(--admin-border-subtle)]" 
+                      aria-hidden="true" 
+                    />
+                  )}
+                  {/* Icon */}
+                  <div className="w-8 h-8 rounded-[var(--admin-radius-md)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center shrink-0 text-[var(--admin-text-secondary)] relative z-10 transition-colors group-hover:border-[var(--admin-border-strong)]">
+                    <span className="material-symbols-outlined text-[15px]">{a.icon}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-[var(--admin-text-primary)] font-medium truncate">{a.text}</p>
-                    <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">{a.time}</p>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <p className="text-[12px] text-[var(--admin-text-primary)] font-medium leading-relaxed break-words whitespace-normal">{a.text}</p>
+                    <span className="inline-flex items-center gap-1 text-[10px] text-[var(--admin-text-tertiary)] mt-1 font-medium">
+                      <span className="material-symbols-outlined text-[10px] leading-none">schedule</span>
+                      {a.time}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -470,15 +504,23 @@ export function AdminDashboard() {
         </motion.div>
 
         {/* Inventory Alerts */}
-        <motion.div variants={fadeUp} className="admin-card p-6 flex flex-col">
+        <motion.div variants={fadeUp} className="admin-card p-4 sm:p-6 flex flex-col">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-[14px] font-semibold text-[var(--admin-text-primary)]">Inventory Alerts</h3>
-            <button onClick={() => navigate("/admin/inventory")} className="text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer min-h-0">View All</button>
+            <button 
+              onClick={() => navigate("/admin/inventory")} 
+              className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer min-h-0"
+            >
+              View All
+            </button>
           </div>
           {outOfStock === 0 && lowStockProducts === 0 && products.filter((p) => p.stock <= 5).length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-[var(--admin-success-light)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-success-border)] text-[var(--admin-success)]">
-              <span className="material-symbols-outlined text-[28px] mb-2">check_circle</span>
-              <span className="text-[10px] uppercase font-bold tracking-wider">Stock Levels Healthy</span>
+            <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--admin-success-light)] to-[rgba(16,185,129,0.02)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-success-border)] p-6 text-center shadow-[inset_0_1px_2px_rgba(16,185,129,0.05)]">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-2.5 animate-pulse">
+                <span className="material-symbols-outlined text-[22px] font-bold">check_circle</span>
+              </div>
+              <span className="text-[11px] uppercase font-bold tracking-wider text-emerald-700">Stock Levels Healthy</span>
+              <p className="text-[10px] text-emerald-600/80 mt-1 font-medium">All products are well stocked</p>
             </div>
           ) : (
             <div className="flex-1 overflow-hidden flex flex-col">
@@ -500,15 +542,18 @@ export function AdminDashboard() {
                   </div>
                 </div>
               )}
-              <div className="space-y-1.5 mt-2">
+              <div className="space-y-2 mt-2">
                 {products.filter((p) => p.stock <= 5).slice(0, 3).map((p, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-[var(--admin-border-subtle)] last:border-0">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <img onError={handleImageError} src={p.image} alt={p.name} className="w-8 h-8 rounded-[var(--admin-radius-sm)] object-cover border border-[var(--admin-border)] shrink-0" />
-                      <span className="text-[12px] text-[var(--admin-text-primary)] font-medium truncate max-w-[140px]">{p.name}</span>
+                  <div key={i} className="flex items-center justify-between p-2 rounded-[var(--admin-radius-md)] border border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)] transition-colors">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <img onError={handleImageError} src={p.image} alt={p.name} className="w-9 h-9 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border)] shrink-0 shadow-sm" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[12px] text-[var(--admin-text-primary)] font-bold truncate block">{p.name}</span>
+                        <span className="text-[10px] text-[var(--admin-text-tertiary)] block mt-0.5 truncate">{p.category || "General"} · {formatCurrency(p.price)}</span>
+                      </div>
                     </div>
-                    <span className={`admin-badge ${p.stock === 0 ? "admin-badge-error" : "admin-badge-warning"}`}>
-                      {p.stock === 0 ? "Out" : `${p.stock} left`}
+                    <span className={`admin-badge ${p.stock === 0 ? "admin-badge-error" : "admin-badge-warning"} shrink-0 ml-2 font-bold text-[9px] px-2 py-0.5`}>
+                      {p.stock === 0 ? "OUT" : `${p.stock} LEFT`}
                     </span>
                   </div>
                 ))}
@@ -519,12 +564,12 @@ export function AdminDashboard() {
       </div>
 
       {/* Weekly Order & Sales Volume Chart */}
-      <ChartCard title="Weekly Order Velocity" subtitle="Real-time orders placed & products sold this past week">
+      <ChartCard title="Weekly Order Velocity" subtitle="Real-time orders placed & products sold this past week" className="p-4 sm:p-6">
         <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
-          <BarChart data={weeklyOrderStats} barGap={isMobile ? 4 : 6}>
+          <BarChart data={weeklyOrderStats} barGap={isMobile ? 4 : 6} margin={{ top: 10, right: 5, left: isMobile ? -20 : -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--admin-border-subtle)" vertical={false} />
             <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--admin-text-tertiary)" }} axisLine={false} tickLine={false} />
-            <YAxis hide={isMobile} tick={{ fontSize: 10, fill: "var(--admin-text-tertiary)" }} axisLine={false} tickLine={false} />
+            <YAxis hide={isMobile} allowDecimals={false} tick={{ fontSize: 10, fill: "var(--admin-text-tertiary)" }} axisLine={false} tickLine={false} width={25} />
             <Tooltip content={<ChartTooltip />} />
             <Bar dataKey="ordersCount" fill="var(--admin-accent)" radius={[4, 4, 0, 0]} name="Orders Placed" />
             <Bar dataKey="itemsCount" fill="var(--admin-border-strong)" radius={[4, 4, 0, 0]} name="Products Sold" />
@@ -535,10 +580,10 @@ export function AdminDashboard() {
       {/* Bottom Row */}
       <div className="admin-grid-content">
         {/* Recent Orders */}
-        <motion.div variants={fadeUp} className="admin-card p-6 flex flex-col">
+        <motion.div variants={fadeUp} className="admin-card p-4 sm:p-6 flex flex-col">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-[14px] font-semibold text-[var(--admin-text-primary)]">Recent Orders</h3>
-            <button onClick={() => navigate("/admin/orders")} className="text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer min-h-0">View All</button>
+            <button onClick={() => navigate("/admin/orders")} className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer min-h-0">View All</button>
           </div>
           {orders.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)] p-4 text-center">
@@ -546,88 +591,138 @@ export function AdminDashboard() {
               <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No Orders Found</span>
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-6 px-6 scrollbar-hide">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Order</th>
-                    <th>Customer</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.slice(0, 5).map((o, i) => (
-                    <tr key={i} onClick={() => navigate(`/admin/orders/${o.id}`)} className="admin-table-row-clickable">
-                      <td className="font-bold text-[var(--admin-text-primary)]">{o.id.substring(o.id.length - 8).toUpperCase()}</td>
-                      <td className="truncate max-w-[100px]">{o.customer}</td>
-                      <td className="font-semibold">{formatCurrency(o.total)}</td>
-                      <td><StatusBadge status={o.status} /></td>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto -mx-6 px-6 scrollbar-hide">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Order</th>
+                      <th>Customer</th>
+                      <th>Amount</th>
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {orders.slice(0, 5).map((o, i) => (
+                      <tr key={i} onClick={() => navigate(`/admin/orders/${o.id}`)} className="admin-table-row-clickable">
+                        <td className="font-bold text-[var(--admin-text-primary)]">{o.id.substring(o.id.length - 8).toUpperCase()}</td>
+                        <td className="truncate max-w-[100px]">{o.customer}</td>
+                        <td className="font-semibold">{formatCurrency(o.total)}</td>
+                        <td><StatusBadge status={o.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card List View */}
+              <div className="md:hidden space-y-2.5">
+                {orders.slice(0, 5).map((o, i) => (
+                  <motion.div
+                    key={i}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(`/admin/orders/${o.id}`)}
+                    className="relative flex items-center justify-between p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)] transition-all cursor-pointer bg-[var(--admin-surface)] pl-4 overflow-hidden"
+                  >
+                    {/* Status vertical accent strip */}
+                    <span className={`absolute left-0 top-0 bottom-0 w-1 ${getStatusIndicatorColor(o.status)}`} aria-hidden="true" />
+                    
+                    <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
+                      {/* Initials Avatar */}
+                      <div className="w-8 h-8 rounded-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center shrink-0 text-[10px] font-bold text-[var(--admin-text-secondary)] shadow-sm">
+                        {getInitials(o.customer)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12px] font-bold text-[var(--admin-text-primary)]">#{o.id.substring(o.id.length - 8).toUpperCase()}</p>
+                        <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5 truncate font-medium">{o.customer}</p>
+                      </div>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1.5 shrink-0">
+                      <p className="text-[12px] font-bold text-[var(--admin-text-primary)]">{formatCurrency(o.total)}</p>
+                      <StatusBadge status={o.status} className="text-[8px] px-2 py-0.5 font-bold" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </>
           )}
         </motion.div>
 
         {/* Upcoming Bookings */}
-        <motion.div variants={fadeUp} className="admin-card p-6 flex flex-col">
+        <motion.div variants={fadeUp} className="admin-card p-4 sm:p-6 flex flex-col">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-[14px] font-semibold text-[var(--admin-text-primary)]">Upcoming Bookings</h3>
-            <button onClick={() => navigate("/admin/events")} className="text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer min-h-0">View All</button>
+            <button onClick={() => navigate("/admin/events")} className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer min-h-0">View All</button>
           </div>
           {eventBookings.filter((b) => b.status !== "Cancelled").length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)] p-4 text-center">
-              <span className="material-symbols-outlined text-[28px] text-[var(--admin-text-tertiary)] mb-2">calendar_today</span>
-              <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No Bookings Found</span>
+            <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-[var(--admin-surface-muted)] to-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)] p-6 text-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+              <div className="w-10 h-10 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-tertiary)] flex items-center justify-center mb-2.5 shadow-sm">
+                <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+              </div>
+              <span className="text-[11px] uppercase font-bold tracking-wider text-[var(--admin-text-secondary)]">No Bookings Found</span>
+              <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-1 font-medium">Your event schedule is clear</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {eventBookings.filter((b) => b.status !== "Cancelled").slice(0, 4).map((b, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)] transition-colors cursor-pointer">
-                  <div className="w-10 h-10 rounded-[var(--admin-radius-md)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">event</span>
+                <motion.div 
+                  key={i} 
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate("/admin/events")}
+                  className="relative flex items-center gap-3 p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)] transition-all cursor-pointer bg-[var(--admin-surface)] pl-4 overflow-hidden"
+                >
+                  {/* Status vertical accent strip */}
+                  <span className={`absolute left-0 top-0 bottom-0 w-1 ${getStatusIndicatorColor(b.status)}`} aria-hidden="true" />
+                  
+                  {/* Initials Avatar */}
+                  <div className="w-8 h-8 rounded-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center shrink-0 text-[10px] font-bold text-[var(--admin-text-secondary)] shadow-sm">
+                    {getInitials(b.customer)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold text-[var(--admin-text-primary)] truncate">{b.eventType}</p>
-                    <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">{b.customer} · {b.date}</p>
+                    <p className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate">{b.eventType}</p>
+                    <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5 font-medium truncate">{b.customer} · {b.date}</p>
                   </div>
-                  <StatusBadge status={b.status} />
-                </div>
+                  <StatusBadge status={b.status} className="text-[8px] px-2 py-0.5 font-bold shrink-0 ml-2" />
+                </motion.div>
               ))}
             </div>
           )}
         </motion.div>
 
         {/* Trending Products */}
-        <motion.div variants={fadeUp} className="admin-card p-6 flex flex-col">
+        <motion.div variants={fadeUp} className="admin-card p-4 sm:p-6 flex flex-col">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-[14px] font-semibold text-[var(--admin-text-primary)]">Trending Products</h3>
-            <button onClick={() => navigate("/admin/products")} className="text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer min-h-0">View All</button>
+            <button onClick={() => navigate("/admin/products")} className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer min-h-0">View All</button>
           </div>
           {trendingProducts.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)] p-4 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)] p-6 text-center">
               <span className="material-symbols-outlined text-[28px] text-[var(--admin-text-tertiary)] mb-2">trending_up</span>
-              <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No Products Yet</span>
+              <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No Products Yet</span>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {trendingProducts.map((p, i) => (
-                <div key={i} onClick={() => navigate(`/admin/products/edit/${p.id}`)} className="flex items-center gap-3 p-2 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)] hover:border-[var(--admin-border-strong)] transition-all cursor-pointer group">
-                  <img src={p.image} alt={p.name} className="w-10 h-10 rounded-[var(--admin-radius-md)] object-cover shrink-0 border border-[var(--admin-border)]" />
+                <motion.div 
+                  key={i} 
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate(`/admin/products/edit/${p.id}`)} 
+                  className="flex items-center gap-3 p-2.5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)] hover:border-[var(--admin-border-strong)] transition-all cursor-pointer group min-w-0 bg-[var(--admin-surface)]"
+                >
+                  <img onError={handleImageError} src={p.image} alt={p.name} className="w-11 h-11 rounded-[var(--admin-radius-md)] object-cover shrink-0 border border-[var(--admin-border)] shadow-sm" />
                   <div className="flex-1 min-w-0">
                     <p className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate group-hover:text-[var(--admin-accent)] transition-colors">{p.name}</p>
-                    <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">{formatCurrency(p.price)} · {p.category}</p>
+                    <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5 truncate font-medium">{formatCurrency(p.price)} · {p.category}</p>
                   </div>
-                  <div className="flex flex-col items-end justify-center shrink-0 pr-1">
-                    <span className="flex items-center gap-1 admin-badge admin-badge-neutral">
-                      <span className="material-symbols-outlined text-[12px]">visibility</span>
+                  <div className="flex flex-col items-end justify-center shrink-0 pl-1">
+                    <span className="flex items-center gap-1 admin-badge admin-badge-neutral text-[9px] px-1.5 py-0.5 font-bold">
+                      <span className="material-symbols-outlined text-[10px] leading-none">visibility</span>
                       {p.views.toLocaleString()}
                     </span>
-                    <span className="text-[9px] font-semibold text-[var(--admin-text-tertiary)] mt-1">{p.sold} sold</span>
+                    <span className="text-[10px] font-bold text-[var(--admin-text-secondary)] mt-1.5 shrink-0">{p.sold} sold</span>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}

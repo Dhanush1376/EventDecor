@@ -9,7 +9,7 @@ import {
   adminResetPassword,
 } from '../controllers/adminAuthController';
 import { getAdmins, addAdmin, updateAdminRole, removeAdmin } from '../controllers/adminManagementController';
-import { requireAuth, requireRole, requireSuperAdmin } from '../middleware/authMiddleware';
+import { requireSuperAdmin } from '../middleware/authMiddleware';
 import { authLimiter } from '../middleware/rateLimiter';
 
 const router = Router();

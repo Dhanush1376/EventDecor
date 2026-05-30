@@ -225,7 +225,7 @@ export const createCampaign = asyncHandler(async (req: Request, res: Response) =
  * ADMIN: Fetch All Campaigns
  */
 export const getCampaigns = asyncHandler(async (req: Request, res: Response) => {
-  const campaigns = await EmailCampaign.find().populate('templateId').sort({ createdAt: -1 });
+  const campaigns = await EmailCampaign.find().populate('templateId').sort({ createdAt: -1 }).lean();
   res.status(200).json(new ApiResponse(true, 'Campaigns fetched', campaigns));
 });
 
@@ -255,7 +255,7 @@ export const triggerCampaignSend = asyncHandler(async (req: Request, res: Respon
  * ADMIN: Fetch Email Templates
  */
 export const getTemplates = asyncHandler(async (req: Request, res: Response) => {
-  const templates = await EmailTemplate.find().sort({ name: 1 });
+  const templates = await EmailTemplate.find().sort({ name: 1 }).lean();
   res.status(200).json(new ApiResponse(true, 'Templates fetched', templates));
 });
 
@@ -307,7 +307,7 @@ export const getNotificationAnalytics = asyncHandler(async (req: Request, res: R
   const openedLogs = await NotificationLog.countDocuments({ openedAt: { $exists: true, $ne: null } });
   
   // Aggregate total link clicks
-  const logsWithClicks = await NotificationLog.find({ 'clicks.0': { $exists: true } }).select('clicks');
+  const logsWithClicks = await NotificationLog.find({ 'clicks.0': { $exists: true } }).select('clicks').lean();
   let totalClicks = 0;
   logsWithClicks.forEach(log => {
     totalClicks += log.clicks.length;

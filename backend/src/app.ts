@@ -211,7 +211,7 @@ app.use('/api/', globalLimiter);
 
 
 // 6. Health Check — lite by default (no CDN probe); ?full=1 runs delivery probe for dashboards
-app.get('/api/health', noCacheMiddleware, async (req: Request, res: Response) => {
+app.get(['/api/health', '/api/v1/health'], noCacheMiddleware, async (req: Request, res: Response) => {
 
   const dbState = mongoose.connection.readyState;
   let dbStatus = dbState === 1 ? 'UP' : 'DOWN';
@@ -276,19 +276,19 @@ app.get('/api/health', noCacheMiddleware, async (req: Request, res: Response) =>
 });
 
 // Readiness Probe (Tracks HTTP readiness, not DB readiness to prevent Render crash loops)
-app.get('/api/readiness', noCacheMiddleware, (req: Request, res: Response) => {
+app.get(['/api/readiness', '/api/v1/readiness'], noCacheMiddleware, (req: Request, res: Response) => {
   // Return 200 immediately if HTTP server is reachable.
   // DB degradation should be handled via circuit breakers and bufferCommands: false, NOT pod restarts.
   res.status(200).json({ ready: true, timestamp: new Date().toISOString() });
 });
 
 // Version endpoint — minimal public payload (no environment disclosure)
-app.get('/api/version', noCacheMiddleware, (req: Request, res: Response) => {
+app.get(['/api/version', '/api/v1/version'], noCacheMiddleware, (req: Request, res: Response) => {
   res.json({ version: process.env.npm_package_version || '1.0.0' });
 });
 
 // Telemetry & Metrics endpoint - protected, admin-only
-app.get('/api/metrics', requireAuth, requireAdmin, noCacheMiddleware, async (req: Request, res: Response) => {
+app.get(['/api/metrics', '/api/v1/metrics'], requireAuth, requireAdmin, noCacheMiddleware, async (req: Request, res: Response) => {
 
   const dbState = mongoose.connection.readyState;
   const dbStatus = dbState === 1 ? 'UP' : 'DOWN';

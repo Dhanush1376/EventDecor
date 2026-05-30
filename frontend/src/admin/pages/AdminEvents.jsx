@@ -940,7 +940,7 @@ export function AdminEvents() {
               <div className="py-20 text-center text-[var(--admin-text-tertiary)] text-[12px]">No active custom bookings logged.</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="admin-table w-full">
+                <table className="admin-table w-full min-w-[800px]">
                   <thead>
                     <tr>
                       <th>Customer Details</th>

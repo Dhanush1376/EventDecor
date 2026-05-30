@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getDashboardStats, getAuditLogs, createAuditLog, clearAuditLogs } from '../controllers/analyticsController';
 import { getPaymentReconciliationReport } from '../controllers/paymentReconciliationController';
-import { requireAuth, requireAdmin, requireRole } from '../middleware/authMiddleware';
+import { requireAuth, requireRole } from '../middleware/authMiddleware';
 import { adminResponseCache } from '../middleware/adminResponseCache';
 
 const router = Router();

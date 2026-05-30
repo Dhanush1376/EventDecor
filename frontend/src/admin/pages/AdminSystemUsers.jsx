@@ -10,7 +10,7 @@ import {
   Edit2
 } from 'lucide-react';
 import api from '../../services/api';
-import { SkeletonDashboard } from '../components/AdminUIKit';
+import { SkeletonTable, PageHeader } from '../components/AdminUIKit';
 
 export const AdminSystemUsers = () => {
   const { user } = useAuth();
@@ -100,153 +100,229 @@ export const AdminSystemUsers = () => {
 
   if (!isSuperAdmin) {
     return (
-      <div className="p-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <ShieldAlert className="w-16 h-16 text-[var(--admin-error)] mb-4" />
-        <h2 className="text-[11px]  text-[var(--admin-text-primary)]">Access Denied</h2>
-        <p className="text-[var(--admin-text-tertiary)] mt-2">Only Super Admins can manage system users.</p>
+      <div className="p-4 sm:p-8 flex flex-col items-center justify-center min-h-[60vh] max-w-md mx-auto">
+        <div className="admin-card w-full p-6 text-center space-y-4 border border-[var(--admin-border-subtle)] flex flex-col items-center shadow-sm rounded-[var(--admin-radius-lg)]">
+          <div className="w-12 h-12 rounded-full bg-[var(--admin-error-light)] border border-[var(--admin-error-border)] flex items-center justify-center">
+            <ShieldAlert className="w-6 h-6 text-[var(--admin-error)]" />
+          </div>
+          <div>
+            <h2 className="text-[16px] sm:text-[18px] font-bold text-[var(--admin-text-primary)] tracking-tight font-display">Access Denied</h2>
+            <p className="text-[12px] sm:text-[13px] text-[var(--admin-text-tertiary)] mt-1.5 leading-normal max-w-[260px] mx-auto font-medium">
+              Only Super Admins can manage system users and adjust security access controls.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h2 className="text-[11px]  text-[var(--admin-text-secondary)]900 tracking-tight">System Access</h2>
-          <p className="text-[var(--admin-text-tertiary)] mt-1">Manage administrators, staff, and access control</p>
-        </div>
+    <div className="max-w-[1300px] mx-auto space-y-6 pb-20 text-[var(--admin-text-primary)]">
+      {/* Page Header */}
+      <PageHeader
+        title="System Access"
+        subtitle="Manage administrators, staff, and access control"
+      >
         <button
           onClick={() => handleOpenModal('add')}
-          className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+          className="admin-btn admin-btn-primary"
         >
-          <UserPlus size={18} />
+          <UserPlus size={15} />
           <span>Add Admin</span>
         </button>
-      </div>
+      </PageHeader>
 
-      <div className="admin-card shadow-sm border border-stone-100 overflow-hidden">
-        {loading ? (
-          <SkeletonDashboard />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-[var(--admin-bg-subtle)] border-b border-stone-100 text-[11px] uppercase tracking-wider text-[var(--admin-text-tertiary)]">
-                  <th className="px-6 py-4 font-medium">User Details</th>
-                  <th className="px-6 py-4 font-medium">Role</th>
-                  <th className="px-6 py-4 font-medium">Security Status</th>
-                  <th className="px-6 py-4 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100">
-                {admins.map((admin) => (
-                  <tr key={admin._id} className="hover:bg-[var(--admin-bg-subtle)]/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                          {admin.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-medium text-[var(--admin-text-secondary)]900">{admin.name}</div>
-                          <div className="text-[11px] text-[var(--admin-text-tertiary)]">{admin.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-primary/10 text-primary capitalize">
-                        {admin.role.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {admin.isLocked ? (
-                        <div className="flex items-center gap-1.5 text-[var(--admin-error)] text-[11px]">
-                          <ShieldAlert size={16} />
-                          <span>Locked Out</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-[var(--admin-success)] text-[11px]">
-                          <ShieldCheck size={16} />
-                          <span>Active</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {admin.role !== 'super_admin' && admin.email !== user?.email && (
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleOpenModal('edit', admin)}
-                            className="p-2 text-[var(--admin-text-secondary)]400 hover:text-primary transition-colors"
-                            title="Edit Role"
-                          >
-                            <Edit2 size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(admin._id)}
-                            className="p-2 text-[var(--admin-text-secondary)]400 hover:text-[var(--admin-error)] transition-colors"
-                            title="Revoke Access"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      )}
-                    </td>
+      {loading ? (
+        <SkeletonTable rows={4} cols={4} />
+      ) : (
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden md:block admin-card shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs min-w-[600px]">
+                <thead>
+                  <tr className="bg-[var(--admin-bg-subtle)] border-b border-[var(--admin-border-subtle)] text-[11px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold">
+                    <th className="px-6 py-4 font-semibold">User Details</th>
+                    <th className="px-6 py-4 font-semibold">Role</th>
+                    <th className="px-6 py-4 font-semibold">Security Status</th>
+                    <th className="px-6 py-4 font-semibold text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-black/5">
+                  {admins.map((admin) => (
+                    <tr key={admin._id} className="hover:bg-[var(--admin-bg-subtle)]/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+                            {admin.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-bold text-[var(--admin-text-primary)] text-sm">{admin.name}</div>
+                            <div className="text-[11px] text-[var(--admin-text-secondary)] font-mono">{admin.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] uppercase tracking-wider">
+                          {admin.role.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {admin.isLocked ? (
+                          <div className="flex items-center gap-1.5 text-[var(--admin-error)] text-[11px] font-bold">
+                            <ShieldAlert size={14} />
+                            <span>Locked Out</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-[var(--admin-success)] text-[11px] font-bold">
+                            <ShieldCheck size={14} />
+                            <span>Active</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {admin.role !== 'super_admin' && admin.email !== user?.email && (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenModal('edit', admin)}
+                              className="p-2 text-[var(--admin-text-secondary)] hover:text-black transition-colors cursor-pointer"
+                              title="Edit Role"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(admin._id)}
+                              className="p-2 text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] transition-colors cursor-pointer"
+                              title="Revoke Access"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Mobile Cards deck list */}
+          <div className="block md:hidden space-y-3">
+            {admins.map((admin) => (
+              <div key={admin._id} className="admin-card p-4 hover:border-[var(--admin-border-strong)] transition-all duration-300 space-y-3">
+                {/* Row 1: Initials & details */}
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] flex items-center justify-center font-bold text-[13px] shrink-0 shadow-sm">
+                    {admin.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-[var(--admin-text-primary)] text-[13px] truncate">{admin.name}</div>
+                    <div className="text-[10px] text-[var(--admin-text-tertiary)] truncate mt-0.5">{admin.email}</div>
+                  </div>
+                </div>
+
+                {/* Row 2: Role & status */}
+                <div className="flex items-center justify-between border-t border-b border-[var(--admin-border-subtle)] py-2">
+                  <div>
+                    <span className="text-[8px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block mb-0.5">Permissions</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] uppercase tracking-wider">
+                      {admin.role.replace('_', ' ')}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <span className="text-[8px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block mb-0.5 text-right">Access Status</span>
+                    {admin.isLocked ? (
+                      <div className="flex items-center gap-1 text-[var(--admin-error)] text-[10px] font-bold">
+                        <ShieldAlert size={12} />
+                        <span>LOCKED OUT</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-[var(--admin-success)] text-[10px] font-bold">
+                        <ShieldCheck size={12} />
+                        <span>ACTIVE</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 3: Action Buttons */}
+                {admin.role !== 'super_admin' && admin.email !== user?.email && (
+                  <div className="flex justify-end gap-3 pt-1">
+                    <button
+                      onClick={() => handleOpenModal('edit', admin)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[var(--admin-border)] hover:border-black text-[9px] font-label uppercase tracking-wider font-bold transition-all text-black hover:bg-black hover:text-white cursor-pointer active:scale-95"
+                      title="Edit Role"
+                    >
+                      <Edit2 size={12} />
+                      <span>Edit Role</span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(admin._id)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[var(--admin-error-border)] bg-[var(--admin-error-light)] text-[var(--admin-error)] hover:bg-[var(--admin-error)] hover:text-white transition-all text-[9px] font-label uppercase tracking-wider font-bold cursor-pointer active:scale-95"
+                      title="Revoke Access"
+                    >
+                      <Trash2 size={12} />
+                      <span>Revoke</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--admin-text-primary)]/50 backdrop-blur-sm">
-          <div className="admin-card p-6 w-full max-w-md shadow-xl border border-stone-100">
-            <h2 className="text-[11px]  mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--admin-surface-overlay)] backdrop-blur-sm">
+          <div className="admin-card p-6 w-full max-w-md shadow-xl border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)]">
+            <h2 className="text-[15px] font-bold text-[var(--admin-text-primary)] mb-4">
               {modalMode === 'add' ? 'Add New System User' : 'Edit User Role'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               {modalMode === 'add' && (
                 <>
                   <div>
-                    <label className="block text-[11px] font-medium text-[var(--admin-text-secondary)] mb-1">Full Name</label>
+                    <label className="admin-label">Full Name</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-[var(--admin-accent)] focus:border-[var(--admin-accent)] outline-none"
+                      className="admin-input"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[var(--admin-text-secondary)] mb-1">Email Address</label>
+                    <label className="admin-label">Email Address</label>
                     <input
                       type="email"
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-[var(--admin-accent)] focus:border-[var(--admin-accent)] outline-none"
+                      className="admin-input"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[var(--admin-text-secondary)] mb-1">Temporary Password</label>
+                    <label className="admin-label">Temporary Password</label>
                     <input
                       type="text"
                       required
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-[var(--admin-accent)] focus:border-[var(--admin-accent)] outline-none"
+                      className="admin-input font-mono"
                     />
-                    <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1">User must use this password to login initially.</p>
+                    <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-1.5 leading-normal font-light">User must use this password to login initially.</p>
                   </div>
                 </>
               )}
               
               <div>
-                <label className="block text-[11px] font-medium text-[var(--admin-text-secondary)] mb-1">Role & Permissions</label>
+                <label className="admin-label">Role & Permissions</label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-[var(--admin-accent)] focus:border-[var(--admin-accent)] outline-none"
+                  className="admin-select"
                 >
                   <option value="manager">Manager (General Store Ops)</option>
                   <option value="main_admin">Main Admin (Store Setup & Settings)</option>
@@ -257,17 +333,17 @@ export const AdminSystemUsers = () => {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-4 border-t border-[var(--admin-border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)] transition-colors"
+                  className="px-4 py-2 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-bg-subtle)] transition-all text-[11px] font-bold uppercase tracking-wider active:scale-95 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  className="px-4 py-2 bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white rounded-[var(--admin-radius-lg)] transition-all text-[11px] font-bold uppercase tracking-wider active:scale-95 shadow-sm hover:shadow-md cursor-pointer"
                 >
                   {modalMode === 'add' ? 'Create Admin' : 'Save Changes'}
                 </button>

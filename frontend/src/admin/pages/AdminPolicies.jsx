@@ -2,8 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { policyService } from '../../services/domainServices';
-import { Skeleton } from '../../components/ui';
 import { toast } from 'react-hot-toast';
+import {
+  PageHeader,
+  AdminSkeleton,
+  StatusBadge,
+  fadeUp,
+  stagger
+} from '../components/AdminUIKit';
 
 export function AdminPolicies() {
   const navigate = useNavigate();
@@ -43,9 +49,7 @@ export function AdminPolicies() {
       key: 'status',
       label: 'Status',
       render: (val) => (
-        <span className={`px-2 py-1 text-[11px] uppercase tracking-wider font-bold rounded-full ${val === 'published' ? 'bg-[#f6f2e8] text-[#c29b38]' : 'bg-gray-100 text-gray-500'}`}>
-          {val}
-        </span>
+        <StatusBadge status={val} />
       ),
     },
     {
@@ -60,13 +64,13 @@ export function AdminPolicies() {
         <div className="flex gap-3">
           <button
             onClick={() => navigate(`/admin/policies/${row._id}`)}
-            className="text-[#c29b38] hover:underline text-sm font-bold tracking-wider"
+            className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:underline text-xs font-bold tracking-wider cursor-pointer bg-transparent border-none p-0"
           >
             EDIT
           </button>
           <button
             onClick={() => handleDelete(row._id)}
-            className="text-red-500 hover:underline text-sm font-bold tracking-wider"
+            className="text-[var(--admin-error)] hover:text-red-700 hover:underline text-xs font-bold tracking-wider cursor-pointer bg-transparent border-none p-0"
           >
             DELETE
           </button>
@@ -76,49 +80,45 @@ export function AdminPolicies() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-body font-semibold text-[#1a1c1a] tracking-tight">
-            Policy Management
-          </h1>
-          <p className="text-sm text-[#685c57] mt-1">
-            Manage legal and storefront policies across your platform.
-          </p>
-        </div>
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
+      <PageHeader
+        title="Policy Management"
+        subtitle="Manage legal and storefront policies across your platform."
+      >
         <button
           onClick={() => navigate('/admin/policies/new')}
-          className="bg-[#1a1c1a] text-white px-5 py-2.5 rounded hover:bg-[#2d302d] transition-colors text-sm font-bold tracking-wide uppercase"
+          className="admin-btn admin-btn-primary"
         >
+          <span className="material-symbols-outlined text-[16px]">add</span>
           Create Policy
         </button>
-      </div>
+      </PageHeader>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 overflow-hidden">
+      <motion.div variants={fadeUp} className="admin-card p-6 overflow-hidden">
         {loading ? (
           <div className="space-y-4">
-            <Skeleton className="h-12 w-full rounded" />
-            <Skeleton className="h-12 w-full rounded" />
-            <Skeleton className="h-12 w-full rounded" />
+            <AdminSkeleton className="h-12 w-full rounded-[var(--admin-radius-md)]" />
+            <AdminSkeleton className="h-12 w-full rounded-[var(--admin-radius-md)]" />
+            <AdminSkeleton className="h-12 w-full rounded-[var(--admin-radius-md)]" />
           </div>
         ) : policies.length === 0 ? (
-          <div className="text-center py-12 text-[#685c57]">
+          <div className="text-center py-12 text-[var(--admin-text-tertiary)]">
             <span className="material-symbols-outlined text-4xl mb-3 opacity-50">description</span>
             <p className="text-sm">No policies found. Click "Create Policy" to get started.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="admin-table w-full min-w-[600px]">
               <thead>
-                <tr className="border-b border-[var(--admin-border-subtle)] text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
-                  {columns.map((c, i) => <th key={i} className="pb-3">{c.label}</th>)}
+                <tr>
+                  {columns.map((c, i) => <th key={i}>{c.label}</th>)}
                 </tr>
               </thead>
-              <tbody className="text-[13px] text-[var(--admin-text-primary)]">
+              <tbody>
                 {policies.map(row => (
-                  <tr key={row._id} className="border-b border-[var(--admin-border-subtle)] last:border-b-0">
+                  <tr key={row._id}>
                     {columns.map((c, i) => (
-                      <td key={i} className="py-4 pr-4">
+                      <td key={i}>
                         {c.render ? c.render(row[c.key], row) : row[c.key]}
                       </td>
                     ))}
@@ -128,7 +128,7 @@ export function AdminPolicies() {
             </table>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

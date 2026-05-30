@@ -60,6 +60,7 @@ const CouponSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+CouponSchema.index({ code: 1, isActive: 1 });
 CouponSchema.index({ isActive: 1 });
 CouponSchema.index({ expiryDate: 1 });
 

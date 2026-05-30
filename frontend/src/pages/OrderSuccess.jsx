@@ -6,7 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { SEO } from "../components/seo/SEO";
 import { handleImageError } from "../utils/imageUtils";
 import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
-import { InvoiceTemplate } from "../components/ui";
+import { InvoiceTemplate, OrderSuccessSkeleton } from "../components/ui";
 import { orderService } from "../services/domainServices";
 import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
@@ -176,12 +176,7 @@ export function OrderSuccess() {
   }, [orderId]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-surface-container-low flex flex-col items-center justify-center pt-12 pb-32">
-        <div className="skeleton-box inline-block w-12 h-12 rounded-md" />
-        <p className="text-xs uppercase font-bold tracking-widest text-secondary">Securing Order Details...</p>
-      </div>
-    );
+    return <OrderSuccessSkeleton />;
   }
 
   if (error || !order) {

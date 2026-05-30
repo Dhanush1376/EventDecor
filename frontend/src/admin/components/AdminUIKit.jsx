@@ -50,20 +50,46 @@ export function PageHeader({ title, subtitle, children, className = "" }) {
   return (
     <motion.div
       variants={fadeUp}
-      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${className}`}
+      className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--admin-border-subtle)] pb-5 ${className}`}
     >
       <div>
-        <h1 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight leading-tight">
+        <h1 className="text-[20px] sm:text-[26px] font-bold text-[var(--admin-text-primary)] font-display tracking-tight leading-tight">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-[13px] text-[var(--admin-text-secondary)] mt-1 leading-normal">
+          <p className="text-[12px] sm:text-[13px] text-[var(--admin-text-tertiary)] mt-1 font-medium leading-normal">
             {subtitle}
           </p>
         )}
       </div>
       {children && (
-        <div className="flex items-center gap-2 flex-wrap shrink-0">{children}</div>
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2 shrink-0">
+          {React.Children.map(children, (child) => {
+            if (React.isValidElement(child)) {
+              const isBtn = child.type === "button" || child.props?.className?.includes("admin-btn");
+              if (isBtn) {
+                const isOutline = child.props.className?.includes("admin-btn-outline");
+                const isSecondary = child.props.className?.includes("admin-btn-secondary");
+                
+                let extraClasses = "w-full sm:w-auto justify-center text-[11px] font-bold uppercase tracking-wider rounded-[var(--admin-radius-lg)] active:scale-95 transition-all shadow-none hover:shadow-none py-2.5 min-h-[44px] sm:min-h-[36px] flex items-center gap-2";
+                
+                if (!isOutline && !isSecondary) {
+                  // Style as minimal soft gold
+                  extraClasses += " bg-[var(--admin-accent-light)] hover:bg-[var(--admin-accent-muted)] text-[var(--admin-accent)] border border-[rgba(139,115,64,0.18)] hover:border-[rgba(139,115,64,0.3)]";
+                } else if (isOutline) {
+                  extraClasses += " bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]";
+                } else if (isSecondary) {
+                  extraClasses += " bg-[var(--admin-text-primary)] hover:bg-[#27272A] text-white border-none";
+                }
+                
+                return React.cloneElement(child, {
+                  className: `${child.props.className || ""} ${extraClasses}`.trim()
+                });
+              }
+            }
+            return child;
+          })}
+        </div>
       )}
     </motion.div>
   );
@@ -87,7 +113,7 @@ export function StatCard({
     <motion.button
       variants={fadeUp}
       onClick={onClick}
-      className="admin-card-interactive relative p-5 text-left w-full overflow-hidden group"
+      className="admin-card-interactive relative p-3 sm:p-5 text-left w-full overflow-hidden group"
     >
       {/* Accent stripe */}
       <div
@@ -95,13 +121,13 @@ export function StatCard({
         style={{ backgroundColor: color }}
       />
 
-      <div className="flex items-start justify-between mb-3 pl-2">
+      <div className="flex items-start justify-between mb-2.5 sm:mb-3 pl-0.5 sm:pl-2">
         <div
-          className="w-9 h-9 rounded-[var(--admin-radius-lg)] flex items-center justify-center"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-[var(--admin-radius-md)] sm:rounded-[var(--admin-radius-lg)] flex items-center justify-center"
           style={{ backgroundColor: `${color}0A`, border: `1px solid ${color}15` }}
         >
           <span
-            className="material-symbols-outlined text-[18px]"
+            className="material-symbols-outlined text-[16px] sm:text-[18px]"
             style={{ color }}
           >
             {icon}
@@ -111,9 +137,9 @@ export function StatCard({
           <span
             className={`admin-badge ${
               changeType === "up" ? "admin-badge-success" : "admin-badge-error"
-            }`}
+            } text-[8px] sm:text-[9px]`}
           >
-            <span className="material-symbols-outlined text-[10px] font-bold">
+            <span className="material-symbols-outlined text-[9px] sm:text-[10px] font-bold">
               {changeType === "up" ? "trending_up" : "trending_down"}
             </span>
             {change}
@@ -121,17 +147,17 @@ export function StatCard({
         )}
       </div>
 
-      <div className="flex items-end justify-between pl-2">
-        <div>
-          <p className="text-[24px] font-bold text-[var(--admin-text-primary)] leading-none tracking-tight">
+      <div className="flex items-end justify-between pl-0.5 sm:pl-2">
+        <div className="min-w-0">
+          <p className="text-[18px] sm:text-[24px] font-bold text-[var(--admin-text-primary)] leading-none tracking-tight">
             {value}
           </p>
-          <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-2 font-semibold tracking-wider uppercase">
+          <p className="text-[9px] sm:text-[10px] text-[var(--admin-text-tertiary)] mt-1.5 sm:mt-2 font-bold tracking-wider uppercase truncate" title={label}>
             {label}
           </p>
         </div>
         {sparklinePath && (
-          <div className="w-14 h-7 text-[var(--admin-border-strong)] group-hover:text-[var(--admin-accent)] transition-colors duration-300 shrink-0">
+          <div className="w-10 h-5 sm:w-14 sm:h-7 text-[var(--admin-border-strong)] group-hover:text-[var(--admin-accent)] transition-colors duration-300 shrink-0">
             <svg className="w-full h-full" viewBox="0 0 100 30" fill="none">
               <path d={sparklinePath} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -361,7 +387,7 @@ export function PeriodSelector({ periods = ["weekly", "monthly", "yearly"], valu
 // ═══════════════════════════════════════════════════════════════
 export function FilterBar({ filters, value, onChange, counts, className = "" }) {
   return (
-    <div className={`flex gap-2 overflow-x-auto pb-1 scrollbar-hide scroll-smooth ${className}`}>
+    <div className={`flex gap-2 overflow-x-auto pb-1 scrollbar-hide scroll-smooth admin-filter-bar ${className}`}>
       {filters.map((f) => (
         <button
           key={f}
@@ -530,7 +556,7 @@ export function SkeletonDashboard() {
         </div>
         <AdminSkeleton className="w-40 h-9 rounded-[var(--admin-radius-lg)]" />
       </div>
-      <div className="admin-grid-stats">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[1, 2, 3, 4].map((i) => (
           <SkeletonCard key={i} />
         ))}
@@ -729,33 +755,49 @@ export function AdminTextarea({
 // ═══════════════════════════════════════════════════════════════
 // ADMIN TOGGLE — accessible toggle switch
 // ═══════════════════════════════════════════════════════════════
-export function AdminToggle({ label, description, checked, onChange, disabled = false }) {
+export function AdminToggle({ 
+  label, 
+  description, 
+  checked, 
+  onChange, 
+  disabled = false,
+  size = "md",
+  variant = "accent",
+  activeBgColor = null,
+  className = "",
+  ...props
+}) {
+  const isSm = size === "sm";
+  const translateDistance = 16; // both sm and md translate by 16px as per visual math!
+
+  // Active track styling override (if any custom color is passed, e.g. activeBgColor)
+  const trackStyle = activeBgColor && checked ? { backgroundColor: activeBgColor } : {};
+
   const switchEl = (
     <button
       role="switch"
       type="button"
       aria-checked={!!checked}
-      aria-label={label || "Toggle"}
+      aria-label={label || props["aria-label"] || "Toggle"}
       onClick={disabled ? undefined : onChange}
       disabled={disabled}
-      className={`admin-toggle ${
-        disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-      }`}
-      style={{
-        backgroundColor: checked ? "var(--admin-accent)" : "var(--admin-border-strong)",
-      }}
+      className={`admin-toggle-btn ${
+        isSm ? "touch-target-sm" : "touch-target-md"
+      } ${className}`}
+      {...props}
     >
-      <motion.div
-        animate={{ x: checked ? 18 : 0 }}
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        style={{
-          width: "18px",
-          height: "18px",
-          borderRadius: "50%",
-          background: "white",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-        }}
-      />
+      <div 
+        className={`admin-toggle-track ${isSm ? "size-sm" : "size-md"}`}
+        data-state={checked ? "checked" : "unchecked"}
+        data-variant={variant}
+        style={trackStyle}
+      >
+        <motion.div
+          animate={{ x: checked ? translateDistance : 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          className={`admin-toggle-thumb ${isSm ? "size-sm" : "size-md"}`}
+        />
+      </div>
     </button>
   );
 
@@ -779,7 +821,6 @@ export function AdminToggle({ label, description, checked, onChange, disabled = 
     </div>
   );
 }
-
 // ═══════════════════════════════════════════════════════════════
 // CHART COLOR PALETTE
 // ═══════════════════════════════════════════════════════════════

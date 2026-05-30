@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { SiriLogo } from "../ui/SiriLogo";
 
 export function CheckoutNavbar() {
   return (
@@ -23,9 +24,7 @@ export function CheckoutNavbar() {
         {/* Center: Branding (Visible on sm+) */}
         <div className="hidden md:block flex-1 text-center">
           <Link to="/" className="inline-block group">
-            <span className="font-display text-xl font-bold tracking-[0.2em] text-on-surface group-hover:text-primary transition-colors">
-              SIRI ARTS
-            </span>
+            <SiriLogo size="24px" showSubtitle={false} />
           </Link>
         </div>
 

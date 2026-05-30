@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Barcode from 'react-barcode';
+import { OptimizedImage } from '../ui/OptimizedImage';
 
 export default function OrdersTab({
   orderFilter,
@@ -107,8 +108,7 @@ export default function OrdersTab({
                     const prodVariant = item.variant || "Default";
                     return (
                       <div key={itemIdx} className="flex gap-4 items-start pb-2 border-b border-dashed border-outline-variant/10 last:border-0 last:pb-0">
-                        <img
-                          onError={handleImageError}
+                        <OptimizedImage
                           src={prodImage}
                           alt="Traditional wedding event decoration"
                           className="w-14 h-16 bg-surface-container rounded object-cover flex-shrink-0 border border-outline-variant/20 shadow-2xs"

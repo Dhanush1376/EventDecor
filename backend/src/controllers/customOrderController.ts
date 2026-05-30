@@ -107,7 +107,7 @@ export const submitCustomOrder = asyncHandler(async (req: any, res: Response) =>
 // 2. Get My Custom Orders (Customer)
 export const getMyCustomOrders = asyncHandler(async (req: any, res: Response) => {
   const email = req.user?.email;
-  const orders = await CustomOrder.find({ customerEmail: email }).sort({ createdAt: -1 });
+  const orders = await CustomOrder.find({ customerEmail: email }).sort({ createdAt: -1 }).lean();
   res.status(200).json(new ApiResponse(true, 'My custom orders synced', orders));
 });
 
@@ -163,7 +163,7 @@ export const adminGetCustomOrders = asyncHandler(async (req: Request, res: Respo
   }
 
   const [orders, total] = await Promise.all([
-    CustomOrder.find(filterQuery).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    CustomOrder.find(filterQuery).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     CustomOrder.countDocuments(filterQuery)
   ]);
 

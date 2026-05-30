@@ -518,7 +518,7 @@ export function AdminTeam() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-[460px] bg-[var(--admin-surface)] h-full shadow-[var(--admin-shadow-2xl)] p-8 flex flex-col justify-between border-l border-[var(--admin-border)] overflow-hidden"
+              className="relative w-full max-w-[460px] bg-[var(--admin-surface)] h-full shadow-[var(--admin-shadow-2xl)] p-5 sm:p-8 flex flex-col justify-between border-l border-[var(--admin-border)] overflow-hidden"
             >
               <div className="space-y-6 overflow-y-auto custom-scrollbar">
                 <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-5">

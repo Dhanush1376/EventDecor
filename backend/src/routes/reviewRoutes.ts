@@ -10,6 +10,8 @@ import {
   canReview,
 } from '../controllers/reviewController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
+import { validateRequest } from '../middleware/zodValidationMiddleware';
+import { createReviewSchema } from '../validators/reviewValidator';
 
 const router = Router();
 
@@ -19,7 +21,7 @@ router.get('/product/:productId', getProductReviews);
 router.post('/:id/helpful', requireAuth, incrementHelpful);
 
 // Authenticated User Routes
-router.post('/', requireAuth, createReview);
+router.post('/', requireAuth, validateRequest(createReviewSchema), createReview);
 router.get('/can-review/:productId', requireAuth, canReview);
 
 // Admin Routes

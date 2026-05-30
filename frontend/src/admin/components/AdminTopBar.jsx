@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdmin } from "../context/AdminContext";
 import { useAuth } from "../../context/AuthContext";
+import { AdminToggle } from "./AdminUIKit";
 
 export function AdminTopBar() {
   const {
@@ -95,7 +96,7 @@ export function AdminTopBar() {
           {/* Search Trigger — Desktop */}
           <button
             onClick={() => setSearchPaletteOpen(true)}
-            className="hidden md:flex items-center gap-2.5 flex-1 max-w-[340px] lg:max-w-[420px] px-3 py-2 rounded-[var(--admin-radius-lg)] cursor-pointer transition-all duration-150 text-left min-h-0 group"
+            className="hidden md:flex items-center gap-2.5 flex-1 max-w-[240px] xl:max-w-[380px] px-3 py-2 rounded-[var(--admin-radius-lg)] cursor-pointer transition-all duration-150 text-left min-h-0 group"
             style={{
               background: "var(--admin-bg-subtle)",
               border: "1px solid var(--admin-border-subtle)",
@@ -131,18 +132,10 @@ export function AdminTopBar() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Add Product — Desktop */}
-          <button
-            onClick={() => navigate("/admin/products/add")}
-            className="hidden sm:flex admin-btn admin-btn-outline admin-btn-sm gap-1 min-h-[32px]"
-          >
-            <span className="material-symbols-outlined text-[14px]">add</span>
-            Add Product
-          </button>
 
           {/* Auto-Publish Toggle — Desktop */}
           <div
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-[var(--admin-radius-full)] select-none"
+            className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-[var(--admin-radius-full)] select-none"
             style={{
               background: "var(--admin-surface-muted)",
               border: "1px solid var(--admin-border-subtle)",
@@ -154,28 +147,17 @@ export function AdminTopBar() {
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">
               Auto-Publish
             </span>
-            <button
-              onClick={toggleAutoPublish}
-              className="relative w-9 h-5 rounded-full transition-colors duration-200 cursor-pointer min-h-0 p-0"
-              style={{
-                background: autoPublish ? "var(--admin-accent)" : "var(--admin-border-strong)",
-              }}
+            <AdminToggle
+              checked={autoPublish}
+              onChange={toggleAutoPublish}
+              size="sm"
               aria-label="Toggle Auto-Publish"
-              role="switch"
-              aria-checked={autoPublish}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200 shadow-sm"
-                style={{
-                  transform: autoPublish ? "translateX(16px)" : "translateX(0)",
-                }}
-              />
-            </button>
+            />
           </div>
 
           {/* Role Badge — Desktop */}
           <div
-            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--admin-radius-full)] select-none"
+            className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--admin-radius-full)] select-none"
             title="Simulating Portal Access Level"
             style={{
               background: "var(--admin-accent-light)",
@@ -317,7 +299,7 @@ export function AdminTopBar() {
               >
                 <span className="text-white text-[11px] font-bold">{initials}</span>
               </div>
-              <div className="hidden lg:block text-left pr-1">
+              <div className="hidden xl:block text-left pr-1">
                 <p className="text-[12px] font-semibold text-[var(--admin-text-primary)] leading-tight">
                   {user?.name || "Administrator"}
                 </p>
@@ -325,7 +307,7 @@ export function AdminTopBar() {
                   {user?.role || "Staff"}
                 </p>
               </div>
-              <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)] hidden lg:block">
+              <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)] hidden xl:block">
                 expand_more
               </span>
             </button>

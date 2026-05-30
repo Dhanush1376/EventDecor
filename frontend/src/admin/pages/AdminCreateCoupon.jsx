@@ -387,7 +387,7 @@ export function AdminCreateCoupon() {
               <label className="admin-label">
                 Select Eligible Storefront Categories ({formData.targetCategories.length} Selected)
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {AVAILABLE_CATEGORIES.map((cat) => {
                   const isChecked = formData.targetCategories.includes(cat);
                   return (
@@ -415,7 +415,7 @@ export function AdminCreateCoupon() {
               <label className="admin-label">
                 Select Eligible Loyalty Membership Tiers ({formData.targetUserTiers.length} Selected)
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 {AVAILABLE_TIERS.map((tier) => {
                   const isChecked = formData.targetUserTiers.includes(tier);
                   return (

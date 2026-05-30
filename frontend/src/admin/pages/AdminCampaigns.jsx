@@ -184,21 +184,24 @@ export function AdminCampaigns() {
       initial="hidden"
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1300px] mx-auto space-y-6 pb-20  text-[var(--admin-text-primary)]"
+      className="max-w-[1300px] mx-auto space-y-6 pb-20 text-[var(--admin-text-primary)]"
     >
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between border-b border-[var(--admin-border-subtle)] pb-4 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[var(--admin-border-subtle)] pb-5 gap-4">
         <div>
-          <h2 className="text-[26px] font-bold text-[var(--admin-text-primary)] font-display">
+          <h2 className="text-[20px] sm:text-[26px] font-bold text-[var(--admin-text-primary)] font-display tracking-tight">
             Marketing Campaigns & Curation
           </h2>
-          <p className="text-[13px] text-[var(--admin-text-tertiary)]">
+          <p className="text-[12px] sm:text-[13px] text-[var(--admin-text-tertiary)] mt-1 font-medium leading-normal">
             Administer customer email dispatches, draft holiday newsletters, and track live link-click open rates
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-[var(--admin-surface-muted)] p-1 rounded-full text-xs">
+        <div className="flex items-center gap-3 self-start sm:self-auto w-full sm:w-auto">
+          <div
+            className="flex overflow-x-auto gap-1.5 bg-[var(--admin-surface-muted)] p-1 rounded-full text-xs -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none flex-nowrap w-full sm:w-auto"
+            style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+          >
             {[
               { id: "broadcasts", label: "Broadcast Hub", icon: "campaign" },
               { id: "templates", label: "Design Curation", icon: "brush" },
@@ -210,7 +213,7 @@ export function AdminCampaigns() {
                   setActiveTab(tab.id);
                   setIsEditingTemplate(null);
                 }}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-label uppercase text-[9px] tracking-wider font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full font-label uppercase text-[9px] tracking-wider font-bold transition-all duration-300 cursor-pointer whitespace-nowrap shrink-0 snap-align-start ${
                   activeTab === tab.id
                     ? "bg-[var(--admin-surface)] text-black shadow-sm"
                     : "text-black/55 hover:text-black"
@@ -228,22 +231,22 @@ export function AdminCampaigns() {
       {analytics && activeTab === "broadcasts" && (
         <motion.div 
           variants={fadeUp}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
         >
           {[
-            { label: "Total Emails Dispatched", value: analytics.overview.totalDispatched, sub: "All time transaction + marketing", icon: "mail" },
+            { label: "Total Emails Sent", value: analytics.overview.totalDispatched, sub: "All transactional + marketing", icon: "mail" },
             { label: "Unique Opens", value: analytics.overview.totalOpened, sub: `Open rate of ${analytics.overview.openRate}`, icon: "drafts" },
-            { label: "Click redrafts", value: analytics.overview.totalClicks, sub: "Secure tracker redirects", icon: "ads_click" },
-            { label: "Subscribers Opted-in", value: analytics.overview.newsletterSubscribers, sub: `Across ${analytics.overview.visitorConsentProfiles} consent keys`, icon: "mark_email_read" }
+            { label: "Click Tracking", value: analytics.overview.totalClicks, sub: "Secure tracker redirects", icon: "ads_click" },
+            { label: "Opted-in Profiles", value: analytics.overview.newsletterSubscribers, sub: `Across ${analytics.overview.visitorConsentProfiles} keys`, icon: "mark_email_read" }
           ].map((item, idx) => (
-            <div key={idx} className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-5 rounded-3xl shadow-sm flex items-start gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-[var(--admin-surface-muted)] flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-black text-lg">{item.icon}</span>
+            <div key={idx} className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-4 sm:p-5 rounded-[var(--admin-radius-lg)] shadow-sm flex items-start gap-2.5 sm:gap-4 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[var(--admin-surface-muted)] flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-black text-base sm:text-lg">{item.icon}</span>
               </div>
-              <div>
-                <span className="text-[9px] text-black/45 font-label uppercase tracking-widest block font-sans">{item.label}</span>
-                <h4 className="text-xl font-bold text-black font-display mt-0.5">{item.value}</h4>
-                <p className="text-[10px] text-black/40 font-light mt-0.5">{item.sub}</p>
+              <div className="min-w-0">
+                <span className="text-[8px] sm:text-[9px] text-black/45 font-label uppercase tracking-widest block font-sans truncate">{item.label}</span>
+                <h4 className="text-base sm:text-xl font-bold text-black font-display mt-0.5 truncate">{item.value}</h4>
+                <p className="text-[8px] sm:text-[10px] text-black/40 font-light mt-0.5 leading-normal truncate">{item.sub}</p>
               </div>
             </div>
           ))}
@@ -263,7 +266,7 @@ export function AdminCampaigns() {
             className="space-y-4"
           >
             {campaigns.length === 0 ? (
-              <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-12 rounded-3xl text-center flex flex-col items-center justify-center shadow-sm">
+              <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-12 rounded-[var(--admin-radius-lg)] text-center flex flex-col items-center justify-center shadow-sm">
                 <span className="material-symbols-outlined text-black/20 text-[48px] mb-2">search_off</span>
                 <h3 className="text-sm font-bold text-black font-display">Data Not Found</h3>
                 <p className="text-[12px] text-black/40 font-light mt-1 mb-4">No campaigns designed yet. You can easily craft a customized broadcast using our pre-seeded premium templates.</p>
@@ -275,89 +278,169 @@ export function AdminCampaigns() {
                 </button>
               </div>
             ) : (
-              <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-3xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-[var(--admin-bg-subtle)] border-b border-[var(--admin-border-subtle)] text-black/55 font-label uppercase text-[9px] tracking-wider font-bold">
-                        <th className="p-4 font-semibold">Campaign Details</th>
-                        <th className="p-4 font-semibold">Audience Rules</th>
-                        <th className="p-4 font-semibold">Current Status</th>
-                        <th className="p-4 font-semibold text-center">Analytics / Logs</th>
-                        <th className="p-4 font-semibold text-right">Dispatch Control</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-black/5">
-                      {campaigns.map((camp) => (
-                        <tr key={camp._id} className="hover:bg-[var(--admin-bg-subtle)]/50 transition-colors">
-                          <td className="p-4">
-                            <strong className="text-black font-bold text-sm block font-display">{camp.title}</strong>
-                            <span className="text-[11px] text-black/45 block font-light mt-0.5">Subject: {camp.subject}</span>
-                          </td>
-                          <td className="p-4">
-                            <span className="text-[9px] bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] font-label uppercase tracking-widest font-bold px-2.5 py-0.5 rounded-full">
-                              {camp.targetAudience.role}
-                            </span>
-                            {camp.targetAudience.consentedOnly && (
-                              <span className="text-[9px] text-black/60 font-medium block mt-1">✦ Checked Consent Only</span>
-                            )}
-                          </td>
-                          <td className="p-4">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${
-                              camp.status === "sent" ? "bg-[var(--admin-success-light)] text-[var(--admin-success)]" :
-                              camp.status === "sending" ? "bg-amber-50 text-amber-700 animate-pulse" :
-                              camp.status === "scheduled" ? "bg-[var(--admin-surface-muted)] text-[var(--admin-info)]" :
-                              "bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]"
-                            }`}>
-                              <span className="w-1 h-1 rounded-full bg-current" />
-                              {camp.status}
-                            </span>
-                            {camp.sentAt && (
-                              <span className="text-[9px] text-black/40 block mt-1">{new Date(camp.sentAt).toLocaleString()}</span>
-                            )}
-                          </td>
-                          <td className="p-4">
-                            {camp.status === "draft" ? (
-                              <p className="text-black/40 font-light italic text-center">Awaiting send triggers</p>
-                            ) : (
-                              <div className="flex items-center justify-center gap-6">
-                                <div className="text-center">
-                                  <strong className="text-black font-bold text-sm block font-mono">{camp.stats.deliveredCount}</strong>
-                                  <span className="text-[9px] text-black/40 block">Sent</span>
-                                </div>
-                                <div className="text-center">
-                                  <strong className="text-black font-bold text-sm block font-mono">{camp.stats.openCount}</strong>
-                                  <span className="text-[9px] text-black/40 block">Opened</span>
-                                </div>
-                                <div className="text-center">
-                                  <strong className="text-[var(--admin-text-secondary)] font-bold text-sm block font-mono">{camp.stats.clickCount}</strong>
-                                  <span className="text-[9px] text-black/40 block">Clicks</span>
-                                </div>
-                              </div>
-                            )}
-                          </td>
-                          <td className="p-4 text-right">
-                            {camp.status === "draft" && (
-                              <button
-                                onClick={() => handleSendTrigger(camp._id)}
-                                className="bg-black hover:bg-[var(--admin-text-primary)] text-white rounded-full px-4 py-2 font-label uppercase text-[9px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95"
-                              >
-                                Trigger Send
-                              </button>
-                            )}
-                            {camp.status === "sent" && (
-                              <span className="text-[9px] text-black/40 font-medium font-sans">Broadcast Finished</span>
-                            )}
-                            {camp.status === "sending" && (
-                              <span className="text-[9px] text-amber-600 font-bold animate-pulse font-sans">Processing...</span>
-                            )}
-                          </td>
+              <>
+                {/* Desktop table view */}
+                <div className="hidden md:block bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs min-w-[800px]">
+                      <thead>
+                        <tr className="bg-[var(--admin-bg-subtle)] border-b border-[var(--admin-border-subtle)] text-black/55 font-label uppercase text-[9px] tracking-wider font-bold">
+                          <th className="p-4 font-semibold">Campaign Details</th>
+                          <th className="p-4 font-semibold">Audience Rules</th>
+                          <th className="p-4 font-semibold">Current Status</th>
+                          <th className="p-4 font-semibold text-center">Analytics / Logs</th>
+                          <th className="p-4 font-semibold text-right">Dispatch Control</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-black/5">
+                        {campaigns.map((camp) => (
+                          <tr key={camp._id} className="hover:bg-[var(--admin-bg-subtle)]/50 transition-colors">
+                            <td className="p-4">
+                              <strong className="text-black font-bold text-sm block font-display">{camp.title}</strong>
+                              <span className="text-[11px] text-black/45 block font-light mt-0.5">Subject: {camp.subject}</span>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-[9px] bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] font-label uppercase tracking-widest font-bold px-2.5 py-0.5 rounded-full">
+                                {camp.targetAudience.role}
+                              </span>
+                              {camp.targetAudience.consentedOnly && (
+                                <span className="text-[9px] text-black/60 font-medium block mt-1">✦ Checked Consent Only</span>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${
+                                camp.status === "sent" ? "bg-[var(--admin-success-light)] text-[var(--admin-success)]" :
+                                camp.status === "sending" ? "bg-amber-50 text-amber-700 animate-pulse" :
+                                camp.status === "scheduled" ? "bg-[var(--admin-surface-muted)] text-[var(--admin-info)]" :
+                                "bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]"
+                              }`}>
+                                <span className="w-1 h-1 rounded-full bg-current" />
+                                {camp.status}
+                              </span>
+                              {camp.sentAt && (
+                                <span className="text-[9px] text-black/40 block mt-1">{new Date(camp.sentAt).toLocaleString()}</span>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              {camp.status === "draft" ? (
+                                <p className="text-black/40 font-light italic text-center">Awaiting send triggers</p>
+                              ) : (
+                                <div className="flex items-center justify-center gap-6">
+                                  <div className="text-center">
+                                    <strong className="text-black font-bold text-sm block font-mono">{camp.stats.deliveredCount}</strong>
+                                    <span className="text-[9px] text-black/40 block">Sent</span>
+                                  </div>
+                                  <div className="text-center">
+                                    <strong className="text-black font-bold text-sm block font-mono">{camp.stats.openCount}</strong>
+                                    <span className="text-[9px] text-black/40 block">Opened</span>
+                                  </div>
+                                  <div className="text-center">
+                                    <strong className="text-[var(--admin-text-secondary)] font-bold text-sm block font-mono">{camp.stats.clickCount}</strong>
+                                    <span className="text-[9px] text-black/40 block">Clicks</span>
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-4 text-right">
+                              {camp.status === "draft" && (
+                                <button
+                                  onClick={() => handleSendTrigger(camp._id)}
+                                  className="bg-black hover:bg-[var(--admin-text-primary)] text-white rounded-full px-4 py-2 font-label uppercase text-[9px] tracking-widest font-bold transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95"
+                                >
+                                  Trigger Send
+                                </button>
+                              )}
+                              {camp.status === "sent" && (
+                                <span className="text-[9px] text-black/40 font-medium font-sans">Broadcast Finished</span>
+                              )}
+                              {camp.status === "sending" && (
+                                <span className="text-[9px] text-amber-600 font-bold animate-pulse font-sans">Processing...</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+
+                {/* Mobile Cards deck list */}
+                <div className="block md:hidden space-y-3">
+                  {campaigns.map((camp) => (
+                    <div key={camp._id} className="admin-card p-4 hover:border-[var(--admin-border-strong)] transition-all duration-300 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <strong className="text-black font-bold text-[13px] block font-display truncate">{camp.title}</strong>
+                          <span className="text-[10px] text-black/45 block truncate mt-0.5">Subject: {camp.subject}</span>
+                        </div>
+                        
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest shrink-0 ${
+                          camp.status === "sent" ? "bg-[var(--admin-success-light)] text-[var(--admin-success)]" :
+                          camp.status === "sending" ? "bg-amber-50 text-amber-700 animate-pulse" :
+                          camp.status === "scheduled" ? "bg-[var(--admin-surface-muted)] text-[var(--admin-info)]" :
+                          "bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]"
+                        }`}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                          {camp.status}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-b border-[var(--admin-border-subtle)] py-2 text-[10px]">
+                        <div>
+                          <span className="text-[8px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block mb-0.5">Audience Target</span>
+                          <span className="text-[9px] bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] font-label uppercase tracking-widest font-bold px-2 py-0.5 rounded-full">
+                            {camp.targetAudience.role}
+                          </span>
+                        </div>
+                        
+                        {camp.targetAudience.consentedOnly && (
+                          <span className="text-[9px] text-[var(--admin-success)] font-bold flex items-center gap-0.5">
+                            <span className="material-symbols-outlined text-[12px]">check_circle</span> Consent Check
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        {camp.status === "draft" ? (
+                          <span className="text-[10px] text-black/40 font-light italic">Draft Campaign</span>
+                        ) : (
+                          <div className="flex gap-4 text-center">
+                            <div>
+                              <strong className="text-black font-bold text-[12px] block font-mono leading-none">{camp.stats.deliveredCount}</strong>
+                              <span className="text-[8px] text-black/40 block mt-0.5 uppercase">Sent</span>
+                            </div>
+                            <div>
+                              <strong className="text-black font-bold text-[12px] block font-mono leading-none">{camp.stats.openCount}</strong>
+                              <span className="text-[8px] text-black/40 block mt-0.5 uppercase">Opens</span>
+                            </div>
+                            <div>
+                              <strong className="text-[var(--admin-text-secondary)] font-bold text-[12px] block font-mono leading-none">{camp.stats.clickCount}</strong>
+                              <span className="text-[8px] text-black/40 block mt-0.5 uppercase">Clicks</span>
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          {camp.status === "draft" && (
+                            <button
+                              onClick={() => handleSendTrigger(camp._id)}
+                              className="bg-black hover:bg-[var(--admin-text-primary)] text-white rounded-full px-3 py-1.5 font-label uppercase text-[9px] tracking-widest font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+                            >
+                              Trigger Send
+                            </button>
+                          )}
+                          {camp.status === "sent" && (
+                            <span className="text-[9px] text-black/40 font-semibold uppercase tracking-wider block font-sans">Finished</span>
+                          )}
+                          {camp.status === "sending" && (
+                            <span className="text-[9px] text-amber-600 font-bold animate-pulse uppercase tracking-wider block font-sans">Sending...</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </motion.div>
         ) : activeTab === "templates" ? (
@@ -369,7 +452,7 @@ export function AdminCampaigns() {
             className="grid grid-cols-1 lg:grid-cols-3 gap-6"
           >
             {/* Template Form / Editor */}
-            <div className="lg:col-span-1 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-3xl space-y-4 shadow-sm self-start">
+            <div className="lg:col-span-1 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-[var(--admin-radius-lg)] space-y-4 shadow-sm self-start">
               <div className="flex items-center justify-between border-b border-[var(--admin-border-subtle)] pb-2">
                 <h3 className="font-display font-bold text-base text-black">
                   {isEditingTemplate ? "Edit Template Copies" : "Seed Custom Design"}
@@ -454,7 +537,7 @@ export function AdminCampaigns() {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {templates.map((temp) => (
-                  <div key={temp._id} className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-3xl p-5 flex flex-col justify-between shadow-sm">
+                  <div key={temp._id} className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-5 flex flex-col justify-between shadow-sm">
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[9px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-black/55 font-label uppercase tracking-widest px-2.5 py-0.5 rounded-full">
@@ -512,7 +595,7 @@ export function AdminCampaigns() {
             className="grid grid-cols-1 lg:grid-cols-2 gap-6"
           >
             {/* Form */}
-            <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-3xl shadow-sm self-start space-y-4">
+            <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-[var(--admin-radius-lg)] shadow-sm self-start space-y-4">
               <h3 className="font-display font-bold text-base text-black border-b border-[var(--admin-border-subtle)] pb-2">
                 Draft Marketing Campaign
               </h3>
@@ -542,7 +625,7 @@ export function AdminCampaigns() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Audience Type</label>
                     <select
@@ -604,7 +687,7 @@ export function AdminCampaigns() {
             </div>
 
             {/* Live Canvas Preview */}
-            <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-3xl shadow-sm flex flex-col justify-between">
+            <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-6 rounded-[var(--admin-radius-lg)] shadow-sm flex flex-col justify-between">
               <div>
                 <h3 className="font-display font-bold text-base text-black border-b border-[var(--admin-border-subtle)] pb-2 mb-4">
                   Visual Canvas Preview

@@ -133,7 +133,7 @@ export function AdminCoupons() {
                   !c.isActive || isExpired ? "opacity-60" : ""
                 }`}
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-11 h-11 rounded-[var(--admin-radius-lg)] flex items-center justify-center shrink-0 ${

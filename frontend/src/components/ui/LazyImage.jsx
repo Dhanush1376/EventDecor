@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { OptimizedImage } from "./OptimizedImage";
 
 /**
  * Enhanced lazy image component with IntersectionObserver,
@@ -65,14 +66,14 @@ export function LazyImage({
 
       {/* Actual image — only render src when in view */}
       {isInView && !hasError && (
-        <img
+        <OptimizedImage
           src={src}
           alt={alt}
           width={width}
           height={height}
           sizes={sizes}
           loading={eager ? "eager" : "lazy"}
-          decoding="async"
+          priority={eager}
           onLoad={() => setIsLoaded(true)}
           onError={() => {
             setHasError(true);

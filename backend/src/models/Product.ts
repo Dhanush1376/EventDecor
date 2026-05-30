@@ -58,7 +58,7 @@ const ProductSchema: Schema = new Schema(
 );
 
 // Indexes
-ProductSchema.index({ title: 'text', description: 'text' });
+ProductSchema.index({ title: 'text', description: 'text', category: 'text', tags: 'text', teluguTitle: 'text' }, { name: 'FullTextIndex', weights: { title: 10, category: 5, tags: 5, description: 1, teluguTitle: 8 } });
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ featured: 1 });
 ProductSchema.index({ isActive: 1 });

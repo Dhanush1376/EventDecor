@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useWishlistState, useWishlistDispatch } from "../../context/WishlistContext";
 import { useCartDispatch } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
-import { CloudinaryImage } from "./CloudinaryImage";
+import { OptimizedImage } from "./OptimizedImage";
 import { prefetchManager } from "../../utils/prefetchManager";
 
 export const ProductCard = React.memo(function ProductCard({
@@ -130,13 +130,12 @@ export const ProductCard = React.memo(function ProductCard({
       {/* 1. VISUAL CANVAS */}
       <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5">
         <Link to={`/product/${productId}`} className="block h-full">
-          <CloudinaryImage
+          <OptimizedImage
             src={imageSrc}
             alt={title}
             className="transition-all duration-[1.5s] cubic-bezier(0.2, 1, 0.2, 1) group-hover:scale-110"
-            containerClassName="w-full h-full"
             loading={eager ? "eager" : "lazy"}
-            fetchPriority={eager ? "high" : "auto"}
+            priority={eager}
             width={400}
             height={500}
             sizes={sizes}

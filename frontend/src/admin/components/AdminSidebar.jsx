@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdmin } from "../context/AdminContext";
+import { SiriLogo } from "../../components/ui/SiriLogo";
 
 const navSections = [
   {
@@ -128,9 +129,7 @@ export function AdminSidebar() {
                 exit={{ opacity: 0, x: -8, width: 0 }}
                 className="flex flex-col whitespace-nowrap overflow-hidden"
               >
-                <span className="text-[13px] font-bold text-[var(--admin-text-primary)] tracking-tight">
-                  Siri Arts & Crafts
-                </span>
+                <SiriLogo size="20px" showSubtitle={false} />
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-[9px] tracking-wider uppercase text-[var(--admin-text-tertiary)] font-medium">
                     Enterprise
@@ -339,9 +338,9 @@ export function AdminSidebar() {
               <div className="absolute top-3 right-3 z-10">
                 <button
                   onClick={() => setSidebarMobileOpen(false)}
-                  className="p-1.5 rounded-[var(--admin-radius-md)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] cursor-pointer min-h-0"
+                  className="p-2.5 rounded-[var(--admin-radius-md)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] cursor-pointer min-h-0"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
               </div>
               {sidebarContent}
@@ -352,7 +351,7 @@ export function AdminSidebar() {
 
       {/* Mobile Bottom Nav */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 pb-safe-area-inset-bottom"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 admin-mobile-bottom-nav"
         style={{
           minHeight: "var(--admin-bottom-nav-height)",
           background: "rgba(255,255,255,0.92)",

@@ -232,7 +232,7 @@ export function AdminOrders() {
       {/* Real-time Logistics & COD Remittance Reconciliation Ledger */}
       <motion.div variants={fadeUp} className="admin-card overflow-hidden text-left relative p-0">
         <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[var(--admin-border-subtle)]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[var(--admin-border-subtle)]">
           <div className="p-5 space-y-1">
             <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">COD Order Volume</span>
             <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">{formatCurrency(codStats.totalVolume)}</p>
@@ -446,7 +446,7 @@ export function AdminOrders() {
                 const statusOrders = filteredOrders.filter((o) => o.status === status);
 
                 return (
-                  <div key={status} className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[600px]">
+                  <div key={status} className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[400px] md:h-[600px] admin-kanban-column">
                     {/* Column Header */}
                     <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--admin-border-subtle)] shrink-0 select-none">
                       <div className="flex items-center gap-2 text-left">
@@ -709,7 +709,7 @@ export function AdminOrders() {
               </div>
 
               {/* Drawer Footer Controls */}
-              <div className="p-5 bg-[var(--admin-surface-muted)] border-t border-[var(--admin-border)] shrink-0 flex flex-col gap-4 text-left">
+              <div className="p-5 bg-[var(--admin-surface-muted)] border-t border-[var(--admin-border)] shrink-0 flex flex-col gap-4 text-left admin-drawer-footer">
                 <div className="flex-1">
                   <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
                     Direct Status Override

@@ -5,10 +5,13 @@ import {
   ProductCardSkeleton,
   ProductDetailSkeleton,
   HomeSkeleton,
+  ProductListSkeleton,
+  CollectionSkeleton,
   CartSkeleton, 
   CheckoutStepSkeleton, 
   DashboardSkeleton, 
-  GallerySkeleton, 
+  GallerySkeleton,
+  GalleryDetailSkeleton,
   WishlistPageSkeleton, 
   EventDetailSkeleton, 
   ContactSkeleton,
@@ -21,17 +24,19 @@ import {
   LocationLandingSkeleton,
   OrderSuccessSkeleton,
   OrderTrackingSkeleton,
-  PolicySkeleton,
   AuthSkeleton
 } from "./Skeleton";
 
 export function getRouteSkeletonVariant(path) {
   if (path === "/") return "home";
-  if (path.startsWith("/product/")) return "detail";
+  if (path === "/collections") return "product-list";
+  if (path.match(/^\/collections\/[^/]+$/)) return "collection-detail";
+  if (path.startsWith("/product")) return "product-detail";
   if (path.startsWith("/collections") || path.startsWith("/search")) return "product-list";
   if (path === "/cart") return "cart";
   if (path === "/checkout") return "checkout";
   if (path.startsWith("/dashboard")) return "dashboard";
+  if (path.match(/^\/gallery\/[^/]+$/)) return "gallery-detail";
   if (path.startsWith("/gallery")) return "gallery";
   if (path === "/wishlist") return "wishlist";
   if (path === "/events/collections") return "event-collections";
@@ -53,23 +58,16 @@ export function getRouteSkeletonVariant(path) {
 
 /** Lightweight route transition skeleton — avoids blank screens during lazy route loads. */
 export function RouteSkeleton({ variant = "page" }) {
-  if (variant === "product-list") {
-    return (
-      <div className="max-w-[1440px] mx-auto px-4 md:px-[clamp(22px,4.5vw,72px)] py-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" aria-busy="true" aria-label="Loading collection">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <ProductCardSkeleton key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  if (variant === "detail") return <ProductDetailSkeleton />;
   if (variant === "home") return <HomeSkeleton />;
+  if (variant === "product-list") return <ProductListSkeleton />;
+  if (variant === "collection-detail") return <CollectionSkeleton />;
+  if (variant === "product-detail") return <ProductDetailSkeleton />;
   
   if (variant === "cart") return <CartSkeleton />;
   if (variant === "checkout") return <div className="max-w-3xl mx-auto pt-8 px-4"><CheckoutStepSkeleton /></div>;
   if (variant === "dashboard") return <DashboardSkeleton />;
   if (variant === "gallery") return <GallerySkeleton />;
+  if (variant === "gallery-detail") return <GalleryDetailSkeleton />;
   if (variant === "wishlist") return <WishlistPageSkeleton />;
   if (variant === "event") return <EventDetailSkeleton />;
   if (variant === "contact") return <ContactSkeleton />;
@@ -84,9 +82,9 @@ export function RouteSkeleton({ variant = "page" }) {
   if (variant === "location") return <LocationLandingSkeleton />;
   if (variant === "order-success") return <OrderSuccessSkeleton />;
   if (variant === "order-tracking") return <OrderTrackingSkeleton />;
-  if (variant === "policy") return <PolicySkeleton />;
+
   if (variant === "auth") return <AuthSkeleton />;
-  if (variant === "admin") return <div className="py-20 flex justify-center"><div className="w-10 h-10 border-4 border-black/10 border-t-black rounded-full animate-spin" /></div>;
+  if (variant === "admin") return <DashboardSkeleton />;
 
   return (
     <>

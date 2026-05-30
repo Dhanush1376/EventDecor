@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { REVIEW_SAMPLE_IMAGES } from "../../constants/placeholderImages";
+import { OptimizedImage } from "../ui/OptimizedImage";
 
 const EXPERIENCE_TYPES = [
   { id: "product", title: "Product Masterpiece", desc: "Handcrafted decor, brass diyas, artisanal trays & divine idola", icon: "diamond" },
@@ -433,7 +434,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                         onClick={() => addSampleMedia(sample.url, "image")}
                         className="group relative aspect-video rounded-xl overflow-hidden border border-[#D4AF37]/30 cursor-pointer shadow-xs"
                       >
-                        <img src={sample.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Sample" />
+                        <OptimizedImage src={sample.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Sample" />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="text-[10px] text-white font-bold bg-[var(--color-gold-dark)] px-2 py-1 rounded-md">＋ Attach</span>
                         </div>
@@ -471,7 +472,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                               <span className="material-symbols-outlined text-2xl">play_circle</span>
                             </div>
                           ) : (
-                            <img src={media.url} className="w-full h-full object-cover" alt="Uploaded Preview" />
+                            <OptimizedImage src={media.url} className="w-full h-full object-cover" alt="Uploaded Preview" />
                           )}
                           <button
                             type="button"
@@ -539,7 +540,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                           {m.type === "video" ? (
                             <div className="w-full h-full bg-[var(--color-gold-dark)] flex items-center justify-center text-white text-xs font-bold">VIDEO</div>
                           ) : (
-                            <img src={m.url} className="w-full h-full object-cover" alt="Preview" />
+                            <OptimizedImage src={m.url} className="w-full h-full object-cover" alt="Preview" />
                           )}
                         </div>
                       ))}

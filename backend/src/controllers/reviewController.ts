@@ -45,7 +45,7 @@ export const getProductReviews = asyncHandler(async (req: Request, res: Response
   const filter: any = { product: req.params.productId, status: 'approved', isMock: { $ne: true } };
 
   const [reviews, totalCount] = await Promise.all([
-    Review.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Review.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     Review.countDocuments(filter),
   ]);
 
@@ -106,7 +106,7 @@ export const getAllReviews = asyncHandler(async (req: Request, res: Response) =>
   if (status) filter.status = status;
 
   const [reviews, totalCount] = await Promise.all([
-    Review.find(filter).populate('product', 'title imageSrc').populate('customer', 'name email').sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Review.find(filter).populate('product', 'title imageSrc').populate('customer', 'name email').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     Review.countDocuments(filter),
   ]);
 
@@ -161,7 +161,7 @@ export const getPublicReviews = asyncHandler(async (req: Request, res: Response)
   const filter = { status: 'approved' as const, isMock: { $ne: true } };
 
   const [reviews, totalCount] = await Promise.all([
-    Review.find(filter).populate('product', 'title imageSrc').sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Review.find(filter).populate('product', 'title imageSrc').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     Review.countDocuments(filter),
   ]);
 

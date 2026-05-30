@@ -224,7 +224,7 @@ export function AdminOrderDetail() {
               <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-1.5">Placed on {order.date}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button 
               onClick={() => {
                 setPrintStickerOnly(false);

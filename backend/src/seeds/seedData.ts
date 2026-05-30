@@ -299,7 +299,7 @@ const seed = async () => {
     // await ContentSection.deleteMany();
     // await User.deleteMany();
     // await Review.deleteMany();
-    // console.log('🗑️ Data cleared (including reviews)');
+    // logger.info('🗑️ Data cleared (including reviews)');
 
     // 1. Create Admin Users
     const defaultPassword = process.env.ADMIN_PASSWORD || 'SuperAdminPassword123!';

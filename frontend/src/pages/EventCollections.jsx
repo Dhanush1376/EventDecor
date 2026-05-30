@@ -10,6 +10,7 @@ import {
   Pagination,
   EventFilterPanel,
   PromoBanner,
+  Skeleton,
 } from "../components/ui";
 import { eventService, productService, couponService } from "../services/domainServices";
 import { SEO } from "../components/seo/SEO";
@@ -585,7 +586,21 @@ export function EventCollections() {
             </div>
 
             <AnimatePresence mode="wait">
-              {filteredEvents.length > 0 ? (
+              {isLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="space-y-4">
+                      <Skeleton className="aspect-[4/3] md:aspect-[3/2] w-full rounded-[16px] md:rounded-[32px]" />
+                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-6 w-full" />
+                      <div className="flex justify-between items-center pt-2">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredEvents.length > 0 ? (
                 <>
                   <motion.div
                     key={`${activeCategory}-${searchQuery}-${JSON.stringify(filters)}`}

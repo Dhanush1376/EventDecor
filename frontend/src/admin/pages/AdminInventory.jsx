@@ -101,7 +101,7 @@ export function AdminInventory() {
       </PageHeader>
 
       {/* Summary Cards */}
-      <motion.div variants={stagger} className="admin-grid-stats" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+      <motion.div variants={stagger} className="grid grid-cols-3 gap-2.5 sm:gap-4">
         <StatCard
           icon="error"
           label="Out of Stock"

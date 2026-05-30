@@ -163,8 +163,6 @@ export class PaymentService {
 
       await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
 
-      await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
-
       await session.commitTransaction();
       session.endSession();
     } catch (error) {

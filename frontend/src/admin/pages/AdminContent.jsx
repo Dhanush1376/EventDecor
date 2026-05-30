@@ -534,60 +534,64 @@ function SectionOrderEditor({ sections, onToggle, onReorder }) {
         {sections?.map((section, idx) => (
           <div
             key={section.id}
-            className={`flex items-center gap-4.5 p-4 rounded-2xl border transition-all duration-300 shadow-[var(--admin-shadow-xs)] hover:shadow-xs ${
+            className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-4.5 p-4 rounded-2xl border transition-all duration-300 shadow-[var(--admin-shadow-xs)] hover:shadow-xs ${
               section.isVisible
                 ?"bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]/35"
                 :"bg-[var(--admin-surface-muted)] border-transparent opacity-60"
             }`}
           >
-            {/* Position Badging */}
-            <div className="w-8 h-8 rounded-full bg-[var(--admin-text-primary)] text-white flex items-center justify-center  font-semibold text-[11px] sm:text-[11px] shrink-0 shadow-sm">
-              {idx + 1}
-            </div>
+            <div className="flex items-center gap-4 min-w-0 flex-1">
+              {/* Position Badging */}
+              <div className="w-8 h-8 rounded-full bg-[var(--admin-text-primary)] text-white flex items-center justify-center font-semibold text-[11px] shrink-0 shadow-sm">
+                {idx + 1}
+              </div>
 
-            {/* Title / Description */}
-            <div className="flex-1 min-w-0">
-              <span className="text-[12px] font-semibold text-[var(--admin-text-primary)] block tracking-tight">
-                {section.label}
-              </span>
-              <span className="text-[11px] sm:text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest block mt-0.5 font-sans">
-                {section.id ==="hero" ?"Intro Visuals" : section.id ==="featuredCollections" ?"Catalog Category Strip" : section.id ==="featuredProducts" ?"Bestselling Products Shelf" : section.id ==="storyTeaser" ?"Linage Editorial Story" :"Patron Voices Reviews"}
-              </span>
-            </div>
-
-            {/* Position Reordering Buttons */}
-            <div className="flex items-center gap-1.5 shrink-0 bg-[var(--admin-bg-subtle)] p-1.5 rounded-xl border border-[var(--admin-border)]">
-              <button
-                type="button"
-                onClick={() => idx > 0 && onReorder(idx, idx - 1)}
-                disabled={idx === 0}
-                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-[var(--admin-surface)] flex items-center justify-center transition-all border-none bg-transparent"
-                title="Move Section Up"
-              >
-                <span className="material-symbols-outlined text-[16px] font-bold">
-                  expand_less
+              {/* Title / Description */}
+              <div className="flex-1 min-w-0">
+                <span className="text-[12px] font-semibold text-[var(--admin-text-primary)] block tracking-tight truncate">
+                  {section.label}
                 </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => idx < sections.length - 1 && onReorder(idx, idx + 1)}
-                disabled={idx === sections.length - 1}
-                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-[var(--admin-surface)] flex items-center justify-center transition-all border-none bg-transparent"
-                title="Move Section Down"
-              >
-                <span className="material-symbols-outlined text-[16px] font-bold">
-                  expand_more
+                <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest block mt-0.5 truncate">
+                  {section.id ==="hero" ?"Intro Visuals" : section.id ==="featuredCollections" ?"Catalog Category Strip" : section.id ==="featuredProducts" ?"Bestselling Products Shelf" : section.id ==="storyTeaser" ?"Linage Editorial Story" :"Patron Voices Reviews"}
                 </span>
-              </button>
+              </div>
             </div>
 
-            {/* Visibility Toggle */}
-            <div className="flex items-center gap-2 border-l border-[var(--admin-border-subtle)] pl-4.5 shrink-0">
-              <span className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider hidden sm:inline">Visible</span>
-              <AdminToggle
-                checked={section.isVisible}
-                onChange={() => onToggle(section.id)}
-              />
+            <div className="flex items-center justify-between sm:justify-end gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-[var(--admin-border-subtle)] shrink-0">
+              {/* Position Reordering Buttons */}
+              <div className="flex items-center gap-1.5 shrink-0 bg-[var(--admin-bg-subtle)] p-1.5 rounded-xl border border-[var(--admin-border)]">
+                <button
+                  type="button"
+                  onClick={() => idx > 0 && onReorder(idx, idx - 1)}
+                  disabled={idx === 0}
+                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-[var(--admin-surface)] flex items-center justify-center transition-all border-none bg-transparent"
+                  title="Move Section Up"
+                >
+                  <span className="material-symbols-outlined text-[16px] font-bold">
+                    expand_less
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => idx < sections.length - 1 && onReorder(idx, idx + 1)}
+                  disabled={idx === sections.length - 1}
+                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-[var(--admin-surface)] flex items-center justify-center transition-all border-none bg-transparent"
+                  title="Move Section Down"
+                >
+                  <span className="material-symbols-outlined text-[16px] font-bold">
+                    expand_more
+                  </span>
+                </button>
+              </div>
+
+              {/* Visibility Toggle */}
+              <div className="flex items-center gap-2 border-l border-[var(--admin-border-subtle)] pl-4 shrink-0">
+                <span className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider hidden sm:inline">Visible</span>
+                <AdminToggle
+                  checked={section.isVisible}
+                  onChange={() => onToggle(section.id)}
+                />
+              </div>
             </div>
           </div>
         ))}
@@ -769,7 +773,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
               {ab.founders.map((founder, idx) => (
                 <div key={idx} className="bg-[var(--admin-surface)] p-4.5 rounded-xl border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)]">
                   <span className="text-[11px] font-semibold text-[var(--admin-text-tertiary)] uppercase tracking-widest block font-sans">Founder {idx + 1}</span>
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <AdminField label="Full Name">
                       <AdminInput
                         value={founder.name ||""}
@@ -914,9 +918,9 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
           <div className="grid grid-cols-1 gap-4.5">
             {(ab.features || DEFAULT_FEATURES).map((item, idx) => (
               <div key={idx} className="p-4 bg-[var(--admin-surface)]/85 backdrop-blur-md rounded-2xl border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-accent)]/35 transition-all duration-300">
-                <div className="flex justify-between items-center border-b border-[var(--admin-accent)]/5 pb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] text-[var(--admin-text-tertiary)] font-semibold uppercase tracking-wider">Feature Title</span>
+                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-b border-[var(--admin-accent)]/5 pb-2">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-[11px] text-[var(--admin-text-tertiary)] font-semibold uppercase tracking-wider shrink-0 font-sans">Feature Title</span>
                     <AdminInput
                       value={item.title ||""}
                       onChange={(e) => {
@@ -924,7 +928,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                         copy[idx] = { ...copy[idx], title: e.target.value };
                         onUpdate("about", { features: copy });
                       }}
-                      className="!py-1.5 font-bold !text-[11px] sm:text-[11px] !w-48 bg-[var(--admin-surface)] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
+                      className="!py-1.5 font-bold !text-[11px] sm:text-[11px] w-full sm:!w-48 bg-[var(--admin-surface)] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                     />
                   </div>
                   <button
@@ -934,7 +938,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                       onUpdate("about", { features: copy });
                       toast.success("Feature Deleted");
                     }}
-                    className="text-[var(--admin-error)] opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-1.5 hover:bg-[var(--admin-error-light)] rounded-lg"
+                    className="text-[var(--admin-error)] opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-2 hover:bg-[var(--admin-error-light)] rounded-lg self-end sm:self-center shrink-0"
                   >
                     <span className="material-symbols-outlined text-[16px] font-bold">delete</span>
                   </button>
@@ -1227,7 +1231,7 @@ function FAQEditor({ content, onUpdate }) {
                   </AdminField>
                   <button
                     onClick={() => handleDelete('homepage', idx)}
-                    className="text-[var(--admin-error)] opacity-60 hover:opacity-100 p-1.5 ml-2 hover:bg-[var(--admin-error-light)] rounded-lg cursor-pointer"
+                    className="text-[var(--admin-error)] opacity-60 hover:opacity-100 p-2.5 ml-2 hover:bg-[var(--admin-error-light)] rounded-lg cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>
                   </button>
@@ -1269,7 +1273,7 @@ function FAQEditor({ content, onUpdate }) {
                   </AdminField>
                   <button
                     onClick={() => handleDelete('products', idx)}
-                    className="text-[var(--admin-error)] opacity-60 hover:opacity-100 p-1.5 ml-2 hover:bg-[var(--admin-error-light)] rounded-lg cursor-pointer"
+                    className="text-[var(--admin-error)] opacity-60 hover:opacity-100 p-2.5 ml-2 hover:bg-[var(--admin-error-light)] rounded-lg cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>
                   </button>
@@ -1544,7 +1548,7 @@ function QuickCatalogControl() {
             </div>
             <button
               onClick={() => toggleProductFeatured(prd.id)}
-              className={`p-2 rounded-full border transition-all cursor-pointer flex items-center justify-center shadow-[var(--admin-shadow-xs)] active:scale-95 ${
+              className={`p-2.5 rounded-full border transition-all cursor-pointer flex items-center justify-center shadow-[var(--admin-shadow-xs)] active:scale-95 ${
                 prd.featured 
                   ?"bg-[var(--admin-accent)]/15 border-[var(--admin-accent)]/40 text-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]" 
                   :"bg-[var(--admin-surface)] border-[var(--admin-border)] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)]"
@@ -1600,7 +1604,7 @@ export function AdminContent() {
           {/* Sleek Minimal Command Header */}
       <motion.div
         variants={fadeUp}
-        className="flex items-center justify-between pb-4.5 border-b border-[var(--admin-border)] gap-4"
+        className="flex flex-col sm:flex-row sm:items-center justify-between pb-4.5 border-b border-[var(--admin-border)] gap-4"
       >
         <div>
           <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
@@ -1610,36 +1614,32 @@ export function AdminContent() {
             Bespoke Website Layout & Theme Styling Studio
           </p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden sm:flex items-center gap-2 text-[11px] sm:text-[11px] sm:text-[11px] text-[var(--admin-success)] font-semibold uppercase tracking-wider bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] px-4 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)]">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
+          <div className="hidden sm:flex items-center gap-2 text-[11px] text-[var(--admin-success)] font-semibold uppercase tracking-wider bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] px-4 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-success)] animate-pulse " />
             Live Sync Mode
           </div>
 
           {/* Quick Auto-Publish Toggle Switch */}
-          <div className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-3 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)]">
+          <div className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-3 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)] min-h-[38px]">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">Auto-Publish</span>
-            <button
-              onClick={toggleAutoPublish}
-              className={`w-11 h-6 rounded-full transition-colors duration-250 relative focus:outline-none cursor-pointer min-h-0 p-0 ${
-                autoPublish ?"bg-[var(--admin-accent)]" :"bg-[var(--admin-border-strong)]"
-              }`}
-            >
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-250 shadow-sm ${
-                autoPublish ?"translate-x-5" :""
-              }`} />
-            </button>
+            <AdminToggle
+              checked={autoPublish}
+              onChange={toggleAutoPublish}
+              size="sm"
+              aria-label="Toggle Auto-Publish"
+            />
           </div>
           
           {autoPublish ? (
-            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] rounded-full text-[11px] font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] rounded-full text-[11px] font-bold uppercase tracking-wider min-h-[38px]">
               <span className="material-symbols-outlined text-[14px] animate-spin-slow">sync</span>
               <span>Auto-Publishing</span>
             </div>
           ) : (
             <button 
               onClick={publishAllContent} 
-              className="flex items-center gap-2 px-5 py-2.5 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent-hover)] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[var(--admin-shadow-sm)] hover:shadow-[var(--admin-shadow-md)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[var(--admin-accent)]/40"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent-hover)] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[var(--admin-shadow-sm)] hover:shadow-[var(--admin-shadow-md)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[var(--admin-accent)]/40 min-h-[38px]"
             >
               <span className="material-symbols-outlined text-[14px] font-bold">publish</span>
               <span>Publish</span>
@@ -1655,8 +1655,8 @@ export function AdminContent() {
         <div className="block lg:hidden space-y-3.5 bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-4 shadow-[var(--admin-shadow-xs)]">
           {/* Main Category Groups */}
           <div 
-            className="flex items-center gap-1.5 overflow-x-auto pb-1.5 border-b border-[var(--admin-border-subtle)]"
-            style={{ scrollbarWidth:"none", msOverflowStyle:"none" }}
+            className="flex items-center gap-1.5 overflow-x-auto pb-1.5 border-b border-[var(--admin-border-subtle)] scrollbar-hide"
+            style={{ scrollbarWidth:"none", msOverflowStyle:"none", WebkitOverflowScrolling:"touch" }}
           >
             {CMS_SIDEBAR.map((cat) => {
               const isGroupActive = cat.items.some(item => item.id === activeSection);
@@ -1682,8 +1682,8 @@ export function AdminContent() {
 
           {/* Sub-item Nodes */}
           <div 
-            className="flex items-center gap-2 overflow-x-auto py-0.5"
-            style={{ scrollbarWidth:"none", msOverflowStyle:"none" }}
+            className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-hide"
+            style={{ scrollbarWidth:"none", msOverflowStyle:"none", WebkitOverflowScrolling:"touch" }}
           >
             {CMS_SIDEBAR.map((cat) => {
               const isGroupActive = cat.items.some(item => item.id === activeSection);

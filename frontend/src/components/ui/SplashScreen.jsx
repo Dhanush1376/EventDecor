@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { MandalaElement } from "./MandalaElement";
+import { SiriLogo } from "./SiriLogo";
 
 export function SplashScreen({ onComplete }) {
   useEffect(() => {
@@ -89,16 +90,15 @@ export function SplashScreen({ onComplete }) {
           </motion.div>
         </motion.div>
 
-        {/* Text Reveal */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, delay: 1, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center"
         >
-          <h2 className="font-display text-2xl md:text-3xl text-on-surface tracking-[0.25em] uppercase font-light mb-4">
-            Siri Arts & Crafts
-          </h2>
+          <div className="mb-4">
+            <SiriLogo size="48px" showSubtitle={false} />
+          </div>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: "60px" }}

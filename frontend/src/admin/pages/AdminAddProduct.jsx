@@ -696,7 +696,7 @@ export function AdminAddProduct() {
                       {formData.images.length > 0 && (
                         <div className="pt-2">
                           <h4 className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] uppercase tracking-widest mb-3">Media Gallery ({formData.images.length})</h4>
-                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                             {formData.images.map((img, idx) => (
                               <div key={idx} className={`relative aspect-square rounded-xl overflow-hidden border-2 ${formData.imageSrc === img ? 'border-[var(--admin-accent)]' : 'border-[var(--admin-border)]'} group`}>
                                 <img src={img} className="w-full h-full object-cover" alt="Gallery" />

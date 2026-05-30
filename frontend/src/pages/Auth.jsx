@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { authService } from "../services/domainServices";
 import toast from "react-hot-toast";
 import { useWebsiteContent } from "../hooks/useWebsiteContent";
+import { SiriLogo } from "../components/ui/SiriLogo";
 
 import logger from '../utils/logger';
 const containerVariants = {
@@ -257,7 +258,7 @@ export function Auth() {
       />
 
       {/* Left Panel: Immersive Cinematic Storytelling */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-black overflow-hidden">
+      <div className="hidden min-[1680px]:flex min-[1680px]:w-1/2 relative bg-black overflow-hidden">
         <motion.div
           initial={{ scale: 1.05 }}
           animate={{ scale: 1 }}
@@ -280,11 +281,7 @@ export function Auth() {
         </div>
 
         <div className="relative z-10 p-20 text-white w-full min-h-screen flex flex-col justify-between">
-          <Link to="/" className="inline-block group self-start">
-            <span className="font-display text-[26px] tracking-[0.25em] font-light text-white group-hover:text-primary transition-colors">
-              SIRI <span className="font-bold text-primary">ARTS.</span>
-            </span>
-          </Link>
+          <div aria-hidden="true" className="h-20" />
 
           <div className="max-w-lg space-y-8">
             <motion.div
@@ -313,39 +310,36 @@ export function Auth() {
       </div>
 
       {/* Right Panel: Premium Light-Theme Glassmorphism Auth Form */}
-      <div className="w-full lg:w-1/2 relative flex items-center justify-center p-6 md:p-12 overflow-y-auto bg-surface">
-        {/* Decorative Floating Mandalas Background Aesthetics */}
+      <div className="w-full min-[1680px]:w-1/2 relative flex items-center justify-center p-6 md:p-12 overflow-y-auto bg-surface">
+        {/* Decorative Floating Mandalas Background Aesthetics - Softened for Luxury */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-primary/5 blur-[160px] rounded-full" />
           <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-primary/5 blur-[160px] rounded-full" />
           
-          {/* Main Top-Right Mandala */}
           <MandalaElement
             size={650}
             duration={180}
             variant={1}
-            opacity={0.06}
+            opacity={0.04}
             className="absolute -top-40 -right-40 text-primary"
           />
-          {/* Secondary Bottom-Left Mandala */}
           <MandalaElement
             size={500}
             duration={140}
             variant={3}
-            opacity={0.05}
+            opacity={0.03}
             className="absolute -bottom-30 -left-30 text-primary"
           />
-          {/* Center Subtle Mandala behind the card */}
           <MandalaElement
             size={350}
             duration={90}
             variant={2}
-            opacity={0.04}
+            opacity={0.03}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary"
           />
         </div>
 
-        <div className="w-full max-w-[440px] relative z-10 my-auto py-8">
+        <div className="w-full max-w-[440px] relative z-10 my-auto py-16">
           <>
             {step === "success" ? (
               <SuccessState
@@ -372,12 +366,10 @@ export function Auth() {
                 className="space-y-10"
               >
                 {/* Header Branding */}
-                <div className="text-center lg:text-left space-y-3">
+                <div className="text-center lg:text-left space-y-4">
                   <motion.div variants={itemVariants} className="lg:hidden mb-10 flex justify-center">
                     <Link to="/" className="flex items-center gap-1 group">
-                      <span className="font-display text-[24px] text-on-surface-variant font-light tracking-[0.2em]">
-                        SIRI <span className="text-primary font-bold">ARTS</span>
-                      </span>
+                      <SiriLogo size="56px" />
                     </Link>
                   </motion.div>
 
@@ -385,25 +377,25 @@ export function Auth() {
                     <span className="font-label-sm text-[10px] text-primary uppercase tracking-[0.4em] block font-bold">
                       Login Gateway
                     </span>
-                    <h2 className="font-headline text-[36px] md:text-[42px] leading-tight text-on-surface-variant font-light">
+                    <h2 className="font-headline text-[34px] md:text-[42px] leading-tight text-on-surface-variant font-light tracking-tight">
                       {step === "2fa"
-                        ? "Authenticator Code"
+                        ? "Authenticator"
                         : step === "otp"
-                        ? "Enter Security Key"
+                        ? "Security Key"
                         : "Enter Email"}
                     </h2>
-                    <p className="text-on-surface-variant/60 text-[14px] font-light leading-relaxed">
+                    <p className="text-on-surface-variant/60 text-[14px] font-light leading-relaxed max-w-[340px] mx-auto lg:mx-0">
                       {step === "2fa"
                         ? "Enter the 6-digit code from your authenticator app."
                         : step === "otp"
                         ? `A secure verification key has been dispatched to your email.`
-                        : "Authenticate securely to step into the digital studio of Siri Arts, manage your customized orders, and explore your private design collections."}
+                        : "Authenticate securely to step into the digital studio of Siri Arts and manage your collections."}
                     </p>
                   </motion.div>
                 </div>
 
                 {/* Form Card */}
-                <div className="bg-white/70 backdrop-blur-2xl rounded-[32px] p-5 xs:p-8 md:p-10 border border-outline-variant/30 shadow-[0_24px_50px_rgba(115,92,0,0.04)] relative overflow-hidden">
+                <div className="bg-white/80 backdrop-blur-2xl rounded-[32px] p-8 xs:p-10 md:p-12 min-h-[580px] flex flex-col justify-center border border-primary/10 shadow-xl shadow-primary/5 relative overflow-hidden">
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
                   <>
@@ -415,31 +407,25 @@ export function Auth() {
                         animate="animate"
                         exit="exit"
                         onSubmit={handleCheckEmailOrSend}
-                        className="space-y-6"
+                        className="space-y-6 mt-4 lg:mt-0"
                       >
-                        <div className="relative group mt-3">
-                          {/* Envelope Icon */}
-                          <span className="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/30 text-[18px] group-focus-within:text-primary transition-colors">
-                            mail
-                          </span>
-
-                          {/* Floating Label */}
+                        <div className="relative group">
+                          {/* Soft Floating Label */}
                           <label
                             className={`absolute transition-all duration-300 pointer-events-none font-bold ${
                               isFocused || email
-                                ? "text-[10px] -top-2 left-5 bg-white px-1.5 text-primary tracking-[0.2em] uppercase z-10"
-                                : "text-[13px] top-1/2 -translate-y-1/2 left-12 text-on-surface-variant/40 tracking-[0.15em] uppercase"
+                                ? "text-[10px] -top-2 left-4 bg-white/90 backdrop-blur-md px-2 text-primary tracking-[0.2em] uppercase z-10"
+                                : "text-[13px] top-1/2 -translate-y-1/2 left-4 text-on-surface-variant/40 tracking-wide"
                             }`}
                           >
                             Email Address
                           </label>
 
-                          {/* Email Input Field */}
+                          {/* Elegant Rounded Input */}
                           <input
                             type="email"
                             required
-                            className="w-full bg-surface-container-low/50 border border-outline-variant/40 rounded-2xl pl-12 pr-5 py-4.5 font-body text-[15px] text-on-surface-variant outline-none transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5"
-                            placeholder={isFocused ? "e.g. creative@siriartsandcrafts.com" : ""}
+                            className="w-full bg-white border border-outline-variant/40 rounded-2xl px-4 py-4.5 font-body text-[15px] text-on-surface-variant outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/5 shadow-sm"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setIsFocused(true)}
@@ -449,7 +435,7 @@ export function Auth() {
 
                         <button
                           disabled={!email || isLoading}
-                          className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20 cursor-pointer active:scale-[0.98]"
+                          className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20 cursor-pointer active:scale-[0.98]"
                         >
                           {isLoading ? (
                             <div className="skeleton-box inline-block w-5 h-5 rounded-md" />
@@ -582,7 +568,7 @@ export function Auth() {
                         <div className="space-y-6 pt-2">
                           <button
                             disabled={otp.join("").length < 6 || isLoading}
-                            className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-lg shadow-primary/20 cursor-pointer active:scale-[0.98]"
+                            className="w-full h-14 bg-primary text-surface rounded-full flex items-center justify-center gap-3 font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed group shadow-lg shadow-primary/20 cursor-pointer active:scale-[0.98]"
                           >
                             {isLoading ? (
                               <div className="skeleton-box inline-block w-5 h-5 rounded-md" />
@@ -614,23 +600,23 @@ export function Auth() {
 
                 {/* Footer Assistance */}
                 <motion.div variants={itemVariants} className="text-center space-y-5">
-                  <div className="flex items-center justify-center gap-5">
+                  <div className="flex items-center justify-center gap-5 mt-8">
                     <Link
                       to="/"
-                      className="font-label-sm text-[9px] text-on-surface-variant/50 uppercase tracking-[0.2em] font-semibold hover:text-primary transition-colors"
+                      className="font-label-sm text-[9px] text-on-surface-variant/60 uppercase tracking-[0.2em] font-semibold hover:text-primary transition-colors"
                     >
                       Browse Storefront
                     </Link>
                     <span className="w-1 h-1 rounded-full bg-outline-variant/40" />
                     <button
                       onClick={() => window.open(`https://wa.me/91${cleanWhatsapp}`, "_blank")}
-                      className="font-label-sm text-[9px] text-on-surface-variant/50 uppercase tracking-[0.2em] font-semibold hover:text-primary transition-colors cursor-pointer"
+                      className="font-label-sm text-[9px] text-on-surface-variant/60 uppercase tracking-[0.2em] font-semibold hover:text-primary transition-colors cursor-pointer"
                     >
                       Need Assistance?
                     </button>
                   </div>
 
-                  <div className="opacity-40">
+                  <div className="opacity-40 mt-4">
                     <p className="font-label-sm text-[8px] uppercase tracking-[0.3em] font-bold text-on-surface-variant/60">
                       Protected by Siri Secure Verification
                     </p>

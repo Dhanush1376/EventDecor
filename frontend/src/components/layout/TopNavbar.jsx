@@ -11,6 +11,7 @@ import { useSearchOverlay } from "../../hooks/useSearchOverlay";
 import { IntelligentSearchOverlay } from "../search/IntelligentSearchOverlay";
 import { prefetchManager } from "../../utils/prefetchManager";
 import { useScrollDirection } from "../../hooks/useScrollDirection";
+import { SiriLogo } from "../ui/SiriLogo";
 // Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {
@@ -135,25 +136,13 @@ export function TopNavbar() {
               <Link to="/" className="group flex items-center shrink-0">
                 <div className="flex flex-col justify-center">
                   {/* Desktop Layout: Side-by-side */}
-                  <div className="hidden md:flex items-center gap-1">
-                    <span className="font-display text-[20px] font-bold tracking-[0.03em] text-on-surface uppercase">
-                      {firstWord}
-                    </span>
-                    <span className="font-display text-[20px] font-bold tracking-[0.03em] text-primary uppercase">
-                      {restWords ? ` ${restWords}` : ""}
-                    </span>
+                  <div className="hidden md:flex items-center">
+                    <SiriLogo size="40px" />
                   </div>
 
                   {/* Mobile Layout: Stacked */}
                   <div className="flex md:hidden flex-col leading-none">
-                    <span className="font-display text-[14px] font-bold tracking-[0.03em] text-on-surface uppercase">
-                      {firstWord}
-                    </span>
-                    {restWords && (
-                      <span className="font-display text-[8px] font-bold tracking-[0.15em] text-primary uppercase mt-0.5 whitespace-nowrap">
-                        {restWords}
-                      </span>
-                    )}
+                    <SiriLogo size="24px" showSubtitle={false} />
                   </div>
                 </div>
               </Link>
@@ -467,14 +456,7 @@ export function TopNavbar() {
             >
               <div className="flex justify-between items-center mb-5 pb-3 border-b border-outline-variant/10">
                 <div className="flex items-center">
-                  <div className="flex flex-col justify-center leading-none">
-                    <span className="font-display text-[18px] md:text-[20px] text-on-surface font-bold tracking-[0.05em] uppercase">
-                      {firstWord}
-                    </span>
-                    <span className="font-display text-[10px] md:text-[11px] text-primary font-bold tracking-[0.15em] uppercase mt-0.5 whitespace-nowrap">
-                      {restWords}
-                    </span>
-                  </div>
+                  <SiriLogo size="32px" />
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}

@@ -17,10 +17,10 @@ import { safeLocalStorage } from './storage';
 // ─── Consent Check ───
 export function hasAnalyticsConsent() {
   try {
-    const consent = safeLocalStorage.getItem('siri_cookie_consent');
+    const consent = safeLocalStorage.getItem('siri_arts_consent_logged');
     if (!consent) return false;
     const parsed = JSON.parse(consent);
-    return parsed.analytics === true;
+    return parsed.personalizedRecommendations === true || parsed.marketingEmails === true;
   } catch {
     return false;
   }

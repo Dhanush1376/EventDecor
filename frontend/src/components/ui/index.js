@@ -24,3 +24,4 @@ export * from "./EventShowcaseFilterPanel";
 export * from "./CloudinaryImage";
 export * from "./Icon";
 export * from "./StateRenderer";
+export * from "./OptimizedImage";

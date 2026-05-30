@@ -61,6 +61,9 @@ export const registerApiRoutes = (
   apiRouter.use('/tracking', lazyRouter('./trackingRoutes'));
   apiRouter.use('/analytics/recommendations', noCacheMiddleware, lazyRouter('./recommendationAnalyticsRoutes'));
   
+  // Aggregated endpoints
+  apiRouter.use('/homepage', lazyRouter('./homepageRoutes'));
+  
   // Dynamic Configuration & Architecture Routes
   apiRouter.use('/config', lazyRouter('./appConfigRoutes'));
   apiRouter.use('/categories', lazyRouter('./categoryRoutes'));

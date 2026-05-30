@@ -5,6 +5,7 @@ import { orderService } from "../services/domainServices";
 import { SEO } from "../components/seo/SEO";
 import { handleImageError } from "../utils/imageUtils";
 import { MandalaElement } from "../components/ui/MandalaElement";
+import { OrderTrackingSkeleton } from "../components/ui/Skeleton";
 import { playSuccessBeep, playErrorBeep } from "../utils/audioUtils";
 import toast from "react-hot-toast";
 
@@ -191,17 +192,7 @@ export function OrderTrackingPublic() {
   }, [order, isPinVerified, getNextStatus, handleStatusUpdate]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-surface-bright flex flex-col items-center justify-center p-4">
-        <div className="relative flex items-center justify-center w-20 h-20 mb-4">
-          <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
-          <span className="font-display text-2xl text-primary">✦</span>
-        </div>
-        <p className="text-xs text-secondary font-bold uppercase tracking-widest animate-pulse">
-          Connecting to Delhivery Logistics Feed...
-        </p>
-      </div>
-    );
+    return <OrderTrackingSkeleton />;
   }
 
   if (error || !order) {

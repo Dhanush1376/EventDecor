@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { reviewService } from "../../services/domainServices";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { ReviewsSkeleton } from "../ui/Skeleton";
+import { OptimizedImage } from "../ui/OptimizedImage";
 
 import logger from '../../utils/logger';
 // Lazy load heavy interaction overlays to trim the main package bundle size
@@ -348,7 +349,7 @@ export const VerifiedReviews = () => {
                             onClick={() => !isDragging && openMediaLightbox(rev.images.map(url => ({ url, type: "image", caption: rev.eventType, author: rev.user })), i)}
                             className="w-10 h-10 rounded-xl overflow-hidden border border-[#E2DACB] hover:scale-105 transition-transform duration-300 cursor-pointer shadow-2xs shrink-0"
                           >
-                            <img onError={handleImageError} src={img} className="w-full h-full object-cover" alt="Customer Memory" />
+                            <OptimizedImage src={img} className="w-full h-full object-cover" alt="Customer Memory" />
                           </div>
                         ))}
                         {rev.video && (

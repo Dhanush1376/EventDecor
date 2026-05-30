@@ -47,7 +47,7 @@ const GallerySchema: Schema = new Schema(
   { timestamps: true }
 );
 
-GallerySchema.index({ title: 'text', tags: 'text' });
+GallerySchema.index({ title: 'text', tags: 'text', category: 'text', style: 'text', teluguTitle: 'text', description: 'text' }, { name: 'FullTextIndex', weights: { title: 10, tags: 8, category: 5, style: 5, teluguTitle: 8, description: 1 } });
 GallerySchema.index({ category: 1 });
 GallerySchema.index({ event: 1 });
 GallerySchema.index({ type: 1 });

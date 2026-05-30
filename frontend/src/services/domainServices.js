@@ -17,3 +17,4 @@ export { loyaltyService } from './api/loyaltyService';
 export { bookingService } from './api/bookingService';
 export { showcaseService } from './api/showcaseService';
 export { adminInviteService } from './api/adminInviteService';
+export { homepageService } from './api/homepageService';

@@ -53,7 +53,7 @@ const EventSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-EventSchema.index({ title: 'text', description: 'text' });
+EventSchema.index({ title: 'text', description: 'text', category: 'text', style: 'text', features: 'text' }, { name: 'FullTextIndex', weights: { title: 10, category: 5, style: 5, features: 3, description: 1 } });
 EventSchema.index({ category: 1 });
 EventSchema.index({ style: 1 });
 

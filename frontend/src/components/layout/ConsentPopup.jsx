@@ -4,6 +4,8 @@ import { notificationService } from "../../services/domainServices";
 import toast from "react-hot-toast";
 
 import { safeLocalStorage } from "../../utils/storage";
+import { initAnalytics } from "../../utils/analytics";
+import { initObservability } from "../../utils/observability";
 
 import logger from '../../utils/logger';
 export function ConsentPopup() {
@@ -62,6 +64,12 @@ export function ConsentPopup() {
         safeLocalStorage.setItem("siri_arts_consent_logged", JSON.stringify(savedPrefs));
         setPreferences(savedPrefs);
         
+        // Dynamically boostrap scripts after explicit consent
+        if (savedPrefs.personalizedRecommendations || savedPrefs.marketingEmails) {
+          initAnalytics();
+          initObservability();
+        }
+
         if (actionType === "accept") {
           toast.success("Thank you for accepting Siri Arts cookies & alerts!", {
             icon: "✦",
@@ -80,6 +88,11 @@ export function ConsentPopup() {
       logger.error("Failed to persist GDPR consent selection:", err);
       // Fallback local-only save on offline or network failure
       safeLocalStorage.setItem("siri_arts_consent_logged", JSON.stringify(finalPrefs));
+      
+      if (finalPrefs.personalizedRecommendations || finalPrefs.marketingEmails) {
+        initAnalytics();
+        initObservability();
+      }
     } finally {
       setIsVisible(false);
     }
@@ -123,7 +136,7 @@ export function ConsentPopup() {
         >
           {view === "banner" ? (
             <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-5">
-              <div className="flex-1 text-center md:text-left">
+               <div className="flex-1 text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-2.5 mb-2.5">
                   <span className="material-symbols-outlined text-[var(--color-gold-dark)] text-xl animate-pulse">
                     verified_user

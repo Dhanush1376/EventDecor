@@ -9,6 +9,7 @@ import {
   fadeUp,
   stagger,
   SkeletonDashboard,
+  PageHeader,
 } from "../components/AdminUIKit";
 
 export function AdminSettings() {
@@ -316,7 +317,7 @@ export function AdminSettings() {
         {/* Navigation Sidebar */}
         <motion.div
           variants={fadeUp}
-          className="admin-card p-3 h-fit lg:sticky lg:top-24 space-y-1"
+          className="admin-card p-3 h-fit lg:sticky lg:top-24 space-y-1 admin-settings-nav"
         >
           {sectionsList.map((sec, i) => (
             <button

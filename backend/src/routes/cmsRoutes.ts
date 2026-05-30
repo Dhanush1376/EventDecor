@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { getPublishedContent, getSectionByKey, updateSection, publishAll } from '../controllers/contentController';
 import { aiGenerateContent } from '../controllers/cmsController';
-import { requireAuth, requireAdmin, requireRole } from '../middleware/authMiddleware';
+import { requireAuth, requireRole } from '../middleware/authMiddleware';
 import { cacheResponse } from '../middleware/cacheMiddleware';
 import { redisResponseCache } from '../middleware/redisResponseCache';
 import ContentService from '../services/contentService';

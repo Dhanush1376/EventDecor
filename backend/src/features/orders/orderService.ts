@@ -555,17 +555,8 @@ class OrderService {
       // 4. Clear the user's cart in the database upon successful verification
       await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
 
-      // 5. Increment Coupon used count if coupon was active
-      if (order.couponCode) {
-        await Coupon.findOneAndUpdate(
-          { code: order.couponCode.toUpperCase() }, 
-          { 
-            $inc: { usedCount: 1 },
-            $push: { usedBy: { userId: order.user, orderId: order._id } }
-          },
-          { session }
-        );
-      }
+      // NOTE: Coupon usedCount was already atomically incremented during createOrder().
+      // Do NOT increment again here — the webhook handler correctly reverses it on payment failure.
 
       await session.commitTransaction();
       session.endSession();

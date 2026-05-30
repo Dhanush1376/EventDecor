@@ -2,7 +2,7 @@ import React, { useEffect, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CloudinaryImage } from "../ui/CloudinaryImage";
+import { OptimizedImage } from "../ui/OptimizedImage";
 import { handleImageError } from "../../utils/imageUtils";
 import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../context/CartContext";
@@ -194,10 +194,12 @@ export function GallerySlideshow({
                   className="max-w-full max-h-full object-contain rounded-2xl shadow-md"
                 />
               ) : (
-                <img
+                <OptimizedImage
                   src={displayImage.includes('cloudinary.com') ? displayImage.replace('/upload/', '/upload/f_auto,q_auto,dpr_auto,w_1200/') : displayImage}
                   alt={currentItem.title}
                   className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
+                  width={1200}
+                  height={1200}
                 />
               )}
             </motion.div>
@@ -303,7 +305,7 @@ export function GallerySlideshow({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <CloudinaryImage
+                    <OptimizedImage
                       src={thumbImage}
                       alt={item.title}
                       className="w-full h-full object-cover"

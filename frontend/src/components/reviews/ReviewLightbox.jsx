@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { OptimizedImage } from "../ui/OptimizedImage";
 
 export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(activeIndex);
@@ -79,7 +80,7 @@ export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose })
                 </button>
               </div>
             ) : (
-              <img
+              <OptimizedImage
                 src={currentItem.url || currentItem}
                 alt="Enlarged Customer View"
                 className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl p-2 select-none"
@@ -137,7 +138,7 @@ export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose })
                   VID
                 </div>
               ) : (
-                <img src={itm.url || itm} className="w-full h-full object-cover" alt="Thumb" />
+                <OptimizedImage src={itm.url || itm} className="w-full h-full object-cover" alt="Thumb" />
               )}
             </div>
           ))}

@@ -9,6 +9,7 @@ import { ShareButton } from "../components/ui/ShareButton";
 import { galleryService, productService } from "../services/domainServices";
 import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
 import { CloudinaryImage } from "../components/ui/CloudinaryImage";
+import { GalleryDetailSkeleton } from "../components/ui/Skeleton";
 
 
 import logger from '../utils/logger';
@@ -83,11 +84,7 @@ export function GalleryDetail() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <div className="skeleton-box inline-block w-12 h-12 rounded-md" />
-      </div>
-    );
+    return <GalleryDetailSkeleton />;
   }
 
   if (!item)

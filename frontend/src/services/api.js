@@ -8,6 +8,7 @@ import {
   setSessionMarker,
   clearAuthStorage,
   getFallbackRefreshToken,
+  setFallbackRefreshToken,
 } from '../utils/authStorage';
 import { clearCachedProfile } from '../utils/authSessionCache';
 
@@ -25,6 +26,7 @@ const MAX_MUTATION_RETRIES = 2;
 
 let accessToken = null;
 let refreshPromise = null;
+let refreshPostPromise = null;
 let csrfToken = null;
 let csrfInitPromise = null;
 let authBootstrapActive = false;
@@ -62,9 +64,14 @@ export const getAccessToken = () => accessToken;
 
 const applyRefreshPayload = (payload) => {
   const token = payload?.accessToken || payload?.token;
+  const refreshToken = payload?.refreshToken;
+  
   if (token) {
     setAccessToken(token);
     setSessionMarker();
+    if (refreshToken) {
+      setFallbackRefreshToken(refreshToken);
+    }
   }
   return token;
 };
@@ -156,6 +163,8 @@ api.interceptors.request.use(
       path.includes('/admin/') ||
       path.includes('/custom-orders') ||
       path.includes('/notifications') ||
+      path.includes('/analytics/') ||
+      path.includes('/reviews') ||
       path.includes('/recommendations/for-you');
 
     const isAuthLifecycleRequest =
@@ -443,12 +452,12 @@ api.post = function (url, data, config) {
   clearPendingGets();
   if (url === '/auth/refresh' || url?.includes('/auth/refresh')) {
     const body = data && Object.keys(data).length ? data : buildRefreshBody();
-    if (!refreshPromise) {
-      refreshPromise = originalPost.call(this, url, body, config).finally(() => {
-        refreshPromise = null;
+    if (!refreshPostPromise) {
+      refreshPostPromise = originalPost.call(this, url, body, config).finally(() => {
+        refreshPostPromise = null;
       });
     }
-    return refreshPromise;
+    return refreshPostPromise;
   }
   return originalPost.call(this, url, data, config);
 };

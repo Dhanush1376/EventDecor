@@ -76,7 +76,7 @@ export function AdminReviews() {
       className="max-w-[1440px] mx-auto space-y-6"
     >
       {/* Title block */}
-      <motion.div variants={fadeUp} className="flex justify-between items-center">
+      <motion.div variants={fadeUp} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-[24px] font-bold text-[var(--admin-text-primary)]">
             Reviews & Testimonials
@@ -88,7 +88,7 @@ export function AdminReviews() {
         </div>
 
         {/* Dynamic Search Input */}
-        <div className="relative w-72">
+        <div className="relative w-full sm:w-72">
           <input
             type="text"
             placeholder="Search customer, item, or comment..."
@@ -100,7 +100,7 @@ export function AdminReviews() {
       </motion.div>
 
       {/* Tabs */}
-      <motion.div variants={fadeUp} className="flex gap-2">
+      <motion.div variants={fadeUp} className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         {["all","pending","approved","rejected"].map((f) => (
           <button
             key={f}
@@ -144,7 +144,7 @@ export function AdminReviews() {
                 whileHover={{ y: -2 }}
                 className="admin-card p-5 border border-[var(--admin-border)] transition-shadow shadow-xs"
               >
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-container/20 to-primary/10 flex items-center justify-center">
                       <span className="text-[14px] font-bold text-black">

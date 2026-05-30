@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWishlist } from "../context/WishlistContext";
 import { useCart } from "../context/CartContext";
-import { QuickViewModal, CustomDropdown, ProductCard, Skeleton } from "../components/ui";
+import { QuickViewModal, CustomDropdown, ProductCard, Skeleton, WishlistPageSkeleton } from "../components/ui";
 import { SEO } from "../components/seo/SEO";
 import { handleImageError } from "../utils/imageUtils";
 import { productService } from "../services/domainServices";
@@ -89,6 +89,10 @@ export function Wishlist() {
     removeItem(item.id, item.variant);
     triggerNotification(`Moved "${item.title}" to your Bag`);
   };
+
+  if (wishlistLoading) {
+    return <WishlistPageSkeleton />;
+  }
 
   return (
     <motion.div

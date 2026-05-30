@@ -1,6 +1,6 @@
 import express from 'express';
 import { getPublicConfig, getAllConfig, createOrUpdateConfig } from '../controllers/appConfigController';
-import { requireAuth, requireAdmin, requireRole } from '../middleware/authMiddleware';
+import { requireAuth, requireRole } from '../middleware/authMiddleware';
 
 const router = express.Router();
 

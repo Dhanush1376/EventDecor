@@ -237,7 +237,7 @@ export function AdminNotifications() {
                     {!n.read && (
                       <button
                         onClick={() => handleMarkRead(n.id)}
-                        className="p-2 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] rounded-xl cursor-pointer transition-all flex items-center justify-center"
+                        className="p-2.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] rounded-xl cursor-pointer transition-all flex items-center justify-center"
                         title="Mark as Read"
                       >
                         <span className="material-symbols-outlined text-[16px]">done</span>

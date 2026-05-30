@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { MandalaElement } from "../ui/MandalaElement";
 import { useWebsiteContent } from "../../hooks/useWebsiteContent";
 import { CONTACT_EMAIL, SOCIAL_INSTAGRAM, SOCIAL_PINTEREST } from "../../constants/brandEnv";
+import { SiriLogo } from "../ui/SiriLogo";
 
 export function Footer() {
   const { contact, footer, navigation } = useWebsiteContent();
@@ -28,15 +29,7 @@ export function Footer() {
         {/* Brand Soul - Left Aligned */}
         <div className="flex flex-col items-start text-left mb-5.5 md:mb-7">
           <Link to="/" className="group flex items-center mb-4">
-            <div className="flex items-center gap-1">
-              <span className="font-display text-[18px] md:text-[20px] text-on-surface font-bold tracking-[0.05em]">
-                {firstWord}
-              </span>
-              <span className="font-display text-[18px] md:text-[20px] text-primary font-bold tracking-[0.05em]">
-                {restWords ? ` ${restWords}` : ""}
-              </span>
-              <div className="w-1 h-1 rounded-full bg-primary-container animate-pulse" />
-            </div>
+            <SiriLogo size="32px" />
           </Link>
           <p className="font-body text-on-surface-variant/80 max-w-sm leading-relaxed font-light text-[11px] md:px-0">
             {footer?.description || "Ancient craftsmanship meets modern elegance."}

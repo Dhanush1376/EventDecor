@@ -167,7 +167,7 @@ export function AdminCustomers() {
                 <div className="flex items-center gap-2 pt-4 border-t border-[var(--admin-border-subtle)]">
                   <a
                     href={`mailto:${c.email}`}
-                    className="admin-btn admin-btn-outline flex-1 min-h-[32px] h-8 text-[10px] px-0 hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)]"
+                    className="admin-btn admin-btn-outline flex-1 min-h-[36px] h-8 text-[10px] px-2 hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)]"
                   >
                     <span className="material-symbols-outlined text-[14px]">mail</span> Email
                   </a>
@@ -175,13 +175,13 @@ export function AdminCustomers() {
                     href={`https://wa.me/${c.phone.replace(/[^0-9]/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="admin-btn admin-btn-outline flex-1 min-h-[32px] h-8 text-[10px] px-0 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)]"
+                    className="admin-btn admin-btn-outline flex-1 min-h-[36px] h-8 text-[10px] px-2 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)]"
                   >
                     <span className="material-symbols-outlined text-[14px]">chat</span> WhatsApp
                   </a>
                   <button
                     onClick={() => navigate(`/admin/customers/${c.id}`)}
-                    className="admin-btn flex-1 min-h-[32px] h-8 text-[10px] px-0 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)]"
+                    className="admin-btn flex-1 min-h-[36px] h-8 text-[10px] px-2 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)]"
                   >
                     <span className="material-symbols-outlined text-[14px]">visibility</span> Profile
                   </button>

@@ -262,7 +262,7 @@ export function AdminGallery() {
                 {/* Classification Type */}
                 <div className="admin-card-inset p-4 space-y-3">
                   <label className="admin-label">Classification Type</label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
                       { id: "inspiration", icon: "palette", label: "Design Inspiration" },
                       { id: "real-event", icon: "auto_awesome", label: "Real Event Showcase" },
@@ -395,12 +395,12 @@ export function AdminGallery() {
       </motion.div>
 
       {/* ─── Gallery Grid ─── */}
-      <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      <motion.div variants={fadeUp} className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
         {isLoading ? (
           Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="admin-card overflow-hidden">
               <AdminSkeleton className="w-full aspect-[4/3]" style={{ borderRadius: 0 }} />
-              <div className="p-4 space-y-3">
+              <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
                 <AdminSkeleton className="w-16 h-4 rounded" />
                 <AdminSkeleton className="w-full h-4 rounded" />
                 <AdminSkeleton className="w-3/4 h-3 rounded" />
@@ -418,7 +418,7 @@ export function AdminGallery() {
             className="relative admin-card overflow-hidden group flex flex-col"
           >
             {/* Type Badge */}
-            <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+            <div className="absolute top-2.5 left-2.5 lg:top-3 lg:left-3 z-10 flex flex-col gap-1.5">
               <span className="admin-badge admin-badge-primary text-[9px]">
                 {item.type === "real-event" ? "Real Event" : "Inspiration"}
               </span>
@@ -438,27 +438,27 @@ export function AdminGallery() {
                 alt={item.title}
                 className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
               />
-              {/* Hover Actions */}
-              <div className="absolute inset-0 bg-[var(--admin-surface-overlay)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
+              {/* Action Buttons — Mobile: permanent top-right, Desktop: hover overlay */}
+              <div className="absolute top-2.5 right-2.5 lg:top-0 lg:right-0 lg:inset-0 z-20 flex gap-1 lg:gap-2 items-center justify-end lg:justify-center p-0 bg-transparent lg:bg-[var(--admin-surface-overlay)] opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
                 <button
                   onClick={() => handleEdit(item)}
-                  className="w-10 h-10 rounded-full bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-accent)] hover:text-white flex items-center justify-center cursor-pointer shadow-[var(--admin-shadow-lg)] active:scale-90 transition-all"
+                  className="w-7 h-7 lg:w-10 lg:h-10 rounded-full bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-accent)] hover:text-white flex items-center justify-center cursor-pointer shadow-[var(--admin-shadow-lg)] active:scale-90 transition-all border border-[var(--admin-border-subtle)] lg:border-none"
                   title="Edit"
                 >
-                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                  <span className="material-symbols-outlined text-[13px] lg:text-[18px]">edit</span>
                 </button>
                 <button
                   onClick={() => handleDelete(item._id || item.id)}
-                  className="w-10 h-10 rounded-full bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-error)] hover:text-white flex items-center justify-center cursor-pointer shadow-[var(--admin-shadow-lg)] active:scale-90 transition-all"
+                  className="w-7 h-7 lg:w-10 lg:h-10 rounded-full bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-error)] hover:text-white flex items-center justify-center cursor-pointer shadow-[var(--admin-shadow-lg)] active:scale-90 transition-all border border-[var(--admin-border-subtle)] lg:border-none"
                   title="Delete"
                 >
-                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                  <span className="material-symbols-outlined text-[13px] lg:text-[18px]">delete</span>
                 </button>
               </div>
             </div>
 
             {/* Card Content */}
-            <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+            <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider">
                   <span>{item.category}</span>
@@ -487,7 +487,7 @@ export function AdminGallery() {
               )}
 
               {/* Footer Stats */}
-              <div className="pt-3 border-t border-[var(--admin-border-subtle)] flex items-center justify-between flex-wrap gap-2 text-[11px] text-[var(--admin-text-tertiary)]">
+              <div className="pt-2 sm:pt-3 border-t border-[var(--admin-border-subtle)] flex items-center justify-between flex-wrap gap-2 text-[10px] sm:text-[11px] text-[var(--admin-text-tertiary)]">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-[12px]">visibility</span>

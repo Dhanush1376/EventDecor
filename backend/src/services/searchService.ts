@@ -606,12 +606,10 @@ export async function searchAll(
     // Stage 3: Build base filter
     const baseFilter: any = {
       isActive: true,
-      $or: [
-        { title: { $in: regexPatterns } },
-        { category: { $in: regexPatterns } },
-        { tags: { $in: regexPatterns } },
-      ]
     };
+    if (uniqueTerms.length > 0) {
+      baseFilter.$text = { $search: uniqueTerms.join(' ') };
+    }
 
     // Apply manual Category filter or predicted intent category
     const activeCategory = (options.category && options.category !== 'All') 
@@ -640,12 +638,6 @@ export async function searchAll(
         if (minPrice !== undefined) productFilter.price.$gte = minPrice;
         if (maxPrice !== undefined) productFilter.price.$lte = maxPrice;
       }
-      productFilter.$or = [
-        ...productFilter.$or,
-        { teluguTitle: { $in: regexPatterns } },
-        { description: { $in: regexPatterns } },
-        { material: { $in: regexPatterns } }
-      ];
 
       // Add color filters from intent
       if (aiAnalysis.colors.length > 0) {
@@ -695,11 +687,6 @@ export async function searchAll(
         if (minPrice !== undefined) eventFilter.basePrice.$gte = minPrice;
         if (maxPrice !== undefined) eventFilter.basePrice.$lte = maxPrice;
       }
-      eventFilter.$or = [
-        ...eventFilter.$or,
-        { style: { $in: regexPatterns } },
-        { features: { $in: regexPatterns } }
-      ];
 
       promises.push(
         Event.find(eventFilter)
@@ -735,11 +722,6 @@ export async function searchAll(
 
     if (searchGalleries) {
       const galleryFilter = { ...baseFilter };
-      galleryFilter.$or = [
-        ...galleryFilter.$or,
-        { teluguTitle: { $in: regexPatterns } },
-        { description: { $in: regexPatterns } }
-      ];
 
       promises.push(
         Gallery.find(galleryFilter)

@@ -26,8 +26,10 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
     err.name === 'MongoNotConnectedError' ||
     err.name === 'MongoNetworkError' ||
     err.name === 'MongoServerError' ||
+    err.name === 'MongooseServerSelectionError' ||
     err.message?.includes('not connected') ||
-    err.message?.includes('topology destroyed')
+    err.message?.includes('topology destroyed') ||
+    err.message?.includes('ECONNREFUSED')
   ) {
     statusCode = 503;
     message = 'Database connection is temporarily unavailable. Please try again in a few seconds.';

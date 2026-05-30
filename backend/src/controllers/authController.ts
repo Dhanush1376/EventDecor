@@ -81,7 +81,11 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-  setCustomerRefreshCookie(res, result.refreshToken);
+  if ((STAFF_ROLES as readonly string[]).includes(result.user.role)) {
+    setAdminRefreshCookie(res, result.refreshToken);
+  } else {
+    setCustomerRefreshCookie(res, result.refreshToken);
+  }
 
   // Regenerate CSRF token post-login to prevent session fixation
   const csrfToken = regenerateCsrfToken(res);
@@ -89,6 +93,7 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
   const payload: Record<string, unknown> = {
     user: result.user,
     accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
     csrfToken,
   };
 
@@ -97,10 +102,10 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(
-    req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
-      req.cookies?.[ADMIN_REFRESH_COOKIE] ||
-      req.body?.refreshToken ||
+    req.body?.refreshToken ||
       req.headers['x-refresh-token'] ||
+      req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
+      req.cookies?.[ADMIN_REFRESH_COOKIE] ||
       ''
   ).trim();
 
@@ -122,6 +127,7 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
     new ApiResponse(true, 'Session refreshed', {
       user: result.user,
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
     })
   );
 });

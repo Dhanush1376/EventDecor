@@ -54,7 +54,7 @@ export function AdminBookingDetail() {
       variants={stagger}
       className="space-y-6"
     >
-      <motion.div variants={fadeUp} className="flex items-center justify-between gap-4">
+      <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/admin/events")}

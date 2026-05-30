@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { CloudinaryImage } from "./CloudinaryImage";
+import { OptimizedImage } from "./OptimizedImage";
 import { handleImageError } from "../../utils/imageUtils";
 import { useWishlist } from "../../context/WishlistContext";
 import { ShareButton } from "./ShareButton";
@@ -94,11 +94,10 @@ export function ProductGallery({ images = [], product }) {
                 : "border-transparent opacity-60 hover:opacity-100"
             }`}
           >
-            <CloudinaryImage
+            <OptimizedImage
               src={img}
               alt={`Thumbnail ${idx + 1}`}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"
-              containerClassName="w-full h-full pointer-events-none"
               width={100}
               height={100}
             />
@@ -120,11 +119,10 @@ export function ProductGallery({ images = [], product }) {
               onClick={() => openLightbox(idx)}
               className="w-full h-full shrink-0 snap-center relative overflow-hidden bg-white flex items-center justify-center cursor-zoom-in"
             >
-              <CloudinaryImage
+              <OptimizedImage
                 src={img}
                 alt={`Product Primary View ${idx + 1}`}
                 className="w-full h-full object-cover origin-center select-none transition-transform duration-500"
-                containerClassName="w-full h-full pointer-events-none"
                 width={800}
                 height={800}
               />
@@ -227,11 +225,10 @@ export function ProductGallery({ images = [], product }) {
                   {images.map((img, idx) => (
                     <div key={idx} className="w-full h-full shrink-0 snap-center flex items-center justify-center p-6 sm:p-10 md:p-16 lg:p-20">
                       <div className="relative max-w-full max-h-full flex items-center justify-center">
-                        <CloudinaryImage
+                        <OptimizedImage
                           src={img}
                           alt={`Lightbox view ${idx + 1}`}
                           className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
-                          containerClassName="max-w-full max-h-full flex items-center justify-center pointer-events-none"
                           width={1200}
                           height={1200}
                         />
@@ -260,14 +257,13 @@ export function ProductGallery({ images = [], product }) {
                           : "border-[#d4cbbf] opacity-50 hover:opacity-90"
                       }`}
                     >
-                      <CloudinaryImage
-                        src={img}
-                        alt={`Thumbnail ${idx + 1}`}
-                        className="w-full h-full object-cover pointer-events-none"
-                        containerClassName="w-full h-full pointer-events-none"
-                        width={100}
-                        height={100}
-                      />
+                        <OptimizedImage
+                          src={img}
+                          alt={`Thumbnail ${idx + 1}`}
+                          className="w-full h-full object-cover pointer-events-none"
+                          width={100}
+                          height={100}
+                        />
                     </button>
                   ))}
                 </div>

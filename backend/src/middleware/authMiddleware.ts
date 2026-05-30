@@ -181,9 +181,22 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     updateRequestContext({ userId: decoded.id });
     
     next();
-  } catch (err) {
+  } catch (err: any) {
     logger.warn(`requireAuth failed with error for route ${req.originalUrl}: ${err}`);
     if (err instanceof ApiError) throw err;
+    
+    if (
+      err.name === 'MongoNotConnectedError' ||
+      err.name === 'MongoNetworkError' ||
+      err.name === 'MongoServerError' ||
+      err.name === 'MongooseServerSelectionError' ||
+      err.message?.includes('not connected') ||
+      err.message?.includes('topology destroyed') ||
+      err.message?.includes('ECONNREFUSED')
+    ) {
+      throw new ApiError(503, 'Authentication service temporarily unavailable');
+    }
+
     throw new ApiError(401, 'Not authorized to access this route');
   }
 });
