@@ -46,7 +46,6 @@ export function getRouteSkeletonVariant(path) {
   if (path === "/custom-orders") return "custom-orders";
   if (path === "/blog") return "blog";
   if (path.startsWith("/blog/")) return "blog-post";
-  if (path.startsWith("/auth")) return "auth";
   if (path.startsWith("/track/")) return "order-tracking";
   if (path === "/order-success") return "order-success";
   if (["/shipping", "/returns", "/privacy", "/terms"].includes(path)) return "policy";
@@ -83,7 +82,6 @@ export function RouteSkeleton({ variant = "page" }) {
   if (variant === "order-success") return <OrderSuccessSkeleton />;
   if (variant === "order-tracking") return <OrderTrackingSkeleton />;
 
-  if (variant === "auth") return <AuthSkeleton />;
   if (variant === "admin") return <DashboardSkeleton />;
 
   return (

@@ -9,9 +9,11 @@ import logger from '../../utils/logger';
 export function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, loginSuccess } = useAuth();
   
-  const [step, setStep] = useState("identifier"); // identifier, otp, success
+  const [step, setStep] = useState("identifier"); // identifier, otp, 2fa, success
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [totpCode, setTotpCode] = useState("");
+  const [pending2faUserId, setPending2faUserId] = useState(null);
   const [timer, setTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -59,9 +61,9 @@ export function AuthModal() {
     try {
       const response = await authService.verifyOTP(email, otpString.replace(/\D/g, ''));
       if (response.success && response.data?.requires2FA) {
-        toast("Enter your authenticator code on the login page.", { icon: "🔐" });
-        closeAuthModal();
-        window.location.href = "/auth";
+        setPending2faUserId(response.data.userId);
+        setTotpCode("");
+        setStep("2fa");
         return;
       }
       if (response.success) {
@@ -83,6 +85,31 @@ export function AuthModal() {
         setError(false);
         if (otpRefs.current[0]) otpRefs.current[0].focus();
       }, 600);
+    } finally {
+      isSubmittingRef.current = false;
+      setIsLoading(false);
+    }
+  };
+
+  const submit2FA = async (code) => {
+    if (!pending2faUserId || isSubmittingRef.current || isLoading) return;
+    isSubmittingRef.current = true;
+    setIsLoading(true);
+    try {
+      const response = await authService.verify2FALogin(pending2faUserId, code);
+      if (response.success) {
+        setStep("success");
+        setTimeout(async () => {
+          await loginSuccess(
+            response.data.user,
+            response.data.accessToken || response.data.token,
+            response.data.refreshToken
+          );
+        }, 1800);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Invalid authenticator code");
+      setTotpCode("");
     } finally {
       isSubmittingRef.current = false;
       setIsLoading(false);
@@ -112,6 +139,8 @@ export function AuthModal() {
         setOtp(["", "", "", "", "", ""]);
         setTimer(0);
         setError(false);
+        setTotpCode("");
+        setPending2faUserId(null);
       }, 400);
       return () => clearTimeout(t);
     }
@@ -307,10 +336,16 @@ export function AuthModal() {
                       Bespoke Portal
                     </span>
                     <h2 className="font-display text-[28px] sm:text-[32px] leading-tight text-on-surface-variant font-light">
-                      {step === "otp" ? "Enter Security Key" : "Access Studio"}
+                      {step === "2fa"
+                        ? "Authenticator"
+                        : step === "otp"
+                        ? "Enter Security Key"
+                        : "Access Studio"}
                     </h2>
                     <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
-                      {step === "otp"
+                      {step === "2fa"
+                        ? "Enter the 6-digit code from your authenticator app."
+                        : step === "otp"
                         ? "A secure verification code has been dispatched to your inbox."
                         : "Experience passwordless, secure entry. Browse, curate collections, and secure your event masterpieces."
                       }
@@ -356,9 +391,7 @@ export function AuthModal() {
                               onFocus={() => setIsFocused(true)}
                               onBlur={() => setIsFocused(false)}
                             />
-                          </div>
-
-                          <button
+                          </div>                           <button
                             disabled={!email || isLoading}
                             className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
                           >
@@ -372,6 +405,47 @@ export function AuthModal() {
                                 </span>
                               </>
                             )}
+                          </button>
+                        </motion.form>
+                      ) : step === "2fa" ? (
+                        <motion.form
+                          key="2fa-block"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            if (totpCode.length >= 6) submit2FA(totpCode);
+                          }}
+                          className="space-y-6"
+                        >
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={6}
+                            autoComplete="one-time-code"
+                            value={totpCode}
+                            onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                            className="w-full text-center font-display text-[20px] tracking-[0.3em] bg-surface-container-low/50 border border-outline-variant/35 rounded-xl py-3.5 outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5 font-bold"
+                            placeholder="000000"
+                          />
+                          <button
+                            type="submit"
+                            disabled={totpCode.length < 6 || isLoading}
+                            className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
+                          >
+                            {isLoading ? "Verifying…" : "Verify Authenticator"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setStep("identifier");
+                              setPending2faUserId(null);
+                            }}
+                            className="w-full text-center font-label-sm text-[8px] text-primary uppercase tracking-[0.2em] font-bold hover:underline cursor-pointer"
+                          >
+                            Start over
                           </button>
                         </motion.form>
                       ) : (

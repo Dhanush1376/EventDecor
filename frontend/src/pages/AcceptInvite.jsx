@@ -132,7 +132,7 @@ export function AcceptInvite() {
 
             {successMessage.includes("Welcome aboard") ? (
               <button
-                onClick={() => navigate("/auth")}
+                onClick={() => navigate("/admin")}
                 className="w-full py-4 bg-primary text-white font-bold rounded-2xl text-[12px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary-container transition-all cursor-pointer"
               >
                 Sign In to Admin Portal

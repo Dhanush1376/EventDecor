@@ -371,7 +371,7 @@ export function AdminTopBar() {
                       onClick={() => {
                         if (confirmSignOut) {
                           logout(true);
-                          navigate("/auth");
+                          navigate("/");
                           setShowProfile(false);
                         } else {
                           setConfirmSignOut(true);

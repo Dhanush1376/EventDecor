@@ -334,7 +334,7 @@ export function AdminProvider({ children }) {
         logAdminAction("SESSION_EXPIRED","Inactivity timeout threshold exceeded, logging out");
         logout();
         toast.error("Session expired due to inactivity.", { duration: 8000 });
-        window.location.href ="/auth";
+        window.location.href ="/";
       } else if (elapsedSecs >= warningStartSecs) {
         setShowIdleWarning(true);
         setIdleSecondsLeft(totalTimeoutSecs - elapsedSecs);

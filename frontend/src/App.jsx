@@ -61,7 +61,6 @@ const Shipping = lazy(() => import("./pages/Shipping").then((m) => ({ default: m
 const Returns = lazy(() => import("./pages/Returns").then((m) => ({ default: m.Returns })));
 const Privacy = lazy(() => import("./pages/Privacy").then((m) => ({ default: m.Privacy })));
 const Terms = lazy(() => import("./pages/Terms").then((m) => ({ default: m.Terms })));
-const Auth = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Auth })));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite").then((m) => ({ default: m.AcceptInvite })));
 const NotFound = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFound })));
 const BlogListing = lazy(() => import("./pages/BlogListing").then((m) => ({ default: m.BlogListing })));
@@ -219,7 +218,6 @@ function App() {
                             <Route path="/returns" element={<Returns />} />
                             <Route path="/privacy" element={<Privacy />} />
                             <Route path="/terms" element={<Terms />} />
-                            <Route path="/auth" element={<Auth />} />
                             <Route path="/accept-invite" element={<AcceptInvite />} />
                             <Route path="*" element={<NotFound />} />
                           </Route>

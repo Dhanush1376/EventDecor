@@ -26,7 +26,7 @@ import logger from '../utils/logger';
 export function Dashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, logout, checkAuth } = useAuth();
+  const { user, logout, checkAuth, openAuthModal } = useAuth();
   const { items: wishlistItems, removeItem: removeFromWishlist } = useWishlist();
   const { cartCount, items: cartItems, updateQuantity, removeItem } = useCart();
   const fileInputRef = useRef(null);
@@ -491,12 +491,12 @@ export function Dashboard() {
                     <span className="font-label-sm text-[11px] text-secondary font-bold tracking-widest uppercase block">
                       Welcome, Guest
                     </span>
-                    <Link
-                      to="/auth"
-                      className="text-xs font-bold text-primary hover:underline mt-1 block"
+                    <button
+                      onClick={openAuthModal}
+                      className="text-xs font-bold text-primary hover:underline mt-1 block w-full text-center cursor-pointer bg-transparent border-none outline-none"
                     >
                       Access Bespoke Studio
-                    </Link>
+                    </button>
                   </>
                 ) : (
                   <>

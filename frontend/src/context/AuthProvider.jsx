@@ -242,6 +242,9 @@ export function AuthProvider({ children }) {
 
     toast.success('Welcome back to the Studio!');
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const redirectUrl = searchParams.get('redirect');
+
     const adminRoles = [
       'super_admin',
       'main_admin',
@@ -253,6 +256,18 @@ export function AuthProvider({ children }) {
       'manager',
       'coordinator',
     ];
+
+    if (redirectUrl) {
+      if (redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')) {
+        if (redirectUrl.startsWith('/admin') && !adminRoles.includes(userData?.role)) {
+          window.location.href = '/';
+        } else {
+          window.location.href = redirectUrl;
+        }
+        return;
+      }
+    }
+
     if (adminRoles.includes(userData?.role)) {
       window.location.href = '/admin';
       return;

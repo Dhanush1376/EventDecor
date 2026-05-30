@@ -1,18 +1,24 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { RouteSkeleton } from "../ui/RouteSkeleton";
 
 export function ProtectedRoute({ children, adminOnly = false }) {
-  const { user, loading, isAuthenticated, isAuthInitialized } = useAuth();
+  const { user, loading, isAuthenticated, isAuthInitialized, openAuthModal } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    if (isAuthInitialized && !loading && !isAuthenticated) {
+      openAuthModal();
+    }
+  }, [isAuthInitialized, loading, isAuthenticated, openAuthModal]);
 
   if (!isAuthInitialized || (loading && !user)) {
     return <RouteSkeleton variant="page" />;
   }
 
   if (!isAuthenticated) {
-    const loginPath = `/auth?redirect=${encodeURIComponent(location.pathname)}`;
+    const loginPath = `/?redirect=${encodeURIComponent(location.pathname)}`;
     return <Navigate to={loginPath} replace />;
   }
 
