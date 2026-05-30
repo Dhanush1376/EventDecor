@@ -70,7 +70,35 @@ export const ensureIndexes = async (): Promise<void> => {
       const model = (modelModule.default || modelModule) as any;
       if (model && typeof model.createIndexes === 'function') {
         logger.info(`[DATABASE] Ensuring indexes for ${model.modelName}...`);
-        await model.createIndexes();
+        try {
+          await model.createIndexes();
+        } catch (err: any) {
+          const errMsg = err.message || '';
+          if (
+            errMsg.includes('Index already exists') ||
+            errMsg.includes('different name and options') ||
+            errMsg.includes('already exists with different')
+          ) {
+            logger.warn(`[DATABASE] Index conflict detected for ${model.modelName}: ${err.message}. Attempting self-healing...`);
+            const indexes = await model.collection.listIndexes().toArray();
+            let droppedCount = 0;
+            for (const index of indexes) {
+              if (index.key && Object.values(index.key).includes('text') && index.name !== 'FullTextIndex') {
+                logger.info(`[DATABASE] Dropping conflicting text index "${index.name}" on ${model.modelName}...`);
+                await model.collection.dropIndex(index.name);
+                droppedCount++;
+              }
+            }
+            if (droppedCount > 0) {
+              logger.info(`[DATABASE] Retrying createIndexes for ${model.modelName} after dropping ${droppedCount} conflicting index(es)...`);
+              await model.createIndexes();
+            } else {
+              throw err;
+            }
+          } else {
+            throw err;
+          }
+        }
       }
     } catch (err: any) {
       logger.error(`[DATABASE] Failed to build index for model at ${path}: ${err.message}`);

@@ -15,7 +15,7 @@ const skipEndpoints = [
 export const dbReadinessGuard = (req: Request, res: Response, next: NextFunction) => {
   const path = (req.originalUrl || req.url || '').split('?')[0];
 
-  if (process.env.NODE_ENV === 'test') {
+  if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) {
     return next();
   }
 

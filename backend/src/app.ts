@@ -183,6 +183,19 @@ app.get('/', noCacheMiddleware, (req: Request, res: Response) => {
   });
 });
 
+// Root-level health check endpoint supporting both GET and HEAD methods for uptime monitoring
+app.get('/health', noCacheMiddleware, (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.head('/health', noCacheMiddleware, (req: Request, res: Response) => {
+  res.status(200).end();
+});
+
 // Ignore favicon
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
