@@ -233,17 +233,17 @@
   }
 
   /* Global Form Input Focus - Premium Dual-Transition Shadow */
-  input:focus:not(.admin-section-root *),
-  textarea:focus:not(.admin-section-root *),
-  select:focus:not(.admin-section-root *),
-  [type="text"]:focus:not(.admin-section-root *),
-  [type="email"]:focus:not(.admin-section-root *),
-  [type="url"]:focus:not(.admin-section-root *),
-  [type="password"]:focus:not(.admin-section-root *),
-  [type="number"]:focus:not(.admin-section-root *),
-  [type="date"]:focus:not(.admin-section-root *),
-  [type="search"]:focus:not(.admin-section-root *),
-  [type="tel"]:focus:not(.admin-section-root *) {
+  input:focus:not(.admin-section-root *):not(.search-portal-input),
+  textarea:focus:not(.admin-section-root *):not(.search-portal-input),
+  select:focus:not(.admin-section-root *):not(.search-portal-input),
+  [type="text"]:focus:not(.admin-section-root *):not(.search-portal-input),
+  [type="email"]:focus:not(.admin-section-root *):not(.search-portal-input),
+  [type="url"]:focus:not(.admin-section-root *):not(.search-portal-input),
+  [type="password"]:focus:not(.admin-section-root *):not(.search-portal-input),
+  [type="number"]:focus:not(.admin-section-root *):not(.search-portal-input),
+  [type="date"]:focus:not(.admin-section-root *):not(.search-portal-input),
+  [type="search"]:focus:not(.admin-section-root *):not(.search-portal-input),
+  [type="tel"]:focus:not(.admin-section-root *):not(.search-portal-input) {
     outline: none;
     border-color: var(--color-primary-container);
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
