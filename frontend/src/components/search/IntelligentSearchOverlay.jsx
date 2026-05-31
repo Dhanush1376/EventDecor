@@ -145,8 +145,8 @@ export function IntelligentSearchOverlay({
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onKeyDown}
                   placeholder="Search decor, events, styles..."
-                  className="flex-1 bg-transparent border-none text-[18px] md:text-[20px] text-stone-900 placeholder:text-stone-400/70 font-body font-normal search-portal-input"
-                  style={{ outline: 'none', border: 'none', boxShadow: 'none' }}
+                  className="flex-1 bg-transparent border-none outline-none appearance-none ring-0 focus:ring-0 focus:outline-none focus:border-transparent text-[18px] md:text-[20px] text-stone-900 placeholder:text-stone-400/70 font-body font-normal search-portal-input"
+                  style={{ outline: 'none', border: 'none', boxShadow: 'none', WebkitAppearance: 'none', appearance: 'none' }}
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck="false"

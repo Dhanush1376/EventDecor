@@ -20,7 +20,7 @@ export const uploadWithRetry = async (uploadFn, formData, retries = 3, delayMs =
 
 export const uploadDirectToCloudinary = async (formData, isSingle = false) => {
   const sigRes = await api.get('/upload/signed-url');
-  console.log("SIGNED URL RESPONSE:", sigRes);
+  logger.debug("SIGNED URL RESPONSE:", sigRes);
   const { signature, timestamp, cloudName, apiKey, folder, uploadUrl } = sigRes.data?.data || sigRes.data || {};
 
   const files = [];

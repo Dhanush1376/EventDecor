@@ -302,6 +302,12 @@ const SLOW_REQUEST_MS = 4000;
 // Add a response interceptor to handle errors globally
 api.interceptors.response.use(
   (response) => {
+    // Capture new CSRF tokens returned in any successful response (e.g. login)
+    if (response.data?.csrfToken) {
+      csrfToken = response.data.csrfToken;
+      csrfInitPromise = Promise.resolve(csrfToken);
+    }
+
     const started = response.config?.metadata?.startTime;
     if (started && import.meta.env.PROD) {
       const duration = Date.now() - started;
@@ -376,6 +382,29 @@ api.interceptors.response.use(
 
     if (isProtectedWithoutSession) {
       return Promise.reject(error);
+    }
+
+    // Handle CSRF token mismatch / expiration
+    if (status === 403 && error.response?.data?.message?.includes('CSRF') && !originalRequest._csrfRetry) {
+      originalRequest._csrfRetry = true;
+      logger.warn('[API] CSRF token invalid/missing. Re-fetching and retrying...');
+      csrfToken = null;
+      csrfInitPromise = null;
+      
+      try {
+        const newToken = await ensureCsrfToken();
+        if (newToken) {
+          if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
+            originalRequest.headers.set('X-CSRF-Token', newToken);
+          } else {
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers['X-CSRF-Token'] = newToken;
+          }
+          return api(originalRequest);
+        }
+      } catch (e) {
+        logger.error('[API] Failed to refresh CSRF token on retry');
+      }
     }
 
     const skipAuthRetry = originalRequest?._skipAuthRetry;

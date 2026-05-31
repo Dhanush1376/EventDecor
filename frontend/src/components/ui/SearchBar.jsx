@@ -53,7 +53,8 @@ export function SearchBar({
         value={localValue}
         onChange={handleInputChange}
         placeholder={placeholder}
-        className="w-full pl-12 pr-12 py-3 bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50 search-portal-input"
+        className="w-full pl-12 pr-12 py-3 bg-transparent border-none outline-none appearance-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50 search-portal-input"
+        style={{ outline: 'none', border: 'none', boxShadow: 'none', WebkitAppearance: 'none', appearance: 'none' }}
         aria-label="Search"
       />
       {localValue && (

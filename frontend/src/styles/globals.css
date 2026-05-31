@@ -259,19 +259,26 @@
     /* Box shadow is kept for accessibility focus */
   }
 
-  /* Disable focus box shadow/border for all search inputs/portals to prevent square box overlays */
+  /* Disable box shadow/border for all search inputs/portals to prevent square box overlays */
+  input[type="search"],
   input[type="search"]:focus,
   input[type="search"]:focus-visible,
+  input[placeholder*="Search"],
   input[placeholder*="Search"]:focus,
   input[placeholder*="Search"]:focus-visible,
+  input[placeholder*="search"],
   input[placeholder*="search"]:focus,
   input[placeholder*="search"]:focus-visible,
+  input.search-portal-input,
   input.search-portal-input:focus,
   input.search-portal-input:focus-visible {
+    -webkit-appearance: none !important;
+    appearance: none !important;
     outline: none !important;
     border: none !important;
     border-color: transparent !important;
     box-shadow: none !important;
+    background: transparent !important;
   }
 
   /* Material Symbols Global Fix */
