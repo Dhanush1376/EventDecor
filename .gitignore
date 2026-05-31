@@ -32,3 +32,7 @@ dist-ssr
 
 # Documents
 *.docx
+
+# Audit Artifacts & Temp Scripts
+backend_architecture.md
+scripts/extract_arch.js

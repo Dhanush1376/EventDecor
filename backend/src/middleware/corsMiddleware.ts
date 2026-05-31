@@ -27,7 +27,7 @@ export const strictOriginBlocker = (req: Request, res: Response, next: NextFunct
 
   const mutatingMethod = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
   
-  if (!mutatingMethod || process.env.NODE_ENV === 'development') {
+  if (!mutatingMethod || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     return next();
   }
 

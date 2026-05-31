@@ -36,9 +36,12 @@ export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Respon
   // Fetch active promotional coupons for the coupon center
   const activeCoupons = await Coupon.find({ isActive: true, expiryDate: { $gt: new Date() } });
 
-  // Compute lifetime spend progress to display next tier goal
-  const validOrders = await Order.find({ user: userId, orderStatus: { $nin: ['Cancelled', 'Refunded'] } });
-  const lifetimeSpend = validOrders.reduce((sum, ord) => sum + ord.total, 0);
+  // Compute lifetime spend progress using fast MongoDB aggregation
+  const spendAggregation = await Order.aggregate([
+    { $match: { user: user._id, orderStatus: { $nin: ['Cancelled', 'Refunded'] } } },
+    { $group: { _id: null, totalSpend: { $sum: "$total" } } }
+  ]);
+  const lifetimeSpend = spendAggregation[0]?.totalSpend || 0;
 
   const { LOYALTY_TIERS, getTierBySpend } = require('../constants/loyaltyTiers');
   
