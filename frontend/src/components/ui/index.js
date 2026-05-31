@@ -25,3 +25,4 @@ export * from "./CloudinaryImage";
 export * from "./Icon";
 export * from "./StateRenderer";
 export * from "./OptimizedImage";
+export { default as CloudflareVerification } from "./CloudflareVerification";

@@ -25,7 +25,11 @@ const createRedisConfig = () => {
     rejectUnauthorized: process.env.REDIS_REJECT_UNAUTHORIZED !== 'false',
     connectTimeout: 10000,
     family: 4, // Fix for Node 18+ ENOTFOUND IPv6 resolution issues with Upstash
-    reconnectStrategy: (retries: number) => {
+    reconnectStrategy: (retries: number, cause: Error) => {
+      if (cause && cause.message && cause.message.includes('max requests limit exceeded')) {
+        return new Error('Upstash Free Limit Exceeded. Stopping reconnect strategy.');
+      }
+
       const delay = Math.min(50 * Math.pow(2, retries), 10000);
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
       const isProduction = process.env.NODE_ENV === 'production';
