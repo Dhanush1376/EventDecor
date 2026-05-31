@@ -1586,6 +1586,22 @@ export function AdminContent() {
 
   const [activeSection, setActiveSection] = useState("hero");
   
+  const categoryScrollRef = useRef(null);
+  const subitemScrollRef = useRef(null);
+
+  useEffect(() => {
+    // Scroll active category into view
+    const activeCategoryEl = categoryScrollRef.current?.querySelector(".active-category");
+    if (activeCategoryEl) {
+      activeCategoryEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+    // Scroll active subitem into view
+    const activeSubitemEl = subitemScrollRef.current?.querySelector(".active-subitem");
+    if (activeSubitemEl) {
+      activeSubitemEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  }, [activeSection]);
+  
   const [expandedCategories, setExpandedCategories] = useState({"Storefront Layout": true,"Pages": true,"SEO & Branding": true,"System Tools": false
   });
 
@@ -1658,6 +1674,7 @@ export function AdminContent() {
         <div className="block lg:hidden space-y-3.5 bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-4 shadow-[var(--admin-shadow-xs)]">
           {/* Main Category Groups */}
           <div 
+            ref={categoryScrollRef}
             className="flex items-center gap-1.5 overflow-x-auto pb-1.5 border-b border-[var(--admin-border-subtle)] scrollbar-hide"
             style={{ scrollbarWidth:"none", msOverflowStyle:"none", WebkitOverflowScrolling:"touch" }}
           >
@@ -1671,9 +1688,9 @@ export function AdminContent() {
                     // Instantly set active section to the first item under this category group
                     setActiveSection(cat.items[0].id);
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] transition-all duration-300 shrink-0 cursor-pointer border ${
+                  className={`px-3.5 py-1.5 rounded-xl text-[11px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] transition-all duration-300 shrink-0 cursor-pointer border ${
                     isGroupActive
-                      ?"text-[var(--admin-text-inverse)] bg-[var(--admin-text-primary)] border-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)]"
+                      ?"text-[var(--admin-text-inverse)] bg-[var(--admin-text-primary)] border-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] active-category"
                       :"text-[var(--admin-text-secondary)] bg-[var(--admin-bg-subtle)]/40 border-[var(--admin-border)] hover:bg-[var(--admin-surface)] hover:text-[var(--admin-text-primary)]"
                   }`}
                 >
@@ -1685,6 +1702,7 @@ export function AdminContent() {
 
           {/* Sub-item Nodes */}
           <div 
+            ref={subitemScrollRef}
             className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-hide"
             style={{ scrollbarWidth:"none", msOverflowStyle:"none", WebkitOverflowScrolling:"touch" }}
           >
@@ -1701,7 +1719,7 @@ export function AdminContent() {
                     onClick={() => setActiveSection(item.id)}
                     className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all duration-200 shrink-0 border ${
                       isActive
-                        ?"bg-[var(--admin-accent-subtle)] border-transparent text-[var(--admin-accent)] font-semibold"
+                        ?"bg-[var(--admin-accent-subtle)] border-transparent text-[var(--admin-accent)] font-semibold active-subitem"
                         :"bg-[var(--admin-surface)]/60 border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-primary)]"
                     }`}
                   >

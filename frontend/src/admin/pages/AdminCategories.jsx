@@ -130,7 +130,7 @@ export function AdminCategories() {
                     <td className="text-right pr-6">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
-                          onClick={() => window.location.hash = `#/admin/categories/edit/${cat._id}`}
+                          onClick={() => navigate(`/admin/categories/edit/${cat._id}`)}
                           className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
                           title="Edit Category"
                         >

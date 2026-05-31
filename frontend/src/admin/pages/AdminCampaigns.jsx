@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { notificationService } from "../../services/domainServices";
 import toast from "react-hot-toast";
 import { AdminToggle, SkeletonDashboard } from "../components/AdminUIKit";
@@ -10,6 +11,7 @@ import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export function AdminCampaigns() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("broadcasts"); // broadcasts | templates
   const [campaigns, setCampaigns] = useState([]);
   const [templates, setTemplates] = useState([]);
@@ -114,9 +116,9 @@ export function AdminCampaigns() {
           <button
             onClick={() => {
               if (activeTab === "templates") {
-                window.location.hash = "#/admin/campaigns/templates/add";
+                navigate("/admin/campaigns/templates/add");
               } else {
-                window.location.hash = "#/admin/campaigns/add";
+                navigate("/admin/campaigns/add");
               }
             }}
             className="admin-btn admin-btn-primary h-9 shrink-0"
@@ -173,7 +175,7 @@ export function AdminCampaigns() {
                 <h3 className="text-sm font-bold text-black font-display">Data Not Found</h3>
                 <p className="text-[12px] text-black/40 font-light mt-1 mb-4">No campaigns designed yet. You can easily craft a customized broadcast using our pre-seeded premium templates.</p>
                 <button
-                  onClick={() => window.location.hash = "#/admin/campaigns/add"}
+                  onClick={() => navigate("/admin/campaigns/add")}
                   className="bg-[var(--admin-accent)] text-white hover:bg-[var(--admin-text-primary)] rounded-full px-5 py-2.5 font-label uppercase text-[9px] tracking-wider font-bold shadow-md hover:shadow-lg transition-colors cursor-pointer active:scale-95"
                 >
                   Create Campaign
@@ -379,7 +381,7 @@ export function AdminCampaigns() {
                     <div className="flex items-center gap-2 border-t border-[var(--admin-border-subtle)] pt-3 mt-4">
                       <button
                         onClick={() => {
-                          window.location.hash = `#/admin/campaigns/templates/edit/${temp._id}`;
+                          navigate(`/admin/campaigns/templates/edit/${temp._id}`);
                         }}
                         className="px-3 py-2 rounded-xl border border-[var(--admin-border)] hover:border-black text-[9px] font-label uppercase tracking-wider font-bold transition-all text-black hover:bg-black hover:text-white flex-1 text-center cursor-pointer"
                       >

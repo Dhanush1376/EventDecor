@@ -22,6 +22,7 @@ export interface IProduct extends Document {
   stock: number;
   featured: boolean;
   isActive: boolean;
+  isNonRefundable: boolean;
   showInGallery: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -50,6 +51,7 @@ const ProductSchema: Schema = new Schema(
     stock: { type: Number, default: 0, min: 0 },
     featured: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+    isNonRefundable: { type: Boolean, default: false },
     showInGallery: { type: Boolean, default: false },
   },
   {

@@ -252,12 +252,21 @@ export default function CheckoutSidebar() {
                   </span>
                   Secure delivery
                 </p>
-                <p className="flex items-center gap-1.5 font-medium">
-                  <span className="material-symbols-outlined text-sm text-[#c29b38]">
-                    change_circle
-                  </span>
-                  Easy 7-day returns
-                </p>
+                {activeItems.some(item => item.isNonRefundable) ? (
+                  <p className="flex items-center gap-1.5 font-medium text-[#d97706]">
+                    <span className="material-symbols-outlined text-sm text-[#d97706]">
+                      block
+                    </span>
+                    Contains Non-Refundable Items
+                  </p>
+                ) : (
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <span className="material-symbols-outlined text-sm text-[#c29b38]">
+                      change_circle
+                    </span>
+                    Easy 7-day returns
+                  </p>
+                )}
               </div>
 
               {/* Integrated Payment Button at the bottom of the Price Details Card */}

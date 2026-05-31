@@ -186,6 +186,7 @@ api.interceptors.request.use(
       path.includes('/notifications') ||
       path.includes('/analytics/') ||
       path.includes('/reviews') ||
+      path.includes('/upload') ||
       path.includes('/recommendations/for-you');
 
     const isAuthLifecycleRequest =

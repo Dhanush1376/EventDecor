@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { couponService, productService } from "../../services/domainServices";
 import toast from "react-hot-toast";
@@ -34,6 +34,8 @@ export function AdminCreateCoupon() {
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [mobileTab, setMobileTab] = useState("form");
+  const [currentStep, setCurrentStep] = useState(0);
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState({
     code:"",
@@ -254,16 +256,75 @@ export function AdminCreateCoupon() {
   };
 
   if (loading) {
-    return <SkeletonDashboard />;
+    return (
+      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-6">
+        <SkeletonDashboard />
+      </div>
+    );
   }
 
+  const STEPS = [
+    { label: "Metadata", icon: "sell" },
+    { label: "Targeting", icon: "groups" },
+    { label: "Controls", icon: "rule" },
+    { label: "Publish", icon: "verified" }
+  ];
+
+  const handleNext = () => {
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
   const formElement = (
-    <motion.form
-      onSubmit={handleSubmit}
-      variants={fadeUp}
-      className="admin-card p-6 md:p-8 space-y-8"
-    >
-        {/* SECTION 1: BASIC DETAILS */}
+    <div className={`flex-1 min-w-0 ${mobileTab === "form" ? "block" : "hidden lg:block"}`}>
+      <div className="admin-card">
+        {/* Wizard Header */}
+      <div className="flex border-b border-[var(--admin-border-subtle)]">
+        {STEPS.map((step, idx) => {
+          const isActive = idx === currentStep;
+          const isPast = idx < currentStep;
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setCurrentStep(idx)}
+              className={`flex-1 py-4 flex flex-col items-center justify-center gap-1 relative transition-all ${isActive ? 'bg-[var(--admin-surface)]' : 'hover:bg-[var(--admin-surface-muted)]'}`}
+            >
+              <span className={`material-symbols-outlined text-[20px] transition-colors ${isActive ? 'text-[var(--admin-accent)]' : isPast ? 'text-success' : 'text-[var(--admin-text-tertiary)]'}`}>
+                {isPast ? 'check_circle' : step.icon}
+              </span>
+              <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${isActive ? 'text-[var(--admin-accent)]' : 'text-[var(--admin-text-secondary)]'}`}>
+                {step.label}
+              </span>
+              {isActive && (
+                <motion.div layoutId="activeStepIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--admin-accent)]" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <motion.form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (currentStep === STEPS.length - 1) {
+            handleSubmit(e);
+          } else {
+            handleNext();
+          }
+        }}
+        variants={fadeUp}
+        className="p-6 md:p-8 space-y-8 min-h-[450px]"
+      >
+        {/* STEP 1: METADATA */}
+        {currentStep === 0 && (
         <div className="space-y-5">
           <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
             <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">sell</span>
@@ -329,8 +390,10 @@ export function AdminCreateCoupon() {
             />
           </div>
         </div>
+        )}
 
-        {/* SECTION 2: CUSTOMER & CATALOG TARGETING */}
+        {/* STEP 2: CUSTOMER & CATALOG TARGETING */}
+        {currentStep === 1 && (
         <div className="space-y-5">
           <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
             <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">groups</span>
@@ -448,163 +511,168 @@ export function AdminCreateCoupon() {
             </div>
           )}
         </div>
+        )}
 
-        {/* SECTION 3: DISPLAY CONTROLS */}
-        <div className="space-y-5">
-          <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">visibility</span>
-            3. Storefront Visibility & Auto-Apply Settings
-          </h2>
-          <div className="admin-card-inset p-4 space-y-4">
-            <label className="admin-label">
-              Where should this coupon be displayed?
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {DISPLAY_LOCATIONS.map((loc) => {
-                const isChecked = formData.displayLocations.includes(loc.value);
-                return (
-                  <label
-                    key={loc.value}
-                    className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[12px]"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => toggleDisplayLocation(loc.value)}
-                      className="w-4 h-4 rounded accent-[var(--admin-accent)]"
-                    />
-                    <span className="text-[var(--admin-text-primary)] font-semibold">{loc.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="flex items-center gap-4 p-4 admin-card-inset rounded-[var(--admin-radius-lg)] cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isFeatured}
-                onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-                className="w-4 h-4 rounded accent-[var(--admin-accent)]"
-              />
-              <div>
-                <p className="text-[13px] font-semibold text-[var(--admin-text-primary)]">Mark as Featured Offer</p>
-                <p className="text-[11px] text-[var(--admin-text-tertiary)]">Highlighted on promotion banners</p>
+        {/* STEP 3: CONTROLS, SCHEDULING & CASHBACK */}
+        {currentStep === 2 && (
+        <div className="space-y-8">
+          <div className="space-y-5">
+            <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">visibility</span>
+              3. Storefront Visibility & Auto-Apply Settings
+            </h2>
+            <div className="admin-card-inset p-4 space-y-4">
+              <label className="admin-label">
+                Where should this coupon be displayed?
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {DISPLAY_LOCATIONS.map((loc) => {
+                  const isChecked = formData.displayLocations.includes(loc.value);
+                  return (
+                    <label
+                      key={loc.value}
+                      className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[12px]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleDisplayLocation(loc.value)}
+                        className="w-4 h-4 rounded accent-[var(--admin-accent)]"
+                      />
+                      <span className="text-[var(--admin-text-primary)] font-semibold">{loc.label}</span>
+                    </label>
+                  );
+                })}
               </div>
-            </label>
-            <label className="flex items-center gap-4 p-4 admin-card-inset rounded-[var(--admin-radius-lg)] cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isAutoApply}
-                onChange={(e) => setFormData({ ...formData, isAutoApply: e.target.checked })}
-                className="w-4 h-4 rounded accent-[var(--admin-accent)]"
-              />
-              <div>
-                <p className="text-[13px] font-semibold text-[var(--admin-text-primary)]">Auto-Apply at Checkout</p>
-                <p className="text-[11px] text-[var(--admin-text-tertiary)]">Applies automatically if conditions match</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label className="flex items-center gap-4 p-4 admin-card-inset rounded-[var(--admin-radius-lg)] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isFeatured}
+                  onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                  className="w-4 h-4 rounded accent-[var(--admin-accent)]"
+                />
+                <div>
+                  <p className="text-[13px] font-semibold text-[var(--admin-text-primary)]">Mark as Featured Offer</p>
+                  <p className="text-[11px] text-[var(--admin-text-tertiary)]">Highlighted on promotion banners</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-4 p-4 admin-card-inset rounded-[var(--admin-radius-lg)] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isAutoApply}
+                  onChange={(e) => setFormData({ ...formData, isAutoApply: e.target.checked })}
+                  className="w-4 h-4 rounded accent-[var(--admin-accent)]"
+                />
+                <div>
+                  <p className="text-[13px] font-semibold text-[var(--admin-text-primary)]">Auto-Apply at Checkout</p>
+                  <p className="text-[11px] text-[var(--admin-text-tertiary)]">Applies automatically if conditions match</p>
+                </div>
+              </label>
+            </div>
+          </div>
+          
+          <div className="space-y-5 pt-5 border-t border-[var(--admin-border-subtle)]">
+            <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">payments</span>
+              4. Loyalty Wallet Cashback Perks
+            </h2>
+            <p className="text-[11px] text-[var(--admin-text-tertiary)]">
+              Give customers promotional Siri Cash directly in their store wallets upon placing their orders. Admins can configure percentages, fixed credits, or hybrid reward perks!
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="admin-label">Cashback Rate (%)</label>
+                <input
+                  type="number"
+                  value={formData.cashbackPercentage}
+                  onChange={(e) => setFormData({ ...formData, cashbackPercentage: e.target.value })}
+                  placeholder="e.g. 5 for 5% cashback"
+                  className="admin-input"
+                />
               </div>
-            </label>
+              <div className="space-y-1.5">
+                <label className="admin-label">Flat Wallet Cashback Credits (₹)</label>
+                <input
+                  type="number"
+                  value={formData.cashbackFixed}
+                  onChange={(e) => setFormData({ ...formData, cashbackFixed: e.target.value })}
+                  placeholder="e.g. ₹100 flat cashback"
+                  className="admin-input"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-5 pt-5 border-t border-[var(--admin-border-subtle)]">
+            <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">rule</span>
+              5. Exclusions & Campaign Rules
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="admin-label">Validity Start Date *</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  className="admin-input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="admin-label">Campaign Expiry Date *</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.expiryDate}
+                  onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                  className="admin-input"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-1 space-y-1.5">
+                <label className="admin-label">Global Limit</label>
+                <input
+                  type="number"
+                  value={formData.usageLimit}
+                  onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
+                  placeholder="Unlimited"
+                  className="admin-input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="admin-label">Stacking Rules</label>
+                <select
+                  value={formData.stackingRule}
+                  onChange={(e) => setFormData({ ...formData, stackingRule: e.target.value })}
+                  className="admin-select"
+                >
+                  <option value="exclusive">Standalone Exclusive (Cannot Stack)</option>
+                  <option value="stackable">Stackable (Can Combine Offers)</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="admin-label">Campaign Priority Level</label>
+                <input
+                  type="number"
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                  placeholder="e.g. 1"
+                  className="admin-input"
+                />
+              </div>
+            </div>
           </div>
         </div>
+        )}
 
-        {/* SECTION 4: LOYALTY WALLET CASHBACK */}
+        {/* STEP 4: PUBLISH STATUS & REVIEW */}
+        {currentStep === 3 && (
         <div className="space-y-5">
-          <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">payments</span>
-            4. Loyalty Wallet Cashback Perks
-          </h2>
-          <p className="text-[11px] text-[var(--admin-text-tertiary)]">
-            Give customers promotional Siri Cash directly in their store wallets upon placing their orders. Admins can configure percentages, fixed credits, or hybrid reward perks!
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="admin-label">Cashback Rate (%)</label>
-              <input
-                type="number"
-                value={formData.cashbackPercentage}
-                onChange={(e) => setFormData({ ...formData, cashbackPercentage: e.target.value })}
-                placeholder="e.g. 5 for 5% cashback"
-                className="admin-input"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="admin-label">Flat Wallet Cashback Credits (₹)</label>
-              <input
-                type="number"
-                value={formData.cashbackFixed}
-                onChange={(e) => setFormData({ ...formData, cashbackFixed: e.target.value })}
-                placeholder="e.g. ₹100 flat cashback"
-                className="admin-input"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 5: SCHEDULING, LIMITS & STACKING */}
-        <div className="space-y-5">
-          <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 border-b border-[var(--admin-border-subtle)] pb-3">
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">rule</span>
-            5. Exclusions & Campaign Rules
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="admin-label">Validity Start Date *</label>
-              <input
-                type="date"
-                required
-                value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="admin-input"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="admin-label">Campaign Expiry Date *</label>
-              <input
-                type="date"
-                required
-                value={formData.expiryDate}
-                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-                className="admin-input"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-1 space-y-1.5">
-              <label className="admin-label">Global Limit</label>
-              <input
-                type="number"
-                value={formData.usageLimit}
-                onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
-                placeholder="Unlimited"
-                className="admin-input"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="admin-label">Stacking Rules</label>
-              <select
-                value={formData.stackingRule}
-                onChange={(e) => setFormData({ ...formData, stackingRule: e.target.value })}
-                className="admin-select"
-              >
-                <option value="exclusive">Standalone Exclusive (Cannot Stack)</option>
-                <option value="stackable">Stackable (Can Combine Offers)</option>
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="admin-label">Campaign Priority Level</label>
-              <input
-                type="number"
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                placeholder="e.g. 1"
-                className="admin-input"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 6: PUBLISHING STATUS */}
-        <div className="admin-card-inset p-4 rounded-[var(--admin-radius-lg)] max-w-sm">
+          <div className="admin-card-inset p-4 rounded-[var(--admin-radius-lg)] max-w-sm">
           <AdminToggle
             label="Publishing Campaign Status"
             description="Enable to activate this promotional offer in production"
@@ -613,53 +681,170 @@ export function AdminCreateCoupon() {
           />
         </div>
 
+        </div>
+        )}
+
         {/* SUBMIT ACTIONS */}
-        <div className="pt-6 flex items-center justify-end gap-3 border-t border-[var(--admin-border-subtle)]">
+        <div className="pt-6 flex items-center justify-between border-t border-[var(--admin-border-subtle)]">
           <button
             type="button"
-            onClick={handleCancelAction}
+            onClick={currentStep === 0 ? handleCancelAction : handlePrev}
             className="admin-btn admin-btn-outline"
           >
-            Cancel
+            {currentStep === 0 ? "Cancel" : "Previous"}
           </button>
           <button
             type="submit"
             disabled={saving}
             className="admin-btn admin-btn-primary disabled:opacity-50"
           >
-            {saving ?"Saving..." : isEdit ?"Update Coupon" :"Create Coupon"}
+            {currentStep === STEPS.length - 1 ? (saving ? "Saving..." : (isEdit ? "Update Coupon" : "Publish Campaign")) : "Next Step"}
           </button>
         </div>
       </motion.form>
+      </div>
+    </div>
     );
-
 
     return (
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={stagger}
-        className="max-w-[850px] mx-auto space-y-6 pb-16"
-      >
+      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0">
         {/* Header */}
-        <motion.div variants={fadeUp} className="flex items-center gap-4">
-          <button
-            onClick={handleCancelAction}
-            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)]"
-          >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-          </button>
-          <div>
-            <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
-              {isEdit ?"Edit Coupon" :"Create Coupon"}
-            </h2>
-            <p className="text-[13px] text-[var(--admin-text-secondary)] mt-0.5">
-              {isEdit ?"Update coupon settings" :"Set up a new coupon"}
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleCancelAction}
+              className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm"
+            >
+              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            </button>
+            <div>
+              <h2 className="text-[20px] font-bold text-[var(--admin-text-primary)] leading-none mb-1.5 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[22px] text-[var(--admin-accent)]">
+                  {isEdit ? 'edit_note' : 'sell'}
+                </span>
+                {isEdit ? "Edit Coupon" : "Create Coupon"}
+              </h2>
+              <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
+                {isEdit ? "Update coupon settings" : "Set up a new promotional campaign"}
+              </p>
+            </div>
           </div>
-        </motion.div>
+        </div>
 
-        {formElement}
-      </motion.div>
+        {/* Mobile Tab Switcher */}
+        <div className="lg:hidden flex bg-[var(--admin-surface)] rounded-full p-1 border border-[var(--admin-border)] sticky top-20 z-30 shadow-sm mx-4 sm:mx-0">
+          <button
+            onClick={() => setMobileTab("form")}
+            className={`flex-1 py-2 text-[12px] font-bold rounded-full transition-all ${
+              mobileTab === "form" ? "bg-[var(--admin-accent)] text-white shadow-md" : "text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+            }`}
+          >
+            Editor Form
+          </button>
+          <button
+            onClick={() => setMobileTab("preview")}
+            className={`flex-1 py-2 text-[12px] font-bold rounded-full transition-all ${
+              mobileTab === "preview" ? "bg-[var(--admin-accent)] text-white shadow-md" : "text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+            }`}
+          >
+            Live Preview
+          </button>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-6 relative items-start">
+          {/* LEFT COLUMN: FORM */}
+          {formElement}
+
+          {/* RIGHT COLUMN: LIVE PREVIEW */}
+          <div className={`lg:w-[340px] xl:w-[400px] shrink-0 lg:sticky lg:top-24 space-y-6 w-full ${mobileTab === "preview" ? "block" : "hidden lg:block"}`}>
+            <div className="admin-card overflow-hidden">
+                  <div className="bg-[var(--admin-bg-subtle)] px-4 py-3 border-b border-[var(--admin-border)] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-secondary)]">preview</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)]">Live Preview</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-error" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-warning" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-success" />
+                    </div>
+                  </div>
+
+                  <div className="p-8 bg-white flex flex-col items-center justify-center min-h-[400px] border-b border-[var(--admin-border-subtle)] relative">
+                    <div className="relative group cursor-pointer w-full max-w-sm">
+                      {/* Storefront Coupon Card Simulation */}
+                      <div className={`rounded-xl transition-all duration-300 overflow-hidden relative shadow-[var(--admin-shadow-lg)] ${formData.isActive ? 'bg-white border-2 border-[var(--admin-accent)]' : 'bg-gray-50 border-2 border-dashed border-[var(--admin-text-placeholder)] grayscale opacity-70'}`}>
+                        
+                        {/* Coupon Header/Design */}
+                        <div className="bg-[var(--admin-accent)]/10 px-6 py-5 flex items-center justify-between relative overflow-hidden">
+                          <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white shadow-inner" style={{ borderRight: '1px solid var(--admin-border-subtle)' }} />
+                          <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white shadow-inner" style={{ borderLeft: '1px solid var(--admin-border-subtle)' }} />
+                          
+                          <div className="z-10 text-center w-full">
+                            <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--admin-accent)] block mb-1">
+                              {formData.isFeatured ? '⭐ Featured Offer' : 'Special Offer'}
+                            </span>
+                            <h3 className="text-3xl font-black text-[var(--admin-text-primary)] tracking-tight">
+                              {formData.discountType === 'percentage' ? `${formData.discountValue || '0'}% OFF` : `₹${formData.discountValue || '0'} OFF`}
+                            </h3>
+                          </div>
+                        </div>
+
+                        {/* Coupon Details */}
+                        <div className="px-6 py-5 space-y-4 border-t border-dashed border-[var(--admin-border)]">
+                          <div className="text-center">
+                            <div className="inline-block border-2 border-dashed border-[var(--admin-text-tertiary)] rounded-lg px-4 py-2 bg-[var(--admin-surface-muted)]">
+                              <span className="font-mono text-lg font-bold tracking-widest text-[var(--admin-text-primary)]">
+                                {formData.code || 'CODE'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 pt-2 text-center">
+                            {formData.minOrderAmount > 0 && (
+                              <p className="text-[11px] text-[var(--admin-text-secondary)] font-medium">
+                                On minimum purchase of ₹{formData.minOrderAmount}
+                              </p>
+                            )}
+                            <p className="text-[10px] text-[var(--admin-text-tertiary)]">
+                              Valid till {formData.expiryDate ? new Date(formData.expiryDate).toLocaleDateString() : 'TBD'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Target Scope Indicator */}
+                        <div className="bg-[var(--admin-surface-muted)] px-4 py-2 text-center border-t border-[var(--admin-border-subtle)]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)]">
+                            {formData.targetType === 'all' ? 'Valid Storewide' : formData.targetType === 'products' ? `Valid on ${formData.targetProductIds.length} Products` : formData.targetType === 'categories' ? `Valid on ${formData.targetCategories.length} Categories` : `For ${formData.targetUserTiers.length} VIP Tiers`}
+                          </span>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="absolute top-3 right-3">
+                          {formData.isActive ? (
+                            <span className="bg-success/10 text-success text-[9px] font-bold px-2 py-0.5 rounded-full border border-success/20">Active</span>
+                          ) : (
+                            <span className="bg-error/10 text-error text-[9px] font-bold px-2 py-0.5 rounded-full border border-error/20">Draft</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-[var(--admin-surface)] space-y-3">
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-[var(--admin-text-tertiary)] font-medium">Internal Setup Progress</span>
+                      <span className="text-[var(--admin-accent)] font-bold">{formData.code && formData.discountValue && formData.expiryDate ? 'Ready to Publish' : 'Drafting'}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-[var(--admin-border)] rounded-full overflow-hidden">
+                      <div className="h-full bg-[var(--admin-accent)] rounded-full transition-all" style={{ width: (formData.code ? 33 : 0) + (formData.discountValue ? 33 : 0) + (formData.expiryDate ? 34 : 0) + '%' }} />
+                    </div>
+                  </div>
+                </div>
+          </div>
+        </div>
+      </div>
     );
 }
+
+export default AdminCreateCoupon;

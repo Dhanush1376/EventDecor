@@ -80,7 +80,7 @@ export function AdminReviews() {
         title="Reviews & Testimonials"
         subtitle={`${reviews.length} total reviews · ${reviews.filter((r) => r.status ==="pending").length} pending approval payout`}
         headerAction={
-          <div className="max-w-[140px] sm:max-w-md">
+          <div className="w-full sm:max-w-md">
             <FilterBar
               filters={["all", "pending", "approved", "rejected"]}
               value={filter}

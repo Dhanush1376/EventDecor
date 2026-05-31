@@ -216,7 +216,7 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-start justify-center sm:pt-12 md:pt-28 sm:px-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           style={{ background: "var(--admin-surface-overlay)", backdropFilter: "blur(4px)" }}
           onClick={onClose}
         >
@@ -225,7 +225,7 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -8 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="w-full h-[100dvh] sm:h-auto sm:max-h-[min(600px,calc(100dvh-32px))] sm:max-w-2xl overflow-hidden flex flex-col shadow-2xl admin-search-palette rounded-none sm:rounded-[var(--admin-radius-2xl)]"
+            className="w-full max-w-[480px] h-auto max-h-[min(500px,calc(100vh-32px))] overflow-hidden flex flex-col shadow-2xl admin-search-palette rounded-[var(--admin-radius-xl)]"
             style={{ 
               background: "var(--admin-surface)",
               border: "1px solid var(--admin-border)",
@@ -241,10 +241,10 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Type a page name, order ID, product name, or client info..."
+                placeholder="Search pages, orders, products, clients..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="search-portal-input flex-1 bg-transparent text-[16px] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-placeholder)] outline-none border-none ring-0 focus:ring-0 focus:border-none focus:outline-none w-full min-w-0"
+                className="search-portal-input flex-1 bg-transparent text-[15px] text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-placeholder)] outline-none border-none ring-0 focus:ring-0 focus:border-none focus:outline-none w-full min-w-0"
               />
               <div className="flex items-center gap-2 shrink-0">
                 {query && (

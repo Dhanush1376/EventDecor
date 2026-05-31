@@ -80,7 +80,10 @@ export function AdminTemplateCreate() {
     <motion.div initial="hidden" animate="show" variants={stagger} className="max-w-[1000px] mx-auto space-y-6 pb-20 p-4 sm:p-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--admin-border-subtle)] pb-5">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate("/admin/campaigns")} className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm">
+          <button
+            onClick={() => navigate("/admin/campaigns")}
+            className="w-10 h-10 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95 shadow-sm"
+          >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
           <div>

@@ -57,7 +57,6 @@ router.get(
     const paramsToSign: Record<string, string | number> = {
       timestamp,
       folder,
-      resource_type: resourceType,
     };
 
     const signature = getCloudinary().utils.api_sign_request(paramsToSign, apiSecret);

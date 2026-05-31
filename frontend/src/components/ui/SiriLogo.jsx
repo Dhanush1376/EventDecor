@@ -3,8 +3,8 @@ import React from 'react';
 export function SiriLogo({ className = "", size = "36px", showSubtitle = false }) {
   // Parse the size to a number to scale it up
   const numericSize = typeof size === 'string' ? parseInt(size, 10) : size;
-  // Make the logo significantly larger by default (2x the passed size height)
-  const height = numericSize ? numericSize * 2 : 72;
+  // Make the logo slightly larger than passed size height (1.4x)
+  const height = numericSize ? Math.round(numericSize * 1.4) : 50;
 
   return (
     <div 

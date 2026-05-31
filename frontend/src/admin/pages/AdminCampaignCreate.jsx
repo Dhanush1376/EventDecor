@@ -13,6 +13,7 @@ export function AdminCampaignCreate() {
 
   const [templates, setTemplates] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mobileTab, setMobileTab] = useState("form");
 
   const [campaignForm, setCampaignForm] = useState({
     title: "",
@@ -91,10 +92,13 @@ export function AdminCampaignCreate() {
   };
 
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="max-w-[1300px] mx-auto space-y-6 pb-20 p-4 sm:p-0">
+    <motion.div initial="hidden" animate="show" variants={stagger} className="max-w-[1300px] mx-auto space-y-6 pb-20">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--admin-border-subtle)] pb-5">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate("/admin/campaigns")} className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm">
+          <button
+            onClick={() => navigate("/admin/campaigns")}
+            className="w-10 h-10 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95 shadow-sm"
+          >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
           <div>
@@ -109,9 +113,35 @@ export function AdminCampaignCreate() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 items-start min-h-0">
-        <motion.div variants={fadeUp} className="space-y-4">
-          <form onSubmit={handleLaunchCampaign} className="space-y-4 bg-[var(--admin-surface)] p-6 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
+      {/* Mobile Form/Preview Tab Switcher */}
+      <div className="flex lg:hidden bg-[var(--admin-surface-muted)] p-1 rounded-xl border border-[var(--admin-border)]/60 w-full mb-4">
+        <button
+          type="button"
+          onClick={() => setMobileTab("form")}
+          className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+            mobileTab === "form"
+              ? "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40"
+              : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+          }`}
+        >
+          Edit Campaign
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("preview")}
+          className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+            mobileTab === "preview"
+              ? "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40"
+              : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+          }`}
+        >
+          Live Preview
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_0.75fr] gap-6 flex-1 items-start min-h-0">
+        <motion.div variants={fadeUp} className={`space-y-4 ${mobileTab === "form" ? "block" : "hidden lg:block"}`}>
+          <form onSubmit={handleLaunchCampaign} className="space-y-4 bg-[var(--admin-surface)] p-4 sm:p-6 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
             <div>
               <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Campaign Title</label>
               <input
@@ -136,33 +166,31 @@ export function AdminCampaignCreate() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Audience Type</label>
-                <select
-                  value={campaignForm.targetRole}
-                  onChange={(e) => setCampaignForm({ ...campaignForm, targetRole: e.target.value })}
-                  className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
-                >
-                  <option value="all">All Registered Accounts (Customers + Admins)</option>
-                  <option value="customer">Customers Only</option>
-                  <option value="admin">Administrators Only</option>
-                </select>
-              </div>
+            <div>
+              <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Audience Type</label>
+              <select
+                value={campaignForm.targetRole}
+                onChange={(e) => setCampaignForm({ ...campaignForm, targetRole: e.target.value })}
+                className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
+              >
+                <option value="all">All Registered Accounts (Customers + Admins)</option>
+                <option value="customer">Customers Only</option>
+                <option value="admin">Administrators Only</option>
+              </select>
+            </div>
 
-              <div>
-                <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Select Seeding Template</label>
-                <select
-                  value={campaignForm.templateId}
-                  onChange={handleSelectTemplateForForm}
-                  className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
-                >
-                  <option value="">-- Custom HTML / No Template --</option>
-                  {templates.map(t => (
-                    <option key={t._id} value={t._id}>{t.name} ({t.type})</option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Select Seeding Template</label>
+              <select
+                value={campaignForm.templateId}
+                onChange={handleSelectTemplateForForm}
+                className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
+              >
+                <option value="">-- Custom HTML / No Template --</option>
+                {templates.map(t => (
+                  <option key={t._id} value={t._id}>{t.name} ({t.type})</option>
+                ))}
+              </select>
             </div>
 
             <div className="bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] px-4.5 py-3 rounded-2xl">
@@ -206,7 +234,7 @@ export function AdminCampaignCreate() {
           </form>
         </motion.div>
 
-        <motion.div variants={fadeUp} className="border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-5 bg-[var(--admin-bg-subtle)] space-y-4 self-stretch flex flex-col min-h-[450px]">
+        <motion.div variants={fadeUp} className={`border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-4 sm:p-5 bg-[var(--admin-bg-subtle)] space-y-4 self-stretch flex flex-col min-h-[450px] ${mobileTab === "preview" ? "block" : "hidden lg:block"}`}>
           <div className="flex-1">
             <h4 className="font-display font-bold text-xs text-black border-b border-[var(--admin-border-subtle)] pb-2 mb-3">
               Visual Canvas Preview

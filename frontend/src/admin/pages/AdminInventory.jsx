@@ -95,10 +95,10 @@ export function AdminInventory() {
               <button 
                 onClick={handleRefreshStock}
                 disabled={isRefreshing}
-                className="w-9 h-9 rounded-full bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] border border-[var(--admin-border)] flex items-center justify-center cursor-pointer transition-all active:scale-95 text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)]"
+                className="p-1.5 hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-lg flex items-center justify-center cursor-pointer transition-all active:scale-95"
                 title="Refresh Stock"
               >
-                <span className={`material-symbols-outlined text-[18px] ${isRefreshing ? 'animate-spin' : ''}`}>sync</span>
+                <span className={`material-symbols-outlined text-[20px] ${isRefreshing ? 'animate-spin' : ''}`}>sync</span>
               </button>
             </div>
           </PageHeader>

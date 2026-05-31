@@ -76,6 +76,7 @@ const AdminAddProduct = lazy(() => import("./admin/pages/AdminAddProduct").then(
 const AdminOrders = lazy(() => import("./admin/pages/AdminOrders").then((m) => ({ default: m.AdminOrders })));
 const AdminOrderDetail = lazy(() => import("./admin/pages/AdminOrderDetail").then((m) => ({ default: m.AdminOrderDetail })));
 const AdminAddEvent = lazy(() => import("./admin/pages/AdminAddEvent").then((m) => ({ default: m.AdminAddEvent })));
+const AdminAddShowcase = lazy(() => import("./admin/pages/AdminAddShowcase").then((m) => ({ default: m.AdminAddShowcase })));
 const AdminInquiries = lazy(() => import("./admin/pages/AdminInquiries").then((m) => ({ default: m.AdminInquiries })));
 const AdminCustomers = lazy(() => import("./admin/pages/AdminCustomers").then((m) => ({ default: m.AdminCustomers })));
 const AdminCustomerProfile = lazy(() => import("./admin/pages/AdminCustomerProfile").then((m) => ({ default: m.AdminCustomerProfile })));
@@ -260,6 +261,8 @@ function App() {
                             <Route path="events" element={<AdminEvents />} />
                             <Route path="events/add" element={<AdminAddEvent />} />
                             <Route path="events/edit/:id" element={<AdminAddEvent />} />
+                            <Route path="showcases/add" element={<AdminAddShowcase />} />
+                            <Route path="showcases/edit/:id" element={<AdminAddShowcase />} />
                             <Route path="events/:bookingId" element={<AdminBookingDetail />} />
                             <Route path="analytics" element={<AdminAnalytics />} />
                             <Route path="recommendations" element={<AdminRecommendationAnalytics />} />

@@ -15,6 +15,7 @@ export interface IOrderItem {
   variant?: string;
   imageSrc: string;
   category?: string;
+  isNonRefundable?: boolean;
 }
 
 export interface IShippingAddress {
@@ -88,6 +89,7 @@ const OrderSchema: Schema = new Schema(
         variant: { type: String },
         imageSrc: { type: String, required: true },
         category: { type: String },
+        isNonRefundable: { type: Boolean, default: false },
       },
     ],
     shippingAddress: {

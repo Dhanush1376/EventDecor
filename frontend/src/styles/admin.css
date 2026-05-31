@@ -26,7 +26,7 @@
   --admin-border:          #E5E7EB;
   --admin-border-subtle:   #F3F4F6;
   --admin-border-strong:   #D1D5DB;
-  --admin-border-focus:    #6366F1;
+  --admin-border-focus:    #475569;
 
   --admin-text-primary:    #111827;
   --admin-text-secondary:  #374151; /* Increased contrast from #4B5563 */
@@ -34,13 +34,13 @@
   --admin-text-placeholder:#9CA3AF;
   --admin-text-inverse:    #FFFFFF;
 
-  /* Accent: Crisp Indigo */
-  --admin-accent:          #000000;
-  --admin-accent-hover:    #333333;
-  --admin-accent-light:    #F3F4F6;
-  --admin-accent-muted:    rgba(0, 0, 0, 0.05);
-  --admin-accent-subtle:   rgba(0, 0, 0, 0.02);
-  --admin-accent-text:     #000000;
+  /* Accent: Warm Professional Slate */
+  --admin-accent:          #334155;
+  --admin-accent-hover:    #475569;
+  --admin-accent-light:    #F1F5F9;
+  --admin-accent-muted:    rgba(51, 65, 85, 0.08);
+  --admin-accent-subtle:   rgba(51, 65, 85, 0.04);
+  --admin-accent-text:     #1E293B;
 
   /* Semantic Colors */
   --admin-success:         #10B981;
@@ -105,7 +105,7 @@
   --admin-shadow-xl:  0 25px 50px -12px rgba(0, 0, 0, 0.12);
   --admin-shadow-2xl: 0 40px 60px -15px rgba(0, 0, 0, 0.16);
   --admin-shadow-overlay: 0 0 0 1px rgba(0,0,0,0.02), 0 25px 50px -12px rgba(0, 0, 0, 0.2);
-  --admin-shadow-ring: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  --admin-shadow-ring: 0 0 0 3px rgba(51, 65, 85, 0.12);
 
   /* ── Radii ── */
   --admin-radius-sm:   4px;
@@ -171,7 +171,7 @@
     border-radius: var(--admin-radius-lg);
   }
   .admin-section-root #admin-main-content {
-    padding: 16px !important;
+    padding: 16px 16px 100px 16px !important;
   }
 }
 
@@ -321,21 +321,29 @@
   transform: scale(0.97);
 }
 
+.admin-section-root .admin-btn:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .admin-section-root .admin-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--admin-shadow-ring);
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-color: transparent !important;
+  box-shadow: 0 0 0 2px var(--admin-surface, #ffffff), 0 0 0 4px rgba(51, 65, 85, 0.3) !important;
 }
 
 /* Primary */
 .admin-section-root .admin-btn-primary {
   background: var(--admin-accent-light);
   color: var(--admin-accent);
-  border-color: rgba(139, 115, 64, 0.18);
+  border-color: rgba(51, 65, 85, 0.15);
 }
 
 .admin-section-root .admin-btn-primary:hover {
   background: var(--admin-accent-muted);
-  border-color: rgba(139, 115, 64, 0.3);
+  border-color: rgba(51, 65, 85, 0.25);
 }
 
 /* Secondary */
@@ -472,7 +480,7 @@
 .admin-section-root .admin-badge-primary {
   color: var(--admin-accent);
   background: var(--admin-accent-light);
-  border-color: rgba(139, 115, 64, 0.2);
+  border-color: rgba(51, 65, 85, 0.15);
 }
 
 .admin-section-root .admin-badge-dot::before {
@@ -523,29 +531,33 @@
 
 .admin-section-root .admin-input:focus,
 .admin-section-root input:focus,
+.admin-section-root [type="text"]:focus,
+.admin-section-root [type="number"]:focus,
+.admin-section-root [type="email"]:focus,
+.admin-section-root [type="url"]:focus,
+.admin-section-root [type="password"]:focus,
+.admin-section-root [type="search"]:focus,
+.admin-section-root [type="tel"]:focus {
+  border-color: var(--admin-border-focus) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 .admin-section-root .admin-input:focus-visible,
 .admin-section-root input:focus-visible,
-.admin-section-root select:focus,
-.admin-section-root select:focus-visible,
-.admin-section-root textarea:focus,
-.admin-section-root textarea:focus-visible,
-.admin-section-root [type="text"]:focus,
 .admin-section-root [type="text"]:focus-visible,
-.admin-section-root [type="number"]:focus,
 .admin-section-root [type="number"]:focus-visible,
-.admin-section-root [type="email"]:focus,
 .admin-section-root [type="email"]:focus-visible,
-.admin-section-root [type="url"]:focus,
 .admin-section-root [type="url"]:focus-visible,
-.admin-section-root [type="password"]:focus,
 .admin-section-root [type="password"]:focus-visible,
-.admin-section-root [type="search"]:focus,
 .admin-section-root [type="search"]:focus-visible,
-.admin-section-root [type="tel"]:focus,
 .admin-section-root [type="tel"]:focus-visible {
-  border-color: var(--admin-accent) !important;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
+  border-color: var(--admin-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.12) !important;
   outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-color: transparent !important;
 }
 
 .admin-section-root .admin-select {
@@ -573,12 +585,20 @@
 }
 
 .admin-section-root .admin-select:focus,
-.admin-section-root select:focus,
+.admin-section-root select:focus {
+  border-color: var(--admin-border-focus) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 .admin-section-root .admin-select:focus-visible,
 .admin-section-root select:focus-visible {
-  border-color: var(--admin-accent) !important;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
+  border-color: var(--admin-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.12) !important;
   outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-color: transparent !important;
 }
 
 .admin-section-root .admin-textarea {
@@ -601,12 +621,20 @@
 }
 
 .admin-section-root .admin-textarea:focus,
-.admin-section-root textarea:focus,
+.admin-section-root textarea:focus {
+  border-color: var(--admin-border-focus) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 .admin-section-root .admin-textarea:focus-visible,
 .admin-section-root textarea:focus-visible {
-  border-color: var(--admin-accent) !important;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
+  border-color: var(--admin-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.12) !important;
   outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-color: transparent !important;
 }
 
 .admin-section-root .admin-label {

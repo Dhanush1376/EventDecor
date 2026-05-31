@@ -68,6 +68,7 @@ export function AdminAddProduct({ editId }) {
     seoDescription:"",
     featured: false,
     isActive: true,
+    isNonRefundable: false,
     showInGallery: false,
     variants: [], // Color/Size variants array
   });
@@ -238,12 +239,13 @@ export function AdminAddProduct({ editId }) {
               seoDescription: p.seoDescription ||"",
               featured: p.featured || false,
               isActive: p.isActive !== undefined ? p.isActive : true,
+              isNonRefundable: p.isNonRefundable || false,
               showInGallery: p.showInGallery || false,
-              variants: p.variants || [],
+              variants: Array.isArray(p.variants) ? p.variants : [],
             });
           }
         } catch (err) {
-          toast.error(getErrorMessage(err, "Failed to load product details"));
+          toast.error(err?.response?.data?.message || err?.message || "Failed to load product details");
         } finally {
           setIsLoading(false);
         }
@@ -305,8 +307,17 @@ export function AdminAddProduct({ editId }) {
   // Form Validation per step
   const getStepErrors = () => {
     const errors = {};
-    if (currentStep === 0 && !formData.imageSrc) {
-      errors.imageSrc ="Primary image is required";
+    if (currentStep === 0) {
+      // Check if we have any images in the array or as a primary image string
+      const hasAnyImage = formData.images.length > 0 || !!formData.imageSrc;
+      
+      if (formData.images.length > 0 && !formData.imageSrc) {
+        setFormData(prev => ({ ...prev, imageSrc: prev.images[0] }));
+      }
+      
+      if (!hasAnyImage) {
+        errors.imageSrc = "At least one product image is required";
+      }
     }
     if (currentStep === 1) {
       if (!formData.title.trim()) errors.title ="Product title is required";
@@ -407,6 +418,10 @@ export function AdminAddProduct({ editId }) {
   // Submit Handler
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    if (formData.images.length > 0 && !formData.imageSrc) {
+      setFormData(prev => ({ ...prev, imageSrc: prev.images[0] }));
+      formData.imageSrc = formData.images[0]; // also set locally for the check below
+    }
     if (!formData.title || !formData.price || !formData.category || !formData.imageSrc) {
       return toast.error("Please fill in all mandatory fields before publishing");
     }
@@ -433,6 +448,7 @@ export function AdminAddProduct({ editId }) {
         seoDescription: formData.seoDescription || undefined,
         featured: Boolean(formData.featured),
         isActive: Boolean(formData.isActive),
+        isNonRefundable: Boolean(formData.isNonRefundable),
         showInGallery: Boolean(formData.showInGallery),
         variants: formData.variants,
       };
@@ -453,7 +469,7 @@ export function AdminAddProduct({ editId }) {
         handleSuccessAction();
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to save product listing"));
+      toast.error(err?.response?.data?.message || err?.message || "Failed to save product listing");
     } finally {
       setIsLoading(false);
     }
@@ -703,8 +719,11 @@ export function AdminAddProduct({ editId }) {
                                   uploadData.append('urls', input.value);
                                   const res = await uploadService.uploadImages(uploadData, 'products');
                                   if(res.success && res.images) {
-                                    const newImages = [...formData.images, ...res.images];
-                                    setFormData({...formData, images: newImages, imageSrc: formData.imageSrc || res.images[0]});
+                                    setFormData(prev => ({
+                                      ...prev, 
+                                      images: [...prev.images, ...res.images], 
+                                      imageSrc: prev.imageSrc || res.images[0]
+                                    }));
                                     toast.success("Image fetched & optimized!");
                                     input.value = "";
                                   }
@@ -741,12 +760,18 @@ export function AdminAddProduct({ editId }) {
                               files.forEach(f => uploadData.append('images', f));
                               const res = await uploadService.uploadImages(uploadData, 'products');
                               if(res.success && res.images) {
-                                const newImages = [...formData.images, ...res.images];
-                                setFormData({...formData, images: newImages, imageSrc: formData.imageSrc || res.images[0]});
+                                setFormData(prev => ({
+                                  ...prev, 
+                                  images: [...prev.images, ...res.images], 
+                                  imageSrc: prev.imageSrc || res.images[0]
+                                }));
                                 toast.success(`${res.images.length} photos uploaded!`);
                               }
                             } catch (err) {
-                              toast.error(getErrorMessage(err, "Upload failed"));
+                              const msg = err?.response?.status === 401
+                                ? "Upload failed: Please log in again or refresh the page"
+                                : (err?.response?.data?.message || err?.message || "Upload failed. Please try again.");
+                              toast.error(msg);
                             } finally {
                               setIsCompressing(false);
                             }
@@ -1249,6 +1274,18 @@ export function AdminAddProduct({ editId }) {
                         <AdminToggle
                           checked={formData.showInGallery}
                           onChange={() => setFormData({ ...formData, showInGallery: !formData.showInGallery })}
+                        />
+                      </div>
+
+                      {/* Non-Refundable Item Toggle */}
+                      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between col-span-1 sm:col-span-2">
+                        <div>
+                          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">Non-Refundable Item</p>
+                          <p className="text-[11px] text-[var(--admin-text-secondary)]">Customers cannot request returns or refunds for this product after purchase.</p>
+                        </div>
+                        <AdminToggle
+                          checked={formData.isNonRefundable}
+                          onChange={() => setFormData({ ...formData, isNonRefundable: !formData.isNonRefundable })}
                         />
                       </div>
 

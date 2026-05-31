@@ -39,8 +39,9 @@ export function AdminCustomers() {
         subtitle={`${customers.length} customers`}
         icon="group"
         iconColor="users"
+        mobileRow={true}
         headerAction={
-          <div className="max-w-[140px] sm:max-w-md">
+          <div className="w-full sm:max-w-md">
             <FilterBar
               filters={["All", "VIP", "Regular", "New"]}
               value={segmentFilter}
@@ -49,8 +50,24 @@ export function AdminCustomers() {
           </div>
         }
       >
-        <button className="admin-btn admin-btn-ghost" title="Export Customers">
-          <span className="material-symbols-outlined text-[20px]">download</span>
+        <button 
+          className="p-1.5 hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] rounded-lg flex items-center justify-center cursor-pointer transition-all active:scale-95 border-none bg-transparent"
+          title="Export Customers"
+          onClick={() => {
+            const headers = "Name,Email,Phone,Orders,Spent,Segment\n";
+            const rows = customers
+              .map(c => `"${c.name}","${c.email || ''}","${c.phone || ''}",${c.ordersCount || 0},${c.totalSpent || 0},"${c.segment || 'Regular'}"`)
+              .join("\n");
+            const blob = new Blob([headers + rows], { type: "text/csv" });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `SiriArts_Customers_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.click();
+            toast.success("Customers list exported");
+          }}
+        >
+          <span className="material-symbols-outlined text-[18px]">download</span>
         </button>
       </PageHeader>
 
@@ -119,17 +136,6 @@ export function AdminCustomers() {
                         {c.name}
                       </p>
                       <p className="text-[11px] text-[var(--admin-text-tertiary)] font-medium uppercase tracking-wider mt-0.5">{c.city || "Ongole"}</p>
-                      
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <span className="admin-badge admin-badge-success h-5 px-1.5 border-none font-bold text-[9px] shrink-0">
-                          <span className="material-symbols-outlined text-[11px] mr-1">account_balance_wallet</span>
-                          {formatCurrency(c.walletBalance || 0)}
-                        </span>
-                        <span className="admin-badge admin-badge-neutral h-5 px-1.5 font-bold text-[9px] shrink-0">
-                          <span className="material-symbols-outlined text-[11px] mr-1">stars</span>
-                          {c.siriCoins || 0}
-                        </span>
-                      </div>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -152,6 +158,17 @@ export function AdminCustomers() {
                     >
                       👑 {c.loyaltyTier || 'Bronze'}
                     </span>
+                    
+                    <div className="mt-1 flex flex-col items-end gap-1 text-[11px] text-[var(--admin-text-secondary)] font-semibold">
+                      <span className="flex items-center gap-1 shrink-0 whitespace-nowrap">
+                        <span className="material-symbols-outlined text-[13px] text-emerald-600 shrink-0">account_balance_wallet</span>
+                        <span className="whitespace-nowrap">{formatCurrency(c.walletBalance || 0)}</span>
+                      </span>
+                      <span className="flex items-center gap-1 shrink-0 whitespace-nowrap">
+                        <span className="material-symbols-outlined text-[13px] text-amber-500 shrink-0">stars</span>
+                        <span className="whitespace-nowrap">{c.siriCoins || 0} Coins</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
                 
@@ -179,26 +196,26 @@ export function AdminCustomers() {
                 <div className="grid grid-cols-3 gap-2 pt-4 border-t border-[var(--admin-border-subtle)]">
                   <a
                     href={`mailto:${c.email}`}
-                    className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-1 hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] justify-center gap-1"
+                    className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-2 hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] justify-center gap-1.5 w-full transition-all"
                   >
-                    <span className="material-symbols-outlined text-[13px] shrink-0">mail</span>
-                    <span className="truncate">Email</span>
+                    <span className="material-symbols-outlined text-[14px] shrink-0">mail</span>
+                    <span className="hidden sm:inline truncate">Email</span>
                   </a>
                   <a
                     href={`https://wa.me/${c.phone.replace(/[^0-9]/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-1 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)] justify-center gap-1"
+                    className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-2 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)] justify-center gap-1.5 w-full transition-all"
                   >
-                    <span className="material-symbols-outlined text-[13px] shrink-0">chat</span>
-                    <span className="truncate">WhatsApp</span>
+                    <span className="material-symbols-outlined text-[14px] shrink-0">chat</span>
+                    <span className="hidden sm:inline truncate">WhatsApp</span>
                   </a>
                   <button
                     onClick={() => navigate(`/admin/customers/${c.id}`)}
-                    className="admin-btn min-h-[36px] h-8 text-[10px] px-1 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)] justify-center gap-1"
+                    className="admin-btn min-h-[36px] h-8 text-[10px] px-2 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)] justify-center gap-1.5 w-full transition-all"
                   >
-                    <span className="material-symbols-outlined text-[13px] shrink-0">visibility</span>
-                    <span className="truncate">Profile</span>
+                    <span className="material-symbols-outlined text-[14px] shrink-0">visibility</span>
+                    <span className="hidden sm:inline truncate">Profile</span>
                   </button>
                 </div>
               </motion.div>

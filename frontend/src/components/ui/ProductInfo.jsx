@@ -175,6 +175,17 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
               Delivered nationwide in 3-5 working days
             </span>
           </div>
+          {product.isNonRefundable && (
+            <div className="flex items-start gap-3 mt-4 p-3.5 bg-[#fffbeb] rounded-xl border border-[#fde68a]">
+              <span className="material-symbols-outlined text-[18px] text-[#d97706] mt-0.5 shrink-0">
+                block
+              </span>
+              <div className="flex flex-col">
+                <span className="text-[12px] font-bold text-[#b45309] uppercase tracking-wider">Non-Refundable Item</span>
+                <span className="text-[12px] text-[#92400e] font-medium italic">Returns and refunds are not available for this product.</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

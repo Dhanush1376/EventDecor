@@ -14,6 +14,7 @@ import {
   FilterBar,
   formatCurrency,
   fadeUp,
+  stagger,
   SkeletonDashboard,
   EmptyState,
 } from "../components/AdminUIKit";
@@ -74,24 +75,6 @@ export function AdminEvents() {
   // Showcase state variables
   const [showcases, setShowcases] = useState([]);
   const [loadingShowcases, setLoadingShowcases] = useState(false);
-  const [showcaseForm, setShowcaseForm] = useState({
-    title: "",
-    subtitle: "",
-    category: "engagement_gift",
-    rentalPrice: 15000,
-    description: "",
-    image: "",
-    galleryImages: ["", ""],
-    inclusionsText: "Traditional carved wooden ring tray, Beaded shagun boxes, Mogra garland drops",
-    colorPalette: "#8B0000, #FFD700, #FFF8DC",
-    suggestedProps: "Traditional carved wooden ring tray, Beaded shagun boxes",
-    setupTimeHours: 2,
-    seoTitle: "",
-    seoDescription: "",
-    isActive: true,
-  });
-  const [editingShowcaseId, setEditingShowcaseId] = useState(null);
-  const [showShowcaseForm, setShowShowcaseForm] = useState(false);
 
   const fetchEvents = async () => {
     setLoadingPortfolio(true);
@@ -138,118 +121,6 @@ export function AdminEvents() {
     }
   };
 
-  const handleAiAutofill = () => {
-    if (!showcaseForm.image) {
-      toast.error("Please upload or link a photo blueprint first for AI Vision analysis!");
-      return;
-    }
-    const loadId = toast.loading("✨ AI Vision models analyzing floral accents & prop structures...");
-    setTimeout(() => {
-      toast.dismiss(loadId);
-      setShowcaseForm((prev) => ({
-        ...prev,
-        title: prev.title || "Lotus Gifting Crate",
-        subtitle: prev.subtitle || "Carved coconuts with jasmine garlands",
-        category: "telugu_heritage",
-        rentalPrice: 14500,
-        description: prev.description || "A traditional side-stage presentation tray designed for engagement ceremonies with heritage coconuts and jasmine garlands.",
-        inclusionsText: "Hand-carved Heritage Coconuts, Royal Brass Urlis, Jasmine Rope Runners, Beaded Ring Trays, Mogra Drops",
-        colorPalette: "#8B0000, #FFD700, #228B22",
-        setupTimeHours: 2,
-        isActive: true,
-      }));
-      toast.success("✨ AI populated details");
-    }, 1200);
-  };
-
-  const handleCreateOrUpdateShowcase = async (e) => {
-    e.preventDefault();
-    if (!showcaseForm.title || !showcaseForm.image) {
-      toast.error("Showcase Title & Cover Image are required!");
-      return;
-    }
-
-    const loadId = toast.loading("Saving showcase theme...");
-    try {
-      const incList = showcaseForm.inclusionsText
-        .split(",")
-        .map((item) => ({ name: item.trim(), defaultQty: 1, condition: "excellent" }))
-        .filter((i) => i.name.length > 0);
-
-      const payload = {
-        title: showcaseForm.title,
-        subtitle: showcaseForm.subtitle,
-        category: showcaseForm.category,
-        rentalPrice: Number(showcaseForm.rentalPrice) || 12000,
-        description: showcaseForm.description,
-        image: showcaseForm.image,
-        gallery: showcaseForm.galleryImages.filter((g) => g !== ""),
-        inclusions: incList,
-        colorPalette: showcaseForm.colorPalette.split(",").map((c) => c.trim()).filter((c) => c.length > 0),
-        suggestedProps: showcaseForm.suggestedProps.split(",").map((p) => p.trim()).filter((p) => p.length > 0),
-        setupTimeHours: Number(showcaseForm.setupTimeHours) || 2,
-        seoTitle: showcaseForm.seoTitle || undefined,
-        seoDescription: showcaseForm.seoDescription || undefined,
-        isActive: Boolean(showcaseForm.isActive),
-      };
-
-      let res;
-      if (editingShowcaseId) {
-        res = await showcaseService.update(editingShowcaseId, payload);
-      } else {
-        res = await showcaseService.create(payload);
-      }
-
-      toast.dismiss(loadId);
-      if (res.success) {
-        toast.success(editingShowcaseId ? "Theme updated!" : "Theme published!");
-        setShowShowcaseForm(false);
-        setEditingShowcaseId(null);
-        setShowcaseForm({
-          title: "",
-          subtitle: "",
-          category: "engagement_gift",
-          rentalPrice: 15000,
-          description: "",
-          image: "",
-          galleryImages: ["", ""],
-          inclusionsText: "Traditional carved wooden ring tray, Beaded shagun boxes, Mogra garland drops",
-          colorPalette: "#8B0000, #FFD700, #FFF8DC",
-          suggestedProps: "Traditional carved wooden ring tray, Beaded shagun boxes",
-          setupTimeHours: 2,
-          seoTitle: "",
-          seoDescription: "",
-          isActive: true,
-        });
-        fetchShowcases();
-      }
-    } catch (err) {
-      toast.dismiss(loadId);
-      toast.error(getErrorMessage(err, "Failed to save showcase theme."));
-    }
-  };
-
-  const handleEditShowcase = (sc) => {
-    setEditingShowcaseId(sc._id || sc.id);
-    setShowcaseForm({
-      title: sc.title || "",
-      subtitle: sc.subtitle || "",
-      category: sc.category || "engagement_gift",
-      rentalPrice: sc.rentalPrice || 15000,
-      description: sc.description || "",
-      image: sc.image || "",
-      galleryImages: sc.gallery && sc.gallery.length > 0 ? sc.gallery : ["", ""],
-      inclusionsText: sc.inclusions ? sc.inclusions.map((i) => i.name).join(",") : "",
-      colorPalette: sc.colorPalette ? sc.colorPalette.join(",") : "",
-      suggestedProps: sc.suggestedProps ? sc.suggestedProps.join(",") : "",
-      setupTimeHours: sc.setupTimeHours || 2,
-      seoTitle: sc.seoTitle || "",
-      seoDescription: sc.seoDescription || "",
-      isActive: sc.isActive !== undefined ? sc.isActive : true,
-    });
-    setShowShowcaseForm(true);
-    window.scrollTo({ top: 120, behavior: "smooth" });
-  };
 
   const handleDeleteShowcase = async (id) => {
     if (!window.confirm("Are you sure you want to permanently withdraw this showcase theme?")) return;
@@ -361,7 +232,7 @@ export function AdminEvents() {
         icon="event"
         iconColor="orders"
         headerAction={
-          <div className="max-w-[140px] sm:max-w-md">
+          <div className="w-full sm:max-w-md">
             <FilterBar
               filters={tabs.map(t => t.id)}
               value={activeTab}
@@ -372,27 +243,7 @@ export function AdminEvents() {
         }
       >
         <button
-          onClick={() => {
-            setShowcaseForm({
-              title: "",
-              subtitle: "",
-              category: "engagement_gift",
-              rentalPrice: 15000,
-              description: "",
-              image: "",
-              galleryImages: ["", ""],
-              inclusionsText: "Traditional carved wooden ring tray, Beaded shagun boxes, Mogra garland drops",
-              colorPalette: "#8B0000, #FFD700, #FFF8DC",
-              suggestedProps: "Traditional carved wooden ring tray, Beaded shagun boxes",
-              setupTimeHours: 2,
-              seoTitle: "",
-              seoDescription: "",
-              isActive: true,
-            });
-            setShowShowcaseForm(true);
-            setEditingShowcaseId(null);
-            setTimeout(() => window.scrollTo({ top: 120, behavior: "smooth" }), 150);
-          }}
+          onClick={() => navigate("/admin/showcases/add")}
           className="admin-btn admin-btn-primary h-9"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
@@ -400,16 +251,6 @@ export function AdminEvents() {
         </button>
       </PageHeader>
 
-      {/* Onboarding Quick Tip */}
-      <motion.div variants={fadeUp} className="bg-[#f8fafc] border border-[var(--admin-domain-orders)] rounded-[var(--admin-radius-lg)] p-4 flex items-start gap-3 shadow-sm">
-        <span className="material-symbols-outlined text-[var(--admin-domain-orders)] mt-0.5 text-[20px]">lightbulb</span>
-        <div>
-          <h4 className="text-[12px] font-bold text-[var(--admin-text-primary)]">Quick Tip: Event Manager</h4>
-          <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1 leading-relaxed max-w-[800px]">
-            This is your command center for service-based bookings. Use the <strong>Showcase</strong> tab to create preset decoration packages with fixed pricing. Clients can then book these packages directly. Check the <strong>Calendar</strong> to ensure you don't overbook your dates!
-          </p>
-        </div>
-      </motion.div>
 
       <AnimatePresence mode="wait">
         {/* DASHBOARD */}
@@ -745,76 +586,9 @@ export function AdminEvents() {
               </div>
             </div>
           </motion.div>
-        )}
-
-        {/* SHOWCASES */}
+        )}        {/* SHOWCASES */}
         {activeTab === "showcases" && (
           <motion.div key="showcases" initial="hidden" animate="show" variants={fadeUp} className="space-y-6">
-            {showShowcaseForm && (
-              <div className="admin-card p-6 space-y-6">
-                <div className="border-b border-[var(--admin-border-subtle)] pb-4">
-                  <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)]">{editingShowcaseId ? "Edit Showcase Collection" : "Create Traditional Design"}</h4>
-                  <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1">Provide details for traditional wedding, ring ceremony, or gift setups.</p>
-                </div>
-                
-                <div className="bg-[var(--admin-surface-muted)] p-6 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)] space-y-5">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="admin-label mb-1">Step 1: Upload Photo Blueprint *</span>
-                      <p className="text-[11px] text-[var(--admin-text-tertiary)]">Upload cover photography first. AI Vision can analyze props.</p>
-                    </div>
-                    {showcaseForm.image && <StatusBadge status="active" className="bg-[var(--admin-success-light)] text-[var(--admin-success)]" />}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                    <div className="md:col-span-2 space-y-2">
-                      <label className="admin-label">Cover Image URL *</label>
-                      <input type="text" required value={showcaseForm.image} onChange={(e) => setShowcaseForm({ ...showcaseForm, image: e.target.value })} className="admin-input font-mono" />
-                    </div>
-                    <div>
-                      <ImageUpload onUploadSuccess={(url) => { setShowcaseForm(prev => ({ ...prev, image: url })); toast.success("Photo uploaded! Click '✨ AI Autofill'"); }} label="Drop cover photography" />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <button type="button" onClick={handleAiAutofill} className="admin-btn h-9 bg-[var(--admin-accent)] text-white hover:bg-black">
-                    <span className="material-symbols-outlined text-[16px] animate-pulse">auto_awesome</span> AI Autofill from Photo
-                  </button>
-                </div>
-                
-                <form onSubmit={handleCreateOrUpdateShowcase} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    <div className="space-y-2">
-                      <label className="admin-label">Title *</label>
-                      <input type="text" required value={showcaseForm.title} onChange={(e) => setShowcaseForm({ ...showcaseForm, title: e.target.value })} className="admin-input" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="admin-label">Category</label>
-                      <select value={showcaseForm.category} onChange={(e) => setShowcaseForm({ ...showcaseForm, category: e.target.value })} className="admin-input">
-                        <option value="engagement_gift">Engagement Gifts</option>
-                        <option value="telugu_heritage">Telugu Heritage</option>
-                        <option value="wedding_rituals">Wedding Rituals</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="admin-label">Rental Price (₹)</label>
-                      <input type="number" required value={showcaseForm.rentalPrice} onChange={(e) => setShowcaseForm({ ...showcaseForm, rentalPrice: e.target.value })} className="admin-input" />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="admin-label">Description *</label>
-                    <textarea rows={3} required value={showcaseForm.description} onChange={(e) => setShowcaseForm({ ...showcaseForm, description: e.target.value })} className="admin-textarea" />
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-5 border-t border-[var(--admin-border-subtle)]">
-                    <button type="button" onClick={() => setShowShowcaseForm(false)} className="admin-btn admin-btn-outline h-10 px-6">Cancel</button>
-                    <button type="submit" className="admin-btn h-10 px-8">{editingShowcaseId ? "Update Design" : "Save Design"}</button>
-                  </div>
-                </form>
-              </div>
-            )}
-
             <div className="admin-card p-6 space-y-6">
               <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)]">Tambulam & Gift Presentation Designs</h4>
               {loadingShowcases ? (
@@ -837,7 +611,7 @@ export function AdminEvents() {
                         </div>
                       </div>
                       <div className="p-4 border-t border-[var(--admin-border-subtle)] flex gap-2">
-                        <button onClick={() => handleEditShowcase(sc)} className="admin-btn admin-btn-outline flex-1 min-h-[32px] h-8 text-[11px] px-0">
+                        <button onClick={() => navigate(`/admin/showcases/edit/${sc._id || sc.id}`)} className="admin-btn admin-btn-outline flex-1 min-h-[32px] h-8 text-[11px] px-0">
                           <span className="material-symbols-outlined text-[14px]">edit</span> Edit
                         </button>
                         <button onClick={() => handleDeleteShowcase(sc._id || sc.id)} className="admin-btn-icon w-8 h-8 min-h-0 bg-[var(--admin-error-light)] text-[var(--admin-error)] hover:bg-[var(--admin-error)] hover:text-white border-none">

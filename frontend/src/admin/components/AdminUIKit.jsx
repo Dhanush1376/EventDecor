@@ -1,5 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 // ═══════════════════════════════════════════════════════════════
 // SHARED ANIMATION VARIANTS
@@ -46,14 +47,31 @@ export function getRelativeTime(date) {
 // ═══════════════════════════════════════════════════════════════
 // PAGE HEADER — unified page title across all admin pages
 // ═══════════════════════════════════════════════════════════════
-export function PageHeader({ title, subtitle, icon, iconColor, children, className = "", mobileRow = false, headerAction }) {
+export function PageHeader({ title, subtitle, icon, iconColor, children, className = "", mobileRow = false, headerAction, backButton }) {
+  const navigate = useNavigate();
   return (
     <motion.div
       variants={fadeUp}
       className={`flex ${mobileRow ? 'flex-row' : 'flex-col sm:flex-row'} justify-between items-start sm:items-center gap-3 sm:gap-4 border-b border-[var(--admin-border-subtle)] pb-5 ${className}`}
     >
-      <div className={`flex justify-between items-start ${mobileRow ? "flex-1 min-w-0 pr-2" : "w-full sm:w-auto"}`}>
-        <div className="flex items-center gap-3 w-full">
+      <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${mobileRow ? "flex-1 min-w-0 pr-2" : "w-full"}`}>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          {backButton && (
+            <button
+              type="button"
+              onClick={() => {
+                if (backButton.path) {
+                  navigate(backButton.path);
+                } else {
+                  navigate(-1);
+                }
+              }}
+              className="w-9 h-9 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95 shrink-0"
+              title={backButton.label || "Back"}
+            >
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            </button>
+          )}
           {icon && (
             <div 
               className="w-10 h-10 rounded-[var(--admin-radius-lg)] flex items-center justify-center shrink-0"
@@ -72,12 +90,12 @@ export function PageHeader({ title, subtitle, icon, iconColor, children, classNa
               </p>
             )}
           </div>
-          {headerAction && (
-            <div className="shrink-0 flex items-center justify-center">
-              {headerAction}
-            </div>
-          )}
         </div>
+        {headerAction && (
+          <div className="w-full sm:w-auto mt-2 sm:mt-0 shrink-0 flex items-center justify-start sm:justify-center">
+            {headerAction}
+          </div>
+        )}
       </div>
       {children && (
         <div className={`${mobileRow ? 'w-auto flex flex-row gap-0.5' : 'w-full sm:w-auto flex flex-col sm:flex-row gap-2'} shrink-0`}>

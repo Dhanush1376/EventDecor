@@ -104,7 +104,7 @@ export function AdminCoupons() {
           action={
             <button
               onClick={() => {
-                window.location.hash = "#/admin/coupons/add";
+                navigate("/admin/coupons/add");
               }}
               className="admin-btn admin-btn-primary admin-btn-sm"
             >

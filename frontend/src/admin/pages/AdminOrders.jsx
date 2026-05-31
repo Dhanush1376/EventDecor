@@ -200,50 +200,39 @@ export function AdminOrders() {
         subtitle={`${orders.length} orders`}
         icon="shopping_bag"
         iconColor="orders"
-        headerAction={
-          viewMode === "table" && (
-            <div className="max-w-[140px] sm:max-w-md">
-              <FilterBar
-                filters={["All", ...allStatuses]}
-                value={filterStatus}
-                onChange={setFilterStatus}
-                counts={statusCounts}
-              />
-            </div>
-          )
-        }
+        mobileRow={true}
       >
-        <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto flex-nowrap">
-          <div className="flex flex-1 sm:flex-initial bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 shadow-sm">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setViewMode("table")}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-[var(--admin-radius-md)] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+              className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
                 viewMode === "table"
-                  ? "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)]"
-                  : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                  ? "text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]"
+                  : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]"
               }`}
+              title="Table View"
             >
-              <span className="material-symbols-outlined text-[14px]">view_list</span>
-              Table
+              <span className="material-symbols-outlined text-[18px]">view_list</span>
             </button>
             <button
               onClick={() => setViewMode("kanban")}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-[var(--admin-radius-md)] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+              className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
                 viewMode === "kanban"
-                  ? "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)]"
-                  : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                  ? "text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]"
+                  : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]"
               }`}
+              title="Kanban View"
             >
-              <span className="material-symbols-outlined text-[14px]">dashboard</span>
-              Kanban
+              <span className="material-symbols-outlined text-[18px]">dashboard</span>
             </button>
           </div>
           <button 
             onClick={handleExportCSV} 
-            className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-[var(--admin-radius-lg)] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] transition-all active:scale-95 shadow-[var(--admin-shadow-xs)] shrink-0 min-h-[34px]"
+            className="flex items-center justify-center p-1.5 rounded-lg text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] transition-all active:scale-95 cursor-pointer shrink-0"
+            title="Export CSV"
           >
-            <span className="material-symbols-outlined text-[14px]">download</span>
-            Export CSV
+            <span className="material-symbols-outlined text-[18px]">download</span>
           </button>
         </div>
       </PageHeader>
@@ -251,13 +240,13 @@ export function AdminOrders() {
       {/* Real-time Logistics & COD Remittance Reconciliation Ledger */}
       <motion.div variants={fadeUp} className="admin-card overflow-hidden text-left relative p-0">
         <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[var(--admin-border-subtle)]">
-          <div className="p-5 space-y-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 bg-[var(--admin-surface)]">
+          <div className="p-5 space-y-1 border-r border-b md:border-b-0 border-[var(--admin-border-subtle)]">
             <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">COD Order Volume</span>
             <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">{formatCurrency(codStats.totalVolume)}</p>
             <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">Total COD orders</span>
           </div>
-          <div className="p-5 space-y-1">
+          <div className="p-5 space-y-1 border-b md:border-b-0 md:border-r border-[var(--admin-border-subtle)]">
             <span className="text-[10px] text-[var(--admin-warning)] font-bold uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[var(--admin-warning)] animate-pulse" />
               Collections Pending
@@ -265,7 +254,7 @@ export function AdminOrders() {
             <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">{formatCurrency(codStats.pendingRemittance)}</p>
             <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">Awaiting transfer</span>
           </div>
-          <div className="p-5 space-y-1">
+          <div className="p-5 space-y-1 border-r border-[var(--admin-border-subtle)]">
             <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">Shipping Deductions</span>
             <p className="text-[14px] font-bold text-[var(--admin-error)]">{formatCurrency(codStats.courierDeductions)}</p>
             <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">Logistics fees</span>
@@ -277,6 +266,20 @@ export function AdminOrders() {
           </div>
         </div>
       </motion.div>
+
+      {/* Controls row: view modes, search/filters, export buttons */}
+      {viewMode === "table" && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="w-full sm:max-w-md">
+            <FilterBar
+              filters={["All", ...allStatuses]}
+              value={filterStatus}
+              onChange={setFilterStatus}
+              counts={statusCounts}
+            />
+          </div>
+        </div>
+      )}
 
 
 

@@ -20,13 +20,22 @@ export const uploadWithRetry = async (uploadFn, formData, retries = 3, delayMs =
 
 export const uploadDirectToCloudinary = async (formData, isSingle = false) => {
   const sigRes = await api.get('/upload/signed-url');
-  const { signature, timestamp, cloudName, apiKey, folder } = sigRes.data;
+  console.log("SIGNED URL RESPONSE:", sigRes);
+  const { signature, timestamp, cloudName, apiKey, folder, uploadUrl } = sigRes.data?.data || sigRes.data || {};
 
   const files = [];
   for (let value of formData.values()) {
     if (value instanceof File || value instanceof Blob) {
       files.push(value);
+    } else if (typeof value === 'string' && value.startsWith('http')) {
+      // Handle direct URLs (Cloudinary supports uploading from remote URLs)
+      const urls = value.split(',').map(s => s.trim()).filter(s => s.startsWith('http'));
+      files.push(...urls);
     }
+  }
+
+  if (files.length === 0) {
+    throw new Error("No valid files or URLs provided for upload.");
   }
 
   const uploadPromises = files.map(async (file) => {
@@ -37,7 +46,7 @@ export const uploadDirectToCloudinary = async (formData, isSingle = false) => {
     cloudinaryData.append('signature', signature);
     cloudinaryData.append('folder', folder);
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+    const res = await fetch(uploadUrl || `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
       method: 'POST',
       body: cloudinaryData,
     });

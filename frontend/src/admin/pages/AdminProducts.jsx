@@ -65,21 +65,23 @@ export function AdminProducts() {
     >
       {/* Header */}
       <PageHeader
-        title="Products Catalog"
+        title={
+          <div className="flex items-center justify-between w-[calc(100vw-80px)] sm:w-auto">
+            <span>Products Catalog</span>
+            <button
+              onClick={() => setIsMobileFilterOpen(true)}
+              className="md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-border)] transition-colors relative shrink-0"
+            >
+              <span className="material-symbols-outlined text-[18px]">tune</span>
+              {(selectedCategory !== "All" || selectedStatus !== "All") && (
+                <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[var(--admin-accent)] border border-[var(--admin-surface)]" />
+              )}
+            </button>
+          </div>
+        }
         subtitle={`${products.length} products`}
         icon="inventory_2"
         iconColor="products"
-        headerAction={
-          <button
-            onClick={() => setIsMobileFilterOpen(true)}
-            className="md:hidden flex items-center justify-center w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-border)] transition-colors relative"
-          >
-            <span className="material-symbols-outlined text-[16px]">tune</span>
-            {(selectedCategory !== "All" || selectedStatus !== "All") && (
-              <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[var(--admin-accent)] border border-[var(--admin-surface)]" />
-            )}
-          </button>
-        }
       >
         <button
           onClick={() => navigate('/admin/products/add')}

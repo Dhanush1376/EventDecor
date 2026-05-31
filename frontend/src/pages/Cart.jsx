@@ -378,10 +378,17 @@ export function Cart() {
 
                             {/* Return policy & delivery forecast strip */}
                             <div className="mt-2.5 text-[11px] text-secondary space-y-1">
-                               <div className="flex items-center gap-1">
-                                  <span className="material-symbols-outlined text-[13px]">keyboard_return</span>
-                                  <span className="font-bold text-on-surface">{settings.returnPolicyDays || 14} days</span> return available
-                               </div>
+                               {item.isNonRefundable ? (
+                                 <div className="flex items-center gap-1 text-[#d97706] font-bold">
+                                   <span className="material-symbols-outlined text-[13px]">block</span>
+                                   Non-Refundable
+                                 </div>
+                               ) : (
+                                 <div className="flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[13px]">keyboard_return</span>
+                                    <span className="font-bold text-on-surface">{settings.returnPolicyDays || 14} days</span> return available
+                                 </div>
+                               )}
                                <div className="flex items-center gap-1">
                                   <span className="material-symbols-outlined text-[13px]">local_shipping</span>
                                   <span>Delivery by <span className="text-on-surface font-bold">{deliveryDateStr}</span></span>

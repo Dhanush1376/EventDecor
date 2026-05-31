@@ -47,7 +47,7 @@ function CheckoutContent() {
 
       <div className="max-w-[1240px] mx-auto w-full pt-4 px-4 sm:px-6">
         {activeStep === 1 ? (
-          <div className="max-w-[768px] mx-auto">
+          <div className="max-w-[1024px] mx-auto">
             <Suspense fallback={<StepFallback mode="address" />}>
               <CheckoutAddressStep />
             </Suspense>

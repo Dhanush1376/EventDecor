@@ -401,7 +401,7 @@ export default function CheckoutAddressStep() {
           </div>
 
           {/* Sticky Action Footer */}
-          <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-lg z-40 max-w-[768px] mx-auto flex gap-3">
+          <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-lg z-40 max-w-[1024px] mx-auto flex gap-3">
              <button
                type="button"
                onClick={() => {
@@ -498,7 +498,7 @@ export default function CheckoutAddressStep() {
          </div>
 
          {/* Sticky Action Footer */}
-         <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 max-w-[768px] mx-auto">
+         <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 max-w-[1024px] mx-auto">
             <button
               onClick={() => setIsSelectingList(false)}
               className="w-full bg-[#f26a10] hover:bg-[#d85d0d] text-white py-3.5 rounded-[4px] text-[13px] font-extrabold uppercase tracking-widest shadow-sm transition-colors text-center"
@@ -572,7 +572,7 @@ export default function CheckoutAddressStep() {
       </div>
 
       {/* Sticky Action Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 max-w-[768px] mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 max-w-[1024px] mx-auto">
          <button
            onClick={() => setActiveStep(2)} // Proceed to Payment
            className="w-full bg-[#f26a10] hover:bg-[#d85d0d] text-white py-3.5 rounded-[4px] text-[13px] font-extrabold uppercase tracking-widest shadow-sm transition-colors text-center"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -54,8 +54,8 @@ export function AdminAddCategory() {
     setFormData((prev) => ({
       ...prev,
       name: val,
-      slug: prev.slug === prev.name.toLowerCase().replace(/\s+/g, '-') 
-        ? val.toLowerCase().replace(/\s+/g, '-') 
+      slug: prev.slug === prev.name.toLowerCase().replace(/[\s\W-]+/g, '-') 
+        ? val.toLowerCase().replace(/[\s\W-]+/g, '-') 
         : prev.slug,
     }));
   };
@@ -85,14 +85,15 @@ export function AdminAddCategory() {
 
   if (isLoading) {
     return (
-      <div className="max-w-[800px] mx-auto space-y-6 pb-20 p-6">
+      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-6">
         <SkeletonForm fields={4} />
       </div>
     );
   }
 
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="max-w-[800px] mx-auto space-y-6 pb-20 p-4 sm:p-0">
+    <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate("/admin/categories")} className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm">
@@ -112,73 +113,84 @@ export function AdminAddCategory() {
         </div>
       </div>
 
-      <motion.div variants={fadeUp} className="admin-card p-6 md:p-8 space-y-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-1.5">
-            <label className="admin-label">Category Name *</label>
-            <input
-              required
-              type="text"
-              placeholder="e.g. Traditional Mandaps"
-              value={formData.name}
-              onChange={handleNameChange}
-              className="admin-input"
-            />
-          </div>
+      <div className="max-w-3xl mx-auto">
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="show"
+          className="space-y-6"
+        >
+          <div className="admin-card p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-1.5">
+                <label className="admin-label">Category Name <span className="text-error">*</span></label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Traditional Mandaps"
+                  value={formData.name}
+                  onChange={handleNameChange}
+                  className="admin-input"
+                />
+              </div>
 
-          <div className="space-y-1.5">
-            <label className="admin-label">Slug / URL Path *</label>
-            <input
-              required
-              type="text"
-              placeholder="e.g. traditional-mandaps"
-              value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-              className="admin-input font-mono"
-            />
-          </div>
+              <div className="space-y-1.5">
+                <label className="admin-label">Slug / URL Path <span className="text-error">*</span></label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. traditional-mandaps"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[\s\W-]+/g, '-') })}
+                  className="admin-input font-mono"
+                />
+              </div>
 
-          <div className="space-y-1.5">
-            <label className="admin-label">Category Scope Type Scope *</label>
-            <select
-              className="admin-select"
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-            >
-              <option value="product">Product Catalog</option>
-              <option value="event">Real Event Showcase</option>
-              <option value="gallery">Inspiration Gallery</option>
-              <option value="global">Global Shared Scope</option>
-            </select>
-          </div>
+              <div className="space-y-1.5">
+                <label className="admin-label">Category Scope Type <span className="text-error">*</span></label>
+                <select
+                  className="admin-select"
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                >
+                  <option value="product">Product Catalog</option>
+                  <option value="event">Real Event Showcase</option>
+                  <option value="gallery">Inspiration Gallery</option>
+                  <option value="global">Global Shared Scope</option>
+                </select>
+              </div>
 
-          <div className="pt-2">
-            <AdminToggle
-              label="Publishing Status"
-              description="Enable to display items of this category on the storefront"
-              checked={formData.isActive}
-              onChange={() => setFormData({ ...formData, isActive: !formData.isActive })}
-            />
-          </div>
+              <div className="pt-4 border-t border-[var(--admin-border-subtle)]">
+                <AdminToggle
+                  label="Publishing Status"
+                  description="Enable to display items of this category on the storefront"
+                  checked={formData.isActive}
+                  onChange={() => setFormData({ ...formData, isActive: !formData.isActive })}
+                />
+              </div>
 
-          <div className="flex gap-3 pt-6 border-t border-[var(--admin-border-subtle)] mt-8">
-            <button
-              type="button"
-              onClick={() => navigate("/admin/categories")}
-              className="admin-btn admin-btn-outline flex-1 py-3"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={submitting}
-              type="submit"
-              className="admin-btn admin-btn-primary flex-[2] py-3 shadow-md"
-            >
-              {submitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Create Category'}
-            </button>
+              <div className="flex gap-3 pt-6 border-t border-[var(--admin-border-subtle)] mt-8">
+                <button
+                  type="button"
+                  onClick={() => navigate("/admin/categories")}
+                  className="admin-btn admin-btn-outline flex-1 py-3"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={submitting}
+                  type="submit"
+                  className="admin-btn admin-btn-primary flex-[2] py-3 shadow-md"
+                >
+                  {submitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Create Category'}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
-      </motion.div>
-    </motion.div>
+        </motion.div>
+      </div>
+    </div>
   );
 }
+
+export default AdminAddCategory;

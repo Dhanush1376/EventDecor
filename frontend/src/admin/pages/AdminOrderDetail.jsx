@@ -428,8 +428,14 @@ export function AdminOrderDetail() {
                         )}
                       </div>
                       <div>
-                        <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-snug">
+                        <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-snug flex items-center gap-2">
                           {item.name}
+                          {item.isNonRefundable && (
+                            <span className="text-[9px] uppercase tracking-wider font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a] px-1.5 py-0.5 rounded-[var(--admin-radius-sm)] flex items-center gap-0.5">
+                              <span className="material-symbols-outlined text-[10px]">block</span>
+                              Non-Refundable
+                            </span>
+                          )}
                         </p>
                         <p className="text-[12px] text-[var(--admin-text-tertiary)] font-bold mt-1">
                           Qty: {item.qty} × {formatCurrency(item.price)}

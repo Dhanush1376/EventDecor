@@ -79,7 +79,7 @@ class OrderService {
 
     // 1. Batch-query products at once to eliminate N+1 findById queries inside the loop
     const productIds = [...new Set(items.map((item: any) => String(item.productId)).filter(Boolean))] as any[];
-    const products = await Product.find({ _id: { $in: productIds } }).select('title price stock isActive imageSrc category').session(session);
+    const products = await Product.find({ _id: { $in: productIds } }).select('title price stock isActive imageSrc category isNonRefundable').session(session);
     const productsById = new Map<string, any>(products.map((p: any) => [p._id.toString(), p]));
 
     // Pre-validate all items before doing any stock updates to maintain transactional integrity
@@ -125,6 +125,7 @@ class OrderService {
           variant: item.variant || 'Default',
           imageSrc: product.imageSrc,
           category: product.category,
+          isNonRefundable: product.isNonRefundable || false,
         });
       }
     } catch (err) {
@@ -720,6 +721,14 @@ class OrderService {
 
     if (oldStatus !== finalStatus && !validTransitions[oldStatus]?.includes(finalStatus)) {
       throw new ApiError(400, `Invalid state transition from ${oldStatus} to ${finalStatus}`);
+    }
+
+    // Block 'Returned' or 'Refunded' if all items are non-refundable
+    if (finalStatus === 'Returned' || finalStatus === 'Refunded') {
+      const allNonRefundable = order.items.length > 0 && order.items.every(item => item.isNonRefundable);
+      if (allNonRefundable) {
+        throw new ApiError(400, 'This order consists entirely of non-refundable items and cannot be returned or refunded.');
+      }
     }
 
     order.orderStatus = finalStatus as any;

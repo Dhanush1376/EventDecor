@@ -66,6 +66,15 @@ export function AdminSidebar() {
   const mobileSidebarRef = React.useRef(null);
   const [sidebarSearch, setSidebarSearch] = useState("");
   const [collapsedSections, setCollapsedSections] = useState({});
+  const [isFabOpen, setIsFabOpen] = useState(false);
+
+  const fabActions = [
+    { label: "Coupon", icon: "sell", path: "/admin/coupons/add" },
+    { label: "Showcase", icon: "view_carousel", path: "/admin/showcases/add" },
+    { label: "Product", icon: "inventory_2", path: "/admin/products/add" },
+    { label: "Category", icon: "category", path: "/admin/categories/add" },
+    { label: "Campaign", icon: "campaign", path: "/admin/campaigns/add" }
+  ];
   
   const toggleSection = (si) => {
     setCollapsedSections(prev => ({ ...prev, [si]: !prev[si] }));
@@ -366,6 +375,20 @@ export function AdminSidebar() {
         {sidebarContent}
       </motion.aside>
 
+      {/* FAB Mobile Overlay */}
+      <AnimatePresence>
+        {isFabOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsFabOpen(false)}
+            className="fixed inset-0 z-[35] lg:hidden"
+            style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(2px)" }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Mobile Drawer Overlay */}
       <AnimatePresence>
         {sidebarMobileOpen && (
@@ -428,28 +451,73 @@ export function AdminSidebar() {
 
           if (item.isAction) {
             return (
-              <button
-                key={index}
-                onClick={() => navigate(item.path)}
-                className="w-11 h-11 rounded-full flex items-center justify-center shadow-[var(--admin-shadow-md)] -translate-y-3 hover:scale-105 active:scale-95 transition-all cursor-pointer min-h-0"
-                style={{
-                  background: "var(--admin-accent)",
-                  color: "white",
-                  border: "2px solid var(--admin-surface)",
-                }}
-                title={item.label}
-              >
-                <span className="material-symbols-outlined text-[20px] font-bold">
-                  add
-                </span>
-              </button>
+              <div key={index} className="relative w-11 flex justify-center -translate-y-3 z-[60]">
+                <AnimatePresence>
+                  {isFabOpen && (
+                    <>
+                      {fabActions.map((action, i) => {
+                        // Horizontal row, centered above the button
+                        const x = (i - Math.floor(fabActions.length / 2)) * 65; // 65px spacing for more gap
+                        const y = -80; // Sit 80px above the button to leave room for text below
+                        
+                        return (
+                          <motion.button
+                            key={i}
+                            initial={{ opacity: 0, x, y: y + 15, scale: 0.9 }}
+                            animate={{ opacity: 1, x, y, scale: 1 }}
+                            exit={{ opacity: 0, x, y: y + 15, scale: 0.9 }}
+                            transition={{ duration: 0.1, ease: "easeOut" }}
+                            onClick={() => {
+                              navigate(action.path);
+                              setIsFabOpen(false);
+                            }}
+                            className="absolute top-1 w-10 h-10 rounded-full flex items-center justify-center shadow-[var(--admin-shadow-lg)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] border border-[var(--admin-border-subtle)]"
+                            style={{ left: "calc(50% - 20px)" }}
+                            title={action.label}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">
+                              {action.icon}
+                            </span>
+                            {/* Label below the button for horizontal row */}
+                            <span className="absolute -bottom-6 text-[9px] font-semibold whitespace-nowrap opacity-90 shadow-sm" style={{ background: "var(--admin-surface)", padding: "2px 6px", borderRadius: "12px", border: "1px solid var(--admin-border-subtle)" }}>
+                              {action.label}
+                            </span>
+                          </motion.button>
+                        );
+                      })}
+                    </>
+                  )}
+                </AnimatePresence>
+
+                <button
+                  onClick={() => setIsFabOpen(!isFabOpen)}
+                  className="w-11 h-11 relative z-[61] rounded-full flex items-center justify-center shadow-[var(--admin-shadow-md)] hover:scale-105 active:scale-95 transition-all cursor-pointer min-h-0"
+                  style={{
+                    background: isFabOpen ? "var(--admin-surface)" : "var(--admin-accent)",
+                    color: isFabOpen ? "var(--admin-accent)" : "white",
+                    border: "2px solid var(--admin-surface)",
+                  }}
+                  title="Create New"
+                >
+                  <motion.span 
+                    animate={{ rotate: isFabOpen ? 45 : 0 }}
+                    transition={{ duration: 0.1, ease: "easeOut" }}
+                    className="material-symbols-outlined text-[20px] font-bold"
+                  >
+                    add
+                  </motion.span>
+                </button>
+              </div>
             );
           }
 
           return (
             <button
               key={index}
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                navigate(item.path);
+                setIsFabOpen(false);
+              }}
               className="flex flex-col items-center justify-center gap-0.5 w-14 h-full relative cursor-pointer group min-h-0"
             >
               <span

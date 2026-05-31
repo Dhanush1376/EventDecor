@@ -124,6 +124,12 @@ export default function OrdersTab({
                           <strong className="text-xs text-primary block mt-1">
                             ₹{(prodPrice * (item.quantity || 1)).toLocaleString()}
                           </strong>
+                          {item.isNonRefundable && (
+                            <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a] px-1.5 py-0.5 rounded mt-1.5">
+                              <span className="material-symbols-outlined text-[10px]">block</span>
+                              Non-Refundable
+                            </span>
+                          )}
                           {order.orderStatus === "Delivered" && (
                             <button
                               onClick={() => setReviewingProduct({
