@@ -13,6 +13,8 @@ import {
   SkeletonTable,
   SkeletonList,
   SkeletonDashboard,
+  MobileFilterDrawer,
+  EmptyState,
 } from "../components/AdminUIKit";
 import { AdminAddProduct } from "./AdminAddProduct";
 
@@ -23,10 +25,7 @@ export function AdminProducts() {
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [viewMode, setViewMode] = useState("table");
   const [selectedProducts, setSelectedProducts] = useState([]);
-
-  // Drawer states
-  const [showDrawer, setShowDrawer] = useState(false);
-  const [activeEditId, setActiveEditId] = useState(null);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -68,12 +67,22 @@ export function AdminProducts() {
       <PageHeader
         title="Products Catalog"
         subtitle={`${products.length} products`}
+        icon="inventory_2"
+        iconColor="products"
+        headerAction={
+          <button
+            onClick={() => setIsMobileFilterOpen(true)}
+            className="md:hidden flex items-center justify-center w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-border)] transition-colors relative"
+          >
+            <span className="material-symbols-outlined text-[16px]">tune</span>
+            {(selectedCategory !== "All" || selectedStatus !== "All") && (
+              <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[var(--admin-accent)] border border-[var(--admin-surface)]" />
+            )}
+          </button>
+        }
       >
         <button
-          onClick={() => {
-            setActiveEditId(null);
-            setShowDrawer(true);
-          }}
+          onClick={() => navigate('/admin/products/add')}
           className="admin-btn admin-btn-primary h-9"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
@@ -83,9 +92,12 @@ export function AdminProducts() {
 
       <motion.div
         variants={fadeUp}
-        className="admin-card p-2 sm:p-3 flex flex-row items-center justify-between gap-2"
+        className="admin-card p-2 sm:p-3 hidden md:flex flex-row items-center justify-between gap-2"
       >
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        {/* Mobile Filters (moved to headerAction, but we still need the desktop filters here) */}
+
+        {/* Desktop Filters */}
+        <div className="hidden md:flex items-center gap-1.5 flex-1 min-w-0">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -120,7 +132,7 @@ export function AdminProducts() {
           <div className="flex bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 shadow-sm shrink-0">
             <button
               onClick={() => setViewMode("table")}
-              className={`flex items-center justify-center w-8 h-7.5 rounded-[var(--admin-radius-md)] transition-all shrink-0 ${
+              className={`hidden md:flex items-center justify-center w-8 h-7.5 rounded-[var(--admin-radius-md)] transition-all shrink-0 ${
                 viewMode === "table"
                   ? "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)]"
                   : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
@@ -130,7 +142,7 @@ export function AdminProducts() {
             </button>
             <button
               onClick={() => setViewMode("grid")}
-              className={`flex items-center justify-center w-8 h-7.5 rounded-[var(--admin-radius-md)] transition-all shrink-0 ${
+              className={`hidden md:flex items-center justify-center w-8 h-7.5 rounded-[var(--admin-radius-md)] transition-all shrink-0 ${
                 viewMode === "grid"
                   ? "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)]"
                   : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
@@ -169,13 +181,24 @@ export function AdminProducts() {
             animate="show"
             exit="hidden"
             variants={fadeUp}
-            className="admin-card py-24 flex flex-col items-center justify-center text-center"
+            className="admin-card py-16 flex justify-center"
           >
-            <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">
-              search_off
-            </span>
-            <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">Data Not Found</p>
-            <p className="text-[12px] text-[var(--admin-text-secondary)]">No products found.</p>
+            <EmptyState
+              icon={searchQuery ? "search_off" : "inventory_2"}
+              title={searchQuery || selectedCategory !== "All" || selectedStatus !== "All" ? "No Matches Found" : "No Products Yet"}
+              description={searchQuery || selectedCategory !== "All" || selectedStatus !== "All" ? "No products match the search or filter criteria." : "Get started by adding your first product to the catalog."}
+              action={
+                searchQuery || selectedCategory !== "All" || selectedStatus !== "All" ? (
+                  <button onClick={() => { setSelectedCategory("All"); setSelectedStatus("All"); }} className="admin-btn admin-btn-outline">
+                    Clear Filters
+                  </button>
+                ) : (
+                  <button onClick={() => navigate('/admin/products/add')} className="admin-btn admin-btn-primary">
+                    <span className="material-symbols-outlined text-[16px]">add</span> Add Product
+                  </button>
+                )
+              }
+            />
           </motion.div>
         ) : viewMode === "table" ? (
           <motion.div
@@ -184,9 +207,11 @@ export function AdminProducts() {
             animate="show"
             exit="hidden"
             variants={fadeUp}
-            className="admin-card overflow-x-auto"
+            className="admin-card"
           >
-            <table className="admin-table w-full min-w-[900px]">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="admin-table w-full min-w-[900px]">
               <thead>
                 <tr>
                   <th className="w-12 text-center">
@@ -215,10 +240,7 @@ export function AdminProducts() {
                   <tr
                     key={p.id}
                     className="admin-table-row-clickable group"
-                    onClick={() => {
-                      setActiveEditId(p.id);
-                      setShowDrawer(true);
-                    }}
+                    onClick={() => navigate(`/admin/products/edit/${p.id}`)}
                   >
                     <td className="text-center" onClick={(e) => e.stopPropagation()}>
                       <input
@@ -287,10 +309,7 @@ export function AdminProducts() {
                           </span>
                         </button>
                         <button
-                          onClick={() => {
-                            setActiveEditId(p.id);
-                            setShowDrawer(true);
-                          }}
+                          onClick={() => navigate(`/admin/products/edit/${p.id}`)}
                           className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
                           title="Edit"
                         >
@@ -308,7 +327,57 @@ export function AdminProducts() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
+
+            {/* Mobile Stacked Cards (replaces table on small screens) */}
+            <div className="flex md:hidden flex-col gap-3 p-3 bg-[var(--admin-bg-subtle)]">
+              {filteredProducts.map((p) => (
+                <div 
+                  key={p.id}
+                  onClick={() => navigate(`/admin/products/edit/${p.id}`)}
+                  className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] p-3 shadow-sm border border-[var(--admin-border)] flex flex-col gap-3 cursor-pointer hover:border-[var(--admin-border-strong)] transition-all"
+                >
+                  <div className="flex items-start gap-3">
+                    <img
+                      onError={handleImageError}
+                      src={p.image}
+                      alt={p.name}
+                      className="w-16 h-16 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border-subtle)] shrink-0"
+                    />
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="font-bold text-[var(--admin-text-primary)] text-[13px] leading-tight line-clamp-2">
+                          {p.name}
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // show action sheet here normally, for now we will just link to edit
+                            navigate(`/admin/products/edit/${p.id}`);
+                          }}
+                          className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] -mr-2 -mt-1"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1">{p.category}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-[var(--admin-border-subtle)]">
+                    <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
+                      {formatCurrency(p.price)}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[11px] font-bold ${p.stock === 0 ? "text-[var(--admin-error)]" : "text-[var(--admin-text-secondary)]"}`}>
+                        Stock: {p.stock}
+                      </span>
+                      <StatusBadge status={statusLabels[p.status] || p.status} className="border-none px-1.5 py-0.5 text-[9px]" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         ) : (
           /* Grid View */
@@ -324,10 +393,7 @@ export function AdminProducts() {
               <motion.div
                 key={p.id}
                 variants={fadeUp}
-                onClick={() => {
-                  setActiveEditId(p.id);
-                  setShowDrawer(true);
-                }}
+                onClick={() => navigate(`/admin/products/edit/${p.id}`)}
                 className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border-subtle)] overflow-hidden group cursor-pointer hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-300 flex flex-col justify-between text-left h-full"
               >
                 <div className="relative aspect-square overflow-hidden bg-[var(--admin-bg-subtle)] shrink-0">
@@ -371,15 +437,56 @@ export function AdminProducts() {
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Slide-Up Bottom Drawer Sheet */}
-      <AdminAddProduct
-        isOpen={showDrawer}
-        editId={activeEditId}
-        onClose={() => {
-          setShowDrawer(false);
-          if (refreshProducts) refreshProducts();
-        }}
-      />
+
+      <MobileFilterDrawer
+        isOpen={isMobileFilterOpen}
+        onClose={() => setIsMobileFilterOpen(false)}
+        title="Filter Products"
+      >
+        <div>
+          <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
+            Category
+          </label>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="admin-input"
+          >
+            <option value="All">All Categories</option>
+            {productCategories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
+            Status
+          </label>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="admin-input"
+          >
+            <option value="All">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="low_stock">Low Stock</option>
+            <option value="out_of_stock">Out of Stock</option>
+          </select>
+        </div>
+        <div className="pt-4 flex items-center justify-between">
+          <button
+            onClick={() => {
+              setSelectedCategory("All");
+              setSelectedStatus("All");
+            }}
+            className="text-[12px] font-bold text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </MobileFilterDrawer>
     </motion.div>
   );
 }

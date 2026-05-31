@@ -14,16 +14,13 @@ import {
   fadeUp,
   stagger,
 } from "../components/AdminUIKit";
-import { AdminCreateCoupon } from "./AdminCreateCoupon";
 
 export function AdminCoupons() {
   const navigate = useNavigate();
   const { searchQuery } = useAdmin();
   const queryClient = useQueryClient();
 
-  // Drawer modal states
-  const [showDrawer, setShowDrawer] = useState(false);
-  const [activeEditId, setActiveEditId] = useState(null);
+  // Route-based creation instead of drawer
 
   const { data: coupons = [], isLoading: loading } = useQuery({
     queryKey: ["adminCoupons"],
@@ -84,10 +81,7 @@ export function AdminCoupons() {
         subtitle={`${coupons.filter((c) => c.isActive).length} active coupons in store catalog`}
       >
         <button
-          onClick={() => {
-            setActiveEditId(null);
-            setShowDrawer(true);
-          }}
+          onClick={() => navigate("/admin/coupons/add")}
           className="admin-btn admin-btn-primary h-9"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
@@ -110,8 +104,7 @@ export function AdminCoupons() {
           action={
             <button
               onClick={() => {
-                setActiveEditId(null);
-                setShowDrawer(true);
+                window.location.hash = "#/admin/coupons/add";
               }}
               className="admin-btn admin-btn-primary admin-btn-sm"
             >
@@ -219,10 +212,7 @@ export function AdminCoupons() {
                   </span>
                   <div className="flex gap-1">
                     <button
-                      onClick={() => {
-                        setActiveEditId(c._id || c.id);
-                        setShowDrawer(true);
-                      }}
+                      onClick={() => navigate(`/admin/coupons/edit/${c._id || c.id}`)}
                       className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
                       title="Edit Coupon"
                     >
@@ -247,15 +237,6 @@ export function AdminCoupons() {
         </motion.div>
       )}
 
-      {/* Slide-Up Bottom Drawer Sheet */}
-      <AdminCreateCoupon
-        isOpen={showDrawer}
-        editId={activeEditId}
-        onClose={() => {
-          setShowDrawer(false);
-          queryClient.invalidateQueries({ queryKey: ["adminCoupons"] });
-        }}
-      />
     </motion.div>
   );
 }

@@ -123,8 +123,8 @@ export function TopNavbar() {
       <nav
         className={`top-navbar fixed top-0 w-full transition-all duration-500 ${
           !isAtTop
-            ? "bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-3"
-            : "bg-surface/90 backdrop-blur-md py-4 border-b border-outline-variant/10"
+            ? "bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-1.5"
+            : "bg-surface/90 backdrop-blur-md py-2 border-b border-outline-variant/10"
         } ${!isAtTop && scrollDirection === "down" ? "-translate-y-full" : "translate-y-0"}`}
         style={{ zIndex: 'var(--z-sticky)', boxShadow: !isAtTop ? 'var(--shadow-md)' : 'var(--shadow-xs)' }}
       >

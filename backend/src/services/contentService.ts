@@ -112,46 +112,53 @@ class ContentService {
     return section;
   }
 
-  static async updateSection(key: string, newData: any) {
+  static async updateSection(key: string, newData: any, retry = 0): Promise<any> {
     const payload = key === 'studio_settings' ? sanitizeStudioSettings(newData) : newData;
-    let section = await ContentSection.findOne({ sectionKey: key });
+    try {
+      let section = await ContentSection.findOne({ sectionKey: key });
 
-    if (section) {
-      // Store current data in revision history
-      section.revisionHistory.push({
-        previousData: section.data,
-        modifiedAt: new Date(),
-      });
-      
-      // Limit revision history to last 10 versions
-      if (section.revisionHistory.length > 10) {
-        section.revisionHistory.shift();
+      if (section) {
+        // Store current data in revision history
+        section.revisionHistory.push({
+          previousData: section.data,
+          modifiedAt: new Date(),
+        });
+        
+        // Limit revision history to last 10 versions
+        if (section.revisionHistory.length > 10) {
+          section.revisionHistory.shift();
+        }
+
+        section.data = payload;
+        section.lastModified = new Date();
+        section.status = 'published'; // Always publish on update/save from admin
+        await section.save();
+      } else {
+        section = new ContentSection({
+          sectionKey: key,
+          data: payload,
+          status: 'published', // Always publish on update/save from admin
+        });
+        await section.save();
       }
+      
+      // Invalidate MemoryCache to ensure immediate sync
+      cmsCache.delete(`cms:content:${key}`);
+      cmsCache.delete('cms:all_sections');
+      cmsCache.delete('cms:published:flat');
+      cmsCache.delete(key); // Just in case cache key is set without prefix (like 'studio_settings')
+      if (key === 'admin_safety_lock') {
+        await invalidateSafetyLockCache();
+      }
+      await bumpPublicCacheVersion();
 
-      section.data = payload;
-      section.lastModified = new Date();
-      section.status = 'published'; // Always publish on update/save from admin
-      await section.save();
-    } else {
-      section = new ContentSection({
-        sectionKey: key,
-        data: payload,
-        status: 'published', // Always publish on update/save from admin
-      });
-      await section.save();
+      return section;
+    } catch (err: any) {
+      if (err.name === 'VersionError' && retry < 3) {
+        return this.updateSection(key, newData, retry + 1);
+      }
+      throw err;
     }
-    
-    // Invalidate MemoryCache to ensure immediate sync
-    cmsCache.delete(`cms:content:${key}`);
-    cmsCache.delete('cms:all_sections');
-    cmsCache.delete('cms:published:flat');
-    cmsCache.delete(key); // Just in case cache key is set without prefix (like 'studio_settings')
-    if (key === 'admin_safety_lock') {
-      await invalidateSafetyLockCache();
-    }
-    await bumpPublicCacheVersion();
-
-    return section;
   }
 
   static async publishAll() {

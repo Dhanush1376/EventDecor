@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { policyService } from '../../services/domainServices';
 import { createSafeHtml } from '../../utils/sanitize';
 import { toast } from 'react-hot-toast';
 import { SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
 
-export function AdminPolicyEditor({ isOpen, onClose, editId }) {
+export function AdminPolicyEditor() {
   const navigate = useNavigate();
-  const { id: routeId } = useParams();
-  const id = editId || routeId;
-  const isDrawerMode = isOpen !== undefined;
+  const { id } = useParams();
   const isNew = id === 'new' || !id;
 
-  const [loading, setLoading] = useState(isDrawerMode ? false : !isNew);
+  const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('write'); // 'write' or 'preview'
   
@@ -52,7 +49,7 @@ export function AdminPolicyEditor({ isOpen, onClose, editId }) {
         setFormData(data.data);
       }
     } catch (error) {
-      toast.error('Failed to load policy');
+      toast.error(getErrorMessage(error, 'Failed to load policy'));
       handleCancelAction();
     } finally {
       setLoading(false);
@@ -71,29 +68,21 @@ export function AdminPolicyEditor({ isOpen, onClose, editId }) {
       }
       handleSuccessAction();
     } catch (error) {
-      toast.error(error?.response?.data?.message || 'Failed to save policy');
+      toast.error(getErrorMessage(error, 'Failed to save policy'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancelAction = () => {
-    if (isDrawerMode) {
-      onClose();
-    } else {
-      navigate('/admin/policies');
-    }
+    navigate('/admin/policies');
   };
 
   const handleSuccessAction = () => {
-    if (isDrawerMode) {
-      onClose();
-    } else {
-      navigate('/admin/policies');
-    }
+    navigate('/admin/policies');
   };
 
-  if (loading && !isDrawerMode) return <SkeletonDashboard />;
+  if (loading) return <SkeletonDashboard />;
 
   const editorContent = (
     <div className="space-y-6 flex-1 pb-4">
@@ -206,67 +195,6 @@ export function AdminPolicyEditor({ isOpen, onClose, editId }) {
     </div>
   );
 
-  if (isDrawerMode) {
-    return typeof document !== "undefined" && createPortal(
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
-          >
-            {/* Backdrop Blur overlay */}
-            <div
-              onClick={handleCancelAction}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
-            />
-            
-            {/* Slide-Up Bottom Drawer Sheet */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 26, stiffness: 220 }}
-              className="relative w-full max-w-4xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
-            >
-              {/* Grab Handle */}
-              <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
-
-              {/* Form Title & Subtitle */}
-              <div className="mb-5 pb-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0">
-                <div>
-                  <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
-                      {isNew ? "note_add" : "edit_note"}
-                    </span>
-                    {isNew ? "Create Policy" : "Edit Policy"}
-                  </h3>
-                  <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5">
-                    {isNew ? "Draft legal or storefront policy clauses" : "Update policy details and SEO settings"}
-                  </p>
-                </div>
-                <button 
-                  type="button" 
-                  onClick={handleCancelAction}
-                  className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
-                </button>
-              </div>
-
-              {loading ? (
-                <div className="py-12 flex justify-center items-center">
-                  <div className="w-8 h-8 rounded-full border-2 border-[var(--admin-accent)] border-t-transparent animate-spin" />
-                </div>
-              ) : editorContent}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>,
-      document.body
-    );
-  }
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="max-w-4xl mx-auto space-y-6 pb-24">

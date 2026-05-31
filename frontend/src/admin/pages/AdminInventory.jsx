@@ -59,7 +59,7 @@ export function AdminInventory() {
         throw new Error("API failed");
       }
     } catch (err) {
-      toast.error("Failed to update stock. Reverting.");
+      toast.error(getErrorMessage(err, "Failed to update stock. Reverting."));
       // Revert State
       setProducts((prev) =>
         prev.map((p) =>

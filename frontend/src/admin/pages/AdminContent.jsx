@@ -691,26 +691,29 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
       
       <SectionHeader
         icon="info"
-        title="About Heritage Page Customizer"
-        description="Overhaul the full cinematic brand story, founder profiles, mission, and visual graphics"
+        title="About Page Content"
+        description="Configure the story, mission, and founder details"
       />
       
       <div className="space-y-6">
         {/* Cinematic Hero */}
-        <div className="admin-card p-5 space-y-4">
-          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2">1. Editorial Hero Showcase</span>
+        <div className="admin-card-inset p-5 space-y-4">
+          <h4 className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[14px]">view_day</span>
+            Hero Section
+          </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
             <AdminField label="Cinematic Title Headline">
               <AdminInput
                 value={ab.heroTitle ||""}
-                onChange={(e) => onUpdate("about", { heroTitle: e.target.value })}
+                onChange={(e) => onUpdate("aboutPage", { heroTitle: e.target.value })}
                 className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
               />
             </AdminField>
             <AdminField label="Cinematic Subtitle">
               <AdminInput
                 value={ab.heroSubtitle ||""}
-                onChange={(e) => onUpdate("about", { heroSubtitle: e.target.value })}
+                onChange={(e) => onUpdate("aboutPage", { heroSubtitle: e.target.value })}
                 className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
               />
             </AdminField>
@@ -718,7 +721,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
           <ImageUpload
             label="Cinematic Backdrop Graphic"
             value={ab.heroImage ||""}
-            onChange={(val) => onUpdate("about", { heroImage: val })}
+            onChange={(val) => onUpdate("aboutPage", { heroImage: val })}
             folder="cms"
           />
         </div>
@@ -730,12 +733,12 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
             <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
               <AdminTextarea
                 value={ab.missionStatement ||""}
-                onChange={(e) => onUpdate("about", { missionStatement: e.target.value })}
+                onChange={(e) => onUpdate("aboutPage", { missionStatement: e.target.value })}
                 rows={3}
                 className="!pr-12 !py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
               />
               <div className="absolute right-2.5 top-2.5">
-                <AISparkButton text={ab.missionStatement} onApply={(val) => onUpdate("about", { missionStatement: val })} />
+                <AISparkButton text={ab.missionStatement} onApply={(val) => onUpdate("aboutPage", { missionStatement: val })} />
               </div>
             </div>
           </AdminField>
@@ -743,21 +746,21 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
             <ImageUpload
               label="Narrative Side Illustration Image"
               value={ab.storyImage ||""}
-              onChange={(val) => onUpdate("about", { storyImage: val })}
+              onChange={(val) => onUpdate("aboutPage", { storyImage: val })}
               folder="cms"
             />
             <div className="space-y-3.5">
               <AdminField label="Primary Founder Name" description="Name showing inside leadership frames">
                 <AdminInput
                   value={ab.founderName ||"Sirisha Atmakuri"}
-                  onChange={(e) => onUpdate("about", { founderName: e.target.value })}
+                  onChange={(e) => onUpdate("aboutPage", { founderName: e.target.value })}
                   className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                 />
               </AdminField>
               <AdminField label="Leadership Role Title">
                 <AdminInput
                   value={ab.founderRole ||"Founder & Creative Head"}
-                  onChange={(e) => onUpdate("about", { founderRole: e.target.value })}
+                  onChange={(e) => onUpdate("aboutPage", { founderRole: e.target.value })}
                   className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                 />
               </AdminField>
@@ -780,7 +783,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                         onChange={(e) => {
                           const copy = [...ab.founders];
                           copy[idx] = { ...copy[idx], name: e.target.value };
-                          onUpdate("about", { founders: copy });
+                          onUpdate("aboutPage", { founders: copy });
                         }}
                         className="!py-2 !text-[11px] sm:text-[11px]"
                       />
@@ -791,7 +794,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                         onChange={(e) => {
                           const copy = [...ab.founders];
                           copy[idx] = { ...copy[idx], role: e.target.value };
-                          onUpdate("about", { founders: copy });
+                          onUpdate("aboutPage", { founders: copy });
                         }}
                         className="!py-2 !text-[11px] sm:text-[11px]"
                       />
@@ -803,7 +806,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                       onChange={(e) => {
                         const copy = [...ab.founders];
                         copy[idx] = { ...copy[idx], subtitle: e.target.value };
-                        onUpdate("about", { founders: copy });
+                        onUpdate("aboutPage", { founders: copy });
                       }}
                       className="!py-2 !text-[11px] sm:text-[11px]"
                     />
@@ -814,7 +817,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                       onChange={(e) => {
                         const copy = [...ab.founders];
                         copy[idx] = { ...copy[idx], quote: e.target.value };
-                        onUpdate("about", { founders: copy });
+                        onUpdate("aboutPage", { founders: copy });
                       }}
                       className="!py-1.5 !text-[11px] sm:text-[11px]"
                       rows={3}
@@ -826,7 +829,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                     onChange={(val) => {
                       const copy = [...ab.founders];
                       copy[idx] = { ...copy[idx], signatureImg: val };
-                      onUpdate("about", { founders: copy });
+                      onUpdate("aboutPage", { founders: copy });
                     }}
                     folder="cms"
                   />
@@ -845,7 +848,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
               onClick={() => {
                 const copy = [...(ab.specializations || DEFAULT_SPECIALIZATIONS)];
                 copy.push({ title:"New Specialization", img:"" });
-                onUpdate("about", { specializations: copy });
+                onUpdate("aboutPage", { specializations: copy });
                 toast.success("New Specialization Added!");
               }}
               className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-accent)] border border-[var(--admin-accent)]/30 hover:border-[var(--admin-accent)] px-3.5 py-1.5 rounded-full bg-[var(--admin-surface)] transition-all cursor-pointer shadow-[var(--admin-shadow-xs)] hover:shadow-xs"
@@ -864,7 +867,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                     onChange={(e) => {
                       const copy = [...(ab.specializations || DEFAULT_SPECIALIZATIONS)];
                       copy[idx] = { ...copy[idx], title: e.target.value };
-                      onUpdate("about", { specializations: copy });
+                      onUpdate("aboutPage", { specializations: copy });
                     }}
                     className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
                   />
@@ -876,7 +879,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                     onChange={(val) => {
                       const copy = [...(ab.specializations || DEFAULT_SPECIALIZATIONS)];
                       copy[idx] = { ...copy[idx], img: val };
-                      onUpdate("about", { specializations: copy });
+                      onUpdate("aboutPage", { specializations: copy });
                     }}
                     folder="cms"
                   />
@@ -885,7 +888,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                   type="button"
                   onClick={() => {
                     const copy = (ab.specializations || DEFAULT_SPECIALIZATIONS).filter((_, i) => i !== idx);
-                    onUpdate("about", { specializations: copy });
+                    onUpdate("aboutPage", { specializations: copy });
                     toast.success("Specialization Deleted");
                   }}
                   className="text-[var(--admin-error)] opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-1.5 hover:bg-[var(--admin-error-light)] rounded-lg shrink-0"
@@ -906,7 +909,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
               onClick={() => {
                 const copy = [...(ab.features || DEFAULT_FEATURES)];
                 copy.push({ icon:"star", title:"New Feature", desc:"Feature description." });
-                onUpdate("about", { features: copy });
+                onUpdate("aboutPage", { features: copy });
                 toast.success("New Feature Added!");
               }}
               className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-accent)] border border-[var(--admin-accent)]/30 hover:border-[var(--admin-accent)] px-3.5 py-1.5 rounded-full bg-[var(--admin-surface)] transition-all cursor-pointer shadow-[var(--admin-shadow-xs)] hover:shadow-xs"
@@ -926,7 +929,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                       onChange={(e) => {
                         const copy = [...(ab.features || DEFAULT_FEATURES)];
                         copy[idx] = { ...copy[idx], title: e.target.value };
-                        onUpdate("about", { features: copy });
+                        onUpdate("aboutPage", { features: copy });
                       }}
                       className="!py-1.5 font-bold !text-[11px] sm:text-[11px] w-full sm:!w-48 bg-[var(--admin-surface)] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
                     />
@@ -935,7 +938,7 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
                     type="button"
                     onClick={() => {
                       const copy = (ab.features || DEFAULT_FEATURES).filter((_, i) => i !== idx);
-                      onUpdate("about", { features: copy });
+                      onUpdate("aboutPage", { features: copy });
                       toast.success("Feature Deleted");
                     }}
                     className="text-[var(--admin-error)] opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center p-2 hover:bg-[var(--admin-error-light)] rounded-lg self-end sm:self-center shrink-0"
@@ -1002,11 +1005,11 @@ function EventsPageEditor({ content, onUpdate }) {
             <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
               <AdminInput
                 value={hero.title ||""}
-                onChange={(e) => onUpdate("events-page", { hero: { ...hero, title: e.target.value } })}
+                onChange={(e) => onUpdate("eventsPage", { hero: { ...hero, title: e.target.value } })}
                 className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
               <div className="absolute right-2.5">
-                <AISparkButton text={hero.title} onApply={(val) => onUpdate("events-page", { hero: { ...hero, title: val } })} />
+                <AISparkButton text={hero.title} onApply={(val) => onUpdate("eventsPage", { hero: { ...hero, title: val } })} />
               </div>
             </div>
           </AdminField>
@@ -1015,11 +1018,11 @@ function EventsPageEditor({ content, onUpdate }) {
             <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
               <AdminInput
                 value={hero.subtitle ||""}
-                onChange={(e) => onUpdate("events-page", { hero: { ...hero, subtitle: e.target.value } })}
+                onChange={(e) => onUpdate("eventsPage", { hero: { ...hero, subtitle: e.target.value } })}
                 className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
               <div className="absolute right-2.5">
-                <AISparkButton text={hero.subtitle} onApply={(val) => onUpdate("events-page", { hero: { ...hero, subtitle: val } })} />
+                <AISparkButton text={hero.subtitle} onApply={(val) => onUpdate("eventsPage", { hero: { ...hero, subtitle: val } })} />
               </div>
             </div>
           </AdminField>
@@ -1028,12 +1031,12 @@ function EventsPageEditor({ content, onUpdate }) {
             <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
               <AdminTextarea
                 value={hero.description ||""}
-                onChange={(e) => onUpdate("events-page", { hero: { ...hero, description: e.target.value } })}
+                onChange={(e) => onUpdate("eventsPage", { hero: { ...hero, description: e.target.value } })}
                 rows={3}
                 className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
               />
               <div className="absolute right-2.5 top-2.5">
-                <AISparkButton text={hero.description} onApply={(val) => onUpdate("events-page", { hero: { ...hero, description: val } })} />
+                <AISparkButton text={hero.description} onApply={(val) => onUpdate("eventsPage", { hero: { ...hero, description: val } })} />
               </div>
             </div>
           </AdminField>
@@ -1041,7 +1044,7 @@ function EventsPageEditor({ content, onUpdate }) {
           <ImageUpload
             label="Hero Background Image"
             value={hero.backgroundImage ||""}
-            onChange={(val) => onUpdate("events-page", { hero: { ...hero, backgroundImage: val } })}
+            onChange={(val) => onUpdate("eventsPage", { hero: { ...hero, backgroundImage: val } })}
             folder="cms"
           />
         </div>
@@ -1052,7 +1055,7 @@ function EventsPageEditor({ content, onUpdate }) {
           <ImageUpload
             label="Promo Section Background Image"
             value={promo.backgroundImage ||""}
-            onChange={(val) => onUpdate("events-page", { promo: { ...promo, backgroundImage: val } })}
+            onChange={(val) => onUpdate("eventsPage", { promo: { ...promo, backgroundImage: val } })}
             folder="cms"
           />
         </div>
@@ -1176,25 +1179,26 @@ function CustomOrdersEditor({ content, onUpdate }) {
 
 // 11. FAQS
 function FAQEditor({ content, onUpdate }) {
-  const homepageFaqs = content.homepage || [];
-  const productsFaqs = content.products || [];
+  const faqs = content.faqs || {};
+  const homepageFaqs = faqs.homepage || [];
+  const productsFaqs = faqs.products || [];
 
   const handleUpdate = (category, idx, field, value) => {
     const copy = category === 'homepage' ? [...homepageFaqs] : [...productsFaqs];
     copy[idx] = { ...copy[idx], [field]: value };
-    onUpdate("faqs", { ...content, [category]: copy });
+    onUpdate("faqs", { [category]: copy });
   };
 
   const handleAdd = (category) => {
     const copy = category === 'homepage' ? [...homepageFaqs] : [...productsFaqs];
     copy.push({ question: "New Question", answer: "Answer here" });
-    onUpdate("faqs", { ...content, [category]: copy });
+    onUpdate("faqs", { [category]: copy });
   };
 
   const handleDelete = (category, idx) => {
     const copy = category === 'homepage' ? [...homepageFaqs] : [...productsFaqs];
     copy.splice(idx, 1);
-    onUpdate("faqs", { ...content, [category]: copy });
+    onUpdate("faqs", { [category]: copy });
   };
 
   return (
@@ -1577,7 +1581,6 @@ export function AdminContent() {
     autoPublish,
     toggleAutoPublish,
     auxContent,
-    handleUpdate,
     dataLoading
   } = useAdmin();
 
@@ -1789,16 +1792,16 @@ export function AdminContent() {
               transition={{ duration: 0.15 }}
             >
               {activeSection ==="hero" && (
-                <HeroSectionEditor content={websiteContent} onUpdate={handleUpdate} />
+                <HeroSectionEditor content={websiteContent} onUpdate={updateContent} />
               )}
               {activeSection ==="collections" && (
-                <FeaturedCollectionsEditor content={websiteContent} onUpdate={handleUpdate} />
+                <FeaturedCollectionsEditor content={websiteContent} onUpdate={updateContent} />
               )}
               {activeSection ==="story" && (
-                <StoryTeaserEditor content={websiteContent} onUpdate={handleUpdate} />
+                <StoryTeaserEditor content={websiteContent} onUpdate={updateContent} />
               )}
               {activeSection ==="bestsellers" && (
-                <BestsellerStripEditor content={websiteContent} onUpdate={handleUpdate} />
+                <BestsellerStripEditor content={websiteContent} onUpdate={updateContent} />
               )}
 
               {activeSection ==="homepageSections" && (
@@ -1809,29 +1812,29 @@ export function AdminContent() {
                 />
               )}
               {activeSection ==="gallery" && (
-                <GalleryPortfolioEditor content={websiteContent} onUpdate={handleUpdate} />
+                <GalleryPortfolioEditor content={websiteContent} onUpdate={updateContent} />
               )}
               {activeSection ==="about" && (
-                <AboutPageDetailsEditor content={websiteContent.aboutPage} onUpdate={handleUpdate} />
+                <AboutPageDetailsEditor content={websiteContent.aboutPage} onUpdate={updateContent} />
               )}
               {activeSection ==="events-page" && (
-                <EventsPageEditor content={websiteContent.eventsPage} onUpdate={handleUpdate} />
+                <EventsPageEditor content={websiteContent.eventsPage} onUpdate={updateContent} />
               )}
               {activeSection ==="contact" && (
-                <ContactInfoEditor contact={websiteContent.contact} onUpdate={handleUpdate} />
+                <ContactInfoEditor contact={websiteContent.contact} onUpdate={updateContent} />
               )}
               {activeSection ==="custom-orders" && (
-                <CustomOrdersCMSEditor content={websiteContent} onUpdate={handleUpdate} />
+                <CustomOrdersEditor content={websiteContent} onUpdate={updateContent} />
               )}
               {activeSection ==="seo-center" && (
-                <SEOCenterEditor content={websiteContent} onUpdate={handleUpdate} />
+                <SEOCenterEditor content={websiteContent} onUpdate={updateContent} />
               )}
 
               {activeSection ==="announcement-bar" && (
-                <AnnouncementBarEditor banners={websiteContent.banners} onUpdate={handleUpdate} />
+                <AnnouncementBarEditor banners={websiteContent.banners} onUpdate={updateContent} />
               )}
               {activeSection ==="navigation" && (
-                <NavigationFooterEditor nav={websiteContent.navigation} footer={websiteContent.footer} onUpdate={handleUpdate} />
+                <NavigationFooterEditor nav={websiteContent.navigation} footer={websiteContent.footer} onUpdate={updateContent} />
               )}
               {activeSection ==="publish-controls" && (
                 <PublisherVersionsEditor />
@@ -1843,7 +1846,7 @@ export function AdminContent() {
                 <QuickCatalogControl />
               )}
               {activeSection ==="faqs" && (
-                <FAQEditor content={websiteContent} onUpdate={handleUpdate} />
+                <FAQEditor content={websiteContent} onUpdate={updateContent} />
               )}
             </motion.div>
           </AnimatePresence>

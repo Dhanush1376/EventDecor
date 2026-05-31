@@ -5,6 +5,7 @@ import { logRouteDiagnostic } from "./utils/diagnostics";
 import { AnimatePresence } from "framer-motion";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "react-hot-toast";
+import { ensureCsrfToken } from "./services/api";
 
 import { PageLoader } from "./components/ui/PageLoader";
 import { RouteSkeleton } from "./components/ui/RouteSkeleton";
@@ -74,14 +75,18 @@ const AdminProducts = lazy(() => import("./admin/pages/AdminProducts").then((m) 
 const AdminAddProduct = lazy(() => import("./admin/pages/AdminAddProduct").then((m) => ({ default: m.AdminAddProduct })));
 const AdminOrders = lazy(() => import("./admin/pages/AdminOrders").then((m) => ({ default: m.AdminOrders })));
 const AdminOrderDetail = lazy(() => import("./admin/pages/AdminOrderDetail").then((m) => ({ default: m.AdminOrderDetail })));
+const AdminAddEvent = lazy(() => import("./admin/pages/AdminAddEvent").then((m) => ({ default: m.AdminAddEvent })));
 const AdminInquiries = lazy(() => import("./admin/pages/AdminInquiries").then((m) => ({ default: m.AdminInquiries })));
 const AdminCustomers = lazy(() => import("./admin/pages/AdminCustomers").then((m) => ({ default: m.AdminCustomers })));
 const AdminCustomerProfile = lazy(() => import("./admin/pages/AdminCustomerProfile").then((m) => ({ default: m.AdminCustomerProfile })));
 const AdminGallery = lazy(() => import("./admin/pages/AdminGallery").then((m) => ({ default: m.AdminGallery })));
+const AdminAddGalleryItem = lazy(() => import("./admin/pages/AdminAddGalleryItem").then((m) => ({ default: m.AdminAddGalleryItem })));
 const AdminEvents = lazy(() => import("./admin/pages/AdminEvents").then((m) => ({ default: m.AdminEvents })));
 const AdminBookingDetail = lazy(() => import("./admin/pages/AdminBookingDetail").then((m) => ({ default: m.AdminBookingDetail })));
-const AdminAnalytics = lazy(() => import("./admin/pages/AdminAnalytics").then((m) => ({ default: m.AdminAnalytics })));
+const AdminPolicies = lazy(() => import("./admin/pages/AdminPolicies").then((m) => ({ default: m.AdminPolicies })));
+const AdminPolicyEditor = lazy(() => import("./admin/pages/AdminPolicyEditor").then((m) => ({ default: m.AdminPolicyEditor })));
 const AdminRecommendationAnalytics = lazy(() => import("./admin/pages/AdminRecommendationAnalytics").then((m) => ({ default: m.AdminRecommendationAnalytics })));
+const AdminAnalytics = lazy(() => import("./admin/pages/AdminAnalytics").then((m) => ({ default: m.AdminAnalytics })));
 const AdminInventory = lazy(() => import("./admin/pages/AdminInventory").then((m) => ({ default: m.AdminInventory })));
 const AdminCoupons = lazy(() => import("./admin/pages/AdminCoupons").then((m) => ({ default: m.AdminCoupons })));
 const AdminCreateCoupon = lazy(() => import("./admin/pages/AdminCreateCoupon").then((m) => ({ default: m.AdminCreateCoupon })));
@@ -93,10 +98,11 @@ const AdminTeam = lazy(() => import("./admin/pages/AdminTeam").then((m) => ({ de
 const AdminSettings = lazy(() => import("./admin/pages/AdminSettings").then((m) => ({ default: m.AdminSettings })));
 const AdminSystemUsers = lazy(() => import("./admin/pages/AdminSystemUsers").then((m) => ({ default: m.AdminSystemUsers })));
 const AdminCategories = lazy(() => import("./admin/pages/AdminCategories").then((m) => ({ default: m.AdminCategories })));
+const AdminAddCategory = lazy(() => import("./admin/pages/AdminAddCategory").then((m) => ({ default: m.AdminAddCategory })));
+const AdminCampaignCreate = lazy(() => import("./admin/pages/AdminCampaignCreate").then((m) => ({ default: m.AdminCampaignCreate })));
+const AdminTemplateCreate = lazy(() => import("./admin/pages/AdminTemplateCreate").then((m) => ({ default: m.AdminTemplateCreate })));
 const AdminConfig = lazy(() => import("./admin/pages/AdminConfig").then((m) => ({ default: m.AdminConfig })));
 const AdminLayouts = lazy(() => import("./admin/pages/AdminLayouts").then((m) => ({ default: m.AdminLayouts })));
-const AdminPolicies = lazy(() => import("./admin/pages/AdminPolicies").then((m) => ({ default: m.AdminPolicies })));
-const AdminPolicyEditor = lazy(() => import("./admin/pages/AdminPolicyEditor").then((m) => ({ default: m.AdminPolicyEditor })));
 const AdminReviews = lazy(() => import("./admin/pages/AdminReviews").then((m) => ({ default: m.AdminReviews })));
 
 // All /admin/* pages are React.lazy() — not in the storefront initial JS bundle (see npm run build:report).
@@ -149,6 +155,8 @@ function App() {
 
   React.useEffect(() => {
     setIsMounted(true);
+    // Pre-fetch CSRF token so it's ready before any user interaction
+    ensureCsrfToken().catch(() => {});
   }, []);
 
   React.useEffect(() => {
@@ -229,9 +237,13 @@ function App() {
                             <Route index element={<AdminDashboard />} />
                             <Route path="homepage" element={<AdminContent />} />
                             <Route path="products" element={<AdminProducts />} />
-                            <Route path="categories" element={<AdminCategories />} />
+                            <Route path="settings" element={<AdminSettings />} />
                             <Route path="config" element={<AdminConfig />} />
                             <Route path="layouts" element={<AdminLayouts />} />
+                            <Route path="policies" element={<AdminPolicies />} />
+                            <Route path="policies/add" element={<AdminPolicyEditor />} />
+                            <Route path="policies/edit/:id" element={<AdminPolicyEditor />} />
+                            <Route path="recommendations" element={<AdminRecommendationAnalytics />} />
                             <Route path="products/add" element={<AdminAddProduct />} />
                             <Route path="products/edit/:id" element={<AdminAddProduct />} />
                             <Route path="orders" element={<AdminOrders />} />
@@ -240,7 +252,14 @@ function App() {
                             <Route path="customers" element={<AdminCustomers />} />
                             <Route path="customers/:customerId" element={<AdminCustomerProfile />} />
                             <Route path="gallery" element={<AdminGallery />} />
+                            <Route path="gallery/add" element={<AdminAddGalleryItem />} />
+                            <Route path="gallery/edit/:id" element={<AdminAddGalleryItem />} />
+                            <Route path="categories" element={<AdminCategories />} />
+                            <Route path="categories/add" element={<AdminAddCategory />} />
+                            <Route path="categories/edit/:id" element={<AdminAddCategory />} />
                             <Route path="events" element={<AdminEvents />} />
+                            <Route path="events/add" element={<AdminAddEvent />} />
+                            <Route path="events/edit/:id" element={<AdminAddEvent />} />
                             <Route path="events/:bookingId" element={<AdminBookingDetail />} />
                             <Route path="analytics" element={<AdminAnalytics />} />
                             <Route path="recommendations" element={<AdminRecommendationAnalytics />} />
@@ -251,6 +270,12 @@ function App() {
                             <Route path="payments" element={<AdminPayments />} />
                             <Route path="notifications" element={<AdminNotifications />} />
                             <Route path="campaigns" element={<AdminCampaigns />} />
+                            <Route path="campaigns/add" element={<AdminCampaignCreate />} />
+                            <Route path="campaigns/templates/add" element={<AdminTemplateCreate />} />
+                            <Route path="campaigns/templates/edit/:id" element={<AdminTemplateCreate />} />
+                            <Route path="coupons" element={<AdminCoupons />} />
+                            <Route path="coupons/add" element={<AdminCreateCoupon />} />
+                            <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
                             <Route path="content" element={<AdminContent />} />
                             <Route path="team" element={<AdminTeam />} />
                             <Route path="system-users" element={<AdminSystemUsers />} />

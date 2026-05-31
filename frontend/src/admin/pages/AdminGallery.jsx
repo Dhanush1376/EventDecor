@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { galleryService, productService } from "../../services/domainServices";
 import { ImageUpload } from "../components/ImageUpload";
 import { VideoUpload } from "../components/VideoUpload";
@@ -17,6 +18,7 @@ import {
 } from "../components/AdminUIKit";
 
 export function AdminGallery() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState(["All"]);
   const [filter, setFilter] = useState("All");
@@ -48,7 +50,7 @@ export function AdminGallery() {
       if (catRes.success) setCategories(["All", ...catRes.data]);
       if (prodRes.success) setProducts(prodRes.data.data || prodRes.data.items || prodRes.data || []);
     } catch (err) {
-      toast.error("Failed to load gallery items");
+      toast.error(getErrorMessage(err, "Failed to load gallery items"));
     } finally {
       setIsLoading(false);
     }
@@ -66,17 +68,7 @@ export function AdminGallery() {
   };
 
   const handleEdit = (item) => {
-    setEditingId(item._id || item.id);
-    setNewItem({
-      title: item.title || "", teluguTitle: item.teluguTitle || "", category: item.category || "",
-      event: item.event || "", style: item.style || "", image: item.image || "", video: item.video || "",
-      type: item.type || "inspiration",
-      tags: Array.isArray(item.tags) ? item.tags.join(",") : (item.tags || ""),
-      description: item.description || "", story: item.story || "",
-      linkedProducts: Array.isArray(item.linkedProducts) ? item.linkedProducts.map(p => p._id || p.id || p) : [],
-    });
-    setShowUpload(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    navigate(`/admin/gallery/edit/${item._id || item.id}`);
   };
 
   const handleAiAutofill = () => {
@@ -140,7 +132,7 @@ export function AdminGallery() {
     try {
       const res = await galleryService.delete(id);
       if (res.success) { toast.success("Item deleted"); setItems(items.filter(i => (i._id || i.id) !== id)); }
-    } catch (err) { toast.error("Failed to delete item"); }
+    } catch (err) { toast.error(getErrorMessage(err, "Failed to delete item")); }
   };
 
   const filtered = items.filter(g => {
@@ -162,255 +154,17 @@ export function AdminGallery() {
         subtitle={`${items.length} items cataloged · Manage design inspirations and real event showcases`}
       >
         <button
-          onClick={() => showUpload ? handleCancel() : setShowUpload(true)}
+          onClick={() => navigate("/admin/gallery/add")}
           className="admin-btn admin-btn-primary"
         >
           <span className="material-symbols-outlined text-[16px]">
-            {showUpload ? "close" : "add_photo_alternate"}
+            add_photo_alternate
           </span>
-          {showUpload ? "Cancel" : editingId ? "Editing" : "Add Item"}
+          Add Item
         </button>
       </PageHeader>
 
-      {/* ─── Upload / Edit Form Bottom-Sheet ─── */}
-      {typeof document !== "undefined" && createPortal(
-        <AnimatePresence>
-          {showUpload && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
-            >
-              {/* Backdrop Blur overlay */}
-              <div
-                onClick={handleCancel}
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
-              />
-              
-              {/* Slide-Up Bottom Drawer Sheet */}
-              <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 26, stiffness: 220 }}
-                className="relative w-full max-w-4xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
-              >
-                {/* Grab Handle (Indicates slide-ability) */}
-                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
-
-                {/* Form Title & Subtitle for Mobile Orientation */}
-                <div className="mb-5 pb-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0">
-                  <div>
-                    <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
-                        {editingId ? "edit_note" : "add_photo_alternate"}
-                      </span>
-                      {editingId ? "Edit Gallery Item" : "Curate Gallery Item"}
-                    </h3>
-                    <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5">
-                      {editingId ? "Update showcase assets and details" : "Upload design inspiration or real event details"}
-                    </p>
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={handleCancel}
-                    className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
-                </div>
-
-                <form onSubmit={handleUpload} className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1">
-                  {/* Left Column — Media Uploads & Linked Products */}
-                  <div className="lg:col-span-5 space-y-5 sm:space-y-6">
-                    {/* Image Upload Area */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="admin-label mb-0">Image Asset *</label>
-                        {newItem.image && (
-                          <span className="px-2 py-0.5 rounded-full text-[8.5px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/10 flex items-center gap-0.5">
-                            <span className="material-symbols-outlined text-[10px] leading-none">check_circle</span>
-                            Active
-                          </span>
-                        )}
-                      </div>
-                      <ImageUpload
-                        value={newItem.image}
-                        onChange={(val) => {
-                          setNewItem({ ...newItem, image: val });
-                          toast.success("Photo uploaded! Click AI Autofill to populate details.");
-                        }}
-                        folder="gallery"
-                      />
-                    </div>
-
-                    {/* Video Upload Area */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="admin-label mb-0">Video Reel (Optional)</label>
-                        {newItem.video && (
-                          <span className="px-2 py-0.5 rounded-full text-[8.5px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/10 flex items-center gap-0.5">
-                            <span className="material-symbols-outlined text-[10px] leading-none">videocam</span>
-                            Reel Active
-                          </span>
-                        )}
-                      </div>
-                      <VideoUpload
-                        value={newItem.video}
-                        onChange={(val) => setNewItem({ ...newItem, video: val })}
-                        folder="gallery"
-                      />
-                    </div>
-
-                    {/* AI Autofill trigger (styled beautifully for mobile tap ease) */}
-                    <button
-                      type="button"
-                      onClick={handleAiAutofill}
-                      className="w-full py-2.5 rounded-[var(--admin-radius-lg)] bg-[var(--admin-accent)]/10 hover:bg-[var(--admin-accent)] hover:text-white text-[var(--admin-accent)] border border-[var(--admin-accent)]/20 transition-all font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98]"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">auto_awesome</span>
-                      AI Autofill from Photo
-                    </button>
-
-                    {/* Linked Products */}
-                    <div className="space-y-1.5">
-                      <label className="admin-label">Link Storefront Products</label>
-                      <p className="text-[10.5px] text-[var(--admin-text-tertiary)] leading-normal -mt-0.5">
-                        Tag catalog items onto this image so visitors can shop directly.
-                      </p>
-                      <div className="admin-card-inset p-2.5 max-h-[180px] overflow-y-auto custom-scrollbar space-y-1 border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)]">
-                        {products.length === 0 ? (
-                          <p className="text-[11px] text-[var(--admin-text-tertiary)] italic p-2 text-center">No products in store</p>
-                        ) : products.map((p) => {
-                          const isChecked = newItem.linkedProducts?.includes(p._id || p.id);
-                          return (
-                            <label key={p._id || p.id} className="flex items-center gap-2.5 p-2 hover:bg-[var(--admin-surface-hover)] rounded-[var(--admin-radius-md)] cursor-pointer transition-colors text-[11.5px] font-medium text-[var(--admin-text-secondary)]">
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={(e) => {
-                                  const list = newItem.linkedProducts || [];
-                                  const id = p._id || p.id;
-                                  if (e.target.checked) setNewItem({ ...newItem, linkedProducts: [...list, id] });
-                                  else setNewItem({ ...newItem, linkedProducts: list.filter(x => x !== id) });
-                                }}
-                                className="accent-[var(--admin-accent)] w-4 h-4 rounded"
-                              />
-                              <span className="truncate">{p.title}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column — Classification & Text Fields */}
-                  <div className="lg:col-span-7 space-y-4 sm:space-y-5">
-                    {/* Classification Type Selection */}
-                    <div className="admin-card-inset p-3.5 space-y-2.5 border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)]">
-                      <label className="admin-label mb-0">Classification Type</label>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        {[
-                          { id: "inspiration", icon: "palette", label: "Design Inspiration" },
-                          { id: "real-event", icon: "auto_awesome", label: "Real Event" },
-                        ].map(t => (
-                          <button
-                            key={t.id}
-                            type="button"
-                            onClick={() => setNewItem({ ...newItem, type: t.id })}
-                            className={`p-2.5 rounded-[var(--admin-radius-md)] text-[10px] font-bold uppercase tracking-wider border transition-all flex flex-col items-center justify-center gap-1 ${
-                              newItem.type === t.id
-                                ? "bg-[var(--admin-accent)] text-white border-[var(--admin-accent)] shadow-sm"
-                                : "bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]"
-                            }`}
-                          >
-                            <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
-                            <span className="truncate w-full text-center">{t.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Form Inputs Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="admin-label">Title *</label>
-                        <input type="text" required value={newItem.title} onChange={(e) => setNewItem({ ...newItem, title: e.target.value })} className="admin-input" placeholder="Enter catalog title" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="admin-label">Telugu Title (Optional)</label>
-                        <input type="text" value={newItem.teluguTitle} onChange={(e) => setNewItem({ ...newItem, teluguTitle: e.target.value })} className="admin-input" placeholder="సిరి వివాహ అలంకరణ" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <label className="admin-label mb-0">Category *</label>
-                        <button type="button" onClick={() => setShowCatModal(true)} className="text-[10px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer flex items-center gap-0.5">
-                          <span className="material-symbols-outlined text-[12px]">add_circle</span> Manage Categories
-                        </button>
-                      </div>
-                      <select required value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })} className="admin-select">
-                        <option value="">Select Category</option>
-                        <option value="Traditional">Traditional</option>
-                        <option value="Floral">Floral</option>
-                        <option value="Modern">Modern</option>
-                        <option value="Royal">Royal</option>
-                        <option value="Minimalist">Minimalist</option>
-                        <option value="Rustic">Rustic</option>
-                        {customCategories?.events?.map(c => (
-                          <option key={c.id} value={c.name}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="admin-label">Event Tag</label>
-                        <input type="text" value={newItem.event} onChange={(e) => setNewItem({ ...newItem, event: e.target.value })} className="admin-input" placeholder="Wedding, Haldi, Reception" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="admin-label">Style Accent</label>
-                        <input type="text" value={newItem.style} onChange={(e) => setNewItem({ ...newItem, style: e.target.value })} className="admin-input" placeholder="Temple Heritage, Floral Arch" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="admin-label">Search Tags (Comma separated)</label>
-                      <input type="text" value={newItem.tags} onChange={(e) => setNewItem({ ...newItem, tags: e.target.value })} className="admin-input" placeholder="wedding, gold, botanical, mandap" />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-1">
-                        <label className="admin-label">Description</label>
-                        <textarea value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} className="admin-textarea" rows={2} placeholder="Brief design concept..." />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="admin-label">Story & Crafting Details (Optional)</label>
-                        <textarea value={newItem.story} onChange={(e) => setNewItem({ ...newItem, story: e.target.value })} className="admin-textarea" rows={2} placeholder="Studio story or floral crafting journey..." />
-                      </div>
-                    </div>
-
-                    {/* Form Action Controls */}
-                    <div className="flex flex-col sm:flex-row gap-2.5 pt-3">
-                      {editingId && (
-                        <button type="button" onClick={handleCancel} className="admin-btn admin-btn-outline w-full sm:flex-1 py-3 text-[11px] font-bold uppercase tracking-wider">
-                          Cancel Edit
-                        </button>
-                      )}
-                      <button type="submit" className="admin-btn admin-btn-primary w-full sm:flex-[2] py-3 text-[11px] font-bold uppercase tracking-wider">
-                        {editingId ? "Save Changes" : "Confirm Curation"}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+      {/* Upload/Edit Drawer Removed in favor of Router Navigation */}
 
       {/* ─── Filters ─── */}
       <motion.div variants={fadeUp} className="space-y-4">

@@ -260,7 +260,7 @@ export function AdminSettings() {
         }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update profile details.");
+      toast.error(getErrorMessage(err, "Failed to update profile details."));
     } finally {
       setSaving(false);
     }
@@ -279,7 +279,7 @@ export function AdminSettings() {
         });
       }
     } catch (err) {
-      toast.error("Failed to commit settings changes.");
+      toast.error(getErrorMessage(err, "Failed to commit settings changes."));
     } finally {
       setSaving(false);
     }

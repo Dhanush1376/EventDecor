@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import { ADMIN_ROLES } from '../config/adminConfig';
+import { ADMIN_ROLES, STAFF_ROLES } from '../config/adminConfig';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -489,11 +489,11 @@ export const uploadAvatarController = asyncHandler(async (req: any, res: Respons
 export const getTeamMembers = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
   const [members, memberCount, invites, inviteCount] = await Promise.all([
-    User.find({ role: { $in: ADMIN_ROLES } })
+    User.find({ role: { $in: STAFF_ROLES } })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
-    User.countDocuments({ role: { $in: ADMIN_ROLES } }),
+    User.countDocuments({ role: { $in: STAFF_ROLES } }),
     TeamInvite.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
     TeamInvite.countDocuments(),
   ]);

@@ -119,7 +119,7 @@ app.use((req: Request, res: Response, next) => {
     return next();
   }
   const contentLength = parseInt(req.headers['content-length'] || '0', 10);
-  if (contentLength > 10240) { // 10kb limit for standard JSON payloads
+  if (contentLength > 51200) { // 50kb limit for standard JSON payloads (matches express.json limit)
     logger.warn(`[SECURITY] Blocked oversized payload (${contentLength} bytes) to ${req.path}`);
     return res.status(413).json({ success: false, message: 'Payload Too Large' });
   }

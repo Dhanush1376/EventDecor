@@ -5,6 +5,7 @@ import { WishlistStateContext, WishlistDispatchContext } from "./WishlistContext
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import logger from '../utils/logger';
+import { getErrorMessage } from '../utils/errorHelpers';
 
 export function WishlistProvider({ children }) {
   const { user, isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
@@ -64,7 +65,7 @@ export function WishlistProvider({ children }) {
     onError: (err, product, context) => {
       queryClient.setQueryData(['wishlist'], context?.previousWishlist);
       logger.error("Failed to sync wishlist:", err);
-      toast.error("Failed to update wishlist. Please try again.");
+      toast.error(getErrorMessage(err, "Unable to update wishlist. Please try again."));
     },
     onSuccess: (data, product, context) => {
       toast.success(context.isPresent ? "Removed from Wishlist" : "Added to Wishlist");

@@ -58,7 +58,7 @@ export function AdminOrderDetail() {
       toast.success("Payment settled");
     } catch (error) {
       playErrorBeep();
-      toast.error("Failed to reconcile COD remittance.");
+      toast.error(getErrorMessage(error, "Failed to reconcile COD remittance."));
     }
   };
 

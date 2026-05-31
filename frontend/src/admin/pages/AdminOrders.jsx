@@ -13,6 +13,7 @@ import {
   stagger,
   SkeletonTable,
   SkeletonList,
+  EmptyState,
 } from "../components/AdminUIKit";
 
 const slideDrawer = {
@@ -197,6 +198,20 @@ export function AdminOrders() {
       <PageHeader
         title="Orders"
         subtitle={`${orders.length} orders`}
+        icon="shopping_bag"
+        iconColor="orders"
+        headerAction={
+          viewMode === "table" && (
+            <div className="max-w-[140px] sm:max-w-md">
+              <FilterBar
+                filters={["All", ...allStatuses]}
+                value={filterStatus}
+                onChange={setFilterStatus}
+                counts={statusCounts}
+              />
+            </div>
+          )
+        }
       >
         <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto flex-nowrap">
           <div className="flex flex-1 sm:flex-initial bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 shadow-sm">
@@ -263,17 +278,7 @@ export function AdminOrders() {
         </div>
       </motion.div>
 
-      {/* Table Filters Tab */}
-      {viewMode === "table" && (
-        <motion.div variants={fadeUp}>
-          <FilterBar
-            filters={["All", ...allStatuses]}
-            value={filterStatus}
-            onChange={setFilterStatus}
-            counts={statusCounts}
-          />
-        </motion.div>
-      )}
+
 
       {/* CONTENT SWITCHER */}
       <AnimatePresence mode="wait">
@@ -305,9 +310,11 @@ export function AdminOrders() {
             animate="show"
             exit="hidden"
             variants={fadeUp}
-            className="admin-card overflow-x-auto"
+            className="admin-card"
           >
-            <table className="admin-table w-full min-w-[900px]">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="admin-table w-full min-w-[900px]">
               <thead>
                 <tr>
                   <th>Order ID</th>
@@ -324,12 +331,19 @@ export function AdminOrders() {
               <tbody>
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-20 text-center">
-                      <div className="flex flex-col items-center justify-center text-[var(--admin-text-tertiary)]">
-                        <span className="material-symbols-outlined text-[36px] mb-2">search_off</span>
-                        <p className="text-[12px] font-bold text-[var(--admin-text-secondary)]">Data Not Found</p>
-                        <p className="text-[11px] mt-0.5">Try adjusting filters or search queries</p>
-                      </div>
+                    <td colSpan={9} className="py-16 text-center">
+                      <EmptyState
+                        icon={searchQuery || filterStatus !== "All" ? "search_off" : "shopping_bag"}
+                        title={searchQuery || filterStatus !== "All" ? "No Matches Found" : "No Orders Yet"}
+                        description={searchQuery || filterStatus !== "All" ? "No orders match the search or filter criteria." : "You haven't received any orders yet."}
+                        action={
+                          (searchQuery || filterStatus !== "All") && (
+                            <button onClick={() => setFilterStatus("All")} className="admin-btn admin-btn-outline">
+                              Clear Filters
+                            </button>
+                          )
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -427,7 +441,76 @@ export function AdminOrders() {
                   })
                 )}
               </tbody>
-            </table>
+              </table>
+            </div>
+
+            {/* Mobile Stacked Cards (replaces table on small screens) */}
+            <div className="flex md:hidden flex-col gap-3 p-3 bg-[var(--admin-bg-subtle)]">
+              {filteredOrders.length === 0 ? (
+                <div className="py-10 text-center flex flex-col items-center justify-center bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)]">
+                  <EmptyState
+                    icon={searchQuery || filterStatus !== "All" ? "search_off" : "shopping_bag"}
+                    title={searchQuery || filterStatus !== "All" ? "No Matches Found" : "No Orders Yet"}
+                    description={searchQuery || filterStatus !== "All" ? "No orders match the search or filter criteria." : "You haven't received any orders yet."}
+                    action={
+                      (searchQuery || filterStatus !== "All") && (
+                        <button onClick={() => setFilterStatus("All")} className="admin-btn admin-btn-outline">
+                          Clear Filters
+                        </button>
+                      )
+                    }
+                  />
+                </div>
+              ) : (
+                filteredOrders.map((o) => {
+                  const isNew = o.date && o.date.includes("Today");
+                  return (
+                    <div
+                      key={o.id}
+                      onClick={() => openOrderDrawer(o)}
+                      className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] p-4 shadow-sm border border-[var(--admin-border)] flex flex-col gap-3 cursor-pointer hover:border-[var(--admin-border-strong)] transition-all"
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
+                              #{o.id.substring(o.id.length - 8).toUpperCase()}
+                            </span>
+                            {isNew && <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)] animate-pulse" />}
+                          </div>
+                          <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] mt-0.5 block">{o.customer}</span>
+                        </div>
+                        <StatusBadge status={o.status} className="border-none px-2 py-1 text-[10px]" />
+                      </div>
+                      
+                      <div className="pt-2 pb-2 border-y border-[var(--admin-border-subtle)]">
+                        <p className="text-[12px] text-[var(--admin-text-primary)] line-clamp-2">
+                          {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(", ")}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
+                          {formatCurrency(o.total)}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold tracking-wider">{o.payment}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openOrderDrawer(o);
+                            }}
+                            className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </motion.div>
         ) : (
           /* KANBAN BOARD */

@@ -80,7 +80,15 @@ class AuthService {
     // 1. Detect if this token was already used (Replay attack detection)
     const isUsed = await UsedRefreshToken.findOne({ tokenHash });
     if (isUsed) {
-      // Replay detected — revoke entire refresh-token family for this user (RFC 6749 rotation)
+      const timeSinceUsedMs = Date.now() - (isUsed as any).createdAt.getTime();
+      const GRACE_PERIOD_MS = 15000;
+
+      if (timeSinceUsedMs < GRACE_PERIOD_MS) {
+        logger.warn(`[AUTH] Grace period overlap detected for userId: ${isUsed.userId}. Returning 409 Conflict without revoking sessions.`);
+        throw new ApiError(409, 'Session refreshed concurrently in another tab.');
+      }
+
+      // Replay detected outside grace period — revoke entire refresh-token family (RFC 6749 rotation)
       logger.error(
         `[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Revoking all sessions. Potential token theft.`
       );

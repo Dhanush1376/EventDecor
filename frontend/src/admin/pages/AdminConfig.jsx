@@ -21,7 +21,7 @@ export function AdminConfig() {
       const res = await api.get('/config');
       if (res.data?.success) setConfigs(res.data.data);
     } catch (err) {
-      toast.error('Failed to load global config');
+      toast.error(getErrorMessage(err, 'Failed to load global config'));
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ export function AdminConfig() {
       toast.success('Configuration saved');
       fetchConfigs();
     } catch (err) {
-      toast.error('Failed to save config');
+      toast.error(getErrorMessage(err, 'Failed to save config'));
     }
   };
 
@@ -55,7 +55,7 @@ export function AdminConfig() {
       toast.success('Config created');
       fetchConfigs();
     } catch (err) {
-      toast.error('Failed to create config');
+      toast.error(getErrorMessage(err, 'Failed to create config'));
     }
   };
 

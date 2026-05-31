@@ -248,9 +248,14 @@ export function AdminDashboard() {
       <PageHeader
         title="Dashboard"
         subtitle={`Welcome back. Here's your business overview. · Last synced ${lastDataRefresh ? lastDataRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`}
-      >
+        icon="dashboard"
+        iconColor="revenue"
+      />
+
+      <div className="flex w-full mt-[-8px]">
         <PeriodSelector value={chartPeriod} onChange={setChartPeriod} periods={["weekly", "monthly", "yearly"]} />
-      </PageHeader>
+      </div>
+
 
       <motion.div
         variants={fadeUp}
@@ -271,52 +276,36 @@ export function AdminDashboard() {
           </div>
         </div>
         <button className="admin-btn admin-btn-outline bg-[var(--admin-surface)] min-h-[36px] self-end sm:self-auto">
-          Launch Editor
+          Open Website Editor
           <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
         </button>
       </motion.div>
 
       {/* Quick Security Overrides */}
       <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="admin-card-flush bg-[var(--admin-bg-subtle)] p-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-[var(--admin-radius-md)] flex items-center justify-center border ${safetyLock ? "bg-[var(--admin-error-light)] border-[var(--admin-error-border)] text-[var(--admin-error)]" : "bg-[var(--admin-surface)] border-[var(--admin-border)] text-[var(--admin-text-tertiary)]"}`}>
-              <span className="material-symbols-outlined text-[20px]">{safetyLock ? "lock" : "lock_open"}</span>
-            </div>
-            <div>
-              <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                Global Safety Lock
-                {safetyLock && <span className="admin-badge admin-badge-error text-[9px]">Restricted</span>}
-              </h3>
-              <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">Block database writes</p>
-            </div>
-          </div>
+        <div className="admin-card p-0 overflow-hidden border-2 border-[var(--admin-domain-danger-bg)] hover:border-[var(--admin-domain-danger)] transition-colors shadow-sm bg-white">
           <AdminToggle
+            label="Global Safety Lock"
+            description="Block database writes to prevent accidental modifications during critical updates."
+            consequence={safetyLock ? "Database writes are blocked." : "Database is open for writes."}
             checked={safetyLock}
             onChange={toggleSafetyLock}
             variant="error"
-            aria-label="Toggle Database Safety Lock"
+            activeBgColor="var(--admin-domain-danger)"
+            className="px-5 py-4 border-none"
           />
         </div>
 
-        <div className="admin-card-flush bg-[var(--admin-bg-subtle)] p-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-[var(--admin-radius-md)] flex items-center justify-center border ${maintenanceMode ? "bg-[var(--admin-warning-light)] border-[var(--admin-warning-border)] text-[var(--admin-warning)]" : "bg-[var(--admin-surface)] border-[var(--admin-border)] text-[var(--admin-text-tertiary)]"}`}>
-              <span className="material-symbols-outlined text-[20px]">{maintenanceMode ? "construction" : "public"}</span>
-            </div>
-            <div>
-              <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                Maintenance Shield
-                {maintenanceMode && <span className="admin-badge admin-badge-warning text-[9px]">Active</span>}
-              </h3>
-              <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">Redirect storefront traffic</p>
-            </div>
-          </div>
+        <div className="admin-card p-0 overflow-hidden border-2 border-[var(--admin-domain-users-bg)] hover:border-[var(--admin-domain-users)] transition-colors shadow-sm bg-white">
           <AdminToggle
+            label="Maintenance Shield"
+            description="Redirect all storefront traffic to a maintenance screen."
+            consequence={maintenanceMode ? "Storefront is offline." : "Storefront is publicly accessible."}
             checked={maintenanceMode}
             onChange={toggleMaintenanceMode}
             variant="warning"
-            aria-label="Toggle Maintenance Shield"
+            activeBgColor="var(--admin-domain-users)"
+            className="px-5 py-4 border-none"
           />
         </div>
       </motion.div>
@@ -329,10 +318,11 @@ export function AdminDashboard() {
           value={formatCurrency(dashboardStats?.stats?.totalSales !== undefined ? dashboardStats.stats.totalSales : 0)}
           change="+15.4%"
           changeType="up"
-          color="var(--admin-accent)"
+          domainColor="revenue"
+          infoTooltip="Total gross revenue before refunds."
           onClick={() => navigate("/admin/payments")}
           sparklinePath="M0,20 Q15,5 30,20 T60,8 T90,18 T100,5"
-          progress={78}
+          progress={Math.min(100, Math.round(((dashboardStats?.stats?.totalSales || 0) / 100000) * 100)) || 5}
         />
         <StatCard
           icon="shopping_bag"
@@ -340,10 +330,11 @@ export function AdminDashboard() {
           value={dashboardStats?.stats?.pendingOrders !== undefined ? dashboardStats.stats.pendingOrders : pendingOrders}
           change={pendingOrders > 0 ? "Needs Review" : "Healthy"}
           changeType={pendingOrders > 3 ? "down" : "up"}
-          color="var(--admin-info)"
+          domainColor="orders"
+          infoTooltip="Orders that have not been fulfilled yet."
           onClick={() => navigate("/admin/orders")}
           sparklinePath="M0,8 Q20,25 40,12 T80,18 T100,10"
-          progress={42}
+          progress={Math.min(100, Math.round((pendingOrders / 20) * 100)) || 5}
         />
         <StatCard
           icon="event"
@@ -351,10 +342,11 @@ export function AdminDashboard() {
           value={dashboardStats?.stats?.totalEvents !== undefined ? dashboardStats.stats.totalEvents : eventBookings.filter((b) => b.status !== "Cancelled").length}
           change="+8.1%"
           changeType="up"
-          color="var(--admin-success)"
+          domainColor="orders"
+          infoTooltip="Upcoming event consultations and setups."
           onClick={() => navigate("/admin/events")}
           sparklinePath="M0,22 Q20,12 40,25 T80,8 T100,18"
-          progress={64}
+          progress={Math.min(100, Math.round((eventBookings.filter((b) => b.status !== "Cancelled").length / 50) * 100)) || 5}
         />
         <StatCard
           icon="group"
@@ -362,10 +354,11 @@ export function AdminDashboard() {
           value={(dashboardStats?.stats?.totalCustomers !== undefined ? dashboardStats.stats.totalCustomers : (customers?.length || 0)).toLocaleString()}
           change="+11.3%"
           changeType="up"
-          color="var(--admin-warning)"
+          domainColor="users"
+          infoTooltip="Registered customers and accounts."
           onClick={() => navigate("/admin/customers")}
           sparklinePath="M0,25 Q20,18 40,10 T80,5 T100,2"
-          progress={89}
+          progress={Math.min(100, Math.round(((customers?.length || 0) / 100) * 100)) || 5}
         />
       </motion.div>
 

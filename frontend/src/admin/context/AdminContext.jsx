@@ -188,7 +188,8 @@ export function AdminProvider({ children }) {
   const [safetyLock, setSafetyLock] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState(15);
-  const [autoPublish, setAutoPublish] = useState(false);
+  const [autoPublish, setAutoPublish] = useState(true);
+  const autoSaveTimers = useRef({});
 
   const [auditLogs, setAuditLogs] = useState([]);
 
@@ -440,6 +441,12 @@ export function AdminProvider({ children }) {
 
   // ─── Website Content CMS State ───
   const [websiteContent, setWebsiteContent] = useState(loadContent);
+  const websiteContentRef = useRef(websiteContent);
+  
+  useEffect(() => {
+    websiteContentRef.current = websiteContent;
+  }, [websiteContent]);
+
   const [contentHistory, setContentHistory] = useState([]);
   const [hasUnsavedContent, setHasUnsavedContent] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
@@ -463,27 +470,32 @@ export function AdminProvider({ children }) {
           ]);
 
         if (productsRes.status ==="fulfilled" && productsRes.value?.success) {
-          const list = productsRes.value.data?.data || [];
-          setProducts(list.map(mapDbProductToFrontend));
+          const payload = productsRes.value.data;
+          const list = payload?.products || payload?.data || payload || [];
+          setProducts((Array.isArray(list) ? list : []).map(mapDbProductToFrontend));
         }
         if (ordersRes.status ==="fulfilled" && ordersRes.value?.success) {
-          const list = ordersRes.value.data?.data || [];
-          setOrders(list.map(mapDbOrderToFrontend));
+          const payload = ordersRes.value.data;
+          const list = payload?.orders || payload?.data || payload || [];
+          setOrders((Array.isArray(list) ? list : []).map(mapDbOrderToFrontend));
         }
         if (customersRes.status ==="fulfilled" && customersRes.value?.success) {
-          const list = customersRes.value.data?.data || [];
-          setCustomers(list.map(mapDbCustomerToFrontend));
+          const payload = customersRes.value.data;
+          const list = payload?.users || payload?.data || payload || [];
+          setCustomers((Array.isArray(list) ? list : []).map(mapDbCustomerToFrontend));
         }
         if (reviewsRes.status ==="fulfilled" && reviewsRes.value?.success) {
-          setReviews(reviewsRes.value.data?.data || []);
+          const payload = reviewsRes.value.data;
+          const list = payload?.reviews || payload?.data || payload || [];
+          setReviews(Array.isArray(list) ? list : []);
         }
         if (statsRes.status ==="fulfilled" && statsRes.value?.success) {
           setDashboardStats(statsRes.value.data);
         }
         if (eventsRes.status ==="fulfilled" && eventsRes.value?.success) {
           const evData = eventsRes.value.data;
-          const list = evData?.data || evData?.items || (Array.isArray(evData) ? evData : []);
-          setEventBookings(list.map(mapDbEventToFrontend));
+          const list = evData?.events || evData?.items || evData?.data || (Array.isArray(evData) ? evData : []);
+          setEventBookings((Array.isArray(list) ? list : []).map(mapDbEventToFrontend));
         }
         if (auditLogsRes.status ==="fulfilled" && auditLogsRes.value?.success) {
           const rawLogs = auditLogsRes.value.data?.data || auditLogsRes.value.data || [];
@@ -909,17 +921,23 @@ export function AdminProvider({ children }) {
         { timestamp: new Date(), section, change: data },
       ]);
       setHasUnsavedContent(true);
-
-      // Auto-publish support
-      if (autoPublish) {
-        const publishData = { ...prev[section], ...data, status:"published" };
-        Promise.resolve().then(() => {
-          publishContent(section, publishData);
-        });
-      }
-
       return newContent;
     });
+
+    // Auto-publish support (Debounced 3s for Draft Mode UX)
+    if (autoPublish) {
+      if (autoSaveTimers.current[section]) {
+        clearTimeout(autoSaveTimers.current[section]);
+      }
+      
+      autoSaveTimers.current[section] = setTimeout(() => {
+        const latestData = websiteContentRef.current[section];
+        if (latestData) {
+          const publishData = { ...latestData, status: "published" };
+          publishContent(section, publishData);
+        }
+      }, 3000);
+    }
   }, [autoPublish, publishContent]);
 
   const updateNestedContent = useCallback((section, path, value) => {
@@ -933,18 +951,24 @@ export function AdminProvider({ children }) {
       obj[keys[keys.length - 1]] = value;
       newContent[section].status ="modified";
       setHasUnsavedContent(true);
-
-      // Auto-publish support
-      if (autoPublish) {
-        const publishData = structuredClone(newContent[section]);
-        publishData.status ="published";
-        Promise.resolve().then(() => {
-          publishContent(section, publishData);
-        });
-      }
-
       return newContent;
     });
+
+    // Auto-publish support (Debounced 3s for Draft Mode UX)
+    if (autoPublish) {
+      if (autoSaveTimers.current[section]) {
+        clearTimeout(autoSaveTimers.current[section]);
+      }
+
+      autoSaveTimers.current[section] = setTimeout(() => {
+        const latestData = websiteContentRef.current[section];
+        if (latestData) {
+          const publishData = structuredClone(latestData);
+          publishData.status = "published";
+          publishContent(section, publishData);
+        }
+      }, 3000);
+    }
   }, [autoPublish, publishContent]);
 
   // Publish ALL to BACKEND API (parallel with error reporting)

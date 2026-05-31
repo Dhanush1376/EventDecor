@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useMemo } from"react";
+import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from"framer-motion";
-import { useNavigate, useParams } from"react-router-dom";
-import { productCategories } from"../data/adminData";
-import { productService, uploadService } from"../../services/domainServices";
-import { useAdmin } from"../context/AdminContext";
-import { ImageUpload } from"../components/ImageUpload";
-import toast from"react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate, useParams } from "react-router-dom";
+import { productCategories } from "../data/adminData";
+import { productService, uploadService } from "../../services/domainServices";
+import { useAdmin } from "../context/AdminContext";
+import { ImageUpload } from "../components/ImageUpload";
+import toast from "react-hot-toast";
 import { AdminToggle, SkeletonForm } from "../components/AdminUIKit";
 
 import logger from '../../utils/logger';
@@ -26,13 +26,12 @@ const WIZARD_STEPS = [
   { id:"review", label:"Review & Publish", icon:"verified" },
 ];
 
-export function AdminAddProduct({ isOpen, onClose, editId }) {
+export function AdminAddProduct({ editId }) {
   const { id: routeId } = useParams();
   const id = editId || routeId;
   const navigate = useNavigate();
   const { refreshProducts } = useAdmin();
   const isEditMode = Boolean(id);
-  const isDrawerMode = isOpen !== undefined;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [mobileTab, setMobileTab] = useState("form");
@@ -244,7 +243,7 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
             });
           }
         } catch (err) {
-          toast.error("Failed to load product details");
+          toast.error(getErrorMessage(err, "Failed to load product details"));
         } finally {
           setIsLoading(false);
         }
@@ -283,19 +282,11 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
   }, [id, isEditMode]);
 
   const handleCancelAction = () => {
-    if (isDrawerMode) {
-      onClose();
-    } else {
-      navigate("/admin/products");
-    }
+    navigate("/admin/products");
   };
 
   const handleSuccessAction = () => {
-    if (isDrawerMode) {
-      onClose();
-    } else {
-      navigate("/admin/products");
-    }
+    navigate("/admin/products");
   };
 
   // Auto-save status tracking (in-memory only)
@@ -462,7 +453,7 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
         handleSuccessAction();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message ||"Failed to save product listing");
+      toast.error(getErrorMessage(err, "Failed to save product listing"));
     } finally {
       setIsLoading(false);
     }
@@ -476,7 +467,7 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
     );
   }, [formData.category, categoriesList]);
 
-  if (isLoading && isEditMode && !formData.title && !isDrawerMode) {
+  if (isLoading && isEditMode && !formData.title) {
     return (
       <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-6">
         <SkeletonForm fields={6} />
@@ -485,7 +476,7 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
   }
 
   const mainLayout = (
-    <div className={isDrawerMode ? "space-y-6 flex-1 pb-4" : "max-w-[1280px] mx-auto space-y-6 pb-20"}>
+    <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -631,9 +622,20 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
               :"text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
           }`}
         >
-          Preview
+          Live Preview
         </button>
       </div>
+
+      {/* Onboarding Quick Tip */}
+      <motion.div variants={fadeUp} className="bg-[#f8fafc] border border-[var(--admin-domain-products)] rounded-[var(--admin-radius-lg)] p-4 flex items-start gap-3 shadow-sm mb-6 hidden lg:flex">
+        <span className="material-symbols-outlined text-[var(--admin-domain-products)] mt-0.5 text-[20px]">lightbulb</span>
+        <div>
+          <h4 className="text-[12px] font-bold text-[var(--admin-text-primary)]">Quick Tip: AI AutoFill</h4>
+          <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1 leading-relaxed max-w-[800px]">
+            Upload an image and use the <strong>AI Vision</strong> tool to automatically generate product titles, descriptions, and categories. Or use <kbd className="px-1.5 py-0.5 bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded">Alt + →</kbd> to quickly navigate through the form steps.
+          </p>
+        </div>
+      </motion.div>
 
       {/* Main Grid: Form wizard on left, real-time preview on right */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
@@ -688,19 +690,32 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
                             type="text" 
                             id="directUrlInput"
                             placeholder="Image URL"
-                            className="flex-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-lg px-3 py-2 text-[11px] outline-none focus:border-[var(--admin-accent)]/40"
+                            className="flex-1 min-w-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-lg px-3 py-2 text-[11px] outline-none focus:border-[var(--admin-accent)]/40"
                           />
                           <button 
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               const input = document.getElementById("directUrlInput");
                               if(input.value) {
-                                const newImages = [...formData.images, input.value];
-                                setFormData({...formData, images: newImages, imageSrc: formData.imageSrc || input.value});
-                                input.value ="";
+                                setIsCompressing(true);
+                                try {
+                                  const uploadData = new FormData();
+                                  uploadData.append('urls', input.value);
+                                  const res = await uploadService.uploadImages(uploadData, 'products');
+                                  if(res.success && res.images) {
+                                    const newImages = [...formData.images, ...res.images];
+                                    setFormData({...formData, images: newImages, imageSrc: formData.imageSrc || res.images[0]});
+                                    toast.success("Image fetched & optimized!");
+                                    input.value = "";
+                                  }
+                                } catch (err) {
+                                  toast.error("Failed to upload from URL");
+                                } finally {
+                                  setIsCompressing(false);
+                                }
                               }
                             }}
-                            className="bg-[var(--admin-accent)] text-white hover:brightness-110 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-transform active:scale-95 cursor-pointer"
+                            className="shrink-0 bg-[var(--admin-accent)] text-white hover:brightness-110 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-transform active:scale-95 cursor-pointer whitespace-nowrap"
                           >
                             Add URL
                           </button>
@@ -730,8 +745,8 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
                                 setFormData({...formData, images: newImages, imageSrc: formData.imageSrc || res.images[0]});
                                 toast.success(`${res.images.length} photos uploaded!`);
                               }
-                            } catch(err) {
-                              toast.error("Upload failed");
+                            } catch (err) {
+                              toast.error(getErrorMessage(err, "Upload failed"));
                             } finally {
                               setIsCompressing(false);
                             }
@@ -1014,6 +1029,7 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
                         />
                         <input
                           type="number"
+                          inputMode="decimal"
                           placeholder="+/- Price (₹)"
                           value={newVariant.price}
                           onChange={(e) => setNewVariant({ ...newVariant, price: e.target.value })}
@@ -1133,6 +1149,7 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
                             type="number"
                             required
                             min="1"
+                            inputMode="decimal"
                             value={formData.price}
                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                             className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40 "
@@ -1148,6 +1165,7 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-secondary)]/50 text-[13px] font-bold">₹</span>
                           <input
                             type="number"
+                            inputMode="decimal"
                             value={formData.oldPrice}
                             onChange={(e) => setFormData({ ...formData, oldPrice: e.target.value })}
                             placeholder="Optional list price"
@@ -1166,6 +1184,7 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
                             type="number"
                             required
                             min="0"
+                            inputMode="decimal"
                             placeholder="Units"
                             value={formData.stock}
                             onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
@@ -1611,68 +1630,6 @@ export function AdminAddProduct({ isOpen, onClose, editId }) {
       )}
     </div>
   );
-
-  if (isDrawerMode) {
-    return typeof document !== "undefined" && createPortal(
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
-          >
-            {/* Backdrop Blur overlay */}
-            <div
-              onClick={handleCancelAction}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
-            />
-            
-            {/* Slide-Up Bottom Drawer Sheet */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 26, stiffness: 220 }}
-              className="relative w-full max-w-7xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 h-[95vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
-            >
-              {/* Grab Handle */}
-              <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
-
-              {/* Title & Subtitle */}
-              <div className="mb-4 pb-2 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0">
-                <div>
-                  <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
-                      {isEditMode ? "edit_note" : "add_box"}
-                    </span>
-                    {isEditMode ? "Edit Product Catalog Item" : "Create Product Catalog Item"}
-                  </h3>
-                  <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5">
-                    {isEditMode ? "Update pricing, specifications, variants, and listing cover" : "Add new listing with advanced configurations, SEO metadata, and AI autofill features"}
-                  </p>
-                </div>
-                <button 
-                  type="button" 
-                  onClick={handleCancelAction}
-                  className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
-                </button>
-              </div>
-
-              {isLoading ? (
-                <div className="py-12 flex justify-center items-center">
-                  <div className="w-8 h-8 rounded-full border-2 border-[var(--admin-accent)] border-t-transparent animate-spin" />
-                </div>
-              ) : mainLayout}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>,
-      document.body
-    );
-  }
 
   return mainLayout;
 }

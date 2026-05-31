@@ -10,16 +10,12 @@ import {
   fadeUp,
   stagger
 } from '../components/AdminUIKit';
-import { AdminPolicyEditor } from './AdminPolicyEditor';
 
 export function AdminPolicies() {
   const navigate = useNavigate();
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Drawer modal states
-  const [showDrawer, setShowDrawer] = useState(false);
-  const [activeEditId, setActiveEditId] = useState(null);
+  // Drawer state removed in favor of routing
 
   useEffect(() => {
     fetchPolicies();
@@ -30,7 +26,7 @@ export function AdminPolicies() {
       const data = await policyService.getAll();
       setPolicies(data.data || []);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to fetch policies');
+      toast.error(getErrorMessage(error, 'Failed to fetch policies'));
     } finally {
       setLoading(false);
     }
@@ -42,7 +38,7 @@ export function AdminPolicies() {
         await policyService.delete(id);
         fetchPolicies();
       } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to delete policy');
+        toast.error(getErrorMessage(error, 'Failed to delete policy'));
       }
     }
   };
@@ -68,10 +64,7 @@ export function AdminPolicies() {
       render: (_, row) => (
         <div className="flex gap-3">
           <button
-            onClick={() => {
-              setActiveEditId(row._id);
-              setShowDrawer(true);
-            }}
+            onClick={() => navigate(`/admin/policies/edit/${row._id}`)}
             className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:underline text-xs font-bold tracking-wider cursor-pointer bg-transparent border-none p-0"
           >
             EDIT
@@ -94,10 +87,7 @@ export function AdminPolicies() {
         subtitle="Manage legal and storefront policies across your platform."
       >
         <button
-          onClick={() => {
-            setActiveEditId(null);
-            setShowDrawer(true);
-          }}
+          onClick={() => navigate("/admin/policies/add")}
           className="admin-btn admin-btn-primary h-9"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
@@ -141,15 +131,6 @@ export function AdminPolicies() {
         )}
       </motion.div>
 
-      {/* Slide-Up Bottom Drawer Sheet */}
-      <AdminPolicyEditor
-        isOpen={showDrawer}
-        editId={activeEditId}
-        onClose={() => {
-          setShowDrawer(false);
-          fetchPolicies();
-        }}
-      />
     </motion.div>
   );
 }

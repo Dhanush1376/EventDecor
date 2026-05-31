@@ -8,6 +8,7 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  EmptyState,
 } from "../components/AdminUIKit";
 
 export function AdminCustomers() {
@@ -36,20 +37,24 @@ export function AdminCustomers() {
       <PageHeader
         title="Customers"
         subtitle={`${customers.length} customers`}
-        mobileRow={true}
+        icon="group"
+        iconColor="users"
+        headerAction={
+          <div className="max-w-[140px] sm:max-w-md">
+            <FilterBar
+              filters={["All", "VIP", "Regular", "New"]}
+              value={segmentFilter}
+              onChange={setSegmentFilter}
+            />
+          </div>
+        }
       >
         <button className="admin-btn admin-btn-ghost" title="Export Customers">
           <span className="material-symbols-outlined text-[20px]">download</span>
         </button>
       </PageHeader>
 
-      <motion.div variants={fadeUp}>
-        <FilterBar
-          filters={["All", "VIP", "Regular", "New"]}
-          value={segmentFilter}
-          onChange={setSegmentFilter}
-        />
-      </motion.div>
+
 
       <AnimatePresence mode="wait">
         {dataLoading ? (
@@ -72,13 +77,20 @@ export function AdminCustomers() {
             animate="show"
             exit="hidden"
             variants={fadeUp}
-            className="admin-card py-24 flex flex-col items-center justify-center text-center"
+            className="admin-card py-16 flex justify-center"
           >
-            <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">
-              search_off
-            </span>
-            <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">Data Not Found</p>
-            <p className="text-[12px] text-[var(--admin-text-secondary)]">No customers found.</p>
+            <EmptyState
+              icon={searchQuery || segmentFilter !== "All" ? "search_off" : "group"}
+              title={searchQuery || segmentFilter !== "All" ? "No Matches Found" : "No Customers Yet"}
+              description={searchQuery || segmentFilter !== "All" ? "No customers match the search or filter criteria." : "When customers create accounts or place orders, they will appear here."}
+              action={
+                (searchQuery || segmentFilter !== "All") && (
+                  <button onClick={() => setSegmentFilter("All")} className="admin-btn admin-btn-outline">
+                    Clear Filters
+                  </button>
+                )
+              }
+            />
           </motion.div>
         ) : (
           <motion.div

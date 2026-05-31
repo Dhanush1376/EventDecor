@@ -21,7 +21,7 @@ export function AdminLayouts() {
       const res = await api.get('/layouts');
       if (res.data?.success) setLayouts(res.data.data);
     } catch (err) {
-      toast.error('Failed to load layouts');
+      toast.error(getErrorMessage(err, 'Failed to load layouts'));
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ export function AdminLayouts() {
       toast.success('Section visibility updated');
       fetchLayouts();
     } catch (err) {
-      toast.error('Failed to update section visibility');
+      toast.error(getErrorMessage(err, 'Failed to update section visibility'));
     }
   };
 

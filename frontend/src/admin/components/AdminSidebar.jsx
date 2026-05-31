@@ -7,51 +7,51 @@ import { SiriLogo } from "../../components/ui/SiriLogo";
 const navSections = [
   {
     label: "Home",
-    items: [{ label: "Dashboard", icon: "dashboard", path: "/admin", keywords: "stats, home, sales, overview" }],
+    items: [{ label: "Dashboard", icon: "dashboard", path: "/admin", keywords: "stats, home, sales, overview", domain: "revenue" }],
   },
   {
     label: "Edit Website",
     items: [
-      { label: "Dynamic Layouts", icon: "view_carousel", path: "/admin/layouts", keywords: "layouts, sections, homepage" },
-      { label: "Edit Web Pages", icon: "edit_note", path: "/admin/content", keywords: "cms, homepage, hero, pages, policy" },
-      { label: "Photo Gallery", icon: "photo_library", path: "/admin/gallery", keywords: "photos, heritage, images" },
-      { label: "Policy Management", icon: "gavel", path: "/admin/policies", keywords: "policy, terms, legal, privacy" },
+      { label: "Dynamic Layouts", icon: "view_carousel", path: "/admin/layouts", keywords: "layouts, sections, homepage", domain: "settings" },
+      { label: "Edit Web Pages", icon: "edit_note", path: "/admin/content", keywords: "cms, homepage, hero, pages, policy", domain: "settings" },
+      { label: "Photo Gallery", icon: "photo_library", path: "/admin/gallery", keywords: "photos, heritage, images", domain: "settings" },
+      { label: "Policy Management", icon: "gavel", path: "/admin/policies", keywords: "policy, terms, legal, privacy", domain: "settings" },
     ],
   },
   {
     label: "Products & Stock",
     items: [
-      { label: "Categories", icon: "category", path: "/admin/categories", keywords: "taxonomy, tags, labels" },
-      { label: "Product List", icon: "inventory_2", path: "/admin/products", keywords: "items, stock, catalog" },
-      { label: "Stock Levels", icon: "warehouse", path: "/admin/inventory", keywords: "alerts, stock count, storage" },
+      { label: "Categories", icon: "category", path: "/admin/categories", keywords: "taxonomy, tags, labels", domain: "products" },
+      { label: "Product List", icon: "inventory_2", path: "/admin/products", keywords: "items, stock, catalog", domain: "products" },
+      { label: "Stock Levels", icon: "warehouse", path: "/admin/inventory", keywords: "alerts, stock count, storage", domain: "products" },
     ],
   },
   {
     label: "Sales & Bookings",
     items: [
-      { label: "Orders", icon: "shopping_bag", path: "/admin/orders", keywords: "sales, checkout, delivery" },
-      { label: "Special Requests", icon: "architecture", path: "/admin/custom-orders", keywords: "customization, consultation, event decor" },
-      { label: "Customers", icon: "group", path: "/admin/customers", keywords: "users, crm, segments, vip" },
-      { label: "Discount Coupons", icon: "sell", path: "/admin/coupons", keywords: "discounts, vouchers" },
-      { label: "Payments", icon: "payments", path: "/admin/payments", keywords: "razorpay, cod, invoice, cashflow" },
+      { label: "Orders", icon: "shopping_bag", path: "/admin/orders", keywords: "sales, checkout, delivery", domain: "orders" },
+      { label: "Special Requests", icon: "architecture", path: "/admin/custom-orders", keywords: "customization, consultation, event decor", domain: "orders" },
+      { label: "Customers", icon: "group", path: "/admin/customers", keywords: "users, crm, segments, vip", domain: "users" },
+      { label: "Discount Coupons", icon: "sell", path: "/admin/coupons", keywords: "discounts, vouchers", domain: "revenue" },
+      { label: "Payments", icon: "payments", path: "/admin/payments", keywords: "razorpay, cod, invoice, cashflow", domain: "revenue" },
     ],
   },
   {
     label: "Bookings & Feedback",
     items: [
-      { label: "Event Bookings", icon: "event", path: "/admin/events", keywords: "booking, setups, dates" },
+      { label: "Event Bookings", icon: "event", path: "/admin/events", keywords: "booking, setups, dates", domain: "orders" },
     ],
   },
   {
     label: "Reports & Settings",
     items: [
-      { label: "Sales Reports", icon: "analytics", path: "/admin/analytics", keywords: "trends, metrics, profits" },
-      { label: "AI Engine Analytics", icon: "psychology", path: "/admin/recommendations", keywords: "recommendations, trending, metrics" },
-      { label: "Marketing Emails", icon: "campaign", path: "/admin/campaigns", keywords: "marketing, email, newsletters" },
-      { label: "Manage Staff", icon: "groups", path: "/admin/team", keywords: "staff, employees, access, permissions" },
-      { label: "System Users", icon: "admin_panel_settings", path: "/admin/system-users", keywords: "admins, super, security, access" },
-      { label: "Settings", icon: "settings", path: "/admin/settings", keywords: "profile, backups, config" },
-      { label: "Global Config", icon: "settings_suggest", path: "/admin/config", keywords: "flags, variables, toggles" },
+      { label: "Sales Reports", icon: "analytics", path: "/admin/analytics", keywords: "trends, metrics, profits", domain: "revenue" },
+      { label: "AI Engine Analytics", icon: "psychology", path: "/admin/recommendations", keywords: "recommendations, trending, metrics", domain: "settings" },
+      { label: "Marketing Emails", icon: "campaign", path: "/admin/campaigns", keywords: "marketing, email, newsletters", domain: "revenue" },
+      { label: "Manage Staff", icon: "groups", path: "/admin/team", keywords: "staff, employees, access, permissions", domain: "users" },
+      { label: "System Users", icon: "admin_panel_settings", path: "/admin/system-users", keywords: "admins, super, security, access", domain: "users" },
+      { label: "Settings", icon: "settings", path: "/admin/settings", keywords: "profile, backups, config", domain: "settings" },
+      { label: "Global Config", icon: "settings_suggest", path: "/admin/config", keywords: "flags, variables, toggles", domain: "settings" },
     ],
   },
 ];
@@ -65,6 +65,11 @@ export function AdminSidebar() {
   const location = useLocation();
   const mobileSidebarRef = React.useRef(null);
   const [sidebarSearch, setSidebarSearch] = useState("");
+  const [collapsedSections, setCollapsedSections] = useState({});
+  
+  const toggleSection = (si) => {
+    setCollapsedSections(prev => ({ ...prev, [si]: !prev[si] }));
+  };
 
   // Restore scroll position whenever a nav element (desktop or mobile) mounts
   const handleNavRef = React.useCallback((node) => {
@@ -201,19 +206,40 @@ export function AdminSidebar() {
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto py-2 px-2 custom-scrollbar space-y-3"
       >
-        {filteredNavSections.map((section, si) => (
+        {filteredNavSections.map((section, si) => {
+          const isCollapsed = collapsedSections[si] && sidebarOpen && !sidebarSearch;
+          return (
           <div key={si} className="space-y-0.5">
             {sidebarOpen && (
-              <div className="px-3 py-1.5 mb-0.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-text-tertiary)]">
+              <button 
+                onClick={() => toggleSection(si)}
+                className="w-full flex items-center justify-between px-3 py-1.5 mb-0.5 group min-h-0 text-left outline-none cursor-pointer hover:bg-[var(--admin-surface-hover)] rounded-[var(--admin-radius-md)] transition-colors"
+              >
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)] transition-colors">
                   {section.label}
                 </span>
-              </div>
+                <span className={`material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)] transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}>
+                  expand_more
+                </span>
+              </button>
             )}
-            {section.items.map((item, ii) => {
-              const isActive = location.pathname === item.path || 
-                (item.path !== "/admin" && location.pathname.startsWith(item.path));
-              return (
+            <AnimatePresence initial={false}>
+              {!isCollapsed && (
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={{
+                    visible: { height: "auto", opacity: 1, overflow: "visible" },
+                    hidden: { height: 0, opacity: 0, overflow: "hidden" }
+                  }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="space-y-0.5"
+                >
+                  {section.items.map((item, ii) => {
+                    const isActive = location.pathname === item.path || 
+                      (item.path !== "/admin" && location.pathname.startsWith(item.path));
+                    return (
                 <NavLink
                   key={ii}
                   to={item.path}
@@ -232,8 +258,8 @@ export function AdminSidebar() {
                       layoutId="sidebarActiveBackground"
                       className="absolute inset-0 rounded-[var(--admin-radius-md)] z-0"
                       style={{
-                        background: "var(--admin-accent-light)",
-                        borderLeft: "2px solid var(--admin-accent)",
+                        background: `var(--admin-domain-${item.domain || 'settings'}-bg)`,
+                        borderLeft: `2px solid var(--admin-domain-${item.domain || 'settings'})`,
                       }}
                       transition={{ type: "spring", stiffness: 350, damping: 30 }}
                     />
@@ -241,9 +267,10 @@ export function AdminSidebar() {
 
                   <span
                     className={`material-symbols-outlined text-[18px] relative z-10 transition-colors ${
-                      isActive ? "text-[var(--admin-accent)]" : "text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-secondary)]"
+                      isActive ? "" : "text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-secondary)]"
                     }`}
                     style={{
+                      color: isActive ? `var(--admin-domain-${item.domain || 'settings'})` : undefined,
                       fontVariationSettings: isActive
                         ? "'FILL' 1, 'wght' 500"
                         : "'FILL' 0, 'wght' 400",
@@ -260,10 +287,14 @@ export function AdminSidebar() {
                     </div>
                   )}
                 </NavLink>
-              );
-            })}
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        ))}
+          );
+        })}
 
         {/* Recently Edited Products */}
         {sidebarOpen && !sidebarSearch && recentlyEdited.length > 0 && (

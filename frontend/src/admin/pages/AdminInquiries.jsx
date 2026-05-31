@@ -116,7 +116,7 @@ export function AdminInquiries() {
         if (selectedOrder?._id === id) setSelectedOrder(res.data);
       }
     } catch (err) {
-      toast.error("Failed to update status");
+      toast.error(getErrorMessage(err, "Failed to update status"));
     } finally {
       setUpdatingId(null);
     }
@@ -131,7 +131,7 @@ export function AdminInquiries() {
         if (selectedOrder?._id === id) setSelectedOrder(res.data);
       }
     } catch (err) {
-      toast.error("Failed to change priority");
+      toast.error(getErrorMessage(err, "Failed to change priority"));
     }
   };
 
@@ -144,7 +144,7 @@ export function AdminInquiries() {
         if (selectedOrder?._id === id) setSelectedOrder(res.data);
       }
     } catch (err) {
-      toast.error("Failed to save internal notes");
+      toast.error(getErrorMessage(err, "Failed to save internal notes"));
     }
   };
 
@@ -167,7 +167,7 @@ export function AdminInquiries() {
         setSelectedOrder(res.data);
       }
     } catch (err) {
-      toast.error("Failed to compile quotation");
+      toast.error(getErrorMessage(err, "Failed to compile quotation"));
     } finally {
       setUpdatingId(null);
     }
@@ -186,7 +186,7 @@ export function AdminInquiries() {
         setOrders(prev => prev.map(o => o._id === selectedOrder._id ? res.data : o));
       }
     } catch (err) {
-      toast.error("Failed to send message");
+      toast.error(getErrorMessage(err, "Failed to send message"));
     } finally {
       setIsSendingMessage(false);
     }
@@ -201,7 +201,7 @@ export function AdminInquiries() {
         setSelectedOrder(null);
       }
     } catch (err) {
-      toast.error("Failed to archive order");
+      toast.error(getErrorMessage(err, "Failed to archive order"));
     }
   };
 
@@ -214,7 +214,7 @@ export function AdminInquiries() {
         toast.success("Form options saved");
       }
     } catch (err) {
-      toast.error("Failed to save storefront options");
+      toast.error(getErrorMessage(err, "Failed to save storefront options"));
     } finally {
       setIsSavingCMS(false);
     }

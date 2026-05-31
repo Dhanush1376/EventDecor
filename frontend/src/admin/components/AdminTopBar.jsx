@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdmin } from "../context/AdminContext";
 import { useAuth } from "../../context/AuthContext";
@@ -25,6 +25,7 @@ export function AdminTopBar() {
   const notifRef = useRef(null);
   const profileRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const { user, logout } = useAuth();
 
@@ -92,6 +93,29 @@ export function AdminTopBar() {
               {sidebarOpen ? "menu_open" : "menu"}
             </span>
           </button>
+
+          {/* Breadcrumbs (Desktop) */}
+          <div className="hidden lg:flex items-center gap-1.5 ml-1 mr-4 select-none">
+            <span className="text-[12px] font-semibold text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer transition-colors" onClick={() => navigate('/admin')}>
+              Admin
+            </span>
+            {location.pathname !== '/admin' && location.pathname.split('/').filter(Boolean).slice(1).map((segment, index, arr) => (
+              <React.Fragment key={index}>
+                <span className="material-symbols-outlined text-[14px] text-[var(--admin-border-strong)]">
+                  chevron_right
+                </span>
+                <span className={`text-[12px] font-semibold capitalize ${index === arr.length - 1 ? "text-[var(--admin-text-primary)]" : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer transition-colors"}`}
+                  onClick={() => {
+                    if (index < arr.length - 1) {
+                      navigate('/admin/' + arr.slice(0, index + 1).join('/'));
+                    }
+                  }}
+                >
+                  {segment.replace(/-/g, ' ')}
+                </span>
+              </React.Fragment>
+            ))}
+          </div>
 
           {/* Search Trigger — Desktop */}
           <button
@@ -291,9 +315,8 @@ export function AdminTopBar() {
               className="flex items-center gap-2 p-1 rounded-[var(--admin-radius-md)] hover:bg-[var(--admin-surface-hover)] cursor-pointer transition-colors min-h-0"
             >
               <div
-                className="w-8 h-8 rounded-[var(--admin-radius-md)] flex items-center justify-center"
+                className="w-8 h-8 rounded-[var(--admin-radius-md)] flex items-center justify-center bg-black"
                 style={{
-                  background: "linear-gradient(135deg, var(--admin-accent), #C49A3C)",
                   boxShadow: "var(--admin-shadow-xs)",
                 }}
               >

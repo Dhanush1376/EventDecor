@@ -5,10 +5,7 @@ import logger from '../../utils/logger';
 const checkAuthLocal = () => hasSessionMarker();
 
 export const authService = {
-  login: async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
-    return response.data;
-  },
+  // NOTE: Legacy login/register removed (A-01). Auth is now OTP-based via sendOTP + verifyOTP.
   adminLogin: async (email, password) => {
     const response = await api.post('/admin/auth/login', { email, password });
     return response.data;
@@ -25,10 +22,6 @@ export const authService = {
     const response = await api.post('/admin/auth/verify-2fa', { userId, token });
     return response.data;
   },
-  register: async (userData) => {
-    const response = await api.post('/auth/register', userData);
-    return response.data;
-  },
   getProfile: async (options = {}) => {
     if (!checkAuthLocal()) {
       return Promise.reject(new Error('Not authenticated'));
@@ -36,8 +29,8 @@ export const authService = {
     const response = await api.get('/auth/profile', options);
     return response.data;
   },
-  sendOTP: async (email, password) => {
-    const response = await api.post('/auth/send-otp', { email, password });
+  sendOTP: async (email) => {
+    const response = await api.post('/auth/send-otp', { email });
     return response.data;
   },
   verifyOTP: async (email, otp) => {
@@ -60,3 +53,4 @@ export const authService = {
     return response.data;
   },
 };
+

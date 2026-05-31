@@ -46,21 +46,38 @@ export function getRelativeTime(date) {
 // ═══════════════════════════════════════════════════════════════
 // PAGE HEADER — unified page title across all admin pages
 // ═══════════════════════════════════════════════════════════════
-export function PageHeader({ title, subtitle, children, className = "", mobileRow = false }) {
+export function PageHeader({ title, subtitle, icon, iconColor, children, className = "", mobileRow = false, headerAction }) {
   return (
     <motion.div
       variants={fadeUp}
       className={`flex ${mobileRow ? 'flex-row' : 'flex-col sm:flex-row'} justify-between items-start sm:items-center gap-3 sm:gap-4 border-b border-[var(--admin-border-subtle)] pb-5 ${className}`}
     >
-      <div className={mobileRow ? "flex-1 min-w-0 pr-2" : "w-full sm:w-auto"}>
-        <h1 className="text-[20px] sm:text-[26px] font-bold text-[var(--admin-text-primary)] font-display tracking-tight leading-tight">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-[12px] sm:text-[13px] text-[var(--admin-text-tertiary)] mt-1 font-medium leading-normal">
-            {subtitle}
-          </p>
-        )}
+      <div className={`flex justify-between items-start ${mobileRow ? "flex-1 min-w-0 pr-2" : "w-full sm:w-auto"}`}>
+        <div className="flex items-center gap-3 w-full">
+          {icon && (
+            <div 
+              className="w-10 h-10 rounded-[var(--admin-radius-lg)] flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `var(--admin-domain-${iconColor || 'settings'}-bg)`, color: `var(--admin-domain-${iconColor || 'settings'})` }}
+            >
+              <span className="material-symbols-outlined text-[20px]">{icon}</span>
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[20px] sm:text-[26px] font-bold text-[var(--admin-text-primary)] font-display tracking-tight leading-tight flex items-center gap-2">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="text-[12px] sm:text-[13px] text-[var(--admin-text-tertiary)] mt-1 font-medium leading-normal">
+                {subtitle}
+              </p>
+            )}
+          </div>
+          {headerAction && (
+            <div className="shrink-0 flex items-center justify-center">
+              {headerAction}
+            </div>
+          )}
+        </div>
       </div>
       {children && (
         <div className={`${mobileRow ? 'w-auto flex flex-row gap-0.5' : 'w-full sm:w-auto flex flex-col sm:flex-row gap-2'} shrink-0`}>
@@ -79,12 +96,11 @@ export function PageHeader({ title, subtitle, children, className = "", mobileRo
                 } else {
                   extraClasses += " px-3 py-2 sm:py-2.5";
                   if (!isOutline && !isSecondary) {
-                    // Style as minimal soft gold
-                    extraClasses += " bg-[var(--admin-accent-light)] hover:bg-[var(--admin-accent-muted)] text-[var(--admin-accent)] border border-[rgba(139,115,64,0.18)] hover:border-[rgba(139,115,64,0.3)]";
+                    extraClasses += " admin-btn-primary";
                   } else if (isOutline) {
-                    extraClasses += " bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]";
+                    extraClasses += " admin-btn-outline";
                   } else if (isSecondary) {
-                    extraClasses += " bg-[var(--admin-text-primary)] hover:bg-[#27272A] text-white border-none";
+                    extraClasses += " admin-btn-secondary";
                   }
                 }
                 
@@ -111,10 +127,15 @@ export function StatCard({
   change,
   changeType = "up",
   color = "#6366F1",
+  domainColor,
+  infoTooltip,
   onClick,
   sparklinePath,
   progress,
 }) {
+  const finalColor = domainColor ? `var(--admin-domain-${domainColor})` : color;
+  const finalBg = domainColor ? `var(--admin-domain-${domainColor}-bg)` : `${color}0A`;
+
   return (
     <motion.button
       variants={fadeUp}
@@ -124,33 +145,35 @@ export function StatCard({
       {/* Accent stripe */}
       <div
         className="admin-stat-accent"
-        style={{ backgroundColor: color }}
+        style={{ backgroundColor: finalColor }}
       />
 
       <div className="flex items-start justify-between mb-2.5 sm:mb-3 pl-0.5 sm:pl-2">
         <div
           className="w-8 h-8 sm:w-9 sm:h-9 rounded-[var(--admin-radius-md)] sm:rounded-[var(--admin-radius-lg)] flex items-center justify-center"
-          style={{ backgroundColor: `${color}0A`, border: `1px solid ${color}15` }}
+          style={{ backgroundColor: finalBg }}
         >
           <span
             className="material-symbols-outlined text-[16px] sm:text-[18px]"
-            style={{ color }}
+            style={{ color: finalColor }}
           >
             {icon}
           </span>
         </div>
-        {change && (
-          <span
-            className={`admin-badge ${
-              changeType === "up" ? "admin-badge-success" : "admin-badge-error"
-            } text-[8px] sm:text-[9px] max-w-[75px] sm:max-w-none px-1.5 sm:px-2`}
-          >
-            <span className="material-symbols-outlined text-[9px] sm:text-[10px] font-bold shrink-0">
-              {changeType === "up" ? "trending_up" : "trending_down"}
+        <div className="flex items-center gap-2">
+          {change && (
+            <span
+              className={`admin-badge ${
+                changeType === "up" ? "admin-badge-success" : "admin-badge-error"
+              } text-[8px] sm:text-[9px] max-w-[75px] sm:max-w-none px-1.5 sm:px-2`}
+            >
+              <span className="material-symbols-outlined text-[9px] sm:text-[10px] font-bold shrink-0">
+                {changeType === "up" ? "trending_up" : "trending_down"}
+              </span>
+              <span className="truncate">{change}</span>
             </span>
-            <span className="truncate">{change}</span>
-          </span>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="flex items-end justify-between pl-0.5 sm:pl-2">
@@ -158,9 +181,16 @@ export function StatCard({
           <p className="text-[18px] sm:text-[24px] font-bold text-[var(--admin-text-primary)] leading-none tracking-tight">
             {value}
           </p>
-          <p className="text-[9px] sm:text-[10px] text-[var(--admin-text-tertiary)] mt-1.5 sm:mt-2 font-bold tracking-wider uppercase truncate" title={label}>
-            {label}
-          </p>
+          <div className="flex items-center gap-1.5 mt-1.5 sm:mt-2">
+            <p className="text-[9px] sm:text-[10px] text-[var(--admin-text-tertiary)] font-bold tracking-wider uppercase truncate" title={label}>
+              {label}
+            </p>
+            {infoTooltip && (
+              <span className="material-symbols-outlined text-[12px] text-[var(--admin-text-placeholder)] hover:text-[var(--admin-text-secondary)] transition-colors cursor-help" title={infoTooltip}>
+                info
+              </span>
+            )}
+          </div>
         </div>
         {sparklinePath && (
           <div className="w-10 h-5 sm:w-14 sm:h-7 text-[var(--admin-border-strong)] group-hover:text-[var(--admin-accent)] transition-colors duration-300 shrink-0">
@@ -178,7 +208,7 @@ export function StatCard({
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="h-full rounded-full"
-            style={{ backgroundColor: color }}
+            style={{ backgroundColor: finalColor }}
           />
         </div>
       )}
@@ -418,6 +448,53 @@ export function FilterBar({ filters, value, onChange, counts, className = "" }) 
         </button>
       ))}
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MOBILE FILTER DRAWER — native slide-up bottom sheet
+// ═══════════════════════════════════════════════════════════════
+export function MobileFilterDrawer({ isOpen, onClose, title = "Filters", children }) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-[1000] md:hidden"
+            style={{ background: "var(--admin-surface-overlay)", backdropFilter: "blur(4px)" }}
+          />
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 350 }}
+            className="fixed bottom-0 left-0 right-0 z-[1010] bg-[var(--admin-surface)] rounded-t-[var(--admin-radius-2xl)] shadow-2xl flex flex-col max-h-[85vh] md:hidden border-t border-[var(--admin-border)] overflow-hidden"
+          >
+            <div className="w-full flex justify-center pt-3 pb-1 shrink-0" onClick={onClose}>
+              <div className="w-12 h-1.5 rounded-full bg-[var(--admin-border-strong)]" />
+            </div>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--admin-border-subtle)] shrink-0">
+              <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)]">{title}</h3>
+              <button onClick={onClose} className="admin-btn-icon w-8 h-8 p-0">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 pb-6 flex flex-col gap-5">
+              {children}
+            </div>
+            <div className="p-4 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)] shrink-0">
+              <button onClick={onClose} className="admin-btn admin-btn-primary w-full h-[44px]">
+                Show Results
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -765,6 +842,8 @@ export function AdminTextarea({
 export function AdminToggle({ 
   label, 
   description, 
+  consequence,
+  statusBadge,
   checked, 
   onChange, 
   disabled = false,
@@ -808,23 +887,36 @@ export function AdminToggle({
     </button>
   );
 
-  if (!label && !description) return switchEl;
+  if (!label && !description && !consequence && !statusBadge) return switchEl;
 
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[var(--admin-border-subtle)] w-full gap-4">
+    <div className={`flex flex-row items-center justify-between py-3 border-b border-[var(--admin-border-subtle)] w-full gap-4 ${className}`}>
       <div className="text-left flex-1 min-w-0">
-        {label && (
-          <span className="text-[13px] text-[var(--admin-text-primary)] font-semibold block">
-            {label}
-          </span>
-        )}
+        <div className="flex items-center gap-2 mb-0.5">
+          {label && (
+            <span className="text-[13px] text-[var(--admin-text-primary)] font-bold block">
+              {label}
+            </span>
+          )}
+          {statusBadge && <StatusBadge status={statusBadge} className="scale-90 origin-left" />}
+        </div>
         {description && (
           <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5 leading-normal">
             {description}
           </p>
         )}
+        {consequence && (
+          <p className={`text-[11px] font-semibold mt-1.5 flex items-center gap-1.5 ${checked ? "text-[var(--admin-domain-revenue)]" : "text-[var(--admin-domain-danger)]"}`}>
+            <span className="material-symbols-outlined text-[13px]">
+              {checked ? "check_circle" : "warning"}
+            </span>
+            {consequence}
+          </p>
+        )}
       </div>
-      {switchEl}
+      <div className="shrink-0">
+        {switchEl}
+      </div>
     </div>
   );
 }

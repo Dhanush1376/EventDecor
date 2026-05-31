@@ -216,7 +216,7 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-start justify-center pt-4 sm:pt-12 md:pt-28 px-4"
+          className="fixed inset-0 z-[9999] flex items-start justify-center sm:pt-12 md:pt-28 sm:px-4"
           style={{ background: "var(--admin-surface-overlay)", backdropFilter: "blur(4px)" }}
           onClick={onClose}
         >
@@ -225,10 +225,9 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -8 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="w-full max-w-2xl overflow-hidden flex flex-col max-h-[min(600px,calc(100dvh-32px))] shadow-2xl admin-search-palette"
+            className="w-full h-[100dvh] sm:h-auto sm:max-h-[min(600px,calc(100dvh-32px))] sm:max-w-2xl overflow-hidden flex flex-col shadow-2xl admin-search-palette rounded-none sm:rounded-[var(--admin-radius-2xl)]"
             style={{ 
               background: "var(--admin-surface)",
-              borderRadius: "var(--admin-radius-2xl)",
               border: "1px solid var(--admin-border)",
             }}
             onClick={(e) => e.stopPropagation()}

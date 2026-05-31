@@ -48,7 +48,7 @@ export const AdminSystemUsers = () => {
         setAdmins(res.data.data);
       }
     } catch (err) {
-      toast.error('Failed to load system users');
+      toast.error(getErrorMessage(err, 'Failed to load system users'));
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export const AdminSystemUsers = () => {
       setShowModal(false);
       fetchAdmins();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save admin');
+      toast.error(getErrorMessage(err, 'Failed to save admin'));
     }
   };
 
@@ -95,7 +95,7 @@ export const AdminSystemUsers = () => {
         toast.success('Admin access revoked');
         fetchAdmins();
       } catch (err) {
-        toast.error(err.response?.data?.message || 'Failed to revoke access');
+        toast.error(getErrorMessage(err, 'Failed to revoke access'));
       }
     }
   };

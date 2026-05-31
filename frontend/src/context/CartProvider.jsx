@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import logger from '../utils/logger';
 import { persistentStorage } from "../utils/persistentStorage";
 import { userService } from "../services/domainServices";
+import { getErrorMessage } from '../utils/errorHelpers';
 
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
@@ -142,8 +143,9 @@ export function CartProvider({ children }) {
     const qty = product.quantity || 1;
     const itemKey = product._id || product.id;
     
-    const action = async () => {
-      if (isAuthenticated) {
+    if (isAuthenticated) {
+      // Authenticated: use DB cart via runProtectedAction
+      const action = async () => {
         setIsCartOpen(true);
         try {
           await addToCart({
@@ -153,92 +155,93 @@ export function CartProvider({ children }) {
           });
         } catch (err) {
           logger.error("Failed to add item to database cart:", err);
+          toast.error(getErrorMessage(err, 'Unable to add item to bag'));
         }
-      } else {
-        // Guest mode: update locally
-        setGuestItems((prev) => {
-          const existingIndex = prev.findIndex((item) => item.id === itemKey);
-          let newItems = [];
-          if (existingIndex >= 0) {
-            newItems = [...prev];
-            newItems[existingIndex] = { 
-              ...newItems[existingIndex], 
-              quantity: newItems[existingIndex].quantity + qty 
-            };
-          } else {
-            newItems = [
-              ...prev,
-              {
-                id: itemKey,
-                _id: itemKey,
-                title: product.title,
-                price: product.price,
-                oldPrice: product.oldPrice || product.price,
-                stock: product.stock || 10,
-                seller: product.seller || "Assured Craft Teams",
-                rating: product.rating || 4.5,
-                imageSrc: product.imageSrc,
-                category: product.category,
-                quantity: qty,
-                variant: "Default",
-              },
-            ];
-          }
-          const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-          setGuestSummary({
-            subtotal,
-            shippingFee: 0,
-            platformFee: 0,
-            discount: 0,
-            total: subtotal,
-          });
-          return newItems;
+      };
+      runProtectedAction(action);
+    } else {
+      // Guest mode: update locally without requiring auth
+      setGuestItems((prev) => {
+        const existingIndex = prev.findIndex((item) => item.id === itemKey);
+        let newItems = [];
+        if (existingIndex >= 0) {
+          newItems = [...prev];
+          newItems[existingIndex] = { 
+            ...newItems[existingIndex], 
+            quantity: newItems[existingIndex].quantity + qty 
+          };
+        } else {
+          newItems = [
+            ...prev,
+            {
+              id: itemKey,
+              _id: itemKey,
+              title: product.title,
+              price: product.price,
+              oldPrice: product.oldPrice || product.price,
+              stock: product.stock || 10,
+              seller: product.seller || "Assured Craft Teams",
+              rating: product.rating || 4.5,
+              imageSrc: product.imageSrc,
+              category: product.category,
+              quantity: qty,
+              variant: "Default",
+            },
+          ];
+        }
+        const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        setGuestSummary({
+          subtotal,
+          shippingFee: 0,
+          platformFee: 0,
+          discount: 0,
+          total: subtotal,
         });
-        setIsCartOpen(true);
-      }
-    };
-
-    runProtectedAction(action);
+        return newItems;
+      });
+      setIsCartOpen(true);
+    }
   }, [runProtectedAction, isAuthenticated, addToCart]);
 
   const removeItem = useCallback(async (id, variant) => {
-    const action = async () => {
-      if (isAuthenticated) {
+    if (isAuthenticated) {
+      const action = async () => {
         try {
           await removeFromCart({ productId: id });
         } catch (err) {
           logger.error("Failed to remove item from database cart:", err);
+          toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
         }
-      } else {
-        setGuestItems((prev) => {
-          const newItems = prev.filter((item) => item.id !== id);
-          const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-          setGuestSummary({
-            subtotal,
-            shippingFee: 0,
-            platformFee: 0,
-            discount: 0,
-            total: subtotal,
-          });
-          return newItems;
+      };
+      runProtectedAction(action);
+    } else {
+      // Guest mode: remove locally without requiring auth
+      setGuestItems((prev) => {
+        const newItems = prev.filter((item) => item.id !== id);
+        const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        setGuestSummary({
+          subtotal,
+          shippingFee: 0,
+          platformFee: 0,
+          discount: 0,
+          total: subtotal,
         });
-      }
-    };
-
-    runProtectedAction(action);
+        return newItems;
+      });
+    }
   }, [runProtectedAction, isAuthenticated, removeFromCart]);
 
   const updateQuantity = useCallback((id, variantOrQuantity, maybeQuantity) => {
-    const action = () => {
-      const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
-      const numericQuantity = Number(quantity) || 1;
-      
-      if (numericQuantity < 1) {
-        removeItem(id);
-        return;
-      }
+    const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
+    const numericQuantity = Number(quantity) || 1;
+    
+    if (numericQuantity < 1) {
+      removeItem(id);
+      return;
+    }
 
-      if (isAuthenticated) {
+    if (isAuthenticated) {
+      const action = () => {
         // 1. Instantly update React Query Cache for responsiveness
         const previousCart = queryClient.getQueryData(['cart']);
         if (previousCart) {
@@ -277,25 +280,26 @@ export function CartProvider({ children }) {
             await syncCart({ cartItems: payload });
           } catch (err) {
             logger.error("Failed to update cart quantity in database:", err);
+            toast.error(getErrorMessage(err, 'Unable to update quantity'));
           }
         }, 500);
-      } else {
-        setGuestItems((prev) => {
-          const newItems = prev.map((item) => (item.id === id ? { ...item, quantity: numericQuantity } : item));
-          const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-          setGuestSummary({
-            subtotal,
-            shippingFee: 0,
-            platformFee: 0,
-            discount: 0,
-            total: subtotal,
-          });
-          return newItems;
+      };
+      runProtectedAction(action);
+    } else {
+      // Guest mode: update locally without requiring auth
+      setGuestItems((prev) => {
+        const newItems = prev.map((item) => (item.id === id ? { ...item, quantity: numericQuantity } : item));
+        const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        setGuestSummary({
+          subtotal,
+          shippingFee: 0,
+          platformFee: 0,
+          discount: 0,
+          total: subtotal,
         });
-      }
-    };
-
-    runProtectedAction(action);
+        return newItems;
+      });
+    }
   }, [removeItem, runProtectedAction, isAuthenticated, syncCart, queryClient]);
 
   const clearCart = useCallback(async () => {

@@ -4,7 +4,7 @@ import { loyaltyService } from"../../services/domainServices";
 import toast from"react-hot-toast";
 
 import logger from '../../utils/logger';
-import { SkeletonDashboard } from '../components/AdminUIKit';
+import { SkeletonDashboard, PageHeader, FilterBar } from '../components/AdminUIKit';
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export function AdminReviews() {
@@ -23,7 +23,7 @@ export function AdminReviews() {
       }
     } catch (err) {
       logger.error("Failed to load reviews:", err);
-      toast.error("Could not fetch customer reviews feed.");
+      toast.error(getErrorMessage(err, "Could not fetch customer reviews feed."));
     } finally {
       setLoading(false);
     }
@@ -76,17 +76,20 @@ export function AdminReviews() {
       className="max-w-[1440px] mx-auto space-y-6"
     >
       {/* Title block */}
-      <motion.div variants={fadeUp} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-[24px] font-bold text-[var(--admin-text-primary)]">
-            Reviews & Testimonials
-          </h2>
-          <p className="text-[13px] text-[var(--admin-text-tertiary)]">
-            {reviews.length} total reviews ·{""}
-            {reviews.filter((r) => r.status ==="pending").length} pending approval payout
-          </p>
-        </div>
-
+      <PageHeader
+        title="Reviews & Testimonials"
+        subtitle={`${reviews.length} total reviews · ${reviews.filter((r) => r.status ==="pending").length} pending approval payout`}
+        headerAction={
+          <div className="max-w-[140px] sm:max-w-md">
+            <FilterBar
+              filters={["all", "pending", "approved", "rejected"]}
+              value={filter}
+              onChange={setFilter}
+              className="pb-0"
+            />
+          </div>
+        }
+      >
         {/* Dynamic Search Input */}
         <div className="relative w-full sm:w-72">
           <input
@@ -97,24 +100,7 @@ export function AdminReviews() {
             className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-xl px-4 py-2 text-[11px] outline-none focus:border-slate-900 transition-all font-semibold"
           />
         </div>
-      </motion.div>
-
-      {/* Tabs */}
-      <motion.div variants={fadeUp} className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {["all","pending","approved","rejected"].map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-xl text-[12px] font-semibold capitalize cursor-pointer transition-all ${
-              filter === f 
-                ?"bg-[var(--admin-accent)] text-white" 
-                :"bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border)] hover:border-slate-900-container/30"
-            }`}
-          >
-            {f}
-          </button>
-        ))}
-      </motion.div>
+      </PageHeader>
 
       {/* Reviews feed */}
       <motion.div variants={fadeUp} className="space-y-4">

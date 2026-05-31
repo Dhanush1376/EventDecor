@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '../services/domainServices';
 import { hasSessionMarker } from '../utils/authStorage';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../utils/errorHelpers';
 
 const checkAuthLocal = () => hasSessionMarker();
 
@@ -83,7 +84,7 @@ export function useCartMutations() {
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(['cart'], context?.previousCart);
-      toast.error('Failed to add item to bag');
+      toast.error(getErrorMessage(err, 'Unable to add item to bag'));
     },
     onSuccess: (data) => {
       if (data) {
@@ -128,7 +129,7 @@ export function useCartMutations() {
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(['cart'], context?.previousCart);
-      toast.error('Failed to remove item from bag');
+      toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
     },
     onSuccess: (data) => {
       if (data) {
@@ -183,7 +184,7 @@ export function useCartMutations() {
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(['cart'], context?.previousCart);
-      toast.error('Failed to sync bag');
+      toast.error(getErrorMessage(err, 'Unable to sync bag'));
     },
     onSuccess: (data) => {
       if (data) {

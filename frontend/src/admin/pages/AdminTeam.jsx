@@ -68,7 +68,7 @@ export function AdminTeam() {
         setHistory(historyRes.data?.data || historyRes.data?.results || historyRes.data || []);
       }
     } catch (err) {
-      toast.error("Failed to sync team listings from database.");
+      toast.error(getErrorMessage(err, "Failed to sync team listings from database."));
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export function AdminTeam() {
         fetchTeamData();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to create invitation request.");
+      toast.error(getErrorMessage(err, "Failed to create invitation request."));
     } finally {
       setSubmitting(false);
     }
@@ -156,7 +156,7 @@ export function AdminTeam() {
         fetchTeamData();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to revoke invitation.");
+      toast.error(getErrorMessage(err, "Failed to revoke invitation."));
     }
   };
 
@@ -180,7 +180,7 @@ export function AdminTeam() {
       }
     } catch (err) {
       toast.dismiss(loadToast);
-      toast.error(err.response?.data?.message || "Failed to update role.");
+      toast.error(getErrorMessage(err, "Failed to update role."));
     }
   };
 
@@ -201,7 +201,7 @@ export function AdminTeam() {
       }
     } catch (err) {
       toast.dismiss(loadToast);
-      toast.error(err.response?.data?.message || "Failed to revoke admin privileges.");
+      toast.error(getErrorMessage(err, "Failed to revoke admin privileges."));
     }
   };
 
@@ -220,6 +220,22 @@ export function AdminTeam() {
       <PageHeader
         title="Team Workspace & Authorization"
         subtitle="Manage team access and invitations"
+        headerAction={
+          <div className="max-w-[140px] sm:max-w-md">
+            <FilterBar
+              filters={["roster", "pending", "history"]}
+              value={activeTab}
+              onChange={setActiveTab}
+              className="pb-0 border-b border-[var(--admin-border-subtle)]"
+              formatLabel={(id) => {
+                if (id === "roster") return `Active Roster (${members.length})`;
+                if (id === "pending") return `Pending Invites (${invites.length})`;
+                if (id === "history") return `Invitation History (${history.length})`;
+                return id;
+              }}
+            />
+          </div>
+        }
       >
         <button
           onClick={() => setIsInviteOpen(true)}
@@ -230,20 +246,7 @@ export function AdminTeam() {
         </button>
       </PageHeader>
 
-      <motion.div variants={fadeUp}>
-        <FilterBar
-          filters={["roster", "pending", "history"]}
-          value={activeTab}
-          onChange={setActiveTab}
-          className="pb-0 border-b border-[var(--admin-border-subtle)]"
-          formatLabel={(id) => {
-            if (id === "roster") return `Active Roster (${members.length})`;
-            if (id === "pending") return `Pending Invites (${invites.length})`;
-            if (id === "history") return `Invitation History (${history.length})`;
-            return id;
-          }}
-        />
-      </motion.div>
+
 
       {loading ? (
         <SkeletonDashboard />
@@ -509,7 +512,7 @@ export function AdminTeam() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
+              className="fixed inset-0 z-[990] flex items-end sm:items-center justify-center admin-section-root p-0 sm:p-4"
             >
               <div
                 onClick={() => setIsInviteOpen(false)}
@@ -517,14 +520,14 @@ export function AdminTeam() {
               />
 
               <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
                 transition={{ type: "spring", damping: 26, stiffness: 220 }}
-                className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+                className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] sm:rounded-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] sm:max-h-[85vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t sm:border border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))] sm:pb-8"
               >
-                {/* Grab Handle */}
-                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
+                {/* Grab Handle (Mobile Only) */}
+                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0 sm:hidden" />
 
                 <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
                   <div>

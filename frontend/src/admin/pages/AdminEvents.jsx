@@ -14,8 +14,8 @@ import {
   FilterBar,
   formatCurrency,
   fadeUp,
-  stagger,
   SkeletonDashboard,
+  EmptyState,
 } from "../components/AdminUIKit";
 
 const EVENT_CATEGORIES = [
@@ -62,70 +62,14 @@ export function AdminEvents() {
   // Master Portfolio States
   const [events, setEvents] = useState([]);
   const [loadingPortfolio, setLoadingPortfolio] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [showForm, setShowForm] = useState(false);
 
   // Bookings States
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Replaced drawer Operations State with standalone AdminBookingDetail route
 
-  // Drawer Operations State
-  const [drawerStatus, setDrawerStatus] = useState("inquiry");
-  const [drawerNotes, setDrawerNotes] = useState("");
-  const [drawerChatMsg, setDrawerChatMsg] = useState("");
-  const chatEndRef = useRef(null);
-
-  // Logistics assignments
-  const [logisticsSetup, setLogisticsSetup] = useState("");
-  const [logisticsPickup, setLogisticsPickup] = useState("");
-  const [allocatedTeam, setAllocatedTeam] = useState([]);
-  const [allocatedProps, setAllocatedProps] = useState([]);
-
-  // Live Map refs & venue states for Admin Drawer Editor
-  const adminMapInstanceRef = useRef(null);
-  const adminMarkerInstanceRef = useRef(null);
-
-  const [venueName, setVenueName] = useState("");
-  const [venueAddress, setVenueAddress] = useState("");
-  const [venueCity, setVenueCity] = useState("");
-  const [venueState, setVenueState] = useState("");
-  const [venueCountry, setVenueCountry] = useState("");
-  const [venuePincode, setVenuePincode] = useState("");
-  const [venueLatitude, setVenueLatitude] = useState("");
-  const [venueLongitude, setVenueLongitude] = useState("");
-  const [venueGoogleMapsLink, setVenueGoogleMapsLink] = useState("");
-  const [venueIsOutdoor, setVenueIsOutdoor] = useState(false);
-
-  // Quotation editor inputs
-  const [quoteRental, setQuoteRental] = useState("");
-  const [quoteSetup, setQuoteSetup] = useState("");
-  const [quoteTransport, setQuoteTransport] = useState("");
-  const [quoteAddons, setQuoteAddons] = useState("");
-
-  const [formData, setFormData] = useState({
-    title: "",
-    subtitle: "",
-    category: "",
-    style: "",
-    image: "",
-    decorCount: "",
-    venueType: "Indoor/Outdoor",
-    pricing: "",
-    description: "",
-    colorPalette: "",
-    features: "",
-    materialStyle: "",
-    venueSize: "",
-    galleryImages: ["", ""],
-    beforeImage: "",
-    afterImage: "",
-    seoTitle: "",
-    seoDescription: "",
-    isActive: true,
-  });
+  // End of form data
 
   // Showcase state variables
   const [showcases, setShowcases] = useState([]);
@@ -158,7 +102,7 @@ export function AdminEvents() {
         setEvents(list);
       }
     } catch (err) {
-      toast.error("Failed to load portfolio masteries");
+      toast.error(getErrorMessage(err, "Failed to load portfolio masteries"));
     } finally {
       setLoadingPortfolio(false);
     }
@@ -174,7 +118,7 @@ export function AdminEvents() {
       }
     } catch (err) {
       logger.error(err);
-      toast.error("Failed to fetch customer event bookings catalog.");
+      toast.error(getErrorMessage(err, "Failed to fetch customer event bookings catalog."));
     } finally {
       setLoadingBookings(false);
     }
@@ -188,7 +132,7 @@ export function AdminEvents() {
         setShowcases(res.data || []);
       }
     } catch (err) {
-      toast.error("Failed to load side-stage showcase collections.");
+      toast.error(getErrorMessage(err, "Failed to load side-stage showcase collections."));
     } finally {
       setLoadingShowcases(false);
     }
@@ -281,7 +225,7 @@ export function AdminEvents() {
       }
     } catch (err) {
       toast.dismiss(loadId);
-      toast.error("Failed to save showcase theme.");
+      toast.error(getErrorMessage(err, "Failed to save showcase theme."));
     }
   };
 
@@ -316,7 +260,7 @@ export function AdminEvents() {
         fetchShowcases();
       }
     } catch (err) {
-      toast.error("Failed to delete showcase collection.");
+      toast.error(getErrorMessage(err, "Failed to delete showcase collection."));
     }
   };
 
@@ -350,7 +294,7 @@ export function AdminEvents() {
       setTeamMembers(staff);
       setInventoryItems(inventory);
     } catch (err) {
-      toast.error("Unable to load live team or inventory data.");
+      toast.error(getErrorMessage(err, "Unable to load live team or inventory data."));
       setTeamMembers([]);
       setInventoryItems([]);
     } finally {
@@ -368,394 +312,11 @@ export function AdminEvents() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (selectedBooking) {
-      const timer = setTimeout(() => {
-        setDrawerStatus(selectedBooking.status);
-        setDrawerNotes(selectedBooking.adminNotes || "");
-        setLogisticsSetup(selectedBooking.setupTiming ? selectedBooking.setupTiming.substring(0, 16) : "");
-        setLogisticsPickup(selectedBooking.pickupTiming ? selectedBooking.pickupTiming.substring(0, 16) : "");
-        setAllocatedTeam(selectedBooking.assignedTeam || []);
-        setAllocatedProps(selectedBooking.rentedInventory || []);
-        setQuoteRental(selectedBooking.pricing?.rentalFee || 0);
-        setQuoteSetup(selectedBooking.pricing?.setupCharges || 0);
-        setQuoteTransport(selectedBooking.pricing?.transportationCost || 0);
-        setQuoteAddons(selectedBooking.pricing?.addOnCharges || 0);
+  // Drawer logic moved to AdminBookingDetail.jsx
 
-        const v = selectedBooking.venue || {};
-        setVenueName(v.name || "");
-        setVenueAddress(v.address || "");
-        setVenueCity(v.city || "");
-        setVenueState(v.state || "");
-        setVenueCountry(v.country || "");
-        setVenuePincode(v.pincode || "");
-        setVenueLatitude(v.latitude || "");
-        setVenueLongitude(v.longitude || "");
-        setVenueGoogleMapsLink(v.googleMapsLink || "");
-        setVenueIsOutdoor(v.isOutdoor || false);
-      }, 0);
+  // Replaced handleEdit, handleCancel, handleSubmit with standalone pages
 
-      const chatTimer = setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(chatTimer);
-      };
-    }
-  }, [selectedBooking]);
-
-  const handleEdit = (ev) => {
-    setEditingId(ev._id || ev.id);
-    setFormData({
-      title: ev.title || "",
-      subtitle: ev.subtitle || "",
-      category: ev.category || "",
-      style: ev.style || "",
-      image: ev.image || "",
-      decorCount: ev.decorCount || "",
-      venueType: ev.venueType || "Indoor/Outdoor",
-      pricing: ev.pricing || "",
-      description: ev.description || "",
-      colorPalette: ev.colorPalette ? ev.colorPalette.join(",") : "",
-      features: ev.features ? ev.features.join(",") : "",
-      materialStyle: ev.materialStyle || "",
-      venueSize: ev.venueSize || "",
-      galleryImages: ev.gallery ? [ev.gallery[1] || "", ev.gallery[2] || ""] : ["", ""],
-      beforeImage: ev.beforeAfterImages?.before || "",
-      afterImage: ev.beforeAfterImages?.after || "",
-      seoTitle: ev.seoTitle || "",
-      seoDescription: ev.seoDescription || "",
-      isActive: ev.isActive !== undefined ? ev.isActive : true,
-    });
-    setShowForm(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setShowForm(false);
-    setFormData({
-      title: "",
-      subtitle: "",
-      category: "",
-      style: "",
-      image: "",
-      decorCount: "",
-      venueType: "Indoor/Outdoor",
-      pricing: "",
-      description: "",
-      colorPalette: "",
-      features: "",
-      materialStyle: "",
-      venueSize: "",
-      galleryImages: ["", ""],
-      beforeImage: "",
-      afterImage: "",
-      seoTitle: "",
-      seoDescription: "",
-      isActive: true,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.title || !formData.category || !formData.style || !formData.image || !formData.description) {
-      return toast.error("Please fill in all required fields.");
-    }
-
-    setIsSaving(true);
-    try {
-      const payload = {
-        title: formData.title,
-        subtitle: formData.subtitle || undefined,
-        category: formData.category,
-        style: formData.style,
-        image: formData.image,
-        decorCount: formData.decorCount || undefined,
-        venueType: formData.venueType || undefined,
-        pricing: formData.pricing || undefined,
-        description: formData.description,
-        colorPalette: formData.colorPalette ? formData.colorPalette.split(",").map((c) => c.trim()).filter(Boolean) : [],
-        features: formData.features ? formData.features.split(",").map((f) => f.trim()).filter(Boolean) : [],
-        materialStyle: formData.materialStyle || undefined,
-        venueSize: formData.venueSize || undefined,
-        gallery: [formData.image, ...formData.galleryImages.filter(Boolean)].slice(0, 3),
-        beforeAfterImages: (formData.beforeImage || formData.afterImage)
-          ? { before: formData.beforeImage || undefined, after: formData.afterImage || undefined }
-          : undefined,
-        seoTitle: formData.seoTitle || undefined,
-        seoDescription: formData.seoDescription || undefined,
-        isActive: Boolean(formData.isActive),
-      };
-
-      const res = editingId
-        ? await eventService.update(editingId, payload)
-        : await eventService.create(payload);
-
-      if (res.success) {
-        toast.success(editingId ? "Portfolio updated" : "Theme published");
-        handleCancel();
-        fetchEvents();
-        refreshEvents();
-      }
-    } catch (err) {
-      toast.error("Failed to save event portfolio.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleUpdateStatus = async (status) => {
-    if (!selectedBooking) return;
-    try {
-      const res = await bookingService.adminUpdateStatus(selectedBooking._id || selectedBooking.id, status);
-      if (res.success) {
-        toast.success(`Booking status changed to: ${status.toUpperCase()}`);
-        setDrawerStatus(status);
-        fetchBookings();
-        setSelectedBooking(res.data);
-      }
-    } catch (err) {
-      toast.error("Failed to change status.");
-    }
-  };
-
-  const handleUpdateQuotation = async () => {
-    if (!selectedBooking) return;
-    const loadId = toast.loading("Updating price estimate...");
-    try {
-      const res = await bookingService.adminUpdateQuotation(selectedBooking._id || selectedBooking.id, {
-        rentalFee: Number(quoteRental),
-        setupCharges: Number(quoteSetup),
-        transportationCost: Number(quoteTransport),
-        addOnCharges: Number(quoteAddons),
-      });
-      toast.dismiss(loadId);
-      if (res.success) {
-        toast.success("Estimate sent");
-        fetchBookings();
-        setSelectedBooking(res.data);
-      }
-    } catch (err) {
-      toast.dismiss(loadId);
-      toast.error("Failed to update price estimate.");
-    }
-  };
-
-  const handleUpdateLogistics = async () => {
-    if (!selectedBooking) return;
-    const loadId = toast.loading("Saving staff lists, times, & venue logistics...");
-    try {
-      const res = await bookingService.adminUpdateLogistics(selectedBooking._id || selectedBooking.id, {
-        setupTiming: logisticsSetup ? new Date(logisticsSetup) : undefined,
-        pickupTiming: logisticsPickup ? new Date(logisticsPickup) : undefined,
-        assignedTeam: allocatedTeam,
-        rentedInventory: allocatedProps,
-        adminNotes: drawerNotes,
-        venue: {
-          name: venueName,
-          address: venueAddress,
-          city: venueCity,
-          state: venueState,
-          country: venueCountry,
-          pincode: venuePincode,
-          latitude: venueLatitude ? Number(venueLatitude) : undefined,
-          longitude: venueLongitude ? Number(venueLongitude) : undefined,
-          googleMapsLink: venueGoogleMapsLink,
-          isOutdoor: venueIsOutdoor,
-        },
-      });
-      toast.dismiss(loadId);
-      if (res.success) {
-        toast.success("Rosters, checklists, timelines, and venue saved!");
-        fetchBookings();
-        setSelectedBooking(res.data);
-      }
-    } catch (err) {
-      toast.dismiss(loadId);
-      toast.error("Failed to save setup logistics.");
-    }
-  };
-
-  useEffect(() => {
-    if (!isDrawerOpen || !selectedBooking) {
-      if (adminMapInstanceRef.current) {
-        try { adminMapInstanceRef.current.remove(); } catch (e) { logger.warn("Admin map cleanup error", e); }
-        adminMapInstanceRef.current = null;
-        adminMarkerInstanceRef.current = null;
-      }
-      return;
-    }
-    const mapTimer = setTimeout(() => { initDrawerMap(); }, 450);
-    return () => clearTimeout(mapTimer);
-  }, [isDrawerOpen, selectedBooking?._id]);
-
-  const initDrawerMap = () => {
-    const mapDom = document.getElementById("admin-leaflet-map");
-    if (!mapDom || adminMapInstanceRef.current) return;
-
-    if (!document.getElementById("leaflet-css-cdn")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css-cdn";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
-
-    if (window.L) {
-      setupLeafletDrawerMap();
-    } else {
-      if (!document.getElementById("leaflet-js-cdn")) {
-        const script = document.createElement("script");
-        script.id = "leaflet-js-cdn";
-        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-        script.async = true;
-        script.onload = () => setupLeafletDrawerMap();
-        document.head.appendChild(script);
-      } else {
-        const interval = setInterval(() => {
-          if (window.L) {
-            clearInterval(interval);
-            setupLeafletDrawerMap();
-          }
-        }, 100);
-      }
-    }
-  };
-
-  const setupLeafletDrawerMap = () => {
-    const mapDom = document.getElementById("admin-leaflet-map");
-    if (!mapDom || adminMapInstanceRef.current) return;
-    const lat = Number(venueLatitude) || 15.506;
-    const lng = Number(venueLongitude) || 80.049;
-
-    try {
-      const map = window.L.map("admin-leaflet-map", { zoomControl: false }).setView([lat, lng], 13);
-      window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; OpenStreetMap contributors',
-      }).addTo(map);
-      window.L.control.zoom({ position: "bottomright" }).addTo(map);
-
-      const goldIcon = window.L.divIcon({
-        className: "custom-leaflet-marker",
-        html: `<div class="relative w-8 h-8 flex items-center justify-center">
-                 <div class="absolute w-8 h-8 bg-[var(--admin-accent)] opacity-30 rounded-full animate-ping"></div>
-                 <span class="material-symbols-outlined text-[var(--admin-accent)] text-[32px] drop-shadow-lg z-10 animate-bounce">location_on</span>
-               </div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-      });
-
-      const marker = window.L.marker([lat, lng], { icon: goldIcon, draggable: true }).addTo(map);
-      adminMarkerInstanceRef.current = marker;
-      adminMapInstanceRef.current = map;
-
-      map.on("click", (e) => {
-        const { lat: clickLat, lng: clickLng } = e.latlng;
-        marker.setLatLng([clickLat, clickLng]);
-        updateAdminCoordinates(clickLat, clickLng);
-      });
-
-      marker.on("dragend", () => {
-        const position = marker.getLatLng();
-        updateAdminCoordinates(position.lat, position.longitude || position.lng);
-      });
-    } catch (e) {
-      logger.error("Failed to setup Leaflet map inside admin drawer", e);
-    }
-  };
-
-  const updateAdminCoordinates = async (lat, lng) => {
-    setVenueLatitude(lat);
-    setVenueLongitude(lng);
-
-    try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
-      if (response.ok) {
-        const data = await response.json();
-        const addr = data.address || {};
-        const street = addr.road || addr.suburb || addr.neighbourhood || "";
-        const city = addr.city || addr.town || addr.village || addr.county || "";
-        const state = addr.state || "";
-        const country = addr.country || "";
-        const pincode = addr.postcode || "";
-        const name = data.name || addr.amenity || addr.building || addr.shop || "";
-
-        const formattedAddress = data.display_name || `${name ? name + "," : ""}${street}, ${city}, ${state}, ${pincode}`;
-
-        setVenueName(name || street || "Selected Venue");
-        setVenueAddress(formattedAddress);
-        setVenueCity(city);
-        setVenueState(state);
-        setVenueCountry(country);
-        setVenuePincode(pincode);
-        setVenueGoogleMapsLink(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`);
-
-        toast.success("Coordinates and address auto-geocoded!");
-      }
-    } catch (err) {
-      logger.warn("Admin geocode error", err);
-    }
-  };
-
-  const handleAdminCoordInputChange = (type, value) => {
-    if (type === "lat") {
-      setVenueLatitude(value);
-      const latNum = Number(value);
-      if (!isNaN(latNum) && adminMapInstanceRef.current && adminMarkerInstanceRef.current) {
-        adminMarkerInstanceRef.current.setLatLng([latNum, Number(venueLongitude) || 80.049]);
-        adminMapInstanceRef.current.setView([latNum, Number(venueLongitude) || 80.049]);
-      }
-    } else {
-      setVenueLongitude(value);
-      const lngNum = Number(value);
-      if (!isNaN(lngNum) && adminMapInstanceRef.current && adminMarkerInstanceRef.current) {
-        adminMarkerInstanceRef.current.setLatLng([Number(venueLatitude) || 15.506, lngNum]);
-        adminMapInstanceRef.current.setView([Number(venueLatitude) || 15.506, lngNum]);
-      }
-    }
-  };
-
-  const handleSendAdminChat = async (e) => {
-    e.preventDefault();
-    if (!drawerChatMsg.trim() || !selectedBooking) return;
-    try {
-      const res = await bookingService.postChat(selectedBooking._id || selectedBooking.id, drawerChatMsg);
-      if (res.success) {
-        setDrawerChatMsg("");
-        setSelectedBooking(res.data);
-        fetchBookings();
-      }
-    } catch (err) {
-      toast.error("Failed to post message.");
-    }
-  };
-
-  const handleTeamMemberToggle = (name, role, contact) => {
-    setAllocatedTeam((prev) => {
-      const exists = prev.some((t) => t.name === name);
-      if (exists) return prev.filter((t) => t.name !== name);
-      return [...prev, { name, role, contact }];
-    });
-  };
-
-  const handlePropChecklistToggle = (item, quantity) => {
-    setAllocatedProps((prev) => {
-      const exists = prev.some((p) => p.item === item);
-      if (exists) return prev.filter((p) => p.item !== item);
-      return [...prev, { item, quantity, returnStatus: "pending" }];
-    });
-  };
-
-  const handlePropReturnStatusChange = (idx, status) => {
-    setAllocatedProps((prev) => {
-      const next = [...prev];
-      next[idx].returnStatus = status;
-      return next;
-    });
-  };
+  // Drawer logic handles removed.
 
   const getCalendarDays = () => {
     const today = new Date();
@@ -797,12 +358,21 @@ export function AdminEvents() {
       <PageHeader
         title="Events & Bookings Manager"
         subtitle={`${bookings.length} active event bookings recorded`}
+        icon="event"
+        iconColor="orders"
+        headerAction={
+          <div className="max-w-[140px] sm:max-w-md">
+            <FilterBar
+              filters={tabs.map(t => t.id)}
+              value={activeTab}
+              onChange={setActiveTab}
+              className="pb-0 border-b border-[var(--admin-border-subtle)]"
+            />
+          </div>
+        }
       >
         <button
           onClick={() => {
-            setActiveTab("showcases");
-            setShowShowcaseForm(true);
-            setEditingShowcaseId(null);
             setShowcaseForm({
               title: "",
               subtitle: "",
@@ -815,8 +385,12 @@ export function AdminEvents() {
               colorPalette: "#8B0000, #FFD700, #FFF8DC",
               suggestedProps: "Traditional carved wooden ring tray, Beaded shagun boxes",
               setupTimeHours: 2,
+              seoTitle: "",
+              seoDescription: "",
               isActive: true,
             });
+            setShowShowcaseForm(true);
+            setEditingShowcaseId(null);
             setTimeout(() => window.scrollTo({ top: 120, behavior: "smooth" }), 150);
           }}
           className="admin-btn admin-btn-primary h-9"
@@ -826,13 +400,15 @@ export function AdminEvents() {
         </button>
       </PageHeader>
 
-      <motion.div variants={fadeUp}>
-        <FilterBar
-          filters={tabs.map(t => t.id)}
-          value={activeTab}
-          onChange={setActiveTab}
-          className="pb-0 border-b border-[var(--admin-border-subtle)]"
-        />
+      {/* Onboarding Quick Tip */}
+      <motion.div variants={fadeUp} className="bg-[#f8fafc] border border-[var(--admin-domain-orders)] rounded-[var(--admin-radius-lg)] p-4 flex items-start gap-3 shadow-sm">
+        <span className="material-symbols-outlined text-[var(--admin-domain-orders)] mt-0.5 text-[20px]">lightbulb</span>
+        <div>
+          <h4 className="text-[12px] font-bold text-[var(--admin-text-primary)]">Quick Tip: Event Manager</h4>
+          <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1 leading-relaxed max-w-[800px]">
+            This is your command center for service-based bookings. Use the <strong>Showcase</strong> tab to create preset decoration packages with fixed pricing. Clients can then book these packages directly. Check the <strong>Calendar</strong> to ensure you don't overbook your dates!
+          </p>
+        </div>
       </motion.div>
 
       <AnimatePresence mode="wait">
@@ -937,7 +513,13 @@ export function AdminEvents() {
             {loadingBookings ? (
                <SkeletonDashboard />
             ) : bookings.length === 0 ? (
-              <div className="py-20 text-center text-[var(--admin-text-tertiary)] text-[12px]">No active custom bookings logged.</div>
+              <div className="py-16 flex justify-center bg-[var(--admin-surface)]">
+                <EmptyState
+                  icon="event_busy"
+                  title="No Bookings Yet"
+                  description="Active event setups and consultations will appear here."
+                />
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="admin-table w-full min-w-[800px]">
@@ -953,7 +535,7 @@ export function AdminEvents() {
                   </thead>
                   <tbody>
                     {bookings.map((b) => (
-                      <tr key={b._id || b.id} className="admin-table-row-clickable" onClick={() => { setSelectedBooking(b); setIsDrawerOpen(true); }}>
+                      <tr key={b._id || b.id} className="admin-table-row-clickable" onClick={() => navigate(`/admin/events/${b._id || b.id}`)}>
                         <td>
                           <div className="space-y-0.5">
                             <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">{b.user?.name || "Anonymous Client"}</span>
@@ -987,7 +569,7 @@ export function AdminEvents() {
                         </td>
                         <td className="text-right">
                           <button
-                            onClick={(e) => { e.stopPropagation(); setSelectedBooking(b); setIsDrawerOpen(true); }}
+                            onClick={(e) => { e.stopPropagation(); navigate(`/admin/events/${b._id || b.id}`); }}
                             className="admin-btn admin-btn-outline h-8 min-h-0 text-[10px] px-3 py-0"
                           >
                             Manage
@@ -1063,102 +645,13 @@ export function AdminEvents() {
                 <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-0.5">Manage published catalogs visible to customer discovery masonry grids.</p>
               </div>
               <button
-                onClick={() => { if (showForm) handleCancel(); else setShowForm(true); }}
+                onClick={() => navigate('/admin/events/add')}
                 className="admin-btn admin-btn-primary h-9"
               >
-                <span className="material-symbols-outlined text-[16px]">{showForm ? "close" : "add"}</span>
-                {showForm ? "Close Creator" : "Publish Theme Curation"}
+                <span className="material-symbols-outlined text-[16px]">add</span>
+                Publish Theme Curation
               </button>
             </div>
-
-            <AnimatePresence>
-              {showForm && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="admin-card p-6 overflow-hidden">
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <ImageUpload label="Cover Image *" value={formData.image} onChange={(url) => setFormData({ ...formData, image: url })} folder="events" />
-                      <ImageUpload label="Gallery perspective 1" value={formData.galleryImages[0]} onChange={(url) => { const list = [...formData.galleryImages]; list[0] = url; setFormData({ ...formData, galleryImages: list }); }} folder="events" />
-                      <ImageUpload label="Gallery perspective 2" value={formData.galleryImages[1]} onChange={(url) => { const list = [...formData.galleryImages]; list[1] = url; setFormData({ ...formData, galleryImages: list }); }} folder="events" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      <div className="space-y-2">
-                        <label className="admin-label">Theme Title *</label>
-                        <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="admin-input" required />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="admin-label">Subtitle</label>
-                        <input type="text" value={formData.subtitle} onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })} className="admin-input" />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="admin-label mb-0">Category *</label>
-                          <button type="button" onClick={() => setShowCatModal(true)} className="text-[10px] font-bold text-[var(--admin-accent)] hover:underline flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[12px]">add_circle</span> Manage
-                          </button>
-                        </div>
-                        <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="admin-input" required>
-                          <option value="">Select Category</option>
-                          {customCategories?.events?.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                      <div className="space-y-2">
-                        <label className="admin-label">Decor Style *</label>
-                        <select value={formData.style} onChange={(e) => setFormData({ ...formData, style: e.target.value })} className="admin-input" required>
-                          <option value="">Select Style</option>
-                          {DECOR_STYLES.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="admin-label">Pricing Tag</label>
-                        <input type="text" value={formData.pricing} onChange={(e) => setFormData({ ...formData, pricing: e.target.value })} className="admin-input" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="admin-label">Venue Footprint</label>
-                        <input type="text" value={formData.venueSize} onChange={(e) => setFormData({ ...formData, venueSize: e.target.value })} className="admin-input" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="admin-label">Completed Count</label>
-                        <input type="text" value={formData.decorCount} onChange={(e) => setFormData({ ...formData, decorCount: e.target.value })} className="admin-input" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="admin-label">Atmospheric Narrative (Description) *</label>
-                      <textarea rows={3} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="admin-textarea" required />
-                    </div>
-
-                    <div className="border-t border-[var(--admin-border-subtle)] pt-5 space-y-5">
-                      <div>
-                        <h4 className="text-[12px] font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[16px]">language</span> SEO Meta Configuration
-                        </h4>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-2">
-                          <label className="admin-label">SEO Meta Title</label>
-                          <input type="text" value={formData.seoTitle || ""} onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })} className="admin-input" />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="admin-label">SEO Meta Description</label>
-                          <textarea rows={2} value={formData.seoDescription || ""} onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })} className="admin-textarea" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 pt-5 border-t border-[var(--admin-border-subtle)]">
-                      <button type="submit" disabled={isSaving} className="admin-btn h-10 px-8">
-                        {isSaving ? "Saving..." : editingId ? "Update Setup" : "Publish Theme"}
-                      </button>
-                      <button type="button" onClick={handleCancel} className="admin-btn admin-btn-outline h-10 px-6">Cancel</button>
-                    </div>
-                  </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             {loadingPortfolio ? (
               <SkeletonDashboard />
@@ -1181,7 +674,7 @@ export function AdminEvents() {
                         <p className="text-[11px] text-[var(--admin-text-secondary)] line-clamp-2 leading-relaxed">{ev.description}</p>
                       </div>
                       <div className="flex gap-2 pt-4 mt-4 border-t border-[var(--admin-border-subtle)]">
-                        <button onClick={() => handleEdit(ev)} className="admin-btn admin-btn-outline flex-1 min-h-[32px] h-8 text-[11px] px-0">
+                        <button onClick={() => navigate(`/admin/events/edit/${ev._id || ev.id}`)} className="admin-btn admin-btn-outline flex-1 min-h-[32px] h-8 text-[11px] px-0">
                           <span className="material-symbols-outlined text-[14px]">edit</span> Edit
                         </button>
                         <button onClick={() => navigate(`/events/${ev._id || ev.id}`)} className="admin-btn-icon w-8 h-8 min-h-0 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)]">
@@ -1360,133 +853,7 @@ export function AdminEvents() {
         )}
       </AnimatePresence>
 
-      {/* DRAWER */}
-      <AnimatePresence>
-        {isDrawerOpen && selectedBooking && (
-          <div className="fixed inset-0 z-[200] flex justify-end">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDrawerOpen(false)} className="absolute inset-0" style={{ background: "var(--admin-surface-overlay)", backdropFilter: "blur(4px)" }} />
-            <motion.div
-              initial={{ x: "100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-[850px] bg-[var(--admin-surface)] h-full shadow-[var(--admin-shadow-2xl)] flex flex-col md:flex-row z-10 overflow-hidden border-l border-[var(--admin-border)]"
-            >
-              <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 border-r border-[var(--admin-border-subtle)] custom-scrollbar">
-                <div className="flex justify-between items-start border-b border-[var(--admin-border-subtle)] pb-5">
-                  <div>
-                    <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">EVENT BOOKING DETAILS</span>
-                    <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)]">{selectedBooking.title}</h3>
-                    <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">Customer: {selectedBooking.user?.name} | {selectedBooking.user?.phone}</p>
-                  </div>
-                  <button onClick={() => setIsDrawerOpen(false)} className="admin-btn-icon w-8 h-8 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]">
-                    <span className="material-symbols-outlined text-[18px]">close</span>
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="admin-label">Change Booking Status</label>
-                  <select value={drawerStatus} onChange={(e) => handleUpdateStatus(e.target.value)} className="admin-input h-10 font-bold capitalize">
-                    <option value="inquiry">Inquiry Received</option>
-                    <option value="review">Under Review</option>
-                    <option value="confirmed">Booking Confirmed</option>
-                    <option value="team_assigned">Staff Assigned</option>
-                    <option value="setup_in_progress">Setup In Progress</option>
-                    <option value="active">Event Active & Live</option>
-                    <option value="completed">Completed & Cleaned Up</option>
-                  </select>
-                </div>
-
-                <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-                  <span className="admin-label mb-0">Price Estimates</span>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Theme Rental Fee (₹)</label><input type="number" value={quoteRental} onChange={(e) => setQuoteRental(e.target.value)} className="admin-input" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Labor & Setup Charges (₹)</label><input type="number" value={quoteSetup} onChange={(e) => setQuoteSetup(e.target.value)} className="admin-input" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Transportation (₹)</label><input type="number" value={quoteTransport} onChange={(e) => setQuoteTransport(e.target.value)} className="admin-input" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Add-ons (₹)</label><input type="number" value={quoteAddons} onChange={(e) => setQuoteAddons(e.target.value)} className="admin-input" disabled /></div>
-                  </div>
-                  <button onClick={handleUpdateQuotation} className="admin-btn w-full h-10">Save & Send Price Estimate</button>
-                </div>
-
-                <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-                  <span className="admin-label mb-0">Setup & Pickup Schedule</span>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Setup Time</label><input type="datetime-local" value={logisticsSetup} onChange={(e) => setLogisticsSetup(e.target.value)} className="admin-input" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Pickup Time</label><input type="datetime-local" value={logisticsPickup} onChange={(e) => setLogisticsPickup(e.target.value)} className="admin-input" /></div>
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-                  <div className="flex items-center justify-between">
-                    <span className="admin-label mb-0">Celebration Venue & Map</span>
-                    <span className="admin-badge admin-badge-info">Interactive Geocoding</span>
-                  </div>
-                  <div className="relative w-full h-[200px] rounded-[var(--admin-radius-xl)] overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-bg-subtle)]">
-                    <div id="admin-leaflet-map" className="w-full h-full z-10" />
-                  </div>
-                  <p className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">📍 Drag the marker or click on the map to auto-geocode fields!</p>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1 sm:col-span-2"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Venue Name</label><input type="text" value={venueName} onChange={(e) => setVenueName(e.target.value)} className="admin-input" /></div>
-                    <div className="space-y-1 sm:col-span-2"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Address</label><textarea rows={2} value={venueAddress} onChange={(e) => setVenueAddress(e.target.value)} className="admin-textarea" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Latitude</label><input type="number" step="any" value={venueLatitude} onChange={(e) => handleAdminCoordInputChange("lat", e.target.value)} className="admin-input font-mono" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">Longitude</label><input type="number" step="any" value={venueLongitude} onChange={(e) => handleAdminCoordInputChange("lng", e.target.value)} className="admin-input font-mono" /></div>
-                  </div>
-                </div>
-
-                <div className="space-y-3 pt-5 border-t border-[var(--admin-border-subtle)]">
-                  <span className="admin-label mb-0">Assign Staff</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {teamMembers.map((member) => {
-                      const isAllocated = allocatedTeam.some((t) => t.name === member.name);
-                      return (
-                        <div key={member.name} onClick={() => handleTeamMemberToggle(member.name, member.role, member.contact)} className={`p-3 rounded-[var(--admin-radius-lg)] border cursor-pointer transition-all flex justify-between items-center ${isAllocated ? "bg-[var(--admin-surface-muted)] border-[var(--admin-border-strong)]" : "border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)]"}`}>
-                          <div><span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">{member.name}</span><span className="text-[10px] text-[var(--admin-text-tertiary)] block capitalize">{member.role}</span></div>
-                          <input type="checkbox" checked={isAllocated} readOnly className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer" />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <button onClick={handleUpdateLogistics} className="admin-btn w-full h-11 text-[12px]">Save Timeline & Staff</button>
-              </div>
-
-              {/* Chat Panel */}
-              <div className="w-full md:w-[320px] bg-[var(--admin-bg-subtle)] p-6 flex flex-col h-full shrink-0 border-t md:border-t-0 border-[var(--admin-border-subtle)]">
-                <div className="border-b border-[var(--admin-border-subtle)] pb-4 shrink-0 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">CLIENT CHAT</span>
-                    <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)]">Customer Messages</h4>
-                  </div>
-                  <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">forum</span>
-                </div>
-
-                <div className="flex-1 overflow-y-auto py-5 space-y-5 pr-2 custom-scrollbar flex flex-col">
-                  {selectedBooking.chatHistory?.map((chat, idx) => {
-                    const isAdmin = chat.sender === "admin";
-                    return (
-                      <div key={idx} className={`flex flex-col max-w-[85%] ${isAdmin ? "self-end text-right ml-auto" : "self-start text-left"}`}>
-                        <span className="text-[9px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">{isAdmin ? "You" : "Client"}</span>
-                        <div className={`p-3 text-[12px] leading-relaxed shadow-sm ${isAdmin ? "bg-[var(--admin-accent)] text-white rounded-[16px] rounded-tr-[4px]" : "bg-[var(--admin-surface)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] rounded-[16px] rounded-tl-[4px]"}`}>
-                          {chat.message}
-                        </div>
-                        <span className="text-[9px] font-bold text-[var(--admin-text-tertiary)] mt-1.5 block">{new Date(chat.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                      </div>
-                    );
-                  })}
-                  <div ref={chatEndRef} />
-                </div>
-
-                <form onSubmit={handleSendAdminChat} className="pt-4 shrink-0 flex items-center gap-2 mt-auto">
-                  <input type="text" placeholder="Message..." value={drawerChatMsg} onChange={(e) => setDrawerChatMsg(e.target.value)} className="admin-input h-10 flex-1 rounded-full" required />
-                  <button type="submit" className="w-10 h-10 rounded-full bg-[var(--admin-accent)] text-white flex items-center justify-center hover:bg-[var(--admin-accent-hover)] transition-all shrink-0"><span className="material-symbols-outlined text-[16px]">send</span></button>
-                </form>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Drawer removed */}
 
       {/* Category Modal */}
       <AnimatePresence>

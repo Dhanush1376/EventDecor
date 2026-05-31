@@ -42,16 +42,25 @@ const pathIncludesAuth = (url = '') => String(url).toLowerCase().includes('/auth
 export const ensureCsrfToken = async () => {
   if (csrfToken) return csrfToken;
   if (!csrfInitPromise) {
-    csrfInitPromise = api
-      .get('/csrf-token', { _bypassOfflineQueue: true })
-      .then((res) => {
-        csrfToken = res.data?.csrfToken || csrfToken;
-        return csrfToken;
-      })
-      .catch((err) => {
-        csrfInitPromise = null;
-        throw err;
-      });
+    csrfInitPromise = (async () => {
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const res = await api.get('/csrf-token', { _bypassOfflineQueue: true });
+          csrfToken = res.data?.csrfToken || csrfToken;
+          return csrfToken;
+        } catch (err) {
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 500));
+          } else {
+            // Allow request to proceed — backend will enforce CSRF and return
+            // a clear 403 "Invalid or missing CSRF token" instead of silently blocking
+            logger.warn('[API] CSRF token fetch failed after retries. Proceeding without token.');
+            csrfInitPromise = null;
+            return null;
+          }
+        }
+      }
+    })();
   }
   return csrfInitPromise;
 };
@@ -139,8 +148,20 @@ export const refreshAccessToken = async () => {
         const payload = res.data?.data || res.data;
         return applyRefreshPayload(payload);
       })
+      .catch(async (err) => {
+        if (err.response?.status === 409) {
+          logger.warn('[API] Concurrent refresh detected (409). Retrying in 1s to pick up new tokens from other tab.');
+          await new Promise((r) => setTimeout(r, 1000));
+          refreshPromise = null;
+          return refreshAccessToken(); // Retry the refresh with the new cookie/localStorage token
+        }
+        throw err;
+      })
       .finally(() => {
-        refreshPromise = null;
+        // Only nullify if it hasn't been nullified by the retry catch block
+        if (refreshPromise) {
+          refreshPromise = null;
+        }
       });
   }
   return refreshPromise;
@@ -389,6 +410,9 @@ api.interceptors.response.use(
           logger.warn('[API] Token refresh failed due to network error. Preserving session.');
         }
       }
+    } else if (error.response?.status === 409 && isAuthRefresh) {
+      logger.warn('[API] Refresh endpoint returned 409 (grace period overlap). Deferring to retry logic.');
+      // Do nothing, let the catch block in refreshAccessToken handle the retry
     } else if (error.response?.status === 401 && isAuthRefresh) {
       logger.error('[API] Refresh endpoint returned 401. Session expired.');
       dispatchUnauthorized();
