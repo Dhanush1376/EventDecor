@@ -131,7 +131,7 @@ export function IntelligentSearchOverlay({
             className="relative z-10 w-full max-w-2xl mx-auto mt-[8vh] md:mt-[12vh] px-4"
           >
             {/* Search Input Card */}
-            <div className="bg-[#fcfbf9]/95 border border-[#d0c5af]/30 rounded-[32px] shadow-[0_32px_80px_-10px_rgba(27,24,20,0.18)] focus-within:border-primary/45 focus-within:shadow-[0_32px_80px_-10px_rgba(184,157,112,0.12),0_0_0_1px_rgba(184,157,112,0.1)] transition-all duration-500 overflow-hidden">
+            <div className="bg-[#fcfbf9]/95 border-none rounded-[32px] shadow-[0_32px_80px_-10px_rgba(27,24,20,0.18)] focus-within:shadow-[0_32px_80px_-10px_rgba(184,157,112,0.12)] transition-all duration-500 overflow-hidden">
               
               {/* Input Row */}
               <div className="flex items-center gap-4 px-6 py-4.5 md:px-8.5 md:py-5.5 relative">

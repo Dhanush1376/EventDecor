@@ -43,7 +43,7 @@ export function SearchBar({
 
   return (
     <div
-      className={`relative group w-full md:flex-1 bg-surface-bright/90 backdrop-blur-md border border-outline-variant/30 rounded-full transition-all duration-300 overflow-hidden ${className}`}
+      className={`relative group w-full md:flex-1 bg-surface-bright/90 backdrop-blur-md border-none rounded-full transition-all duration-300 overflow-hidden ${className}`}
     >
       <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 transition-colors select-none pointer-events-none font-bold">
         search

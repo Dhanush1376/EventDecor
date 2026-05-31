@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { isOriginAllowed } from '../config/corsConfig';
 import { getCsrfCookieOptions, getCsrfCookieName } from '../config/cookieConfig';
+import logger from '../config/logger';
 
 export const CSRF_COOKIE_NAME = getCsrfCookieName();
 export const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -71,7 +72,8 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   const cookieToken = String(req.cookies?.[CSRF_COOKIE_NAME] || '');
   const headerToken = String(req.headers[CSRF_HEADER_NAME] || '');
 
-  if (!cookieToken || !headerToken || cookieToken.length !== headerToken.length) {
+  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+    logger.error(`[CSRF_FAILED] path=${req.path} cookieToken=${cookieToken} headerToken=${headerToken}`);
     res.status(403).json({
       success: false,
       message: 'Invalid or missing CSRF token',
