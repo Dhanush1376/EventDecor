@@ -605,12 +605,16 @@ export function AdminAddShowcase() {
                                 toast.success(`Showcase image uploaded successfully!`);
                               }
                             } catch (err) {
-                              const msg =
+                              let msg =
                                 err?.response?.status === 401
                                   ? 'Upload failed: Please log in again or refresh the page'
                                   : err?.response?.data?.message ||
                                     err?.message ||
                                     'Upload failed. Please try again.';
+
+                              if (err?.message === 'Network Error') {
+                                msg = `Network Error! URL: ${err?.config?.url || 'unknown'}. Check if CORS or AdBlocker is blocking it.`;
+                              }
                               toast.error(msg);
                             } finally {
                               setTimeout(() => {
