@@ -6,7 +6,7 @@ import logger from '../config/logger';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import { getTrackingCookieOptions } from '../config/cookieConfig';
-import { sanitizeTrackingMetadata, stripHtmlTags } from '../utils/aiSanitizer';
+import { sanitizeTrackingMetadata } from '../utils/aiSanitizer';
 
 const VALID_EVENT_TYPES = new Set([
   'product_view',
@@ -30,7 +30,11 @@ const VALID_EVENT_TYPES = new Set([
 
 const VALID_TARGET_TYPES = new Set(['product', 'event', 'gallery', 'showcase']);
 
-const isValidInteractionPayload = (eventType: string, targetType: string, targetId: string): boolean =>
+const isValidInteractionPayload = (
+  eventType: string,
+  targetType: string,
+  targetId: string,
+): boolean =>
   VALID_EVENT_TYPES.has(eventType) &&
   VALID_TARGET_TYPES.has(targetType) &&
   mongoose.Types.ObjectId.isValid(targetId);
@@ -43,7 +47,9 @@ export const trackEvent = async (req: Request, res: Response) => {
     const { eventType, targetType, targetId, metadata } = req.body;
 
     if (!eventType || !targetType || !targetId) {
-      return res.status(400).json({ success: false, message: 'eventType, targetType, and targetId are required' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'eventType, targetType, and targetId are required' });
     }
 
     const userId = (req as any).user?.id || (req as any).user?._id || null;
@@ -85,11 +91,13 @@ export const trackEvent = async (req: Request, res: Response) => {
     // If significant activity, enqueue profile rebuild
     if (userId && ['purchase', 'booking', 'wishlist_add', 'cart_add'].includes(eventType)) {
       if (isQueuesReady()) {
-        recommendationQueue.add(
-          'rebuild-user-profile',
-          { type: 'rebuild-user-profile', userId },
-          { priority: 2, delay: 5000 } // Slight delay to batch rapid events
-        ).catch(() => {});
+        recommendationQueue
+          .add(
+            'rebuild-user-profile',
+            { type: 'rebuild-user-profile', userId },
+            { priority: 2, delay: 5000 }, // Slight delay to batch rapid events
+          )
+          .catch(() => {});
       }
 
       // Invalidate personal feed cache
@@ -131,7 +139,13 @@ export const trackBatchEvents = async (req: Request, res: Response) => {
     });
 
     const docs = dedupedEvents
-      .filter((e: any) => e.eventType && e.targetType && e.targetId && isValidInteractionPayload(e.eventType, e.targetType, e.targetId))
+      .filter(
+        (e: any) =>
+          e.eventType &&
+          e.targetType &&
+          e.targetId &&
+          isValidInteractionPayload(e.eventType, e.targetType, e.targetId),
+      )
       .map((e: any) => {
         const sanitizedMeta = sanitizeTrackingMetadata(e.metadata);
         return {

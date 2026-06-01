@@ -18,7 +18,11 @@ import WalletTransaction from '../models/WalletTransaction';
 import { creditWalletBalance } from '../utils/walletMutations';
 
 export class PaymentService {
-  static verifyWebhookSignature(signature: string, rawBody: Buffer, webhookSecret: string): boolean {
+  static verifyWebhookSignature(
+    signature: string,
+    rawBody: Buffer,
+    webhookSecret: string,
+  ): boolean {
     const shasum = crypto.createHmac('sha256', webhookSecret);
     shasum.update(rawBody);
     const digest = shasum.digest('hex');
@@ -60,15 +64,20 @@ export class PaymentService {
 
     try {
       order = await Order.findOneAndUpdate(
-        { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed'] } } as any,
+        {
+          razorpayOrderId: razorpay_order_id,
+          paymentStatus: { $in: ['pending', 'failed'] },
+        } as any,
         { $set: { paymentStatus: 'processing' } },
-        { new: true, session }
+        { new: true, session },
       );
 
       if (!order) {
         const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
         if (existingOrder && existingOrder.paymentStatus === 'paid') {
-          logger.info(`[PAYMENT REDUNDANCY] Payment already processed successfully for order: ${existingOrder._id}`);
+          logger.info(
+            `[PAYMENT REDUNDANCY] Payment already processed successfully for order: ${existingOrder._id}`,
+          );
           await session.abortTransaction();
           session.endSession();
           return existingOrder;
@@ -95,58 +104,77 @@ export class PaymentService {
       const isAmountValid = fetchedPayment.amount === expectedAmount;
       const isCurrencyValid = fetchedPayment.currency === 'INR';
       const isOrderValid = fetchedPayment.order_id === razorpay_order_id;
-      const isStatusValid = fetchedPayment.status === 'captured' || fetchedPayment.status === 'authorized';
+      const isStatusValid =
+        fetchedPayment.status === 'captured' || fetchedPayment.status === 'authorized';
 
-      const isValid = isSignatureValid && isAmountValid && isCurrencyValid && isOrderValid && isStatusValid;
+      const isValid =
+        isSignatureValid && isAmountValid && isCurrencyValid && isOrderValid && isStatusValid;
 
       // Log the verification attempt
-      await PaymentAudit.create([{
-        orderId: order._id,
-        userId: userId,
-        razorpayOrderId: razorpay_order_id,
-        razorpayPaymentId: razorpay_payment_id,
-        eventType: 'verification_attempt',
-        status: isValid ? 'success' : (!isSignatureValid ? 'failed' : 'tampered'),
-        amountExpected: expectedAmount,
-        amountReceived: Number(fetchedPayment.amount),
-        currencyReceived: String(fetchedPayment.currency),
-        signatureValid: isSignatureValid,
-        notes: `Signature: ${isSignatureValid}, Amount Match: ${isAmountValid}, Status: ${fetchedPayment.status}, Order Match: ${isOrderValid}`,
-        rawPayload: JSON.stringify(fetchedPayment)
-      }], { session });
+      await PaymentAudit.create(
+        [
+          {
+            orderId: order._id,
+            userId: userId,
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+            eventType: 'verification_attempt',
+            status: isValid ? 'success' : !isSignatureValid ? 'failed' : 'tampered',
+            amountExpected: expectedAmount,
+            amountReceived: Number(fetchedPayment.amount),
+            currencyReceived: String(fetchedPayment.currency),
+            signatureValid: isSignatureValid,
+            notes: `Signature: ${isSignatureValid}, Amount Match: ${isAmountValid}, Status: ${fetchedPayment.status}, Order Match: ${isOrderValid}`,
+            rawPayload: JSON.stringify(fetchedPayment),
+          },
+        ],
+        { session },
+      );
 
       if (!isValid) {
         for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.productId, {
-            $inc: { stock: item.quantity }
-          }, { session });
+          await Product.findByIdAndUpdate(
+            item.productId,
+            {
+              $inc: { stock: item.quantity },
+            },
+            { session },
+          );
         }
 
         if (order.walletDeduction && order.walletDeduction > 0) {
           await creditWalletBalance(order.user, order.walletDeduction, session);
-          await WalletTransaction.create([{
-            userId: order.user,
-            type: 'credit',
-            amount: order.walletDeduction,
-            source: 'refund',
-            description: 'Refund for failed Razorpay payment verification',
-            status: 'active'
-          }], { session });
+          await WalletTransaction.create(
+            [
+              {
+                userId: order.user,
+                type: 'credit',
+                amount: order.walletDeduction,
+                source: 'refund',
+                description: 'Refund for failed Razorpay payment verification',
+                status: 'active',
+              },
+            ],
+            { session },
+          );
         }
 
         if (order.couponCode) {
           await Coupon.findOneAndUpdate(
-            { code: order.couponCode.toUpperCase() }, 
-            { 
+            { code: order.couponCode.toUpperCase() },
+            {
               $inc: { usedCount: -1 },
-              $pull: { usedBy: { orderId: order._id } }
+              $pull: { usedBy: { orderId: order._id } },
             },
-            { session }
+            { session },
           );
         }
 
         order.paymentStatus = 'failed';
-        order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Tampering/Mismatch) - Stock & Coupon Released' });
+        order.statusHistory.push({
+          status: 'Pending',
+          note: 'Payment verification failed (Tampering/Mismatch) - Stock & Coupon Released',
+        });
         await order.save({ session });
         await session.commitTransaction();
         session.endSession();
@@ -157,7 +185,10 @@ export class PaymentService {
       order.orderStatus = 'Confirmed';
       order.razorpayPaymentId = razorpay_payment_id;
       order.razorpaySignature = razorpay_signature;
-      order.statusHistory.push({ status: 'Confirmed', note: 'Payment verified and order confirmed' });
+      order.statusHistory.push({
+        status: 'Confirmed',
+        note: 'Payment verified and order confirmed',
+      });
 
       await order.save({ session });
 
@@ -188,11 +219,14 @@ export class PaymentService {
         orderId: order._id.toString(),
         date: order.createdAt || new Date(),
         customerName: user?.name || 'Customer',
-        shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+        shippingAddress:
+          typeof order.shippingAddress === 'string'
+            ? order.shippingAddress
+            : order.shippingAddress?.address || '',
         items: order.items,
         subtotal: order.subtotal,
         shipping: order.shippingFee,
-        total: order.total
+        total: order.total,
       });
 
       if (user) {
@@ -208,12 +242,15 @@ export class PaymentService {
             variant: i.variant,
             quantity: i.quantity,
             price: i.price,
-            image: i.imageSrc
+            image: i.imageSrc,
           })),
           subtotal: order.subtotal,
           shipping: order.shippingFee,
           total: order.total,
-          shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+          shippingAddress:
+            typeof order.shippingAddress === 'string'
+              ? order.shippingAddress
+              : order.shippingAddress?.address || '',
           dashboardUrl: `${frontendUrl}/dashboard?tab=orders`,
           currentYear: new Date().getFullYear(),
         });
@@ -225,11 +262,13 @@ export class PaymentService {
           type: 'order',
           action: 'order_placed',
           userId: user._id.toString(),
-          attachments: [{
-            filename: `Invoice_${order.invoiceNumber}.pdf`,
-            content: pdfBuffer,
-            contentType: 'application/pdf'
-          }]
+          attachments: [
+            {
+              filename: `Invoice_${order.invoiceNumber}.pdf`,
+              content: pdfBuffer,
+              contentType: 'application/pdf',
+            },
+          ],
         });
 
         if (adminEmails.length > 0) {
@@ -239,11 +278,13 @@ export class PaymentService {
             customHtml: htmlContent,
             type: 'system',
             action: 'admin_order_alert',
-            attachments: [{
-              filename: `Invoice_${order.invoiceNumber}.pdf`,
-              content: pdfBuffer,
-              contentType: 'application/pdf'
-            }]
+            attachments: [
+              {
+                filename: `Invoice_${order.invoiceNumber}.pdf`,
+                content: pdfBuffer,
+                contentType: 'application/pdf',
+              },
+            ],
           });
         }
       }
@@ -269,7 +310,9 @@ export class PaymentService {
           paymentStatus: 'paid',
         }).lean();
         if (alreadyPaidByPaymentId) {
-          logger.info(`[PAYMENT WEBHOOK IDEMPOTENCY] Payment ${razorpay_payment_id} already processed`);
+          logger.info(
+            `[PAYMENT WEBHOOK IDEMPOTENCY] Payment ${razorpay_payment_id} already processed`,
+          );
           return { status: 200, message: 'Webhook idempotency: payment already processed' };
         }
       }
@@ -282,14 +325,19 @@ export class PaymentService {
       session.startTransaction();
 
       try {
-        let order: any = await Order.findOneAndUpdate(
-          { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed'] } } as any,
+        const order: any = await Order.findOneAndUpdate(
+          {
+            razorpayOrderId: razorpay_order_id,
+            paymentStatus: { $in: ['pending', 'failed'] },
+          } as any,
           { $set: { paymentStatus: 'processing' } },
-          { new: true, session }
+          { new: true, session },
         );
 
         if (!order) {
-          const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id }).session(session);
+          const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id }).session(
+            session,
+          );
           if (existingOrder?.paymentStatus === 'paid') {
             await session.abortTransaction();
             return { status: 200, message: 'Already paid' };
@@ -304,30 +352,35 @@ export class PaymentService {
 
         const isValid = isAmountValid && isCurrencyValid;
 
-        await PaymentAudit.create([{
-          orderId: order._id,
-          userId: order.user,
-          razorpayOrderId: razorpay_order_id,
-          razorpayPaymentId: razorpay_payment_id,
-          eventType: 'webhook_received',
-          status: isValid ? 'success' : 'tampered',
-          amountExpected: expectedAmount,
-          amountReceived: Number(paymentEntity.amount),
-          currencyReceived: String(paymentEntity.currency),
-          signatureValid: true, // Controller verified it
-          notes: `Amount Match: ${isAmountValid}, Currency Match: ${isCurrencyValid}, Event: ${event}`,
-          rawPayload: JSON.stringify(paymentEntity)
-        }], { session });
+        await PaymentAudit.create(
+          [
+            {
+              orderId: order._id,
+              userId: order.user,
+              razorpayOrderId: razorpay_order_id,
+              razorpayPaymentId: razorpay_payment_id,
+              eventType: 'webhook_received',
+              status: isValid ? 'success' : 'tampered',
+              amountExpected: expectedAmount,
+              amountReceived: Number(paymentEntity.amount),
+              currencyReceived: String(paymentEntity.currency),
+              signatureValid: true, // Controller verified it
+              notes: `Amount Match: ${isAmountValid}, Currency Match: ${isCurrencyValid}, Event: ${event}`,
+              rawPayload: JSON.stringify(paymentEntity),
+            },
+          ],
+          { session },
+        );
 
         if (!isValid) {
           if (order.couponCode) {
             await Coupon.findOneAndUpdate(
-              { code: order.couponCode.toUpperCase() }, 
-              { 
+              { code: order.couponCode.toUpperCase() },
+              {
                 $inc: { usedCount: -1 },
-                $pull: { usedBy: { orderId: order._id } }
+                $pull: { usedBy: { orderId: order._id } },
               },
-              { session }
+              { session },
             );
           }
 
@@ -339,7 +392,10 @@ export class PaymentService {
           });
           await order.save({ session });
           await session.commitTransaction();
-          return { status: 200, message: 'Webhook processed but validation failed due to tampering' };
+          return {
+            status: 200,
+            message: 'Webhook processed but validation failed due to tampering',
+          };
         }
 
         order.paymentStatus = 'paid';
@@ -380,30 +436,39 @@ export class PaymentService {
           session.startTransaction();
           try {
             for (const item of order.items) {
-              await Product.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } }, { session });
+              await Product.findByIdAndUpdate(
+                item.productId,
+                { $inc: { stock: item.quantity } },
+                { session },
+              );
             }
             if (order.couponCode) {
               await Coupon.findOneAndUpdate(
-                { code: order.couponCode.toUpperCase() }, 
-                { 
+                { code: order.couponCode.toUpperCase() },
+                {
                   $inc: { usedCount: -1 },
-                  $pull: { usedBy: { orderId: order._id } }
+                  $pull: { usedBy: { orderId: order._id } },
                 },
-                { session }
+                { session },
               );
             }
 
             // Restore wallet deduction if customer used wallet balance
             if (order.walletDeduction && order.walletDeduction > 0) {
               await creditWalletBalance(order.user, order.walletDeduction, session);
-              await WalletTransaction.create([{
-                userId: order.user,
-                type: 'credit',
-                amount: order.walletDeduction,
-                source: 'refund',
-                description: 'Refund for failed Razorpay payment (webhook)',
-                status: 'active'
-              }], { session });
+              await WalletTransaction.create(
+                [
+                  {
+                    userId: order.user,
+                    type: 'credit',
+                    amount: order.walletDeduction,
+                    source: 'refund',
+                    description: 'Refund for failed Razorpay payment (webhook)',
+                    status: 'active',
+                  },
+                ],
+                { session },
+              );
             }
 
             order.paymentStatus = 'failed';
@@ -415,7 +480,7 @@ export class PaymentService {
             logger.warn('[PAYMENT_FAILED] Webhook reported payment failure for order', {
               orderId: order._id,
               razorpayOrderId: razorpay_order_id,
-              userId: order.user
+              userId: order.user,
             });
             await order.save({ session });
             await session.commitTransaction();

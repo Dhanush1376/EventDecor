@@ -1,5 +1,3 @@
-import logger from '../../config/logger';
-
 /**
  * ExplorationEngine - Balances exploration (showing new/diverse items)
  * and exploitation (showing items the user has high affinity for).
@@ -58,7 +56,7 @@ class ExplorationEngine {
     rankedExploitItems: any[],
     diverseExplorePool: any[],
     targetLimit: number,
-    userProfileOrSession: any
+    userProfileOrSession: any,
   ): any[] {
     const adaptiveEps = this.getAdaptiveEpsilon(userProfileOrSession);
     const exploreCount = Math.floor(targetLimit * adaptiveEps);
@@ -70,7 +68,7 @@ class ExplorationEngine {
     // Filter out items already in the exploit list from the explore pool
     const exploitIds = new Set(finalExploit.map((item) => item._id?.toString()));
     const validExplorePool = diverseExplorePool.filter(
-      (item) => !exploitIds.has(item._id?.toString())
+      (item) => !exploitIds.has(item._id?.toString()),
     );
 
     // Deterministic daily seed based on user ID (or 'anonymous')
@@ -92,7 +90,7 @@ class ExplorationEngine {
   public applyNoveltyBonus(
     items: any[],
     userInteractedIds: Set<string>,
-    bonusWeight: number = 0.15
+    bonusWeight: number = 0.15,
   ): any[] {
     return items.map((item) => {
       const isNovel = !userInteractedIds.has(item._id?.toString());

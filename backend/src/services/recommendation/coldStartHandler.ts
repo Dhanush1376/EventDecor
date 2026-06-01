@@ -1,7 +1,6 @@
 import Product from '../../models/Product';
 import Event from '../../models/Event';
 import Gallery from '../../models/Gallery';
-import ShowcaseCollection from '../../models/ShowcaseCollection';
 import { getTrendingFeeds } from './trendingEngine';
 import { getCachedSeasonalContext, computeSeasonalBoost } from './seasonalEngine';
 import { RecommendationCache } from './recommendationCache';
@@ -28,7 +27,7 @@ export interface ColdStartRecommendation {
  * Checks cache first, computes if stale.
  */
 export async function getColdStartFeed(
-  options: { limit?: number; targetType?: string } = {}
+  options: { limit?: number; targetType?: string } = {},
 ): Promise<ColdStartRecommendation[]> {
   const limit = options.limit || 20;
   const targetType = options.targetType;
@@ -46,7 +45,7 @@ export async function getColdStartFeed(
 
     // 1. Trending products (weighted highest for cold start)
     const trendingFeeds = await getTrendingFeeds(
-      seasonalContext.isSeasonallyActive ? seasonalContext.activePeriods[0]?.context : undefined
+      seasonalContext.isSeasonallyActive ? seasonalContext.activePeriods[0]?.context : undefined,
     );
 
     // 2. Featured/popular products from DB
@@ -76,12 +75,12 @@ export async function getColdStartFeed(
         product.category,
         undefined,
         product.tags,
-        seasonalContext
+        seasonalContext,
       );
 
       // Check if this item is trending (bonus)
       const trendingItem = trendingFeeds.trendingNow.find(
-        (t) => t.targetId === (product._id as any).toString()
+        (t) => t.targetId === (product._id as any).toString(),
       );
       const trendingBonus = trendingItem ? trendingItem.score * 0.3 : 0;
 
@@ -106,7 +105,7 @@ export async function getColdStartFeed(
         event.category,
         event.style,
         event.features,
-        seasonalContext
+        seasonalContext,
       );
 
       const baseScore = 4; // Events are inherently high-value
@@ -130,10 +129,11 @@ export async function getColdStartFeed(
         gallery.category,
         gallery.style,
         gallery.tags,
-        seasonalContext
+        seasonalContext,
       );
 
-      const popularityScore = Math.log2(Math.max(gallery.views || 1, 1)) + (gallery.likes || 0) * 0.5;
+      const popularityScore =
+        Math.log2(Math.max(gallery.views || 1, 1)) + (gallery.likes || 0) * 0.5;
       const finalScore = popularityScore * seasonalBoost;
 
       feed.push({
@@ -154,7 +154,9 @@ export async function getColdStartFeed(
     // Cache the result
     await RecommendationCache.setColdStartFeed(diversified);
 
-    const filtered = targetType ? diversified.filter((i) => i.targetType === targetType) : diversified;
+    const filtered = targetType
+      ? diversified.filter((i) => i.targetType === targetType)
+      : diversified;
     return filtered.slice(0, limit);
   } catch (err: any) {
     logger.error(`[COLD START] Error generating cold start feed: ${err.message}`);
@@ -193,4 +195,3 @@ function applyDiversityFilter(items: ColdStartRecommendation[]): ColdStartRecomm
   // Append deferred items at the end
   return [...result, ...deferred];
 }
-

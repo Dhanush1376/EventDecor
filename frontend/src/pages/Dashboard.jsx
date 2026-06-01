@@ -1,26 +1,34 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useWishlist } from "../context/WishlistContext";
-import { useCart } from "../context/CartContext";
-import { SEO } from "../components/seo/SEO";
-import { handleImageError } from "../utils/imageUtils";
-import { useAuth } from "../context/AuthContext";
-import { orderService, userService } from "../services/domainServices";
-import { MandalaElement } from "../components/ui/MandalaElement";
-import { WriteReviewModal } from "../components/sections/ProductReviews";
-import toast from "react-hot-toast";
-import Barcode from "react-barcode";
-import { ErrorBoundary } from "../components/ui/ErrorBoundary";
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useWishlist } from '../context/WishlistContext';
+import { useCart } from '../context/CartContext';
+import { SEO } from '../components/seo/SEO';
+import { handleImageError } from '../utils/imageUtils';
+import { useAuth } from '../context/AuthContext';
+import { orderService, userService } from '../services/domainServices';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { WriteReviewModal } from '../components/sections/ProductReviews';
+import toast from 'react-hot-toast';
+import Barcode from 'react-barcode';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 
-const InvoiceTemplate = React.lazy(() => import("../components/ui").then(m => ({ default: m.InvoiceTemplate })));
-const ProductCard = React.lazy(() => import("../components/ui").then(m => ({ default: m.ProductCard })));
-const LoyaltyPanel = React.lazy(() => import("../components/loyalty/LoyaltyPanel").then(m => ({ default: m.LoyaltyPanel })));
-const EventCustomerDashboard = React.lazy(() => import("./EventCustomerDashboard").then(m => ({ default: m.EventCustomerDashboard })));
+const InvoiceTemplate = React.lazy(() =>
+  import('../components/ui').then((m) => ({ default: m.InvoiceTemplate })),
+);
+const ProductCard = React.lazy(() =>
+  import('../components/ui').then((m) => ({ default: m.ProductCard })),
+);
+const LoyaltyPanel = React.lazy(() =>
+  import('../components/loyalty/LoyaltyPanel').then((m) => ({ default: m.LoyaltyPanel })),
+);
+const EventCustomerDashboard = React.lazy(() =>
+  import('./EventCustomerDashboard').then((m) => ({ default: m.EventCustomerDashboard })),
+);
 
-import { useWebsiteContent } from "../hooks/useWebsiteContent";
-import { useDashboardData } from "../hooks/useDashboardData";
-import { OrdersListSkeleton, ProductCardSkeleton, Skeleton } from "../components/ui/Skeleton";
+import { useWebsiteContent } from '../hooks/useWebsiteContent';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { OrdersListSkeleton, ProductCardSkeleton, Skeleton } from '../components/ui/Skeleton';
 
 import logger from '../utils/logger';
 export function Dashboard() {
@@ -32,16 +40,30 @@ export function Dashboard() {
   const fileInputRef = useRef(null);
 
   const { contact } = useWebsiteContent();
-  const addressText = contact?.address || "Siri Arts & Crafts, #28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh";
-  const phoneText = contact?.phone || "9866006648";
+  const addressText =
+    contact?.address ||
+    'Siri Arts & Crafts, #28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh';
+  const phoneText = contact?.phone || '9866006648';
 
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState('profile');
   const [mobileShowContent, setMobileShowContent] = useState(false);
 
   // Sync tab from URL query params
   useEffect(() => {
-    const tabParam = searchParams.get("tab");
-    if (tabParam && ["profile", "orders", "addresses", "wishlist", "preferences", "loyalty", "bookings"].includes(tabParam)) {
+    const tabParam = searchParams.get('tab');
+    if (
+      tabParam &&
+      [
+        'profile',
+        'orders',
+        'rentals',
+        'addresses',
+        'wishlist',
+        'preferences',
+        'loyalty',
+        'bookings',
+      ].includes(tabParam)
+    ) {
       const timer = setTimeout(() => {
         setActiveTab(tabParam);
         setMobileShowContent(true);
@@ -56,12 +78,14 @@ export function Dashboard() {
 
   const {
     orders,
+    rentals,
     setOrders,
     addresses,
     setAddresses,
     recentlyViewed,
     setRecentlyViewed,
     isOrdersLoading,
+    isRentalsLoading,
     isAddressesLoading,
     isLoadingRecentlyViewed,
     refetch: refetchDashboardData,
@@ -69,18 +93,18 @@ export function Dashboard() {
 
   // Profile forms
   const [profileForm, setProfileForm] = useState({
-    name: "",
-    phone: "",
-    gender: "",
-    dateOfBirth: "",
+    name: '',
+    phone: '',
+    gender: '',
+    dateOfBirth: '',
   });
 
   // Preference forms
   const [prefsForm, setPrefsForm] = useState({
     email: true,
     marketing: true,
-    theme: "light",
-    language: "en",
+    theme: 'light',
+    language: 'en',
   });
 
   // Address forms
@@ -101,52 +125,79 @@ export function Dashboard() {
     if (user) {
       const timer = setTimeout(() => {
         setProfileForm({
-          name: user.name || "",
-          phone: user.phone || "",
-          gender: user.gender || "",
-          dateOfBirth: user.dateOfBirth || "",
+          name: user.name || '',
+          phone: user.phone || '',
+          gender: user.gender || '',
+          dateOfBirth: user.dateOfBirth || '',
         });
 
         setPrefsForm({
           email: user.notificationPreferences?.email !== false,
           marketing: user.notificationPreferences?.marketing !== false,
-          theme: user.accountPreferences?.theme || "light",
-          language: user.accountPreferences?.language || "en",
+          theme: user.accountPreferences?.theme || 'light',
+          language: user.accountPreferences?.language || 'en',
         });
       }, 0);
       return () => clearTimeout(timer);
     }
   }, [user]);
 
-  const [orderFilter, setOrderFilter] = useState("ALL");
+  const [orderFilter, setOrderFilter] = useState('ALL');
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    if (orderFilter === "DELIVERED")
-      return orders.filter((o) => o.orderStatus === "delivered");
-    if (orderFilter === "ON_THE_WAY")
+    if (orderFilter === 'DELIVERED') return orders.filter((o) => o.orderStatus === 'delivered');
+    if (orderFilter === 'ON_THE_WAY')
       return orders.filter((o) =>
-        ["confirmed", "processing", "shipped"].includes(o.orderStatus),
+        ['confirmed', 'processing', 'shipped'].includes(o.orderStatus?.toLowerCase()),
+      );
+    if (orderFilter === 'RENTAL')
+      return orders.filter(
+        (o) => o.orderType === 'rental' || o.items?.some((i) => i.type === 'rental'),
+      );
+    if (orderFilter === 'PURCHASE')
+      return orders.filter(
+        (o) => o.orderType !== 'rental' && !o.items?.some((i) => i.type === 'rental'),
       );
     return orders;
   }, [orders, orderFilter]);
+
+  // Dashboard counts
+  const dashboardCounts = useMemo(() => {
+    if (!orders) return { activeRentals: 0, upcomingReturns: 0, purchaseOrders: 0 };
+    return {
+      activeRentals: orders.filter(
+        (o) =>
+          (o.orderType === 'rental' || o.items?.some((i) => i.type === 'rental')) &&
+          !['completed', 'cancelled', 'returned'].includes(o.orderStatus?.toLowerCase()),
+      ).length,
+      upcomingReturns: orders.filter(
+        (o) =>
+          (o.orderType === 'rental' || o.items?.some((i) => i.type === 'rental')) &&
+          ['delivered', 'active rental', 'return requested'].includes(o.orderStatus?.toLowerCase()),
+      ).length,
+      purchaseOrders: orders.filter(
+        (o) => o.orderType !== 'rental' && !o.items?.some((i) => i.type === 'rental'),
+      ).length,
+    };
+  }, [orders]);
 
   // Profile Save
   const handleProfileSave = async (e) => {
     e.preventDefault();
     if (!profileForm.name.trim()) {
-      toast.error("Full name cannot be blank");
+      toast.error('Full name cannot be blank');
       return;
     }
     setIsUpdatingProfile(true);
     try {
       const res = await userService.updateProfile(profileForm);
       if (res.success) {
-        toast.success("Profile information updated successfully!");
+        toast.success('Profile information updated successfully!');
         await checkAuth(); // Reload global user state
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update profile details");
+      toast.error(err.response?.data?.message || 'Failed to update profile details');
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -169,11 +220,11 @@ export function Dashboard() {
       };
       const res = await userService.updatePreferences(payload);
       if (res.success) {
-        toast.success("Preferences saved successfully!");
+        toast.success('Preferences saved successfully!');
         await checkAuth();
       }
     } catch (err) {
-      toast.error("Failed to save preference settings");
+      toast.error('Failed to save preference settings');
     } finally {
       setIsPreferencesSaving(false);
     }
@@ -190,29 +241,29 @@ export function Dashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file format");
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file format');
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image file size should not exceed 2MB");
+      toast.error('Image file size should not exceed 2MB');
       return;
     }
 
     const formData = new FormData();
-    formData.append("avatar", file);
+    formData.append('avatar', file);
 
     setIsUploadingAvatar(true);
-    const toastId = toast.loading("Uploading secure avatar image...");
+    const toastId = toast.loading('Uploading secure avatar image...');
     try {
       const res = await userService.uploadAvatar(formData);
       if (res.success) {
-        toast.success("Profile avatar updated successfully!", { id: toastId });
+        toast.success('Profile avatar updated successfully!', { id: toastId });
         await checkAuth();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to upload avatar", { id: toastId });
+      toast.error(err.response?.data?.message || 'Failed to upload avatar', { id: toastId });
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -221,12 +272,12 @@ export function Dashboard() {
   // Address Handlers
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
+      toast.error('Geolocation is not supported by your browser');
       return;
     }
 
     setIsDetectingLocation(true);
-    const toastId = toast.loading("Accessing device GPS coordinates...");
+    const toastId = toast.loading('Accessing device GPS coordinates...');
 
     const geoOptions = {
       enableHighAccuracy: true,
@@ -238,42 +289,38 @@ export function Dashboard() {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          toast.loading("Resolving coordinates to address details...", { id: toastId });
+          toast.loading('Resolving coordinates to address details...', { id: toastId });
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
             {
               headers: {
-                "Accept-Language": "en",
+                'Accept-Language': 'en',
               },
-            }
+            },
           );
 
-          if (!res.ok) throw new Error("Reverse lookup failed");
+          if (!res.ok) throw new Error('Reverse lookup failed');
 
           const data = await res.json();
           if (data && data.address) {
             const addr = data.address;
-            const road = addr.road || addr.suburb || addr.neighbourhood || "";
-            const locality = addr.suburb || addr.neighbourhood || addr.city_district || "";
-            const city = addr.city || addr.town || addr.village || addr.county || "";
-            const state = addr.state || "";
-            const pincode = addr.postcode || "";
+            const road = addr.road || addr.suburb || addr.neighbourhood || '';
+            const locality = addr.suburb || addr.neighbourhood || addr.city_district || '';
+            const city = addr.city || addr.town || addr.village || addr.county || '';
+            const state = addr.state || '';
+            const pincode = addr.postcode || '';
 
             // Construct readable street details
-            const streetParts = [
-              addr.house_number,
-              addr.building,
-              addr.road,
-            ].filter(Boolean);
+            const streetParts = [addr.house_number, addr.building, addr.road].filter(Boolean);
             const addressString =
               streetParts.length > 0
-                ? streetParts.join(", ")
-                : data.display_name.split(",").slice(0, 3).join(",").trim();
+                ? streetParts.join(', ')
+                : data.display_name.split(',').slice(0, 3).join(',').trim();
 
             setAddressFormData((prev) => ({
               ...prev,
-              pincode: pincode.replace(/\s/g, ""), // clean pincode spacing
-              locality: locality || road || "Local Area",
+              pincode: pincode.replace(/\s/g, ''), // clean pincode spacing
+              locality: locality || road || 'Local Area',
               addressString: addressString || data.display_name,
               city: city,
               state: state,
@@ -281,13 +328,13 @@ export function Dashboard() {
               longitude,
             }));
 
-            toast.success("Location tracking successful! Parameters updated.", { id: toastId });
+            toast.success('Location tracking successful! Parameters updated.', { id: toastId });
           } else {
-            toast.error("Unable to parse address components from coordinates.", { id: toastId });
+            toast.error('Unable to parse address components from coordinates.', { id: toastId });
           }
         } catch (error) {
-          logger.error("Reverse geocoding failure:", error);
-          toast.error("Failed to map coordinates to a clean street address.", { id: toastId });
+          logger.error('Reverse geocoding failure:', error);
+          toast.error('Failed to map coordinates to a clean street address.', { id: toastId });
         } finally {
           setIsDetectingLocation(false);
         }
@@ -296,19 +343,19 @@ export function Dashboard() {
         setIsDetectingLocation(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            toast.error("Location access denied by your device.", { id: toastId });
+            toast.error('Location access denied by your device.', { id: toastId });
             break;
           case error.POSITION_UNAVAILABLE:
-            toast.error("GPS position parameters unavailable.", { id: toastId });
+            toast.error('GPS position parameters unavailable.', { id: toastId });
             break;
           case error.TIMEOUT:
-            toast.error("Location tracking request timed out.", { id: toastId });
+            toast.error('Location tracking request timed out.', { id: toastId });
             break;
           default:
-            toast.error("An unknown geotracking error occurred.", { id: toastId });
+            toast.error('An unknown geotracking error occurred.', { id: toastId });
         }
       },
-      geoOptions
+      geoOptions,
     );
   };
 
@@ -316,14 +363,14 @@ export function Dashboard() {
     setEditingAddressId(addr._id || addr.id);
     setAddressFormData({
       id: addr._id || addr.id,
-      name: addr.name || "",
-      phone: addr.phone || "",
-      pincode: addr.pincode || "",
-      locality: addr.locality || "",
-      addressString: addr.addressString || "",
-      city: addr.city || "",
-      state: addr.state || "",
-      tag: addr.tag || "Home",
+      name: addr.name || '',
+      phone: addr.phone || '',
+      pincode: addr.pincode || '',
+      locality: addr.locality || '',
+      addressString: addr.addressString || '',
+      city: addr.city || '',
+      state: addr.state || '',
+      tag: addr.tag || 'Home',
       latitude: addr.latitude || null,
       longitude: addr.longitude || null,
     });
@@ -332,57 +379,57 @@ export function Dashboard() {
 
   const handleAddressSave = async (e) => {
     e.preventDefault();
-    
+
     // Validations
     if (!addressFormData.phone || addressFormData.phone.length < 10) {
-      toast.error("Please enter a valid 10-digit mobile number");
+      toast.error('Please enter a valid 10-digit mobile number');
       return;
     }
     if (!addressFormData.pincode || addressFormData.pincode.length !== 6) {
-      toast.error("Please enter a valid 6-digit postal pincode");
+      toast.error('Please enter a valid 6-digit postal pincode');
       return;
     }
 
     setIsAddressSaving(true);
     try {
-      if (editingAddressId === "new") {
+      if (editingAddressId === 'new') {
         await userService.addAddress(addressFormData);
-        toast.success("New address added successfully!");
+        toast.success('New address added successfully!');
       } else {
         await userService.updateAddress(editingAddressId, addressFormData);
-        toast.success("Address modified successfully!");
+        toast.success('Address modified successfully!');
       }
       await fetchAddressesList();
       setIsAddressModalOpen(false);
       setEditingAddressId(null);
       setAddressFormData(null);
     } catch (err) {
-      toast.error("Failed to store address information");
+      toast.error('Failed to store address information');
     } finally {
       setIsAddressSaving(false);
     }
   };
 
   const handleDeleteAddress = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this address?")) return;
-    const toastId = toast.loading("Removing address...");
+    if (!window.confirm('Are you sure you want to delete this address?')) return;
+    const toastId = toast.loading('Removing address...');
     try {
       await userService.deleteAddress(id);
-      toast.success("Address deleted successfully!", { id: toastId });
+      toast.success('Address deleted successfully!', { id: toastId });
       await fetchAddressesList();
     } catch (err) {
-      toast.error("Failed to delete address", { id: toastId });
+      toast.error('Failed to delete address', { id: toastId });
     }
   };
 
   const handleSetDefaultAddress = async (id) => {
-    const toastId = toast.loading("Setting default parameters...");
+    const toastId = toast.loading('Setting default parameters...');
     try {
       await userService.setDefaultAddress(id);
-      toast.success("Default delivery address set!", { id: toastId });
+      toast.success('Default delivery address set!', { id: toastId });
       await fetchAddressesList();
     } catch (err) {
-      toast.error("Failed to set default address", { id: toastId });
+      toast.error('Failed to set default address', { id: toastId });
     }
   };
 
@@ -391,7 +438,7 @@ export function Dashboard() {
     if (targetOrder) {
       setSelectedInvoiceOrder(targetOrder);
     } else {
-      toast.error("Invoice data currently unavailable. Refreshing feed.");
+      toast.error('Invoice data currently unavailable. Refreshing feed.');
     }
   };
 
@@ -413,9 +460,9 @@ export function Dashboard() {
             Home
           </Link>
           <span>/</span>
-          <button 
+          <button
             onClick={() => setMobileShowContent(false)}
-            className={`hover:text-primary transition-colors cursor-pointer uppercase ${!mobileShowContent ? "text-on-surface" : ""}`}
+            className={`hover:text-primary transition-colors cursor-pointer uppercase ${!mobileShowContent ? 'text-on-surface' : ''}`}
           >
             My Account
           </button>
@@ -424,30 +471,30 @@ export function Dashboard() {
               <span className="hidden md:inline">/</span>
               <span className="md:hidden text-primary">/</span>
               <span className="text-on-surface">
-                {activeTab === "profile" && "Profile Settings"}
-                {activeTab === "orders" && "My Order History"}
-                {activeTab === "bookings" && "My Event Bookings"}
-                {activeTab === "addresses" && "Delivery Sites"}
-                {activeTab === "wishlist" && "Curated Wishlist"}
-                {activeTab === "cart" && "My Shopping Bag"}
-                {activeTab === "recently-viewed" && "Recently Viewed"}
-                {activeTab === "preferences" && "Platform Preferences"}
-                {activeTab === "loyalty" && "Loyalty Club"}
+                {activeTab === 'profile' && 'Profile Settings'}
+                {activeTab === 'orders' && 'My Order History'}
+                {activeTab === 'rentals' && 'My Rentals'}
+                {activeTab === 'bookings' && 'My Event Bookings'}
+                {activeTab === 'addresses' && 'Delivery Sites'}
+                {activeTab === 'wishlist' && 'Curated Wishlist'}
+                {activeTab === 'cart' && 'My Shopping Bag'}
+                {activeTab === 'recently-viewed' && 'Recently Viewed'}
+                {activeTab === 'preferences' && 'Platform Preferences'}
+                {activeTab === 'loyalty' && 'Loyalty Club'}
               </span>
             </>
           )}
         </nav>
 
         <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6">
-          
           {/* LEFT SIDEBAR NAVIGATION PANEL */}
-          <div className={`col-span-1 md:col-span-2 lg:col-span-3 space-y-4 ${mobileShowContent ? "hidden md:block" : "block"}`}>
-            
+          <div
+            className={`col-span-1 md:col-span-2 lg:col-span-3 space-y-4 ${mobileShowContent ? 'hidden md:block' : 'block'}`}
+          >
             {/* Dynamic Avatar & Basic Info Card */}
             <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 flex flex-col items-center text-center shadow-xs relative group overflow-hidden">
-              
               {/* Profile Image with Edit Overlay */}
-              <div 
+              <div
                 onClick={handleAvatarClick}
                 className="w-20 h-20 rounded-full border border-outline-variant/50 relative overflow-hidden bg-surface-container flex items-center justify-center cursor-pointer shadow-sm group/avatar hover:border-primary transition-colors"
               >
@@ -460,13 +507,13 @@ export function Dashboard() {
                 {user?.avatar ? (
                   <img
                     src={user.avatar}
-                    alt={user.name || "Avatar"}
+                    alt={user.name || 'Avatar'}
                     className="w-full h-full object-cover"
                     onError={handleImageError}
                   />
                 ) : (
                   <span className="font-display text-[26px] text-primary font-light">
-                    {user?.name ? user.name.substring(0, 2).toUpperCase() : "AT"}
+                    {user?.name ? user.name.substring(0, 2).toUpperCase() : 'AT'}
                   </span>
                 )}
 
@@ -506,19 +553,25 @@ export function Dashboard() {
                     <span className="text-[11px] text-secondary block truncate font-light mb-2">
                       {user.email}
                     </span>
-                    
+
                     <div className="flex flex-col gap-1 items-center">
-                      <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-wider font-semibold uppercase ${
-                        user.isVerified 
-                          ? "bg-green-50/70 text-green-700 border-green-200" 
-                          : "bg-amber-50 text-amber-700 border-amber-200"
-                      }`}>
-                        {user.isVerified ? "✔ Verified Session" : "Pending Verification"}
+                      <span
+                        className={`text-[9px] px-2 py-0.5 rounded-full border tracking-wider font-semibold uppercase ${
+                          user.isVerified
+                            ? 'bg-green-50/70 text-green-700 border-green-200'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}
+                      >
+                        {user.isVerified ? '✔ Verified Session' : 'Pending Verification'}
                       </span>
-                      
+
                       {user.createdAt && (
                         <span className="text-[9px] text-secondary/50 font-medium">
-                          Joined {new Date(user.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' })}
+                          Joined{' '}
+                          {new Date(user.createdAt).toLocaleString('default', {
+                            month: 'long',
+                            year: 'numeric',
+                          })}
                         </span>
                       )}
                     </div>
@@ -543,66 +596,80 @@ export function Dashboard() {
 
                 <motion.button
                   role="tab"
-                  aria-selected={activeTab === "orders"}
+                  aria-selected={activeTab === 'orders'}
                   whileHover={{ x: 3 }}
                   onClick={() => {
-                    setActiveTab("orders");
-                    setOrderFilter("ALL");
+                    setActiveTab('orders');
+                    setOrderFilter('ALL');
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-                    activeTab === "orders"
-                      ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
-                      : "text-on-surface hover:bg-surface-container-low"
+                    activeTab === 'orders'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
                   <span>My Order History</span>
-                  <span className="material-symbols-outlined text-xs">
-                    chevron_right
+                  <span className="material-symbols-outlined text-xs">chevron_right</span>
+                </motion.button>
+
+                <motion.button
+                  role="tab"
+                  aria-selected={activeTab === 'rentals'}
+                  whileHover={{ x: 3 }}
+                  onClick={() => {
+                    setActiveTab('rentals');
+                    setMobileShowContent(true);
+                  }}
+                  className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
+                    activeTab === 'rentals'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
+                  }`}
+                >
+                  <span>My Rentals</span>
+                  <span className="material-symbols-outlined text-xs text-[#8c7335]">
+                    inventory_2
                   </span>
                 </motion.button>
               </div>
 
               <div className="border-b border-surface-container">
                 <div className="px-4 py-3 bg-surface-container-low text-secondary font-bold text-[11px] uppercase tracking-wider flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm text-primary">
-                    person
-                  </span>
+                  <span className="material-symbols-outlined text-sm text-primary">person</span>
                   Profile
                 </div>
 
                 <motion.button
                   role="tab"
-                  aria-selected={activeTab === "profile"}
+                  aria-selected={activeTab === 'profile'}
                   whileHover={{ x: 3 }}
                   onClick={() => {
-                    setActiveTab("profile");
+                    setActiveTab('profile');
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-                    activeTab === "profile"
-                      ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
-                      : "text-on-surface hover:bg-surface-container-low"
+                    activeTab === 'profile'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
                   <span>Profile Settings</span>
-                  <span className="material-symbols-outlined text-xs">
-                    chevron_right
-                  </span>
+                  <span className="material-symbols-outlined text-xs">chevron_right</span>
                 </motion.button>
 
                 <motion.button
                   role="tab"
-                  aria-selected={activeTab === "bookings"}
+                  aria-selected={activeTab === 'bookings'}
                   whileHover={{ x: 3 }}
                   onClick={() => {
-                    setActiveTab("bookings");
+                    setActiveTab('bookings');
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-                    activeTab === "bookings"
-                      ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
-                      : "text-on-surface hover:bg-surface-container-low"
+                    activeTab === 'bookings'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
                   <span>My Event Bookings</span>
@@ -613,42 +680,38 @@ export function Dashboard() {
 
                 <motion.button
                   role="tab"
-                  aria-selected={activeTab === "addresses"}
+                  aria-selected={activeTab === 'addresses'}
                   whileHover={{ x: 3 }}
                   onClick={() => {
-                    setActiveTab("addresses");
+                    setActiveTab('addresses');
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-                    activeTab === "addresses"
-                      ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
-                      : "text-on-surface hover:bg-surface-container-low"
+                    activeTab === 'addresses'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
                   <span>Addresses</span>
-                  <span className="text-[11px] text-secondary font-bold">
-                    ({addresses.length})
-                  </span>
+                  <span className="text-[11px] text-secondary font-bold">({addresses.length})</span>
                 </motion.button>
 
                 <motion.button
                   role="tab"
-                  aria-selected={activeTab === "preferences"}
+                  aria-selected={activeTab === 'preferences'}
                   whileHover={{ x: 3 }}
                   onClick={() => {
-                    setActiveTab("preferences");
+                    setActiveTab('preferences');
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-                    activeTab === "preferences"
-                      ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
-                      : "text-on-surface hover:bg-surface-container-low"
+                    activeTab === 'preferences'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
                   <span>Settings</span>
-                  <span className="material-symbols-outlined text-xs">
-                    chevron_right
-                  </span>
+                  <span className="material-symbols-outlined text-xs">chevron_right</span>
                 </motion.button>
               </div>
 
@@ -662,16 +725,16 @@ export function Dashboard() {
 
                 <motion.button
                   role="tab"
-                  aria-selected={activeTab === "wishlist"}
+                  aria-selected={activeTab === 'wishlist'}
                   whileHover={{ x: 3 }}
                   onClick={() => {
-                    setActiveTab("wishlist");
+                    setActiveTab('wishlist');
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-                    activeTab === "wishlist"
-                      ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
-                      : "text-on-surface hover:bg-surface-container-low"
+                    activeTab === 'wishlist'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
                   <span>Curated Wishlist</span>
@@ -682,57 +745,53 @@ export function Dashboard() {
 
                 <motion.button
                   role="tab"
-                  aria-selected={activeTab === "cart"}
+                  aria-selected={activeTab === 'cart'}
                   whileHover={{ x: 3 }}
                   onClick={() => {
-                    setActiveTab("cart");
+                    setActiveTab('cart');
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-                    activeTab === "cart"
-                      ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
-                      : "text-on-surface hover:bg-surface-container-low"
+                    activeTab === 'cart'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
                   <span>My Shopping Bag</span>
-                  <span className="text-[11px] font-bold text-primary">
-                    ({cartCount})
-                  </span>
+                  <span className="text-[11px] font-bold text-primary">({cartCount})</span>
                 </motion.button>
 
                 <motion.button
                   role="tab"
-                  aria-selected={activeTab === "recently-viewed"}
+                  aria-selected={activeTab === 'recently-viewed'}
                   whileHover={{ x: 3 }}
                   onClick={() => {
-                    setActiveTab("recently-viewed");
+                    setActiveTab('recently-viewed');
                     fetchRecentlyViewedList();
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-                    activeTab === "recently-viewed"
-                      ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
-                      : "text-on-surface hover:bg-surface-container-low"
+                    activeTab === 'recently-viewed'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
                   <span>Recently Viewed</span>
-                  <span className="material-symbols-outlined text-xs">
-                    history
-                  </span>
+                  <span className="material-symbols-outlined text-xs">history</span>
                 </motion.button>
 
                 <motion.button
                   role="tab"
-                  aria-selected={activeTab === "loyalty"}
+                  aria-selected={activeTab === 'loyalty'}
                   whileHover={{ x: 3 }}
                   onClick={() => {
-                    setActiveTab("loyalty");
+                    setActiveTab('loyalty');
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-                    activeTab === "loyalty"
-                      ? "text-primary font-bold bg-primary/5 border-l-2 border-primary"
-                      : "text-on-surface hover:bg-surface-container-low"
+                    activeTab === 'loyalty'
+                      ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                      : 'text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
                   <span>Siri Coins & Wallet</span>
@@ -744,824 +803,1147 @@ export function Dashboard() {
 
               <motion.button
                 whileHover={{
-                  backgroundColor: "var(--color-error-container)",
-                  color: "var(--color-on-error-container)",
+                  backgroundColor: 'var(--color-error-container)',
+                  color: 'var(--color-on-error-container)',
                 }}
                 onClick={() => {
                   logout();
-                  setTimeout(() => navigate("/"), 400);
+                  setTimeout(() => navigate('/'), 400);
                 }}
                 className="w-full text-left px-4 py-3.5 text-error font-bold text-[11px] uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer outline-none"
               >
-                <span className="material-symbols-outlined text-sm">
-                  logout
-                </span>
+                <span className="material-symbols-outlined text-sm">logout</span>
                 Logout
               </motion.button>
 
               <div className="flex flex-col gap-1.5 p-4 text-on-surface-variant/40 font-label-sm text-[10px] uppercase tracking-widest font-bold border-t border-surface-container">
-                <span className="max-w-md">
-                  Address: {addressText}
-                </span>
+                <span className="max-w-md">Address: {addressText}</span>
                 <span>Phone: +91 {phoneText}</span>
               </div>
             </div>
           </div>
 
           {/* MAIN DYNAMIC CONTENT PORTAL PANELS */}
-          <div className={`col-span-1 md:col-span-4 lg:col-span-9 space-y-4 ${mobileShowContent ? "block" : "hidden md:block"}`}>
+          <div
+            className={`col-span-1 md:col-span-4 lg:col-span-9 space-y-4 ${mobileShowContent ? 'block' : 'hidden md:block'}`}
+          >
             <>
-              
               {/* TAB 0: RESERVED EVENT BOOKINGS */}
-              {activeTab === "bookings" && (
-                <ErrorBoundary key="bookings-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load bookings tab.</div>}>
-                <motion.div
-                  id="panel-bookings"
-                  role="tabpanel"
-                  key="tab-bookings"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-surface-bright border border-outline-variant/40 rounded-lg p-3 md:p-6 shadow-xs space-y-6 overflow-hidden"
-                >
-                  <div className="pb-4 border-b border-outline-variant/40">
-                    <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
-                      My Event Bookings
-                    </h2>
-                    <span className="text-[11px] text-secondary font-light">
-                      Track your reserved setups, theme boards, milestone deposits, and site lead coordinates.
-                    </span>
-                  </div>
-                  <React.Suspense fallback={
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {[...Array(2)].map((_, i) => (
-                        <div key={i} className="p-5 rounded-2xl bg-white border border-outline-variant/10 space-y-4">
-                          <div className="flex justify-between items-center">
-                            <Skeleton className="h-4 w-24" />
-                            <Skeleton className="h-6 w-20 rounded-full" />
-                          </div>
-                          <Skeleton className="h-5 w-3/4" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-2/3" />
-                        </div>
-                      ))}
+              {activeTab === 'bookings' && (
+                <ErrorBoundary
+                  key="bookings-error"
+                  fallback={
+                    <div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">
+                      Failed to load bookings tab.
                     </div>
-                  }>
-                    <EventCustomerDashboard isEmbedded={true} />
-                  </React.Suspense>
-                </motion.div>
+                  }
+                >
+                  <motion.div
+                    id="panel-bookings"
+                    role="tabpanel"
+                    key="tab-bookings"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-surface-bright border border-outline-variant/40 rounded-lg p-3 md:p-6 shadow-xs space-y-6 overflow-hidden"
+                  >
+                    <div className="pb-4 border-b border-outline-variant/40">
+                      <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
+                        My Event Bookings
+                      </h2>
+                      <span className="text-[11px] text-secondary font-light">
+                        Track your reserved setups, theme boards, milestone deposits, and site lead
+                        coordinates.
+                      </span>
+                    </div>
+                    <React.Suspense
+                      fallback={
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {[...Array(2)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="p-5 rounded-2xl bg-white border border-outline-variant/10 space-y-4"
+                            >
+                              <div className="flex justify-between items-center">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-6 w-20 rounded-full" />
+                              </div>
+                              <Skeleton className="h-5 w-3/4" />
+                              <Skeleton className="h-4 w-full" />
+                              <Skeleton className="h-4 w-2/3" />
+                            </div>
+                          ))}
+                        </div>
+                      }
+                    >
+                      <EventCustomerDashboard isEmbedded={true} />
+                    </React.Suspense>
+                  </motion.div>
                 </ErrorBoundary>
               )}
 
               {/* TAB 1: PROFILE EDITING & PARAMETERS */}
-              {activeTab === "profile" && (
-                <ErrorBoundary key="profile-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load profile tab.</div>}>
-                <motion.div
-                  id="panel-profile"
-                  role="tabpanel"
-                  key="tab-profile"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs space-y-6"
+              {activeTab === 'profile' && (
+                <ErrorBoundary
+                  key="profile-error"
+                  fallback={
+                    <div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">
+                      Failed to load profile tab.
+                    </div>
+                  }
                 >
-                  <div className="pb-4 border-b border-outline-variant/40">
-                    <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
-                      Profile Settings
-                    </h2>
-                    <span className="text-[11px] text-secondary font-light">
-                      Update your account profiles, contact parameters, and identity settings.
-                    </span>
-                  </div>
-
-                  <form onSubmit={handleProfileSave} className="space-y-5 max-w-2xl text-[11px]">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div>
-                        <label htmlFor="dashboard-profile-name" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-                          Full Account Name
-                        </label>
-                        <input
-                          id="dashboard-profile-name"
-                          type="text"
-                          required
-                          autoComplete="name"
-                          value={profileForm.name}
-                          onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
-                          placeholder="Enter your full name"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-                          Registered Email Address
-                        </label>
-                        <input
-                          type="email"
-                          disabled
-                          value={user?.email || ""}
-                          className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none font-semibold text-secondary cursor-not-allowed"
-                        />
-                        <span className="text-[9px] text-secondary/50 block mt-1">
-                          Security Note: Primary login email keys cannot be modified.
-                        </span>
-                      </div>
+                  <motion.div
+                    id="panel-profile"
+                    role="tabpanel"
+                    key="tab-profile"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs space-y-6"
+                  >
+                    <div className="pb-4 border-b border-outline-variant/40">
+                      <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
+                        Profile Settings
+                      </h2>
+                      <span className="text-[11px] text-secondary font-light">
+                        Update your account profiles, contact parameters, and identity settings.
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                      <div>
-                        <label htmlFor="dashboard-profile-phone" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-                          Mobile Number
-                        </label>
-                        <input
-                          id="dashboard-profile-phone"
-                          type="tel"
-                          autoComplete="tel"
-                          value={profileForm.phone}
-                          onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
-                          placeholder="e.g. 9876543210"
-                        />
+                    <form onSubmit={handleProfileSave} className="space-y-5 max-w-2xl text-[11px]">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                          <label
+                            htmlFor="dashboard-profile-name"
+                            className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          >
+                            Full Account Name
+                          </label>
+                          <input
+                            id="dashboard-profile-name"
+                            type="text"
+                            required
+                            autoComplete="name"
+                            value={profileForm.name}
+                            onChange={(e) =>
+                              setProfileForm({ ...profileForm, name: e.target.value })
+                            }
+                            className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                            placeholder="Enter your full name"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
+                            Registered Email Address
+                          </label>
+                          <input
+                            type="email"
+                            disabled
+                            value={user?.email || ''}
+                            className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none font-semibold text-secondary cursor-not-allowed"
+                          />
+                          <span className="text-[9px] text-secondary/50 block mt-1">
+                            Security Note: Primary login email keys cannot be modified.
+                          </span>
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-                          Gender Option
-                        </label>
-                        <select
-                          value={profileForm.gender}
-                          onChange={(e) => setProfileForm({ ...profileForm, gender: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                        <div>
+                          <label
+                            htmlFor="dashboard-profile-phone"
+                            className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          >
+                            Mobile Number
+                          </label>
+                          <input
+                            id="dashboard-profile-phone"
+                            type="tel"
+                            autoComplete="tel"
+                            value={profileForm.phone}
+                            onChange={(e) =>
+                              setProfileForm({ ...profileForm, phone: e.target.value })
+                            }
+                            className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                            placeholder="e.g. 9876543210"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
+                            Gender Option
+                          </label>
+                          <select
+                            value={profileForm.gender}
+                            onChange={(e) =>
+                              setProfileForm({ ...profileForm, gender: e.target.value })
+                            }
+                            className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other / Custom</option>
+                            <option value="prefer-not-to-say">Prefer Not To Disclose</option>
+                          </select>
+                        </div>
+
+                        <div className="min-w-0">
+                          <label
+                            htmlFor="dashboard-profile-dob"
+                            className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          >
+                            Date Of Birth (DOB)
+                          </label>
+                          <input
+                            id="dashboard-profile-dob"
+                            type="date"
+                            autoComplete="bday"
+                            value={profileForm.dateOfBirth}
+                            onChange={(e) =>
+                              setProfileForm({ ...profileForm, dateOfBirth: e.target.value })
+                            }
+                            className="w-full min-w-0 max-w-full bg-white border border-outline-variant/30 rounded-lg px-2 md:px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-4 flex justify-end">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          disabled={isUpdatingProfile}
+                          type="submit"
+                          className="btn-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[10px] inline-flex items-center gap-2 cursor-pointer shadow-md"
                         >
-                          <option value="">Select Gender</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="other">Other / Custom</option>
-                          <option value="prefer-not-to-say">Prefer Not To Disclose</option>
-                        </select>
+                          {isUpdatingProfile ? (
+                            <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
+                          ) : (
+                            <>
+                              <span className="material-symbols-outlined text-[13px]">save</span>
+                              <span>Commit Profile Updates</span>
+                            </>
+                          )}
+                        </motion.button>
                       </div>
-
-                      <div className="min-w-0">
-                        <label htmlFor="dashboard-profile-dob" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-                          Date Of Birth (DOB)
-                        </label>
-                        <input
-                          id="dashboard-profile-dob"
-                          type="date"
-                          autoComplete="bday"
-                          value={profileForm.dateOfBirth}
-                          onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
-                          className="w-full min-w-0 max-w-full bg-white border border-outline-variant/30 rounded-lg px-2 md:px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex justify-end">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        disabled={isUpdatingProfile}
-                        type="submit"
-                        className="btn-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[10px] inline-flex items-center gap-2 cursor-pointer shadow-md"
-                      >
-                        {isUpdatingProfile ? (
-                          <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
-                        ) : (
-                          <>
-                            <span className="material-symbols-outlined text-[13px]">save</span>
-                            <span>Commit Profile Updates</span>
-                          </>
-                        )}
-                      </motion.button>
-                    </div>
-                  </form>
-                </motion.div>
+                    </form>
+                  </motion.div>
                 </ErrorBoundary>
               )}
 
               {/* TAB 2: ADDRESS MANAGEMENT */}
-              {activeTab === "addresses" && (
-                <ErrorBoundary key="addresses-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load addresses tab.</div>}>
-                <motion.div
-                  id="panel-addresses"
-                  role="tabpanel"
-                  key="tab-addresses"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
+              {activeTab === 'addresses' && (
+                <ErrorBoundary
+                  key="addresses-error"
+                  fallback={
+                    <div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">
+                      Failed to load addresses tab.
+                    </div>
+                  }
                 >
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
-                    <div>
-                      <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
-                        Delivery Sites
-                      </h2>
-                      <span className="text-[11px] text-secondary font-light">
-                        Configure premium delivery, invoicing sites, and home destinations.
-                      </span>
+                  <motion.div
+                    id="panel-addresses"
+                    role="tabpanel"
+                    key="tab-addresses"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+                      <div>
+                        <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
+                          Delivery Sites
+                        </h2>
+                        <span className="text-[11px] text-secondary font-light">
+                          Configure premium delivery, invoicing sites, and home destinations.
+                        </span>
+                      </div>
+
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setEditingAddressId('new');
+                          setAddressFormData({
+                            id: 'new',
+                            name: '',
+                            phone: '',
+                            pincode: '',
+                            locality: '',
+                            addressString: '',
+                            city: '',
+                            state: '',
+                            tag: 'Home',
+                            latitude: null,
+                            longitude: null,
+                          });
+                          setIsAddressModalOpen(true);
+                        }}
+                        className="bg-primary text-surface rounded-full px-4 md:px-5 py-2 md:py-2.5 font-bold text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-on-surface transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-md whitespace-nowrap shrink-0 self-start sm:self-auto"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">add</span>
+                        <span className="hidden sm:inline">Add Delivery Destination</span>
+                        <span className="sm:hidden">Add New</span>
+                      </motion.button>
                     </div>
 
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setEditingAddressId("new");
-                        setAddressFormData({
-                          id: "new",
-                          name: "",
-                          phone: "",
-                          pincode: "",
-                          locality: "",
-                          addressString: "",
-                          city: "",
-                          state: "",
-                          tag: "Home",
-                          latitude: null,
-                          longitude: null,
-                        });
-                        setIsAddressModalOpen(true);
-                      }}
-                      className="bg-primary text-surface rounded-full px-4 md:px-5 py-2 md:py-2.5 font-bold text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-on-surface transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-md whitespace-nowrap shrink-0 self-start sm:self-auto"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">add</span>
-                      <span className="hidden sm:inline">Add Delivery Destination</span>
-                      <span className="sm:hidden">Add New</span>
-                    </motion.button>
-                  </div>
-
-                  {isAddressesLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="h-40 bg-white border border-outline-variant/20 rounded-lg animate-pulse" />
-                      <div className="h-40 bg-white border border-outline-variant/20 rounded-lg animate-pulse" />
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <AnimatePresence>
-                        {addresses.map((addr) => (
-                          <motion.div
-                            layout
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            key={addr._id || addr.id}
-                            className={`bg-surface-bright border rounded-lg p-5 shadow-xs flex flex-col justify-between text-[11px] relative transition-colors ${
-                              addr.isDefault 
-                                ? "border-primary/80 ring-1 ring-primary/20" 
-                                : "border-outline-variant/40 hover:border-outline-variant"
-                            }`}
-                          >
-                            <div className="flex flex-col h-full justify-between">
-                              <div>
-                                <div className="flex items-center justify-between mb-3">
-                                  <span className="bg-surface-container text-secondary text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-widest">
-                                    {addr.tag}
-                                  </span>
-
-                                  {addr.isDefault ? (
-                                    <span className="text-[10px] text-green-700 font-bold bg-green-50 px-2 py-0.5 border border-green-200 rounded flex items-center gap-1">
-                                      <span className="material-symbols-outlined text-[10px]">check_circle</span>
-                                      Default Destination
+                    {isAddressesLoading ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="h-40 bg-white border border-outline-variant/20 rounded-lg animate-pulse" />
+                        <div className="h-40 bg-white border border-outline-variant/20 rounded-lg animate-pulse" />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <AnimatePresence>
+                          {addresses.map((addr) => (
+                            <motion.div
+                              layout
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              key={addr._id || addr.id}
+                              className={`bg-surface-bright border rounded-lg p-5 shadow-xs flex flex-col justify-between text-[11px] relative transition-colors ${
+                                addr.isDefault
+                                  ? 'border-primary/80 ring-1 ring-primary/20'
+                                  : 'border-outline-variant/40 hover:border-outline-variant'
+                              }`}
+                            >
+                              <div className="flex flex-col h-full justify-between">
+                                <div>
+                                  <div className="flex items-center justify-between mb-3">
+                                    <span className="bg-surface-container text-secondary text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-widest">
+                                      {addr.tag}
                                     </span>
-                                  ) : (
-                                    <button
-                                      onClick={() => handleSetDefaultAddress(addr._id || addr.id)}
-                                      className="text-[9px] text-primary uppercase font-bold hover:underline cursor-pointer active:scale-[0.98]"
-                                    >
-                                      Set as Default
-                                    </button>
+
+                                    {addr.isDefault ? (
+                                      <span className="text-[10px] text-green-700 font-bold bg-green-50 px-2 py-0.5 border border-green-200 rounded flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[10px]">
+                                          check_circle
+                                        </span>
+                                        Default Destination
+                                      </span>
+                                    ) : (
+                                      <button
+                                        onClick={() => handleSetDefaultAddress(addr._id || addr.id)}
+                                        className="text-[9px] text-primary uppercase font-bold hover:underline cursor-pointer active:scale-[0.98]"
+                                      >
+                                        Set as Default
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <strong className="text-xs text-on-surface block mb-1 font-bold">
+                                    {addr.name}
+                                  </strong>
+                                  <p className="text-secondary leading-relaxed mb-3 text-[11px]">
+                                    {addr.addressString}, {addr.locality},<br />
+                                    {addr.city}, {addr.state} -{' '}
+                                    <strong className="text-on-surface font-semibold">
+                                      {addr.pincode}
+                                    </strong>
+                                  </p>
+                                  <span className="text-on-surface font-semibold block text-[11px]">
+                                    Mobile Contact: {addr.phone}
+                                  </span>
+                                  {addr.latitude && addr.longitude && (
+                                    <div className="mt-2 text-[9px] text-green-700 font-bold bg-green-50 px-2 py-0.5 border border-green-200 rounded-sm inline-flex items-center gap-1 uppercase tracking-wider">
+                                      <span className="material-symbols-outlined text-[10px]">
+                                        share_location
+                                      </span>
+                                      GPS Locked: {addr.latitude.toFixed(4)},{' '}
+                                      {addr.longitude.toFixed(4)}
+                                    </div>
                                   )}
                                 </div>
 
-                                <strong className="text-xs text-on-surface block mb-1 font-bold">
-                                  {addr.name}
-                                </strong>
-                                <p className="text-secondary leading-relaxed mb-3 text-[11px]">
-                                  {addr.addressString}, {addr.locality},<br />
-                                  {addr.city}, {addr.state} -{" "}
-                                  <strong className="text-on-surface font-semibold">
-                                    {addr.pincode}
-                                  </strong>
-                                </p>
-                                <span className="text-on-surface font-semibold block text-[11px]">
-                                  Mobile Contact: {addr.phone}
-                                </span>
-                                {addr.latitude && addr.longitude && (
-                                  <div className="mt-2 text-[9px] text-green-700 font-bold bg-green-50 px-2 py-0.5 border border-green-200 rounded-sm inline-flex items-center gap-1 uppercase tracking-wider">
-                                    <span className="material-symbols-outlined text-[10px]">share_location</span>
-                                    GPS Locked: {addr.latitude.toFixed(4)}, {addr.longitude.toFixed(4)}
-                                  </div>
-                                )}
+                                <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-end gap-3.5 font-bold text-[11px] uppercase tracking-wider">
+                                  <button
+                                    onClick={() => handleAddressEdit(addr)}
+                                    className="text-primary hover:underline cursor-pointer active:scale-[0.98]"
+                                  >
+                                    Modify
+                                  </button>
+                                  <span className="text-outline-variant">|</span>
+                                  <button
+                                    onClick={() => handleDeleteAddress(addr._id || addr.id)}
+                                    className="text-secondary hover:text-red-600 transition-colors cursor-pointer active:scale-[0.98]"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
                               </div>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    )}
 
-                              <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-end gap-3.5 font-bold text-[11px] uppercase tracking-wider">
-                                <button
-                                  onClick={() => handleAddressEdit(addr)}
-                                  className="text-primary hover:underline cursor-pointer active:scale-[0.98]"
-                                >
-                                  Modify
-                                </button>
-                                <span className="text-outline-variant">|</span>
-                                <button
-                                  onClick={() => handleDeleteAddress(addr._id || addr.id)}
-                                  className="text-secondary hover:text-red-600 transition-colors cursor-pointer active:scale-[0.98]"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                    </div>
-                  )}
-
-                  {addresses.length === 0 && !isAddressesLoading && (
-                    <div className="text-center py-16 bg-surface-bright rounded-lg border border-outline-variant/40 text-[11px] text-secondary italic">
-                      No delivery destination parameters logged yet. Click above to define your first site!
-                    </div>
-                  )}
-                </motion.div>
+                    {addresses.length === 0 && !isAddressesLoading && (
+                      <div className="text-center py-16 bg-surface-bright rounded-lg border border-outline-variant/40 text-[11px] text-secondary italic">
+                        No delivery destination parameters logged yet. Click above to define your
+                        first site!
+                      </div>
+                    )}
+                  </motion.div>
                 </ErrorBoundary>
               )}
 
               {/* TAB 3: ACCOUNT PREFERENCES */}
-              {activeTab === "preferences" && (
-                <ErrorBoundary key="preferences-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load preferences tab.</div>}>
-                <motion.div
-                  id="panel-preferences"
-                  role="tabpanel"
-                  key="tab-preferences"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs space-y-6"
+              {activeTab === 'preferences' && (
+                <ErrorBoundary
+                  key="preferences-error"
+                  fallback={
+                    <div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">
+                      Failed to load preferences tab.
+                    </div>
+                  }
                 >
-                  <div className="pb-4 border-b border-outline-variant/40">
-                    <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
-                      Preferences & Setting Variables
-                    </h2>
-                    <span className="text-[11px] text-secondary font-light">
-                      Customize how you interact with Siri Arts & Crafts. All changes sync dynamically.
-                    </span>
-                  </div>
+                  <motion.div
+                    id="panel-preferences"
+                    role="tabpanel"
+                    key="tab-preferences"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs space-y-6"
+                  >
+                    <div className="pb-4 border-b border-outline-variant/40">
+                      <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
+                        Preferences & Setting Variables
+                      </h2>
+                      <span className="text-[11px] text-secondary font-light">
+                        Customize how you interact with Siri Arts & Crafts. All changes sync
+                        dynamically.
+                      </span>
+                    </div>
 
-                  <form onSubmit={handlePreferencesSave} className="space-y-6 max-w-xl text-[11px]">
-                    
-                    {/* Notification Preferences */}
-                    <div className="space-y-3">
-                      <h3 className="font-bold text-xs uppercase tracking-wider text-primary">Notification Subscriptions</h3>
-                      
-                      <div className="flex items-start gap-3 p-3 bg-surface-container-low/40 rounded-lg border border-outline-variant/20">
-                        <input
-                          type="checkbox"
-                          id="pref-email"
-                          checked={prefsForm.email}
-                          onChange={(e) => setPrefsForm({ ...prefsForm, email: e.target.checked })}
-                          className="mt-1 cursor-pointer w-4 h-4 accent-primary"
-                        />
-                        <div>
-                          <label htmlFor="pref-email" className="font-bold text-on-surface cursor-pointer text-xs block">
-                            Direct Order Invoicing & Transaction Updates
-                          </label>
-                          <span className="text-[10px] text-secondary font-light">
-                            Receive real-time order logs, shipping statuses, verification keys, and tracking parameters. (Highly Recommended)
-                          </span>
+                    <form
+                      onSubmit={handlePreferencesSave}
+                      className="space-y-6 max-w-xl text-[11px]"
+                    >
+                      {/* Notification Preferences */}
+                      <div className="space-y-3">
+                        <h3 className="font-bold text-xs uppercase tracking-wider text-primary">
+                          Notification Subscriptions
+                        </h3>
+
+                        <div className="flex items-start gap-3 p-3 bg-surface-container-low/40 rounded-lg border border-outline-variant/20">
+                          <input
+                            type="checkbox"
+                            id="pref-email"
+                            checked={prefsForm.email}
+                            onChange={(e) =>
+                              setPrefsForm({ ...prefsForm, email: e.target.checked })
+                            }
+                            className="mt-1 cursor-pointer w-4 h-4 accent-primary"
+                          />
+                          <div>
+                            <label
+                              htmlFor="pref-email"
+                              className="font-bold text-on-surface cursor-pointer text-xs block"
+                            >
+                              Direct Order Invoicing & Transaction Updates
+                            </label>
+                            <span className="text-[10px] text-secondary font-light">
+                              Receive real-time order logs, shipping statuses, verification keys,
+                              and tracking parameters. (Highly Recommended)
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-3 p-3 bg-surface-container-low/40 rounded-lg border border-outline-variant/20">
+                          <input
+                            type="checkbox"
+                            id="pref-marketing"
+                            checked={prefsForm.marketing}
+                            onChange={(e) =>
+                              setPrefsForm({ ...prefsForm, marketing: e.target.checked })
+                            }
+                            className="mt-1 cursor-pointer w-4 h-4 accent-primary"
+                          />
+                          <div>
+                            <label
+                              htmlFor="pref-marketing"
+                              className="font-bold text-on-surface cursor-pointer text-xs block"
+                            >
+                              Exclusive Curations & Launch Alerts
+                            </label>
+                            <span className="text-[10px] text-secondary font-light">
+                              Access premium limited-edition collections, holiday discount
+                              campaigns, and early-bird event details.
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-start gap-3 p-3 bg-surface-container-low/40 rounded-lg border border-outline-variant/20">
-                        <input
-                          type="checkbox"
-                          id="pref-marketing"
-                          checked={prefsForm.marketing}
-                          onChange={(e) => setPrefsForm({ ...prefsForm, marketing: e.target.checked })}
-                          className="mt-1 cursor-pointer w-4 h-4 accent-primary"
-                        />
-                        <div>
-                          <label htmlFor="pref-marketing" className="font-bold text-on-surface cursor-pointer text-xs block">
-                            Exclusive Curations & Launch Alerts
-                          </label>
-                          <span className="text-[10px] text-secondary font-light">
-                            Access premium limited-edition collections, holiday discount campaigns, and early-bird event details.
-                          </span>
-                        </div>
+                      <div className="pt-6 flex justify-end">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          disabled={isPreferencesSaving}
+                          type="submit"
+                          className="bg-primary text-surface px-5 py-2 rounded-full font-bold uppercase tracking-widest text-[9px] inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-on-surface transition-colors"
+                        >
+                          {isPreferencesSaving ? (
+                            <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
+                          ) : (
+                            <>
+                              <span className="material-symbols-outlined text-[13px]">tune</span>
+                              <span>Save Preferences</span>
+                            </>
+                          )}
+                        </motion.button>
                       </div>
-                    </div>
-
-                    <div className="pt-6 flex justify-end">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        disabled={isPreferencesSaving}
-                        type="submit"
-                        className="bg-primary text-surface px-5 py-2 rounded-full font-bold uppercase tracking-widest text-[9px] inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-on-surface transition-colors"
-                      >
-                        {isPreferencesSaving ? (
-                          <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
-                        ) : (
-                          <>
-                            <span className="material-symbols-outlined text-[13px]">tune</span>
-                            <span>Save Preferences</span>
-                          </>
-                        )}
-                      </motion.button>
-                    </div>
-                  </form>
-                </motion.div>
+                    </form>
+                  </motion.div>
                 </ErrorBoundary>
               )}
 
               {/* TAB 4: REAL-TIME ORDER HISTORY */}
-              {activeTab === "orders" && (
-                <ErrorBoundary key="orders-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load orders tab.</div>}>
-                <motion.div
-                  id="panel-orders"
-                  role="tabpanel"
-                  key="tab-orders"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
+              {activeTab === 'orders' && (
+                <ErrorBoundary
+                  key="orders-error"
+                  fallback={
+                    <div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">
+                      Failed to load orders tab.
+                    </div>
+                  }
                 >
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-3.5 flex items-center gap-2 overflow-x-auto shadow-xs">
-                    <span className="text-[10px] uppercase font-bold text-secondary tracking-widest mr-2 flex-shrink-0">
-                      Sort Parameters:
-                    </span>
-                    {[
-                      { id: "ALL", label: "Show All Orders" },
-                      { id: "ON_THE_WAY", label: "In Transit" },
-                      { id: "DELIVERED", label: "Delivered Masterpieces" },
-                    ].map((f) => (
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        key={f.id}
-                        onClick={() => setOrderFilter(f.id)}
-                        className={`px-3 py-1.5 rounded-full text-[9px] uppercase tracking-wider font-bold transition-all flex-shrink-0 cursor-pointer ${
-                          orderFilter === f.id
-                            ? "bg-primary text-surface shadow-xs"
-                            : "bg-surface-container text-secondary hover:bg-outline-variant/20"
-                        }`}
-                      >
-                        {f.label}
-                      </motion.button>
-                    ))}
-                  </div>
+                  <motion.div
+                    id="panel-orders"
+                    role="tabpanel"
+                    key="tab-orders"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="bg-[#8c7335]/5 border border-[#8c7335]/20 rounded-lg p-3 text-center">
+                        <span className="block text-[10px] uppercase font-bold text-[#8c7335] tracking-widest mb-1">
+                          Active Rentals
+                        </span>
+                        <strong className="text-xl text-[#5a481f]">
+                          {dashboardCounts.activeRentals}
+                        </strong>
+                      </div>
+                      <div className="bg-amber-50/50 border border-amber-200/50 rounded-lg p-3 text-center">
+                        <span className="block text-[10px] uppercase font-bold text-amber-700 tracking-widest mb-1">
+                          Upcoming Returns
+                        </span>
+                        <strong className="text-xl text-amber-900">
+                          {dashboardCounts.upcomingReturns}
+                        </strong>
+                      </div>
+                      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-3 text-center shadow-xs">
+                        <span className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1">
+                          Purchase Orders
+                        </span>
+                        <strong className="text-xl text-on-surface">
+                          {dashboardCounts.purchaseOrders}
+                        </strong>
+                      </div>
+                    </div>
 
-                  {isOrdersLoading ? (
-                    <OrdersListSkeleton rows={2} />
-                  ) : (
-                    <motion.div layout className="space-y-4">
-                      <AnimatePresence>
-                        {filteredOrders.map((order, idx) => (
-                          <motion.div
-                            layout
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.25, delay: idx * 0.05 }}
-                            key={order._id || idx}
-                            className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs hover:border-outline-variant transition-colors"
-                          >
-                            <div className="flex flex-col sm:flex-row justify-between gap-4 pb-3 border-b border-surface-container">
-                              <div>
-                                <span className="text-[9px] uppercase font-bold text-secondary tracking-widest block mb-0.5">
-                                  Unique Order ID
-                                </span>
-                                <div className="flex items-center gap-2">
-                                  <strong className="text-xs font-mono text-on-surface truncate max-w-[130px] sm:max-w-none">
-                                    {order._id}
-                                  </strong>
-                                  <button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(order._id);
-                                      toast.success("Order ID copied!");
-                                    }}
-                                    className="material-symbols-outlined text-[13px] text-secondary hover:text-primary transition-colors cursor-pointer active:scale-[0.95]"
-                                    title="Copy ID Key"
+                    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-3.5 flex items-center gap-2 overflow-x-auto shadow-xs">
+                      <span className="text-[10px] uppercase font-bold text-secondary tracking-widest mr-2 flex-shrink-0">
+                        Sort Parameters:
+                      </span>
+                      {[
+                        { id: 'ALL', label: 'All Orders' },
+                        { id: 'RENTAL', label: 'Rental Orders' },
+                        { id: 'PURCHASE', label: 'Purchase Orders' },
+                      ].map((f) => (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          key={f.id}
+                          onClick={() => setOrderFilter(f.id)}
+                          className={`px-3 py-1.5 rounded-full text-[9px] uppercase tracking-wider font-bold transition-all flex-shrink-0 cursor-pointer ${
+                            orderFilter === f.id
+                              ? 'bg-primary text-surface shadow-xs'
+                              : 'bg-surface-container text-secondary hover:bg-outline-variant/20'
+                          }`}
+                        >
+                          {f.label}
+                        </motion.button>
+                      ))}
+                    </div>
+
+                    {isOrdersLoading ? (
+                      <OrdersListSkeleton rows={2} />
+                    ) : (
+                      <motion.div layout className="space-y-4">
+                        <AnimatePresence>
+                          {filteredOrders.map((order, idx) => (
+                            <motion.div
+                              layout
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.25, delay: idx * 0.05 }}
+                              key={order._id || idx}
+                              className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs hover:border-outline-variant transition-colors"
+                            >
+                              <div className="flex flex-col sm:flex-row justify-between gap-4 pb-3 border-b border-surface-container">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    {order.orderType === 'rental' ||
+                                    order.items?.some((i) => i.type === 'rental') ? (
+                                      <span className="bg-[#8c7335]/10 text-[#8c7335] border border-[#8c7335]/20 text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[12px]">
+                                          sell
+                                        </span>{' '}
+                                        🏷 RENTAL ORDER
+                                      </span>
+                                    ) : (
+                                      <span className="bg-surface-container text-secondary border border-outline-variant/30 text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[12px]">
+                                          shopping_cart
+                                        </span>{' '}
+                                        🛒 PURCHASE ORDER
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[9px] uppercase font-bold text-secondary tracking-widest block mb-0.5">
+                                    Unique Order ID
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <strong className="text-xs font-mono text-on-surface truncate max-w-[130px] sm:max-w-none">
+                                      {order._id}
+                                    </strong>
+                                    <button
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(order._id);
+                                        toast.success('Order ID copied!');
+                                      }}
+                                      className="material-symbols-outlined text-[13px] text-secondary hover:text-primary transition-colors cursor-pointer active:scale-[0.95]"
+                                      title="Copy ID Key"
+                                    >
+                                      content_copy
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`px-2.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold ${
+                                      order.orderStatus === 'delivered'
+                                        ? 'bg-green-50 text-green-700 border border-green-200'
+                                        : 'bg-amber-50 text-amber-800 border border-amber-200 animate-pulse'
+                                    }`}
                                   >
-                                    content_copy
-                                  </button>
+                                    {order.orderStatus}
+                                  </span>
+
+                                  <span className="text-[9px] bg-surface-container px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-outline-variant/10">
+                                    {order.paymentStatus || 'Paid'}
+                                  </span>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-3">
-                                <span
-                                  className={`px-2.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold ${
-                                    order.orderStatus === "delivered"
-                                      ? "bg-green-50 text-green-700 border border-green-200"
-                                      : "bg-amber-50 text-amber-800 border border-amber-200 animate-pulse"
-                                  }`}
-                                >
-                                  {order.orderStatus}
-                                </span>
+                              <div className="pt-3 space-y-4">
+                                {order.items?.map((item, itemIdx) => {
+                                  const prodTitle =
+                                    item.title ||
+                                    (typeof item.productId === 'object'
+                                      ? item.productId?.title
+                                      : null) ||
+                                    'Artisanal Piece';
+                                  const prodPrice =
+                                    item.price ||
+                                    (typeof item.productId === 'object'
+                                      ? item.productId?.price
+                                      : 0) ||
+                                    0;
+                                  const prodImage =
+                                    item.imageSrc ||
+                                    (typeof item.productId === 'object'
+                                      ? item.productId?.imageSrc || item.productId?.images?.[0]
+                                      : null) ||
+                                    '';
+                                  const prodVariant = item.variant || 'Default';
+                                  return (
+                                    <div
+                                      key={itemIdx}
+                                      className="flex gap-4 items-start pb-2 border-b border-dashed border-outline-variant/10 last:border-0 last:pb-0"
+                                    >
+                                      <img
+                                        onError={handleImageError}
+                                        src={prodImage}
+                                        alt="Traditional wedding event decoration"
+                                        className="w-14 h-16 bg-surface-container rounded object-cover flex-shrink-0 border border-outline-variant/20 shadow-2xs"
+                                      />
 
-                                <span className="text-[9px] bg-surface-container px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-outline-variant/10">
-                                  {order.paymentStatus || "Paid"}
-                                </span>
+                                      <div className="flex-1 min-w-0 text-[12px]">
+                                        <div className="flex items-center gap-2">
+                                          <h4 className="font-bold text-on-surface line-clamp-1">
+                                            {prodTitle}
+                                          </h4>
+                                          {item.type === 'rental' && (
+                                            <span className="bg-[#8c7335]/10 text-[#8c7335] text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded flex items-center gap-1 border border-[#8c7335]/20">
+                                              <span className="material-symbols-outlined text-[10px]">
+                                                sell
+                                              </span>{' '}
+                                              🏷 RENTAL
+                                            </span>
+                                          )}
+                                        </div>
+                                        {item.type === 'rental' && item.rentalInfo && (
+                                          <span className="text-[11px] text-[#8c7335] block mt-1 font-medium bg-[#8c7335]/10 border border-[#8c7335]/20 px-1.5 py-0.5 rounded inline-block mb-1">
+                                            Period:{' '}
+                                            {new Date(
+                                              item.rentalInfo.startDate,
+                                            ).toLocaleDateString()}{' '}
+                                            to{' '}
+                                            {new Date(item.rentalInfo.endDate).toLocaleDateString()}
+                                          </span>
+                                        )}
+                                        <span className="text-[11px] text-secondary block mt-0.5">
+                                          Quantity: {item.quantity || 1} • Unit Price: ₹
+                                          {prodPrice.toLocaleString()}{' '}
+                                          {prodVariant !== 'Default' && `• Style: ${prodVariant}`}
+                                        </span>
+                                        <strong className="text-xs text-primary block mt-1">
+                                          ₹{(prodPrice * (item.quantity || 1)).toLocaleString()}
+                                        </strong>
+                                        {order.orderStatus === 'Delivered' && (
+                                          <button
+                                            onClick={() =>
+                                              setReviewingProduct({
+                                                productId: item.productId?._id || item.productId,
+                                                productTitle: prodTitle,
+                                              })
+                                            }
+                                            className="mt-2 text-[10px] text-primary hover:text-primary-dark font-bold uppercase tracking-widest flex items-center gap-1 transition-colors active:scale-[0.98]"
+                                          >
+                                            <span className="material-symbols-outlined text-[13px]">
+                                              rate_review
+                                            </span>
+                                            Write a Review
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            </div>
 
-                             <div className="pt-3 space-y-4">
-                              {order.items?.map((item, itemIdx) => {
-                                const prodTitle = item.title || (typeof item.productId === "object" ? item.productId?.title : null) || "Artisanal Piece";
-                                const prodPrice = item.price || (typeof item.productId === "object" ? item.productId?.price : 0) || 0;
-                                const prodImage = item.imageSrc || (typeof item.productId === "object" ? item.productId?.imageSrc || item.productId?.images?.[0] : null) || "";
-                                const prodVariant = item.variant || "Default";
-                                return (
-                                  <div key={itemIdx} className="flex gap-4 items-start pb-2 border-b border-dashed border-outline-variant/10 last:border-0 last:pb-0">
-                                    <img
-                                      onError={handleImageError}
-                                      src={prodImage}
-                                      alt="Traditional wedding event decoration"
-                                      className="w-14 h-16 bg-surface-container rounded object-cover flex-shrink-0 border border-outline-variant/20 shadow-2xs"
-                                    />
-
-                                    <div className="flex-1 min-w-0 text-[12px]">
-                                      <h4 className="font-bold text-on-surface line-clamp-1">
-                                        {prodTitle}
-                                      </h4>
-                                      <span className="text-[11px] text-secondary block mt-0.5">
-                                        Quantity: {item.quantity || 1} • Unit Price: ₹{prodPrice.toLocaleString()} {prodVariant !== 'Default' && `• Style: ${prodVariant}`}
+                              {/* Rental Specific Information */}
+                              {(order.orderType === 'rental' ||
+                                order.items?.some((i) => i.type === 'rental')) && (
+                                <div className="mt-4 pt-3 border-t border-dashed border-outline-variant/30">
+                                  <h4 className="text-[10px] font-bold text-[#8c7335] uppercase tracking-widest mb-3 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[14px]">
+                                      info
+                                    </span>{' '}
+                                    Rental Information
+                                  </h4>
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#8c7335]/5 border border-[#8c7335]/20 p-3 rounded-lg text-[10px] text-[#5a481f]">
+                                    <div>
+                                      <span className="uppercase tracking-wider font-bold block mb-1 opacity-75">
+                                        Rental Period
                                       </span>
-                                      <strong className="text-xs text-primary block mt-1">
-                                        ₹{(prodPrice * (item.quantity || 1)).toLocaleString()}
-                                      </strong>
-                                      {order.orderStatus === "Delivered" && (
-                                        <button
-                                          onClick={() => setReviewingProduct({
-                                            productId: item.productId?._id || item.productId,
-                                            productTitle: prodTitle
-                                          })}
-                                          className="mt-2 text-[10px] text-primary hover:text-primary-dark font-bold uppercase tracking-widest flex items-center gap-1 transition-colors active:scale-[0.98]"
-                                        >
-                                          <span className="material-symbols-outlined text-[13px]">rate_review</span>
-                                          Write a Review
-                                        </button>
-                                      )}
+                                      <span className="font-semibold text-[11px]">
+                                        {order.items?.find((i) => i.rentalInfo)?.rentalInfo
+                                          ? `${new Date(order.items.find((i) => i.rentalInfo).rentalInfo.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - ${new Date(order.items.find((i) => i.rentalInfo).rentalInfo.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
+                                          : 'N/A'}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="uppercase tracking-wider font-bold block mb-1 opacity-75">
+                                        Deposit
+                                      </span>
+                                      <span className="font-semibold text-[11px] text-green-700">
+                                        ₹{(order.depositTotal || 0).toLocaleString()}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="uppercase tracking-wider font-bold block mb-1 opacity-75">
+                                        Return Status
+                                      </span>
+                                      <span className="font-semibold text-[11px]">
+                                        {['returned', 'completed'].includes(
+                                          order.orderStatus?.toLowerCase(),
+                                        )
+                                          ? 'Returned'
+                                          : order.orderStatus?.toLowerCase() === 'return requested'
+                                            ? 'Pickup Scheduled'
+                                            : 'Pending Return'}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="uppercase tracking-wider font-bold block mb-1 opacity-75">
+                                        Refund Status
+                                      </span>
+                                      <span className="font-semibold text-[11px]">
+                                        {order.depositRefundStatus || 'Pending'}
+                                      </span>
                                     </div>
                                   </div>
-                                );
-                              })}
-                            </div>
+                                </div>
+                              )}
 
-                            {/* Enterprise Logistics Details */}
-                            {order.trackingNumber && (
-                              <div className="mt-3 pt-3 border-t border-dashed border-outline-variant/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-surface-container/30 p-3 rounded-lg">
-                                <div>
-                                  <span className="text-[9px] uppercase font-bold text-secondary tracking-widest block mb-0.5">Tracking AWB</span>
-                                  <strong className="text-on-surface text-xs font-mono">{order.trackingNumber}</strong>
-                                </div>
-                                <div>
-                                  <span className="text-[9px] uppercase font-bold text-secondary tracking-widest block mb-0.5">Courier</span>
-                                  <strong className="text-primary text-xs">{order.courierPartner || "Delhivery Logistics"}</strong>
-                                </div>
-                                {order.barcodeData && (
-                                  <div className="bg-white px-2 py-1 rounded shadow-sm">
-                                    <Barcode value={order.barcodeData} height={20} width={1} displayValue={false} background="transparent" margin={0} />
+                              {/* Enterprise Logistics Details */}
+                              {order.trackingNumber && (
+                                <div className="mt-3 pt-3 border-t border-dashed border-outline-variant/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-surface-container/30 p-3 rounded-lg">
+                                  <div>
+                                    <span className="text-[9px] uppercase font-bold text-secondary tracking-widest block mb-0.5">
+                                      Tracking AWB
+                                    </span>
+                                    <strong className="text-on-surface text-xs font-mono">
+                                      {order.trackingNumber}
+                                    </strong>
                                   </div>
-                                )}
-                              </div>
-                            )}
+                                  <div>
+                                    <span className="text-[9px] uppercase font-bold text-secondary tracking-widest block mb-0.5">
+                                      Courier
+                                    </span>
+                                    <strong className="text-primary text-xs">
+                                      {order.courierPartner || 'Delhivery Logistics'}
+                                    </strong>
+                                  </div>
+                                  {order.barcodeData && (
+                                    <div className="bg-white px-2 py-1 rounded shadow-sm">
+                                      <Barcode
+                                        value={order.barcodeData}
+                                        height={20}
+                                        width={1}
+                                        displayValue={false}
+                                        background="transparent"
+                                        margin={0}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
 
-                            <div className="pt-3 mt-3 border-t border-surface-container flex flex-wrap justify-between items-center gap-3 text-[11px]">
-                              <p className="text-secondary flex items-center gap-1 font-medium">
-                                <span className="material-symbols-outlined text-xs text-green-700">
-                                  calendar_today
-                                </span>
-                                Ordered on {new Date(order.createdAt).toLocaleDateString("en-US", { day: 'numeric', month: 'long', year: 'numeric' })}
-                              </p>
-                              
-                              <div className="flex items-center gap-4 font-bold uppercase tracking-wider text-[10px]">
-                                {order.invoiceNumber ? (
-                                  <button
-                                    onClick={() => downloadInvoice(order._id)}
-                                    className="text-primary hover:underline cursor-pointer flex items-center gap-1 active:scale-[0.98]"
-                                  >
-                                    <span className="material-symbols-outlined text-[13px]">receipt_long</span>
-                                    <span>Invoice: {order.invoiceNumber}</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => downloadInvoice(order._id)}
-                                    className="text-primary hover:underline cursor-pointer flex items-center gap-1 active:scale-[0.98]"
-                                  >
-                                    <span className="material-symbols-outlined text-[13px]">download</span>
-                                    <span>Get PDF Invoice</span>
-                                  </button>
-                                )}
-                                <span className="text-outline-variant">|</span>
-                                <button
-                                  onClick={() => {
-                                    if(order.trackingNumber) window.open(`https://www.delhivery.com/tracking?id=${order.trackingNumber}`, "_blank");
-                                    else toast.success("Opening live courier query feed...");
-                                  }}
-                                  className="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center gap-1 active:scale-[0.98]"
-                                >
-                                  <span className="material-symbols-outlined text-[13px]">local_shipping</span>
-                                  <span>Track Dispatch</span>
-                                </button>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
+                              <div className="pt-3 mt-3 border-t border-surface-container flex flex-wrap justify-between items-center gap-3 text-[11px]">
+                                <p className="text-secondary flex items-center gap-1 font-medium">
+                                  <span className="material-symbols-outlined text-xs text-green-700">
+                                    calendar_today
+                                  </span>
+                                  Ordered on{' '}
+                                  {new Date(order.createdAt).toLocaleDateString('en-US', {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
+                                  })}
+                                </p>
 
-                      {filteredOrders.length === 0 && !isOrdersLoading && (
-                        <div className="text-center py-16 bg-surface-bright rounded-lg border border-outline-variant/40 text-[11px] text-secondary italic">
-                          No order records found matching the status filter.
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </motion.div>
+                                <div className="flex items-center gap-4 font-bold uppercase tracking-wider text-[10px]">
+                                  {order.invoiceNumber ? (
+                                    <button
+                                      onClick={() => downloadInvoice(order._id)}
+                                      className="text-primary hover:underline cursor-pointer flex items-center gap-1 active:scale-[0.98]"
+                                    >
+                                      <span className="material-symbols-outlined text-[13px]">
+                                        receipt_long
+                                      </span>
+                                      <span>Invoice: {order.invoiceNumber}</span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => downloadInvoice(order._id)}
+                                      className="text-primary hover:underline cursor-pointer flex items-center gap-1 active:scale-[0.98]"
+                                    >
+                                      <span className="material-symbols-outlined text-[13px]">
+                                        download
+                                      </span>
+                                      <span>Get PDF Invoice</span>
+                                    </button>
+                                  )}
+                                  <span className="text-outline-variant">|</span>
+                                  <button
+                                    onClick={() => {
+                                      if (order.trackingNumber)
+                                        window.open(
+                                          `https://www.delhivery.com/tracking?id=${order.trackingNumber}`,
+                                          '_blank',
+                                        );
+                                      else toast.success('Opening live courier query feed...');
+                                    }}
+                                    className="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center gap-1 active:scale-[0.98]"
+                                  >
+                                    <span className="material-symbols-outlined text-[13px]">
+                                      local_shipping
+                                    </span>
+                                    <span>Track Dispatch</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+
+                        {filteredOrders.length === 0 && !isOrdersLoading && (
+                          <div className="text-center py-16 bg-surface-bright rounded-lg border border-outline-variant/40 text-[11px] text-secondary italic">
+                            No order records found matching the status filter.
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </motion.div>
                 </ErrorBoundary>
               )}
 
               {/* TAB 5: WISHLIST COLLECTIONS */}
-              {activeTab === "wishlist" && (
-                <ErrorBoundary key="wishlist-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load wishlist tab.</div>}>
-                <motion.div
-                  id="panel-wishlist"
-                  role="tabpanel"
-                  key="tab-wishlist"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
+              {activeTab === 'wishlist' && (
+                <ErrorBoundary
+                  key="wishlist-error"
+                  fallback={
+                    <div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">
+                      Failed to load wishlist tab.
+                    </div>
+                  }
                 >
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
-                    <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
-                      Curated Wishlist
-                    </h2>
-                    <span className="text-[11px] text-secondary font-light">
-                      Your saved masterpieces, wedding collections, and event elements.
-                    </span>
-                  </div>
+                  <motion.div
+                    id="panel-wishlist"
+                    role="tabpanel"
+                    key="tab-wishlist"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
+                      <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
+                        Curated Wishlist
+                      </h2>
+                      <span className="text-[11px] text-secondary font-light">
+                        Your saved masterpieces, wedding collections, and event elements.
+                      </span>
+                    </div>
 
-                  {wishlistItems && wishlistItems.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      <AnimatePresence>
-                        <React.Suspense fallback={<ProductCardSkeleton />}>
-                          {wishlistItems.map((item, idx) => (
-                            <ProductCard
-                              key={item._id || idx}
-                              product={item}
-                              isWishlistRoute={true}
-                              onRemove={() => removeFromWishlist(item._id)}
-                            />
-                          ))}
-                        </React.Suspense>
-                      </AnimatePresence>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-center py-20 bg-surface-bright rounded-xl border border-outline-variant/40 shadow-xs relative overflow-hidden">
-                      <span className="material-symbols-outlined text-[48px] text-primary/20 mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
-                      <h3 className="font-display text-xl text-on-surface mb-2 font-medium">Curated Gallery Empty</h3>
-                      <p className="text-[11px] text-secondary font-light max-w-sm mx-auto mb-6">
-                        Your wishlist is completely empty. Explore the shop to save event masterpieces!
-                      </p>
-                      <Link to="/products" className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md">
-                        Explore Collection
-                      </Link>
-                    </div>
-                  )}
-                </motion.div>
+                    {wishlistItems && wishlistItems.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <AnimatePresence>
+                          <React.Suspense fallback={<ProductCardSkeleton />}>
+                            {wishlistItems.map((item, idx) => (
+                              <ProductCard
+                                key={item._id || idx}
+                                product={item}
+                                isWishlistRoute={true}
+                                onRemove={() => removeFromWishlist(item._id)}
+                              />
+                            ))}
+                          </React.Suspense>
+                        </AnimatePresence>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center py-20 bg-surface-bright rounded-xl border border-outline-variant/40 shadow-xs relative overflow-hidden">
+                        <span
+                          className="material-symbols-outlined text-[48px] text-primary/20 mb-4"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          favorite
+                        </span>
+                        <h3 className="font-display text-xl text-on-surface mb-2 font-medium">
+                          Curated Gallery Empty
+                        </h3>
+                        <p className="text-[11px] text-secondary font-light max-w-sm mx-auto mb-6">
+                          Your wishlist is completely empty. Explore the shop to save event
+                          masterpieces!
+                        </p>
+                        <Link
+                          to="/products"
+                          className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md"
+                        >
+                          Explore Collection
+                        </Link>
+                      </div>
+                    )}
+                  </motion.div>
                 </ErrorBoundary>
               )}
 
               {/* TAB 6: DYNAMIC SHOPPING BAG */}
-              {activeTab === "cart" && (
-                <ErrorBoundary key="cart-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load cart tab.</div>}>
-                <motion.div
-                  id="panel-cart"
-                  role="tabpanel"
-                  key="tab-cart"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
-                >
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
-                    <div>
-                      <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
-                        My Shopping Bag
-                      </h2>
-                      <span className="text-[11px] text-secondary font-light">
-                        Items currently reserved for your signature verification and checkout session.
-                      </span>
+              {activeTab === 'cart' && (
+                <ErrorBoundary
+                  key="cart-error"
+                  fallback={
+                    <div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">
+                      Failed to load cart tab.
                     </div>
-                  </div>
-
-                  {cartItems && cartItems.length > 0 ? (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {cartItems.map((item) => {
-                          const prod = item.product || item;
-                          return <ProductCard key={prod._id || prod.id} {...prod} imageSrc={prod.imageSrc || prod.images?.[0]} />;
-                        })}
+                  }
+                >
+                  <motion.div
+                    id="panel-cart"
+                    role="tabpanel"
+                    key="tab-cart"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
+                      <div>
+                        <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
+                          My Shopping Bag
+                        </h2>
+                        <span className="text-[11px] text-secondary font-light">
+                          Items currently reserved for your signature verification and checkout
+                          session.
+                        </span>
                       </div>
-                      <div className="pt-4 flex justify-end">
+                    </div>
+
+                    {cartItems && cartItems.length > 0 ? (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {cartItems.map((item) => {
+                            const prod = item.product || item;
+                            return (
+                              <ProductCard
+                                key={prod._id || prod.id}
+                                {...prod}
+                                imageSrc={prod.imageSrc || prod.images?.[0]}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="pt-4 flex justify-end">
+                          <Link
+                            to="/cart"
+                            className="btn-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[10px] inline-flex items-center gap-2 cursor-pointer shadow-md"
+                          >
+                            <span>Secure Entire Bag</span>
+                            <span className="material-symbols-outlined text-[13px]">
+                              arrow_forward
+                            </span>
+                          </Link>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center py-20 bg-surface-bright rounded-xl border border-outline-variant/40 shadow-xs relative overflow-hidden">
+                        <span className="material-symbols-outlined text-[48px] text-primary/20 mb-4">
+                          shopping_bag
+                        </span>
+                        <h3 className="font-display text-xl text-on-surface mb-2 font-medium">
+                          Your Bag is Empty
+                        </h3>
+                        <p className="text-[11px] text-secondary font-light max-w-sm mx-auto mb-6">
+                          Your shopping bag is completely empty. Start browsing our curated catalog
+                          to reserve your event pieces.
+                        </p>
                         <Link
-                          to="/cart"
-                          className="btn-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[10px] inline-flex items-center gap-2 cursor-pointer shadow-md"
+                          to="/products"
+                          className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md"
                         >
-                          <span>Secure Entire Bag</span>
-                          <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+                          Browse Boutique
                         </Link>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-center py-20 bg-surface-bright rounded-xl border border-outline-variant/40 shadow-xs relative overflow-hidden">
-                      <span className="material-symbols-outlined text-[48px] text-primary/20 mb-4">shopping_bag</span>
-                      <h3 className="font-display text-xl text-on-surface mb-2 font-medium">Your Bag is Empty</h3>
-                      <p className="text-[11px] text-secondary font-light max-w-sm mx-auto mb-6">
-                        Your shopping bag is completely empty. Start browsing our curated catalog to reserve your event pieces.
-                      </p>
-                      <Link to="/products" className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md">
-                        Browse Boutique
-                      </Link>
-                    </div>
-                  )}
-                </motion.div>
+                    )}
+                  </motion.div>
                 </ErrorBoundary>
               )}
 
               {/* TAB 7: RECENTLY VIEWED PRODUCTS */}
-              {activeTab === "recently-viewed" && (
-                <ErrorBoundary key="recently-viewed-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load recently viewed tab.</div>}>
-                <motion.div
-                  id="panel-recently-viewed"
-                  role="tabpanel"
-                  key="tab-recently-viewed"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
+              {activeTab === 'recently-viewed' && (
+                <ErrorBoundary
+                  key="recently-viewed-error"
+                  fallback={
+                    <div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">
+                      Failed to load recently viewed tab.
+                    </div>
+                  }
                 >
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
-                    <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
-                      Recently Viewed Masterpieces
-                    </h2>
-                    <span className="text-[11px] text-secondary font-light">
-                      A list of the products and spec-sheets you opened in your active verified session.
-                    </span>
-                  </div>
+                  <motion.div
+                    id="panel-recently-viewed"
+                    role="tabpanel"
+                    key="tab-recently-viewed"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
+                      <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
+                        Recently Viewed Masterpieces
+                      </h2>
+                      <span className="text-[11px] text-secondary font-light">
+                        A list of the products and spec-sheets you opened in your active verified
+                        session.
+                      </span>
+                    </div>
 
-                  {isLoadingRecentlyViewed ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <ProductCardSkeleton />
-                      <ProductCardSkeleton />
-                    </div>
-                  ) : recentlyViewed && recentlyViewed.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      <AnimatePresence>
-                        {recentlyViewed.map((item) => {
-                          const prod = item.product;
-                          if (!prod) return null;
-                          return <ProductCard key={prod._id || prod.id} {...prod} imageSrc={prod.imageSrc || prod.images?.[0]} />;
-                        })}
-                      </AnimatePresence>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-center py-20 bg-surface-bright rounded-xl border border-outline-variant/40 shadow-xs relative overflow-hidden">
-                      <span className="material-symbols-outlined text-[48px] text-primary/20 mb-4">history</span>
-                      <h3 className="font-display text-xl text-on-surface mb-2 font-medium">No Session History</h3>
-                      <p className="text-[11px] text-secondary font-light max-w-sm mx-auto mb-6">
-                        No recently viewed items tracked yet. Open any spec-sheet from the boutique to build your session history!
-                      </p>
-                      <Link to="/products" className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md">
-                        Discover Pieces
-                      </Link>
-                    </div>
-                  )}
-                </motion.div>
+                    {isLoadingRecentlyViewed ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <ProductCardSkeleton />
+                        <ProductCardSkeleton />
+                      </div>
+                    ) : recentlyViewed && recentlyViewed.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <AnimatePresence>
+                          {recentlyViewed.map((item) => {
+                            const prod = item.product;
+                            if (!prod) return null;
+                            return (
+                              <ProductCard
+                                key={prod._id || prod.id}
+                                {...prod}
+                                imageSrc={prod.imageSrc || prod.images?.[0]}
+                              />
+                            );
+                          })}
+                        </AnimatePresence>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center py-20 bg-surface-bright rounded-xl border border-outline-variant/40 shadow-xs relative overflow-hidden">
+                        <span className="material-symbols-outlined text-[48px] text-primary/20 mb-4">
+                          history
+                        </span>
+                        <h3 className="font-display text-xl text-on-surface mb-2 font-medium">
+                          No Session History
+                        </h3>
+                        <p className="text-[11px] text-secondary font-light max-w-sm mx-auto mb-6">
+                          No recently viewed items tracked yet. Open any spec-sheet from the
+                          boutique to build your session history!
+                        </p>
+                        <Link
+                          to="/products"
+                          className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md"
+                        >
+                          Discover Pieces
+                        </Link>
+                      </div>
+                    )}
+                  </motion.div>
                 </ErrorBoundary>
               )}
 
-              {activeTab === "loyalty" && (
-                <ErrorBoundary key="loyalty-error" fallback={<div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">Failed to load loyalty tab.</div>}>
-                <motion.div
-                  id="panel-loyalty"
-                  role="tabpanel"
-                  key="tab-loyalty"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
+              {activeTab === 'loyalty' && (
+                <ErrorBoundary
+                  key="loyalty-error"
+                  fallback={
+                    <div className="p-6 text-center text-rose-500 font-bold bg-rose-50 rounded-lg">
+                      Failed to load loyalty tab.
+                    </div>
+                  }
                 >
-                  <React.Suspense fallback={<Skeleton className="h-32 w-full rounded-lg" />}>
-                    <LoyaltyPanel />
-                  </React.Suspense>
-                </motion.div>
+                  <motion.div
+                    id="panel-loyalty"
+                    role="tabpanel"
+                    key="tab-loyalty"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <React.Suspense fallback={<Skeleton className="h-32 w-full rounded-lg" />}>
+                      <LoyaltyPanel />
+                    </React.Suspense>
+                  </motion.div>
                 </ErrorBoundary>
               )}
             </>
@@ -1584,13 +1966,12 @@ export function Dashboard() {
 
             {/* Modal Container */}
             <motion.div
-              initial={{ y: "100%", opacity: 0 }}
+              initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed bottom-0 left-0 right-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:bottom-auto lg:max-w-lg w-full bg-white rounded-t-3xl lg:rounded-2xl shadow-2xl z-[101] overflow-hidden"
             >
-              
               {/* Rotating Gold Mandala Overlay */}
               <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.04] z-0">
                 <MandalaElement
@@ -1605,17 +1986,15 @@ export function Dashboard() {
               <div className="p-6 relative z-10">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-display text-lg text-on-surface uppercase tracking-wider">
-                    {editingAddressId === "new"
-                      ? "Add New Site Parameters"
-                      : "Modify Site Parameters"}
+                    {editingAddressId === 'new'
+                      ? 'Add New Site Parameters'
+                      : 'Modify Site Parameters'}
                   </h3>
                   <button
                     onClick={() => setIsAddressModalOpen(false)}
                     className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-secondary hover:text-primary transition-colors cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-base">
-                      close
-                    </span>
+                    <span className="material-symbols-outlined text-base">close</span>
                   </button>
                 </div>
 
@@ -1639,7 +2018,9 @@ export function Dashboard() {
                         </>
                       ) : (
                         <>
-                          <span className="material-symbols-outlined text-[12px] font-bold">my_location</span>
+                          <span className="material-symbols-outlined text-[12px] font-bold">
+                            my_location
+                          </span>
                           <span>Use Current Location</span>
                         </>
                       )}
@@ -1654,13 +2035,19 @@ export function Dashboard() {
                       className="flex items-center gap-2 text-[10px] text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider"
                     >
                       <span className="material-symbols-outlined text-xs">share_location</span>
-                      <span>GPS Locked: {addressFormData.latitude.toFixed(6)}, {addressFormData.longitude.toFixed(6)}</span>
+                      <span>
+                        GPS Locked: {addressFormData.latitude.toFixed(6)},{' '}
+                        {addressFormData.longitude.toFixed(6)}
+                      </span>
                     </motion.div>
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="dashboard-address-name" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label
+                        htmlFor="dashboard-address-name"
+                        className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1"
+                      >
                         Receiver Full Name
                       </label>
                       <input
@@ -1680,7 +2067,10 @@ export function Dashboard() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="dashboard-address-phone" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label
+                        htmlFor="dashboard-address-phone"
+                        className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1"
+                      >
                         Contact Phone Number
                       </label>
                       <input
@@ -1703,7 +2093,10 @@ export function Dashboard() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="dashboard-address-pincode" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label
+                        htmlFor="dashboard-address-pincode"
+                        className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1"
+                      >
                         6-Digit Pincode
                       </label>
                       <input
@@ -1723,7 +2116,10 @@ export function Dashboard() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="dashboard-address-locality" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label
+                        htmlFor="dashboard-address-locality"
+                        className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1"
+                      >
                         Locality / Sector
                       </label>
                       <input
@@ -1745,7 +2141,10 @@ export function Dashboard() {
                   </div>
 
                   <div>
-                    <label htmlFor="dashboard-address-street" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                    <label
+                      htmlFor="dashboard-address-street"
+                      className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1"
+                    >
                       Street Address & Building Details
                     </label>
                     <textarea
@@ -1766,7 +2165,10 @@ export function Dashboard() {
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1">
-                      <label htmlFor="dashboard-address-city" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label
+                        htmlFor="dashboard-address-city"
+                        className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1"
+                      >
                         City / District
                       </label>
                       <input
@@ -1786,7 +2188,10 @@ export function Dashboard() {
                       />
                     </div>
                     <div className="col-span-1">
-                      <label htmlFor="dashboard-address-state" className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1">
+                      <label
+                        htmlFor="dashboard-address-state"
+                        className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1"
+                      >
                         State
                       </label>
                       <input
@@ -1840,7 +2245,7 @@ export function Dashboard() {
                       ) : (
                         <>
                           <span className="material-symbols-outlined text-xs">save</span>
-                          <span>{editingAddressId === "new" ? "Add Address" : "Save Changes"}</span>
+                          <span>{editingAddressId === 'new' ? 'Add Address' : 'Save Changes'}</span>
                         </>
                       )}
                     </motion.button>
@@ -1887,11 +2292,17 @@ export function Dashboard() {
               onClick={(e) => e.stopPropagation()}
               className="bg-surface w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl"
             >
-              <React.Suspense fallback={<div className="p-8"><Skeleton className="h-80 w-full rounded-xl" /></div>}>
-                <InvoiceTemplate 
-                  order={selectedInvoiceOrder} 
-                  user={user} 
-                  onClose={() => setSelectedInvoiceOrder(null)} 
+              <React.Suspense
+                fallback={
+                  <div className="p-8">
+                    <Skeleton className="h-80 w-full rounded-xl" />
+                  </div>
+                }
+              >
+                <InvoiceTemplate
+                  order={selectedInvoiceOrder}
+                  user={user}
+                  onClose={() => setSelectedInvoiceOrder(null)}
                 />
               </React.Suspense>
             </motion.div>

@@ -6,7 +6,20 @@ export interface IUser extends Document {
   name: string;
   email: string;
   phone?: string;
-  role: 'user' | 'customer' | 'owner' | 'super_admin' | 'main_admin' | 'moderator' | 'support_admin' | 'support' | 'order_manager' | 'content_manager' | 'admin' | 'manager' | 'coordinator';
+  role:
+    | 'user'
+    | 'customer'
+    | 'owner'
+    | 'super_admin'
+    | 'main_admin'
+    | 'moderator'
+    | 'support_admin'
+    | 'support'
+    | 'order_manager'
+    | 'content_manager'
+    | 'admin'
+    | 'manager'
+    | 'coordinator';
   avatar?: string;
   gender?: string;
   dateOfBirth?: string;
@@ -15,6 +28,11 @@ export interface IUser extends Document {
     product: mongoose.Types.ObjectId;
     quantity: number;
     variant?: string;
+    type?: 'purchase' | 'rental';
+    rentalInfo?: {
+      startDate: Date;
+      endDate: Date;
+    };
   }>;
   recentlyViewed?: Array<{
     product: mongoose.Types.ObjectId;
@@ -52,10 +70,24 @@ const UserSchema: Schema = new Schema(
     name: { type: String, default: 'Customer', trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     phone: { type: String, trim: true },
-    role: { 
-      type: String, 
-      enum: ['user', 'customer', 'owner', 'super_admin', 'main_admin', 'moderator', 'support_admin', 'support', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'], 
-      default: 'customer' 
+    role: {
+      type: String,
+      enum: [
+        'user',
+        'customer',
+        'owner',
+        'super_admin',
+        'main_admin',
+        'moderator',
+        'support_admin',
+        'support',
+        'order_manager',
+        'content_manager',
+        'admin',
+        'manager',
+        'coordinator',
+      ],
+      default: 'customer',
     },
     avatar: { type: String, default: '' },
     gender: { type: String, default: '', trim: true },
@@ -65,22 +97,27 @@ const UserSchema: Schema = new Schema(
       {
         product: { type: Schema.Types.ObjectId, ref: 'Product' },
         quantity: { type: Number, default: 1 },
-        variant: { type: String, default: 'Default' }
-      }
+        variant: { type: String, default: 'Default' },
+        type: { type: String, enum: ['purchase', 'rental'], default: 'purchase' },
+        rentalInfo: {
+          startDate: { type: Date },
+          endDate: { type: Date },
+        },
+      },
     ],
     recentlyViewed: [
       {
         product: { type: Schema.Types.ObjectId, ref: 'Product' },
-        viewedAt: { type: Date, default: Date.now }
-      }
+        viewedAt: { type: Date, default: Date.now },
+      },
     ],
     notificationPreferences: {
       email: { type: Boolean, default: true },
-      marketing: { type: Boolean, default: true }
+      marketing: { type: Boolean, default: true },
     },
     accountPreferences: {
       theme: { type: String, default: 'light' },
-      language: { type: String, default: 'en' }
+      language: { type: String, default: 'en' },
     },
     isVerified: { type: Boolean, default: false },
     lastLogin: { type: Date },
@@ -104,7 +141,11 @@ const UserSchema: Schema = new Schema(
     lockUntil: { type: Date },
     walletBalance: { type: Number, default: 0 },
     siriCoins: { type: Number, default: 0 },
-    loyaltyTier: { type: String, enum: ['Bronze', 'Silver', 'Gold', 'Platinum'], default: 'Bronze' },
+    loyaltyTier: {
+      type: String,
+      enum: ['Bronze', 'Silver', 'Gold', 'Platinum'],
+      default: 'Bronze',
+    },
     referralCode: { type: String, unique: true, sparse: true },
     referredBy: { type: Schema.Types.ObjectId, ref: 'User' },
     referralsCount: { type: Number, default: 0 },
@@ -113,12 +154,12 @@ const UserSchema: Schema = new Schema(
     timestamps: true,
     toJSON: { getters: true },
     toObject: { getters: true },
-  }
+  },
 );
 
 UserSchema.index({ role: 1 });
 UserSchema.index({ isVerified: 1 });
-UserSchema.index({ "recentlyViewed.product": 1 });
+UserSchema.index({ 'recentlyViewed.product': 1 });
 UserSchema.index({ loyaltyTier: 1 });
 
 // High-Performance Production Compound Index for Paginated Staff and Admin Lists

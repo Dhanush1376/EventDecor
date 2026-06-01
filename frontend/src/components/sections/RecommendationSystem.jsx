@@ -1,22 +1,23 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ProductCard } from "../ui/ProductCard";
-import { RecommendationSkeleton } from "../ui/Skeleton";
-import { 
-  useSimilarRecommendations, 
-  useCompleteSetup, 
-  useAlsoViewed 
-} from "../../hooks/useRecommendationQueries";
-import { useRecentlyViewed } from "../../hooks/useUserQueries";
-import { useAuth } from "../../context/AuthContext";
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ProductCard } from '../ui/ProductCard';
+import { RecommendationSkeleton } from '../ui/Skeleton';
+import {
+  useSimilarRecommendations,
+  useCompleteSetup,
+  useAlsoViewed,
+} from '../../hooks/useRecommendationQueries';
+import { useRecentlyViewed } from '../../hooks/useUserQueries';
+import { useAuth } from '../../context/AuthContext';
 
-export function RecommendationSystem({ 
-  category, 
-  currentProductId, 
-  targetType = 'product', 
-  hideHeader = false, 
-  compact = false, 
-  horizontalScroll = false 
+export function RecommendationSystem({
+  category,
+  currentProductId,
+  targetType = 'product',
+  hideHeader = false,
+  compact = false,
+  horizontalScroll = false,
+  rentalOnly = false,
 }) {
   const { isAuthenticated } = useAuth();
   const [shouldFetch, setShouldFetch] = useState(false);
@@ -29,7 +30,9 @@ export function RecommendationSystem({
     return () => clearTimeout(timer);
   }, []);
 
-  const similarQuery = useSimilarRecommendations(targetType, currentProductId, 8, { enabled: shouldFetch });
+  const similarQuery = useSimilarRecommendations(targetType, currentProductId, 8, {
+    enabled: shouldFetch,
+  });
   const completeQuery = useCompleteSetup(currentProductId, 8, { enabled: shouldFetch });
   const alsoViewedQuery = useAlsoViewed(currentProductId, targetType, 8, { enabled: shouldFetch });
   const recentlyViewedQuery = useRecentlyViewed();
@@ -40,7 +43,10 @@ export function RecommendationSystem({
 
   const recentlyViewedList = useMemo(() => {
     if (!isAuthenticated || !recentlyViewedQuery.data) return [];
-    const list = recentlyViewedQuery.data.data || recentlyViewedQuery.data.items || (Array.isArray(recentlyViewedQuery.data) ? recentlyViewedQuery.data : []);
+    const list =
+      recentlyViewedQuery.data.data ||
+      recentlyViewedQuery.data.items ||
+      (Array.isArray(recentlyViewedQuery.data) ? recentlyViewedQuery.data : []);
     return list
       .filter((item) => item.product)
       .map((item) => ({
@@ -53,6 +59,9 @@ export function RecommendationSystem({
         category: item.product.category,
         rating: item.product.rating || 4.8,
         slug: item.product.slug,
+        isRentalAvailable: item.product.isRentalAvailable,
+        availabilityMode: item.product.availabilityMode,
+        rentalPricing: item.product.rentalPricing,
       }))
       .filter((p) => p.id !== currentProductId)
       .slice(0, 8);
@@ -60,28 +69,44 @@ export function RecommendationSystem({
 
   // Determine if we should show the loading skeleton
   // We only show loading if we have started fetching AND we don't have any cached placeholder data
-  const loading = shouldFetch && (
-    (similarQuery.isPending && similarList.length === 0) ||
-    (completeQuery.isPending && completeSetupList.length === 0) ||
-    (alsoViewedQuery.isPending && alsoViewedList.length === 0)
-  );
+  const loading =
+    shouldFetch &&
+    ((similarQuery.isPending && similarList.length === 0) ||
+      (completeQuery.isPending && completeSetupList.length === 0) ||
+      (alsoViewedQuery.isPending && alsoViewedList.length === 0));
 
   const getActiveList = () => {
-    const combined = [...similarList, ...completeSetupList, ...alsoViewedList, ...recentlyViewedList];
+    const combined = [
+      ...similarList,
+      ...completeSetupList,
+      ...alsoViewedList,
+      ...recentlyViewedList,
+    ];
     const uniqueIds = new Set();
-    const uniqueList = [];
-    const currentIdStr = currentProductId ? String(currentProductId) : "";
-    
+    let uniqueList = [];
+    const currentIdStr = currentProductId ? String(currentProductId) : '';
+
     for (const item of combined) {
       const rawId = item.id || item._id;
       if (!rawId) continue;
       const idStr = String(rawId);
-      
+
       if (!uniqueIds.has(idStr) && idStr !== currentIdStr) {
         uniqueIds.add(idStr);
         uniqueList.push(item);
       }
     }
+
+    if (rentalOnly) {
+      uniqueList = uniqueList.filter(
+        (item) =>
+          item.isRentalAvailable ||
+          item.availabilityMode === 'both' ||
+          item.availabilityMode === 'rental' ||
+          item.rentalPricing,
+      );
+    }
+
     return uniqueList.slice(0, 16);
   };
 
@@ -97,17 +122,18 @@ export function RecommendationSystem({
   }
 
   return (
-    <section className="py-12 bg-transparent relative overflow-hidden">
+    <section
+      className={`${compact ? 'pt-4 pb-0 md:py-4' : 'py-12'} bg-transparent relative overflow-hidden`}
+    >
       {/* Subtle Glow Accent */}
       <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
 
       <div className="max-w-max-width mx-auto px-4 md:px-6 lg:px-8 relative z-10">
         {!hideHeader && (
-          <div className="mb-8 flex flex-col items-center md:items-start">
-            <span className="font-label text-[10px] text-primary uppercase tracking-[0.3em] font-semibold mb-2">
-              Artisan Curation
-            </span>
-            <h3 className="font-headline text-2xl md:text-3xl text-on-surface leading-tight tracking-tight">
+          <div className={`${compact ? 'mb-3' : 'mb-6'} w-full text-left`}>
+            <h3
+              className={`${compact ? 'text-[11px] uppercase tracking-widest font-bold text-on-surface/80' : 'text-[18px] md:text-[22px] font-bold text-on-surface'} leading-tight`}
+            >
               You May Also Like
             </h3>
           </div>
@@ -129,8 +155,11 @@ export function RecommendationSystem({
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className={horizontalScroll ? "flex gap-6 pb-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar" : "grid grid-cols-2 md:grid-cols-4 gap-6 pb-6"}
+              className={
+                horizontalScroll
+                  ? `flex gap-4 md:gap-6 ${compact ? 'pb-2' : 'pb-4'} overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar`
+                  : 'grid grid-cols-2 md:grid-cols-4 gap-6 pb-6'
+              }
             >
               {activeList.map((product, idx) => (
                 <motion.div
@@ -138,7 +167,11 @@ export function RecommendationSystem({
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.04, duration: 0.4 }}
-                  className={horizontalScroll ? "w-[200px] sm:w-[240px] md:w-[280px] flex-shrink-0 snap-start" : "w-full"}
+                  className={
+                    horizontalScroll
+                      ? `${compact ? 'w-[140px] sm:w-[160px]' : 'w-[200px] sm:w-[240px] md:w-[280px]'} flex-shrink-0 snap-start`
+                      : 'w-full'
+                  }
                 >
                   <ProductCard
                     {...product}

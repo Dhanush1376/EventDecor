@@ -13,7 +13,7 @@ export class OrderValidationService {
     }
 
     const MAX_QUANTITY_PER_ITEM = 50;
-    
+
     const MAX_ITEMS_PER_ORDER = 20;
 
     if (items.length > MAX_ITEMS_PER_ORDER) {
@@ -21,25 +21,67 @@ export class OrderValidationService {
     }
 
     for (const item of items) {
-      if (typeof item.quantity !== 'number' || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > MAX_QUANTITY_PER_ITEM) {
+      if (
+        typeof item.quantity !== 'number' ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity < 1 ||
+        item.quantity > MAX_QUANTITY_PER_ITEM
+      ) {
         throw new ApiError(400, `Invalid quantity for item: ${item.productId}`);
       }
     }
 
     let subtotal = 0;
-    const productIds = [...new Set(items.map((item: any) => String(item.productId)).filter(Boolean))] as any[];
-    const products = await Product.find({ _id: { $in: productIds } }).select('title price stock category isActive');
-    const productsById = new Map<string, any>(products.map((product: any) => [product._id.toString(), product]));
-    
+    const productIds = [
+      ...new Set(items.map((item: any) => String(item.productId)).filter(Boolean)),
+    ] as any[];
+    const products = await Product.find({ _id: { $in: productIds } }).select(
+      'title price stock category isActive rentalEnabled rentalPricing securityDeposit isDepositRefundable',
+    );
+    const productsById = new Map<string, any>(
+      products.map((product: any) => [product._id.toString(), product]),
+    );
+
+    let depositTotal = 0;
+
     // 1. Validate stock availability and calculate actual subtotal from DB
     for (const item of items) {
       const product = productsById.get(String(item.productId));
       if (!product) throw new ApiError(404, `Product not found: ${item.productId}`);
-      if (!product.isActive) throw new ApiError(400, `Product is no longer active: ${product.title}`);
+      if (!product.isActive)
+        throw new ApiError(400, `Product is no longer active: ${product.title}`);
       if (product.stock < item.quantity) {
         throw new ApiError(400, `Insufficient stock for product: ${product.title}`);
       }
-      subtotal += product.price * item.quantity;
+
+      let itemPrice = product.price;
+
+      if (item.type === 'rental') {
+        if (!product.rentalEnabled)
+          throw new ApiError(400, `Product is not available for rent: ${product.title}`);
+
+        // Calculate rental price based on days
+        if (item.rentalInfo?.startDate && item.rentalInfo?.endDate) {
+          const days =
+            Math.ceil(
+              (new Date(item.rentalInfo.endDate).getTime() -
+                new Date(item.rentalInfo.startDate).getTime()) /
+                (1000 * 3600 * 24),
+            ) + 1;
+
+          if (days <= 1 && product.rentalPricing?.daily) itemPrice = product.rentalPricing.daily;
+          else if (days <= 7 && product.rentalPricing?.weekly)
+            itemPrice = product.rentalPricing.weekly;
+          else if (product.rentalPricing?.monthly) itemPrice = product.rentalPricing.monthly;
+        }
+
+        // Add security deposit
+        if (product.securityDeposit) {
+          depositTotal += product.securityDeposit * item.quantity;
+        }
+      }
+
+      subtotal += itemPrice * item.quantity;
     }
 
     // Fetch user details first (for tier validation and wallet checking)
@@ -72,7 +114,11 @@ export class OrderValidationService {
         couponMessage = `Minimum order amount of ₹${coupon.minOrderAmount} is required`;
       } else {
         // Customer Eligibility checks
-        if (coupon.targetType === 'tiers' && coupon.targetUserTiers && coupon.targetUserTiers.length > 0) {
+        if (
+          coupon.targetType === 'tiers' &&
+          coupon.targetUserTiers &&
+          coupon.targetUserTiers.length > 0
+        ) {
           if (!coupon.targetUserTiers.includes(loyaltyTier)) {
             couponMessage = `This coupon is exclusively reserved for loyalty levels: ${coupon.targetUserTiers.join(', ')}`;
           }
@@ -81,7 +127,11 @@ export class OrderValidationService {
         if (!couponMessage) {
           // Dynamic Product/Category targeting checks
           let applicableAmount = 0;
-          if (coupon.targetType === 'products' && coupon.targetProductIds && coupon.targetProductIds.length > 0) {
+          if (
+            coupon.targetType === 'products' &&
+            coupon.targetProductIds &&
+            coupon.targetProductIds.length > 0
+          ) {
             const productIdsStr = coupon.targetProductIds.map((id: any) => id.toString());
             for (const item of items) {
               if (productIdsStr.includes(item.productId.toString())) {
@@ -94,7 +144,11 @@ export class OrderValidationService {
             if (applicableAmount === 0) {
               couponMessage = 'This coupon code is only valid for selected premium products.';
             }
-          } else if (coupon.targetType === 'categories' && coupon.targetCategories && coupon.targetCategories.length > 0) {
+          } else if (
+            coupon.targetType === 'categories' &&
+            coupon.targetCategories &&
+            coupon.targetCategories.length > 0
+          ) {
             const targetCatsLower = coupon.targetCategories.map((c: any) => c.toLowerCase());
             for (const item of items) {
               const product = productsById.get(String(item.productId));
@@ -131,7 +185,7 @@ export class OrderValidationService {
     const { paymentMethod, useWallet } = data;
     const shippingFee = subtotal > 2000 || subtotal === 0 ? 0 : 100;
     const platformFee = 0;
-    
+
     let codFee = 0;
     if (paymentMethod && paymentMethod.toLowerCase() === 'cod') {
       try {
@@ -149,17 +203,17 @@ export class OrderValidationService {
     }
 
     const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
-    
+
     let walletDeduction = 0;
     if (useWallet) {
       walletDeduction = Math.min(preliminaryTotal, availableWallet);
     }
 
-    const total = preliminaryTotal - walletDeduction;
+    const total = preliminaryTotal - walletDeduction + depositTotal;
 
     // Estimate Siri Coins (1 Siri Coin per ₹10 spent on subtotal)
     const coinsToEarn = Math.round(subtotal / 10);
-    
+
     // Estimate Cashback percentage based on membership tier
     let cashbackRate = 0.02; // Bronze: 2%
     if (loyaltyTier === 'Silver') cashbackRate = 0.05;
@@ -189,6 +243,7 @@ export class OrderValidationService {
       coinsEarned: coinsToEarn,
       cashbackEarned: estimatedCashback,
       total,
+      depositTotal,
       couponValid,
       couponMessage,
     };

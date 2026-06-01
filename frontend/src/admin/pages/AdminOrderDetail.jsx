@@ -1,12 +1,12 @@
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAdmin } from "../context/AdminContext";
-import Barcode from "react-barcode";
-import { QRCodeSVG } from "qrcode.react";
-import { InvoiceTemplate } from "../../components/ui";
-import { playSuccessBeep, playErrorBeep } from "../../utils/audioUtils";
-import toast from "react-hot-toast";
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAdmin } from '../context/AdminContext';
+import Barcode from 'react-barcode';
+import { QRCodeSVG } from 'qrcode.react';
+import { InvoiceTemplate } from '../../components/ui';
+import { playSuccessBeep, playErrorBeep } from '../../utils/audioUtils';
+import toast from 'react-hot-toast';
 import {
   PageHeader,
   StatusBadge,
@@ -14,18 +14,34 @@ import {
   fadeUp,
   stagger,
   SkeletonDashboard,
-} from "../components/AdminUIKit";
+} from '../components/AdminUIKit';
 
 const allStatuses = [
-  "Pending", "Confirmed", "Packed", "Ready to Ship", "Shipped",
-  "Out for Delivery", "Delivered", "Settled", "Cancelled", "Returned", "Refunded",
+  'Pending',
+  'Confirmed',
+  'Packed',
+  'Ready to Ship',
+  'Shipped',
+  'Out for Delivery',
+  'Delivered',
+  'Settled',
+  'Cancelled',
+  'Returned',
+  'Refunded',
 ];
 
 const statusIcons = {
-  "Pending": "schedule", "Confirmed": "thumb_up", "Packed": "inventory_2",
-  "Ready to Ship": "conveyor_belt", "Shipped": "local_shipping", "Out for Delivery": "directions_run",
-  "Delivered": "check_circle", "Settled": "payments", "Cancelled": "cancel",
-  "Returned": "keyboard_return", "Refunded": "payments",
+  Pending: 'schedule',
+  Confirmed: 'thumb_up',
+  Packed: 'inventory_2',
+  'Ready to Ship': 'conveyor_belt',
+  Shipped: 'local_shipping',
+  'Out for Delivery': 'directions_run',
+  Delivered: 'check_circle',
+  Settled: 'payments',
+  Cancelled: 'cancel',
+  Returned: 'keyboard_return',
+  Refunded: 'payments',
 };
 
 export function AdminOrderDetail() {
@@ -37,7 +53,7 @@ export function AdminOrderDetail() {
   const [showStickerModal, setShowStickerModal] = React.useState(false);
   const [printStickerOnly, setPrintStickerOnly] = React.useState(false);
   const [settlementCharges, setSettlementCharges] = React.useState(150);
-  
+
   React.useEffect(() => {
     if (order && order.rawOrder) {
       const timer = setTimeout(() => {
@@ -50,46 +66,47 @@ export function AdminOrderDetail() {
   const handleReconcileCOD = async () => {
     try {
       await updateOrderStatus(
-        order.id, "Settled", 
-        `COD Remittance Reconciled. Courier Charges: ₹${settlementCharges}`, 
-        Number(settlementCharges)
+        order.id,
+        'Settled',
+        `COD Remittance Reconciled. Courier Charges: ₹${settlementCharges}`,
+        Number(settlementCharges),
       );
       playSuccessBeep();
-      toast.success("Payment settled");
+      toast.success('Payment settled');
     } catch (error) {
       playErrorBeep();
-      toast.error(getErrorMessage(error, "Failed to reconcile COD remittance."));
+      toast.error(getErrorMessage(error, 'Failed to reconcile COD remittance.'));
     }
   };
 
   // Capture physical barcode scanner keyboard inputs
   React.useEffect(() => {
     if (!order) return;
-    let buffer = "";
+    let buffer = '';
     let lastKeyTime = Date.now();
 
     const handleKeyPress = (e) => {
       const currentTime = Date.now();
-      
+
       // Scanners input extremely quickly (< 50ms)
       if (currentTime - lastKeyTime > 50) {
-        buffer = "";
+        buffer = '';
       }
       lastKeyTime = currentTime;
 
-      if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") {
+      if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
         return;
       }
 
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         if (buffer.length >= 3) {
           const scannedCode = buffer.trim().toUpperCase();
-          buffer = "";
-          
+          buffer = '';
+
           const cleanOrderId = order.id.toUpperCase();
-          const cleanAWB = (order.trackingNumber || "").toUpperCase();
+          const cleanAWB = (order.trackingNumber || '').toUpperCase();
           const customBarcode = `SR-${order.id.substring(order.id.length - 8).toUpperCase()}-IN`;
-          const invoiceNum = (order.invoiceNumber || "").toUpperCase();
+          const invoiceNum = (order.invoiceNumber || '').toUpperCase();
 
           if (
             scannedCode === cleanOrderId ||
@@ -99,15 +116,21 @@ export function AdminOrderDetail() {
             scannedCode.includes(cleanOrderId.substring(0, 8))
           ) {
             playSuccessBeep();
-            
+
             const currentIdx = allStatuses.indexOf(order.status);
             if (currentIdx !== -1 && currentIdx < allStatuses.length - 1) {
               const nextStatus = allStatuses[currentIdx + 1];
-              if (["Cancelled", "Returned", "Refunded"].includes(nextStatus)) {
+              if (['Cancelled', 'Returned', 'Refunded'].includes(nextStatus)) {
                 toast.success(`Package is already at final state: ${order.status}`);
               } else {
-                updateOrderStatus(order.id, nextStatus, `Physical scan verification transition to ${nextStatus}`);
-                toast.success(`Package Verified! Status transitioned from ${order.status} to ${nextStatus}`);
+                updateOrderStatus(
+                  order.id,
+                  nextStatus,
+                  `Physical scan verification transition to ${nextStatus}`,
+                );
+                toast.success(
+                  `Package Verified! Status transitioned from ${order.status} to ${nextStatus}`,
+                );
               }
             }
           } else {
@@ -123,8 +146,8 @@ export function AdminOrderDetail() {
       }
     };
 
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, [order, updateOrderStatus]);
 
   if (dataLoading) {
@@ -141,11 +164,10 @@ export function AdminOrderDetail() {
         <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">
           receipt_long
         </span>
-        <p className="text-[16px] font-bold text-[var(--admin-text-primary)] mb-4">Order not found</p>
-        <button
-          onClick={() => navigate("/admin/orders")}
-          className="admin-btn h-10 px-6"
-        >
+        <p className="text-[16px] font-bold text-[var(--admin-text-primary)] mb-4">
+          Order not found
+        </p>
+        <button onClick={() => navigate('/admin/orders')} className="admin-btn h-10 px-6">
           Back to Orders
         </button>
       </div>
@@ -158,7 +180,7 @@ export function AdminOrderDetail() {
     <>
       <style type="text/css" media="print">
         {`
-          @page { size: ${printStickerOnly ? "auto" : "A4 portrait"}; margin: ${printStickerOnly ? "0" : "15mm"}; }
+          @page { size: ${printStickerOnly ? 'auto' : 'A4 portrait'}; margin: ${printStickerOnly ? '0' : '15mm'}; }
           body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white; }
           
           body * {
@@ -170,14 +192,14 @@ export function AdminOrderDetail() {
           
           /* Force only our printable layouts to print */
           .print-only {
-            display: ${printStickerOnly ? "none" : "block"} !important;
+            display: ${printStickerOnly ? 'none' : 'block'} !important;
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
           }
           .sticker-print-only {
-            display: ${printStickerOnly ? "block" : "none"} !important;
+            display: ${printStickerOnly ? 'block' : 'none'} !important;
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
@@ -194,12 +216,7 @@ export function AdminOrderDetail() {
       </div>
 
       {/* NORMAL SCREEN LAYOUT */}
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={stagger}
-        className="space-y-6 no-print"
-      >
+      <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6 no-print">
         {/* Header */}
         <motion.div
           variants={fadeUp}
@@ -207,25 +224,32 @@ export function AdminOrderDetail() {
         >
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/admin/orders")}
+              onClick={() => navigate('/admin/orders')}
               className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]"
             >
-              <span className="material-symbols-outlined text-[20px]">
-                arrow_back
-              </span>
+              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
             </button>
             <div>
               <div className="flex items-center gap-3">
                 <h2 className="text-[20px] font-bold text-[var(--admin-text-primary)] leading-none">
                   {order.id}
                 </h2>
-                <StatusBadge status={order.payment.replace("_", "")} />
+                {order.orderType && order.orderType !== 'purchase' && (
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${order.orderType === 'rental' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}
+                  >
+                    {order.orderType}
+                  </span>
+                )}
+                <StatusBadge status={order.payment.replace('_', '')} />
               </div>
-              <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-1.5">Placed on {order.date}</p>
+              <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-1.5">
+                Placed on {order.date}
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <button 
+            <button
               onClick={() => {
                 setPrintStickerOnly(false);
                 setTimeout(() => window.print(), 100);
@@ -235,7 +259,7 @@ export function AdminOrderDetail() {
               <span className="material-symbols-outlined text-[16px]">print</span>
               Print Invoice
             </button>
-            <button 
+            <button
               onClick={() => setShowStickerModal(true)}
               className="admin-btn admin-btn-outline h-9"
             >
@@ -243,7 +267,7 @@ export function AdminOrderDetail() {
               View Invoice
             </button>
             <a
-              href={`https://wa.me/${order.phone.replace(/[^0-9]/g, "")}`}
+              href={`https://wa.me/${order.phone.replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="admin-btn h-9 bg-[var(--admin-success)] text-white hover:bg-[var(--admin-success-light)] border-none"
@@ -258,10 +282,7 @@ export function AdminOrderDetail() {
           {/* Main Content */}
           <div className="space-y-6">
             {/* Status Update */}
-            <motion.div
-              variants={fadeUp}
-              className="admin-card p-6"
-            >
+            <motion.div variants={fadeUp} className="admin-card p-6">
               <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-4">
                 Update Logistics Status
               </h2>
@@ -272,85 +293,105 @@ export function AdminOrderDetail() {
                     onClick={() => updateOrderStatus(order.id, s)}
                     className={`flex items-center gap-1.5 px-4 py-2.5 rounded-[var(--admin-radius-lg)] text-[12px] font-bold cursor-pointer transition-all border ${
                       order.status === s
-                        ? "bg-[var(--admin-accent)] border-[var(--admin-accent)] text-white shadow-sm"
-                        : "bg-[var(--admin-surface)] border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:border-[var(--admin-border-strong)] hover:text-[var(--admin-text-primary)]"
+                        ? 'bg-[var(--admin-accent)] border-[var(--admin-accent)] text-white shadow-sm'
+                        : 'bg-[var(--admin-surface)] border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:border-[var(--admin-border-strong)] hover:text-[var(--admin-text-primary)]'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-[16px]">
-                      {statusIcons[s]}
-                    </span>
+                    <span className="material-symbols-outlined text-[16px]">{statusIcons[s]}</span>
                     {s}
                   </button>
                 ))}
               </div>
-              
+
               {/* Progress Track */}
               <div className="mt-8 pt-6 border-t border-[var(--admin-border-subtle)] flex items-center gap-1 overflow-x-auto pb-2 custom-scrollbar">
-                {["Pending", "Confirmed", "Packed", "Shipped", "Out for Delivery", "Delivered"
-                ].map((s, i, arr) => {
-                  const idx = arr.indexOf(order.status);
-                  const active = i <= idx && order.status !== "Cancelled" && order.status !== "Returned" && order.status !== "Refunded";
-                  return (
-                    <React.Fragment key={s}>
-                      <div
-                        title={s}
-                        className={`w-10 h-10 rounded-full flex flex-col items-center justify-center text-[18px] shrink-0 transition-colors ${
-                          active
-                            ? "bg-[var(--admin-accent)] text-white shadow-sm"
-                            : "bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border)]"
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[18px]">{statusIcons[s]}</span>
-                      </div>
-                      {i < arr.length - 1 && (
+                {['Pending', 'Confirmed', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered'].map(
+                  (s, i, arr) => {
+                    const idx = arr.indexOf(order.status);
+                    const active =
+                      i <= idx &&
+                      order.status !== 'Cancelled' &&
+                      order.status !== 'Returned' &&
+                      order.status !== 'Refunded';
+                    return (
+                      <React.Fragment key={s}>
                         <div
-                          className={`flex-1 min-w-[20px] h-1 rounded-full ${i < idx && active ? "bg-[var(--admin-accent)]" : "bg-[var(--admin-surface-muted)]"}`}
-                        />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
+                          title={s}
+                          className={`w-10 h-10 rounded-full flex flex-col items-center justify-center text-[18px] shrink-0 transition-colors ${
+                            active
+                              ? 'bg-[var(--admin-accent)] text-white shadow-sm'
+                              : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border)]'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            {statusIcons[s]}
+                          </span>
+                        </div>
+                        {i < arr.length - 1 && (
+                          <div
+                            className={`flex-1 min-w-[20px] h-1 rounded-full ${i < idx && active ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-surface-muted)]'}`}
+                          />
+                        )}
+                      </React.Fragment>
+                    );
+                  },
+                )}
               </div>
             </motion.div>
 
             {/* Cash on Delivery Reconciliation & Settlement Panel */}
             {order.rawOrder?.paymentMethod?.toLowerCase() === 'cod' && (
-              <motion.div
-                variants={fadeUp}
-                className="admin-card p-6 relative overflow-hidden"
-              >
+              <motion.div variants={fadeUp} className="admin-card p-6 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-[var(--admin-warning)]"></div>
-                
+
                 <div className="flex items-center justify-between mb-4 border-b border-[var(--admin-border-subtle)] pb-4">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[20px] text-[var(--admin-warning)]">account_balance_wallet</span>
-                    <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)]">COD Reconciliation & Settlement</h2>
+                    <span className="material-symbols-outlined text-[20px] text-[var(--admin-warning)]">
+                      account_balance_wallet
+                    </span>
+                    <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+                      COD Reconciliation & Settlement
+                    </h2>
                   </div>
-                  <span className={`admin-badge border-none font-bold text-[10px] uppercase tracking-wider h-6 px-2.5 ${
-                    order.rawOrder?.settlementStatus === 'Settled' 
-                      ? 'bg-[var(--admin-success-light)] text-[var(--admin-success)]' 
-                      : 'bg-[#fffbeb] text-[#d97706]'
-                  }`}>
+                  <span
+                    className={`admin-badge border-none font-bold text-[10px] uppercase tracking-wider h-6 px-2.5 ${
+                      order.rawOrder?.settlementStatus === 'Settled'
+                        ? 'bg-[var(--admin-success-light)] text-[var(--admin-success)]'
+                        : 'bg-[#fffbeb] text-[#d97706]'
+                    }`}
+                  >
                     {order.rawOrder?.settlementStatus || 'Pending'}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
                   <div className="bg-[var(--admin-surface-muted)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
-                    <span className="block text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider mb-1">Total COD Volume</span>
-                    <span className="text-[16px] font-bold text-[var(--admin-text-primary)]">{formatCurrency(order.total)}</span>
+                    <span className="block text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider mb-1">
+                      Total COD Volume
+                    </span>
+                    <span className="text-[16px] font-bold text-[var(--admin-text-primary)]">
+                      {formatCurrency(order.total)}
+                    </span>
                   </div>
                   <div className="bg-[var(--admin-surface-muted)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
-                    <span className="block text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider mb-1">Courier Deductions</span>
-                    <span className="text-[16px] font-bold text-[var(--admin-warning)]">{formatCurrency(order.rawOrder?.courierCharges || settlementCharges)}</span>
+                    <span className="block text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider mb-1">
+                      Courier Deductions
+                    </span>
+                    <span className="text-[16px] font-bold text-[var(--admin-warning)]">
+                      {formatCurrency(order.rawOrder?.courierCharges || settlementCharges)}
+                    </span>
                   </div>
                   <div className="bg-[var(--admin-surface-muted)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
-                    <span className="block text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider mb-1">Bank Payout Amount</span>
+                    <span className="block text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider mb-1">
+                      Bank Payout Amount
+                    </span>
                     <span className="text-[16px] font-bold text-[var(--admin-success)]">
-                      {order.rawOrder?.settlementStatus === 'Settled' 
-                        ? formatCurrency(order.rawOrder?.settledAmount || (order.total - (order.rawOrder?.courierCharges || 150)))
-                        : formatCurrency(order.total - settlementCharges)
-                      }
+                      {order.rawOrder?.settlementStatus === 'Settled'
+                        ? formatCurrency(
+                            order.rawOrder?.settledAmount ||
+                              order.total - (order.rawOrder?.courierCharges || 150),
+                          )
+                        : formatCurrency(order.total - settlementCharges)}
                     </span>
                   </div>
                 </div>
@@ -358,7 +399,10 @@ export function AdminOrderDetail() {
                 {order.rawOrder?.settlementStatus !== 'Settled' ? (
                   <div className="bg-[#fffbeb] p-5 rounded-[var(--admin-radius-lg)] border border-[#fde68a] space-y-4">
                     <p className="text-[12px] text-[#92400e] leading-relaxed font-medium">
-                      This order is marked as <strong>{order.payment}</strong>. The courier partner ({order.courierPartner || 'Delhivery'}) has collected the cash. Adjust and enter the actual shipping + COD handling fees below to reconcile the remittance to our bank.
+                      This order is marked as <strong>{order.payment}</strong>. The courier partner
+                      ({order.courierPartner || 'Delhivery'}) has collected the cash. Adjust and
+                      enter the actual shipping + COD handling fees below to reconcile the
+                      remittance to our bank.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 items-end">
                       <div className="w-full sm:w-1/2 text-left">
@@ -366,7 +410,9 @@ export function AdminOrderDetail() {
                         <input
                           type="number"
                           value={settlementCharges}
-                          onChange={(e) => setSettlementCharges(Math.max(0, Number(e.target.value)))}
+                          onChange={(e) =>
+                            setSettlementCharges(Math.max(0, Number(e.target.value)))
+                          }
                           className="admin-input bg-[var(--admin-surface)] border-[#fcd34d] focus:border-[#d97706] focus:ring-[#fcd34d]"
                         />
                       </div>
@@ -385,17 +431,30 @@ export function AdminOrderDetail() {
                     </div>
                     {order.status !== 'Delivered' && (
                       <p className="text-[11px] font-bold text-[var(--admin-error)]">
-                        * Reconciliation can only be executed once status is updated to "Delivered" via agent scan or manual override.
+                        * Reconciliation can only be executed once status is updated to "Delivered"
+                        via agent scan or manual override.
                       </p>
                     )}
                   </div>
                 ) : (
                   <div className="bg-[var(--admin-success-light)] p-5 rounded-[var(--admin-radius-lg)] border border-[#bbf7d0] flex items-start gap-3">
-                    <span className="material-symbols-outlined text-[20px] text-[var(--admin-success)] mt-0.5">check_circle</span>
+                    <span className="material-symbols-outlined text-[20px] text-[var(--admin-success)] mt-0.5">
+                      check_circle
+                    </span>
                     <div className="space-y-1.5">
-                      <p className="text-[13px] font-bold text-[#166534]">Remittance Fully Settled</p>
+                      <p className="text-[13px] font-bold text-[#166534]">
+                        Remittance Fully Settled
+                      </p>
                       <p className="text-[12px] text-[#15803d] leading-relaxed font-medium">
-                        Reconciled! Net payout of <strong>{formatCurrency(order.rawOrder?.settledAmount || (order.total - order.rawOrder?.courierCharges))}</strong> was received in the studio's bank account after deducting courier fees of <strong>{formatCurrency(order.rawOrder?.courierCharges)}</strong>.
+                        Reconciled! Net payout of{' '}
+                        <strong>
+                          {formatCurrency(
+                            order.rawOrder?.settledAmount ||
+                              order.total - order.rawOrder?.courierCharges,
+                          )}
+                        </strong>{' '}
+                        was received in the studio's bank account after deducting courier fees of{' '}
+                        <strong>{formatCurrency(order.rawOrder?.courierCharges)}</strong>.
                       </p>
                     </div>
                   </div>
@@ -404,10 +463,7 @@ export function AdminOrderDetail() {
             )}
 
             {/* Items */}
-            <motion.div
-              variants={fadeUp}
-              className="admin-card p-6"
-            >
+            <motion.div variants={fadeUp} className="admin-card p-6">
               <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-5">
                 Order Items
               </h2>
@@ -420,7 +476,11 @@ export function AdminOrderDetail() {
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 rounded-[var(--admin-radius-md)] bg-[var(--admin-bg-subtle)] flex items-center justify-center overflow-hidden border border-[var(--admin-border)] shrink-0">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <span className="material-symbols-outlined text-[24px] text-[var(--admin-text-tertiary)]">
                             inventory_2
@@ -437,6 +497,30 @@ export function AdminOrderDetail() {
                             </span>
                           )}
                         </p>
+                        {item.type === 'rental' && item.rentalInfo && (
+                          <div className="mt-1.5 flex items-center gap-1.5">
+                            <span className="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
+                              <span className="material-symbols-outlined text-[10px]">event</span>
+                              {new Date(item.rentalInfo.startDate).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}{' '}
+                              -{' '}
+                              {new Date(item.rentalInfo.endDate).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
+                            </span>
+                            {item.deposit > 0 && (
+                              <span className="text-[10px] bg-amber-50 text-amber-600 border border-amber-100 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
+                                <span className="material-symbols-outlined text-[10px]">
+                                  security
+                                </span>
+                                Deposit: {formatCurrency(item.deposit)}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <p className="text-[12px] text-[var(--admin-text-tertiary)] font-bold mt-1">
                           Qty: {item.qty} × {formatCurrency(item.price)}
                         </p>
@@ -448,7 +532,22 @@ export function AdminOrderDetail() {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between items-center mt-6 pt-5 border-t border-[var(--admin-border-strong)]">
+
+              {order.depositTotal > 0 && (
+                <div className="flex justify-between items-center mt-4 pt-4 border-t border-[var(--admin-border-subtle)]">
+                  <span className="text-[14px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[16px] text-amber-500">
+                      lock
+                    </span>{' '}
+                    Total Security Deposit
+                  </span>
+                  <span className="text-[16px] font-bold text-amber-600">
+                    {formatCurrency(order.depositTotal)}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center mt-4 pt-4 border-t border-[var(--admin-border-strong)]">
                 <span className="text-[16px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider">
                   Grand Total
                 </span>
@@ -461,54 +560,63 @@ export function AdminOrderDetail() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            
             {/* Logistics & Tracking Card */}
-            <motion.div
-              variants={fadeUp}
-              className="admin-card p-6 relative overflow-hidden"
-            >
+            <motion.div variants={fadeUp} className="admin-card p-6 relative overflow-hidden">
               {/* Top accent */}
               <div className="absolute top-0 left-0 w-full h-1 bg-[var(--admin-text-primary)]"></div>
-              
+
               <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-5 flex items-center justify-between">
                 <span>Enterprise Logistics</span>
                 <span className="text-[10px] bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] px-2 py-0.5 rounded-[var(--admin-radius-sm)] font-bold uppercase tracking-wider border border-[var(--admin-border-subtle)]">
-                  {order.courierPartner || "Delhivery"}
+                  {order.courierPartner || 'Delhivery'}
                 </span>
               </h2>
-              
+
               <div className="space-y-3 mb-6 bg-[var(--admin-surface-muted)] p-5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
                 <div className="flex justify-between items-center text-[12px]">
-                  <span className="text-[var(--admin-text-secondary)] font-medium">Tracking AWB</span>
-                  <span className="font-bold text-[var(--admin-text-primary)]">{order.trackingNumber || "N/A"}</span>
+                  <span className="text-[var(--admin-text-secondary)] font-medium">
+                    Tracking AWB
+                  </span>
+                  <span className="font-bold text-[var(--admin-text-primary)]">
+                    {order.trackingNumber || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-[12px]">
                   <span className="text-[var(--admin-text-secondary)] font-medium">Invoice No</span>
-                  <span className="font-bold text-[var(--admin-text-primary)]">{order.invoiceNumber || "N/A"}</span>
+                  <span className="font-bold text-[var(--admin-text-primary)]">
+                    {order.invoiceNumber || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-[12px]">
                   <span className="text-[var(--admin-text-secondary)] font-medium">Package</span>
-                  <span className="font-bold text-[var(--admin-text-primary)]">{order.packageType || "Box"} ({order.weight || "1.0"}kg)</span>
+                  <span className="font-bold text-[var(--admin-text-primary)]">
+                    {order.packageType || 'Box'} ({order.weight || '1.0'}kg)
+                  </span>
                 </div>
               </div>
 
               {order.barcodeData && (
                 <div className="flex justify-center mb-6 py-4 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
-                  <Barcode value={order.barcodeData} height={35} width={1.5} displayValue={false} background="transparent" />
+                  <Barcode
+                    value={order.barcodeData}
+                    height={35}
+                    width={1.5}
+                    displayValue={false}
+                    background="transparent"
+                  />
                 </div>
               )}
-              
+
               <div className="flex flex-col items-center justify-center p-4 border border-dashed border-[var(--admin-border-strong)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] transition-colors">
-                <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest mb-3">Scan to Track</span>
+                <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest mb-3">
+                  Scan to Track
+                </span>
                 <QRCodeSVG value={trackingQR} size={110} level="M" />
               </div>
             </motion.div>
 
             {/* Customer & Shipping */}
-            <motion.div
-              variants={fadeUp}
-              className="admin-card p-6"
-            >
+            <motion.div variants={fadeUp} className="admin-card p-6">
               <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-5">
                 Shipping Destination
               </h2>
@@ -516,10 +624,10 @@ export function AdminOrderDetail() {
                 <div className="w-12 h-12 rounded-[var(--admin-radius-md)] bg-[var(--admin-bg-subtle)] flex items-center justify-center border border-[var(--admin-border)] shrink-0">
                   <span className="text-[14px] font-bold text-[var(--admin-text-primary)]">
                     {order.customer
-                      .split(" ")
+                      .split(' ')
                       .filter(Boolean)
                       .map((n) => n[0])
-                      .join("")
+                      .join('')
                       .slice(0, 2)
                       .toUpperCase()}
                   </span>
@@ -528,7 +636,9 @@ export function AdminOrderDetail() {
                   <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-tight">
                     {order.customer}
                   </p>
-                  <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-1">{order.email}</p>
+                  <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-1">
+                    {order.email}
+                  </p>
                 </div>
               </div>
 
@@ -538,8 +648,14 @@ export function AdminOrderDetail() {
                     phone
                   </span>
                   <div>
-                    <span className="block text-[13px] font-medium text-[var(--admin-text-primary)]">{order.phone}</span>
-                    {order.shippingAddress?.alternatePhone && <span className="block text-[11px] text-[var(--admin-text-secondary)] mt-1 font-medium">Alt: {order.shippingAddress.alternatePhone}</span>}
+                    <span className="block text-[13px] font-medium text-[var(--admin-text-primary)]">
+                      {order.phone}
+                    </span>
+                    {order.shippingAddress?.alternatePhone && (
+                      <span className="block text-[11px] text-[var(--admin-text-secondary)] mt-1 font-medium">
+                        Alt: {order.shippingAddress.alternatePhone}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -548,34 +664,42 @@ export function AdminOrderDetail() {
                   </span>
                   <div className="leading-relaxed text-[13px] text-[var(--admin-text-secondary)] font-medium">
                     <span className="block">{order.address}</span>
-                    {order.shippingAddress?.landmark && <span className="block text-[11px] mt-1.5 text-[var(--admin-text-primary)] font-bold">Landmark: {order.shippingAddress.landmark}</span>}
+                    {order.shippingAddress?.landmark && (
+                      <span className="block text-[11px] mt-1.5 text-[var(--admin-text-primary)] font-bold">
+                        Landmark: {order.shippingAddress.landmark}
+                      </span>
+                    )}
                   </div>
                 </div>
-                
+
                 {order.needByDate && (
                   <div className="flex items-start gap-3 mt-5 p-3.5 bg-[var(--admin-success-light)] rounded-[var(--admin-radius-lg)] border border-[#bbf7d0]">
                     <span className="material-symbols-outlined text-[18px] text-[var(--admin-success)] mt-0.5 shrink-0">
                       calendar_today
                     </span>
                     <div>
-                      <span className="block text-[12px] font-bold text-[#166534]">Required Need-By Date</span>
+                      <span className="block text-[12px] font-bold text-[#166534]">
+                        Required Need-By Date
+                      </span>
                       <span className="block text-[13px] font-bold text-[#15803d] mt-1">
-                        {new Date(order.needByDate).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
+                        {new Date(order.needByDate).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
                         })}
                       </span>
                     </div>
                   </div>
                 )}
-                
+
                 {order.shippingAddress?.deliveryInstructions && (
                   <div className="flex items-start gap-3 mt-4 p-3.5 bg-[#fffbeb] rounded-[var(--admin-radius-lg)] border border-[#fde68a]">
                     <span className="material-symbols-outlined text-[18px] text-[#d97706] mt-0.5 shrink-0">
                       info
                     </span>
-                    <span className="text-[12px] text-[#92400e] font-medium italic">"{order.shippingAddress.deliveryInstructions}"</span>
+                    <span className="text-[12px] text-[#92400e] font-medium italic">
+                      "{order.shippingAddress.deliveryInstructions}"
+                    </span>
                   </div>
                 )}
               </div>
@@ -583,17 +707,51 @@ export function AdminOrderDetail() {
 
             {/* Actions */}
             <motion.div variants={fadeUp} className="space-y-3">
-              {order.status !== "Cancelled" && order.status !== "Delivered" && order.status !== "Refunded" && (
-                <button
-                  onClick={() => updateOrderStatus(order.id, "Cancelled")}
-                  className="admin-btn admin-btn-outline w-full h-11 border-[var(--admin-error-light)] text-[var(--admin-error)] bg-[var(--admin-error-light)] hover:bg-[var(--admin-error)] hover:text-white hover:border-[var(--admin-error)] transition-colors border-none"
-                >
-                  <span className="material-symbols-outlined text-[16px]">
-                    cancel
-                  </span>
-                  Cancel Order
-                </button>
+              {(order.orderType === 'rental' || order.items?.some((i) => i.type === 'rental')) && (
+                <div className="admin-card p-5 bg-[#8c7335]/5 border border-[#8c7335]/20 mb-4 shadow-none">
+                  <h3 className="text-[12px] font-bold text-[#8c7335] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">sell</span>
+                    Rental Actions
+                  </h3>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => toast.success('Return approved')}
+                      className="admin-btn admin-btn-outline w-full h-10 border-[#8c7335]/30 text-[#8c7335] bg-white hover:bg-[#8c7335] hover:text-white transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        assignment_turned_in
+                      </span>
+                      Approve Return
+                    </button>
+                    <button
+                      onClick={() => toast.success('Inspection logged')}
+                      className="admin-btn admin-btn-outline w-full h-10 border-amber-200 text-amber-700 bg-white hover:bg-amber-600 hover:text-white transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">search</span>
+                      Inspect Item
+                    </button>
+                    <button
+                      onClick={() => toast.success('Deposit released')}
+                      className="admin-btn admin-btn-outline w-full h-10 border-green-200 text-green-700 bg-white hover:bg-green-600 hover:text-white transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">payments</span>
+                      Release Deposit
+                    </button>
+                  </div>
+                </div>
               )}
+
+              {order.status !== 'Cancelled' &&
+                order.status !== 'Delivered' &&
+                order.status !== 'Refunded' && (
+                  <button
+                    onClick={() => updateOrderStatus(order.id, 'Cancelled')}
+                    className="admin-btn admin-btn-outline w-full h-11 border-[var(--admin-error-light)] text-[var(--admin-error)] bg-[var(--admin-error-light)] hover:bg-[var(--admin-error)] hover:text-white hover:border-[var(--admin-error)] transition-colors border-none"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">cancel</span>
+                    Cancel Order
+                  </button>
+                )}
             </motion.div>
           </div>
         </div>
@@ -665,10 +823,7 @@ export function AdminOrderDetail() {
                 `}
               </style>
 
-              <InvoiceTemplate 
-                order={order} 
-                onClose={() => setShowStickerModal(false)} 
-              />
+              <InvoiceTemplate order={order} onClose={() => setShowStickerModal(false)} />
             </motion.div>
           </>
         )}

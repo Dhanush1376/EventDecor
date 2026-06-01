@@ -6,7 +6,7 @@ import { getCachedSeasonalContext, computeSeasonalBoost } from './recommendation
 import { MemoryCache } from '../utils/MemoryCache';
 import logger from '../config/logger';
 import redisClient from '../utils/redis';
-import { sanitizePromptInput, validateAIResponse, htmlEscapeString } from '../utils/aiSanitizer';
+import { sanitizePromptInput, validateAIResponse } from '../utils/aiSanitizer';
 
 // ── In-memory caches ──
 const autocompleteCache = new MemoryCache({ defaultTtlMs: 5 * 60 * 1000, maxKeys: 500 });
@@ -37,7 +37,10 @@ async function setCachedData<T>(key: string, data: T, ttlMs: number): Promise<vo
   }
 }
 
-async function getSearchCache<T>(cacheType: 'ac' | 'trending' | 'full', key: string): Promise<T | null> {
+async function getSearchCache<T>(
+  cacheType: 'ac' | 'trending' | 'full',
+  key: string,
+): Promise<T | null> {
   const redisKey = `search:${cacheType}:${key}`;
   const redisCached = await getCachedData<T>(redisKey);
   if (redisCached) return redisCached;
@@ -47,7 +50,12 @@ async function getSearchCache<T>(cacheType: 'ac' | 'trending' | 'full', key: str
   return searchResultsCache.get<T>(key);
 }
 
-async function setSearchCache<T>(cacheType: 'ac' | 'trending' | 'full', key: string, val: T, ttlMs: number): Promise<void> {
+async function setSearchCache<T>(
+  cacheType: 'ac' | 'trending' | 'full',
+  key: string,
+  val: T,
+  ttlMs: number,
+): Promise<void> {
   const redisKey = `search:${cacheType}:${key}`;
   await setCachedData(redisKey, val, ttlMs);
 
@@ -111,47 +119,115 @@ const TRANSLITERATION_MAP: Record<string, string[]> = {
 
 // ── Synonym expansion map for decor/event domain ──
 const SYNONYM_MAP: Record<string, string[]> = {
-  mandap:      ['mandapam', 'stage', 'wedding altar', 'wedding stage', 'ceremony stage'],
-  mandapam:    ['mandap', 'stage', 'wedding altar'],
-  wedding:     ['marriage', 'shaadi', 'vivah', 'kalyanam', 'pelli'],
-  floral:      ['flower', 'flowers', 'bouquet', 'garland', 'mala'],
-  pooja:       ['puja', 'prayer', 'worship', 'homam', 'havan'],
-  rangoli:     ['kolam', 'muggu', 'alpana', 'floor art'],
-  birthday:    ['bday', 'celebration', 'party'],
-  engagement:  ['ring ceremony', 'nischayam', 'betrothal'],
-  lighting:    ['lights', 'lamps', 'candles', 'diyas', 'led', 'illumination'],
+  mandap: ['mandapam', 'stage', 'wedding altar', 'wedding stage', 'ceremony stage'],
+  mandapam: ['mandap', 'stage', 'wedding altar'],
+  wedding: ['marriage', 'shaadi', 'vivah', 'kalyanam', 'pelli'],
+  floral: ['flower', 'flowers', 'bouquet', 'garland', 'mala'],
+  pooja: ['puja', 'prayer', 'worship', 'homam', 'havan'],
+  rangoli: ['kolam', 'muggu', 'alpana', 'floor art'],
+  birthday: ['bday', 'celebration', 'party'],
+  engagement: ['ring ceremony', 'nischayam', 'betrothal'],
+  lighting: ['lights', 'lamps', 'candles', 'diyas', 'led', 'illumination'],
   traditional: ['heritage', 'classical', 'ethnic', 'desi'],
-  modern:      ['contemporary', 'minimalist', 'minimal', 'trendy'],
-  luxury:      ['premium', 'exclusive', 'high-end', 'deluxe', 'grand'],
-  tray:        ['thali', 'plate', 'platter', 'presentation'],
-  diwali:      ['deepavali', 'festival of lights'],
-  haldi:       ['turmeric ceremony', 'pithi'],
-  mehendi:     ['mehndi', 'henna'],
-  sangeet:     ['music night', 'dance night'],
-  reception:   ['grand reception', 'wedding reception'],
-  decor:       ['decoration', 'decorations', 'setup', 'arrangement'],
-  decoration:  ['decor', 'setup', 'arrangement', 'styling'],
-  stage:       ['backdrop', 'mandap', 'platform'],
-  balloon:     ['balloons', 'helium', 'arch'],
-  gold:        ['golden', 'gilded'],
-  silver:      ['metallic', 'chrome'],
-  pink:        ['rose', 'blush', 'magenta'],
-  red:         ['crimson', 'maroon', 'scarlet'],
-  white:       ['ivory', 'cream', 'pearl'],
+  modern: ['contemporary', 'minimalist', 'minimal', 'trendy'],
+  luxury: ['premium', 'exclusive', 'high-end', 'deluxe', 'grand'],
+  tray: ['thali', 'plate', 'platter', 'presentation'],
+  diwali: ['deepavali', 'festival of lights'],
+  haldi: ['turmeric ceremony', 'pithi'],
+  mehendi: ['mehndi', 'henna'],
+  sangeet: ['music night', 'dance night'],
+  reception: ['grand reception', 'wedding reception'],
+  decor: ['decoration', 'decorations', 'setup', 'arrangement'],
+  decoration: ['decor', 'setup', 'arrangement', 'styling'],
+  stage: ['backdrop', 'mandap', 'platform'],
+  balloon: ['balloons', 'helium', 'arch'],
+  gold: ['golden', 'gilded'],
+  silver: ['metallic', 'chrome'],
+  pink: ['rose', 'blush', 'magenta'],
+  red: ['crimson', 'maroon', 'scarlet'],
+  white: ['ivory', 'cream', 'pearl'],
 };
 
 // ── Category keywords for intent prediction ──
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  'Wedding':     ['wedding', 'marriage', 'bride', 'groom', 'mandap', 'mandapam', 'bridal', 'shaadi', 'kalyanam', 'pelli', 'vivah', 'sangeet', 'mehendi', 'haldi', 'reception', 'పెళ్లి', 'మండపం'],
-  'Birthday':    ['birthday', 'bday', 'party', 'celebration', 'cake', 'balloon', 'balloons', 'kids', 'child'],
-  'Pooja':       ['pooja', 'puja', 'prayer', 'homam', 'havan', 'worship', 'religious', 'temple', 'god', 'పూజ'],
-  'Engagement':  ['engagement', 'ring', 'proposal', 'nischayam', 'betrothal', 'నిశ్చితార్థం'],
-  'Floral':      ['floral', 'flower', 'bouquet', 'garland', 'rose', 'jasmine', 'marigold', 'mala', 'పువ్వులు'],
-  'Traditional': ['traditional', 'heritage', 'ethnic', 'classical', 'rangoli', 'kolam', 'muggu', 'ముగ్గు'],
-  'Modern':      ['modern', 'contemporary', 'minimalist', 'trendy', 'sleek', 'chic'],
-  'Lighting':    ['lighting', 'lights', 'lamps', 'candles', 'diyas', 'led', 'fairy lights', 'chandelier', 'దీపావళి'],
-  'Stage':       ['stage', 'backdrop', 'mandap', 'platform', 'entrance'],
-  'Diwali':      ['diwali', 'deepavali', 'festival', 'festive', 'rangoli'],
+  Wedding: [
+    'wedding',
+    'marriage',
+    'bride',
+    'groom',
+    'mandap',
+    'mandapam',
+    'bridal',
+    'shaadi',
+    'kalyanam',
+    'pelli',
+    'vivah',
+    'sangeet',
+    'mehendi',
+    'haldi',
+    'reception',
+    'పెళ్లి',
+    'మండపం',
+  ],
+  Birthday: [
+    'birthday',
+    'bday',
+    'party',
+    'celebration',
+    'cake',
+    'balloon',
+    'balloons',
+    'kids',
+    'child',
+  ],
+  Pooja: [
+    'pooja',
+    'puja',
+    'prayer',
+    'homam',
+    'havan',
+    'worship',
+    'religious',
+    'temple',
+    'god',
+    'పూజ',
+  ],
+  Engagement: ['engagement', 'ring', 'proposal', 'nischayam', 'betrothal', 'నిశ్చితార్థం'],
+  Floral: [
+    'floral',
+    'flower',
+    'bouquet',
+    'garland',
+    'rose',
+    'jasmine',
+    'marigold',
+    'mala',
+    'పువ్వులు',
+  ],
+  Traditional: [
+    'traditional',
+    'heritage',
+    'ethnic',
+    'classical',
+    'rangoli',
+    'kolam',
+    'muggu',
+    'ముగ్గు',
+  ],
+  Modern: ['modern', 'contemporary', 'minimalist', 'trendy', 'sleek', 'chic'],
+  Lighting: [
+    'lighting',
+    'lights',
+    'lamps',
+    'candles',
+    'diyas',
+    'led',
+    'fairy lights',
+    'chandelier',
+    'దీపావళి',
+  ],
+  Stage: ['stage', 'backdrop', 'mandap', 'platform', 'entrance'],
+  Diwali: ['diwali', 'deepavali', 'festival', 'festive', 'rangoli'],
 };
 
 // ── Interface Definitions ──
@@ -214,12 +290,14 @@ export interface AIAnalysisResult {
 export function analyzeQueryLocally(query: string): AIAnalysisResult {
   const normalized = query.toLowerCase().trim();
   const words = normalized.split(/\s+/);
-  
+
   let priceMax: number | null = null;
-  let priceMin: number | null = null;
-  
+  const priceMin: number | null = null;
+
   // Regex to extract budget: "under 50000", "below 50k", "rs 30000", "under 1 lakh"
-  const priceMaxMatch = normalized.match(/(?:under|below|less than|within|budget)\s*(?:rs\.?|inr)?\s*(\d+)\s*(k|lakh)?/i);
+  const priceMaxMatch = normalized.match(
+    /(?:under|below|less than|within|budget)\s*(?:rs\.?|inr)?\s*(\d+)\s*(k|lakh)?/i,
+  );
   if (priceMaxMatch) {
     let val = parseInt(priceMaxMatch[1], 10);
     const unit = priceMaxMatch[2]?.toLowerCase();
@@ -240,32 +318,95 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
 
   // Detect style
   let style: string | null = null;
-  if (normalized.includes('traditional') || normalized.includes('heritage') || normalized.includes('ethnic') || normalized.includes('desi') || normalized.includes('classical')) {
+  if (
+    normalized.includes('traditional') ||
+    normalized.includes('heritage') ||
+    normalized.includes('ethnic') ||
+    normalized.includes('desi') ||
+    normalized.includes('classical')
+  ) {
     style = 'traditional';
-  } else if (normalized.includes('modern') || normalized.includes('contemporary') || normalized.includes('minimal')) {
+  } else if (
+    normalized.includes('modern') ||
+    normalized.includes('contemporary') ||
+    normalized.includes('minimal')
+  ) {
     style = 'modern';
-  } else if (normalized.includes('luxury') || normalized.includes('premium') || normalized.includes('exclusive') || normalized.includes('grand') || normalized.includes('royal')) {
+  } else if (
+    normalized.includes('luxury') ||
+    normalized.includes('premium') ||
+    normalized.includes('exclusive') ||
+    normalized.includes('grand') ||
+    normalized.includes('royal')
+  ) {
     style = 'luxury';
-  } else if (normalized.includes('simple') || normalized.includes('budget') || normalized.includes('cheap')) {
+  } else if (
+    normalized.includes('simple') ||
+    normalized.includes('budget') ||
+    normalized.includes('cheap')
+  ) {
     style = 'simple';
   }
 
   // Detect category
   let category: string | null = null;
   for (const [catName, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-    if (keywords.some(kw => normalized.includes(kw))) {
+    if (keywords.some((kw) => normalized.includes(kw))) {
       category = catName;
       break;
     }
   }
 
   // Detect colors
-  const colorPalette = ['red', 'yellow', 'gold', 'golden', 'white', 'pink', 'rose', 'orange', 'green', 'blue', 'silver', 'ivory', 'cream', 'peach', 'purple', 'maroon'];
-  const colors = colorPalette.filter(color => normalized.includes(color));
+  const colorPalette = [
+    'red',
+    'yellow',
+    'gold',
+    'golden',
+    'white',
+    'pink',
+    'rose',
+    'orange',
+    'green',
+    'blue',
+    'silver',
+    'ivory',
+    'cream',
+    'peach',
+    'purple',
+    'maroon',
+  ];
+  const colors = colorPalette.filter((color) => normalized.includes(color));
 
   // Detect tags
-  const potentialTags = ['balloons', 'balloon', 'flowers', 'flower', 'marigold', 'jasmine', 'rose', 'garland', 'backdrop', 'stage', 'entrance', 'welcome board', 'coconut', 'tray', 'thali', 'diyas', 'lamps', 'lights', 'lighting', 'candles', 'leaves', 'banana', 'mango', 'curtain', 'drapes'];
-  const tags = potentialTags.filter(t => normalized.includes(t));
+  const potentialTags = [
+    'balloons',
+    'balloon',
+    'flowers',
+    'flower',
+    'marigold',
+    'jasmine',
+    'rose',
+    'garland',
+    'backdrop',
+    'stage',
+    'entrance',
+    'welcome board',
+    'coconut',
+    'tray',
+    'thali',
+    'diyas',
+    'lamps',
+    'lights',
+    'lighting',
+    'candles',
+    'leaves',
+    'banana',
+    'mango',
+    'curtain',
+    'drapes',
+  ];
+  const tags = potentialTags.filter((t) => normalized.includes(t));
 
   // Basic script-based language check
   const teluguRegex = /[\u0c00-\u0c7f]/;
@@ -282,7 +423,7 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
     tags,
     priceMin,
     priceMax,
-    expandedTerms
+    expandedTerms,
   };
 }
 
@@ -291,7 +432,7 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
  */
 export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResult> {
   const normalizedQuery = query.toLowerCase().trim();
-  
+
   const cacheKey = `ai_analysis:${normalizedQuery}`;
   const cached = await getSearchCache<AIAnalysisResult>('full', cacheKey);
   if (cached) return cached;
@@ -355,17 +496,17 @@ export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResul
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         response_format: { type: 'json_object' },
         temperature: 0.1,
-        max_tokens: 300
+        max_tokens: 300,
       }),
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     clearTimeout(timeout);
@@ -382,7 +523,9 @@ export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResul
       // Validate AI response against expected schema (prevents arbitrary JSON injection)
       const validated = validateAIResponse(rawParsed);
       if (!validated) {
-        logger.warn('[SEARCH AI] AI response failed schema validation, falling back to local parser');
+        logger.warn(
+          '[SEARCH AI] AI response failed schema validation, falling back to local parser',
+        );
         throw new Error('AI response schema validation failed');
       }
 
@@ -390,7 +533,9 @@ export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResul
       return validated;
     }
   } catch (err: any) {
-    logger.warn(`[SEARCH AI] AI query parsing failed: ${err.message}. Falling back to local parser.`);
+    logger.warn(
+      `[SEARCH AI] AI query parsing failed: ${err.message}. Falling back to local parser.`,
+    );
   }
 
   const localResult = analyzeQueryLocally(safeQuery);
@@ -408,8 +553,12 @@ export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResul
  */
 export async function getAutocomplete(
   query: string,
-  options: { limit?: number } = {}
-): Promise<{ suggestions: AutocompleteResult[]; predictedCategories: string[]; correctedQuery?: string }> {
+  options: { limit?: number } = {},
+): Promise<{
+  suggestions: AutocompleteResult[];
+  predictedCategories: string[];
+  correctedQuery?: string;
+}> {
   const limit = options.limit || 8;
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -419,7 +568,10 @@ export async function getAutocomplete(
 
   // Check cache
   const cacheKey = `${normalizedQuery}_${limit}`;
-  const cached = await getSearchCache<{ suggestions: AutocompleteResult[]; predictedCategories: string[] }>('ac', cacheKey);
+  const cached = await getSearchCache<{
+    suggestions: AutocompleteResult[];
+    predictedCategories: string[];
+  }>('ac', cacheKey);
   if (cached) return cached;
 
   try {
@@ -439,7 +591,7 @@ export async function getAutocomplete(
           { title: { $in: regexPatterns } },
           { teluguTitle: { $in: regexPatterns } },
           { category: { $in: regexPatterns } },
-          { tags: { $in: regexPatterns } }
+          { tags: { $in: regexPatterns } },
         ],
       })
         .select('_id title teluguTitle imageSrc category price rating slug')
@@ -498,7 +650,13 @@ export async function getAutocomplete(
         image: p.imageSrc,
         price: p.price,
         slug: p.slug,
-        score: computeSearchScore(p.title, p.category, p.tags || [], normalizedQuery, p.teluguTitle),
+        score: computeSearchScore(
+          p.title,
+          p.category,
+          p.tags || [],
+          normalizedQuery,
+          p.teluguTitle,
+        ),
       });
     }
 
@@ -524,7 +682,13 @@ export async function getAutocomplete(
         type: 'gallery',
         category: g.category,
         image: g.image,
-        score: computeSearchScore(g.title, g.category, g.tags || [], normalizedQuery, g.teluguTitle),
+        score: computeSearchScore(
+          g.title,
+          g.category,
+          g.tags || [],
+          normalizedQuery,
+          g.teluguTitle,
+        ),
       });
     }
 
@@ -534,10 +698,10 @@ export async function getAutocomplete(
     // Local spelling/transliteration recommendation for overlay banner
     let correctedQuery: string | undefined;
     const words = normalizedQuery.split(/\s+/);
-    const correctedWords = words.map(word => {
+    const correctedWords = words.map((word) => {
       const trans = TRANSLITERATION_MAP[word];
       if (trans && trans.length > 0) {
-        const englishSuggested = trans.find(t => !/[\u0c00-\u0c7f]/.test(t));
+        const englishSuggested = trans.find((t) => !/[\u0c00-\u0c7f]/.test(t));
         return englishSuggested || word;
       }
       return word;
@@ -570,7 +734,7 @@ export async function searchAll(
     limit?: number;
     priceMin?: number;
     priceMax?: number;
-  } = {}
+  } = {},
 ): Promise<SearchResponse> {
   const page = options.page || 1;
   const limit = Math.min(options.limit || 20, 40);
@@ -589,16 +753,16 @@ export async function searchAll(
   try {
     // Stage 1: Analyze query semantic intent using AI / Local Fallback
     const aiAnalysis = await analyzeQueryWithAI(normalizedQuery);
-    
+
     // Stage 2: Merge terms and build regex patterns (capped at 15 to prevent regex explosion / ReDoS)
     const terms = [
       normalizedQuery,
       aiAnalysis.correctedQuery,
       ...aiAnalysis.expandedTerms,
       ...getTransliterationsAndSynonyms(normalizedQuery),
-      ...generateFuzzyVariants(normalizedQuery)
+      ...generateFuzzyVariants(normalizedQuery),
     ];
-    const uniqueTerms = [...new Set(terms.filter(t => t.length > 1))].slice(0, 15);
+    const uniqueTerms = [...new Set(terms.filter((t) => t.length > 1))].slice(0, 15);
     const regexPatterns = uniqueTerms.map((term) => new RegExp(escapeRegex(term), 'i'));
 
     const seasonal = await getCachedSeasonalContext();
@@ -612,9 +776,10 @@ export async function searchAll(
     }
 
     // Apply manual Category filter or predicted intent category
-    const activeCategory = (options.category && options.category !== 'All') 
-      ? options.category 
-      : (aiAnalysis.category || undefined);
+    const activeCategory =
+      options.category && options.category !== 'All'
+        ? options.category
+        : aiAnalysis.category || undefined;
 
     if (activeCategory) {
       baseFilter.category = new RegExp(escapeRegex(activeCategory), 'i');
@@ -628,8 +793,10 @@ export async function searchAll(
     const promises: Promise<void>[] = [];
 
     // Setup Price parameters (combining manual filter + AI budget parser)
-    const minPrice = options.priceMin !== undefined ? options.priceMin : (aiAnalysis.priceMin || undefined);
-    const maxPrice = options.priceMax !== undefined ? options.priceMax : (aiAnalysis.priceMax || undefined);
+    const minPrice =
+      options.priceMin !== undefined ? options.priceMin : aiAnalysis.priceMin || undefined;
+    const maxPrice =
+      options.priceMax !== undefined ? options.priceMax : aiAnalysis.priceMax || undefined;
 
     if (searchProducts) {
       const productFilter = { ...baseFilter };
@@ -641,25 +808,38 @@ export async function searchAll(
 
       // Add color filters from intent
       if (aiAnalysis.colors.length > 0) {
-        productFilter.$or.push({ tags: { $in: aiAnalysis.colors.map(c => new RegExp(escapeRegex(c), 'i')) } });
+        productFilter.$or.push({
+          tags: { $in: aiAnalysis.colors.map((c) => new RegExp(escapeRegex(c), 'i')) },
+        });
       }
 
       promises.push(
         Product.find(productFilter)
-          .select('_id title teluguTitle imageSrc category price rating reviews tags slug material description')
+          .select(
+            '_id title teluguTitle imageSrc category price rating reviews tags slug material description',
+          )
           .limit(100)
           .maxTimeMS(5000)
           .lean()
           .then((products) => {
             for (const p of products) {
-              const searchScore = computeSearchScore(p.title, p.category, p.tags || [], normalizedQuery, p.teluguTitle);
+              const searchScore = computeSearchScore(
+                p.title,
+                p.category,
+                p.tags || [],
+                normalizedQuery,
+                p.teluguTitle,
+              );
               const seasonalBoost = computeSeasonalBoost(p.category, undefined, p.tags, seasonal);
-              const popularityBoost = ((p.rating || 0) / 5) * 0.3 + Math.min((p.reviews || 0) / 100, 0.2);
+              const popularityBoost =
+                ((p.rating || 0) / 5) * 0.3 + Math.min((p.reviews || 0) / 100, 0.2);
 
               // Extra boost if matching parsed AI tags/styles
               let aiBoost = 1.0;
-              if (aiAnalysis.style && p.description?.toLowerCase().includes(aiAnalysis.style)) aiBoost += 0.2;
-              if (aiAnalysis.tags.some(t => p.tags?.map(pt => pt.toLowerCase()).includes(t))) aiBoost += 0.25;
+              if (aiAnalysis.style && p.description?.toLowerCase().includes(aiAnalysis.style))
+                aiBoost += 0.2;
+              if (aiAnalysis.tags.some((t) => p.tags?.map((pt) => pt.toLowerCase()).includes(t)))
+                aiBoost += 0.25;
 
               items.push({
                 id: (p._id as any).toString(),
@@ -672,11 +852,17 @@ export async function searchAll(
                 reviews: p.reviews,
                 tags: p.tags,
                 slug: p.slug,
-                score: (searchScore * seasonalBoost * aiBoost) + popularityBoost,
-                matchSource: getMatchSource(p.title, p.category, p.tags || [], normalizedQuery, p.teluguTitle),
+                score: searchScore * seasonalBoost * aiBoost + popularityBoost,
+                matchSource: getMatchSource(
+                  p.title,
+                  p.category,
+                  p.tags || [],
+                  normalizedQuery,
+                  p.teluguTitle,
+                ),
               });
             }
-          })
+          }),
       );
     }
 
@@ -696,12 +882,21 @@ export async function searchAll(
           .lean()
           .then((events) => {
             for (const e of events) {
-              const searchScore = computeSearchScore(e.title, e.category, e.features || [], normalizedQuery);
+              const searchScore = computeSearchScore(
+                e.title,
+                e.category,
+                e.features || [],
+                normalizedQuery,
+              );
               const seasonalBoost = computeSeasonalBoost(e.category, e.style, e.features, seasonal);
-              
+
               let aiBoost = 1.0;
-              if (aiAnalysis.style && e.style?.toLowerCase().includes(aiAnalysis.style)) aiBoost += 0.3;
-              if (aiAnalysis.tags.some(t => e.features?.map(ef => ef.toLowerCase()).includes(t))) aiBoost += 0.25;
+              if (aiAnalysis.style && e.style?.toLowerCase().includes(aiAnalysis.style))
+                aiBoost += 0.3;
+              if (
+                aiAnalysis.tags.some((t) => e.features?.map((ef) => ef.toLowerCase()).includes(t))
+              )
+                aiBoost += 0.25;
 
               items.push({
                 id: (e._id as any).toString(),
@@ -712,11 +907,11 @@ export async function searchAll(
                 image: e.image,
                 price: e.basePrice,
                 tags: e.features,
-                score: (searchScore * seasonalBoost * aiBoost),
+                score: searchScore * seasonalBoost * aiBoost,
                 matchSource: getMatchSource(e.title, e.category, e.features || [], normalizedQuery),
               });
             }
-          })
+          }),
       );
     }
 
@@ -731,12 +926,21 @@ export async function searchAll(
           .lean()
           .then((galleries) => {
             for (const g of galleries) {
-              const searchScore = computeSearchScore(g.title, g.category, g.tags || [], normalizedQuery, g.teluguTitle);
-              const popularityBoost = Math.log2(Math.max(g.views || 1, 1)) * 0.05 + Math.min((g.likes || 0) / 50, 0.1);
+              const searchScore = computeSearchScore(
+                g.title,
+                g.category,
+                g.tags || [],
+                normalizedQuery,
+                g.teluguTitle,
+              );
+              const popularityBoost =
+                Math.log2(Math.max(g.views || 1, 1)) * 0.05 + Math.min((g.likes || 0) / 50, 0.1);
 
               let aiBoost = 1.0;
-              if (aiAnalysis.style && g.style?.toLowerCase().includes(aiAnalysis.style)) aiBoost += 0.25;
-              if (aiAnalysis.tags.some(t => g.tags?.map(gt => gt.toLowerCase()).includes(t))) aiBoost += 0.25;
+              if (aiAnalysis.style && g.style?.toLowerCase().includes(aiAnalysis.style))
+                aiBoost += 0.25;
+              if (aiAnalysis.tags.some((t) => g.tags?.map((gt) => gt.toLowerCase()).includes(t)))
+                aiBoost += 0.25;
 
               items.push({
                 id: (g._id as any).toString(),
@@ -746,11 +950,17 @@ export async function searchAll(
                 style: g.style,
                 image: g.image,
                 tags: g.tags,
-                score: (searchScore * aiBoost) + popularityBoost,
-                matchSource: getMatchSource(g.title, g.category, g.tags || [], normalizedQuery, g.teluguTitle),
+                score: searchScore * aiBoost + popularityBoost,
+                matchSource: getMatchSource(
+                  g.title,
+                  g.category,
+                  g.tags || [],
+                  normalizedQuery,
+                  g.teluguTitle,
+                ),
               });
             }
-          })
+          }),
       );
     }
 
@@ -808,7 +1018,7 @@ export async function searchAll(
  * Get trending search terms based on user interaction aggregation.
  */
 export async function getTrendingSearches(
-  options: { limit?: number; days?: number } = {}
+  options: { limit?: number; days?: number } = {},
 ): Promise<{ query: string; count: number }[]> {
   const limit = options.limit || 10;
   const days = options.days || 7;
@@ -849,7 +1059,7 @@ export async function getTrendingSearches(
         (existing) =>
           existing.includes(normalized) ||
           normalized.includes(existing) ||
-          levenshteinDistance(existing, normalized) <= 2
+          levenshteinDistance(existing, normalized) <= 2,
       );
 
       if (!isDuplicate) {
@@ -873,7 +1083,7 @@ export async function getTrendingSearches(
  */
 export async function getRelatedSearches(
   query: string,
-  options: { limit?: number } = {}
+  options: { limit?: number } = {},
 ): Promise<string[]> {
   const limit = options.limit || 5;
   const normalized = query.trim().toLowerCase();
@@ -921,7 +1131,7 @@ export function getTransliterationsAndSynonyms(query: string): string[] {
       for (const t of trans) {
         expanded.add(t);
         expanded.add(normalized.replace(word, t));
-        
+
         // Synonyms for transliteration
         const synonyms = SYNONYM_MAP[t];
         if (synonyms) {
@@ -939,7 +1149,7 @@ export function getTransliterationsAndSynonyms(query: string): string[] {
       for (const syn of synonyms) {
         expanded.add(syn);
         expanded.add(normalized.replace(word, syn));
-        
+
         // Reverse-map synonyms to transliterated keys
         for (const [key, val] of Object.entries(TRANSLITERATION_MAP)) {
           if (val.includes(syn)) {
@@ -955,9 +1165,9 @@ export function getTransliterationsAndSynonyms(query: string): string[] {
     if (word.length >= 2) {
       expanded.add(word);
       const trans = TRANSLITERATION_MAP[word];
-      if (trans) trans.forEach(t => expanded.add(t));
+      if (trans) trans.forEach((t) => expanded.add(t));
       const synonyms = SYNONYM_MAP[word];
-      if (synonyms) synonyms.forEach(s => expanded.add(s));
+      if (synonyms) synonyms.forEach((s) => expanded.add(s));
     }
   }
 
@@ -980,12 +1190,32 @@ export function generateFuzzyVariants(query: string): string[] {
   }
 
   const keyboardMap: Record<string, string[]> = {
-    a: ['s', 'q'], s: ['a', 'd'], d: ['s', 'f'], f: ['d', 'g'], g: ['f', 'h'],
-    h: ['g', 'j'], j: ['h', 'k'], k: ['j', 'l'], l: ['k'], q: ['w', 'a'],
-    w: ['q', 'e'], e: ['w', 'r'], r: ['e', 't'], t: ['r', 'y'], y: ['t', 'u'],
-    u: ['y', 'i'], i: ['u', 'o'], o: ['i', 'p'], p: ['o'],
-    z: ['x'], x: ['z', 'c'], c: ['x', 'v'], v: ['c', 'b'], b: ['v', 'n'],
-    n: ['b', 'm'], m: ['n'],
+    a: ['s', 'q'],
+    s: ['a', 'd'],
+    d: ['s', 'f'],
+    f: ['d', 'g'],
+    g: ['f', 'h'],
+    h: ['g', 'j'],
+    j: ['h', 'k'],
+    k: ['j', 'l'],
+    l: ['k'],
+    q: ['w', 'a'],
+    w: ['q', 'e'],
+    e: ['w', 'r'],
+    r: ['e', 't'],
+    t: ['r', 'y'],
+    y: ['t', 'u'],
+    u: ['y', 'i'],
+    i: ['u', 'o'],
+    o: ['i', 'p'],
+    p: ['o'],
+    z: ['x'],
+    x: ['z', 'c'],
+    c: ['x', 'v'],
+    v: ['c', 'b'],
+    b: ['v', 'n'],
+    n: ['b', 'm'],
+    m: ['n'],
   };
 
   for (let i = 0; i < query.length && variants.size < 6; i++) {
@@ -1033,7 +1263,7 @@ export function computeSearchScore(
   category: string,
   tags: string[],
   query: string,
-  teluguTitle?: string
+  teluguTitle?: string,
 ): number {
   const normalizedTitle = (title || '').toLowerCase();
   const normalizedTeluguTitle = (teluguTitle || '').toLowerCase();
@@ -1046,12 +1276,18 @@ export function computeSearchScore(
   // Exact matching
   if (normalizedTitle === query || (normalizedTeluguTitle && normalizedTeluguTitle === query)) {
     score += 1.5;
-  } else if (normalizedTitle.includes(query) || (normalizedTeluguTitle && normalizedTeluguTitle.includes(query))) {
+  } else if (
+    normalizedTitle.includes(query) ||
+    (normalizedTeluguTitle && normalizedTeluguTitle.includes(query))
+  ) {
     score += 1.0;
   }
 
   // Prefix matching
-  if (normalizedTitle.startsWith(query) || (normalizedTeluguTitle && normalizedTeluguTitle.startsWith(query))) {
+  if (
+    normalizedTitle.startsWith(query) ||
+    (normalizedTeluguTitle && normalizedTeluguTitle.startsWith(query))
+  ) {
     score += 0.4;
   }
 
@@ -1082,7 +1318,7 @@ function getMatchSource(
   category: string,
   tags: string[],
   query: string,
-  teluguTitle?: string
+  teluguTitle?: string,
 ): string {
   const normalizedQuery = query.toLowerCase();
 
@@ -1111,7 +1347,7 @@ function levenshteinDistance(a: string, b: string): number {
       dp[i][j] = Math.min(
         dp[i - 1][j] + 1,
         dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
       );
     }
   }

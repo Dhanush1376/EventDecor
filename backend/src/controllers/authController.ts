@@ -4,8 +4,7 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import User from '../models/User';
-import { canonicalizeEmail, isSameEmail } from '../utils/emailHelper';
-import { getAdminEmails } from '../config/adminConfig';
+import { canonicalizeEmail } from '../utils/emailHelper';
 import { STAFF_ROLES } from '../config/adminConfig';
 import logger from '../config/logger';
 import {
@@ -72,14 +71,12 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
         requires2FA: true,
         userId: result.user._id,
         user: result.user,
-      })
+      }),
     );
   }
 
   logger.info(`[AUTH] Session created for user ${result.user._id}`);
   await invalidateUserSessionCaches(String(result.user._id));
-
-
 
   if ((STAFF_ROLES as readonly string[]).includes(result.user.role)) {
     setAdminRefreshCookie(res, result.refreshToken);
@@ -106,7 +103,7 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
       req.headers['x-refresh-token'] ||
       req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
       req.cookies?.[ADMIN_REFRESH_COOKIE] ||
-      ''
+      '',
   ).trim();
 
   if (!refreshToken) {
@@ -128,7 +125,7 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
       user: result.user,
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
-    })
+    }),
   );
 });
 
@@ -138,7 +135,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
       req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
       req.cookies?.[ADMIN_REFRESH_COOKIE] ||
       req.headers['x-refresh-token'] ||
-      ''
+      '',
   ).trim();
   const userId = (req as any).user?.id;
 
@@ -185,7 +182,9 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const user = await User.findById(userId)
-    .select('name email phone role avatar walletBalance siriCoins loyaltyTier referralCode createdAt')
+    .select(
+      'name email phone role avatar walletBalance siriCoins loyaltyTier referralCode createdAt',
+    )
     .lean();
   if (!user) {
     throw new ApiError(404, 'User session not found in database');

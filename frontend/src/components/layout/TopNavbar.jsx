@@ -1,45 +1,59 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useCart } from "../../context/CartContext";
-import { useAuth } from "../../context/AuthContext";
-import { useMediaQuery } from "../../hooks/useMediaQuery";
-import { adminInviteService } from "../../services/domainServices";
-import { useWebsiteContent } from "../../hooks/useWebsiteContent";
-import { useSearchOverlay } from "../../hooks/useSearchOverlay";
-import { IntelligentSearchOverlay } from "../search/IntelligentSearchOverlay";
-import { prefetchManager } from "../../utils/prefetchManager";
-import { useScrollDirection } from "../../hooks/useScrollDirection";
-import { SiriLogo } from "../ui/SiriLogo";
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { adminInviteService } from '../../services/domainServices';
+import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import { useSearchOverlay } from '../../hooks/useSearchOverlay';
+import { IntelligentSearchOverlay } from '../search/IntelligentSearchOverlay';
+import { prefetchManager } from '../../utils/prefetchManager';
+import { useScrollDirection } from '../../hooks/useScrollDirection';
+import { SiriLogo } from '../ui/SiriLogo';
 // Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {
   const { navigation } = useWebsiteContent();
-  const logoText = navigation?.logo?.text || "SIRI ARTS & CRAFTS";
-  const logoWords = logoText.split(" ");
-  const firstWord = logoWords[0] || "SIRI";
-  const restWords = logoWords.slice(1).join(" ") || "ARTS & CRAFTS";
+  const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
+  const logoWords = logoText.split(' ');
+  const firstWord = logoWords[0] || 'SIRI';
+  const restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
 
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
-  const { cartCount, setIsCartOpen } = useCart();
+  const { cartCount, setIsCartOpen, purchaseCartCount, rentalCartCount, setActiveCartMode } =
+    useCart();
   const { user, isAuthenticated, logout, openAuthModal } = useAuth();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 767px)");
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [hasPendingInvite, setHasPendingInvite] = useState(false);
-  
+
   const { scrollDirection, isAtTop } = useScrollDirection();
 
-  const adminRoles = ['owner', 'super_admin', 'main_admin', 'moderator', 'support_admin', 'support', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
+  const adminRoles = [
+    'owner',
+    'super_admin',
+    'main_admin',
+    'moderator',
+    'support_admin',
+    'support',
+    'order_manager',
+    'content_manager',
+    'admin',
+    'manager',
+    'coordinator',
+  ];
 
   useEffect(() => {
     let active = true;
     if (isAuthenticated && user) {
-      adminInviteService.getMyPendingInvite()
+      adminInviteService
+        .getMyPendingInvite()
         .then((res) => {
           if (active && res?.success && res?.data) {
             setHasPendingInvite(true);
@@ -71,7 +85,7 @@ export function TopNavbar() {
   useEffect(() => {
     if (isOpen && isMobile) {
       mobileTriggerRef.current = document.activeElement;
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
 
       const focusableElements = mobileMenuRef.current?.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
@@ -81,8 +95,8 @@ export function TopNavbar() {
       }
 
       const handleKeyDown = (e) => {
-        if (e.key === "Escape") setIsOpen(false);
-        if (e.key === "Tab" && focusableElements) {
+        if (e.key === 'Escape') setIsOpen(false);
+        if (e.key === 'Tab' && focusableElements) {
           const first = focusableElements[0];
           const last = focusableElements[focusableElements.length - 1];
           if (e.shiftKey && document.activeElement === first) {
@@ -94,10 +108,10 @@ export function TopNavbar() {
           }
         }
       };
-      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener('keydown', handleKeyDown);
       return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        document.body.style.overflow = "";
+        window.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = '';
         if (mobileTriggerRef.current) {
           mobileTriggerRef.current.focus();
         }
@@ -106,15 +120,15 @@ export function TopNavbar() {
   }, [isOpen, isMobile]);
 
   // Purely dynamic, CMS-driven links. No hardcoded fallbacks.
-  const dbLinks = navigation?.mainLinks?.filter(link => link.isVisible).map(link => ({
-    label: link.label,
-    href: link.href || link.link
-  })) || [];
+  const dbLinks =
+    navigation?.mainLinks
+      ?.filter((link) => link.isVisible)
+      .map((link) => ({
+        label: link.label,
+        href: link.href || link.link,
+      })) || [];
 
-  const navLinks = [
-    { label: "Home", href: "/", mobileOnly: true },
-    ...dbLinks
-  ];
+  const navLinks = [{ label: 'Home', href: '/', mobileOnly: true }, ...dbLinks];
 
   const isActive = (href) => location.pathname === href;
 
@@ -123,10 +137,13 @@ export function TopNavbar() {
       <nav
         className={`top-navbar fixed top-0 w-full transition-all duration-500 ${
           !isAtTop
-            ? "bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-1.5"
-            : "bg-surface/90 backdrop-blur-md py-2 border-b border-outline-variant/10"
-        } ${!isAtTop && scrollDirection === "down" ? "-translate-y-full" : "translate-y-0"}`}
-        style={{ zIndex: 'var(--z-sticky)', boxShadow: !isAtTop ? 'var(--shadow-md)' : 'var(--shadow-xs)' }}
+            ? 'bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-1.5'
+            : 'bg-surface/90 backdrop-blur-md py-2 border-b border-outline-variant/10'
+        } ${!isAtTop && scrollDirection === 'down' ? '-translate-y-full' : 'translate-y-0'}`}
+        style={{
+          zIndex: 'var(--z-sticky)',
+          boxShadow: !isAtTop ? 'var(--shadow-md)' : 'var(--shadow-xs)',
+        }}
       >
         <h1 className="sr-only">Siri Arts & Crafts</h1>
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
@@ -161,8 +178,8 @@ export function TopNavbar() {
                         <Link
                           className={`relative font-label-sm text-[10px] lg:text-[11px] uppercase tracking-[0.2em] lg:tracking-[0.25em] px-2.5 lg:px-3.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold whitespace-nowrap ${
                             active
-                              ? "text-primary bg-primary-container/10"
-                              : "text-on-surface hover:text-primary hover:bg-surface-container-low"
+                              ? 'text-primary bg-primary-container/10'
+                              : 'text-on-surface hover:text-primary hover:bg-surface-container-low'
                           }`}
                           to={link.href}
                         >
@@ -189,8 +206,8 @@ export function TopNavbar() {
                       key={idx}
                       className={`relative font-label-sm text-[10px] uppercase tracking-[0.15em] px-2.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold whitespace-nowrap ${
                         active
-                          ? "text-primary bg-primary-container/10"
-                          : "text-on-surface hover:text-primary"
+                          ? 'text-primary bg-primary-container/10'
+                          : 'text-on-surface hover:text-primary'
                       }`}
                       to={link.href}
                     >
@@ -210,13 +227,13 @@ export function TopNavbar() {
                       onClick={() => setIsMoreOpen(!isMoreOpen)}
                       className={`font-label-sm text-[10px] uppercase tracking-[0.15em] px-2.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold cursor-pointer ${
                         isMoreActive
-                          ? "text-primary bg-primary-container/10"
-                          : "text-on-surface hover:text-primary"
+                          ? 'text-primary bg-primary-container/10'
+                          : 'text-on-surface hover:text-primary'
                       }`}
                     >
                       More
                       <span
-                        className={`material-symbols-outlined text-[18px] transition-transform duration-300 ${isMoreOpen ? "rotate-180" : ""}`}
+                        className={`material-symbols-outlined text-[18px] transition-transform duration-300 ${isMoreOpen ? 'rotate-180' : ''}`}
                       >
                         expand_more
                       </span>
@@ -260,9 +277,7 @@ export function TopNavbar() {
                   className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
                   aria-label="Search Catalog (⌘K)"
                 >
-                  <span className="material-symbols-outlined text-[18px]">
-                    search
-                  </span>
+                  <span className="material-symbols-outlined text-[18px]">search</span>
                 </button>
 
                 <Link
@@ -270,28 +285,23 @@ export function TopNavbar() {
                   className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold icon-button-touch-target"
                   aria-label="View Wishlist"
                 >
-                  <span
-                    className="material-symbols-outlined text-[18px]"
-                    aria-hidden="true"
-                  >
+                  <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
                     favorite
                   </span>
                 </Link>
 
                 <button
                   id="cart-trigger-desktop"
-                  onMouseEnter={() => prefetchManager.prefetchRoute("/cart", { kind: "hover" })}
-                  onClick={() => setIsCartOpen(true)}
+                  onMouseEnter={() => prefetchManager.prefetchRoute('/cart', { kind: 'hover' })}
+                  onClick={() => {
+                    navigate('/cart');
+                  }}
                   className="text-on-surface hover:text-[#d4af37] transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#d4af37]/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
-                  aria-label="View Shopping Bag"
+                  aria-label="View Bag"
                 >
-                  <span
-                    className="material-symbols-outlined text-[20px]"
-                    aria-hidden="true"
-                  >
-                    shopping_bag
+                  <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                    shopping_cart
                   </span>
-
                   {cartCount > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
@@ -309,20 +319,20 @@ export function TopNavbar() {
                     className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
                     aria-label="User Account"
                   >
-                    <span className="material-symbols-outlined text-[18px]">
-                      login
-                    </span>
+                    <span className="material-symbols-outlined text-[18px]">login</span>
                   </button>
                 ) : (
                   <div className="relative hidden md:block">
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                      onMouseEnter={() => prefetchManager.prefetchRoute("/dashboard", { kind: "hover" })}
+                      onMouseEnter={() =>
+                        prefetchManager.prefetchRoute('/dashboard', { kind: 'hover' })
+                      }
                       className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square min-h-0"
                       aria-label="User Dropdown"
                     >
                       <span className="text-[10px] text-primary uppercase font-bold tracking-wider">
-                        {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || "U"}
+                        {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || 'U'}
                       </span>
                       {hasPendingInvite && (
                         <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm" />
@@ -332,8 +342,8 @@ export function TopNavbar() {
                     <AnimatePresence>
                       {isProfileDropdownOpen && (
                         <>
-                          <div 
-                            className="fixed inset-0 z-40" 
+                          <div
+                            className="fixed inset-0 z-40"
                             onClick={() => setIsProfileDropdownOpen(false)}
                           />
                           <motion.div
@@ -344,7 +354,7 @@ export function TopNavbar() {
                           >
                             <div className="px-4 py-2 border-b border-outline-variant/10 mb-1">
                               <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider truncate">
-                                {user?.name || "Customer"}
+                                {user?.name || 'Customer'}
                               </p>
                               <p className="text-[9px] text-on-surface-variant/50 truncate font-light tracking-wide">
                                 {user?.email}
@@ -364,7 +374,9 @@ export function TopNavbar() {
                                 onClick={() => setIsProfileDropdownOpen(false)}
                                 className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors font-bold border-b border-outline-variant/10 mb-1.5 pb-2"
                               >
-                                <span className="material-symbols-outlined text-[15px]">shield_person</span>
+                                <span className="material-symbols-outlined text-[15px]">
+                                  shield_person
+                                </span>
                                 <span>Admin Portal</span>
                               </Link>
                             )}
@@ -383,7 +395,9 @@ export function TopNavbar() {
                               onClick={() => setIsProfileDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
                             >
-                              <span className="material-symbols-outlined text-[15px]">package_2</span>
+                              <span className="material-symbols-outlined text-[15px]">
+                                package_2
+                              </span>
                               <span>Orders</span>
                             </Link>
 
@@ -392,7 +406,9 @@ export function TopNavbar() {
                               onClick={() => setIsProfileDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
                             >
-                              <span className="material-symbols-outlined text-[15px]">location_on</span>
+                              <span className="material-symbols-outlined text-[15px]">
+                                location_on
+                              </span>
                               <span>Addresses</span>
                             </Link>
 
@@ -415,7 +431,9 @@ export function TopNavbar() {
               </div>
 
               <button
-                onMouseEnter={() => prefetchManager.prefetchRoute("/collections", { kind: "hover" })}
+                onMouseEnter={() =>
+                  prefetchManager.prefetchRoute('/collections', { kind: 'hover' })
+                }
                 onClick={() => setIsOpen(true)}
                 className="md:hidden flex flex-col items-center justify-center gap-[4.5px] w-9 h-9 rounded-full hover:bg-primary-container/10 hover:text-primary transition-all duration-300 hover:scale-110 cursor-pointer text-on-surface min-h-0 icon-button-touch-target"
                 aria-label="Open navigation menu"
@@ -448,10 +466,10 @@ export function TopNavbar() {
               role="dialog"
               aria-modal="true"
               aria-label="Mobile Navigation Menu"
-              initial={{ x: "100%" }}
+              initial={{ x: '100%' }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 280 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
               className="fixed right-0 top-0 h-full w-[80%] max-w-sm bg-surface-bright z-[120] lg:hidden p-6 md:p-8 flex flex-col shadow-2xl border-l border-outline-variant/10 rounded-l-2xl overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-5 pb-3 border-b border-outline-variant/10">
@@ -481,14 +499,17 @@ export function TopNavbar() {
                         onClick={() => setIsOpen(false)}
                         className={`group flex items-center justify-between py-3.5 border-b border-outline-variant/10 text-[11px] uppercase tracking-[0.2em] font-semibold transition-all duration-300 ${
                           active
-                            ? "text-primary pl-2"
-                            : "text-on-surface hover:text-primary hover:pl-2"
+                            ? 'text-primary pl-2'
+                            : 'text-on-surface hover:text-primary hover:pl-2'
                         }`}
                         to={link.href}
                       >
                         <span>{link.label}</span>
                         {active ? (
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary" style={{ boxShadow: "0 0 8px var(--color-primary)" }} />
+                          <span
+                            className="w-1.5 h-1.5 rounded-full bg-primary"
+                            style={{ boxShadow: '0 0 8px var(--color-primary)' }}
+                          />
                         ) : (
                           <span className="material-symbols-outlined text-[14px] text-on-surface/20 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300">
                             east
@@ -591,9 +612,7 @@ export function TopNavbar() {
                       }}
                       className="flex items-center justify-center gap-2 py-3.5 bg-on-surface text-surface hover:bg-primary hover:text-white rounded-xl transition-all duration-300 col-span-2 cursor-pointer font-bold"
                     >
-                      <span className="material-symbols-outlined text-[16px]">
-                        login
-                      </span>
+                      <span className="material-symbols-outlined text-[16px]">login</span>
                       <span className="font-label text-[9px] uppercase tracking-[0.2em] font-bold">
                         Sign In
                       </span>
@@ -626,8 +645,6 @@ export function TopNavbar() {
         onClearRecent={search.clearRecentSearches}
         correctedQuery={search.correctedQuery}
       />
-
     </>
   );
 }
- 

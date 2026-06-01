@@ -2,8 +2,6 @@ import { Request, Response } from 'express';
 import AdminNotification from '../models/AdminNotification';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
-import { emitAdminNotification } from '../socket';
-import logger from '../config/logger';
 import { getPaginationOptions } from '../utils/pagination';
 import { setPaginationHeaders } from '../utils/paginationHeaders';
 
@@ -20,25 +18,27 @@ export const getAdminNotifications = asyncHandler(async (req: Request, res: Resp
   ]);
 
   setPaginationHeaders(res, total, page, limit);
-  res.status(200).json(new ApiResponse(true, 'Admin notifications fetched', {
-    notifications,
-    total,
-    unreadCount,
-    page,
-    pages: Math.ceil(total / limit),
-  }));
+  res.status(200).json(
+    new ApiResponse(true, 'Admin notifications fetched', {
+      notifications,
+      total,
+      unreadCount,
+      page,
+      pages: Math.ceil(total / limit),
+    }),
+  );
 });
 
 /**
  * Mark a single notification as read
-*/
+ */
 export const markNotificationRead = asyncHandler(async (req: Request, res: Response) => {
   const notification = await AdminNotification.findByIdAndUpdate(
-    req.params.id, 
+    req.params.id,
     { isRead: true },
-    { new: true }
+    { new: true },
   );
-  
+
   res.status(200).json(new ApiResponse(true, 'Notification marked as read', notification));
 });
 

@@ -2,7 +2,7 @@ import { OrderValidationService } from './services/orderValidation';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import getRazorpay from '../../config/razorpay';
-import Order, { IOrder } from '../../models/Order';
+import Order from '../../models/Order';
 import Product from '../../models/Product';
 import User from '../../models/User';
 import Coupon from '../../models/Coupon';
@@ -32,11 +32,21 @@ import { OrderCreationService, OrderPaymentService, OrderFulfillmentService } fr
 export { OrderCreationService, OrderPaymentService, OrderFulfillmentService };
 
 class OrderService {
-  static async validateTotals(userId: string, data: any) { return OrderValidationService.validateTotals(userId, data); }
-
+  static async validateTotals(userId: string, data: any) {
+    return OrderValidationService.validateTotals(userId, data);
+  }
 
   static async createOrder(userId: string, orderData: any) {
-    const { items, shippingAddress, couponCode, notes, needByDate, paymentMethod, useWallet, idempotencyKey } = orderData;
+    const {
+      items,
+      shippingAddress,
+      couponCode,
+      notes,
+      needByDate,
+      paymentMethod,
+      useWallet,
+      idempotencyKey,
+    } = orderData;
     const isCod = paymentMethod === 'cod';
 
     const MAX_QUANTITY_PER_ITEM = 50;
@@ -51,7 +61,12 @@ class OrderService {
     }
 
     for (const item of items) {
-      if (typeof item.quantity !== 'number' || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > MAX_QUANTITY_PER_ITEM) {
+      if (
+        typeof item.quantity !== 'number' ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity < 1 ||
+        item.quantity > MAX_QUANTITY_PER_ITEM
+      ) {
         throw new ApiError(400, `Invalid quantity for item: ${item.productId}`);
       }
     }
@@ -75,18 +90,30 @@ class OrderService {
     session.startTransaction();
 
     let subtotal = 0;
+    let depositTotal = 0;
     const orderItems = [];
 
     // 1. Batch-query products at once to eliminate N+1 findById queries inside the loop
-    const productIds = [...new Set(items.map((item: any) => String(item.productId)).filter(Boolean))] as any[];
-    const products = await Product.find({ _id: { $in: productIds } }).select('title price stock isActive imageSrc category isNonRefundable').session(session);
+    const productIds = [
+      ...new Set(items.map((item: any) => String(item.productId)).filter(Boolean)),
+    ] as any[];
+    const products = await Product.find({ _id: { $in: productIds } })
+      .select('title price stock isActive imageSrc category isNonRefundable')
+      .session(session);
     const productsById = new Map<string, any>(products.map((p: any) => [p._id.toString(), p]));
 
     // Pre-validate all items before doing any stock updates to maintain transactional integrity
     for (const item of items) {
+      if (item.type === 'rental') {
+        throw new ApiError(
+          400,
+          `Rental items cannot be purchased through the standard checkout. Please use the dedicated Rental Wizard for ${item.title || 'this item'}.`,
+        );
+      }
       const product = productsById.get(String(item.productId));
       if (!product) throw new ApiError(404, `Product ${item.productId} not found`);
-      if (!product.isActive) throw new ApiError(400, `Product is no longer active: ${product.title}`);
+      if (!product.isActive)
+        throw new ApiError(400, `Product is no longer active: ${product.title}`);
       if (product.stock < item.quantity) {
         throw new ApiError(400, `Insufficient stock for product: ${product.title}`);
       }
@@ -100,7 +127,7 @@ class OrderService {
         const updatedProduct = await Product.findOneAndUpdate(
           { _id: item.productId, stock: { $gte: item.quantity }, isActive: true },
           { $inc: { stock: -item.quantity } },
-          { new: true, session }
+          { new: true, session },
         );
 
         if (!updatedProduct) {
@@ -113,25 +140,55 @@ class OrderService {
         }
 
         reservedItems.push({ productId: String(item.productId), quantity: item.quantity });
-        
-        const itemTotal = product.price * item.quantity;
+
+        let itemPrice = product.price;
+        const itemType = item.type || 'purchase';
+        let itemDeposit = 0;
+
+        if (itemType === 'rental' && item.rentalInfo?.startDate && item.rentalInfo?.endDate) {
+          const start = new Date(item.rentalInfo.startDate);
+          const end = new Date(item.rentalInfo.endDate);
+          const diffDays =
+            Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+
+          if (product.rentalPricing) {
+            if (diffDays >= 30 && product.rentalPricing.monthly > 0) {
+              itemPrice = (product.rentalPricing.monthly / 30) * diffDays;
+            } else if (diffDays >= 7 && product.rentalPricing.weekly > 0) {
+              itemPrice = (product.rentalPricing.weekly / 7) * diffDays;
+            } else if (product.rentalPricing.daily > 0) {
+              itemPrice = product.rentalPricing.daily * diffDays;
+            }
+          }
+          itemDeposit = (product.securityDeposit || 0) * item.quantity;
+          depositTotal += itemDeposit;
+        }
+
+        const itemTotal = itemPrice * item.quantity;
         subtotal += itemTotal;
-        
+
         orderItems.push({
           productId: product._id,
           title: product.title,
-          price: product.price,
+          price: itemPrice,
           quantity: item.quantity,
           variant: item.variant || 'Default',
           imageSrc: product.imageSrc,
           category: product.category,
           isNonRefundable: product.isNonRefundable || false,
+          type: itemType,
+          deposit: itemDeposit,
+          rentalInfo: item.rentalInfo,
         });
       }
     } catch (err) {
       // Rollback successfully reserved stock to prevent stock leaks
       for (const reserved of reservedItems) {
-        await Product.findByIdAndUpdate(reserved.productId, { $inc: { stock: reserved.quantity } }, { session });
+        await Product.findByIdAndUpdate(
+          reserved.productId,
+          { $inc: { stock: reserved.quantity } },
+          { session },
+        );
       }
       throw err;
     }
@@ -149,17 +206,18 @@ class OrderService {
 
       if (couponCode) {
         // ATOMIC COUPON VALIDATION AND RESERVATION
-        const coupon = await Coupon.findOneAndUpdate({
-          code: couponCode.toUpperCase(),
-          isActive: true,
-          $or: [
-            { usageLimit: null },
-            { $expr: { $lt: ['$usedCount', '$usageLimit'] } }
-          ]
-        }, {
-          $inc: { usedCount: 1 },
-          $push: { usedBy: { userId, orderId: pendingOrderId } }
-        }, { new: true, session });
+        const coupon = await Coupon.findOneAndUpdate(
+          {
+            code: couponCode.toUpperCase(),
+            isActive: true,
+            $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
+          },
+          {
+            $inc: { usedCount: 1 },
+            $push: { usedBy: { userId, orderId: pendingOrderId } },
+          },
+          { new: true, session },
+        );
 
         if (coupon && new Date() <= coupon.expiryDate && subtotal >= coupon.minOrderAmount) {
           couponValid = true;
@@ -175,10 +233,14 @@ class OrderService {
         } else {
           // If coupon was valid but expired or didn't meet min amount, rollback the increment we just did
           if (coupon) {
-            await Coupon.findByIdAndUpdate(coupon._id, {
-              $inc: { usedCount: -1 },
-              $pull: { usedBy: { orderId: pendingOrderId } }
-            }, { session });
+            await Coupon.findByIdAndUpdate(
+              coupon._id,
+              {
+                $inc: { usedCount: -1 },
+                $pull: { usedBy: { orderId: pendingOrderId } },
+              },
+              { session },
+            );
           }
           throw new ApiError(400, 'Coupon is invalid, expired, or usage limit reached');
         }
@@ -202,7 +264,10 @@ class OrderService {
 
       const shippingFee = subtotal > 2000 ? 0 : 100;
       user = await User.findById(userId).session(session);
-      const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
+      const preliminaryTotal = Math.max(
+        0,
+        subtotal + shippingFee + codFee + depositTotal - discount,
+      );
 
       if (useWallet && user) {
         const potentialWalletDeduction = Math.min(preliminaryTotal, user.walletBalance || 0);
@@ -213,7 +278,10 @@ class OrderService {
             walletDeducted = true;
             user = updatedUser;
           } else {
-            throw new ApiError(400, 'Insufficient wallet balance. It may have been used in another concurrent transaction.');
+            throw new ApiError(
+              400,
+              'Insufficient wallet balance. It may have been used in another concurrent transaction.',
+            );
           }
         }
       }
@@ -222,14 +290,19 @@ class OrderService {
 
       // Log wallet debit transaction if atomic deduction succeeded
       if (walletDeducted && walletDeduction > 0 && user) {
-        await WalletTransaction.create([{
-          userId: user._id,
-          type: 'debit',
-          amount: walletDeduction,
-          source: 'checkout_redeem',
-          description: `Redeemed Siri Cash at checkout`,
-          status: 'active'
-        }], { session });
+        await WalletTransaction.create(
+          [
+            {
+              userId: user._id,
+              type: 'debit',
+              amount: walletDeduction,
+              source: 'checkout_redeem',
+              description: `Redeemed Siri Cash at checkout`,
+              status: 'active',
+            },
+          ],
+          { session },
+        );
       }
 
       const randomSeq = crypto.randomBytes(3).toString('hex').toUpperCase();
@@ -237,18 +310,29 @@ class OrderService {
       const trackingNumber = `TRK${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
       const courierPartner = 'Delhivery';
       const barcodeData = invoiceNumber;
-      const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'http://localhost:5173';
+      const frontendUrl =
+        process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'http://localhost:5173';
       const publicTrackingToken = LogisticsService.generateTrackingToken(pendingOrderId.toString());
       const qrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
 
+      let hasPurchase = false;
+      let hasRental = false;
+      for (const item of orderItems) {
+        if (item.type === 'rental') hasRental = true;
+        else hasPurchase = true;
+      }
+      const orderType = hasRental && hasPurchase ? 'mixed' : hasRental ? 'rental' : 'purchase';
+
       if (isCod) {
         // Pre-assign tracking URL synchronously (order._id is generated on instantiation)
-        
+
         order = new Order({
           _id: pendingOrderId,
           user: userId,
           items: orderItems,
           shippingAddress,
+          orderType,
+          depositTotal,
           subtotal,
           shippingFee,
           discount,
@@ -259,7 +343,9 @@ class OrderService {
           paymentMethod: 'cod',
           paymentStatus: 'Pending COD',
           orderStatus: 'Confirmed',
-          statusHistory: [{ status: 'Confirmed', note: 'Cash on Delivery order successfully placed' }],
+          statusHistory: [
+            { status: 'Confirmed', note: 'Cash on Delivery order successfully placed' },
+          ],
           invoiceNumber,
           trackingNumber,
           courierPartner,
@@ -280,8 +366,13 @@ class OrderService {
         await order.save({ session });
         AnalyticsService.clearCache();
 
-        // Clear the user's cart in database immediately
-        await User.findByIdAndUpdate(userId, { $set: { cart: [] } }, { session });
+        // Clear only the ordered items from the user's cart in database immediately
+        const orderedProductIds = order.items.map((item: any) => item.productId);
+        await User.findByIdAndUpdate(
+          userId,
+          { $pull: { cart: { product: { $in: orderedProductIds } } } },
+          { session },
+        );
 
         const resultCod = {
           order,
@@ -313,16 +404,19 @@ class OrderService {
             orderId: order._id.toString(),
             date: order.createdAt || new Date(),
             customerName: user?.name || 'Customer',
-            shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+            shippingAddress:
+              typeof order.shippingAddress === 'string'
+                ? order.shippingAddress
+                : order.shippingAddress?.address || '',
             items: order.items,
             subtotal: order.subtotal,
             shipping: order.shippingFee,
-            total: order.total
+            total: order.total,
           });
 
           if (user) {
             const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
-            
+
             // 3. Compile beautiful HTML Template
             const htmlContent = compileTemplate('order-confirmation', {
               customerName: user.name,
@@ -334,12 +428,15 @@ class OrderService {
                 variant: i.variant,
                 quantity: i.quantity,
                 price: i.price,
-                image: i.imageSrc
+                image: i.imageSrc,
               })),
               subtotal: order.subtotal,
               shipping: order.shippingFee,
               total: order.total,
-              shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+              shippingAddress:
+                typeof order.shippingAddress === 'string'
+                  ? order.shippingAddress
+                  : order.shippingAddress?.address || '',
               dashboardUrl: `${frontendUrl}/dashboard?tab=orders`,
               currentYear: new Date().getFullYear(),
             });
@@ -352,13 +449,15 @@ class OrderService {
               type: 'order',
               action: 'order_placed',
               userId: user._id.toString(),
-              attachments: [{
-                filename: `Invoice_${order.invoiceNumber}.pdf`,
-                content: pdfBuffer,
-                contentType: 'application/pdf'
-              }]
+              attachments: [
+                {
+                  filename: `Invoice_${order.invoiceNumber}.pdf`,
+                  content: pdfBuffer,
+                  contentType: 'application/pdf',
+                },
+              ],
             });
-            
+
             // 5. Send Admin Alert Email
             const adminEmails = getAdminEmails();
             if (adminEmails.length > 0) {
@@ -368,11 +467,13 @@ class OrderService {
                 customHtml: htmlContent, // Reuse same elegant template
                 type: 'system',
                 action: 'admin_order_alert',
-                attachments: [{
-                  filename: `Invoice_${order.invoiceNumber}.pdf`,
-                  content: pdfBuffer,
-                  contentType: 'application/pdf'
-                }]
+                attachments: [
+                  {
+                    filename: `Invoice_${order.invoiceNumber}.pdf`,
+                    content: pdfBuffer,
+                    contentType: 'application/pdf',
+                  },
+                ],
               });
             }
           }
@@ -386,7 +487,7 @@ class OrderService {
         // 3b. Handle online Razorpay payment
         const options = {
           amount: Math.round(total * 100),
-          currency: "INR",
+          currency: 'INR',
           receipt: `rcpt_${Date.now()}`,
         };
 
@@ -409,9 +510,12 @@ class OrderService {
           user: userId,
           items: orderItems,
           shippingAddress,
+          orderType,
+          depositTotal,
           subtotal,
           shippingFee,
           discount,
+          codFee: 0,
           walletDeduction,
           total,
           couponCode: couponValid ? couponCode.toUpperCase() : undefined,
@@ -441,7 +545,7 @@ class OrderService {
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
           },
-          type: 'online'
+          type: 'online',
         };
 
         if (redisKey && redisClient) {
@@ -492,16 +596,21 @@ class OrderService {
     try {
       // 1. Atomically lock the order in "processing" state to prevent race conditions
       order = await Order.findOneAndUpdate(
-        { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
+        {
+          razorpayOrderId: razorpay_order_id,
+          paymentStatus: { $in: ['pending', 'failed', 'processing'] },
+        } as any,
         { $set: { paymentStatus: 'processing' } },
-        { new: true, session }
+        { new: true, session },
       );
 
       if (!order) {
         // Check if it's already marked as paid by a webhook or concurrent request
         const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
         if (existingOrder && existingOrder.paymentStatus === 'paid') {
-          logger.info(`[PAYMENT REDUNDANCY] Payment already processed successfully for order: ${existingOrder._id}`);
+          logger.info(
+            `[PAYMENT REDUNDANCY] Payment already processed successfully for order: ${existingOrder._id}`,
+          );
           await session.abortTransaction();
           session.endSession();
           return existingOrder;
@@ -519,25 +628,37 @@ class OrderService {
       if (digest !== razorpay_signature) {
         // 2. Handle failed payment: Return reserved stock
         for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.productId, {
-            $inc: { stock: item.quantity }
-          }, { session });
+          await Product.findByIdAndUpdate(
+            item.productId,
+            {
+              $inc: { stock: item.quantity },
+            },
+            { session },
+          );
         }
 
         if (order.walletDeduction && order.walletDeduction > 0) {
           await creditWalletBalance(order.user, order.walletDeduction, session);
-          await WalletTransaction.create([{
-            userId: order.user,
-            type: 'credit',
-            amount: order.walletDeduction,
-            source: 'refund',
-            description: 'Refund for failed Razorpay payment verification',
-            status: 'active'
-          }], { session });
+          await WalletTransaction.create(
+            [
+              {
+                userId: order.user,
+                type: 'credit',
+                amount: order.walletDeduction,
+                source: 'refund',
+                description: 'Refund for failed Razorpay payment verification',
+                status: 'active',
+              },
+            ],
+            { session },
+          );
         }
 
         order.paymentStatus = 'failed';
-        order.statusHistory.push({ status: 'Pending', note: 'Payment verification failed (Signature Mismatch) - Stock Released & Wallet Refunded' });
+        order.statusHistory.push({
+          status: 'Pending',
+          note: 'Payment verification failed (Signature Mismatch) - Stock Released & Wallet Refunded',
+        });
         await order.save({ session });
         await session.commitTransaction();
         session.endSession();
@@ -549,12 +670,20 @@ class OrderService {
       order.orderStatus = 'Confirmed';
       order.razorpayPaymentId = razorpay_payment_id;
       order.razorpaySignature = razorpay_signature;
-      order.statusHistory.push({ status: 'Confirmed', note: 'Payment verified and order confirmed' });
-      
+      order.statusHistory.push({
+        status: 'Confirmed',
+        note: 'Payment verified and order confirmed',
+      });
+
       await order.save({ session });
 
-      // 4. Clear the user's cart in the database upon successful verification
-      await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
+      // 4. Clear only the ordered items from the user's cart in the database upon successful verification
+      const orderedProductIds = order.items.map((item: any) => item.productId);
+      await User.findByIdAndUpdate(
+        order.user,
+        { $pull: { cart: { product: { $in: orderedProductIds } } } },
+        { session },
+      );
 
       // NOTE: Coupon usedCount was already atomically incremented during createOrder().
       // Do NOT increment again here — the webhook handler correctly reverses it on payment failure.
@@ -568,7 +697,7 @@ class OrderService {
     }
 
     AnalyticsService.clearCache();
-    
+
     // Trigger Admin Alert, Invoice PDF, and Order Confirmation Email
     try {
       const user = await User.findById(order.user);
@@ -587,16 +716,19 @@ class OrderService {
         orderId: order._id.toString(),
         date: order.createdAt || new Date(),
         customerName: user?.name || 'Customer',
-        shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+        shippingAddress:
+          typeof order.shippingAddress === 'string'
+            ? order.shippingAddress
+            : order.shippingAddress?.address || '',
         items: order.items,
         subtotal: order.subtotal,
         shipping: order.shippingFee,
-        total: order.total
+        total: order.total,
       });
 
       if (user) {
         const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
-        
+
         // 3. Compile HTML Template
         const htmlContent = compileTemplate('order-confirmation', {
           customerName: user.name,
@@ -608,12 +740,15 @@ class OrderService {
             variant: i.variant,
             quantity: i.quantity,
             price: i.price,
-            image: i.imageSrc
+            image: i.imageSrc,
           })),
           subtotal: order.subtotal,
           shipping: order.shippingFee,
           total: order.total,
-          shippingAddress: typeof order.shippingAddress === 'string' ? order.shippingAddress : order.shippingAddress?.address || '',
+          shippingAddress:
+            typeof order.shippingAddress === 'string'
+              ? order.shippingAddress
+              : order.shippingAddress?.address || '',
           dashboardUrl: `${frontendUrl}/dashboard?tab=orders`,
           currentYear: new Date().getFullYear(),
         });
@@ -626,11 +761,13 @@ class OrderService {
           type: 'order',
           action: 'order_placed',
           userId: user._id.toString(),
-          attachments: [{
-            filename: `Invoice_${order.invoiceNumber}.pdf`,
-            content: pdfBuffer,
-            contentType: 'application/pdf'
-          }]
+          attachments: [
+            {
+              filename: `Invoice_${order.invoiceNumber}.pdf`,
+              content: pdfBuffer,
+              contentType: 'application/pdf',
+            },
+          ],
         });
 
         // 5. Send Admin Alert Email
@@ -641,18 +778,20 @@ class OrderService {
             customHtml: htmlContent,
             type: 'system',
             action: 'admin_order_alert',
-            attachments: [{
-              filename: `Invoice_${order.invoiceNumber}.pdf`,
-              content: pdfBuffer,
-              contentType: 'application/pdf'
-            }]
+            attachments: [
+              {
+                filename: `Invoice_${order.invoiceNumber}.pdf`,
+                content: pdfBuffer,
+                contentType: 'application/pdf',
+              },
+            ],
           });
         }
       }
     } catch (emailErr) {
       logger.error('Failed to dispatch order confirmation email/PDF in background:', emailErr);
     }
-    
+
     logger.info(`Payment successful for order: ${order._id}`);
     return order;
   }
@@ -661,7 +800,9 @@ class OrderService {
     const { page, limit, skip } = getPaginationOptions({ ...query, limit: 10 });
     const [orders, total] = await Promise.all([
       Order.find({ user: userId })
-        .select('orderStatus paymentStatus total items.title items.quantity createdAt invoiceNumber trackingNumber')
+        .select(
+          'orderStatus paymentStatus total items.title items.quantity createdAt invoiceNumber trackingNumber',
+        )
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -691,7 +832,12 @@ class OrderService {
     return formatPaginationResponse(orders, totalCount, page, limit);
   }
 
-  static async updateOrderStatus(id: string, status: string, note?: string, courierCharges?: number) {
+  static async updateOrderStatus(
+    id: string,
+    status: string,
+    note?: string,
+    courierCharges?: number,
+  ) {
     const razorpay = getRazorpay();
     const order = await Order.findById(id);
     if (!order) throw new ApiError(404, 'Order not found');
@@ -709,14 +855,14 @@ class OrderService {
     // State Machine Validation
     const oldStatus = order.orderStatus;
     const validTransitions: Record<string, string[]> = {
-      'Pending': ['Confirmed', 'Cancelled'],
-      'Confirmed': ['Packed', 'Cancelled'],
-      'Packed': ['Shipped', 'Cancelled'],
-      'Shipped': ['Delivered', 'Cancelled', 'Returned'],
-      'Delivered': ['Returned'],
-      'Cancelled': [],
-      'Returned': [],
-      'Settled': []
+      Pending: ['Confirmed', 'Cancelled'],
+      Confirmed: ['Packed', 'Cancelled'],
+      Packed: ['Shipped', 'Cancelled'],
+      Shipped: ['Delivered', 'Cancelled', 'Returned'],
+      Delivered: ['Returned'],
+      Cancelled: [],
+      Returned: [],
+      Settled: [],
     };
 
     if (oldStatus !== finalStatus && !validTransitions[oldStatus]?.includes(finalStatus)) {
@@ -725,9 +871,13 @@ class OrderService {
 
     // Block 'Returned' or 'Refunded' if all items are non-refundable
     if (finalStatus === 'Returned' || finalStatus === 'Refunded') {
-      const allNonRefundable = order.items.length > 0 && order.items.every(item => item.isNonRefundable);
+      const allNonRefundable =
+        order.items.length > 0 && order.items.every((item) => item.isNonRefundable);
       if (allNonRefundable) {
-        throw new ApiError(400, 'This order consists entirely of non-refundable items and cannot be returned or refunded.');
+        throw new ApiError(
+          400,
+          'This order consists entirely of non-refundable items and cannot be returned or refunded.',
+        );
       }
     }
 
@@ -744,39 +894,53 @@ class OrderService {
         order.paymentStatus = 'COD Collected';
         order.settlementStatus = 'Pending';
         if (!order.courierCharges) {
-          order.courierCharges = courierCharges !== undefined ? courierCharges : Math.round((order.shippingFee || 120) + 30);
+          order.courierCharges =
+            courierCharges !== undefined
+              ? courierCharges
+              : Math.round((order.shippingFee || 120) + 30);
         }
-        order.statusHistory.push({ 
-          status: 'COD Collected', 
-          timestamp: new Date(), 
-          note: 'Package delivered. Cash collected by courier agent. Reconciliation pending.' 
+        order.statusHistory.push({
+          status: 'COD Collected',
+          timestamp: new Date(),
+          note: 'Package delivered. Cash collected by courier agent. Reconciliation pending.',
         });
       } else if (finalStatus === 'Settled') {
         order.codCollected = true;
         order.paymentStatus = 'paid';
         order.settlementStatus = 'Settled';
-        const charges = courierCharges !== undefined ? courierCharges : (order.courierCharges || Math.round((order.shippingFee || 120) + 30));
+        const charges =
+          courierCharges !== undefined
+            ? courierCharges
+            : order.courierCharges || Math.round((order.shippingFee || 120) + 30);
         order.courierCharges = charges;
         order.settledAmount = Math.max(0, order.total - charges);
         order.earnings = order.settledAmount;
-        order.statusHistory.push({ 
-          status: 'Settled', 
-          timestamp: new Date(), 
-          note: `COD Remittance Settled. Received amount: ₹${order.settledAmount} (Total: ₹${order.total} - Courier fee: ₹${charges})` 
+        order.statusHistory.push({
+          status: 'Settled',
+          timestamp: new Date(),
+          note: `COD Remittance Settled. Received amount: ₹${order.settledAmount} (Total: ₹${order.total} - Courier fee: ₹${charges})`,
         });
       }
     }
 
     order.statusHistory.push({ status: finalStatus, timestamp: new Date(), note });
-    
+
     // Process Loyalty/Wallet adjustments based on status change
     if (finalStatus === 'Delivered') {
       try {
-        await LoyaltyService.processPurchaseRewards(order.user.toString(), order._id.toString(), order.total);
+        await LoyaltyService.processPurchaseRewards(
+          order.user.toString(),
+          order._id.toString(),
+          order.total,
+        );
       } catch (rewardsErr) {
         logger.error('Failed to process purchase rewards on delivery:', rewardsErr);
       }
-    } else if (finalStatus === 'Cancelled' || finalStatus === 'Returned' || finalStatus === 'Refunded') {
+    } else if (
+      finalStatus === 'Cancelled' ||
+      finalStatus === 'Returned' ||
+      finalStatus === 'Refunded'
+    ) {
       try {
         await LoyaltyService.reversePurchaseRewards(order._id.toString());
       } catch (reversalErr) {
@@ -793,7 +957,7 @@ class OrderService {
             amount: order.walletDeduction,
             source: 'refund',
             description: `Refund for ${finalStatus.toLowerCase()} order`,
-            status: 'active'
+            status: 'active',
           });
         } catch (walletErr) {
           logger.error('Failed to refund wallet on order cancellation:', walletErr);
@@ -804,11 +968,11 @@ class OrderService {
       if (order.couponCode) {
         try {
           await Coupon.findOneAndUpdate(
-            { code: order.couponCode.toUpperCase() }, 
-            { 
+            { code: order.couponCode.toUpperCase() },
+            {
               $inc: { usedCount: -1 },
-              $pull: { usedBy: { orderId: order._id } }
-            }
+              $pull: { usedBy: { orderId: order._id } },
+            },
           );
         } catch (couponErr) {
           logger.error('Failed to rollback coupon usage on order cancellation:', couponErr);
@@ -816,32 +980,38 @@ class OrderService {
       }
 
       // Automated Razorpay refund integration for online paid orders
-      if (order.paymentStatus === 'paid' && order.razorpayPaymentId && (order.paymentMethod?.toLowerCase() === 'razorpay')) {
+      if (
+        order.paymentStatus === 'paid' &&
+        order.razorpayPaymentId &&
+        order.paymentMethod?.toLowerCase() === 'razorpay'
+      ) {
         if (razorpay) {
           try {
-            logger.info(`[PAYMENT REFUND] Initiating Razorpay automatic refund of ₹${order.total} for order: ${order._id}`);
+            logger.info(
+              `[PAYMENT REFUND] Initiating Razorpay automatic refund of ₹${order.total} for order: ${order._id}`,
+            );
             const refund = await (razorpay as any).refunds.create({
               payment_id: order.razorpayPaymentId,
               amount: Math.round(order.total * 100), // convert to paise
               speed: 'normal',
               notes: {
                 orderId: order._id.toString(),
-                reason: `Automatic refund for order status: ${finalStatus}`
-              }
+                reason: `Automatic refund for order status: ${finalStatus}`,
+              },
             });
             logger.info(`[REFUND SUCCESS] Razorpay refund successful. ID: ${refund.id}`);
             order.paymentStatus = 'refunded';
             order.statusHistory.push({
               status: 'Refunded' as any,
               timestamp: new Date(),
-              note: `Razorpay Refund successfully created: ${refund.id}`
+              note: `Razorpay Refund successfully created: ${refund.id}`,
             });
           } catch (refundErr: any) {
             logger.error('🏥 [REFUND FAILED] Razorpay API refund failed:', refundErr);
             order.statusHistory.push({
               status: 'Pending' as any,
               timestamp: new Date(),
-              note: `Automated Razorpay refund failed: ${refundErr.message || 'API error'}`
+              note: `Automated Razorpay refund failed: ${refundErr.message || 'API error'}`,
             });
           }
         } else {
@@ -850,7 +1020,7 @@ class OrderService {
           order.statusHistory.push({
             status: 'Refunded' as any,
             timestamp: new Date(),
-            note: 'Simulated payment refund completed successfully'
+            note: 'Simulated payment refund completed successfully',
           });
         }
       }
@@ -897,7 +1067,7 @@ class OrderService {
             orderId: order._id.toString(),
             finalStatus: finalStatus.toUpperCase(),
             note: note || 'Your exquisite items are being handled with care.',
-            frontendUrl
+            frontendUrl,
           }),
           type: 'order',
           action: `order_${finalStatus.toLowerCase().replace(/ /g, '_')}`,
@@ -911,13 +1081,19 @@ class OrderService {
     return order;
   }
 
-  static verifyWebhookSignature(signature: string, rawBody: Buffer, webhookSecret: string): boolean {
+  static verifyWebhookSignature(
+    signature: string,
+    rawBody: Buffer,
+    webhookSecret: string,
+  ): boolean {
     const shasum = crypto.createHmac('sha256', webhookSecret);
     shasum.update(rawBody);
     const digest = shasum.digest('hex');
     const sigBuffer = Buffer.from(signature, 'utf8');
     const digestBuffer = Buffer.from(digest, 'utf8');
-    return sigBuffer.length === digestBuffer.length && crypto.timingSafeEqual(sigBuffer, digestBuffer);
+    return (
+      sigBuffer.length === digestBuffer.length && crypto.timingSafeEqual(sigBuffer, digestBuffer)
+    );
   }
 
   /**
@@ -938,7 +1114,7 @@ class OrderService {
         }).lean();
         if (alreadyPaidByPaymentId) {
           logger.info(
-            `[PAYMENT WEBHOOK IDEMPOTENCY] Payment ${razorpay_payment_id} already processed for order ${alreadyPaidByPaymentId._id}`
+            `[PAYMENT WEBHOOK IDEMPOTENCY] Payment ${razorpay_payment_id} already processed for order ${alreadyPaidByPaymentId._id}`,
           );
           return { status: 200, message: 'Webhook idempotency: payment already processed' };
         }
@@ -949,10 +1125,13 @@ class OrderService {
         return { status: 200, message: 'Skipped: missing entity details' };
       }
 
-      let order: any = await Order.findOneAndUpdate(
-        { razorpayOrderId: razorpay_order_id, paymentStatus: { $in: ['pending', 'failed', 'processing'] } } as any,
+      const order: any = await Order.findOneAndUpdate(
+        {
+          razorpayOrderId: razorpay_order_id,
+          paymentStatus: { $in: ['pending', 'failed', 'processing'] },
+        } as any,
         { $set: { paymentStatus: 'processing' } },
-        { new: true }
+        { new: true },
       );
 
       if (!order) {
@@ -978,16 +1157,21 @@ class OrderService {
         });
 
         await order.save({ session });
-        await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
+        const orderedProductIds = order.items.map((item: any) => item.productId);
+        await User.findByIdAndUpdate(
+          order.user,
+          { $pull: { cart: { product: { $in: orderedProductIds } } } },
+          { session },
+        );
 
         if (order.couponCode) {
           await Coupon.findOneAndUpdate(
             { code: order.couponCode.toUpperCase() },
-            { 
+            {
               $inc: { usedCount: 1 },
-              $push: { usedBy: { userId: order.user, orderId: order._id } }
+              $push: { usedBy: { userId: order.user, orderId: order._id } },
             },
-            { session }
+            { session },
           );
         }
 
@@ -1011,7 +1195,11 @@ class OrderService {
             date: order.createdAt,
             customerName: user.name,
             shippingAddress: order.shippingAddress?.addressString || '',
-            items: order.items.map((i: any) => ({ name: i.title || 'Decor Item', quantity: i.quantity, price: i.price })),
+            items: order.items.map((i: any) => ({
+              name: i.title || 'Decor Item',
+              quantity: i.quantity,
+              price: i.price,
+            })),
             subtotal: order.subtotal,
             shipping: order.shippingFee,
             total: order.total,
@@ -1029,11 +1217,13 @@ class OrderService {
               shippingAddress: order.shippingAddress,
               frontend_url: frontendUrl,
             },
-            attachments: [{
-              filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
-              content: invoiceBuffer,
-              contentType: 'application/pdf',
-            }],
+            attachments: [
+              {
+                filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
+                content: invoiceBuffer,
+                contentType: 'application/pdf',
+              },
+            ],
             type: 'order',
             action: 'order_placed',
             userId: user._id.toString(),
@@ -1050,11 +1240,13 @@ class OrderService {
                 message: `Order #${order._id.toString().slice(-8).toUpperCase()} for ₹${order.total.toLocaleString('en-IN')} has been placed by ${user.name}.`,
                 actionUrl: `${frontendUrl}/admin/orders/${order._id}`,
               },
-              attachments: [{
-                filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
-                content: invoiceBuffer,
-                contentType: 'application/pdf',
-              }],
+              attachments: [
+                {
+                  filename: `Invoice_${order._id.toString().slice(-8).toUpperCase()}.pdf`,
+                  content: invoiceBuffer,
+                  contentType: 'application/pdf',
+                },
+              ],
               type: 'system',
               action: 'admin_order_notification',
             });
@@ -1082,20 +1274,25 @@ class OrderService {
               await Product.findByIdAndUpdate(
                 item.productId,
                 { $inc: { stock: item.quantity } },
-                { session }
+                { session },
               );
             }
 
             if (order.walletDeduction && order.walletDeduction > 0) {
               await creditWalletBalance(order.user, order.walletDeduction, session);
-              await WalletTransaction.create([{
-                userId: order.user,
-                type: 'credit',
-                amount: order.walletDeduction,
-                source: 'refund',
-                description: 'Refund for failed Razorpay payment via Webhook',
-                status: 'active'
-              }], { session });
+              await WalletTransaction.create(
+                [
+                  {
+                    userId: order.user,
+                    type: 'credit',
+                    amount: order.walletDeduction,
+                    source: 'refund',
+                    description: 'Refund for failed Razorpay payment via Webhook',
+                    status: 'active',
+                  },
+                ],
+                { session },
+              );
             }
 
             order.paymentStatus = 'failed';
@@ -1106,7 +1303,9 @@ class OrderService {
             });
             await order.save({ session });
             await session.commitTransaction();
-            logger.warn(`[PAYMENT WEBHOOK FAILURE] Registered payment failure for order: ${order._id}`);
+            logger.warn(
+              `[PAYMENT WEBHOOK FAILURE] Registered payment failure for order: ${order._id}`,
+            );
           } catch (err) {
             await session.abortTransaction();
             throw err;

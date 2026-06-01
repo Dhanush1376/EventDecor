@@ -8,35 +8,127 @@ import { categoryCache } from '../utils/MemoryCache';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import { analyzeQueryWithAI, escapeRegex } from './searchService';
 
+function enforceSmartPricing(data: Partial<IProduct>, existingProduct?: IProduct) {
+  const isManual =
+    data.isManualRentalPricing !== undefined
+      ? data.isManualRentalPricing
+      : existingProduct?.isManualRentalPricing;
+
+  // If manual pricing is enabled, we just accept the incoming values (they should be validated by mongoose schema)
+  if (isManual === true) return;
+
+  const price = data.price !== undefined ? Number(data.price) : Number(existingProduct?.price || 0);
+  const category = (
+    data.category !== undefined ? String(data.category) : String(existingProduct?.category || '')
+  ).toLowerCase();
+
+  if (price > 0 && category) {
+    let dailyRate = 0.05;
+    let depositRate = 0;
+
+    if (category.includes('furniture')) {
+      dailyRate = 0.04;
+      depositRate = 0.3;
+    } else if (category.includes('electronic')) {
+      dailyRate = 0.06;
+      depositRate = 0.5;
+    } else if (category.includes('wedding decoration') || category.includes('wedding')) {
+      dailyRate = 0.08;
+      depositRate = 0.4;
+    } else if (category.includes('camera')) {
+      dailyRate = 0.1;
+      depositRate = 0.6;
+    } else {
+      dailyRate = 0.05;
+      if (price <= 5000) depositRate = 0.3;
+      else if (price <= 25000) depositRate = 0.4;
+      else if (price <= 100000) depositRate = 0.5;
+      else depositRate = 0.6;
+    }
+
+    const daily = Math.round(price * dailyRate);
+    const weekly = daily * 6;
+    const monthly = daily * 16;
+    const deposit = Math.round(price * depositRate);
+
+    data.rentalPricing = {
+      ...(data.rentalPricing || existingProduct?.rentalPricing || ({} as any)),
+      daily,
+      weekly,
+      monthly,
+    };
+    data.securityDeposit = deposit;
+  }
+}
+
 class ProductService {
   static async getAllProducts(queryParams: any) {
-    const { category, search, sort, featured, minPrice, maxPrice, material, collection } = queryParams;
+    const {
+      category,
+      search,
+      sort,
+      featured,
+      minPrice,
+      maxPrice,
+      material,
+      collection,
+      availableForRent,
+      availableForPurchase,
+      availabilityMode,
+    } = queryParams;
     const { page, limit, skip } = getPaginationOptions(queryParams);
 
     const filter: any = { isActive: true };
 
     if (category) filter.category = category;
     if (featured === 'true') filter.featured = true;
+
+    // Rental filters
+    if (availableForRent === 'true') {
+      filter.rentalEnabled = true;
+      filter.availabilityMode = { $in: ['rent_only', 'both'] };
+    }
+    if (availableForPurchase === 'true') {
+      filter.availabilityMode = { $in: ['purchase_only', 'both'] };
+    }
+    if (availabilityMode && ['purchase_only', 'rent_only', 'both'].includes(availabilityMode)) {
+      filter.availabilityMode = availabilityMode;
+    }
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
     if (material) {
-      const materials = String(material).split(',').map((item) => item.trim()).filter(Boolean);
-      if (materials.length > 0) filter.material = { $in: materials.map((item) => new RegExp(`^${escapeRegex(item)}$`, 'i')) };
+      const materials = String(material)
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+      if (materials.length > 0)
+        filter.material = {
+          $in: materials.map((item) => new RegExp(`^${escapeRegex(item)}$`, 'i')),
+        };
     }
     if (collection) {
-      const collections = String(collection).split(',').map((item) => item.trim()).filter(Boolean);
-      if (collections.length > 0) filter.category = { $in: collections.map((item) => new RegExp(`^${escapeRegex(item)}$`, 'i')) };
+      const collections = String(collection)
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+      if (collections.length > 0)
+        filter.category = {
+          $in: collections.map((item) => new RegExp(`^${escapeRegex(item)}$`, 'i')),
+        };
     }
 
     let correctedQuery: string | undefined;
 
     if (search) {
       const aiAnalysis = await analyzeQueryWithAI(search);
-      
-      if (aiAnalysis.correctedQuery && aiAnalysis.correctedQuery.toLowerCase() !== search.toLowerCase()) {
+
+      if (
+        aiAnalysis.correctedQuery &&
+        aiAnalysis.correctedQuery.toLowerCase() !== search.toLowerCase()
+      ) {
         correctedQuery = aiAnalysis.correctedQuery;
       }
 
@@ -55,13 +147,9 @@ class ProductService {
         filter.category = new RegExp(`^${escapeRegex(aiAnalysis.category)}$`, 'i');
       }
 
-      const allSearchTerms = [
-        search,
-        aiAnalysis.correctedQuery,
-        ...aiAnalysis.expandedTerms
-      ];
+      const allSearchTerms = [search, aiAnalysis.correctedQuery, ...aiAnalysis.expandedTerms];
       const uniqueSearchTerms = [...new Set(allSearchTerms.filter(Boolean))];
-      const regexPatterns = uniqueSearchTerms.map(t => new RegExp(escapeRegex(t), 'i'));
+      const regexPatterns = uniqueSearchTerms.map((t) => new RegExp(escapeRegex(t), 'i'));
 
       filter.$or = [
         { title: { $in: regexPatterns } },
@@ -69,12 +157,14 @@ class ProductService {
         { category: { $in: regexPatterns } },
         { material: { $in: regexPatterns } },
         { tags: { $in: regexPatterns } },
-        { description: { $in: regexPatterns } }
+        { description: { $in: regexPatterns } },
       ];
 
       // Match colors if detected
       if (aiAnalysis.colors.length > 0) {
-        filter.$or.push({ tags: { $in: aiAnalysis.colors.map(c => new RegExp(escapeRegex(c), 'i')) } });
+        filter.$or.push({
+          tags: { $in: aiAnalysis.colors.map((c) => new RegExp(escapeRegex(c), 'i')) },
+        });
       }
     }
 
@@ -108,6 +198,7 @@ class ProductService {
   }
 
   static async createProduct(data: Partial<IProduct>) {
+    enforceSmartPricing(data);
     const product = new Product(data);
     const saved = await product.save();
     if (saved.showInGallery) {
@@ -121,15 +212,20 @@ class ProductService {
 
   static async updateProduct(id: string, data: Partial<IProduct>) {
     const oldProduct = await Product.findById(id);
-    
+    if (oldProduct) {
+      enforceSmartPricing(data, oldProduct as IProduct);
+    }
+
     const product = await Product.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-    
+
     if (oldProduct && product) {
       // Clean up primary product image if replaced
       if (data.imageSrc && oldProduct.imageSrc && oldProduct.imageSrc !== data.imageSrc) {
         const publicId = extractPublicId(oldProduct.imageSrc);
         if (publicId) {
-          deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up old product image: ${err}`));
+          deleteFromCloudinary(publicId).catch((err) =>
+            logger.error(`Failed to clean up old product image: ${err}`),
+          );
         }
       }
 
@@ -140,7 +236,9 @@ class ProductService {
         for (const img of removedImages) {
           const publicId = extractPublicId(img);
           if (publicId) {
-            deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up old product sub-image: ${err}`));
+            deleteFromCloudinary(publicId).catch((err) =>
+              logger.error(`Failed to clean up old product sub-image: ${err}`),
+            );
           }
         }
       }
@@ -177,21 +275,26 @@ class ProductService {
         $pull: {
           wishlist: product._id,
           cart: { product: product._id },
-          recentlyViewed: { product: product._id }
-        }
-      }
-    ).catch((err: any) => logger.error(`Failed to clean up user references for deleted product ${id}: ${err}`));
+          recentlyViewed: { product: product._id },
+        },
+      },
+    ).catch((err: any) =>
+      logger.error(`Failed to clean up user references for deleted product ${id}: ${err}`),
+    );
 
     // Clean up product reviews
     const Review = require('../models/Review').default || require('../models/Review');
-    Review.deleteMany({ product: product._id })
-      .catch((err: any) => logger.error(`Failed to clean up reviews for deleted product ${id}: ${err}`));
+    Review.deleteMany({ product: product._id }).catch((err: any) =>
+      logger.error(`Failed to clean up reviews for deleted product ${id}: ${err}`),
+    );
 
     // Clean up main product image from Cloudinary
     if (product.imageSrc) {
       const publicId = extractPublicId(product.imageSrc);
       if (publicId) {
-        deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up deleted product image: ${err}`));
+        deleteFromCloudinary(publicId).catch((err) =>
+          logger.error(`Failed to clean up deleted product image: ${err}`),
+        );
       }
     }
 
@@ -200,7 +303,9 @@ class ProductService {
       for (const img of product.images) {
         const publicId = extractPublicId(img);
         if (publicId) {
-          deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up deleted product sub-image: ${err}`));
+          deleteFromCloudinary(publicId).catch((err) =>
+            logger.error(`Failed to clean up deleted product sub-image: ${err}`),
+          );
         }
       }
     }
@@ -210,7 +315,6 @@ class ProductService {
     await bumpPublicCacheVersion();
     return product;
   }
-
 
   static async syncToGallery(product: any) {
     try {
@@ -249,7 +353,9 @@ class ProductService {
         if (item.image) {
           const publicId = extractPublicId(item.image);
           if (publicId) {
-            deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up gallery image: ${err}`));
+            deleteFromCloudinary(publicId).catch((err) =>
+              logger.error(`Failed to clean up gallery image: ${err}`),
+            );
           }
         }
       }

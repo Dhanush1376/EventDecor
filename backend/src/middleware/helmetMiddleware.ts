@@ -1,7 +1,6 @@
 import helmet from 'helmet';
 import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
-import { ALLOWED_VERCEL_PREVIEWS } from '../config/corsConfig';
 
 /**
  * Enterprise-grade HTTP Security Headers Middleware
@@ -25,29 +24,27 @@ const helmetConfig = helmet({
   crossOriginEmbedderPolicy: false,
   // Isolate browsing context to prevent cross-origin window references
   crossOriginOpenerPolicy: { policy: 'same-origin' },
-  hsts: process.env.NODE_ENV === 'production' 
-    ? { maxAge: 31536000, includeSubDomains: true, preload: true }
-    : false, // Disable HSTS in dev to prevent localhost HTTPS redirects
+  hsts:
+    process.env.NODE_ENV === 'production'
+      ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+      : false, // Disable HSTS in dev to prevent localhost HTTPS redirects
   // Prevent browser DNS prefetching that could leak visited domains
   dnsPrefetchControl: { allow: false },
   referrerPolicy: {
     policy: 'strict-origin-when-cross-origin',
   },
-  xFrameOptions: { action: 'sameorigin' } // Redundant with frameAncestors but good fallback for older browsers
+  xFrameOptions: { action: 'sameorigin' }, // Redundant with frameAncestors but good fallback for older browsers
 });
 
 // 3. Permissions-Policy Header
 const permissionsPolicy = (req: Request, res: Response, next: NextFunction) => {
   // Prevent access to potentially sensitive APIs
   // Using modern directives. Allow payment only from Razorpay if necessary, otherwise self.
-  const policy = 'camera=(), microphone=(), geolocation=(), interest-cohort=(), usb=(), payment=(self "https://checkout.razorpay.com")';
+  const policy =
+    'camera=(), microphone=(), geolocation=(), interest-cohort=(), usb=(), payment=(self "https://checkout.razorpay.com")';
   res.setHeader('Permissions-Policy', policy);
   next();
 };
 
 // Export the complete middleware chain
-export const securityHeadersMiddleware = [
-  generateNonce,
-  helmetConfig,
-  permissionsPolicy
-];
+export const securityHeadersMiddleware = [generateNonce, helmetConfig, permissionsPolicy];

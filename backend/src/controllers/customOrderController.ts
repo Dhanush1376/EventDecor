@@ -16,7 +16,7 @@ const DEFAULT_CONFIG = {
     { id: 'housewarming', label: 'Housewarming / Gruhapravesam', enabled: true },
     { id: 'baby_shower', label: 'Baby Shower / Seemantham', enabled: true },
     { id: 'corporate', label: 'Corporate & Banquet Decor', enabled: true },
-    { id: 'other', label: 'Custom Festive Gathering', enabled: true }
+    { id: 'other', label: 'Custom Festive Gathering', enabled: true },
   ],
   productTypes: [
     { id: 'mandapam', label: 'Full Mandapam Setup', enabled: true },
@@ -25,26 +25,26 @@ const DEFAULT_CONFIG = {
     { id: 'table_scapes', label: 'Artisanal Table Centerpieces', enabled: true },
     { id: 'entrance', label: 'Grand Archways & Entrances', enabled: true },
     { id: 'brass_props', label: 'Handcrafted Brass Installations', enabled: true },
-    { id: 'other', label: 'Bespoke Custom Artifacts', enabled: true }
+    { id: 'other', label: 'Bespoke Custom Artifacts', enabled: true },
   ],
   themes: [
     { id: 'traditional', label: 'Royal South Indian Heritage', enabled: true },
     { id: 'marigold_blast', label: 'Haldi Vibrant Yellows & Golds', enabled: true },
     { id: 'modern_gold', label: 'Contemporary Glassmorphism & Gold', enabled: true },
     { id: 'pastel_palace', label: 'Soft Pastel Florals & Ivory', enabled: true },
-    { id: 'minimalist', label: 'Minimalist Wooden Craftsmanship', enabled: true }
+    { id: 'minimalist', label: 'Minimalist Wooden Craftsmanship', enabled: true },
   ],
   budgetRanges: [
     { id: 'low', label: '₹10,000 - ₹50,000', enabled: true },
     { id: 'medium', label: '₹50,000 - ₹1,500,000', enabled: true },
     { id: 'high', label: '₹1,500,000 - ₹5,000,000', enabled: true },
-    { id: 'ultra', label: '₹5,000,000+', enabled: true }
+    { id: 'ultra', label: '₹5,000,000+', enabled: true },
   ],
   bookingTypes: [
     { id: 'video', label: 'Premium Video Consultation', enabled: true },
     { id: 'call', label: 'Direct Audio Conference', enabled: true },
-    { id: 'in_person', label: 'In-Studio Creative Meeting', enabled: true }
-  ]
+    { id: 'in_person', label: 'In-Studio Creative Meeting', enabled: true },
+  ],
 };
 
 // 1. Submit Custom Order (Customer)
@@ -59,7 +59,7 @@ export const submitCustomOrder = asyncHandler(async (req: any, res: Response) =>
     eventDate,
     city,
     bookingType,
-    customerPhone
+    customerPhone,
   } = req.body;
 
   const order = await CustomOrder.create({
@@ -80,13 +80,15 @@ export const submitCustomOrder = asyncHandler(async (req: any, res: Response) =>
         sender: 'admin',
         senderName: 'Siri Arts & Crafts',
         text: 'Welcome to your custom design workspace! Our design team is currently reviewing your blueprint and inspiration images.',
-        createdAt: new Date()
-      }
-    ]
+        createdAt: new Date(),
+      },
+    ],
   });
 
   // Trigger luxury emails asynchronously
-  CustomOrderMailService.sendSubmissionEmails(order).catch(err => logger.error("Custom order submission email error:", err));
+  CustomOrderMailService.sendSubmissionEmails(order).catch((err) =>
+    logger.error('Custom order submission email error:', err),
+  );
 
   // Admin real-time notification
   try {
@@ -158,21 +160,23 @@ export const adminGetCustomOrders = asyncHandler(async (req: Request, res: Respo
       { customerEmail: { $regex: searchString, $options: 'i' } },
       { occasion: { $regex: searchString, $options: 'i' } },
       { productType: { $regex: searchString, $options: 'i' } },
-      { city: { $regex: searchString, $options: 'i' } }
+      { city: { $regex: searchString, $options: 'i' } },
     ];
   }
 
   const [orders, total] = await Promise.all([
     CustomOrder.find(filterQuery).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-    CustomOrder.countDocuments(filterQuery)
+    CustomOrder.countDocuments(filterQuery),
   ]);
 
-  res.status(200).json(new ApiResponse(true, 'Custom orders catalog matched', {
-    items: orders,
-    page,
-    totalPages: Math.ceil(total / limit),
-    total
-  }));
+  res.status(200).json(
+    new ApiResponse(true, 'Custom orders catalog matched', {
+      items: orders,
+      page,
+      totalPages: Math.ceil(total / limit),
+      total,
+    }),
+  );
 });
 
 // 5. Admin Update Status
@@ -193,7 +197,7 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
     sender: 'admin',
     senderName: 'System Logger',
     text: `Workspace status transition: Changed from "${prevStatus}" to "${status}".`,
-    createdAt: new Date()
+    createdAt: new Date(),
   });
 
   await order.save();
@@ -206,7 +210,7 @@ export const adminUpdatePriority = asyncHandler(async (req: Request, res: Respon
   const order = await CustomOrder.findByIdAndUpdate(
     req.params.id,
     { priority },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   if (!order) {
@@ -220,11 +224,7 @@ export const adminUpdatePriority = asyncHandler(async (req: Request, res: Respon
 // 7. Admin Update Notes
 export const adminUpdateNotes = asyncHandler(async (req: Request, res: Response) => {
   const { adminNotes } = req.body;
-  const order = await CustomOrder.findByIdAndUpdate(
-    req.params.id,
-    { adminNotes },
-    { new: true }
-  );
+  const order = await CustomOrder.findByIdAndUpdate(req.params.id, { adminNotes }, { new: true });
 
   if (!order) {
     res.status(404).json(new ApiResponse(false, 'Custom order not found'));
@@ -245,7 +245,10 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
   }
 
   const calculatedItems = items || [];
-  const itemsSum = calculatedItems.reduce((acc: number, item: any) => acc + (Number(item.amount) || 0), 0);
+  const itemsSum = calculatedItems.reduce(
+    (acc: number, item: any) => acc + (Number(item.amount) || 0),
+    0,
+  );
   const taxVal = Number(tax) || 0;
   const shippingVal = Number(shipping) || 0;
   const grandTotal = itemsSum + taxVal + shippingVal;
@@ -256,7 +259,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
     shipping: shippingVal,
     total: grandTotal,
     notes,
-    status: quoteStatus || 'draft'
+    status: quoteStatus || 'draft',
   };
 
   // If quote is sent, shift entire workspace status
@@ -266,11 +269,13 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
       sender: 'admin',
       senderName: 'System Logger',
       text: `An itemized studio estimate totaling ₹${grandTotal.toLocaleString('en-IN')} has been compiled and dispatched for review.`,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     // Trigger quotation email asynchronously
-    CustomOrderMailService.sendQuotationEmail(order).catch(err => logger.error('Quotation email error:', err));
+    CustomOrderMailService.sendQuotationEmail(order).catch((err) =>
+      logger.error('Quotation email error:', err),
+    );
   }
 
   await order.save();
@@ -300,7 +305,7 @@ export const customerRespondQuotation = asyncHandler(async (req: any, res: Respo
       sender: 'customer',
       senderName: order.customerName,
       text: `I have APPROVED the provided estimate. Ready to proceed with scheduling and deposit transactions!`,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
   } else {
     order.status = 'Reviewing';
@@ -308,14 +313,16 @@ export const customerRespondQuotation = asyncHandler(async (req: any, res: Respo
       sender: 'customer',
       senderName: order.customerName,
       text: `I have requested modifications on the quotation. Let's adjust the scope items.`,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
   }
 
   await order.save();
 
   // Trigger response notification emails
-  CustomOrderMailService.sendQuotationResponseEmail(order, status).catch(err => logger.error('Quotation response email error:', err));
+  CustomOrderMailService.sendQuotationResponseEmail(order, status).catch((err) =>
+    logger.error('Quotation response email error:', err),
+  );
 
   res.status(200).json(new ApiResponse(true, 'Quotation response lodged', order));
 });
@@ -342,7 +349,7 @@ export const postMessage = asyncHandler(async (req: any, res: Response) => {
     senderName: isSenderAdmin ? 'Siri Design Team' : order.customerName,
     text,
     attachments: attachments || [],
-    createdAt: new Date()
+    createdAt: new Date(),
   });
 
   await order.save();
@@ -352,8 +359,8 @@ export const postMessage = asyncHandler(async (req: any, res: Response) => {
     order,
     isSenderAdmin ? 'Siri Design Team' : order.customerName,
     isSenderAdmin ? 'admin' : 'customer',
-    text
-  ).catch(err => logger.error('Chat message notification email error:', err));
+    text,
+  ).catch((err) => logger.error('Chat message notification email error:', err));
 
   res.status(200).json(new ApiResponse(true, 'Message dispatched', order));
 });
@@ -364,7 +371,7 @@ export const adminArchiveOrder = asyncHandler(async (req: Request, res: Response
   const order = await CustomOrder.findByIdAndUpdate(
     req.params.id,
     { archived: archived !== false },
-    { new: true }
+    { new: true },
   );
 
   if (!order) {
@@ -372,38 +379,46 @@ export const adminArchiveOrder = asyncHandler(async (req: Request, res: Response
     return;
   }
 
-  res.status(200).json(new ApiResponse(true, archived ? 'Order archived' : 'Order restored', order));
+  res
+    .status(200)
+    .json(new ApiResponse(true, archived ? 'Order archived' : 'Order restored', order));
 });
 
 // 12. Dynamic Form Configurations CMS
 export const getCustomOrderConfig = asyncHandler(async (req: Request, res: Response) => {
-  let config = await WebsiteContent.findOne({ key: 'customOrderConfig' });
-  
+  const config = await WebsiteContent.findOne({ key: 'customOrderConfig' });
+
   if (!config) {
-    res.status(200).json(new ApiResponse(true, 'No custom order configuration found', {
-      occasions: [],
-      productTypes: [],
-      themes: [],
-      budgetRanges: [],
-      bookingTypes: []
-    }));
+    res.status(200).json(
+      new ApiResponse(true, 'No custom order configuration found', {
+        occasions: [],
+        productTypes: [],
+        themes: [],
+        budgetRanges: [],
+        bookingTypes: [],
+      }),
+    );
     return;
   }
 
-  res.status(200).json(new ApiResponse(true, 'Dynamic custom order configuration fetched', config.content));
+  res
+    .status(200)
+    .json(new ApiResponse(true, 'Dynamic custom order configuration fetched', config.content));
 });
 
 export const adminUpdateCustomOrderConfig = asyncHandler(async (req: any, res: Response) => {
   const { content } = req.body;
-  
+
   const config = await WebsiteContent.findOneAndUpdate(
     { key: 'customOrderConfig' },
-    { 
+    {
       content,
-      lastUpdatedBy: req.user._id 
+      lastUpdatedBy: req.user._id,
     },
-    { new: true, upsert: true }
+    { new: true, upsert: true },
   );
 
-  res.status(200).json(new ApiResponse(true, 'Custom order dynamic configs updated', config.content));
+  res
+    .status(200)
+    .json(new ApiResponse(true, 'Custom order dynamic configs updated', config.content));
 });

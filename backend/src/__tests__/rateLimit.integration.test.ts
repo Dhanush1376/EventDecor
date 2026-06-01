@@ -7,7 +7,7 @@ describe('Rate limiting (TEST_RATE_LIMIT)', () => {
   beforeAll(() => {
     process.env.TEST_RATE_LIMIT = 'true';
     jest.resetModules();
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+
     app = require('../app').default;
   });
 

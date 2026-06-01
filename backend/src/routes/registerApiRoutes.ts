@@ -32,7 +32,7 @@ const lazyRouter = (modulePath: string) => {
 export const registerApiRoutes = (
   app: Application,
   prefix: string,
-  apiVersion: ApiVersionTag = 'v1'
+  apiVersion: ApiVersionTag = 'v1',
 ): void => {
   const apiRouter = express.Router();
   apiRouter.use(attachApiVersion(apiVersion));
@@ -59,17 +59,26 @@ export const registerApiRoutes = (
   apiRouter.use('/admin/invites', noCacheMiddleware, lazyRouter('./adminInviteRoutes'));
   apiRouter.use('/recommendations', lazyRouter('./recommendationRoutes'));
   apiRouter.use('/tracking', lazyRouter('./trackingRoutes'));
-  apiRouter.use('/analytics/recommendations', noCacheMiddleware, lazyRouter('./recommendationAnalyticsRoutes'));
-  
+  apiRouter.use(
+    '/analytics/recommendations',
+    noCacheMiddleware,
+    lazyRouter('./recommendationAnalyticsRoutes'),
+  );
+
   // Aggregated endpoints
   apiRouter.use('/homepage', lazyRouter('./homepageRoutes'));
-  
+
   // Dynamic Configuration & Architecture Routes
   apiRouter.use('/config', lazyRouter('./appConfigRoutes'));
   apiRouter.use('/categories', lazyRouter('./categoryRoutes'));
   apiRouter.use('/layouts', lazyRouter('./pageLayoutRoutes'));
   apiRouter.use('/search', lazyRouter('./searchRoutes'));
   apiRouter.use('/media', lazyRouter('./mediaRoutes'));
+
+  // Rental System Routes
+  apiRouter.use('/rentals', noCacheMiddleware, lazyRouter('./rentalRoutes'));
+  apiRouter.use('/rental-policies', lazyRouter('./rentalPolicyRoutes'));
+  apiRouter.use('/service-areas', lazyRouter('./serviceAreaRoutes'));
 
   app.use(prefix, apiRouter);
 };

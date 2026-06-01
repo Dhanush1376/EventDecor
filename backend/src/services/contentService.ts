@@ -1,4 +1,4 @@
-import ContentSection, { IContentSection } from '../models/ContentSection';
+import ContentSection from '../models/ContentSection';
 import { PLACEHOLDER_IMAGES } from '../constants/placeholderImages';
 import ApiError from '../utils/ApiError';
 import { cmsCache } from '../utils/MemoryCache';
@@ -42,12 +42,12 @@ class ContentService {
           if (ADMIN_ONLY_SECTION_KEYS.has(section.sectionKey)) return;
           flatContent[section.sectionKey] = stripSensitiveFromSectionData(
             section.sectionKey,
-            section.data
+            section.data,
           );
         });
         return flatContent;
       },
-      10 * 60 * 1000
+      10 * 60 * 1000,
     );
   }
 
@@ -60,39 +60,95 @@ class ContentService {
         admin_idle_timeout: { idleTimeout: 15 },
         admin_theme_mode: { themeMode: 'dark' },
         studio_settings: {
-          businessName: "Siri Arts & Crafts",
-          tagline: "",
-          businessEmail: "Sirisha.atmakuri@gmail.com",
-          phoneNumber: "+91 98660 06648",
-          gstNumber: "GSTIN123456789",
-          address: "#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh",
-          primaryColor: "#735c00",
-          secondaryColor: "#F8F9FB",
-          fontFamily: "Playfair Display + Inter",
-          freeShippingThreshold: "2000",
-          standardShippingFee: "99",
-          expressShippingFee: "249",
-          codFee: "90",
-          deliveryEstimate: "5-7",
-          razorpayKeyId: "",
-          upiId: "siriarts@upi",
-          whatsappNumber: "+91 98660 06648",
-          whatsappMessage: "Hello! Thank you for reaching Siri Arts & Crafts.",
+          businessName: 'Siri Arts & Crafts',
+          tagline: '',
+          businessEmail: 'Sirisha.atmakuri@gmail.com',
+          phoneNumber: '+91 98660 06648',
+          gstNumber: 'GSTIN123456789',
+          address: '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
+          primaryColor: '#735c00',
+          secondaryColor: '#F8F9FB',
+          fontFamily: 'Playfair Display + Inter',
+          freeShippingThreshold: '2000',
+          standardShippingFee: '99',
+          expressShippingFee: '249',
+          codFee: '90',
+          deliveryEstimate: '5-7',
+          razorpayKeyId: '',
+          upiId: 'siriarts@upi',
+          whatsappNumber: '+91 98660 06648',
+          whatsappMessage: 'Hello! Thank you for reaching Siri Arts & Crafts.',
         },
         custom_categories: {
           products: [
-            { id: "p1", name: "Traditional Return Gifts", count: 24, image: PLACEHOLDER_IMAGES.emptyCart, active: true, description: "Bespoke brass tambulam bowls and handcrafted shagun packaging." },
-            { id: "p2", name: "Engagement Ring Trays", count: 18, image: PLACEHOLDER_IMAGES.mandalaArt3, active: true, description: "Pearl beaded trays and custom carved wooden initials." },
-            { id: "p3", name: "Carved Coconuts & Shagun", count: 12, image: PLACEHOLDER_IMAGES.collectionWedding, active: true, description: "Artisanal hand-painted coconuts for traditional ceremonies." },
-            { id: "p4", name: "Customized Gift Hampers", count: 30, image: PLACEHOLDER_IMAGES.mandalaArt2, active: true, description: "Velvet presentation hampers with South Indian sweet boxes." }
+            {
+              id: 'p1',
+              name: 'Traditional Return Gifts',
+              count: 24,
+              image: PLACEHOLDER_IMAGES.emptyCart,
+              active: true,
+              description: 'Bespoke brass tambulam bowls and handcrafted shagun packaging.',
+            },
+            {
+              id: 'p2',
+              name: 'Engagement Ring Trays',
+              count: 18,
+              image: PLACEHOLDER_IMAGES.mandalaArt3,
+              active: true,
+              description: 'Pearl beaded trays and custom carved wooden initials.',
+            },
+            {
+              id: 'p3',
+              name: 'Carved Coconuts & Shagun',
+              count: 12,
+              image: PLACEHOLDER_IMAGES.collectionWedding,
+              active: true,
+              description: 'Artisanal hand-painted coconuts for traditional ceremonies.',
+            },
+            {
+              id: 'p4',
+              name: 'Customized Gift Hampers',
+              count: 30,
+              image: PLACEHOLDER_IMAGES.mandalaArt2,
+              active: true,
+              description: 'Velvet presentation hampers with South Indian sweet boxes.',
+            },
           ],
           events: [
-            { id: "e1", name: "Telugu Heritage (Pellikuthuru)", count: 8, image: PLACEHOLDER_IMAGES.collectionWedding, active: true, description: "Royal Mysore brass urlis, marigold strings, and wooden carved seats." },
-            { id: "e2", name: "Engagement Gift Setup", count: 15, image: PLACEHOLDER_IMAGES.heroBackground, active: true, description: "Side-stage gift presentation pedestals and LED uplighting." },
-            { id: "e3", name: "Ring Ceremony Showcases", count: 10, image: PLACEHOLDER_IMAGES.mandalaHero, active: true, description: "Gold-leaf backdrop rings and velvet pedestal arrangements." },
-            { id: "e4", name: "Tambulam & Shagun Counter", count: 20, image: PLACEHOLDER_IMAGES.mandalaArt4, active: true, description: "Royal wooden shelving with fresh jasmine runners." }
-          ]
-        }
+            {
+              id: 'e1',
+              name: 'Telugu Heritage (Pellikuthuru)',
+              count: 8,
+              image: PLACEHOLDER_IMAGES.collectionWedding,
+              active: true,
+              description: 'Royal Mysore brass urlis, marigold strings, and wooden carved seats.',
+            },
+            {
+              id: 'e2',
+              name: 'Engagement Gift Setup',
+              count: 15,
+              image: PLACEHOLDER_IMAGES.heroBackground,
+              active: true,
+              description: 'Side-stage gift presentation pedestals and LED uplighting.',
+            },
+            {
+              id: 'e3',
+              name: 'Ring Ceremony Showcases',
+              count: 10,
+              image: PLACEHOLDER_IMAGES.mandalaHero,
+              active: true,
+              description: 'Gold-leaf backdrop rings and velvet pedestal arrangements.',
+            },
+            {
+              id: 'e4',
+              name: 'Tambulam & Shagun Counter',
+              count: 20,
+              image: PLACEHOLDER_IMAGES.mandalaArt4,
+              active: true,
+              description: 'Royal wooden shelving with fresh jasmine runners.',
+            },
+          ],
+        },
       };
 
       if (defaultData[key] !== undefined) {
@@ -123,7 +179,7 @@ class ContentService {
           previousData: section.data,
           modifiedAt: new Date(),
         });
-        
+
         // Limit revision history to last 10 versions
         if (section.revisionHistory.length > 10) {
           section.revisionHistory.shift();
@@ -141,7 +197,7 @@ class ContentService {
         });
         await section.save();
       }
-      
+
       // Invalidate MemoryCache to ensure immediate sync
       cmsCache.delete(`cms:content:${key}`);
       cmsCache.delete('cms:all_sections');
@@ -164,9 +220,9 @@ class ContentService {
   static async publishAll() {
     const result = await ContentSection.updateMany(
       { status: 'draft' },
-      { $set: { status: 'published' } }
+      { $set: { status: 'published' } },
     );
-    
+
     cmsCache.clear();
     await bumpPublicCacheVersion();
 

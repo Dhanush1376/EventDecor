@@ -1,23 +1,26 @@
-import React, { Suspense, lazy } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { SEO } from "../components/seo/SEO";
-import { CheckoutProvider, useCheckout } from "../checkout/CheckoutProvider";
-import toast from "react-hot-toast";
-import { CheckoutSidebarSkeleton, CheckoutStepSkeleton } from "../components/ui/Skeleton";
+import React, { Suspense, lazy } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { SEO } from '../components/seo/SEO';
+import { CheckoutProvider, useCheckout } from '../checkout/CheckoutProvider';
+import toast from 'react-hot-toast';
+import { CheckoutSidebarSkeleton, CheckoutStepSkeleton } from '../components/ui/Skeleton';
 
-const CheckoutAddressStep = lazy(() => import("../checkout/CheckoutAddressStep"));
-const CheckoutPaymentStep = lazy(() => import("../checkout/CheckoutPaymentStep"));
-import { CheckoutSteps } from "../components/ui/CheckoutSteps";
+const CheckoutAddressStep = lazy(() => import('../checkout/CheckoutAddressStep'));
+const CheckoutPaymentStep = lazy(() => import('../checkout/CheckoutPaymentStep'));
+const CheckoutRentalDurationStep = lazy(() => import('../checkout/CheckoutRentalDurationStep'));
+const CheckoutVerificationStep = lazy(() => import('../checkout/CheckoutVerificationStep'));
+import { CheckoutSteps } from '../components/ui/CheckoutSteps';
 
-function StepFallback({ mode = "address" }) {
+function StepFallback({ mode = 'address' }) {
   return <CheckoutStepSkeleton mode={mode} />;
 }
 
-const CheckoutSidebar = lazy(() => import("../checkout/CheckoutSidebar"));
+const CheckoutSidebar = lazy(() => import('../checkout/CheckoutSidebar'));
 
 function CheckoutContent() {
-  const { activeStep, setActiveStep, activeSelectedAddress, navigate } = useCheckout();
+  const { activeStep, setActiveStep, activeSelectedAddress, navigate, orderType, checkoutSteps } =
+    useCheckout();
 
   return (
     <div className="bg-surface-container-low min-h-screen pb-32 font-body text-on-surface">
@@ -28,47 +31,57 @@ function CheckoutContent() {
       />
 
       {/* Top Header Strip with Animated Progress Bar */}
-      <CheckoutSteps 
-        currentStep={activeStep} 
+      <CheckoutSteps
+        steps={checkoutSteps}
+        currentStep={activeStep}
+        orderType={orderType}
         onStepClick={(stepIndex) => {
           if (stepIndex === 0) {
-            navigate("/cart");
-          } else if (stepIndex === 1) {
-            setActiveStep(1);
-          } else if (stepIndex === 2) {
-            if (!activeSelectedAddress) {
-              toast.error("Please configure and select a delivery address first.");
-              return;
-            }
-            setActiveStep(2);
+            navigate('/cart');
+          } else if (stepIndex === activeStep) {
+            return; // Already here
+          } else if (stepIndex < activeStep) {
+            setActiveStep(stepIndex);
+          } else {
+            // Cannot jump forward without passing validations, rely on continue buttons
+            toast.error('Please complete the current step to proceed.');
           }
         }}
       />
 
-      <div className="max-w-[1240px] mx-auto w-full pt-4 px-4 sm:px-6">
-        {activeStep === 1 ? (
-          <div className="max-w-[1024px] mx-auto">
+      <div className="max-w-[1240px] mx-auto w-full pt-6 md:pt-10 px-4 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Active Step Form Details */}
+          <div
+            className={
+              (orderType === 'rental' && activeStep === 2) ||
+              (orderType === 'purchase' && activeStep === 1)
+                ? 'lg:col-span-12 xl:col-span-12 w-full'
+                : 'lg:col-span-7 xl:col-span-8'
+            }
+          >
             <Suspense fallback={<StepFallback mode="address" />}>
-              <CheckoutAddressStep />
+              {orderType === 'rental' && activeStep === 1 && <CheckoutRentalDurationStep />}
+              {((orderType === 'rental' && activeStep === 2) ||
+                (orderType === 'purchase' && activeStep === 1)) && <CheckoutAddressStep />}
+              {orderType === 'rental' && activeStep === 3 && <CheckoutVerificationStep />}
+              {((orderType === 'rental' && activeStep === 4) ||
+                (orderType === 'purchase' && activeStep === 2)) && <CheckoutPaymentStep />}
             </Suspense>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column: Active Step Form Details */}
-            <div className="lg:col-span-7 xl:col-span-8">
-              <Suspense fallback={<StepFallback mode="payment" />}>
-                {activeStep === 2 && <CheckoutPaymentStep />}
-              </Suspense>
-            </div>
 
-            {/* Right Column: Price Details Sidebar & Recommendations */}
+          {/* Right Column: Price Details Sidebar & Recommendations */}
+          {!(
+            (orderType === 'rental' && activeStep === 2) ||
+            (orderType === 'purchase' && activeStep === 1)
+          ) && (
             <div className="lg:col-span-5 xl:col-span-4">
               <Suspense fallback={<CheckoutSidebarSkeleton />}>
                 <CheckoutSidebar />
               </Suspense>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

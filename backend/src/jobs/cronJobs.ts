@@ -5,6 +5,7 @@ import { FailedEmailRetryService } from '../services/failedEmailRetryService';
 import { AdminRoleReconciliationService } from '../services/adminRoleReconciliationService';
 import { withCronLock } from '../utils/cronLock';
 import { releaseStalePendingOrders } from './staleOrderCleanup';
+import { releaseStalePendingRentals } from './rentalCronJobs';
 import { PaymentReconciliationService } from '../services/paymentReconciliationService';
 import { checkCloudinaryCdn } from '../utils/cdnHealth';
 import { getAdminEmails } from '../config/adminConfig';
@@ -23,18 +24,23 @@ export const initJobs = () => {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       await ContentSection.updateMany(
         {},
-        { $pull: { revisionHistory: { modifiedAt: { $lt: thirtyDaysAgo } } } }
+        { $pull: { revisionHistory: { modifiedAt: { $lt: thirtyDaysAgo } } } },
       );
       logger.info('CMS revision cleanup completed.');
     });
   });
 
-  // 2. Release stock for stale pending orders (every 15 minutes)
+  // 2. Release stock for stale pending orders and rentals (every 15 minutes)
   cron.schedule('*/15 * * * *', async () => {
     await withCronLock('stale-order-stock-release', 14 * 60, async () => {
       const count = await releaseStalePendingOrders();
       if (count > 0) {
         logger.info(`[CRON] Released stock for ${count} stale pending order(s)`);
+      }
+
+      const rentalResult = await releaseStalePendingRentals();
+      if (rentalResult.processed > 0) {
+        logger.info(`[CRON] Released stock for ${rentalResult.processed} stale pending rental(s)`);
       }
     });
   });
@@ -45,7 +51,7 @@ export const initJobs = () => {
       const result = await FailedEmailRetryService.processDueRetries();
       if (result.processed > 0) {
         logger.info(
-          `[EMAIL DLQ] Processed ${result.processed} jobs — ${result.succeeded} succeeded, ${result.failed} failed/exhausted`
+          `[EMAIL DLQ] Processed ${result.processed} jobs — ${result.succeeded} succeeded, ${result.failed} failed/exhausted`,
         );
       }
     });
@@ -56,7 +62,9 @@ export const initJobs = () => {
     await withCronLock('admin-role-reconcile', 3600, async () => {
       const result = await AdminRoleReconciliationService.reconcile();
       if (result.upgraded > 0 || result.downgraded > 0) {
-        logger.info(`[ADMIN RECONCILE] Upgraded: ${result.upgraded}, Downgraded: ${result.downgraded}`);
+        logger.info(
+          `[ADMIN RECONCILE] Upgraded: ${result.upgraded}, Downgraded: ${result.downgraded}`,
+        );
       }
     });
   });
@@ -72,7 +80,7 @@ export const initJobs = () => {
       const report = await PaymentReconciliationService.runReport();
       if (report.discrepancyCount > 0) {
         logger.warn(
-          `[PAYMENT RECONCILE] ${report.discrepancyCount} discrepancy(ies) — see /api/analytics/payments/reconciliation`
+          `[PAYMENT RECONCILE] ${report.discrepancyCount} discrepancy(ies) — see /api/analytics/payments/reconciliation`,
         );
       } else {
         logger.info('[PAYMENT RECONCILE] No discrepancies detected.');
@@ -130,7 +138,11 @@ export const initJobs = () => {
     if (!isQueuesReady()) return;
     await withCronLock('reco-trending-update', 14 * 60, async () => {
       try {
-        await recommendationQueue.add('update-trending', { type: 'update-trending' }, { priority: 3 });
+        await recommendationQueue.add(
+          'update-trending',
+          { type: 'update-trending' },
+          { priority: 3 },
+        );
         logger.info('[CRON] Enqueued recommendation trending update');
       } catch (err: any) {
         logger.error(`[CRON] Failed to enqueue trending update: ${err.message}`);
@@ -143,11 +155,21 @@ export const initJobs = () => {
     if (!isQueuesReady()) return;
     await withCronLock('reco-profile-rebuild', 5 * 60 * 60, async () => {
       try {
-        await recommendationQueue.add('rebuild-stale-profiles', { type: 'rebuild-stale-profiles' }, { priority: 5 });
-        await recommendationQueue.add('precompute-active-users-feeds', { type: 'precompute-active-users-feeds' }, { priority: 6 });
+        await recommendationQueue.add(
+          'rebuild-stale-profiles',
+          { type: 'rebuild-stale-profiles' },
+          { priority: 5 },
+        );
+        await recommendationQueue.add(
+          'precompute-active-users-feeds',
+          { type: 'precompute-active-users-feeds' },
+          { priority: 6 },
+        );
         logger.info('[CRON] Enqueued stale profile rebuild and active user feed precomputations');
       } catch (err: any) {
-        logger.error(`[CRON] Failed to enqueue profile rebuild / active user feeds: ${err.message}`);
+        logger.error(
+          `[CRON] Failed to enqueue profile rebuild / active user feeds: ${err.message}`,
+        );
       }
     });
   });
@@ -157,7 +179,11 @@ export const initJobs = () => {
     if (!isQueuesReady()) return;
     await withCronLock('reco-seasonal-update', 3600, async () => {
       try {
-        await recommendationQueue.add('update-seasonal-context', { type: 'update-seasonal-context' }, { priority: 5 });
+        await recommendationQueue.add(
+          'update-seasonal-context',
+          { type: 'update-seasonal-context' },
+          { priority: 5 },
+        );
         logger.info('[CRON] Enqueued seasonal context update');
       } catch (err: any) {
         logger.error(`[CRON] Failed to enqueue seasonal update: ${err.message}`);
@@ -170,7 +196,11 @@ export const initJobs = () => {
     if (!isQueuesReady()) return;
     await withCronLock('reco-trending-snapshot', 55 * 60, async () => {
       try {
-        await recommendationQueue.add('snapshot-trending', { type: 'snapshot-trending' }, { priority: 8 });
+        await recommendationQueue.add(
+          'snapshot-trending',
+          { type: 'snapshot-trending' },
+          { priority: 8 },
+        );
         logger.info('[CRON] Enqueued trending snapshot');
       } catch (err: any) {
         logger.error(`[CRON] Failed to enqueue trending snapshot: ${err.message}`);
@@ -183,7 +213,11 @@ export const initJobs = () => {
     if (!isQueuesReady()) return;
     await withCronLock('reco-catalog-precompute', 60 * 60, async () => {
       try {
-        await recommendationQueue.add('precompute-catalog-recommendations', { type: 'precompute-catalog-recommendations' }, { priority: 7 });
+        await recommendationQueue.add(
+          'precompute-catalog-recommendations',
+          { type: 'precompute-catalog-recommendations' },
+          { priority: 7 },
+        );
         logger.info('[CRON] Enqueued catalog recommendations precomputation');
       } catch (err: any) {
         logger.error(`[CRON] Failed to enqueue catalog precomputation: ${err.message}`);

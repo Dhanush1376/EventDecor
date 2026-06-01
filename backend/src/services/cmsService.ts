@@ -1,9 +1,12 @@
 import WebsiteContent from '../models/WebsiteContent';
-import ApiError from '../utils/ApiError';
 import { cmsCache } from '../utils/MemoryCache';
 import logger from '../config/logger';
 import { bumpPublicCacheVersion } from '../utils/cacheVersion';
-import { deleteFromCloudinary, extractPublicId, extractAllCloudinaryUrls } from '../utils/cloudinary';
+import {
+  deleteFromCloudinary,
+  extractPublicId,
+  extractAllCloudinaryUrls,
+} from '../utils/cloudinary';
 
 class CMSService {
   static async getContent(key: string) {
@@ -23,16 +26,18 @@ class CMSService {
 
   static async updateContent(key: string, newContent: any, userId: string) {
     let websiteContent = await WebsiteContent.findOne({ key });
-    
+
     if (websiteContent) {
       try {
         const oldUrls = extractAllCloudinaryUrls(websiteContent.content);
         const newUrls = new Set(extractAllCloudinaryUrls(newContent));
-        const removedUrls = oldUrls.filter(url => !newUrls.has(url));
+        const removedUrls = oldUrls.filter((url) => !newUrls.has(url));
         for (const url of removedUrls) {
           const publicId = extractPublicId(url);
           if (publicId) {
-            deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up old CMS image: ${err}`));
+            deleteFromCloudinary(publicId).catch((err) =>
+              logger.error(`Failed to clean up old CMS image: ${err}`),
+            );
           }
         }
       } catch (err) {
@@ -50,7 +55,7 @@ class CMSService {
       });
       await websiteContent.save();
     }
-    
+
     // Invalidate CMS caches to maintain content consistency
     logger.info(`[CMS CACHE] Invalidation triggered. Purging cached keys due to update on: ${key}`);
     cmsCache.delete(`cms:content:${key}`);

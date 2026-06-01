@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import mongoose from 'mongoose';
-import EmailTemplate, { IEmailTemplate } from '../models/EmailTemplate';
-import EmailCampaign, { IEmailCampaign } from '../models/EmailCampaign';
+import EmailTemplate from '../models/EmailTemplate';
+import EmailCampaign from '../models/EmailCampaign';
 import NotificationLog from '../models/NotificationLog';
 import ConsentPreference from '../models/ConsentPreference';
 import User from '../models/User';
@@ -16,7 +16,12 @@ const rewriteLinks = (html: string, token: string): string => {
   const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
   // Match href="url", ensuring we do not rewrite mailto:, anchors, unsubscribe, or tracking URLs
   return html.replace(/href="([^"]+)"/gi, (match, url) => {
-    if (url.startsWith('mailto:') || url.startsWith('#') || url.includes('/api/notifications/track/') || url.includes('/unsubscribe')) {
+    if (
+      url.startsWith('mailto:') ||
+      url.startsWith('#') ||
+      url.includes('/api/notifications/track/') ||
+      url.includes('/unsubscribe')
+    ) {
       return match;
     }
     return `href="${backendUrl}/api/notifications/track/click/${token}?url=${encodeURIComponent(url)}"`;
@@ -28,7 +33,7 @@ const appendTrackingPixel = (html: string, token: string): string => {
   const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
   const pixelUrl = `${backendUrl}/api/notifications/track/open/${token}`;
   const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none !important; visibility:hidden; width:1px; height:1px;" alt="" />`;
-  
+
   if (html.includes('</body>')) {
     return html.replace('</body>', `${pixel}</body>`);
   }
@@ -38,16 +43,16 @@ const appendTrackingPixel = (html: string, token: string): string => {
 const formatShippingAddress = (addr: any): string => {
   if (!addr) return '';
   if (typeof addr === 'string') return addr;
-  
+
   const parts = [
     addr.name,
     addr.address,
     addr.locality,
     addr.landmark ? `(Landmark: ${addr.landmark})` : '',
     `${addr.city}, ${addr.state} - ${addr.pincode}`,
-    addr.phone ? `Phone: ${addr.phone}` : ''
+    addr.phone ? `Phone: ${addr.phone}` : '',
   ].filter(Boolean);
-  
+
   return parts.join(', ');
 };
 
@@ -107,7 +112,18 @@ export const sendDirectEmail = (options: EmailOptions) => {
  * Direct Email Dispatch with full open/click logging (INTERNAL PROCESSOR)
  */
 export const sendDirectEmailProcessor = async (options: EmailOptions) => {
-  const { email, subject, templateName, customHtml, templateData = {}, type, action, userId, campaignId, attachments } = options;
+  const {
+    email,
+    subject,
+    templateName,
+    customHtml,
+    templateData = {},
+    type,
+    action,
+    userId,
+    campaignId,
+    attachments,
+  } = options;
 
   try {
     // 0. Idempotency check: prevent sending duplicate emails to the same recipient for the same action within 5 seconds
@@ -116,7 +132,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
       recipientEmail: email,
       type: type as any,
       action,
-      createdAt: { $gte: fiveSecondsAgo }
+      createdAt: { $gte: fiveSecondsAgo },
     });
 
     if (existingLog) {
@@ -129,14 +145,16 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
       if (userId) {
         const user = await User.findById(userId);
         if (user && user.notificationPreferences?.marketing === false) {
-          logger.info(`Skipped marketing email to registered user ${email} due to subscription opt-out.`);
+          logger.info(
+            `Skipped marketing email to registered user ${email} due to subscription opt-out.`,
+          );
           return null;
         }
       }
-      
+
       // Also check general consent records
-      const consent = await ConsentPreference.findOne({ 
-        $or: [{ userId }, { consentToken: email }] 
+      const consent = await ConsentPreference.findOne({
+        $or: [{ userId }, { consentToken: email }],
       });
       if (consent && consent.marketingEmails === false) {
         logger.info(`Skipped marketing email to ${email} due to GDPR consent preferences.`);
@@ -151,7 +169,9 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     if (templateName) {
       const template = await EmailTemplate.findOne({ name: templateName, isActive: true });
       if (!template) {
-        logger.warn(`Email template "${templateName}" not found or disabled. Using fallback content.`);
+        logger.warn(
+          `Email template "${templateName}" not found or disabled. Using fallback content.`,
+        );
         if (!bodyHtml) {
           bodyHtml = `
             <div style="font-family: sans-serif; padding: 20px;">
@@ -219,7 +239,9 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
           throw err;
         }
         const backoffMs = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
-        logger.warn(`[EMAIL RETRY] Attempt ${attempt}/${maxRetries} failed for ${email}: ${err.message}. Retrying in ${backoffMs}ms...`);
+        logger.warn(
+          `[EMAIL RETRY] Attempt ${attempt}/${maxRetries} failed for ${email}: ${err.message}. Retrying in ${backoffMs}ms...`,
+        );
         await new Promise((resolve) => setTimeout(resolve, backoffMs));
       }
     }
@@ -228,7 +250,9 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     log.status = 'delivered';
     await log.save();
 
-    logger.info(`[EMAIL DELIVERED] ${email} (Type: ${type}, Action: ${action}, MessageId: ${info?.messageId || 'n/a'})`);
+    logger.info(
+      `[EMAIL DELIVERED] ${email} (Type: ${type}, Action: ${action}, MessageId: ${info?.messageId || 'n/a'})`,
+    );
 
     return log;
   } catch (err: any) {
@@ -255,25 +279,31 @@ export const runCampaignDispatch = async (campaignId: string) => {
     if (campaign.targetAudience.role && campaign.targetAudience.role !== 'all') {
       filter.role = campaign.targetAudience.role;
     }
-    
+
     // Opt-in check
     if (campaign.targetAudience.consentedOnly) {
       filter['notificationPreferences.marketing'] = { $ne: false };
     }
 
     const users = await User.find(filter).select('_id email name');
-    
+
     // Also include any generic visitors who subscribed directly to marketing emails
-    let allEmails = users.map(u => ({ email: u.email, name: u.name, userId: u._id.toString() }));
-    
+    const allEmails = users.map((u) => ({
+      email: u.email,
+      name: u.name,
+      userId: u._id.toString(),
+    }));
+
     if (campaign.targetAudience.role === 'all' || !campaign.targetAudience.role) {
-      const visitorSubscribers = await ConsentPreference.find({ marketingEmails: true }).select('consentToken');
-      visitorSubscribers.forEach(sub => {
-        if (!allEmails.some(e => e.email.toLowerCase() === sub.consentToken.toLowerCase())) {
+      const visitorSubscribers = await ConsentPreference.find({ marketingEmails: true }).select(
+        'consentToken',
+      );
+      visitorSubscribers.forEach((sub) => {
+        if (!allEmails.some((e) => e.email.toLowerCase() === sub.consentToken.toLowerCase())) {
           allEmails.push({
             email: sub.consentToken,
             name: 'Valued Guest',
-            userId: ''
+            userId: '',
           });
         }
       });
@@ -281,10 +311,10 @@ export const runCampaignDispatch = async (campaignId: string) => {
 
     let sentSuccessfully = 0;
     const batchSize = 10; // Batching for performance and rate limits
-    
+
     for (let i = 0; i < allEmails.length; i += batchSize) {
       const batch = allEmails.slice(i, i + batchSize);
-      
+
       await Promise.all(
         batch.map(async (recipient) => {
           try {
@@ -307,13 +337,16 @@ export const runCampaignDispatch = async (campaignId: string) => {
               sentSuccessfully++;
             }
           } catch (err: any) {
-            logger.error(`[Campaign Dispatch Error] Failed to send email to ${recipient.email}:`, err);
+            logger.error(
+              `[Campaign Dispatch Error] Failed to send email to ${recipient.email}:`,
+              err,
+            );
           }
-        })
+        }),
       );
 
       // Brief sleep between batches to prevent SMTP throttling
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 800));
     }
 
     // 2. Mark Campaign as complete
@@ -322,7 +355,9 @@ export const runCampaignDispatch = async (campaignId: string) => {
     campaign.stats.sentCount = sentSuccessfully;
     await campaign.save();
 
-    logger.info(`Campaign broadcast complete! Delivered ${sentSuccessfully}/${allEmails.length} emails for "${campaign.title}"`);
+    logger.info(
+      `Campaign broadcast complete! Delivered ${sentSuccessfully}/${allEmails.length} emails for "${campaign.title}"`,
+    );
   } catch (err: any) {
     logger.error(`Error executing campaign broadcast for "${campaign.title}":`, err);
     campaign.status = 'failed';
@@ -343,10 +378,10 @@ export const createAdminNotification = async (payload: {
   try {
     const notification = new AdminNotification(payload);
     await notification.save();
-    
+
     // Emit via WebSocket to all connected admins instantly
     emitAdminNotification(notification);
-    
+
     return notification;
   } catch (error) {
     logger.error('Failed to create admin notification:', error);

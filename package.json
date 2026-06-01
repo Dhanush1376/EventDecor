@@ -8,10 +8,14 @@
     "backend:dev": "cd backend && npm run dev",
     "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
     "build:all": "cd frontend && npm run build && cd ../backend && npm run build",
-    "build": "node build-vercel.js"
+    "build": "node build-vercel.js",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.3"
   },
   "engines": {
     "node": ">=18.x"

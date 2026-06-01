@@ -74,7 +74,7 @@ export const getAccessToken = () => accessToken;
 const applyRefreshPayload = (payload) => {
   const token = payload?.accessToken || payload?.token;
   const refreshToken = payload?.refreshToken;
-  
+
   if (token) {
     setAccessToken(token);
     setSessionMarker();
@@ -95,7 +95,7 @@ const isQueueable = (url, method) => {
   if (!url) return false;
   const path = url.toLowerCase();
   const m = method.toLowerCase();
-  
+
   // Only queue mutating actions
   if (m !== 'post' && m !== 'put' && m !== 'delete' && m !== 'patch') {
     return false;
@@ -115,12 +115,12 @@ const isQueueable = (url, method) => {
 const getRequestDescription = (config) => {
   const url = config.url || '';
   const method = (config.method || 'POST').toUpperCase();
-  if (url.includes('/users/cart')) return "Update Shopping Cart";
-  if (url.includes('/users/wishlist')) return "Update Wishlist";
-  if (url.includes('/inquiries')) return "Submit Custom Inquiry";
-  if (url.includes('/custom-orders')) return "Submit Custom Order Inquiry";
-  if (url.includes('/event-bookings')) return "Book Event Consultation";
-  if (url.includes('/reviews')) return "Submit Product Review";
+  if (url.includes('/users/cart')) return 'Update Shopping Cart';
+  if (url.includes('/users/wishlist')) return 'Update Wishlist';
+  if (url.includes('/inquiries')) return 'Submit Custom Inquiry';
+  if (url.includes('/custom-orders')) return 'Submit Custom Order Inquiry';
+  if (url.includes('/event-bookings')) return 'Book Event Consultation';
+  if (url.includes('/reviews')) return 'Submit Product Review';
   return `${method} request to ${url.split('/').pop()}`;
 };
 
@@ -131,10 +131,10 @@ const dispatchUnauthorized = () => {
     logger.dev('[API] Suppressed auth-unauthorized during session bootstrap');
     return;
   }
-  setAccessToken(null);
-  clearAuthStorage();
-  clearCachedProfile();
-  window.dispatchEvent(new Event('auth-unauthorized'));
+  // setAccessToken(null);
+  // clearAuthStorage();
+  // clearCachedProfile();
+  // window.dispatchEvent(new Event('auth-unauthorized'));
 };
 
 export const refreshAccessToken = async () => {
@@ -150,7 +150,9 @@ export const refreshAccessToken = async () => {
       })
       .catch(async (err) => {
         if (err.response?.status === 409) {
-          logger.warn('[API] Concurrent refresh detected (409). Retrying in 1s to pick up new tokens from other tab.');
+          logger.warn(
+            '[API] Concurrent refresh detected (409). Retrying in 1s to pick up new tokens from other tab.',
+          );
           await new Promise((r) => setTimeout(r, 1000));
           refreshPromise = null;
           return refreshAccessToken(); // Retry the refresh with the new cookie/localStorage token
@@ -231,8 +233,7 @@ api.interceptors.request.use(
 
     // ─── OFFLINE & RECONNECTING INTEGRATION ───
     const isOfflineOrReconnecting =
-      window.__networkState === 'offline' ||
-      window.__networkState === 'reconnecting';
+      window.__networkState === 'offline' || window.__networkState === 'reconnecting';
     const isBypass = config._bypassOfflineQueue === true;
 
     if (isOfflineOrReconnecting && !isBypass) {
@@ -253,9 +254,9 @@ api.interceptors.request.use(
           });
         }
         const error = new axios.AxiosError(
-          "Service is currently offline or reconnecting.",
-          "ERR_OFFLINE",
-          config
+          'Service is currently offline or reconnecting.',
+          'ERR_OFFLINE',
+          config,
         );
         return Promise.reject(error);
       }
@@ -270,11 +271,11 @@ api.interceptors.request.use(
             headers: config.headers,
             description: getRequestDescription(config),
           });
-          
+
           const error = new axios.AxiosError(
             `Request queued offline: ${queueItem.description}`,
-            "ERR_OFFLINE_QUEUED",
-            config
+            'ERR_OFFLINE_QUEUED',
+            config,
           );
           error.offlineQueued = true;
           error.queueItem = queueItem;
@@ -284,9 +285,9 @@ api.interceptors.request.use(
 
       // Non-queueable mutations (e.g. login, payment checkout) while offline/reconnecting
       const error = new axios.AxiosError(
-        "Action unavailable while connection is offline or reconnecting.",
-        "ERR_OFFLINE",
-        config
+        'Action unavailable while connection is offline or reconnecting.',
+        'ERR_OFFLINE',
+        config,
       );
       return Promise.reject(error);
     }
@@ -294,7 +295,7 @@ api.interceptors.request.use(
     config.metadata = { startTime: Date.now() };
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 const SLOW_REQUEST_MS = 4000;
@@ -312,7 +313,9 @@ api.interceptors.response.use(
     if (started && import.meta.env.PROD) {
       const duration = Date.now() - started;
       if (duration > SLOW_REQUEST_MS) {
-        logger.warn(`[API] Slow request ${response.config?.method?.toUpperCase()} ${response.config?.url} (${duration}ms)`);
+        logger.warn(
+          `[API] Slow request ${response.config?.method?.toUpperCase()} ${response.config?.url} (${duration}ms)`,
+        );
       }
     }
     return response;
@@ -328,12 +331,15 @@ api.interceptors.response.use(
     const method = originalRequest?.method?.toLowerCase() || 'get';
     const isGet = method === 'get';
     const status = error.response?.status;
-    const isDatabaseDown = status === 503 && error.response?.data?.message?.includes('Database is currently starting up');
-    
+    const isDatabaseDown =
+      status === 503 &&
+      error.response?.data?.message?.includes('Database is currently starting up');
+
     // Don't treat database readiness guard 503s as generic transient errors to avoid 2-minute UI hangs
     const isTransientError =
-      (!error.response || TRANSIENT_STATUSES.has(status) || normalized.isTimeout) && !isDatabaseDown;
-      
+      (!error.response || TRANSIENT_STATUSES.has(status) || normalized.isTimeout) &&
+      !isDatabaseDown;
+
     const maxRetries = isGet ? MAX_GET_RETRIES : MAX_MUTATION_RETRIES;
     const hasRetryAttemptsLeft =
       originalRequest && (!originalRequest._retryCount || originalRequest._retryCount < maxRetries);
@@ -364,7 +370,7 @@ api.interceptors.response.use(
         (status === 429 ? 2000 : 0);
 
       logger.warn(
-        `[API] Transient ${method.toUpperCase()} ${originalRequest.url} — retry ${originalRequest._retryCount}/${maxRetries} in ${Math.round(backoffDelay)}ms`
+        `[API] Transient ${method.toUpperCase()} ${originalRequest.url} — retry ${originalRequest._retryCount}/${maxRetries} in ${Math.round(backoffDelay)}ms`,
       );
 
       await new Promise((resolve) => setTimeout(resolve, backoffDelay));
@@ -385,12 +391,16 @@ api.interceptors.response.use(
     }
 
     // Handle CSRF token mismatch / expiration
-    if (status === 403 && error.response?.data?.message?.includes('CSRF') && !originalRequest._csrfRetry) {
+    if (
+      status === 403 &&
+      error.response?.data?.message?.includes('CSRF') &&
+      !originalRequest._csrfRetry
+    ) {
       originalRequest._csrfRetry = true;
       logger.warn('[API] CSRF token invalid/missing. Re-fetching and retrying...');
       csrfToken = null;
       csrfInitPromise = null;
-      
+
       try {
         const newToken = await ensureCsrfToken();
         if (newToken) {
@@ -421,17 +431,17 @@ api.interceptors.response.use(
       logger.dev('[API] 401 Unauthorized - Attempting token refresh for:', originalRequest.url);
 
       try {
-          const token = await refreshAccessToken();
-          if (token) {
-            logger.dev('[API] Token refresh successful. Retrying original request.');
-            if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
-              originalRequest.headers.set('Authorization', `Bearer ${token}`);
-            } else {
-              originalRequest.headers = originalRequest.headers || {};
-              originalRequest.headers['Authorization'] = `Bearer ${token}`;
-            }
-            return api(originalRequest);
+        const token = await refreshAccessToken();
+        if (token) {
+          logger.dev('[API] Token refresh successful. Retrying original request.');
+          if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
+            originalRequest.headers.set('Authorization', `Bearer ${token}`);
+          } else {
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
           }
+          return api(originalRequest);
+        }
       } catch (refreshErr) {
         if (refreshErr.response) {
           logger.error('[API] Token refresh rejected by server.');
@@ -441,7 +451,9 @@ api.interceptors.response.use(
         }
       }
     } else if (error.response?.status === 409 && isAuthRefresh) {
-      logger.warn('[API] Refresh endpoint returned 409 (grace period overlap). Deferring to retry logic.');
+      logger.warn(
+        '[API] Refresh endpoint returned 409 (grace period overlap). Deferring to retry logic.',
+      );
       // Do nothing, let the catch block in refreshAccessToken handle the retry
     } else if (error.response?.status === 401 && isAuthRefresh) {
       logger.error('[API] Refresh endpoint returned 401. Session expired.');
@@ -457,7 +469,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // High-performance GET request de-duplication wrapper to block parallel duplicate fetches
@@ -473,14 +485,22 @@ api.get = function (url, config) {
 
   const cached = getCachedGet(url, config);
   if (cached && !cached.stale) {
-    return Promise.resolve({ data: cached.data, status: 200, statusText: 'OK', headers: {}, config: config || {}, fromCache: true });
+    return Promise.resolve({
+      data: cached.data,
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: config || {},
+      fromCache: true,
+    });
   }
 
   if (pendingGetRequests.has(requestKey)) {
     return pendingGetRequests.get(requestKey);
   }
 
-  const promise = originalGet.call(this, url, config)
+  const promise = originalGet
+    .call(this, url, config)
     .then((response) => {
       pendingGetRequests.delete(requestKey);
       if (response?.data !== undefined) {
@@ -491,7 +511,15 @@ api.get = function (url, config) {
     .catch((error) => {
       pendingGetRequests.delete(requestKey);
       if (cached?.data) {
-        return { data: cached.data, status: 200, statusText: 'OK', headers: {}, config: config || {}, fromCache: true, stale: true };
+        return {
+          data: cached.data,
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config: config || {},
+          fromCache: true,
+          stale: true,
+        };
       }
       throw error;
     });

@@ -7,9 +7,11 @@ const checkAuthLocal = () => hasSessionMarker();
 import { uploadWithRetry } from './_shared';
 import { uploadDirectToCloudinary } from './_shared';
 export const uploadService = {
-  uploadImages: async (formData, folder = 'products') => {
+  uploadImages: async (formData, folder = 'siri-arts-crafts/direct-uploads') => {
+    // If user asks for identity_docs, construct full path
+    const targetFolder = folder === 'identity_docs' ? 'siri-arts-crafts/identity_docs' : folder;
     return uploadWithRetry(async (fd) => {
-      return await uploadDirectToCloudinary(fd, false);
+      return await uploadDirectToCloudinary(fd, false, targetFolder);
     }, formData);
   },
   uploadCMS: async (formData) => {

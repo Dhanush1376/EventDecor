@@ -1,5 +1,4 @@
 import winston from 'winston';
-import path from 'path';
 import { requestContextStorage } from '../middleware/requestTracker';
 
 // Winston format to dynamically extract the active context and inject request metadata
@@ -38,7 +37,7 @@ const secretStringPatterns = [
   /rzp_(?:live|test)_[a-zA-Z0-9]+/i, // Razorpay Keys
   /sk_(?:live|test)_[a-zA-Z0-9]+/i, // Stripe / Generic Secret Keys
   /eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/, // JWT
-  /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})/ // Basic CC (Visa, MC, Amex, Disc)
+  /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})/, // Basic CC (Visa, MC, Amex, Disc)
 ];
 
 const maskValue = (value: any): any => {
@@ -59,47 +58,56 @@ const maskStringPatterns = (str: string): string => {
   return masked;
 };
 
-const standardKeys = new Set(['level', 'message', 'timestamp', 'service', 'requestId', 'userId', 'ip', 'stack']);
+const standardKeys = new Set([
+  'level',
+  'message',
+  'timestamp',
+  'service',
+  'requestId',
+  'userId',
+  'ip',
+  'stack',
+]);
 
 const maskObject = (obj: any): any => {
   if (obj === null || obj === undefined) return obj;
-  
+
   if (typeof obj === 'string') {
     return maskStringPatterns(obj);
   }
-  
+
   if (Array.isArray(obj)) {
     return obj.map(maskObject);
   }
-  
+
   if (typeof obj === 'object') {
     if (obj instanceof Error) {
       return obj;
     }
-    
+
     const masked: any = {};
     for (const key of Object.keys(obj)) {
       if (standardKeys.has(key)) {
         masked[key] = obj[key];
         continue;
       }
-      
-      const isSensitive = sensitiveKeys.some(regex => regex.test(key));
+
+      const isSensitive = sensitiveKeys.some((regex) => regex.test(key));
       if (isSensitive) {
         masked[key] = maskValue(obj[key]);
       } else {
         masked[key] = maskObject(obj[key]);
       }
     }
-    
+
     const symbols = Object.getOwnPropertySymbols(obj);
     for (const sym of symbols) {
       masked[sym] = obj[sym];
     }
-    
+
     return masked;
   }
-  
+
   return obj;
 };
 
@@ -113,7 +121,7 @@ const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
-  winston.format.json()
+  winston.format.json(),
 );
 
 const productionLogLevel = process.env.LOG_LEVEL || 'warn';
@@ -123,21 +131,21 @@ const logger = winston.createLogger({
   format: logFormat,
   defaultMeta: { service: 'siri-arts-crafts-backend' },
   transports: [
-    new winston.transports.File({ 
-      filename: 'logs/error.log', 
+    new winston.transports.File({
+      filename: 'logs/error.log',
       level: 'error',
       maxsize: 10 * 1024 * 1024, // 10MB limit
       maxFiles: 5, // Keep up to 5 rotated error log files
       tailable: true,
     }),
-    new winston.transports.File({ 
+    new winston.transports.File({
       filename: 'logs/combined.log',
       maxsize: 20 * 1024 * 1024, // 20MB limit
       maxFiles: 5, // Keep up to 5 rotated combined log files
       tailable: true,
     }),
-    new winston.transports.File({ 
-      filename: 'logs/payments.log', 
+    new winston.transports.File({
+      filename: 'logs/payments.log',
       level: 'info',
       maxsize: 10 * 1024 * 1024, // 10MB limit
       maxFiles: 10, // Keep up to 10 rotated payment logs for security audit trail retention
@@ -147,18 +155,18 @@ const logger = winston.createLogger({
 });
 
 // Production: stdout JSON for Render/log drains (file transports are best-effort on ephemeral disks)
-logger.add(new winston.transports.Console({
-  format: process.env.NODE_ENV === 'production'
-    ? winston.format.combine(
-        requestContextFormat(),
-        secretMaskingFormat(),
-        winston.format.timestamp(),
-        winston.format.json()
-      )
-    : winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-}));
+logger.add(
+  new winston.transports.Console({
+    format:
+      process.env.NODE_ENV === 'production'
+        ? winston.format.combine(
+            requestContextFormat(),
+            secretMaskingFormat(),
+            winston.format.timestamp(),
+            winston.format.json(),
+          )
+        : winston.format.combine(winston.format.colorize(), winston.format.simple()),
+  }),
+);
 
 export default logger;

@@ -16,7 +16,8 @@ const checkContentLength = (req: Request, res: Response, next: import('express')
     return next(new ApiError(411, 'Length Required: Content-Length header is missing.'));
   }
   const size = parseInt(contentLength, 10);
-  if (isNaN(size) || size > 50 * 1024 * 1024) { // 50MB max
+  if (isNaN(size) || size > 50 * 1024 * 1024) {
+    // 50MB max
     return next(new ApiError(413, 'Payload Too Large. Max size is 50MB.'));
   }
   next();
@@ -24,6 +25,7 @@ const checkContentLength = (req: Request, res: Response, next: import('express')
 
 const ALLOWED_UPLOAD_FOLDERS = new Set([
   'siri-arts-crafts/direct-uploads',
+  'siri-arts-crafts/identity_docs',
   'event_decor_ecommerce/assets',
   'event_decor_ecommerce/gallery',
 ]);
@@ -36,7 +38,6 @@ router.get(
   '/signed-url',
   signedUrlLimiter,
   requireAuth,
-  requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
     if (!apiSecret) {
@@ -70,39 +71,78 @@ router.get(
         folder,
         resourceType,
         uploadUrl: `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
-      })
+      }),
     );
-  })
+  }),
 );
 
 // C-02: Multipart routes use multer (not express.json) — safe for large video uploads up to multer limits
-router.post('/inspirations', uploadLimiter, requireAuth, checkContentLength, ...uploadGallery.array('images', 5), (req, res) => {
-  const files = req.files as Express.Multer.File[];
-  const imageUrls = files.map((file: any) => file.path);
-  res.status(200).json({ success: true, images: imageUrls });
-});
+router.post(
+  '/inspirations',
+  uploadLimiter,
+  requireAuth,
+  checkContentLength,
+  ...uploadGallery.array('images', 5),
+  (req, res) => {
+    const files = req.files as Express.Multer.File[];
+    const imageUrls = files.map((file: any) => file.path);
+    res.status(200).json({ success: true, images: imageUrls });
+  },
+);
 
-router.post('/products', uploadLimiter, requireAuth, requireAdmin, checkContentLength, ...uploadProducts.array('images', 10), (req, res) => {
-  const files = req.files as Express.Multer.File[];
-  const imageUrls = files.map((file: any) => file.path);
-  res.status(200).json({ success: true, images: imageUrls });
-});
+router.post(
+  '/products',
+  uploadLimiter,
+  requireAuth,
+  requireAdmin,
+  checkContentLength,
+  ...uploadProducts.array('images', 10),
+  (req, res) => {
+    const files = req.files as Express.Multer.File[];
+    const imageUrls = files.map((file: any) => file.path);
+    res.status(200).json({ success: true, images: imageUrls });
+  },
+);
 
-router.post('/gallery', uploadLimiter, requireAuth, requireAdmin, checkContentLength, ...uploadGallery.array('images', 10), (req, res) => {
-  const files = req.files as Express.Multer.File[];
-  const imageUrls = files.map((file: any) => file.path);
-  res.status(200).json({ success: true, images: imageUrls });
-});
+router.post(
+  '/gallery',
+  uploadLimiter,
+  requireAuth,
+  requireAdmin,
+  checkContentLength,
+  ...uploadGallery.array('images', 10),
+  (req, res) => {
+    const files = req.files as Express.Multer.File[];
+    const imageUrls = files.map((file: any) => file.path);
+    res.status(200).json({ success: true, images: imageUrls });
+  },
+);
 
-router.post('/cms', uploadLimiter, requireAuth, requireAdmin, checkContentLength, ...uploadCMS.single('image'), (req, res) => {
-  const file = req.file as any;
-  res.status(200).json({ success: true, url: file.path });
-});
+router.post(
+  '/cms',
+  uploadLimiter,
+  requireAuth,
+  requireAdmin,
+  checkContentLength,
+  ...uploadCMS.single('image'),
+  (req, res) => {
+    const file = req.file as any;
+    res.status(200).json({ success: true, url: file.path });
+  },
+);
 
-router.post('/', uploadLimiter, requireAuth, requireAdmin, checkContentLength, ...uploadProducts.array('images', 5), (req, res) => {
-  const files = req.files as Express.Multer.File[];
-  const imageUrls = files.map((file: any) => file.path);
-  res.status(200).json({ success: true, images: imageUrls });
-});
+router.post(
+  '/',
+  uploadLimiter,
+  requireAuth,
+  requireAdmin,
+  checkContentLength,
+  ...uploadProducts.array('images', 5),
+  (req, res) => {
+    const files = req.files as Express.Multer.File[];
+    const imageUrls = files.map((file: any) => file.path);
+    res.status(200).json({ success: true, images: imageUrls });
+  },
+);
 
 export default router;

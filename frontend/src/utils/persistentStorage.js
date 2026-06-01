@@ -8,9 +8,12 @@ const SECRET_SALT = 'siri_arts_crafts_secret_salt_2026';
  */
 export const obfuscate = (str) => {
   try {
+    const utf8Str = encodeURIComponent(str);
     let result = '';
-    for (let i = 0; i < str.length; i++) {
-      result += String.fromCharCode(str.charCodeAt(i) ^ SECRET_SALT.charCodeAt(i % SECRET_SALT.length));
+    for (let i = 0; i < utf8Str.length; i++) {
+      result += String.fromCharCode(
+        utf8Str.charCodeAt(i) ^ SECRET_SALT.charCodeAt(i % SECRET_SALT.length),
+      );
     }
     return btoa(result);
   } catch (e) {
@@ -27,9 +30,11 @@ export const deobfuscate = (str) => {
     const decoded = atob(str);
     let result = '';
     for (let i = 0; i < decoded.length; i++) {
-      result += String.fromCharCode(decoded.charCodeAt(i) ^ SECRET_SALT.charCodeAt(i % SECRET_SALT.length));
+      result += String.fromCharCode(
+        decoded.charCodeAt(i) ^ SECRET_SALT.charCodeAt(i % SECRET_SALT.length),
+      );
     }
-    return result;
+    return decodeURIComponent(result);
   } catch (e) {
     logger.error('[PersistentStorage] Deobfuscation failed (possible corruption):', e);
     return null;
@@ -144,15 +149,21 @@ export const persistentStorage = {
     try {
       storage.setItem(key, serializedWrapper);
     } catch (err) {
-      logger.warn(`[PersistentStorage] Failed to write key "${key}" to storage. Attempting recovery.`, err);
-      
+      logger.warn(
+        `[PersistentStorage] Failed to write key "${key}" to storage. Attempting recovery.`,
+        err,
+      );
+
       // Attempt Quota Recovery: Sweep expired keys
       sweepExpiredKeys(isSession ? 'sessionStorage' : 'localStorage');
 
       try {
         storage.setItem(key, serializedWrapper);
       } catch (retryErr) {
-        logger.error(`[PersistentStorage] Hard storage failure for key "${key}". Falling back strictly to memory.`, retryErr);
+        logger.error(
+          `[PersistentStorage] Hard storage failure for key "${key}". Falling back strictly to memory.`,
+          retryErr,
+        );
       }
     }
   },
@@ -165,7 +176,7 @@ export const persistentStorage = {
     const useMemory = isSession ? !hasSessionStorage : !hasLocalStorage;
     const memoryStore = isSession ? sessionMemoryStore : localMemoryStore;
     const storage = isSession ? window.sessionStorage : window.localStorage;
-    
+
     const expectedVersion = options.version || '1.0';
     const fallbackValue = options.fallback !== undefined ? options.fallback : null;
 
@@ -176,7 +187,10 @@ export const persistentStorage = {
       try {
         raw = storage.getItem(key);
       } catch (e) {
-        logger.warn(`[PersistentStorage] Read failed from physical storage for key "${key}". Trying memory fallback.`, e);
+        logger.warn(
+          `[PersistentStorage] Read failed from physical storage for key "${key}". Trying memory fallback.`,
+          e,
+        );
       }
     }
 
@@ -191,10 +205,14 @@ export const persistentStorage = {
 
     try {
       const wrapper = JSON.parse(raw);
-      
+
       // Verify if it is indeed our wrapper structure
-      const isWrapped = wrapper && typeof wrapper === 'object' && wrapper?.hasOwnProperty?.('value') && wrapper?.hasOwnProperty?.('version');
-      
+      const isWrapped =
+        wrapper &&
+        typeof wrapper === 'object' &&
+        wrapper?.hasOwnProperty?.('value') &&
+        wrapper?.hasOwnProperty?.('version');
+
       if (!isWrapped) {
         // It's a legacy JSON structure, return it as is
         return wrapper;
@@ -202,7 +220,9 @@ export const persistentStorage = {
 
       // Check version mismatch
       if (wrapper.version !== expectedVersion) {
-        logger.warn(`[PersistentStorage] Version mismatch for key "${key}". Expected ${expectedVersion}, got ${wrapper.version}. Invaliding.`);
+        logger.warn(
+          `[PersistentStorage] Version mismatch for key "${key}". Expected ${expectedVersion}, got ${wrapper.version}. Invaliding.`,
+        );
         persistentStorage.removeItem(key, { session: isSession });
         return fallbackValue;
       }
@@ -244,7 +264,7 @@ export const persistentStorage = {
     const storage = isSession ? window.sessionStorage : window.localStorage;
 
     memoryStore.delete(key);
-    
+
     const available = isSession ? hasSessionStorage : hasLocalStorage;
     if (available && storage) {
       try {
@@ -287,5 +307,5 @@ export const persistentStorage = {
     logger.info('[PersistentStorage] Starting periodic storage clean cycle.');
     sweepExpiredKeys('localStorage');
     sweepExpiredKeys('sessionStorage');
-  }
+  },
 };

@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useAdmin } from "../context/AdminContext";
-import { playSuccessBeep, playErrorBeep } from "../../utils/audioUtils";
-import toast from "react-hot-toast";
+import React, { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useAdmin } from '../context/AdminContext';
+import { playSuccessBeep, playErrorBeep } from '../../utils/audioUtils';
+import toast from 'react-hot-toast';
 import {
   PageHeader,
   FilterBar,
@@ -14,47 +14,48 @@ import {
   SkeletonTable,
   SkeletonList,
   EmptyState,
-} from "../components/AdminUIKit";
+} from '../components/AdminUIKit';
 
 const slideDrawer = {
-  hidden: { x: "100%", opacity: 0 },
+  hidden: { x: '100%', opacity: 0 },
   show: { x: 0, opacity: 1 },
-  exit: { x: "100%", opacity: 0 },
+  exit: { x: '100%', opacity: 0 },
 };
 
 const allStatuses = [
-  "Pending",
-  "Confirmed",
-  "Packed",
-  "Ready to Ship",
-  "Shipped",
-  "Out for Delivery",
-  "Delivered",
-  "Cancelled",
-  "Returned",
-  "Refunded",
+  'Pending',
+  'Confirmed',
+  'Packed',
+  'Ready to Ship',
+  'Shipped',
+  'Out for Delivery',
+  'Delivered',
+  'Cancelled',
+  'Returned',
+  'Refunded',
 ];
 
 const statusIcons = {
-  "Pending": "schedule",
-  "Confirmed": "thumb_up",
-  "Packed": "inventory_2",
-  "Ready to Ship": "conveyor_belt",
-  "Shipped": "local_shipping",
-  "Out for Delivery": "directions_run",
-  "Delivered": "verified",
-  "Cancelled": "cancel",
-  "Returned": "keyboard_return",
-  "Refunded": "payments",
+  Pending: 'schedule',
+  Confirmed: 'thumb_up',
+  Packed: 'inventory_2',
+  'Ready to Ship': 'conveyor_belt',
+  Shipped: 'local_shipping',
+  'Out for Delivery': 'directions_run',
+  Delivered: 'verified',
+  Cancelled: 'cancel',
+  Returned: 'keyboard_return',
+  Refunded: 'payments',
 };
 
 export function AdminOrders() {
   const navigate = useNavigate();
   const { orders, dataLoading, updateOrderStatus, updateOrderNotes, searchQuery } = useAdmin();
-  
-  const [viewMode, setViewMode] = useState("table"); // 'table' or 'kanban'
-  const [filterStatus, setFilterStatus] = useState("All");
-  
+
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'kanban'
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterOrderType, setFilterOrderType] = useState('All');
+
   // Quick-edit details drawer state
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -64,7 +65,7 @@ export function AdminOrders() {
     let pendingRemittance = 0;
     let settledPayouts = 0;
     let courierDeductions = 0;
-    
+
     orders.forEach((o) => {
       if (o.rawOrder?.paymentMethod?.toLowerCase() === 'cod') {
         totalVolume += o.total;
@@ -73,7 +74,7 @@ export function AdminOrders() {
         } else if (o.rawOrder?.settlementStatus === 'Settled' || o.status === 'Settled') {
           const charges = o.rawOrder?.courierCharges || 150;
           courierDeductions += charges;
-          settledPayouts += o.rawOrder?.settledAmount || (o.total - charges);
+          settledPayouts += o.rawOrder?.settledAmount || o.total - charges;
         }
       }
     });
@@ -83,32 +84,32 @@ export function AdminOrders() {
 
   // Capture physical barcode scanner keyboard inputs
   useEffect(() => {
-    let buffer = "";
+    let buffer = '';
     let lastKeyTime = Date.now();
 
     const handleKeyPress = (e) => {
       const currentTime = Date.now();
-      
+
       // Fast barcode keyboard sweeps (< 50ms)
       if (currentTime - lastKeyTime > 50) {
-        buffer = "";
+        buffer = '';
       }
       lastKeyTime = currentTime;
 
-      if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") {
+      if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
         return;
       }
 
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         if (buffer.length >= 3) {
           const scannedCode = buffer.trim().toUpperCase();
-          buffer = "";
-          
+          buffer = '';
+
           const matchedOrder = orders.find((o) => {
             const cleanId = o.id.toUpperCase();
-            const cleanAWB = (o.trackingNumber || "").toUpperCase();
+            const cleanAWB = (o.trackingNumber || '').toUpperCase();
             const customBarcode = `SR-${o.id.substring(o.id.length - 8).toUpperCase()}-IN`;
-            const invoiceNum = (o.invoiceNumber || "").toUpperCase();
+            const invoiceNum = (o.invoiceNumber || '').toUpperCase();
             return (
               scannedCode === cleanId ||
               scannedCode === cleanAWB ||
@@ -120,7 +121,9 @@ export function AdminOrders() {
 
           if (matchedOrder) {
             playSuccessBeep();
-            toast.success(`Order Found! Opening Full Details for #${matchedOrder.id.substring(matchedOrder.id.length - 8).toUpperCase()}`);
+            toast.success(
+              `Order Found! Opening Full Details for #${matchedOrder.id.substring(matchedOrder.id.length - 8).toUpperCase()}`,
+            );
             navigate(`/admin/orders/${matchedOrder.id}`);
           } else {
             playErrorBeep();
@@ -135,8 +138,8 @@ export function AdminOrders() {
       }
     };
 
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, [orders, navigate]);
 
   // Derive selected order data from orders list dynamically
@@ -148,44 +151,44 @@ export function AdminOrders() {
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
-      const matchStatus = filterStatus === "All" || o.status === filterStatus;
+      const matchStatus = filterStatus === 'All' || o.status === filterStatus;
+      const matchOrderType = filterOrderType === 'All' || o.orderType === filterOrderType;
       const matchSearch =
         !searchQuery ||
         o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         o.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
         o.phone.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchStatus && matchSearch;
+      return matchStatus && matchOrderType && matchSearch;
     });
-  }, [orders, filterStatus, searchQuery]);
+  }, [orders, filterStatus, filterOrderType, searchQuery]);
 
   const statusCounts = useMemo(() => {
     const counts = { All: orders.length };
-    allStatuses.forEach(
-      (s) => (counts[s] = orders.filter((o) => o.status === s).length)
-    );
+    allStatuses.forEach((s) => (counts[s] = orders.filter((o) => o.status === s).length));
     return counts;
   }, [orders]);
 
   const handleExportCSV = () => {
     if (filteredOrders.length === 0) {
-      return toast.error("No orders found to export");
+      return toast.error('No orders found to export');
     }
 
-    const headers = "Order ID,Customer,Phone,Items Summary,Total Amount,Payment Type,Status,Order Date\n";
+    const headers =
+      'Order ID,Customer,Phone,Items Summary,Total Amount,Payment Type,Status,Order Date\n';
     const rows = filteredOrders
       .map((o) => {
-        const itemsList = o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(" | ");
+        const itemsList = o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(' | ');
         return `"${o.id}","${o.customer}","${o.phone}","${itemsList}",${o.total},"${o.payment}","${o.status}","${o.date}"`;
       })
-      .join("\n");
+      .join('\n');
 
-    const blob = new Blob([headers + rows], { type: "text/csv" });
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `SiriArts_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `SiriArts_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
     link.click();
-    toast.success("Export ready");
+    toast.success('Export ready');
   };
 
   const openOrderDrawer = (order) => {
@@ -205,30 +208,30 @@ export function AdminOrders() {
         <div className="flex items-center gap-2 shrink-0">
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setViewMode("table")}
+              onClick={() => setViewMode('table')}
               className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
-                viewMode === "table"
-                  ? "text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]"
-                  : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]"
+                viewMode === 'table'
+                  ? 'text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]'
+                  : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]'
               }`}
               title="Table View"
             >
               <span className="material-symbols-outlined text-[18px]">view_list</span>
             </button>
             <button
-              onClick={() => setViewMode("kanban")}
+              onClick={() => setViewMode('kanban')}
               className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
-                viewMode === "kanban"
-                  ? "text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]"
-                  : "text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]"
+                viewMode === 'kanban'
+                  ? 'text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]'
+                  : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]'
               }`}
               title="Kanban View"
             >
               <span className="material-symbols-outlined text-[18px]">dashboard</span>
             </button>
           </div>
-          <button 
-            onClick={handleExportCSV} 
+          <button
+            onClick={handleExportCSV}
             className="flex items-center justify-center p-1.5 rounded-lg text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] transition-all active:scale-95 cursor-pointer shrink-0"
             title="Export CSV"
           >
@@ -242,70 +245,109 @@ export function AdminOrders() {
         <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
         <div className="grid grid-cols-2 md:grid-cols-4 bg-[var(--admin-surface)]">
           <div className="p-5 space-y-1 border-r border-b md:border-b-0 border-[var(--admin-border-subtle)]">
-            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">COD Order Volume</span>
-            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">{formatCurrency(codStats.totalVolume)}</p>
-            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">Total COD orders</span>
+            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
+              COD Order Volume
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+              {formatCurrency(codStats.totalVolume)}
+            </p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
+              Total COD orders
+            </span>
           </div>
           <div className="p-5 space-y-1 border-b md:border-b-0 md:border-r border-[var(--admin-border-subtle)]">
             <span className="text-[10px] text-[var(--admin-warning)] font-bold uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[var(--admin-warning)] animate-pulse" />
               Collections Pending
             </span>
-            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">{formatCurrency(codStats.pendingRemittance)}</p>
-            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">Awaiting transfer</span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+              {formatCurrency(codStats.pendingRemittance)}
+            </p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
+              Awaiting transfer
+            </span>
           </div>
           <div className="p-5 space-y-1 border-r border-[var(--admin-border-subtle)]">
-            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">Shipping Deductions</span>
-            <p className="text-[14px] font-bold text-[var(--admin-error)]">{formatCurrency(codStats.courierDeductions)}</p>
-            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">Logistics fees</span>
+            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
+              Shipping Deductions
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-error)]">
+              {formatCurrency(codStats.courierDeductions)}
+            </p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
+              Logistics fees
+            </span>
           </div>
           <div className="p-5 space-y-1 bg-[var(--admin-success-light)] border-l-0">
-            <span className="text-[10px] text-[var(--admin-success)] font-bold uppercase tracking-wider">Net Bank Payouts</span>
-            <p className="text-[14px] font-bold text-[var(--admin-success)]">{formatCurrency(codStats.settledPayouts)}</p>
-            <span className="text-[10px] text-[var(--admin-success)] opacity-80 mt-1 block">Settled payouts</span>
+            <span className="text-[10px] text-[var(--admin-success)] font-bold uppercase tracking-wider">
+              Net Bank Payouts
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-success)]">
+              {formatCurrency(codStats.settledPayouts)}
+            </p>
+            <span className="text-[10px] text-[var(--admin-success)] opacity-80 mt-1 block">
+              Settled payouts
+            </span>
           </div>
         </div>
       </motion.div>
 
       {/* Controls row: view modes, search/filters, export buttons */}
-      {viewMode === "table" && (
+      {viewMode === 'table' && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="w-full sm:max-w-md">
-            <FilterBar
-              filters={["All", ...allStatuses]}
-              value={filterStatus}
-              onChange={setFilterStatus}
-              counts={statusCounts}
-            />
+          <div className="w-full flex flex-col sm:flex-row gap-4">
+            <div className="sm:max-w-md w-full">
+              <FilterBar
+                filters={['All', ...allStatuses]}
+                value={filterStatus}
+                onChange={setFilterStatus}
+                counts={statusCounts}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-bold text-[var(--admin-text-secondary)]">
+                Type:
+              </span>
+              <div className="flex bg-[var(--admin-surface-muted)] p-1 rounded-lg border border-[var(--admin-border-subtle)]">
+                {['All', 'purchase', 'rental', 'mixed'].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilterOrderType(type)}
+                    className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                      filterOrderType === type
+                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]'
+                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)]'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-
-
       {/* CONTENT SWITCHER */}
       <AnimatePresence mode="wait">
         {dataLoading ? (
-          <motion.div
-            key="loading"
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            variants={fadeUp}
-          >
-            {viewMode === "table" ? (
+          <motion.div key="loading" initial="hidden" animate="show" exit="hidden" variants={fadeUp}>
+            {viewMode === 'table' ? (
               <SkeletonTable rows={10} cols={8} />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 items-start">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[600px]">
-                     <SkeletonList items={5} className="border-none shadow-none bg-transparent" />
+                  <div
+                    key={i}
+                    className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[600px]"
+                  >
+                    <SkeletonList items={5} className="border-none shadow-none bg-transparent" />
                   </div>
                 ))}
               </div>
             )}
           </motion.div>
-        ) : viewMode === "table" ? (
+        ) : viewMode === 'table' ? (
           /* TABLE VIEW */
           <motion.div
             key="table"
@@ -318,132 +360,167 @@ export function AdminOrders() {
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="admin-table w-full min-w-[900px]">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th className="hidden md:table-cell">Items</th>
-                  <th>Total</th>
-                  <th className="hidden sm:table-cell">Payment</th>
-                  <th>Status</th>
-                  <th className="hidden lg:table-cell">Date</th>
-                  <th>Required By</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.length === 0 ? (
+                <thead>
                   <tr>
-                    <td colSpan={9} className="py-16 text-center">
-                      <EmptyState
-                        icon={searchQuery || filterStatus !== "All" ? "search_off" : "shopping_bag"}
-                        title={searchQuery || filterStatus !== "All" ? "No Matches Found" : "No Orders Yet"}
-                        description={searchQuery || filterStatus !== "All" ? "No orders match the search or filter criteria." : "You haven't received any orders yet."}
-                        action={
-                          (searchQuery || filterStatus !== "All") && (
-                            <button onClick={() => setFilterStatus("All")} className="admin-btn admin-btn-outline">
-                              Clear Filters
-                            </button>
-                          )
-                        }
-                      />
-                    </td>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th className="hidden md:table-cell">Items</th>
+                    <th>Total</th>
+                    <th className="hidden sm:table-cell">Payment</th>
+                    <th>Status</th>
+                    <th className="hidden lg:table-cell">Date</th>
+                    <th>Required By</th>
+                    <th className="text-right">Actions</th>
                   </tr>
-                ) : (
-                  filteredOrders.map((o) => {
-                    const isVip = o.total >= 15000;
-                    const isNew = o.date && o.date.includes("Today");
+                </thead>
+                <tbody>
+                  {filteredOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-16 text-center">
+                        <EmptyState
+                          icon={
+                            searchQuery || filterStatus !== 'All' ? 'search_off' : 'shopping_bag'
+                          }
+                          title={
+                            searchQuery || filterStatus !== 'All'
+                              ? 'No Matches Found'
+                              : 'No Orders Yet'
+                          }
+                          description={
+                            searchQuery || filterStatus !== 'All'
+                              ? 'No orders match the search or filter criteria.'
+                              : "You haven't received any orders yet."
+                          }
+                          action={
+                            (searchQuery || filterStatus !== 'All') && (
+                              <button
+                                onClick={() => setFilterStatus('All')}
+                                className="admin-btn admin-btn-outline"
+                              >
+                                Clear Filters
+                              </button>
+                            )
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredOrders.map((o) => {
+                      const isVip = o.total >= 15000;
+                      const isNew = o.date && o.date.includes('Today');
 
-                    return (
-                      <tr
-                        key={o.id}
-                        className="admin-table-row-clickable group"
-                        onClick={() => openOrderDrawer(o)}
-                      >
-                        <td className="font-semibold text-[var(--admin-text-primary)]">
-                          <div className="flex items-center gap-2">
-                            #{o.id.substring(o.id.length - 8).toUpperCase()}
-                            {isNew && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping" title="Recent order" />
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-[var(--admin-text-primary)]">{o.customer}</span>
-                            <span className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[12px]">call</span>
-                              {o.phone}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="hidden md:table-cell max-w-[200px] truncate text-[var(--admin-text-secondary)]">
-                          {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(", ")}
-                        </td>
-                        <td className="font-bold text-[var(--admin-text-primary)]">
-                          <div className="flex flex-col items-start">
-                            <span>{formatCurrency(o.total)}</span>
-                            {isVip && (
-                              <span className="admin-badge admin-badge-neutral text-[8px] mt-1 p-0.5 px-1 font-extrabold uppercase bg-[var(--admin-surface-muted)]">
-                                VIP Collection
+                      return (
+                        <tr
+                          key={o.id}
+                          className="admin-table-row-clickable group"
+                          onClick={() => openOrderDrawer(o)}
+                        >
+                          <td className="font-semibold text-[var(--admin-text-primary)]">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                #{o.id.substring(o.id.length - 8).toUpperCase()}
+                                {isNew && (
+                                  <span
+                                    className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping"
+                                    title="Recent order"
+                                  />
+                                )}
+                              </div>
+                              {o.orderType && o.orderType !== 'purchase' && (
+                                <span
+                                  className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded w-max ${o.orderType === 'rental' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}
+                                >
+                                  {o.orderType}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-[var(--admin-text-primary)]">
+                                {o.customer}
                               </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="hidden sm:table-cell">
-                          <span className="admin-badge admin-badge-neutral uppercase text-[9px] tracking-wider font-bold">
-                            {o.payment}
-                          </span>
-                        </td>
-                        <td>
-                          <StatusBadge status={o.status} />
-                        </td>
-                        <td className="hidden lg:table-cell text-[var(--admin-text-secondary)]">{o.date}</td>
-                        <td>
-                          {o.needByDate ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[var(--admin-radius-sm)] bg-[var(--admin-info-light)] text-[var(--admin-info)] border border-[var(--admin-info-border)] text-[10px] font-bold uppercase tracking-wider">
-                              <span className="material-symbols-outlined text-[12px]">calendar_today</span>
-                              {new Date(o.needByDate).toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                              })}
+                              <span className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]">call</span>
+                                {o.phone}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="hidden md:table-cell max-w-[200px] truncate text-[var(--admin-text-secondary)]">
+                            {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(', ')}
+                          </td>
+                          <td className="font-bold text-[var(--admin-text-primary)]">
+                            <div className="flex flex-col items-start">
+                              <span>{formatCurrency(o.total)}</span>
+                              {isVip && (
+                                <span className="admin-badge admin-badge-neutral text-[8px] mt-1 p-0.5 px-1 font-extrabold uppercase bg-[var(--admin-surface-muted)]">
+                                  VIP Collection
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="hidden sm:table-cell">
+                            <span className="admin-badge admin-badge-neutral uppercase text-[9px] tracking-wider font-bold">
+                              {o.payment}
                             </span>
-                          ) : (
-                            <span className="text-[var(--admin-text-tertiary)]">—</span>
-                          )}
-                        </td>
-                        <td className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => openOrderDrawer(o)}
-                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
-                              title="Quick Details"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">visibility</span>
-                            </button>
-                            <button
-                              onClick={() => navigate(`/admin/orders/${o.id}`)}
-                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
-                              title="Full Invoice"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-                            </button>
-                            <a
-                              href={`https://wa.me/${o.phone.replace(/[^0-9]/g, "")}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)]"
-                              title="WhatsApp"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">chat</span>
-                            </a>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
+                          </td>
+                          <td>
+                            <StatusBadge status={o.status} />
+                          </td>
+                          <td className="hidden lg:table-cell text-[var(--admin-text-secondary)]">
+                            {o.date}
+                          </td>
+                          <td>
+                            {o.needByDate ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[var(--admin-radius-sm)] bg-[var(--admin-info-light)] text-[var(--admin-info)] border border-[var(--admin-info-border)] text-[10px] font-bold uppercase tracking-wider">
+                                <span className="material-symbols-outlined text-[12px]">
+                                  calendar_today
+                                </span>
+                                {new Date(o.needByDate).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                })}
+                              </span>
+                            ) : (
+                              <span className="text-[var(--admin-text-tertiary)]">—</span>
+                            )}
+                          </td>
+                          <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => openOrderDrawer(o)}
+                                className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                                title="Quick Details"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">
+                                  visibility
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => navigate(`/admin/orders/${o.id}`)}
+                                className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                                title="Full Invoice"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">
+                                  receipt_long
+                                </span>
+                              </button>
+                              <a
+                                href={`https://wa.me/${o.phone.replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)]"
+                                title="WhatsApp"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">chat</span>
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
               </table>
             </div>
 
@@ -452,12 +529,21 @@ export function AdminOrders() {
               {filteredOrders.length === 0 ? (
                 <div className="py-10 text-center flex flex-col items-center justify-center bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)]">
                   <EmptyState
-                    icon={searchQuery || filterStatus !== "All" ? "search_off" : "shopping_bag"}
-                    title={searchQuery || filterStatus !== "All" ? "No Matches Found" : "No Orders Yet"}
-                    description={searchQuery || filterStatus !== "All" ? "No orders match the search or filter criteria." : "You haven't received any orders yet."}
+                    icon={searchQuery || filterStatus !== 'All' ? 'search_off' : 'shopping_bag'}
+                    title={
+                      searchQuery || filterStatus !== 'All' ? 'No Matches Found' : 'No Orders Yet'
+                    }
+                    description={
+                      searchQuery || filterStatus !== 'All'
+                        ? 'No orders match the search or filter criteria.'
+                        : "You haven't received any orders yet."
+                    }
                     action={
-                      (searchQuery || filterStatus !== "All") && (
-                        <button onClick={() => setFilterStatus("All")} className="admin-btn admin-btn-outline">
+                      (searchQuery || filterStatus !== 'All') && (
+                        <button
+                          onClick={() => setFilterStatus('All')}
+                          className="admin-btn admin-btn-outline"
+                        >
                           Clear Filters
                         </button>
                       )
@@ -466,7 +552,7 @@ export function AdminOrders() {
                 </div>
               ) : (
                 filteredOrders.map((o) => {
-                  const isNew = o.date && o.date.includes("Today");
+                  const isNew = o.date && o.date.includes('Today');
                   return (
                     <div
                       key={o.id}
@@ -479,16 +565,32 @@ export function AdminOrders() {
                             <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
                               #{o.id.substring(o.id.length - 8).toUpperCase()}
                             </span>
-                            {isNew && <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)] animate-pulse" />}
+                            {isNew && (
+                              <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)] animate-pulse" />
+                            )}
                           </div>
-                          <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] mt-0.5 block">{o.customer}</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] block">
+                              {o.customer}
+                            </span>
+                            {o.orderType && o.orderType !== 'purchase' && (
+                              <span
+                                className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${o.orderType === 'rental' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}
+                              >
+                                {o.orderType}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <StatusBadge status={o.status} className="border-none px-2 py-1 text-[10px]" />
+                        <StatusBadge
+                          status={o.status}
+                          className="border-none px-2 py-1 text-[10px]"
+                        />
                       </div>
-                      
+
                       <div className="pt-2 pb-2 border-y border-[var(--admin-border-subtle)]">
                         <p className="text-[12px] text-[var(--admin-text-primary)] line-clamp-2">
-                          {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(", ")}
+                          {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(', ')}
                         </p>
                       </div>
 
@@ -497,7 +599,9 @@ export function AdminOrders() {
                           {formatCurrency(o.total)}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold tracking-wider">{o.payment}</span>
+                          <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold tracking-wider">
+                            {o.payment}
+                          </span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -527,23 +631,34 @@ export function AdminOrders() {
           >
             {filteredOrders.length === 0 ? (
               <div className="py-20 text-center col-span-full admin-card flex flex-col items-center justify-center">
-                <span className="material-symbols-outlined text-[36px] text-[var(--admin-text-tertiary)] mb-2">search_off</span>
-                <p className="text-[12px] font-bold text-[var(--admin-text-secondary)]">Data Not Found</p>
-                <p className="text-[11px] mt-0.5 text-[var(--admin-text-tertiary)]">Try adjusting your active search keywords or status tabs.</p>
+                <span className="material-symbols-outlined text-[36px] text-[var(--admin-text-tertiary)] mb-2">
+                  search_off
+                </span>
+                <p className="text-[12px] font-bold text-[var(--admin-text-secondary)]">
+                  Data Not Found
+                </p>
+                <p className="text-[11px] mt-0.5 text-[var(--admin-text-tertiary)]">
+                  Try adjusting your active search keywords or status tabs.
+                </p>
               </div>
             ) : (
               allStatuses.slice(0, 5).map((status) => {
                 const statusOrders = filteredOrders.filter((o) => o.status === status);
 
                 return (
-                  <div key={status} className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[400px] md:h-[600px] admin-kanban-column">
+                  <div
+                    key={status}
+                    className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[400px] md:h-[600px] admin-kanban-column"
+                  >
                     {/* Column Header */}
                     <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--admin-border-subtle)] shrink-0 select-none">
                       <div className="flex items-center gap-2 text-left">
                         <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-secondary)]">
                           {statusIcons[status]}
                         </span>
-                        <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider">{status}</span>
+                        <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider">
+                          {status}
+                        </span>
                       </div>
                       <span className="text-[10px] font-bold bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] px-1.5 py-0.5 rounded-[var(--admin-radius-sm)]">
                         {statusOrders.length}
@@ -563,9 +678,18 @@ export function AdminOrders() {
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div>
-                                <span className="text-[12px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors">
-                                  #{o.id.substring(o.id.length - 8).toUpperCase()}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[12px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors">
+                                    #{o.id.substring(o.id.length - 8).toUpperCase()}
+                                  </span>
+                                  {o.orderType && o.orderType !== 'purchase' && (
+                                    <span
+                                      className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${o.orderType === 'rental' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}
+                                    >
+                                      {o.orderType}
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-[11px] font-medium text-[var(--admin-text-secondary)] mt-0.5 truncate max-w-[120px]">
                                   {o.customer}
                                 </p>
@@ -576,15 +700,20 @@ export function AdminOrders() {
                             </div>
 
                             <p className="text-[10px] text-[var(--admin-text-tertiary)] truncate mb-4">
-                              {o.items.map((i) => i.name).join(", ")}
+                              {o.items.map((i) => i.name).join(', ')}
                             </p>
 
-                            <div className="flex items-center justify-between mt-auto pt-3 border-t border-[var(--admin-border-subtle)] gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div
+                              className="flex items-center justify-between mt-auto pt-3 border-t border-[var(--admin-border-subtle)] gap-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <select
                                 value={o.status}
                                 onChange={(e) => {
                                   updateOrderStatus(o.id, e.target.value);
-                                  toast.success(`Moved #${o.id.substring(o.id.length - 6).toUpperCase()} to ${e.target.value}`);
+                                  toast.success(
+                                    `Moved #${o.id.substring(o.id.length - 6).toUpperCase()} to ${e.target.value}`,
+                                  );
                                 }}
                                 className="admin-input py-1 px-2 text-[10px] font-bold uppercase tracking-wider cursor-pointer min-h-0 h-7"
                               >
@@ -597,17 +726,22 @@ export function AdminOrders() {
 
                               <div className="flex items-center gap-1.5 shrink-0">
                                 {hasNote && (
-                                  <span className="material-symbols-outlined text-[14px] text-[var(--admin-warning)]" title="Contains team note">
+                                  <span
+                                    className="material-symbols-outlined text-[14px] text-[var(--admin-warning)]"
+                                    title="Contains team note"
+                                  >
                                     sticky_note_2
                                   </span>
                                 )}
                                 <a
-                                  href={`https://wa.me/${o.phone.replace(/[^0-9]/g, "")}`}
+                                  href={`https://wa.me/${o.phone.replace(/[^0-9]/g, '')}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="w-7 h-7 rounded-[var(--admin-radius-sm)] bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] flex items-center justify-center hover:bg-[var(--admin-success)] hover:text-white transition-colors"
                                 >
-                                  <span className="material-symbols-outlined text-[14px]">chat</span>
+                                  <span className="material-symbols-outlined text-[14px]">
+                                    chat
+                                  </span>
                                 </a>
                               </div>
                             </div>
@@ -618,7 +752,9 @@ export function AdminOrders() {
                       {statusOrders.length === 0 && (
                         <div className="py-12 text-center text-[var(--admin-text-tertiary)] border border-dashed border-[var(--admin-border)] rounded-[var(--admin-radius-lg)] flex flex-col items-center justify-center">
                           <span className="material-symbols-outlined text-[24px] mb-2">inbox</span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider">Empty</span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider">
+                            Empty
+                          </span>
                         </div>
                       )}
                     </div>
@@ -640,7 +776,7 @@ export function AdminOrders() {
               exit={{ opacity: 0 }}
               onClick={() => setIsDrawerOpen(false)}
               className="fixed inset-0 z-[999] cursor-pointer"
-              style={{ background: "var(--admin-surface-overlay)", backdropFilter: "blur(4px)" }}
+              style={{ background: 'var(--admin-surface-overlay)', backdropFilter: 'blur(4px)' }}
             />
 
             <motion.aside
@@ -648,9 +784,9 @@ export function AdminOrders() {
               animate="show"
               exit="exit"
               variants={slideDrawer}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="fixed right-0 top-0 h-screen w-full sm:w-[500px] z-[1000] shadow-[var(--admin-shadow-2xl)] flex flex-col overflow-hidden border-l border-[var(--admin-border)]"
-              style={{ background: "var(--admin-surface)" }}
+              style={{ background: 'var(--admin-surface)' }}
             >
               {/* Drawer Header */}
               <div className="px-6 py-5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0 text-left bg-[var(--admin-bg-subtle)]">
@@ -662,10 +798,7 @@ export function AdminOrders() {
                     #{selectedOrder.id.toUpperCase()}
                   </p>
                 </div>
-                <button
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="admin-btn-icon"
-                >
+                <button onClick={() => setIsDrawerOpen(false)} className="admin-btn-icon">
                   <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
               </div>
@@ -676,11 +809,15 @@ export function AdminOrders() {
                 <div className="admin-card p-5 space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">Customer Profile</p>
-                      <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">{selectedOrder.customer}</h4>
+                      <p className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
+                        Customer Profile
+                      </p>
+                      <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">
+                        {selectedOrder.customer}
+                      </h4>
                     </div>
                     <a
-                      href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g, "")}`}
+                      href={`https://wa.me/${selectedOrder.phone.replace(/[^0-9]/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="admin-badge admin-badge-success flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
@@ -692,26 +829,42 @@ export function AdminOrders() {
 
                   <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-[12px] pt-4 border-t border-[var(--admin-border-subtle)]">
                     <div>
-                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">Phone</p>
-                      <p className="font-semibold text-[var(--admin-text-primary)]">{selectedOrder.phone}</p>
+                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
+                        Phone
+                      </p>
+                      <p className="font-semibold text-[var(--admin-text-primary)]">
+                        {selectedOrder.phone}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">Payment Mode</p>
-                      <p className="font-semibold text-[var(--admin-text-primary)]">{selectedOrder.payment}</p>
+                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
+                        Payment Mode
+                      </p>
+                      <p className="font-semibold text-[var(--admin-text-primary)]">
+                        {selectedOrder.payment}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">Invoice Date</p>
-                      <p className="font-semibold text-[var(--admin-text-primary)]">{selectedOrder.date}</p>
+                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
+                        Invoice Date
+                      </p>
+                      <p className="font-semibold text-[var(--admin-text-primary)]">
+                        {selectedOrder.date}
+                      </p>
                     </div>
                     {selectedOrder.needByDate && (
                       <div>
-                        <p className="text-[var(--admin-info)] font-bold mb-0.5 text-[10px] uppercase">Need-By Date</p>
+                        <p className="text-[var(--admin-info)] font-bold mb-0.5 text-[10px] uppercase">
+                          Need-By Date
+                        </p>
                         <p className="font-bold text-[var(--admin-info)] flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                          {new Date(selectedOrder.needByDate).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
+                          <span className="material-symbols-outlined text-[14px]">
+                            calendar_today
+                          </span>
+                          {new Date(selectedOrder.needByDate).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
                           })}
                         </p>
                       </div>
@@ -721,35 +874,80 @@ export function AdminOrders() {
 
                 {/* 2. Items List */}
                 <div className="space-y-3">
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] pl-1">Curated Items</h4>
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] pl-1">
+                    Curated Items
+                  </h4>
                   <div className="space-y-2">
                     {selectedOrder.items.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)] shadow-[var(--admin-shadow-sm)]">
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)] shadow-[var(--admin-shadow-sm)]"
+                      >
                         <div className="flex items-center gap-3">
                           {item.image && (
-                            <img src={item.image} alt={item.name} className="w-10 h-10 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border-subtle)] shrink-0" />
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-10 h-10 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border-subtle)] shrink-0"
+                            />
                           )}
                           <div>
-                            <p className="text-[12px] font-bold text-[var(--admin-text-primary)] line-clamp-1">{item.name}</p>
-                            <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">Qty: {item.quantity || 1}</p>
+                            <p className="text-[12px] font-bold text-[var(--admin-text-primary)] line-clamp-1">
+                              {item.name}
+                            </p>
+                            <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">
+                              Qty: {item.qty || item.quantity || 1}
+                            </p>
+                            {item.type === 'rental' && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                <span
+                                  className={`text-[9px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider ${
+                                    item.rentalInfo?.inspectionStatus === 'Inspected'
+                                      ? 'bg-green-100 text-green-700 border-green-200'
+                                      : item.rentalInfo?.inspectionStatus === 'Damage Reported'
+                                        ? 'bg-red-100 text-red-700 border-red-200'
+                                        : 'bg-amber-100 text-amber-700 border-amber-200'
+                                  }`}
+                                >
+                                  Insp: {item.rentalInfo?.inspectionStatus || 'Pending'}
+                                </span>
+                                <span
+                                  className={`text-[9px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider ${
+                                    item.rentalInfo?.refundStatus === 'Refunded'
+                                      ? 'bg-green-100 text-green-700 border-green-200'
+                                      : item.rentalInfo?.refundStatus === 'Deducted'
+                                        ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                        : 'bg-amber-100 text-amber-700 border-amber-200'
+                                  }`}
+                                >
+                                  Ref: {item.rentalInfo?.refundStatus || 'Pending'}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <span className="text-[12px] font-bold text-[var(--admin-text-primary)] shrink-0 ml-3">
-                          {formatCurrency(Number(item.price * (item.quantity || 1)))}
+                          {formatCurrency(Number(item.price * (item.qty || item.quantity || 1)))}
                         </span>
                       </div>
                     ))}
                   </div>
 
                   <div className="flex items-center justify-between p-4 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] rounded-[var(--admin-radius-lg)]">
-                    <span className="text-[12px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">Grand Total</span>
-                    <span className="text-[16px] text-[var(--admin-text-primary)] font-bold">{formatCurrency(selectedOrder.total)}</span>
+                    <span className="text-[12px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+                      Grand Total
+                    </span>
+                    <span className="text-[16px] text-[var(--admin-text-primary)] font-bold">
+                      {formatCurrency(selectedOrder.total)}
+                    </span>
                   </div>
                 </div>
 
                 {/* 3. Transaction Timeline */}
                 <div className="admin-card p-5">
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] mb-5">Delivery Timeline</h4>
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] mb-5">
+                    Delivery Timeline
+                  </h4>
                   <div className="relative pl-6 space-y-5 border-l-2 border-[var(--admin-border)] ml-3">
                     {allStatuses.slice(0, 5).map((st, sidx) => {
                       const isDone = allStatuses.indexOf(selectedOrder.status) >= sidx;
@@ -759,13 +957,19 @@ export function AdminOrders() {
                         <div key={st} className="relative flex items-center justify-between">
                           <span
                             className={`absolute -left-[31px] w-4 h-4 rounded-full border-2 bg-[var(--admin-surface)] flex items-center justify-center transition-all ${
-                              isDone ? "border-[var(--admin-accent)]" : "border-[var(--admin-border-strong)]"
+                              isDone
+                                ? 'border-[var(--admin-accent)]'
+                                : 'border-[var(--admin-border-strong)]'
                             }`}
                           >
-                            {isDone && <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />}
+                            {isDone && (
+                              <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+                            )}
                           </span>
                           <div>
-                            <p className={`text-[12px] font-bold ${isCurrent ? "text-[var(--admin-accent)]" : "text-[var(--admin-text-secondary)]"}`}>
+                            <p
+                              className={`text-[12px] font-bold ${isCurrent ? 'text-[var(--admin-accent)]' : 'text-[var(--admin-text-secondary)]'}`}
+                            >
                               {st}
                             </p>
                           </div>
@@ -788,7 +992,7 @@ export function AdminOrders() {
                   <textarea
                     rows={3}
                     placeholder="Type logistics references, customer specifications, or event notes..."
-                    defaultValue={selectedOrderData?.notes || ""}
+                    defaultValue={selectedOrderData?.notes || ''}
                     onBlur={(e) => handleSaveNote(selectedOrder.id, e.target.value)}
                     className="admin-textarea bg-[var(--admin-surface)]"
                   />
@@ -819,7 +1023,7 @@ export function AdminOrders() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="flex items-center gap-3 w-full">
                   <button
                     type="button"

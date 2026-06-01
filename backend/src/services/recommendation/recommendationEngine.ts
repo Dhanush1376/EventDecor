@@ -4,9 +4,14 @@ import Gallery from '../../models/Gallery';
 import UserPreferenceProfile from '../../models/UserPreferenceProfile';
 import UserInteraction from '../../models/UserInteraction';
 import { scoreItemsForUser, scoreItemsForSession, ScoredItem } from './scoringEngine';
-import { getTrendingFeeds, TrendingItem } from './trendingEngine';
+import { getTrendingFeeds } from './trendingEngine';
 import { getCachedSeasonalContext, computeSeasonalBoost, SeasonalContext } from './seasonalEngine';
-import { findSimilarProducts, findSimilarEvents, getUsersAlsoViewed, getComplementaryItems } from './similarityEngine';
+import {
+  findSimilarProducts,
+  findSimilarEvents,
+  getUsersAlsoViewed,
+  getComplementaryItems,
+} from './similarityEngine';
 import { getColdStartFeed, ColdStartRecommendation } from './coldStartHandler';
 import { RecommendationCache } from './recommendationCache';
 import { explorationEngine } from './explorationEngine';
@@ -21,11 +26,11 @@ const CIRCUIT_COOLDOWN_MS = 60_000; // 60 seconds
 
 // ── Scoring Weights ──
 const WEIGHTS = {
-  behavioral: 0.30,
-  contentSimilarity: 0.20,
+  behavioral: 0.3,
+  contentSimilarity: 0.2,
   trending: 0.15,
   seasonal: 0.15,
-  engagement: 0.10,
+  engagement: 0.1,
   freshness: 0.05,
   diversity: 0.05,
 };
@@ -64,7 +69,7 @@ export interface RecommendationContext {
  * Fans out to sub-engines, merges results, applies diversity filters, and returns final ranked list.
  */
 export async function getPersonalizedRecommendations(
-  ctx: RecommendationContext
+  ctx: RecommendationContext,
 ): Promise<{ items: RecommendedItem[]; source: string; seasonal: SeasonalContext | null }> {
   const limit = ctx.limit || 12;
   const offset = ctx.offset || 0;
@@ -75,7 +80,7 @@ export async function getPersonalizedRecommendations(
       logger.warn('[RECO ENGINE] Circuit breaker OPEN — serving cold-start fallback');
       let coldItems = await getColdStartFeed({ limit: limit + 15, targetType: ctx.targetType });
       if (ctx.page === 'homepage') {
-        coldItems = coldItems.filter(item => item.targetType !== 'gallery');
+        coldItems = coldItems.filter((item) => item.targetType !== 'gallery');
       }
       const enriched = await enrichItems(coldItems.slice(0, limit));
       return { items: enriched, source: 'circuit-breaker-fallback', seasonal: null };
@@ -93,9 +98,12 @@ export async function getPersonalizedRecommendations(
 
     if (isColdStart && !ctx.currentItemId) {
       // Full cold start — use cold start handler
-      let coldItems = await getColdStartFeed({ limit: limit + offset + 15, targetType: ctx.targetType });
+      let coldItems = await getColdStartFeed({
+        limit: limit + offset + 15,
+        targetType: ctx.targetType,
+      });
       if (ctx.page === 'homepage') {
-        coldItems = coldItems.filter(item => item.targetType !== 'gallery');
+        coldItems = coldItems.filter((item) => item.targetType !== 'gallery');
       }
       const enriched = await enrichItems(coldItems.slice(offset, offset + limit));
       const seasonal = await getCachedSeasonalContext();
@@ -110,9 +118,12 @@ export async function getPersonalizedRecommendations(
 
     if (candidates.length === 0) {
       // Fallback to cold start
-      let coldItems = await getColdStartFeed({ limit: limit + offset + 15, targetType: ctx.targetType });
+      let coldItems = await getColdStartFeed({
+        limit: limit + offset + 15,
+        targetType: ctx.targetType,
+      });
       if (ctx.page === 'homepage') {
-        coldItems = coldItems.filter(item => item.targetType !== 'gallery');
+        coldItems = coldItems.filter((item) => item.targetType !== 'gallery');
       }
       const enriched = await enrichItems(coldItems.slice(offset, offset + limit));
       return { items: enriched, source: 'cold-start-fallback', seasonal };
@@ -126,27 +137,40 @@ export async function getPersonalizedRecommendations(
       ctx.userId
         ? scoreItemsForUser(ctx.userId, candidateIds, { limit: scoringLimit })
         : ctx.sessionId
-        ? scoreItemsForSession(ctx.sessionId, candidateIds, { limit: scoringLimit })
-        : Promise.resolve([] as ScoredItem[]),
+          ? scoreItemsForSession(ctx.sessionId, candidateIds, { limit: scoringLimit })
+          : Promise.resolve([] as ScoredItem[]),
       getTrendingFeeds(),
     ]);
 
     // Extract results with graceful fallback for rejected promises
-    const behavioralScores = results[0].status === 'fulfilled' ? results[0].value : ([] as ScoredItem[]);
-    const trendingFeeds = results[1].status === 'fulfilled' ? results[1].value : { trendingNow: [], mostBooked: [], popularThisSeason: [], topRated: [], luxuryTrending: [] };
+    const behavioralScores =
+      results[0].status === 'fulfilled' ? results[0].value : ([] as ScoredItem[]);
+    const trendingFeeds =
+      results[1].status === 'fulfilled'
+        ? results[1].value
+        : {
+            trendingNow: [],
+            mostBooked: [],
+            popularThisSeason: [],
+            topRated: [],
+            luxuryTrending: [],
+          };
 
     if (results[0].status === 'rejected') {
-      logger.warn(`[RECO ENGINE] Behavioral scoring failed (non-fatal): ${(results[0] as PromiseRejectedResult).reason?.message}`);
+      logger.warn(
+        `[RECO ENGINE] Behavioral scoring failed (non-fatal): ${(results[0] as PromiseRejectedResult).reason?.message}`,
+      );
     }
     if (results[1].status === 'rejected') {
-      logger.warn(`[RECO ENGINE] Trending feeds failed (non-fatal): ${(results[1] as PromiseRejectedResult).reason?.message}`);
+      logger.warn(
+        `[RECO ENGINE] Trending feeds failed (non-fatal): ${(results[1] as PromiseRejectedResult).reason?.message}`,
+      );
     }
 
     // Build score map
     const behavioralMap = new Map(behavioralScores.map((s) => [s.targetId, s.score]));
     const trendingMap = new Map(
-      [...trendingFeeds.trendingNow, ...trendingFeeds.mostBooked]
-        .map((t) => [t.targetId, t.score])
+      [...trendingFeeds.trendingNow, ...trendingFeeds.mostBooked].map((t) => [t.targetId, t.score]),
     );
 
     // Score each candidate
@@ -173,10 +197,14 @@ export async function getPersonalizedRecommendations(
       // 2. Content similarity to user profile
       let profileSimilarity = 0;
       if (userProfile) {
-        const catAff = (userProfile.categoryAffinities as any)?.get?.(itemCategory)
-          || (userProfile.categoryAffinities as any)?.[itemCategory] || 0;
-        const styleAff = (userProfile.styleAffinities as any)?.get?.(itemStyle)
-          || (userProfile.styleAffinities as any)?.[itemStyle] || 0;
+        const catAff =
+          (userProfile.categoryAffinities as any)?.get?.(itemCategory) ||
+          (userProfile.categoryAffinities as any)?.[itemCategory] ||
+          0;
+        const styleAff =
+          (userProfile.styleAffinities as any)?.get?.(itemStyle) ||
+          (userProfile.styleAffinities as any)?.[itemStyle] ||
+          0;
         profileSimilarity = Math.min((catAff + styleAff) / 2, 1);
       }
 
@@ -216,7 +244,8 @@ export async function getPersonalizedRecommendations(
         targetType,
         score: Math.round(rawScore * 1000) / 1000,
         rawScore,
-        source: behavioralScore > 0 ? 'personalized' : trendingScore > 0 ? 'trending' : 'content-based',
+        source:
+          behavioralScore > 0 ? 'personalized' : trendingScore > 0 ? 'trending' : 'content-based',
         title: (item as any).title,
         imageSrc: (item as any).imageSrc,
         image: (item as any).image,
@@ -232,19 +261,20 @@ export async function getPersonalizedRecommendations(
     });
 
     // Apply novelty bonus
-    const recentInteractions = ctx.userId || ctx.sessionId
-      ? await UserInteraction.find({
-          ...(ctx.userId ? { userId: ctx.userId } : { sessionId: ctx.sessionId }),
-          targetId: { $exists: true },
-        })
-          .select('targetId')
-          .sort({ timestamp: -1 })
-          .limit(80)
-          .maxTimeMS(3000)
-          .lean()
-      : [];
+    const recentInteractions =
+      ctx.userId || ctx.sessionId
+        ? await UserInteraction.find({
+            ...(ctx.userId ? { userId: ctx.userId } : { sessionId: ctx.sessionId }),
+            targetId: { $exists: true },
+          })
+            .select('targetId')
+            .sort({ timestamp: -1 })
+            .limit(80)
+            .maxTimeMS(3000)
+            .lean()
+        : [];
     const interactedIds = new Set<string>(
-      recentInteractions.map((i: any) => i.targetId?.toString()).filter(Boolean)
+      recentInteractions.map((i: any) => i.targetId?.toString()).filter(Boolean),
     );
     const noveltyBoosted = explorationEngine.applyNoveltyBonus(scoredItems, interactedIds, 0.15);
 
@@ -276,7 +306,7 @@ export async function getPersonalizedRecommendations(
       rankedExploitItems,
       diverseExplorePool,
       limit,
-      userProfile
+      userProfile,
     );
 
     // Paginate the balanced result
@@ -295,14 +325,16 @@ export async function getPersonalizedRecommendations(
     consecutiveFailures++;
     if (consecutiveFailures >= CIRCUIT_FAILURE_THRESHOLD) {
       circuitOpenUntil = Date.now() + CIRCUIT_COOLDOWN_MS;
-      logger.error(`[RECO ENGINE] Circuit breaker OPENED after ${consecutiveFailures} consecutive failures`);
+      logger.error(
+        `[RECO ENGINE] Circuit breaker OPENED after ${consecutiveFailures} consecutive failures`,
+      );
     }
 
     logger.error(`[RECO ENGINE] Error generating recommendations: ${err.message}`);
     // Graceful fallback
     let coldItems = await getColdStartFeed({ limit: limit + 15, targetType: ctx.targetType });
     if (ctx.page === 'homepage') {
-      coldItems = coldItems.filter(item => item.targetType !== 'gallery');
+      coldItems = coldItems.filter((item) => item.targetType !== 'gallery');
     }
     const enriched = await enrichItems(coldItems.slice(0, limit));
     return { items: enriched, source: 'error-fallback', seasonal: null };
@@ -349,7 +381,7 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
           .sort({ createdAt: -1 })
           .limit(Math.floor(limit * 0.4))
           .lean(),
-        ctx.page !== 'homepage' 
+        ctx.page !== 'homepage'
           ? Gallery.find({ isActive: true })
               .select('_id title image category style tags views likes createdAt')
               .sort({ views: -1 })
@@ -370,7 +402,9 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
       const topCatProducts = await Product.find({
         isActive: true,
         _id: { $nin: candidates.map((c) => c._id) },
-        category: { $in: userProfile.topCategories.map((c: string) => new RegExp(escapeRegex(c), 'i')) },
+        category: {
+          $in: userProfile.topCategories.map((c: string) => new RegExp(escapeRegex(c), 'i')),
+        },
       })
         .select('_id title imageSrc category price rating reviews tags slug createdAt')
         .limit(15)
@@ -433,7 +467,7 @@ async function enrichItems(items: ColdStartRecommendation[]): Promise<Recommende
 export async function getSimilarRecommendations(
   targetType: string,
   targetId: string,
-  options: { limit?: number } = {}
+  options: { limit?: number } = {},
 ): Promise<RecommendedItem[]> {
   const limit = options.limit || 8;
 
@@ -495,7 +529,9 @@ export async function getSimilarRecommendations(
 /**
  * Enrich targetIds and targetTypes with full database item details.
  */
-export async function enrichScoredItems(items: { targetId: string; targetType: string; score?: number; source?: string }[]): Promise<any[]> {
+export async function enrichScoredItems(
+  items: { targetId: string; targetType: string; score?: number; source?: string }[],
+): Promise<any[]> {
   if (items.length === 0) return [];
 
   const productIds = items.filter((i) => i.targetType === 'product').map((i) => i.targetId);
@@ -550,18 +586,20 @@ export async function precomputeCatalogRecommendations(): Promise<void> {
   try {
     const products = await Product.find({ isActive: true }).select('_id category').lean();
     const events = await Event.find({ isActive: true }).select('_id style').lean();
-    
-    logger.info(`[RECO ENGINE] Starting precomputation for ${products.length} products and ${events.length} events...`);
-    
+
+    logger.info(
+      `[RECO ENGINE] Starting precomputation for ${products.length} products and ${events.length} events...`,
+    );
+
     let count = 0;
-    
+
     // 1. Similar Products and Complete the Setup
     for (const p of products) {
       const productId = (p._id as any).toString();
-      
+
       // Similar products
       await findSimilarProducts(productId, { limit: 12 });
-      
+
       // Complete setup (complementary)
       const compItems = await getComplementaryItems(p.category || '', [productId], { limit: 8 });
       const productIds = compItems.map((i) => i.targetId);
@@ -569,49 +607,61 @@ export async function precomputeCatalogRecommendations(): Promise<void> {
         .select('_id title imageSrc category price rating reviews slug')
         .lean();
 
-      const enrichedComp = compItems.map((item) => {
-        const full = fullProducts.find((prod) => (prod._id as any).toString() === item.targetId);
-        return full ? {
-          _id: item.targetId,
-          targetType: 'product',
-          score: item.similarityScore,
-          source: 'complete-setup',
-          title: full.title,
-          imageSrc: full.imageSrc,
-          category: full.category,
-          price: full.price,
-          rating: full.rating,
-          reviews: full.reviews,
-          slug: full.slug,
-        } : null;
-      }).filter(Boolean);
-      
+      const enrichedComp = compItems
+        .map((item) => {
+          const full = fullProducts.find((prod) => (prod._id as any).toString() === item.targetId);
+          return full
+            ? {
+                _id: item.targetId,
+                targetType: 'product',
+                score: item.similarityScore,
+                source: 'complete-setup',
+                title: full.title,
+                imageSrc: full.imageSrc,
+                category: full.category,
+                price: full.price,
+                rating: full.rating,
+                reviews: full.reviews,
+                slug: full.slug,
+              }
+            : null;
+        })
+        .filter(Boolean);
+
       await RecommendationCache.setCompleteSetup(productId, enrichedComp);
-      
+
       // Users also viewed
       const alsoViewed = await getUsersAlsoViewed(productId, 'product', { limit: 12 });
       const enrichedAlsoViewed = await enrichScoredItems(
-        alsoViewed.map((i) => ({ targetId: i.targetId, targetType: i.targetType, score: i.similarityScore }))
+        alsoViewed.map((i) => ({
+          targetId: i.targetId,
+          targetType: i.targetType,
+          score: i.similarityScore,
+        })),
       );
       await RecommendationCache.setAlsoViewed(productId, enrichedAlsoViewed);
-      
+
       count++;
     }
-    
+
     // 2. Similar Events
     for (const e of events) {
       const eventId = (e._id as any).toString();
       await findSimilarEvents(eventId, { limit: 8 });
-      
+
       const alsoViewed = await getUsersAlsoViewed(eventId, 'event', { limit: 8 });
       const enrichedAlsoViewed = await enrichScoredItems(
-        alsoViewed.map((i) => ({ targetId: i.targetId, targetType: i.targetType, score: i.similarityScore }))
+        alsoViewed.map((i) => ({
+          targetId: i.targetId,
+          targetType: i.targetType,
+          score: i.similarityScore,
+        })),
       );
       await RecommendationCache.setAlsoViewed(eventId, enrichedAlsoViewed);
-      
+
       count++;
     }
-    
+
     logger.info(`[RECO ENGINE] Precomputation complete. Processed ${count} items.`);
   } catch (err: any) {
     logger.error(`[RECO ENGINE] Error during catalog precomputation: ${err.message}`);
@@ -639,9 +689,9 @@ export async function precomputeActiveUsersFeeds(): Promise<number> {
     const pages = ['homepage', 'for-you', 'style', 'trending'];
     for (const userId of activeUserIds) {
       if (!userId) continue;
-      
+
       await rebuildUserProfile(userId.toString());
-      
+
       for (const page of pages) {
         const result = await getPersonalizedRecommendations({
           userId: userId.toString(),
@@ -652,8 +702,9 @@ export async function precomputeActiveUsersFeeds(): Promise<number> {
         await RecommendationCache.setPersonalFeed(userId.toString(), page, result);
       }
       count++;
-      
-      if (count >= 50) { // Limit to top 50 active users to avoid overloading on batch cron runs
+
+      if (count >= 50) {
+        // Limit to top 50 active users to avoid overloading on batch cron runs
         logger.info('[RECO ENGINE] Cap of 50 active users reached for feed precomputation.');
         break;
       }
@@ -680,12 +731,12 @@ export async function initRecommendationSystem(): Promise<void> {
     await getColdStartFeed({ limit: 20 });
 
     logger.info('[RECO ENGINE] ✅ Recommendation system initialized');
-    
+
     // In background, start a catalog precomputation if cache is cold
     if (process.env.ENABLE_WORKERS !== 'false' && process.env.NODE_ENV !== 'test') {
       setTimeout(() => {
         logger.info('[RECO ENGINE] Running catalog precomputation in background on startup...');
-        precomputeCatalogRecommendations().catch(err => {
+        precomputeCatalogRecommendations().catch((err) => {
           logger.error(`[RECO ENGINE] Startup catalog precomputation failed: ${err.message}`);
         });
       }, 5000);

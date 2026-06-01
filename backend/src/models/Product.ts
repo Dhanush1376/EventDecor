@@ -1,5 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface IRentalPricing {
+  daily: number;
+  weekly: number;
+  monthly: number;
+  customDurationEnabled: boolean;
+  customPricePerDay: number;
+}
+
 export interface IProduct extends Document {
   title: string;
   teluguTitle?: string;
@@ -24,6 +32,16 @@ export interface IProduct extends Document {
   isActive: boolean;
   isNonRefundable: boolean;
   showInGallery: boolean;
+  // Rental fields
+  rentalEnabled: boolean;
+  availabilityMode: 'purchase_only' | 'rent_only' | 'both';
+  rentalPricing: IRentalPricing;
+  securityDeposit: number;
+  isDepositRefundable: boolean;
+  rentalStock: number;
+  rentalMinDays: number;
+  rentalMaxDays: number;
+  isManualRentalPricing: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,14 +71,40 @@ const ProductSchema: Schema = new Schema(
     isActive: { type: Boolean, default: true },
     isNonRefundable: { type: Boolean, default: false },
     showInGallery: { type: Boolean, default: false },
+    // Rental fields
+    rentalEnabled: { type: Boolean, default: false },
+    availabilityMode: {
+      type: String,
+      enum: ['purchase_only', 'rent_only', 'both'],
+      default: 'purchase_only',
+    },
+    rentalPricing: {
+      daily: { type: Number, default: 0, min: 0 },
+      weekly: { type: Number, default: 0, min: 0 },
+      monthly: { type: Number, default: 0, min: 0 },
+      customDurationEnabled: { type: Boolean, default: false },
+      customPricePerDay: { type: Number, default: 0, min: 0 },
+    },
+    securityDeposit: { type: Number, default: 0, min: 0 },
+    isDepositRefundable: { type: Boolean, default: true },
+    rentalStock: { type: Number, default: 0, min: 0 },
+    rentalMinDays: { type: Number, default: 1, min: 1 },
+    rentalMaxDays: { type: Number, default: 365, min: 1 },
+    isManualRentalPricing: { type: Boolean, default: false },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexes
-ProductSchema.index({ title: 'text', description: 'text', category: 'text', tags: 'text', teluguTitle: 'text' }, { name: 'FullTextIndex', weights: { title: 10, category: 5, tags: 5, description: 1, teluguTitle: 8 } });
+ProductSchema.index(
+  { title: 'text', description: 'text', category: 'text', tags: 'text', teluguTitle: 'text' },
+  {
+    name: 'FullTextIndex',
+    weights: { title: 10, category: 5, tags: 5, description: 1, teluguTitle: 8 },
+  },
+);
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ featured: 1 });
 ProductSchema.index({ isActive: 1 });
@@ -72,12 +116,21 @@ ProductSchema.index({ isActive: 1, category: 1, rating: -1 });
 ProductSchema.index({ isActive: 1, category: 1, createdAt: -1 });
 ProductSchema.index({ isActive: 1, featured: 1, createdAt: -1 });
 
+// Rental Indexes
+ProductSchema.index({ isActive: 1, rentalEnabled: 1, category: 1 });
+ProductSchema.index({ isActive: 1, availabilityMode: 1, category: 1 });
+
 // Sitemap Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
-ProductSchema.post('save', () => { triggerSitemapUpdate(); });
-ProductSchema.post('deleteOne', () => { triggerSitemapUpdate(); });
-ProductSchema.post('findOneAndDelete', () => { triggerSitemapUpdate(); });
+ProductSchema.post('save', () => {
+  triggerSitemapUpdate();
+});
+ProductSchema.post('deleteOne', () => {
+  triggerSitemapUpdate();
+});
+ProductSchema.post('findOneAndDelete', () => {
+  triggerSitemapUpdate();
+});
 
 const Product = mongoose.model<IProduct>('Product', ProductSchema);
 export default Product;
-

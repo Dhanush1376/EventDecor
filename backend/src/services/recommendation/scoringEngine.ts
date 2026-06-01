@@ -1,5 +1,4 @@
 import UserInteraction from '../../models/UserInteraction';
-import UserPreferenceProfile from '../../models/UserPreferenceProfile';
 import logger from '../../config/logger';
 
 /**
@@ -7,21 +6,21 @@ import logger from '../../config/logger';
  * Each signal has a base weight and a decay half-life in days.
  */
 const SIGNAL_WEIGHTS: Record<string, { weight: number; halfLifeDays: number }> = {
-  purchase:         { weight: 10, halfLifeDays: 30 },
-  booking:          { weight: 10, halfLifeDays: 30 },
-  wishlist_add:     { weight: 7,  halfLifeDays: 14 },
-  cart_add:         { weight: 6,  halfLifeDays: 7 },
-  review_submit:    { weight: 5,  halfLifeDays: 30 },
-  product_click:    { weight: 3,  halfLifeDays: 3 },
-  event_click:      { weight: 3,  halfLifeDays: 3 },
-  gallery_click:    { weight: 2,  halfLifeDays: 3 },
-  product_view:     { weight: 1.5, halfLifeDays: 3 },
-  event_view:       { weight: 1.5, halfLifeDays: 3 },
-  gallery_view:     { weight: 1,  halfLifeDays: 3 },
-  showcase_view:    { weight: 1,  halfLifeDays: 3 },
-  search:           { weight: 4,  halfLifeDays: 7 },
-  category_explore: { weight: 2,  halfLifeDays: 5 },
-  review_read:      { weight: 0.5, halfLifeDays: 3 },
+  purchase: { weight: 10, halfLifeDays: 30 },
+  booking: { weight: 10, halfLifeDays: 30 },
+  wishlist_add: { weight: 7, halfLifeDays: 14 },
+  cart_add: { weight: 6, halfLifeDays: 7 },
+  review_submit: { weight: 5, halfLifeDays: 30 },
+  product_click: { weight: 3, halfLifeDays: 3 },
+  event_click: { weight: 3, halfLifeDays: 3 },
+  gallery_click: { weight: 2, halfLifeDays: 3 },
+  product_view: { weight: 1.5, halfLifeDays: 3 },
+  event_view: { weight: 1.5, halfLifeDays: 3 },
+  gallery_view: { weight: 1, halfLifeDays: 3 },
+  showcase_view: { weight: 1, halfLifeDays: 3 },
+  search: { weight: 4, halfLifeDays: 7 },
+  category_explore: { weight: 2, halfLifeDays: 5 },
+  review_read: { weight: 0.5, halfLifeDays: 3 },
 };
 
 /**
@@ -41,9 +40,9 @@ function computeDecayedWeight(eventType: string, daysSinceEvent: number): number
  */
 function computeDwellBonus(dwellTimeMs?: number): number {
   if (!dwellTimeMs) return 0;
-  if (dwellTimeMs > 60000) return 3;  // >1 minute
-  if (dwellTimeMs > 30000) return 2;  // >30 seconds
-  if (dwellTimeMs > 10000) return 1;  // >10 seconds
+  if (dwellTimeMs > 60000) return 3; // >1 minute
+  if (dwellTimeMs > 30000) return 2; // >30 seconds
+  if (dwellTimeMs > 10000) return 1; // >10 seconds
   return 0;
 }
 
@@ -61,7 +60,7 @@ export interface ScoredItem {
 export async function scoreItemsForUser(
   userId: string,
   candidateIds: string[],
-  options: { lookbackDays?: number; limit?: number } = {}
+  options: { lookbackDays?: number; limit?: number } = {},
 ): Promise<ScoredItem[]> {
   const lookbackDays = options.lookbackDays || 90;
   const limit = options.limit || 50;
@@ -84,7 +83,8 @@ export async function scoreItemsForUser(
 
     for (const interaction of interactions) {
       const targetIdStr = interaction.targetId.toString();
-      const daysSince = (Date.now() - new Date(interaction.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+      const daysSince =
+        (Date.now() - new Date(interaction.timestamp).getTime()) / (1000 * 60 * 60 * 24);
       const decayedWeight = computeDecayedWeight(interaction.eventType, daysSince);
       const dwellBonus = computeDwellBonus(interaction.metadata?.dwellTimeMs);
 
@@ -129,7 +129,7 @@ export async function scoreItemsForUser(
 export async function scoreItemsForSession(
   sessionId: string,
   candidateIds: string[],
-  options: { lookbackMinutes?: number; limit?: number } = {}
+  options: { lookbackMinutes?: number; limit?: number } = {},
 ): Promise<ScoredItem[]> {
   const lookbackMinutes = options.lookbackMinutes || 180; // 3 hours — event decor users browse extensively
   const limit = options.limit || 50;
@@ -152,7 +152,7 @@ export async function scoreItemsForSession(
       const targetIdStr = interaction.targetId.toString();
       // Use shorter decay for session-based scoring (minutes vs days)
       const minutesSince = (Date.now() - new Date(interaction.timestamp).getTime()) / (1000 * 60);
-      const recencyBoost = Math.max(0.1, 1 - (minutesSince / lookbackMinutes));
+      const recencyBoost = Math.max(0.1, 1 - minutesSince / lookbackMinutes);
       const config = SIGNAL_WEIGHTS[interaction.eventType];
       const weight = config ? config.weight * recencyBoost : 0;
       const dwellBonus = computeDwellBonus(interaction.metadata?.dwellTimeMs);
@@ -209,7 +209,12 @@ export async function computeEngagementScore(userId: string): Promise<number> {
           highValueEvents: {
             $sum: {
               $cond: [
-                { $in: ['$eventType', ['purchase', 'booking', 'wishlist_add', 'cart_add', 'review_submit']] },
+                {
+                  $in: [
+                    '$eventType',
+                    ['purchase', 'booking', 'wishlist_add', 'cart_add', 'review_submit'],
+                  ],
+                },
                 1,
                 0,
               ],

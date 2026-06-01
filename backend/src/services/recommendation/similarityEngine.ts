@@ -1,6 +1,5 @@
 import Product from '../../models/Product';
 import Event from '../../models/Event';
-import Gallery from '../../models/Gallery';
 import UserInteraction from '../../models/UserInteraction';
 import { RecommendationCache } from './recommendationCache';
 import { escapeRegex } from '../../services/searchService';
@@ -18,16 +17,16 @@ export interface SimilarItem {
  * When a user views item in category A, suggest items from category B.
  */
 const COMPLEMENTARY_CATEGORIES: Record<string, string[]> = {
-  wedding:     ['floral', 'lighting', 'mandap', 'stage', 'pooja'],
-  mandap:      ['floral', 'lighting', 'wedding', 'stage'],
-  floral:      ['lighting', 'pooja', 'wedding', 'engagement'],
-  lighting:    ['floral', 'mandap', 'stage', 'wedding'],
-  stage:       ['lighting', 'floral', 'mandap', 'wedding'],
-  birthday:    ['balloons', 'party', 'lighting', 'celebration'],
-  engagement:  ['floral', 'lighting', 'premium', 'luxury'],
-  pooja:       ['traditional', 'rangoli', 'floral', 'heritage'],
+  wedding: ['floral', 'lighting', 'mandap', 'stage', 'pooja'],
+  mandap: ['floral', 'lighting', 'wedding', 'stage'],
+  floral: ['lighting', 'pooja', 'wedding', 'engagement'],
+  lighting: ['floral', 'mandap', 'stage', 'wedding'],
+  stage: ['lighting', 'floral', 'mandap', 'wedding'],
+  birthday: ['balloons', 'party', 'lighting', 'celebration'],
+  engagement: ['floral', 'lighting', 'premium', 'luxury'],
+  pooja: ['traditional', 'rangoli', 'floral', 'heritage'],
   traditional: ['pooja', 'heritage', 'rangoli', 'floral'],
-  rangoli:     ['pooja', 'traditional', 'diwali', 'lighting'],
+  rangoli: ['pooja', 'traditional', 'diwali', 'lighting'],
 };
 
 /**
@@ -57,7 +56,7 @@ function priceProximity(priceA: number, priceB: number): number {
  */
 export async function findSimilarProducts(
   productId: string,
-  options: { limit?: number } = {}
+  options: { limit?: number } = {},
 ): Promise<SimilarItem[]> {
   const limit = options.limit || 12;
 
@@ -136,7 +135,9 @@ export async function findSimilarProducts(
     await RecommendationCache.setSimilar(productId, sorted);
     return sorted;
   } catch (err: any) {
-    logger.error(`[SIMILARITY ENGINE] Error finding similar products for ${productId}: ${err.message}`);
+    logger.error(
+      `[SIMILARITY ENGINE] Error finding similar products for ${productId}: ${err.message}`,
+    );
     return [];
   }
 }
@@ -146,7 +147,7 @@ export async function findSimilarProducts(
  */
 export async function findSimilarEvents(
   eventId: string,
-  options: { limit?: number } = {}
+  options: { limit?: number } = {},
 ): Promise<SimilarItem[]> {
   const limit = options.limit || 8;
 
@@ -190,7 +191,10 @@ export async function findSimilarEvents(
       if (featureSim > 0) matchedSignals.push('features');
 
       // Color palette overlap
-      const colorSim = jaccardSimilarity(sourceEvent.colorPalette || [], candidate.colorPalette || []);
+      const colorSim = jaccardSimilarity(
+        sourceEvent.colorPalette || [],
+        candidate.colorPalette || [],
+      );
       score += colorSim * 0.1;
       if (colorSim > 0) matchedSignals.push('colors');
 
@@ -224,7 +228,7 @@ export async function findSimilarEvents(
 export async function getUsersAlsoViewed(
   targetId: string,
   targetType: string,
-  options: { limit?: number } = {}
+  options: { limit?: number } = {},
 ): Promise<SimilarItem[]> {
   const limit = options.limit || 10;
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -246,7 +250,9 @@ export async function getUsersAlsoViewed(
         $match: {
           sessionId: { $in: viewers.slice(0, 100) as any[] }, // Cap for performance
           targetId: { $ne: targetId as any },
-          eventType: { $in: ['product_view', 'event_view', 'gallery_view', 'product_click', 'event_click'] },
+          eventType: {
+            $in: ['product_view', 'event_view', 'gallery_view', 'product_click', 'event_click'],
+          },
           timestamp: { $gte: sevenDaysAgo },
         },
       },
@@ -284,7 +290,7 @@ export async function getUsersAlsoViewed(
 export async function getComplementaryItems(
   sourceCategory: string,
   excludeIds: string[],
-  options: { limit?: number } = {}
+  options: { limit?: number } = {},
 ): Promise<SimilarItem[]> {
   const limit = options.limit || 8;
   const normalized = sourceCategory.toLowerCase();

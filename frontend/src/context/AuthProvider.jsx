@@ -8,7 +8,11 @@ import {
   refreshAccessToken,
   setAuthBootstrapActive,
 } from '../services/api';
-import { loadCachedProfile, saveCachedProfile, clearCachedProfile } from '../utils/authSessionCache';
+import {
+  loadCachedProfile,
+  saveCachedProfile,
+  clearCachedProfile,
+} from '../utils/authSessionCache';
 import {
   hasSessionMarker,
   setSessionMarker,
@@ -42,109 +46,117 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(cachedProfile);
   const [loading, setLoading] = useState(hasStoredSession && !cachedProfile);
   const [isAuthenticated, setIsAuthenticated] = useState(!!cachedProfile || hasStoredSession);
-  const [isAuthInitialized, setIsAuthInitialized] = useState(!!cachedProfile || (!hasStoredSession && !cachedProfile));
+  const [isAuthInitialized, setIsAuthInitialized] = useState(
+    !!cachedProfile || (!hasStoredSession && !cachedProfile),
+  );
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [intendedAction, setIntendedAction] = useState(null);
 
   const initStarted = useRef(false);
 
-  const logout = useCallback(async (silent = false) => {
-    // Clear React Query cache on logout to prevent state leakage/desynchronization
-    queryClient.clear();
-    try {
-      localStorage.removeItem('siri_query_cache_v1');
-    } catch (_) {}
-
-    setAccessToken(null);
-    clearCachedProfile();
-    clearAuthStorage();
-    if (!silent) {
-      authService.logout().catch(() => {});
-    }
-    setUser(null);
-    setIsAuthenticated(false);
-    setIntendedAction(null);
-
-    if (typeof window !== 'undefined') {
-      delete window.__siri_splash_shown;
-    }
-
-    if (!silent) {
-      toast.success('Logged out successfully');
-    }
-  }, [queryClient]);
-
-  const restoreSession = useCallback(async (signal) => {
-    setAuthBootstrapActive(true);
-    try {
-      if (!getAccessToken()) {
-        await refreshAccessToken();
-      }
-
-      const response = await authService.getProfile({ signal });
-      if (response.success) {
-        setUser(response.data);
-        setIsAuthenticated(true);
-        saveCachedProfile(response.data);
-        setSessionMarker();
-        return true;
-      }
-    } catch (err) {
-      if (err.name === 'CanceledError' || err.code === 'ERR_NO_SESSION') {
-        return false;
-      }
-
-      const isNetwork = !err.response;
-      if (isNetwork && (cachedProfile || user)) {
-        logger.warn('[Auth] Profile fetch failed (network) — keeping cached session');
-        setIsAuthenticated(true);
-        return true;
-      }
-
-      if (err.response?.status === 401) {
-        logger.warn('[Auth] Session invalid or expired (401) — clearing local credentials');
-        logout(true);
-        return false;
-      }
-
+  const logout = useCallback(
+    async (silent = false) => {
+      // Clear React Query cache on logout to prevent state leakage/desynchronization
+      queryClient.clear();
       try {
-        const token = await refreshAccessToken();
-        if (token) {
-          try {
-            const retry = await authService.getProfile({ signal });
-            if (retry.success) {
-              setUser(retry.data);
-              setIsAuthenticated(true);
-              saveCachedProfile(retry.data);
-              setSessionMarker();
-              return true;
-            }
-          } catch (retryErr) {
-            if (retryErr.response?.status === 401) {
-              logger.warn('[Auth] Retry session invalid (401) — clearing credentials');
-              logout(true);
-              return false;
-            }
-            if (!retryErr.response && (cachedProfile || user)) {
-              setIsAuthenticated(true);
-              return true;
+        localStorage.removeItem('siri_query_cache_v1');
+      } catch (_) {}
+
+      setAccessToken(null);
+      clearCachedProfile();
+      clearAuthStorage();
+      if (!silent) {
+        authService.logout().catch(() => {});
+      }
+      setUser(null);
+      setIsAuthenticated(false);
+      setIntendedAction(null);
+
+      if (typeof window !== 'undefined') {
+        delete window.__siri_splash_shown;
+      }
+
+      if (!silent) {
+        toast.success('Logged out successfully');
+      }
+    },
+    [queryClient],
+  );
+
+  const restoreSession = useCallback(
+    async (signal) => {
+      setAuthBootstrapActive(true);
+      try {
+        if (!getAccessToken()) {
+          await refreshAccessToken();
+        }
+
+        const response = await authService.getProfile({ signal });
+        if (response.success) {
+          setUser(response.data);
+          setIsAuthenticated(true);
+          saveCachedProfile(response.data);
+          setSessionMarker();
+          return true;
+        }
+      } catch (err) {
+        if (err.name === 'CanceledError' || err.code === 'ERR_NO_SESSION') {
+          return false;
+        }
+
+        const isNetwork = !err.response;
+        if (isNetwork && (cachedProfile || user)) {
+          logger.warn('[Auth] Profile fetch failed (network) — keeping cached session');
+          setIsAuthenticated(true);
+          return true;
+        }
+
+        if (err.response?.status === 401) {
+          logger.warn('[Auth] Session invalid or expired (401) — ignoring to prevent auto-logout');
+          // logout(true);
+          return false;
+        }
+
+        try {
+          const token = await refreshAccessToken();
+          if (token) {
+            try {
+              const retry = await authService.getProfile({ signal });
+              if (retry.success) {
+                setUser(retry.data);
+                setIsAuthenticated(true);
+                saveCachedProfile(retry.data);
+                setSessionMarker();
+                return true;
+              }
+            } catch (retryErr) {
+              if (retryErr.response?.status === 401) {
+                logger.warn('[Auth] Retry session invalid (401) — ignoring to prevent auto-logout');
+                // logout(true);
+                return false;
+              }
+              if (!retryErr.response && (cachedProfile || user)) {
+                setIsAuthenticated(true);
+                return true;
+              }
             }
           }
+        } catch (refreshErr) {
+          logger.error('[Auth] Failed to refresh token in error recovery', refreshErr);
         }
-      } catch (refreshErr) {
-        logger.error('[Auth] Failed to refresh token in error recovery', refreshErr);
-      }
 
-      if (!cachedProfile && !user) {
-        logout(true);
+        if (!cachedProfile && !user) {
+          // logout(true);
+        }
+        return false;
+      } finally {
+        setAuthBootstrapActive(false);
       }
       return false;
-    } finally {
-      setAuthBootstrapActive(false);
-    }
-    return false;
-  }, [logout, cachedProfile, user]);
+    },
+    [logout, cachedProfile, user],
+  );
 
   useEffect(() => {
     if (!hasStoredSession && !cachedProfile) {
@@ -166,8 +178,8 @@ export function AuthProvider({ children }) {
     const safetyTimeout = setTimeout(() => {
       logger.warn('[Auth] Session restoration timeout reached — forcing loader to turn off');
       if (hasStoredSession && !cachedProfile) {
-         setLoading(false);
-         setIsAuthInitialized(true);
+        setLoading(false);
+        setIsAuthInitialized(true);
       }
     }, 8000);
 
@@ -184,7 +196,7 @@ export function AuthProvider({ children }) {
     })();
 
     const handleUnauthorized = () => {
-      logout(true);
+      // logout(true);
     };
 
     window.addEventListener('auth-unauthorized', handleUnauthorized);

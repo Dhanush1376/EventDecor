@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
-import {
-  getPersonalizedRecommendations,
-  getSimilarRecommendations,
-  RecommendationContext,
-} from '../services/recommendation/recommendationEngine';
+
 import { getTrendingFeeds } from '../services/recommendation/trendingEngine';
-import { getCachedSeasonalContext, computeSeasonalBoost } from '../services/recommendation/seasonalEngine';
-import { getUsersAlsoViewed, getComplementaryItems } from '../services/recommendation/similarityEngine';
+import {
+  getCachedSeasonalContext,
+  computeSeasonalBoost,
+} from '../services/recommendation/seasonalEngine';
 import { getColdStartFeed } from '../services/recommendation/coldStartHandler';
 import { RecommendationCache } from '../services/recommendation/recommendationCache';
 import Product from '../models/Product';
@@ -44,9 +42,10 @@ export const getFeed = async (req: Request, res: Response) => {
     const trendingFeeds = await getTrendingFeeds().catch(() => null);
     let fallbackItems: any[] = [];
     if (trendingFeeds) {
-      fallbackItems = page === 'homepage'
-        ? trendingFeeds.trendingNow.filter((i: any) => i.targetType !== 'gallery')
-        : trendingFeeds.trendingNow;
+      fallbackItems =
+        page === 'homepage'
+          ? trendingFeeds.trendingNow.filter((i: any) => i.targetType !== 'gallery')
+          : trendingFeeds.trendingNow;
     }
     if (fallbackItems.length === 0) {
       fallbackItems = await getColdStartFeed({ limit: limit + 5 }).catch(() => []);
@@ -57,9 +56,11 @@ export const getFeed = async (req: Request, res: Response) => {
 
     // Trigger async personalized recommendation build in background
     if (isQueuesReady()) {
-      recommendationQueue.add('rebuild-user-feed', { userId, sessionId, page }, { priority: 2 }).catch((err: any) => {
-        logger.error(`[RECO API] Failed to enqueue rebuild-user-feed: ${err.message}`);
-      });
+      recommendationQueue
+        .add('rebuild-user-feed', { userId, sessionId, page }, { priority: 2 })
+        .catch((err: any) => {
+          logger.error(`[RECO API] Failed to enqueue rebuild-user-feed: ${err.message}`);
+        });
     }
 
     // Track impression for CTR fallback
@@ -109,16 +110,25 @@ export const getSimilar = async (req: Request, res: Response) => {
     }
 
     // Check cache
-    const cacheKey = targetType === 'event' ? `event:${targetId as string}` : targetId as string;
+    const cacheKey = targetType === 'event' ? `event:${targetId as string}` : (targetId as string);
     const cached = await RecommendationCache.getSimilar(cacheKey);
 
     if (cached) {
       const enriched = await enrichTrendingItems(
-        cached.map((item: any) => ({ targetId: item.targetId, targetType: item.targetType, score: item.similarityScore }))
+        cached.map((item: any) => ({
+          targetId: item.targetId,
+          targetType: item.targetType,
+          score: item.similarityScore,
+        })),
       );
       return res.status(200).json({
         success: true,
-        data: { items: sanitizeOutputStrings(enriched.slice(0, limit)), targetType, targetId, fromCache: true },
+        data: {
+          items: sanitizeOutputStrings(enriched.slice(0, limit)),
+          targetType,
+          targetId,
+          fromCache: true,
+        },
       });
     }
 
@@ -127,11 +137,15 @@ export const getSimilar = async (req: Request, res: Response) => {
     if (targetType === 'product') {
       const product = await Product.findById(targetId).select('category').lean();
       if (product) {
-        const products = await Product.find({ category: product.category, _id: { $ne: targetId }, isActive: true })
+        const products = await Product.find({
+          category: product.category,
+          _id: { $ne: targetId },
+          isActive: true,
+        })
           .select('_id title imageSrc category price rating reviews slug')
           .limit(limit)
           .lean();
-        fallbackItems = products.map(p => ({
+        fallbackItems = products.map((p) => ({
           targetId: p._id.toString(),
           targetType: 'product',
           title: p.title,
@@ -140,41 +154,57 @@ export const getSimilar = async (req: Request, res: Response) => {
           price: p.price,
           rating: p.rating,
           reviews: p.reviews,
-          slug: p.slug
+          slug: p.slug,
         }));
       }
     } else if (targetType === 'event') {
       const event = await Event.findById(targetId).select('category').lean();
       if (event) {
-        const events = await Event.find({ category: event.category, _id: { $ne: targetId }, isActive: true })
+        const events = await Event.find({
+          category: event.category,
+          _id: { $ne: targetId },
+          isActive: true,
+        })
           .select('_id title image category style basePrice')
           .limit(limit)
           .lean();
-        fallbackItems = events.map(e => ({
+        fallbackItems = events.map((e) => ({
           targetId: e._id.toString(),
           targetType: 'event',
           title: e.title,
           image: e.image,
           category: e.category,
           style: e.style,
-          basePrice: e.basePrice
+          basePrice: e.basePrice,
         }));
       }
     }
 
     // Trigger background calculation
     if (isQueuesReady()) {
-      recommendationQueue.add('precompute-similar', { targetType, targetId }, { priority: 4 }).catch((err: any) => {
-        logger.error(`[RECO API] Failed to enqueue precompute-similar job: ${err.message}`);
-      });
+      recommendationQueue
+        .add('precompute-similar', { targetType, targetId }, { priority: 4 })
+        .catch((err: any) => {
+          logger.error(`[RECO API] Failed to enqueue precompute-similar job: ${err.message}`);
+        });
     }
 
-    await RecommendationCache.incrementCTR('similar', new Date().toISOString().split('T')[0], 'impressions');
+    await RecommendationCache.incrementCTR(
+      'similar',
+      new Date().toISOString().split('T')[0],
+      'impressions',
+    );
 
     res.setHeader('X-Content-Type-Options', 'nosniff');
     return res.status(200).json({
       success: true,
-      data: { items: sanitizeOutputStrings(fallbackItems), targetType, targetId, isFallback: true, fromCache: false },
+      data: {
+        items: sanitizeOutputStrings(fallbackItems),
+        targetType,
+        targetId,
+        isFallback: true,
+        fromCache: false,
+      },
     });
   } catch (err: any) {
     logger.error(`[RECO API] Error in getSimilar: ${err.message}`);
@@ -224,7 +254,11 @@ export const getTrending = async (req: Request, res: Response) => {
     // Enrich trending items with full data
     const enriched = await enrichTrendingItems(items.slice(0, limit));
 
-    await RecommendationCache.incrementCTR('trending', new Date().toISOString().split('T')[0], 'impressions');
+    await RecommendationCache.incrementCTR(
+      'trending',
+      new Date().toISOString().split('T')[0],
+      'impressions',
+    );
 
     return res.status(200).json({
       success: true,
@@ -325,7 +359,7 @@ export const getForYou = async (req: Request, res: Response) => {
         data: {
           items: cached.items || cached,
           source: cached.source || 'personalized',
-          fromCache: true
+          fromCache: true,
         },
       });
     }
@@ -342,9 +376,13 @@ export const getForYou = async (req: Request, res: Response) => {
 
     // Trigger async build in background
     if (isQueuesReady()) {
-      recommendationQueue.add('rebuild-user-feed', { userId, page: 'for-you' }, { priority: 2 }).catch((err: any) => {
-        logger.error(`[RECO API] Failed to enqueue rebuild-user-feed job for you: ${err.message}`);
-      });
+      recommendationQueue
+        .add('rebuild-user-feed', { userId, page: 'for-you' }, { priority: 2 })
+        .catch((err: any) => {
+          logger.error(
+            `[RECO API] Failed to enqueue rebuild-user-feed job for you: ${err.message}`,
+          );
+        });
     }
 
     return res.status(200).json({
@@ -354,8 +392,8 @@ export const getForYou = async (req: Request, res: Response) => {
         source: 'trending-fallback',
         isFallback: true,
         fromCache: false,
-        pagination: { offset, limit, hasMore: false }
-      }
+        pagination: { offset, limit, hasMore: false },
+      },
     });
   } catch (err: any) {
     logger.error(`[RECO API] Error in getForYou: ${err.message}`);
@@ -374,7 +412,9 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
     // Check cache
     const cached = await RecommendationCache.getCompleteSetup(targetId as string);
     if (cached) {
-      return res.status(200).json({ success: true, data: { items: cached.slice(0, limit), fromCache: true } });
+      return res
+        .status(200)
+        .json({ success: true, data: { items: cached.slice(0, limit), fromCache: true } });
     }
 
     // Cache miss: serve fast fallback
@@ -383,12 +423,16 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const fallbackProducts = await Product.find({ category: product.category, _id: { $ne: targetId }, isActive: true })
+    const fallbackProducts = await Product.find({
+      category: product.category,
+      _id: { $ne: targetId },
+      isActive: true,
+    })
       .select('_id title imageSrc category price rating reviews slug')
       .limit(limit)
       .lean();
 
-    const fallbackItems = fallbackProducts.map(p => ({
+    const fallbackItems = fallbackProducts.map((p) => ({
       _id: p._id.toString(),
       targetType: 'product',
       title: p.title,
@@ -397,19 +441,23 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
       price: p.price,
       rating: p.rating,
       reviews: p.reviews,
-      slug: p.slug
+      slug: p.slug,
     }));
 
     // Trigger background precomputation
     if (isQueuesReady()) {
-      recommendationQueue.add('precompute-similar', { targetType: 'product', targetId }, { priority: 4 }).catch((err: any) => {
-        logger.error(`[RECO API] Failed to enqueue precompute-similar job for setup: ${err.message}`);
-      });
+      recommendationQueue
+        .add('precompute-similar', { targetType: 'product', targetId }, { priority: 4 })
+        .catch((err: any) => {
+          logger.error(
+            `[RECO API] Failed to enqueue precompute-similar job for setup: ${err.message}`,
+          );
+        });
     }
 
     return res.status(200).json({
       success: true,
-      data: { items: sanitizeOutputStrings(fallbackItems), isFallback: true, fromCache: false }
+      data: { items: sanitizeOutputStrings(fallbackItems), isFallback: true, fromCache: false },
     });
   } catch (err: any) {
     logger.error(`[RECO API] Error in getCompleteSetup: ${err.message}`);
@@ -429,7 +477,9 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
     // Check cache
     const cached = await RecommendationCache.getAlsoViewed(targetId as string);
     if (cached) {
-      return res.status(200).json({ success: true, data: { items: cached.slice(0, limit), fromCache: true } });
+      return res
+        .status(200)
+        .json({ success: true, data: { items: cached.slice(0, limit), fromCache: true } });
     }
 
     // Cache miss: serve fast fallback
@@ -437,11 +487,15 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
     if (targetType === 'product') {
       const product = await Product.findById(targetId).select('category').lean();
       if (product) {
-        const products = await Product.find({ category: product.category, _id: { $ne: targetId }, isActive: true })
+        const products = await Product.find({
+          category: product.category,
+          _id: { $ne: targetId },
+          isActive: true,
+        })
           .select('_id title imageSrc category price rating reviews slug')
           .limit(limit)
           .lean();
-        fallbackItems = products.map(p => ({
+        fallbackItems = products.map((p) => ({
           _id: p._id.toString(),
           targetType: 'product',
           title: p.title,
@@ -450,38 +504,46 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
           price: p.price,
           rating: p.rating,
           reviews: p.reviews,
-          slug: p.slug
+          slug: p.slug,
         }));
       }
     } else {
       const event = await Event.findById(targetId).select('category').lean();
       if (event) {
-        const events = await Event.find({ category: event.category, _id: { $ne: targetId }, isActive: true })
+        const events = await Event.find({
+          category: event.category,
+          _id: { $ne: targetId },
+          isActive: true,
+        })
           .select('_id title image category style basePrice')
           .limit(limit)
           .lean();
-        fallbackItems = events.map(e => ({
+        fallbackItems = events.map((e) => ({
           _id: e._id.toString(),
           targetType: 'event',
           title: e.title,
           image: e.image,
           category: e.category,
           style: e.style,
-          basePrice: e.basePrice
+          basePrice: e.basePrice,
         }));
       }
     }
 
     // Trigger background precomputation
     if (isQueuesReady()) {
-      recommendationQueue.add('precompute-similar', { targetType, targetId }, { priority: 4 }).catch((err: any) => {
-        logger.error(`[RECO API] Failed to enqueue precompute-similar job for also-viewed: ${err.message}`);
-      });
+      recommendationQueue
+        .add('precompute-similar', { targetType, targetId }, { priority: 4 })
+        .catch((err: any) => {
+          logger.error(
+            `[RECO API] Failed to enqueue precompute-similar job for also-viewed: ${err.message}`,
+          );
+        });
     }
 
     return res.status(200).json({
       success: true,
-      data: { items: sanitizeOutputStrings(fallbackItems), isFallback: true, fromCache: false }
+      data: { items: sanitizeOutputStrings(fallbackItems), isFallback: true, fromCache: false },
     });
   } catch (err: any) {
     logger.error(`[RECO API] Error in getAlsoViewed: ${err.message}`);

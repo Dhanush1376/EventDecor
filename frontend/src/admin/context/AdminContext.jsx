@@ -1,12 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-} from"react";
-import { initialWebsiteContent } from"../data/websiteContentData";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { initialWebsiteContent } from '../data/websiteContentData';
 import {
   productService,
   orderService,
@@ -17,24 +10,35 @@ import {
   galleryService,
   eventService,
   notificationService,
-} from"../../services/domainServices";
-import toast from"react-hot-toast";
-import { useAuth } from"../../context/AuthContext";
-import { refreshWebsiteContent } from"../../hooks/useWebsiteContent";
-import { io as socketIO } from"socket.io-client";
-import { getAccessToken } from"../../services/api";
-import { getApiUrl } from"../../utils/apiUrl";
-import logger from"../../utils/logger";
+} from '../../services/domainServices';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
+import { refreshWebsiteContent } from '../../hooks/useWebsiteContent';
+import { io as socketIO } from 'socket.io-client';
+import { getAccessToken } from '../../services/api';
+import { getApiUrl } from '../../utils/apiUrl';
+import logger from '../../utils/logger';
 
 const mapDbNotificationToFrontend = (n) => ({
   id: n._id || n.id,
   title: n.title,
   message: n.message,
-  type: n.type === 'custom_request' ? 'booking' : (n.type === 'inquiry' ? 'booking' : (n.type === 'user' ? 'review' : n.type)),
+  type:
+    n.type === 'custom_request'
+      ? 'booking'
+      : n.type === 'inquiry'
+        ? 'booking'
+        : n.type === 'user'
+          ? 'review'
+          : n.type,
   read: n.isRead,
-  time: n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date(n.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Just now',
+  time: n.createdAt
+    ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) +
+      ' ' +
+      new Date(n.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })
+    : 'Just now',
   actionLink: n.actionLink,
-  rawNotification: n
+  rawNotification: n,
 });
 
 const AdminContext = createContext(null);
@@ -43,7 +47,7 @@ const loadContent = () => initialWebsiteContent;
 
 const initialCustomCategories = {
   products: [],
-  events: []
+  events: [],
 };
 
 const loadCustomCategories = () => initialCustomCategories;
@@ -51,63 +55,77 @@ const loadCustomCategories = () => initialCustomCategories;
 const mapDbProductToFrontend = (p) => {
   if (!p) return null;
   if (p.id && p.name && p.image) return p;
-  
-  let fStatus ="active";
-  if (p.stock === 0) fStatus ="out_of_stock";
-  else if (p.stock <= 5) fStatus ="low_stock";
-  else if (!p.isActive) fStatus ="draft";
-  
+
+  let fStatus = 'active';
+  if (p.stock === 0) fStatus = 'out_of_stock';
+  else if (p.stock <= 5) fStatus = 'low_stock';
+  else if (!p.isActive) fStatus = 'draft';
+
   return {
-    id: p._id || p.id ||"PRD-UNKNOWN",
-    name: p.title || p.name ||"Handcrafted Decor Piece",
-    nameTE: p.teluguTitle || p.nameTE ||"",
-    category: p.category ||"Uncategorized",
+    id: p._id || p.id || 'PRD-UNKNOWN',
+    name: p.title || p.name || 'Handcrafted Decor Piece',
+    nameTE: p.teluguTitle || p.nameTE || '',
+    category: p.category || 'Uncategorized',
     price: p.price || 0,
     stock: p.stock !== undefined ? p.stock : 10,
     status: fStatus,
     featured: p.featured !== undefined ? p.featured : false,
-    image: p.imageSrc || p.image ||"",
+    image: p.imageSrc || p.image || '',
     views: p.views !== undefined ? p.views : 120,
     sold: p.sold !== undefined ? p.sold : 5,
     rating: p.rating || 5.0,
-    description: p.description ||"",
-    rawProduct: p
+    description: p.description || '',
+    rawProduct: p,
   };
 };
 
 const mapDbOrderToFrontend = (o) => {
   if (!o) return null;
   if (o.id && o.customer && o.status) return o;
-  
+
   const dateStr = o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '';
-  
+
   // Use capitalized statuses strictly
-  let fStatus = o.orderStatus ||"Pending";
+  let fStatus = o.orderStatus || 'Pending';
   // fallback map for old dev artifacts
-  if (fStatus ==="placed") fStatus ="Pending";
-  else if (fStatus ==="confirmed") fStatus ="Confirmed";
-  else if (fStatus ==="processing") fStatus ="Packed";
-  else if (fStatus ==="shipped") fStatus ="Shipped";
-  else if (fStatus ==="delivered") fStatus ="Delivered";
-  else if (fStatus ==="cancelled") fStatus ="Cancelled";
-  
-  const mappedItems = Array.isArray(o.items) ? o.items.map(item => ({
-    name: item.title || item.name ||"Handcrafted Piece",
-    qty: item.quantity || item.qty || 1,
-    price: item.price || 0
-  })) : [];
-  
+  if (fStatus === 'placed') fStatus = 'Pending';
+  else if (fStatus === 'confirmed') fStatus = 'Confirmed';
+  else if (fStatus === 'processing') fStatus = 'Packed';
+  else if (fStatus === 'shipped') fStatus = 'Shipped';
+  else if (fStatus === 'delivered') fStatus = 'Delivered';
+  else if (fStatus === 'cancelled') fStatus = 'Cancelled';
+
+  const mappedItems = Array.isArray(o.items)
+    ? o.items.map((item) => ({
+        name: item.title || item.name || 'Handcrafted Piece',
+        qty: item.quantity || item.qty || 1,
+        price: item.price || 0,
+        type: item.type || 'purchase',
+        rentalInfo: item.rentalInfo || null,
+        deposit: item.deposit || 0,
+      }))
+    : [];
+
   return {
-    id: o._id || o.id ||"ORD-UNKNOWN",
-    customer: o.shippingAddress?.name || o.user?.name ||"Store Customer",
-    email: o.shippingAddress?.email || o.user?.email ||"customer@email.com",
-    phone: o.shippingAddress?.phone || o.user?.phone ||"",
+    id: o._id || o.id || 'ORD-UNKNOWN',
+    customer: o.shippingAddress?.name || o.user?.name || 'Store Customer',
+    email: o.shippingAddress?.email || o.user?.email || 'customer@email.com',
+    phone: o.shippingAddress?.phone || o.user?.phone || '',
     items: mappedItems,
     total: o.total || o.subtotal || 0,
     status: fStatus,
-    payment: o.paymentStatus ==="paid" ?"Paid" : (o.paymentStatus ==="COD Collected" ?"COD Collected" : (o.paymentMethod?.toLowerCase() ==="cod" ?"COD Pending" :"Pending")),
+    payment:
+      o.paymentStatus === 'paid'
+        ? 'Paid'
+        : o.paymentStatus === 'COD Collected'
+          ? 'COD Collected'
+          : o.paymentMethod?.toLowerCase() === 'cod'
+            ? 'COD Pending'
+            : 'Pending',
     date: dateStr,
-    address: o.shippingAddress ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}` :"Ongole",
+    address: o.shippingAddress
+      ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}`
+      : 'Ongole',
     rawOrder: o,
     // Enterprise logistics mapping
     invoiceNumber: o.invoiceNumber,
@@ -119,32 +137,39 @@ const mapDbOrderToFrontend = (o) => {
     barcodeData: o.barcodeData,
     qrCodeData: o.qrCodeData,
     shippingAddress: o.shippingAddress,
-    needByDate: o.needByDate
+    needByDate: o.needByDate,
+    orderType: o.orderType || 'purchase',
+    rentalInfo: o.rentalInfo || null,
+    depositTotal: o.depositTotal || 0,
   };
 };
 
 const mapDbCustomerToFrontend = (c) => {
   if (!c) return null;
   if (c.id && c.orders !== undefined) return c;
-  
-  const totalSpent = Array.isArray(c.orders) ? c.orders.reduce((sum, order) => sum + (order.total || 0), 0) : 0;
+
+  const totalSpent = Array.isArray(c.orders)
+    ? c.orders.reduce((sum, order) => sum + (order.total || 0), 0)
+    : 0;
   const orderCount = Array.isArray(c.orders) ? c.orders.length : 0;
-  
-  let segment ="New";
+
+  let segment = 'New';
   if (orderCount > 5 || totalSpent > 50000) {
-    segment ="VIP";
+    segment = 'VIP';
   } else if (orderCount > 0) {
-    segment ="Regular";
+    segment = 'Regular';
   }
-  
-  const lastOrderDate = c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] :"2026-05-15";
-  const city = c.addresses && c.addresses[0] ? c.addresses[0].city :"Ongole";
-  
+
+  const lastOrderDate = c.updatedAt
+    ? new Date(c.updatedAt).toISOString().split('T')[0]
+    : '2026-05-15';
+  const city = c.addresses && c.addresses[0] ? c.addresses[0].city : 'Ongole';
+
   return {
-    id: c._id || c.id ||"CUS-UNKNOWN",
-    name: c.name ||"Customer",
-    email: c.email ||"",
-    phone: c.phone ||"",
+    id: c._id || c.id || 'CUS-UNKNOWN',
+    name: c.name || 'Customer',
+    email: c.email || '',
+    phone: c.phone || '',
     orders: orderCount,
     totalSpent: totalSpent || 0,
     lastOrder: lastOrderDate,
@@ -153,27 +178,27 @@ const mapDbCustomerToFrontend = (c) => {
     walletBalance: c.walletBalance || 0,
     siriCoins: c.siriCoins || 0,
     loyaltyTier: c.loyaltyTier || 'Bronze',
-    rawUser: c
+    rawUser: c,
   };
 };
 
 const mapDbEventToFrontend = (e) => {
   if (!e) return null;
   if (e.id && e.eventType && e.customer) return e;
-  
-  const dateStr = e.createdAt ? new Date(e.createdAt).toISOString().split('T')[0] :"2026-05-20";
-  
+
+  const dateStr = e.createdAt ? new Date(e.createdAt).toISOString().split('T')[0] : '2026-05-20';
+
   return {
-    id: e._id || e.id ||"EVT-UNKNOWN",
-    eventType: e.title ||"Custom Consultation",
-    customer: e.category ||"Consultation Request",
-    status: e.isActive ?"Confirmed" :"Pending",
+    id: e._id || e.id || 'EVT-UNKNOWN',
+    eventType: e.title || 'Custom Consultation',
+    customer: e.category || 'Consultation Request',
+    status: e.isActive ? 'Confirmed' : 'Pending',
     date: dateStr,
-    venue: e.venueType ||"Ongole",
-    amount: e.pricing ? parseInt(e.pricing.replace(/[^0-9]/g,"")) || 45000 : 45000,
-    payment:"Paid",
-    staff: ["Siri","Anji"],
-    rawEvent: e
+    venue: e.venueType || 'Ongole',
+    amount: e.pricing ? parseInt(e.pricing.replace(/[^0-9]/g, '')) || 45000 : 45000,
+    payment: 'Paid',
+    staff: ['Siri', 'Anji'],
+    rawEvent: e,
   };
 };
 
@@ -184,7 +209,7 @@ export function AdminProvider({ children }) {
   const { logout } = useAuth();
 
   // ─── SaaS Simulation & Security States ───
-  const [activeRole, setActiveRole] = useState("owner");
+  const [activeRole, setActiveRole] = useState('owner');
   const [safetyLock, setSafetyLock] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState(15);
@@ -196,7 +221,7 @@ export function AdminProvider({ children }) {
   const [showIdleWarning, setShowIdleWarning] = useState(false);
   const [idleSecondsLeft, setIdleSecondsLeft] = useState(30);
 
-  const logAdminAction = useCallback(async (action, details, status ="Success") => {
+  const logAdminAction = useCallback(async (action, details, status = 'Success') => {
     const actorName = activeRole;
     try {
       const res = await analyticsService.createAuditLog(action, details, status);
@@ -208,12 +233,12 @@ export function AdminProvider({ children }) {
           action: log.path || action,
           details: `Client Action on ${log.path || ''}: ${details}`,
           timestamp: log.createdAt || new Date().toISOString(),
-          status: log.statusCode < 400 ? 'Success' : 'Failure'
+          status: log.statusCode < 400 ? 'Success' : 'Failure',
         };
         setAuditLogs((prev) => [newLog, ...prev].slice(0, 100));
       }
     } catch (err) {
-      logger.error("Failed to log admin action to backend:", err);
+      logger.error('Failed to log admin action to backend:', err);
       // Fallback local state update to ensure UI interactivity
       const newLog = {
         id: `log-${Date.now()}`,
@@ -221,7 +246,7 @@ export function AdminProvider({ children }) {
         action,
         details,
         timestamp: new Date().toISOString(),
-        status
+        status,
       };
       setAuditLogs((prev) => [newLog, ...prev].slice(0, 100));
     }
@@ -232,45 +257,47 @@ export function AdminProvider({ children }) {
       const res = await analyticsService.clearAuditLogs();
       if (res.success) {
         setAuditLogs([]);
-        toast.success("Activity log cleared");
+        toast.success('Activity log cleared');
       }
     } catch (err) {
-      logger.error("Failed to clear audit logs:", err);
-      toast.error("Failed to clear cloud audit logs");
+      logger.error('Failed to clear audit logs:', err);
+      toast.error('Failed to clear cloud audit logs');
     }
   }, []);
 
   const toggleSafetyLock = useCallback(async () => {
     const next = !safetyLock;
-    
+
     // Optimistic UI update
     setSafetyLock(next);
-    
+
     try {
       await cmsService.updateSection('admin_safety_lock', { safetyLock: next });
-      logAdminAction("TOGGLE_SAFETY_LOCK", `Global safety write override lock set to ${next}`);
-      toast.success(`Safety lock is now ${next ?"ACTIVE (Write Operations Blocked)" :"DISABLED"}`);
+      logAdminAction('TOGGLE_SAFETY_LOCK', `Global safety write override lock set to ${next}`);
+      toast.success(
+        `Safety lock is now ${next ? 'ACTIVE (Write Operations Blocked)' : 'DISABLED'}`,
+      );
     } catch (err) {
-      logger.error("Failed to update backend safety lock:", err);
+      logger.error('Failed to update backend safety lock:', err);
       // Revert on failure
       setSafetyLock(!next);
-      toast.error("Failed to update safety lock on the backend database.");
+      toast.error('Failed to update safety lock on the backend database.');
     }
   }, [safetyLock, logAdminAction]);
 
   const toggleMaintenanceMode = useCallback(async () => {
     const next = !maintenanceMode;
     setMaintenanceMode(next);
-    
+
     try {
       await cmsService.updateSection('admin_maintenance_mode', { maintenanceMode: next });
-      logAdminAction("TOGGLE_MAINTENANCE", `Global storefront maintenance mode set to ${next}`);
-      toast.success(`Maintenance mode is now ${next ?"ENABLED" :"DISABLED"}`);
+      logAdminAction('TOGGLE_MAINTENANCE', `Global storefront maintenance mode set to ${next}`);
+      toast.success(`Maintenance mode is now ${next ? 'ENABLED' : 'DISABLED'}`);
     } catch (err) {
-      logger.error("Failed to update backend maintenance mode:", err);
+      logger.error('Failed to update backend maintenance mode:', err);
       // Revert on failure
       setMaintenanceMode(!next);
-      toast.error("Failed to update maintenance mode on the backend database.");
+      toast.error('Failed to update maintenance mode on the backend database.');
     }
   }, [maintenanceMode, logAdminAction]);
 
@@ -279,36 +306,42 @@ export function AdminProvider({ children }) {
     setAutoPublish(next);
     try {
       await cmsService.updateSection('admin_auto_publish', { autoPublish: next });
-      logAdminAction("TOGGLE_AUTO_PUBLISH", `Global auto publish CMS setting set to ${next}`);
-      toast.success(`Auto-Publish mode is now ${next ?"ENABLED" :"DISABLED"}`);
+      logAdminAction('TOGGLE_AUTO_PUBLISH', `Global auto publish CMS setting set to ${next}`);
+      toast.success(`Auto-Publish mode is now ${next ? 'ENABLED' : 'DISABLED'}`);
     } catch (err) {
-      logger.error("Failed to update backend auto publish setting:", err);
+      logger.error('Failed to update backend auto publish setting:', err);
       setAutoPublish(!next);
-      toast.error("Failed to update auto publish in database");
+      toast.error('Failed to update auto publish in database');
     }
   }, [autoPublish, logAdminAction]);
 
-  const changeActiveRole = useCallback((role) => {
-    setActiveRole(role);
-    logAdminAction("ROLE_SWITCH", `Switched active preview role to ${role.toUpperCase()}`);
-    toast.success(`Simulating '${role.toUpperCase()}' mode permissions`);
-  }, [logAdminAction]);
+  const changeActiveRole = useCallback(
+    (role) => {
+      setActiveRole(role);
+      logAdminAction('ROLE_SWITCH', `Switched active preview role to ${role.toUpperCase()}`);
+      toast.success(`Simulating '${role.toUpperCase()}' mode permissions`);
+    },
+    [logAdminAction],
+  );
 
-  const changeIdleTimeout = useCallback(async (val) => {
-    setIdleTimeoutMinutes(val);
-    try {
-      await cmsService.updateSection('admin_idle_timeout', { idleTimeout: val });
-      logAdminAction("TIMEOUT_UPDATE", `Idle inactivity threshold updated to ${val} minutes`);
-      toast.success(`Inactivity limit set to ${val} minutes`);
-    } catch (err) {
-      logger.error("Failed to save idle timeout to backend:", err);
-      toast.error("Failed to save timeout in database");
-    }
-  }, [logAdminAction]);
+  const changeIdleTimeout = useCallback(
+    async (val) => {
+      setIdleTimeoutMinutes(val);
+      try {
+        await cmsService.updateSection('admin_idle_timeout', { idleTimeout: val });
+        logAdminAction('TIMEOUT_UPDATE', `Idle inactivity threshold updated to ${val} minutes`);
+        toast.success(`Inactivity limit set to ${val} minutes`);
+      } catch (err) {
+        logger.error('Failed to save idle timeout to backend:', err);
+        toast.error('Failed to save timeout in database');
+      }
+    },
+    [logAdminAction],
+  );
 
   // ─── Idle Inactivity Heartbeat Daemon ───
   const lastActivityRef = useRef(null);
-  
+
   useEffect(() => {
     lastActivityRef.current = Date.now();
     const handleActivity = () => {
@@ -319,10 +352,10 @@ export function AdminProvider({ children }) {
       }
     };
 
-    window.addEventListener("mousemove", handleActivity);
-    window.addEventListener("keydown", handleActivity);
-    window.addEventListener("click", handleActivity);
-    window.addEventListener("scroll", handleActivity);
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('click', handleActivity);
+    window.addEventListener('scroll', handleActivity);
 
     const interval = setInterval(() => {
       const elapsedMs = Date.now() - lastActivityRef.current;
@@ -332,10 +365,10 @@ export function AdminProvider({ children }) {
 
       if (elapsedSecs >= totalTimeoutSecs) {
         clearInterval(interval);
-        logAdminAction("SESSION_EXPIRED","Inactivity timeout threshold exceeded, logging out");
+        logAdminAction('SESSION_EXPIRED', 'Inactivity timeout threshold exceeded, logging out');
         logout();
-        toast.error("Session expired due to inactivity.", { duration: 8000 });
-        window.location.href ="/";
+        toast.error('Session expired due to inactivity.', { duration: 8000 });
+        window.location.href = '/';
       } else if (elapsedSecs >= warningStartSecs) {
         setShowIdleWarning(true);
         setIdleSecondsLeft(totalTimeoutSecs - elapsedSecs);
@@ -345,16 +378,16 @@ export function AdminProvider({ children }) {
     }, 1000);
 
     return () => {
-      window.removeEventListener("mousemove", handleActivity);
-      window.removeEventListener("keydown", handleActivity);
-      window.removeEventListener("click", handleActivity);
-      window.removeEventListener("scroll", handleActivity);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('click', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
       clearInterval(interval);
     };
   }, [idleTimeoutMinutes, showIdleWarning, logout, logAdminAction]);
 
   // ─── Theme Mode (Light only — dark mode removed) ───
-  const themeMode ="light";
+  const themeMode = 'light';
 
   // ─── Backend-Connected State ───
   const [products, setProducts] = useState([]);
@@ -365,84 +398,99 @@ export function AdminProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
   const [dataLoading, setDataLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchPaletteOpen, setSearchPaletteOpen] = useState(false);
 
   // ─── Custom Categories & Themes State ───
   const [customCategories, setCustomCategories] = useState(loadCustomCategories);
 
-  const addCustomCategory = useCallback((type, data) => {
-    if (activeRole ==="viewer") {
-      toast.error("Viewer Role: Write operations are restricted!");
-      return;
-    }
-    if (safetyLock) {
-      toast.error("Safety Lock Active: Write operations are globally blocked!");
-      return;
-    }
-    setCustomCategories(prev => {
-      const next = { ...prev };
-      const list = next[type] || [];
-      const newCat = {
-        id: `${type[0]}-${Date.now()}`,
-        name: data.name,
-        count: data.count || 0,
-        image: data.image ||"",
-        active: data.active !== undefined ? data.active : true,
-        description: data.description ||""
-      };
-      next[type] = [newCat, ...list];
-      cmsService.updateSection('custom_categories', next).catch(e => logger.error("Failed to save category:", e));
-      logAdminAction("ADD_CATEGORY", `Added new category/theme '${data.name}' to ${type}`);
-      toast.success(`${type === "products" ? "Category" : "Theme"} added`);
-      return next;
-    });
-  }, [activeRole, safetyLock, logAdminAction]);
+  const addCustomCategory = useCallback(
+    (type, data) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return;
+      }
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return;
+      }
+      setCustomCategories((prev) => {
+        const next = { ...prev };
+        const list = next[type] || [];
+        const newCat = {
+          id: `${type[0]}-${Date.now()}`,
+          name: data.name,
+          count: data.count || 0,
+          image: data.image || '',
+          active: data.active !== undefined ? data.active : true,
+          description: data.description || '',
+        };
+        next[type] = [newCat, ...list];
+        cmsService
+          .updateSection('custom_categories', next)
+          .catch((e) => logger.error('Failed to save category:', e));
+        logAdminAction('ADD_CATEGORY', `Added new category/theme '${data.name}' to ${type}`);
+        toast.success(`${type === 'products' ? 'Category' : 'Theme'} added`);
+        return next;
+      });
+    },
+    [activeRole, safetyLock, logAdminAction],
+  );
 
-  const updateCustomCategory = useCallback((type, id, data) => {
-    if (activeRole ==="viewer") {
-      toast.error("Viewer Role: Write operations are restricted!");
-      return;
-    }
-    if (safetyLock) {
-      toast.error("Safety Lock Active: Write operations are globally blocked!");
-      return;
-    }
-    setCustomCategories(prev => {
-      const next = { ...prev };
-      const list = next[type] || [];
-      next[type] = list.map(item => item.id === id ? { ...item, ...data } : item);
-      cmsService.updateSection('custom_categories', next).catch(e => logger.error("Failed to save categories:", e));
-      logAdminAction("UPDATE_CATEGORY", `Updated category/theme ID ${id}`);
-      toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} updated!`);
-      return next;
-    });
-  }, [activeRole, safetyLock, logAdminAction]);
+  const updateCustomCategory = useCallback(
+    (type, id, data) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return;
+      }
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return;
+      }
+      setCustomCategories((prev) => {
+        const next = { ...prev };
+        const list = next[type] || [];
+        next[type] = list.map((item) => (item.id === id ? { ...item, ...data } : item));
+        cmsService
+          .updateSection('custom_categories', next)
+          .catch((e) => logger.error('Failed to save categories:', e));
+        logAdminAction('UPDATE_CATEGORY', `Updated category/theme ID ${id}`);
+        toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} updated!`);
+        return next;
+      });
+    },
+    [activeRole, safetyLock, logAdminAction],
+  );
 
-  const deleteCustomCategory = useCallback((type, id) => {
-    if (activeRole ==="viewer") {
-      toast.error("Viewer Role: Write operations are restricted!");
-      return;
-    }
-    if (safetyLock) {
-      toast.error("Safety Lock Active: Write operations are globally blocked!");
-      return;
-    }
-    setCustomCategories(prev => {
-      const next = { ...prev };
-      const list = next[type] || [];
-      next[type] = list.filter(item => item.id !== id);
-      cmsService.updateSection('custom_categories', next).catch(e => logger.error("Failed to save categories:", e));
-      logAdminAction("DELETE_CATEGORY", `Removed category/theme ID ${id}`);
-      toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} removed.`);
-      return next;
-    });
-  }, [activeRole, safetyLock, logAdminAction]);
+  const deleteCustomCategory = useCallback(
+    (type, id) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return;
+      }
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return;
+      }
+      setCustomCategories((prev) => {
+        const next = { ...prev };
+        const list = next[type] || [];
+        next[type] = list.filter((item) => item.id !== id);
+        cmsService
+          .updateSection('custom_categories', next)
+          .catch((e) => logger.error('Failed to save categories:', e));
+        logAdminAction('DELETE_CATEGORY', `Removed category/theme ID ${id}`);
+        toast.success(`${type === 'products' ? 'Product Category' : 'Event Theme'} removed.`);
+        return next;
+      });
+    },
+    [activeRole, safetyLock, logAdminAction],
+  );
 
   // ─── Website Content CMS State ───
   const [websiteContent, setWebsiteContent] = useState(loadContent);
   const websiteContentRef = useRef(websiteContent);
-  
+
   useEffect(() => {
     websiteContentRef.current = websiteContent;
   }, [websiteContent]);
@@ -457,66 +505,83 @@ export function AdminProvider({ children }) {
     const fetchAdminData = async () => {
       setDataLoading(true);
       try {
-        const [productsRes, ordersRes, customersRes, reviewsRes, statsRes, eventsRes, auditLogsRes, alertsRes] =
-          await Promise.allSettled([
-            productService.getAll({ limit: 100 }),
-            orderService.getAll({ limit: 50 }),
-            userService.getAll({ limit: 50, role:"user" }),
-            reviewService.getAll({ limit: 50 }),
-            analyticsService.getDashboardStats(),
-            eventService.getAll({ limit: 50 }),
-            analyticsService.getAuditLogs({ limit: 100 }),
-            notificationService.getAdminAlerts(),
-          ]);
+        const [
+          productsRes,
+          ordersRes,
+          customersRes,
+          reviewsRes,
+          statsRes,
+          eventsRes,
+          auditLogsRes,
+          alertsRes,
+        ] = await Promise.allSettled([
+          productService.getAll({ limit: 100 }),
+          orderService.getAll({ limit: 50 }),
+          userService.getAll({ limit: 50, role: 'user' }),
+          reviewService.getAll({ limit: 50 }),
+          analyticsService.getDashboardStats(),
+          eventService.getAll({ limit: 50 }),
+          analyticsService.getAuditLogs({ limit: 100 }),
+          notificationService.getAdminAlerts(),
+        ]);
 
-        if (productsRes.status ==="fulfilled" && productsRes.value?.success) {
+        if (productsRes.status === 'fulfilled' && productsRes.value?.success) {
           const payload = productsRes.value.data;
           const list = payload?.products || payload?.data || payload || [];
           setProducts((Array.isArray(list) ? list : []).map(mapDbProductToFrontend));
         }
-        if (ordersRes.status ==="fulfilled" && ordersRes.value?.success) {
+        if (ordersRes.status === 'fulfilled' && ordersRes.value?.success) {
           const payload = ordersRes.value.data;
           const list = payload?.orders || payload?.data || payload || [];
           setOrders((Array.isArray(list) ? list : []).map(mapDbOrderToFrontend));
         }
-        if (customersRes.status ==="fulfilled" && customersRes.value?.success) {
+        if (customersRes.status === 'fulfilled' && customersRes.value?.success) {
           const payload = customersRes.value.data;
           const list = payload?.users || payload?.data || payload || [];
           setCustomers((Array.isArray(list) ? list : []).map(mapDbCustomerToFrontend));
         }
-        if (reviewsRes.status ==="fulfilled" && reviewsRes.value?.success) {
+        if (reviewsRes.status === 'fulfilled' && reviewsRes.value?.success) {
           const payload = reviewsRes.value.data;
           const list = payload?.reviews || payload?.data || payload || [];
           setReviews(Array.isArray(list) ? list : []);
         }
-        if (statsRes.status ==="fulfilled" && statsRes.value?.success) {
+        if (statsRes.status === 'fulfilled' && statsRes.value?.success) {
           setDashboardStats(statsRes.value.data);
         }
-        if (eventsRes.status ==="fulfilled" && eventsRes.value?.success) {
+        if (eventsRes.status === 'fulfilled' && eventsRes.value?.success) {
           const evData = eventsRes.value.data;
-          const list = evData?.events || evData?.items || evData?.data || (Array.isArray(evData) ? evData : []);
+          const list =
+            evData?.events ||
+            evData?.items ||
+            evData?.data ||
+            (Array.isArray(evData) ? evData : []);
           setEventBookings((Array.isArray(list) ? list : []).map(mapDbEventToFrontend));
         }
-        if (auditLogsRes.status ==="fulfilled" && auditLogsRes.value?.success) {
+        if (auditLogsRes.status === 'fulfilled' && auditLogsRes.value?.success) {
           const rawLogs = auditLogsRes.value.data?.data || auditLogsRes.value.data || [];
-          setAuditLogs(rawLogs.map(log => ({
-            id: log._id || log.id,
-            actor: (log.actorRole || 'OWNER').toUpperCase(),
-            action: log.path || log.method,
-            details: log.method === 'CLIENT_ACTION' 
-              ? `Admin Triggered Action: ${log.path}` 
-              : `HTTP ${log.method || 'ACTION'} on ${log.path || ''} with status ${log.statusCode || 200}`,
-            timestamp: log.createdAt || new Date().toISOString(),
-            status: log.statusCode < 400 ? 'Success' : 'Failure'
-          })));
+          setAuditLogs(
+            rawLogs.map((log) => ({
+              id: log._id || log.id,
+              actor: (log.actorRole || 'OWNER').toUpperCase(),
+              action: log.path || log.method,
+              details:
+                log.method === 'CLIENT_ACTION'
+                  ? `Admin Triggered Action: ${log.path}`
+                  : `HTTP ${log.method || 'ACTION'} on ${log.path || ''} with status ${log.statusCode || 200}`,
+              timestamp: log.createdAt || new Date().toISOString(),
+              status: log.statusCode < 400 ? 'Success' : 'Failure',
+            })),
+          );
         }
-        if (alertsRes.status ==="fulfilled" && alertsRes.value?.success) {
-          const list = alertsRes.value.data?.notifications || (Array.isArray(alertsRes.value.data) ? alertsRes.value.data : []);
+        if (alertsRes.status === 'fulfilled' && alertsRes.value?.success) {
+          const list =
+            alertsRes.value.data?.notifications ||
+            (Array.isArray(alertsRes.value.data) ? alertsRes.value.data : []);
           setNotifications(list.map(mapDbNotificationToFrontend));
         }
       } catch (err) {
-        logger.error("Failed to load admin data:", err);
-        toast.error("Failed to load admin data: " + (err.message || "Unknown error"));
+        logger.error('Failed to load admin data:', err);
+        toast.error('Failed to load admin data: ' + (err.message || 'Unknown error'));
       } finally {
         setDataLoading(false);
       }
@@ -537,7 +602,10 @@ export function AdminProvider({ children }) {
               merged.hero = { ...initialWebsiteContent.hero, ...response.data.hero };
             }
             if (response.data.heroNavigationCards) {
-              merged.heroNavigationCards = { ...initialWebsiteContent.heroNavigationCards, ...response.data.heroNavigationCards };
+              merged.heroNavigationCards = {
+                ...initialWebsiteContent.heroNavigationCards,
+                ...response.data.heroNavigationCards,
+              };
             }
             if (response.data.eventsPage) {
               merged.eventsPage = {
@@ -545,17 +613,17 @@ export function AdminProvider({ children }) {
                 ...response.data.eventsPage,
                 hero: {
                   ...initialWebsiteContent.eventsPage.hero,
-                  ...(response.data.eventsPage.hero || {})
+                  ...(response.data.eventsPage.hero || {}),
                 },
                 promo: {
                   ...initialWebsiteContent.eventsPage.promo,
-                  ...(response.data.eventsPage.promo || {})
-                }
+                  ...(response.data.eventsPage.promo || {}),
+                },
               };
             }
             // Preserve local unsaved draft sections (marked as 'modified')
             Object.keys(prev).forEach((key) => {
-              if (prev[key]?.status ==="modified") {
+              if (prev[key]?.status === 'modified') {
                 merged[key] = prev[key];
               }
             });
@@ -584,8 +652,6 @@ export function AdminProvider({ children }) {
           if (val) setIdleTimeoutMinutes(parseInt(val));
         }
 
-
-
         // Fetch backend-backed admin auto publish state
         const autoPublishRes = await cmsService.getSection('admin_auto_publish');
         if (autoPublishRes && autoPublishRes.success && autoPublishRes.data) {
@@ -602,7 +668,7 @@ export function AdminProvider({ children }) {
           }
         }
       } catch (err) {
-        logger.warn("CMS API unavailable", err);
+        logger.warn('CMS API unavailable', err);
       }
     };
     fetchCMS();
@@ -621,156 +687,164 @@ export function AdminProvider({ children }) {
   const unreadNotifications = notifications.filter((n) => !n.read).length;
 
   const toggleSidebar = useCallback(() => setSidebarOpen((p) => !p), []);
-  const toggleMobileSidebar = useCallback(
-    () => setSidebarMobileOpen((p) => !p),
-    [],
-  );
+  const toggleMobileSidebar = useCallback(() => setSidebarMobileOpen((p) => !p), []);
 
   // ─── Product Actions (Backend-Connected) ───
-  const deleteProduct = useCallback(async (productId) => {
-    if (activeRole ==="viewer") {
-      toast.error("Viewer Role: Write operations are restricted!");
-      return;
-    }
-    if (activeRole ==="editor") {
-      toast.error("Editor Role: Deleting catalog items is restricted!");
-      return;
-    }
-    if (safetyLock) {
-      toast.error("Safety Lock Active: Write operations are globally blocked!");
-      return;
-    }
-    try {
-      const res = await productService.delete(productId);
-      if (res.success) {
-        setProducts((prev) => prev.filter((p) => (p._id || p.id) !== productId));
-        logAdminAction("DELETE_PRODUCT", `Deactivated product ID: ${productId}`);
-        toast.success("Product deactivated");
+  const deleteProduct = useCallback(
+    async (productId) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return;
       }
-    } catch (err) {
-      toast.error("Failed to delete product");
-    }
-  }, [activeRole, safetyLock, logAdminAction]);
+      if (activeRole === 'editor') {
+        toast.error('Editor Role: Deleting catalog items is restricted!');
+        return;
+      }
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return;
+      }
+      try {
+        const res = await productService.delete(productId);
+        if (res.success) {
+          setProducts((prev) => prev.filter((p) => (p._id || p.id) !== productId));
+          logAdminAction('DELETE_PRODUCT', `Deactivated product ID: ${productId}`);
+          toast.success('Product deactivated');
+        }
+      } catch (err) {
+        toast.error('Failed to delete product');
+      }
+    },
+    [activeRole, safetyLock, logAdminAction],
+  );
 
-  const toggleProductFeatured = useCallback(async (productId) => {
-    if (activeRole ==="viewer") {
-      toast.error("Viewer Role: Write operations are restricted!");
-      return;
-    }
-    if (safetyLock) {
-      toast.error("Safety Lock Active: Write operations are globally blocked!");
-      return;
-    }
-    try {
-      const res = await productService.toggleFeatured(productId);
-      if (res.success) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            (p._id || p.id) === productId ? { ...p, featured: !p.featured } : p,
-          ),
-        );
-        logAdminAction("TOGGLE_FEATURED", `Toggled featured status for product ID: ${productId}`);
-        toast.success("Product featured status updated");
+  const toggleProductFeatured = useCallback(
+    async (productId) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return;
       }
-    } catch (err) {
-      toast.error("Failed to update product");
-    }
-  }, [activeRole, safetyLock, logAdminAction]);
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return;
+      }
+      try {
+        const res = await productService.toggleFeatured(productId);
+        if (res.success) {
+          setProducts((prev) =>
+            prev.map((p) => ((p._id || p.id) === productId ? { ...p, featured: !p.featured } : p)),
+          );
+          logAdminAction('TOGGLE_FEATURED', `Toggled featured status for product ID: ${productId}`);
+          toast.success('Product featured status updated');
+        }
+      } catch (err) {
+        toast.error('Failed to update product');
+      }
+    },
+    [activeRole, safetyLock, logAdminAction],
+  );
 
   // ─── Order Actions (Backend-Connected) ───
-  const updateOrderStatus = useCallback(async (orderId, newStatus, note, courierCharges) => {
-    if (activeRole ==="viewer") {
-      toast.error("Viewer Role: Write operations are restricted!");
-      return;
-    }
-    if (safetyLock) {
-      toast.error("Safety Lock Active: Write operations are globally blocked!");
-      return;
-    }
-    try {
-      const res = await orderService.updateStatus(orderId, newStatus, note, courierCharges);
-      if (res.success) {
-        const mapped = res.data ? mapDbOrderToFrontend(res.data) : null;
-        setOrders((prev) =>
-          prev.map((o) => {
-            if ((o.id || o._id) === orderId) {
-              return mapped || { ...o, status: newStatus, orderStatus: newStatus };
-            }
-            return o;
-          })
-        );
-        logAdminAction("UPDATE_ORDER", `Updated Order ID ${orderId} to status: ${newStatus}`);
-        toast.success(`Order status updated to ${newStatus}`);
+  const updateOrderStatus = useCallback(
+    async (orderId, newStatus, note, courierCharges) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return;
       }
-    } catch (err) {
-      toast.error("Failed to update order status");
-    }
-  }, [activeRole, safetyLock, logAdminAction]);
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return;
+      }
+      try {
+        const res = await orderService.updateStatus(orderId, newStatus, note, courierCharges);
+        if (res.success) {
+          const mapped = res.data ? mapDbOrderToFrontend(res.data) : null;
+          setOrders((prev) =>
+            prev.map((o) => {
+              if ((o.id || o._id) === orderId) {
+                return mapped || { ...o, status: newStatus, orderStatus: newStatus };
+              }
+              return o;
+            }),
+          );
+          logAdminAction('UPDATE_ORDER', `Updated Order ID ${orderId} to status: ${newStatus}`);
+          toast.success(`Order status updated to ${newStatus}`);
+        }
+      } catch (err) {
+        toast.error('Failed to update order status');
+      }
+    },
+    [activeRole, safetyLock, logAdminAction],
+  );
 
-  const updateOrderNotes = useCallback(async (orderId, notes) => {
-    if (activeRole ==="viewer") {
-      toast.error("Viewer Role: Write operations are restricted!");
-      return;
-    }
-    if (safetyLock) {
-      toast.error("Safety Lock Active: Write operations are globally blocked!");
-      return;
-    }
-    try {
-      const res = await orderService.updateNotes(orderId, notes);
-      if (res.success) {
-        setOrders((prev) =>
-          prev.map((o) => {
-            if ((o.id || o._id) === orderId) {
-              return { ...o, notes };
-            }
-            return o;
-          })
-        );
-        logAdminAction("UPDATE_ORDER_NOTES", `Updated Order ID ${orderId} notes`);
-        toast.success("Notes updated");
+  const updateOrderNotes = useCallback(
+    async (orderId, notes) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return;
       }
-    } catch (err) {
-      toast.error("Failed to update order notes");
-    }
-  }, [activeRole, safetyLock, logAdminAction]);
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return;
+      }
+      try {
+        const res = await orderService.updateNotes(orderId, notes);
+        if (res.success) {
+          setOrders((prev) =>
+            prev.map((o) => {
+              if ((o.id || o._id) === orderId) {
+                return { ...o, notes };
+              }
+              return o;
+            }),
+          );
+          logAdminAction('UPDATE_ORDER_NOTES', `Updated Order ID ${orderId} notes`);
+          toast.success('Notes updated');
+        }
+      } catch (err) {
+        toast.error('Failed to update order notes');
+      }
+    },
+    [activeRole, safetyLock, logAdminAction],
+  );
 
   // ─── Review Actions (Backend-Connected) ───
-  const approveReview = useCallback(async (reviewId) => {
-    if (activeRole ==="viewer") {
-      toast.error("Viewer Role: Write operations are restricted!");
-      return;
-    }
-    if (activeRole ==="editor") {
-      toast.error("Editor Role: Moderating customer reviews is restricted!");
-      return;
-    }
-    if (safetyLock) {
-      toast.error("Safety Lock Active: Write operations are globally blocked!");
-      return;
-    }
-    try {
-      const res = await reviewService.updateStatus(reviewId,"approved");
-      if (res.success) {
-        setReviews((prev) =>
-          prev.map((r) => ((r._id || r.id) === reviewId ? { ...r, status:"approved" } : r)),
-        );
-        logAdminAction("APPROVE_REVIEW", `Approved Review ID: ${reviewId}`);
-        toast.success("Review approved");
+  const approveReview = useCallback(
+    async (reviewId) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return;
       }
-    } catch (err) {
-      toast.error("Failed to approve review");
-    }
-  }, [activeRole, safetyLock, logAdminAction]);
+      if (activeRole === 'editor') {
+        toast.error('Editor Role: Moderating customer reviews is restricted!');
+        return;
+      }
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return;
+      }
+      try {
+        const res = await reviewService.updateStatus(reviewId, 'approved');
+        if (res.success) {
+          setReviews((prev) =>
+            prev.map((r) => ((r._id || r.id) === reviewId ? { ...r, status: 'approved' } : r)),
+          );
+          logAdminAction('APPROVE_REVIEW', `Approved Review ID: ${reviewId}`);
+          toast.success('Review approved');
+        }
+      } catch (err) {
+        toast.error('Failed to approve review');
+      }
+    },
+    [activeRole, safetyLock, logAdminAction],
+  );
 
   const markNotificationRead = useCallback(async (notifId) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notifId ? { ...n, read: true } : n)),
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === notifId ? { ...n, read: true } : n)));
     try {
       await notificationService.markAdminAlertRead(notifId);
     } catch (err) {
-      logger.warn("Failed to mark notification read on backend:", err);
+      logger.warn('Failed to mark notification read on backend:', err);
     }
   }, []);
 
@@ -778,9 +852,9 @@ export function AdminProvider({ children }) {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     try {
       await notificationService.markAdminAlertAllRead();
-      toast.success("All notifications marked as read");
+      toast.success('All notifications marked as read');
     } catch (err) {
-      logger.warn("Failed to mark all notifications read on backend:", err);
+      logger.warn('Failed to mark all notifications read on backend:', err);
     }
   }, []);
 
@@ -810,7 +884,7 @@ export function AdminProvider({ children }) {
 
     socket.on('new_notification', (data) => {
       logger.dev('[WEBSOCKET] Received real-time admin alert:', data);
-      
+
       const mapped = mapDbNotificationToFrontend(data);
 
       // Deduplication check
@@ -824,36 +898,43 @@ export function AdminProvider({ children }) {
         const iter = seenNotificationIds.values();
         seenNotificationIds.delete(iter.next().value);
       }
-      
+
       // Luxury real-time alert toast
-      toast((t) => (
-        <div 
-          onClick={() => {
-            toast.dismiss(t.id);
-            if (mapped.actionLink) {
-              window.location.href = mapped.actionLink;
-            }
-          }} 
-          className="cursor-pointer flex flex-col font-sans max-w-[280px]"
-        >
-          <strong className="text-[12px] text-slate-900 font-bold flex items-center gap-1.5 leading-tight">
-            <span className="material-symbols-outlined text-[15px] text-slate-800 shrink-0">notifications_active</span>
-            {mapped.title}
-          </strong>
-          <span className="text-[11px] sm:text-[11px] text-slate-500 mt-1 leading-normal font-normal">{mapped.message}</span>
-        </div>
-      ), {
-        duration: 8000,
-        position: 'top-right',
-        style: {
-          border: '1px solid #efeeeb',
-          padding: '12px 16px',
-          color: '#2d2b29',
-          background: '#ffffff',
-          borderRadius: '12px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.08)'
-        }
-      });
+      toast(
+        (t) => (
+          <div
+            onClick={() => {
+              toast.dismiss(t.id);
+              if (mapped.actionLink) {
+                window.location.href = mapped.actionLink;
+              }
+            }}
+            className="cursor-pointer flex flex-col font-sans max-w-[280px]"
+          >
+            <strong className="text-[12px] text-slate-900 font-bold flex items-center gap-1.5 leading-tight">
+              <span className="material-symbols-outlined text-[15px] text-slate-800 shrink-0">
+                notifications_active
+              </span>
+              {mapped.title}
+            </strong>
+            <span className="text-[11px] sm:text-[11px] text-slate-500 mt-1 leading-normal font-normal">
+              {mapped.message}
+            </span>
+          </div>
+        ),
+        {
+          duration: 8000,
+          position: 'top-right',
+          style: {
+            border: '1px solid #efeeeb',
+            padding: '12px 16px',
+            color: '#2d2b29',
+            background: '#ffffff',
+            borderRadius: '12px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+          },
+        },
+      );
 
       setNotifications((prev) => [mapped, ...prev]);
     });
@@ -884,105 +965,114 @@ export function AdminProvider({ children }) {
   }, []);
 
   // Publish to BACKEND API
-  const publishContent = useCallback(async (section, customData = null) => {
-    try {
-      const sectionData = customData || websiteContent[section];
-      await cmsService.updateSection(section, sectionData);
-      
-      setWebsiteContent((prev) => {
-        const next = {
-          ...prev,
-          [section]: { ...prev[section], ...(customData || {}), status:"published" },
-        };
-        return next;
-      });
-      setLastSaved(new Date());
-      
-      // Clear/Refresh the hook global cache immediately!
-      await refreshWebsiteContent();
-      
-      setPublishToast(`${section} published!`);
-      toast.success(`${section} published!`);
-      setTimeout(() => setPublishToast(null), 3000);
-    } catch (err) {
-      toast.error(`Failed to publish ${section}`);
-    }
-  }, [websiteContent]);
+  const publishContent = useCallback(
+    async (section, customData = null) => {
+      try {
+        const sectionData = customData || websiteContent[section];
+        await cmsService.updateSection(section, sectionData);
+
+        setWebsiteContent((prev) => {
+          const next = {
+            ...prev,
+            [section]: { ...prev[section], ...(customData || {}), status: 'published' },
+          };
+          return next;
+        });
+        setLastSaved(new Date());
+
+        // Clear/Refresh the hook global cache immediately!
+        await refreshWebsiteContent();
+
+        setPublishToast(`${section} published!`);
+        toast.success(`${section} published!`);
+        setTimeout(() => setPublishToast(null), 3000);
+      } catch (err) {
+        toast.error(`Failed to publish ${section}`);
+      }
+    },
+    [websiteContent],
+  );
 
   // ─── Website Content Actions (Backend-Connected) ───
-  const updateContent = useCallback((section, data) => {
-    setWebsiteContent((prev) => {
-      const newContent = {
-        ...prev,
-        [section]: { ...prev[section], ...data, status:"modified" },
-      };
-      setContentHistory((h) => [
-        ...h.slice(-19),
-        { timestamp: new Date(), section, change: data },
-      ]);
-      setHasUnsavedContent(true);
-      return newContent;
-    });
+  const updateContent = useCallback(
+    (section, data) => {
+      setWebsiteContent((prev) => {
+        const newContent = {
+          ...prev,
+          [section]: { ...prev[section], ...data, status: 'modified' },
+        };
+        setContentHistory((h) => [
+          ...h.slice(-19),
+          { timestamp: new Date(), section, change: data },
+        ]);
+        setHasUnsavedContent(true);
+        return newContent;
+      });
 
-    // Auto-publish support (Debounced 3s for Draft Mode UX)
-    if (autoPublish) {
-      if (autoSaveTimers.current[section]) {
-        clearTimeout(autoSaveTimers.current[section]);
-      }
-      
-      autoSaveTimers.current[section] = setTimeout(() => {
-        const latestData = websiteContentRef.current[section];
-        if (latestData) {
-          const publishData = { ...latestData, status: "published" };
-          publishContent(section, publishData);
+      // Auto-publish support (Debounced 3s for Draft Mode UX)
+      if (autoPublish) {
+        if (autoSaveTimers.current[section]) {
+          clearTimeout(autoSaveTimers.current[section]);
         }
-      }, 3000);
-    }
-  }, [autoPublish, publishContent]);
 
-  const updateNestedContent = useCallback((section, path, value) => {
-    setWebsiteContent((prev) => {
-      const newContent = structuredClone(prev);
-      const keys = path.split(".");
-      let obj = newContent[section];
-      for (let i = 0; i < keys.length - 1; i++) {
-        obj = obj[keys[i]];
+        autoSaveTimers.current[section] = setTimeout(() => {
+          const latestData = websiteContentRef.current[section];
+          if (latestData) {
+            const publishData = { ...latestData, status: 'published' };
+            publishContent(section, publishData);
+          }
+        }, 3000);
       }
-      obj[keys[keys.length - 1]] = value;
-      newContent[section].status ="modified";
-      setHasUnsavedContent(true);
-      return newContent;
-    });
+    },
+    [autoPublish, publishContent],
+  );
 
-    // Auto-publish support (Debounced 3s for Draft Mode UX)
-    if (autoPublish) {
-      if (autoSaveTimers.current[section]) {
-        clearTimeout(autoSaveTimers.current[section]);
-      }
-
-      autoSaveTimers.current[section] = setTimeout(() => {
-        const latestData = websiteContentRef.current[section];
-        if (latestData) {
-          const publishData = structuredClone(latestData);
-          publishData.status = "published";
-          publishContent(section, publishData);
+  const updateNestedContent = useCallback(
+    (section, path, value) => {
+      setWebsiteContent((prev) => {
+        const newContent = structuredClone(prev);
+        const keys = path.split('.');
+        let obj = newContent[section];
+        for (let i = 0; i < keys.length - 1; i++) {
+          obj = obj[keys[i]];
         }
-      }, 3000);
-    }
-  }, [autoPublish, publishContent]);
+        obj[keys[keys.length - 1]] = value;
+        newContent[section].status = 'modified';
+        setHasUnsavedContent(true);
+        return newContent;
+      });
+
+      // Auto-publish support (Debounced 3s for Draft Mode UX)
+      if (autoPublish) {
+        if (autoSaveTimers.current[section]) {
+          clearTimeout(autoSaveTimers.current[section]);
+        }
+
+        autoSaveTimers.current[section] = setTimeout(() => {
+          const latestData = websiteContentRef.current[section];
+          if (latestData) {
+            const publishData = structuredClone(latestData);
+            publishData.status = 'published';
+            publishContent(section, publishData);
+          }
+        }, 3000);
+      }
+    },
+    [autoPublish, publishContent],
+  );
 
   // Publish ALL to BACKEND API (parallel with error reporting)
   const publishAllContent = useCallback(async () => {
     try {
       const sectionsToPublish = Object.entries(websiteContent).filter(
-        ([, val]) => val?.status ==="modified"
+        ([, val]) => val?.status === 'modified',
       );
 
       // Publish sections in parallel with error tracking
       const results = await Promise.allSettled(
-        sectionsToPublish.map(([key, data]) => cmsService.updateSection(key, data))
+        sectionsToPublish.map(([key, data]) => cmsService.updateSection(key, data)),
       );
-      
+
       const failedSections = [];
       results.forEach((result, idx) => {
         if (result.status === 'rejected') {
@@ -997,25 +1087,25 @@ export function AdminProvider({ children }) {
         const updated = { ...prev };
         Object.keys(updated).forEach((key) => {
           if (updated[key]?.status && !failedSections.includes(key)) {
-            updated[key].status ="published";
+            updated[key].status = 'published';
           }
         });
         return updated;
       });
       setLastSaved(new Date());
-      
+
       // Clear/Refresh the hook global cache immediately!
       await refreshWebsiteContent();
 
       if (failedSections.length > 0) {
-        toast.error(`Failed to publish: ${failedSections.join(",")}`);
+        toast.error(`Failed to publish: ${failedSections.join(',')}`);
       } else {
-        setPublishToast("All content published!");
-        toast.success("All content published!");
+        setPublishToast('All content published!');
+        toast.success('All content published!');
       }
       setTimeout(() => setPublishToast(null), 3000);
     } catch (err) {
-      toast.error("Failed to publish all content");
+      toast.error('Failed to publish all content');
     }
   }, [websiteContent]);
 
@@ -1062,7 +1152,9 @@ export function AdminProvider({ children }) {
         const list = res.data?.data || [];
         setProducts(list.map(mapDbProductToFrontend));
       }
-    } catch (err) { /* silent */ }
+    } catch (err) {
+      /* silent */
+    }
   }, []);
 
   const refreshOrders = useCallback(async () => {
@@ -1081,7 +1173,9 @@ export function AdminProvider({ children }) {
     try {
       const res = await analyticsService.getDashboardStats();
       if (res.success) setDashboardStats(res.data);
-    } catch (err) { /* silent */ }
+    } catch (err) {
+      /* silent */
+    }
   }, []);
 
   const refreshEvents = useCallback(async () => {
@@ -1092,17 +1186,21 @@ export function AdminProvider({ children }) {
         const list = evData?.data || evData?.items || (Array.isArray(evData) ? evData : []);
         setEventBookings(list.map(mapDbEventToFrontend));
       }
-    } catch (err) { /* silent */ }
+    } catch (err) {
+      /* silent */
+    }
   }, []);
 
   const refreshCustomers = useCallback(async () => {
     try {
-      const res = await userService.getAll({ limit: 50, role: "user" });
+      const res = await userService.getAll({ limit: 50, role: 'user' });
       if (res.success) {
         const list = res.data?.data || [];
         setCustomers(list.map(mapDbCustomerToFrontend));
       }
-    } catch (err) { /* silent */ }
+    } catch (err) {
+      /* silent */
+    }
   }, []);
 
   const refreshReviews = useCallback(async () => {
@@ -1111,7 +1209,9 @@ export function AdminProvider({ children }) {
       if (res.success) {
         setReviews(res.data?.data || []);
       }
-    } catch (err) { /* silent */ }
+    } catch (err) {
+      /* silent */
+    }
   }, []);
 
   // ─── Last Data Refresh Timestamp ───
@@ -1127,10 +1227,12 @@ export function AdminProvider({ children }) {
           (async () => {
             const alertsRes = await notificationService.getAdminAlerts();
             if (alertsRes?.success) {
-              const list = alertsRes.data?.notifications || (Array.isArray(alertsRes.data) ? alertsRes.data : []);
+              const list =
+                alertsRes.data?.notifications ||
+                (Array.isArray(alertsRes.data) ? alertsRes.data : []);
               setNotifications(list.map(mapDbNotificationToFrontend));
             }
-          })()
+          })(),
         ]);
         setLastDataRefresh(new Date());
       } catch (err) {
@@ -1238,6 +1340,6 @@ export function AdminProvider({ children }) {
 
 export const useAdmin = () => {
   const ctx = useContext(AdminContext);
-  if (!ctx) throw new Error("useAdmin must be used within AdminProvider");
+  if (!ctx) throw new Error('useAdmin must be used within AdminProvider');
   return ctx;
 };

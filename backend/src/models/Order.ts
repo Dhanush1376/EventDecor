@@ -39,8 +39,25 @@ export interface IOrder extends Document {
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
   paymentMethod: string;
-  paymentStatus: 'pending' | 'processing' | 'paid' | 'failed' | 'Pending COD' | 'COD Collected' | 'refunded';
-  orderStatus: 'Pending' | 'Confirmed' | 'Packed' | 'Ready to Ship' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled' | 'Returned' | 'Refunded';
+  paymentStatus:
+    | 'pending'
+    | 'processing'
+    | 'paid'
+    | 'failed'
+    | 'Pending COD'
+    | 'COD Collected'
+    | 'refunded';
+  orderStatus:
+    | 'Pending'
+    | 'Confirmed'
+    | 'Packed'
+    | 'Ready to Ship'
+    | 'Shipped'
+    | 'Out for Delivery'
+    | 'Delivered'
+    | 'Cancelled'
+    | 'Returned'
+    | 'Refunded';
   statusHistory: IOrderStatusHistory[];
   subtotal: number;
   shippingFee: number;
@@ -125,7 +142,7 @@ const OrderSchema: Schema = new Schema(
         'Delivered',
         'Cancelled',
         'Returned',
-        'Refunded'
+        'Refunded',
       ],
       default: 'Pending',
     },
@@ -156,7 +173,7 @@ const OrderSchema: Schema = new Schema(
     dimensions: {
       length: { type: Number, default: 0 },
       width: { type: Number, default: 0 },
-      height: { type: Number, default: 0 }
+      height: { type: Number, default: 0 },
     },
     packageType: { type: String, default: 'Standard Box' },
     barcodeData: { type: String },
@@ -165,12 +182,16 @@ const OrderSchema: Schema = new Schema(
     needByDate: { type: String },
     publicTrackingToken: { type: String, select: false },
     codCollected: { type: Boolean, default: false },
-    settlementStatus: { type: String, enum: ['Pending', 'Settled', 'Not Applicable'], default: 'Not Applicable' },
+    settlementStatus: {
+      type: String,
+      enum: ['Pending', 'Settled', 'Not Applicable'],
+      default: 'Not Applicable',
+    },
     settledAmount: { type: Number, default: 0 },
     courierCharges: { type: Number, default: 0 },
     earnings: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 OrderSchema.index({ user: 1 });

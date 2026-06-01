@@ -27,7 +27,7 @@ export const collectMissingEnvVars = (options?: { ciMode?: boolean }): string[] 
     ? [...baseRequiredEnvVars, ...productionRequiredEnvVars]
     : baseRequiredEnvVars;
 
-  let missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+  const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
   if (isProduction || options?.ciMode) {
     const hasBrevo = !!process.env.BREVO_API_KEY;
@@ -39,7 +39,9 @@ export const collectMissingEnvVars = (options?: { ciMode?: boolean }): string[] 
 
   const encKey = process.env.FIELD_ENCRYPTION_KEY;
   if (!encKey || encKey.length < 32) {
-    missingVars.push('FIELD_ENCRYPTION_KEY (must be min 32 chars/bytes for secure AES-256 entropy)');
+    missingVars.push(
+      'FIELD_ENCRYPTION_KEY (must be min 32 chars/bytes for secure AES-256 entropy)',
+    );
   }
   if (encKey && encKey === process.env.JWT_SECRET) {
     missingVars.push('FIELD_ENCRYPTION_KEY (must be distinct from JWT_SECRET)');
@@ -59,7 +61,9 @@ export const collectMissingEnvVars = (options?: { ciMode?: boolean }): string[] 
   }
 
   if (!process.env.GROQ_API_KEY) {
-    process.stdout.write('\x1b[33m⚠️ WARNING: GROQ_API_KEY is missing. AI auto-fill features will fail.\x1b[0m\n');
+    process.stdout.write(
+      '\x1b[33m⚠️ WARNING: GROQ_API_KEY is missing. AI auto-fill features will fail.\x1b[0m\n',
+    );
   }
 
   return missingVars;

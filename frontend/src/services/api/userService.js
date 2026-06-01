@@ -65,8 +65,8 @@ export const userService = {
     const response = await api.get('/users/cart', options);
     return response.data;
   },
-  addToCart: async (productId, quantity) => {
-    const response = await api.post('/users/cart', { productId, quantity });
+  addToCart: async (productId, quantity, type, rentalInfo) => {
+    const response = await api.post('/users/cart', { productId, quantity, type, rentalInfo });
     return response.data;
   },
   syncCart: async (cartItems) => {
@@ -92,7 +92,7 @@ export const userService = {
   uploadAvatar: async (formData) => {
     return uploadWithRetry(async (fd) => {
       const response = await api.post('/users/avatar', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
     }, formData);

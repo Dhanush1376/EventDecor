@@ -19,7 +19,9 @@ import { recordOtpVerifyFailure } from '../utils/otpRateLimit';
 class AuthService {
   /** Strip non-digits and enforce 6-digit OTP shape. */
   static normalizeOtpInput(otp: string): string {
-    return String(otp || '').replace(/\D/g, '').slice(0, 6);
+    return String(otp || '')
+      .replace(/\D/g, '')
+      .slice(0, 6);
   }
 
   static getOtpExpiryMinutes(): number {
@@ -27,11 +29,9 @@ class AuthService {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
   }
   static generateAccessToken(user: IUser) {
-    return jwt.sign(
-      { id: user.id, role: user.role, email: user.email },
-      process.env.JWT_SECRET!,
-      { expiresIn: (process.env.JWT_EXPIRES_IN || '15m') as any }
-    );
+    return jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET!, {
+      expiresIn: (process.env.JWT_EXPIRES_IN || '15m') as any,
+    });
   }
 
   static hashRefreshToken(token: string) {
@@ -64,7 +64,7 @@ class AuthService {
         .sort({ createdAt: 1 })
         .limit(sessionCount - 10)
         .select('_id');
-      await RefreshToken.deleteMany({ _id: { $in: oldest.map(s => s._id) } });
+      await RefreshToken.deleteMany({ _id: { $in: oldest.map((s) => s._id) } });
     }
 
     return { user, token: accessToken, accessToken, refreshToken };
@@ -84,13 +84,15 @@ class AuthService {
       const GRACE_PERIOD_MS = 15000;
 
       if (timeSinceUsedMs < GRACE_PERIOD_MS) {
-        logger.warn(`[AUTH] Grace period overlap detected for userId: ${isUsed.userId}. Returning 409 Conflict without revoking sessions.`);
+        logger.warn(
+          `[AUTH] Grace period overlap detected for userId: ${isUsed.userId}. Returning 409 Conflict without revoking sessions.`,
+        );
         throw new ApiError(409, 'Session refreshed concurrently in another tab.');
       }
 
       // Replay detected outside grace period — revoke entire refresh-token family (RFC 6749 rotation)
       logger.error(
-        `[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Revoking all sessions. Potential token theft.`
+        `[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Revoking all sessions. Potential token theft.`,
       );
       await RefreshToken.deleteMany({ userId: isUsed.userId });
       await UsedRefreshToken.deleteMany({ userId: isUsed.userId });
@@ -151,7 +153,7 @@ class AuthService {
     const cleanEmail = canonicalizeEmail(email);
     const adminEmails = getAdminEmails();
 
-    const isAdmin = adminEmails.some(addr => isSameEmail(cleanEmail, addr));
+    const isAdmin = adminEmails.some((addr) => isSameEmail(cleanEmail, addr));
     if (!isAdmin) {
       return; // Non-admin bypasses credential checks
     }
@@ -159,8 +161,13 @@ class AuthService {
     // 1. Enforce lockout checks
     const lockoutRecord = await FailedLoginAttempt.findOne({ email: cleanEmail });
     if (lockoutRecord && lockoutRecord.lockoutUntil && lockoutRecord.lockoutUntil > new Date()) {
-      const remainingTime = Math.ceil((lockoutRecord.lockoutUntil.getTime() - Date.now()) / 1000 / 60);
-      throw new ApiError(429, `This account has been temporarily locked due to excessive failed attempts. Please try again after ${remainingTime} minutes.`);
+      const remainingTime = Math.ceil(
+        (lockoutRecord.lockoutUntil.getTime() - Date.now()) / 1000 / 60,
+      );
+      throw new ApiError(
+        429,
+        `This account has been temporarily locked due to excessive failed attempts. Please try again after ${remainingTime} minutes.`,
+      );
     }
 
     const adminPassword = process.env.ADMIN_PASSWORD;
@@ -172,7 +179,7 @@ class AuthService {
     const cleanPassword = (password || '').trim();
 
     // 2. Validate password (bcrypt comparison supports both hashed and legacy plaintext env values)
-    const isPasswordValid = cleanAdminPassword.startsWith('$2') 
+    const isPasswordValid = cleanAdminPassword.startsWith('$2')
       ? await bcrypt.compare(cleanPassword, cleanAdminPassword)
       : cleanPassword === cleanAdminPassword;
 
@@ -198,15 +205,27 @@ class AuthService {
           lockoutUntil: lockoutUntil || undefined,
           expiresAt: new Date(Date.now() + 15 * 60 * 1000), // Auto-expire logs
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
 
       if (attempts >= 5) {
-        logger.warn('[AUTH_FAILURE] Admin account lockout due to excessive failed password attempts', { email: cleanEmail });
-        throw new ApiError(429, 'Too many failed login attempts. Your account has been temporarily locked for 15 minutes.');
+        logger.warn(
+          '[AUTH_FAILURE] Admin account lockout due to excessive failed password attempts',
+          { email: cleanEmail },
+        );
+        throw new ApiError(
+          429,
+          'Too many failed login attempts. Your account has been temporarily locked for 15 minutes.',
+        );
       } else {
-        logger.warn('[AUTH_FAILURE] Invalid admin credentials provided', { email: cleanEmail, attempts });
-        throw new ApiError(401, `Invalid admin security credentials. ${5 - attempts} attempts remaining before temporary lockout.`);
+        logger.warn('[AUTH_FAILURE] Invalid admin credentials provided', {
+          email: cleanEmail,
+          attempts,
+        });
+        throw new ApiError(
+          401,
+          `Invalid admin security credentials. ${5 - attempts} attempts remaining before temporary lockout.`,
+        );
       }
     }
 
@@ -220,13 +239,18 @@ class AuthService {
     // 1. Check Lockout
     const lockoutRecord = await FailedLoginAttempt.findOne({ email: cleanEmail });
     if (lockoutRecord && lockoutRecord.lockoutUntil && lockoutRecord.lockoutUntil > new Date()) {
-      const remainingTime = Math.ceil((lockoutRecord.lockoutUntil.getTime() - Date.now()) / 1000 / 60);
-      throw new ApiError(429, `Account temporarily locked due to excessive failed attempts. Try again in ${remainingTime} minutes.`);
+      const remainingTime = Math.ceil(
+        (lockoutRecord.lockoutUntil.getTime() - Date.now()) / 1000 / 60,
+      );
+      throw new ApiError(
+        429,
+        `Account temporarily locked due to excessive failed attempts. Try again in ${remainingTime} minutes.`,
+      );
     }
 
     // 2. Find Admin User
     const user = await User.findOne({ email: cleanEmail }).select('+passwordHash');
-    
+
     // Timing attack mitigation: always perform a bcrypt comparison.
     // The hash here corresponds to 'dummy_password' with 12 salt rounds to keep timing consistent.
     const DUMMY_HASH = '$2a$12$R9h/cIPz0gi.URNNX3rub2A9WEjRRO.h1.2/n3hD0A3w.dG0uG.0i';
@@ -237,8 +261,16 @@ class AuthService {
     }
 
     const adminEmails = getAdminEmails();
-    const isAdminEmail = adminEmails.some(addr => isSameEmail(cleanEmail, addr));
-    const isAdminRole = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin'].includes(user.role);
+    const isAdminEmail = adminEmails.some((addr) => isSameEmail(cleanEmail, addr));
+    const isAdminRole = [
+      'super_admin',
+      'main_admin',
+      'moderator',
+      'support_admin',
+      'order_manager',
+      'content_manager',
+      'admin',
+    ].includes(user.role);
 
     if (!isAdminEmail && !isAdminRole) {
       throw new ApiError(403, 'Access denied. You do not have administrative privileges.');
@@ -265,13 +297,20 @@ class AuthService {
           lockoutUntil: lockoutUntil || undefined,
           expiresAt: new Date(Date.now() + 15 * 60 * 1000),
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
       if (attempts >= 5) {
-        logger.warn('[AUTH_FAILURE] Admin account lockout due to excessive failed login attempts', { email: cleanEmail, ip });
+        logger.warn('[AUTH_FAILURE] Admin account lockout due to excessive failed login attempts', {
+          email: cleanEmail,
+          ip,
+        });
         throw new ApiError(429, 'Too many failed login attempts. Account locked for 15 minutes.');
       } else {
-        logger.warn('[AUTH_FAILURE] Invalid admin login credentials provided', { email: cleanEmail, attempts, ip });
+        logger.warn('[AUTH_FAILURE] Invalid admin login credentials provided', {
+          email: cleanEmail,
+          attempts,
+          ip,
+        });
         throw new ApiError(401, `Invalid credentials. ${5 - attempts} attempts remaining.`);
       }
     }
@@ -322,8 +361,13 @@ class AuthService {
     // Enforce brute-force admin lockout check before generating OTP
     const lockoutRecord = await FailedLoginAttempt.findOne({ email: cleanEmail });
     if (lockoutRecord && lockoutRecord.lockoutUntil && lockoutRecord.lockoutUntil > new Date()) {
-      const remainingTime = Math.ceil((lockoutRecord.lockoutUntil.getTime() - Date.now()) / 1000 / 60);
-      throw new ApiError(429, `This account is temporarily locked due to excessive failed attempts. Please try again after ${remainingTime} minutes.`);
+      const remainingTime = Math.ceil(
+        (lockoutRecord.lockoutUntil.getTime() - Date.now()) / 1000 / 60,
+      );
+      throw new ApiError(
+        429,
+        `This account is temporarily locked due to excessive failed attempts. Please try again after ${remainingTime} minutes.`,
+      );
     }
 
     const isDev = process.env.NODE_ENV === 'development';
@@ -334,11 +378,14 @@ class AuthService {
       const ipRequestCount = await OtpRequestLog.countDocuments({
         ip,
         action: 'request',
-        createdAt: { $gte: fifteenMinutesAgo }
+        createdAt: { $gte: fifteenMinutesAgo },
       });
 
       if (ipRequestCount >= 3) {
-        throw new ApiError(429, 'Too many OTP requests from this IP. Please try again after 15 minutes.');
+        throw new ApiError(
+          429,
+          'Too many OTP requests from this IP. Please try again after 15 minutes.',
+        );
       }
     }
 
@@ -348,11 +395,14 @@ class AuthService {
       const emailRequestCount = await OtpRequestLog.countDocuments({
         email: cleanEmail,
         action: 'request',
-        createdAt: { $gte: oneHourAgo }
+        createdAt: { $gte: oneHourAgo },
       });
 
       if (emailRequestCount >= 5) {
-        throw new ApiError(429, 'Too many OTP requests for this email address. Please try again in an hour.');
+        throw new ApiError(
+          429,
+          'Too many OTP requests for this email address. Please try again in an hour.',
+        );
       }
     }
 
@@ -361,13 +411,15 @@ class AuthService {
     const recentRequestCount = await OtpRequestLog.countDocuments({
       email: cleanEmail,
       action: 'request',
-      createdAt: { $gte: twoSecondsAgo }
+      createdAt: { $gte: twoSecondsAgo },
     });
     if (recentRequestCount > 0) {
-      logger.warn(`[FRONTEND DUPLICATE REQUEST DETECTED] Multiple OTP requests received for ${cleanEmail} within 2 seconds. This indicates frontend race conditions or duplicate click triggers!`);
+      logger.warn(
+        `[FRONTEND DUPLICATE REQUEST DETECTED] Multiple OTP requests received for ${cleanEmail} within 2 seconds. This indicates frontend race conditions or duplicate click triggers!`,
+      );
     }
 
-    // We no longer delete prior OTPs. This allows users to use older OTPs if emails arrive out of order, 
+    // We no longer delete prior OTPs. This allows users to use older OTPs if emails arrive out of order,
     // significantly improving UX. All OTPs will expire automatically via the TTL index.
 
     // 4. Generate cryptographically secure 6-digit OTP
@@ -388,16 +440,18 @@ class AuthService {
       maxAttempts: OTP_MAX_ATTEMPTS,
       exhausted: false,
       type: 'auth',
-      expiresAt
+      expiresAt,
     });
 
-    logger.info(`[OTP CREATED] Active OTP record successfully stored for ${cleanEmail}. Timestamp: ${otpRecord.createdAt}. Expiration: ${expiresAt}.`);
+    logger.info(
+      `[OTP CREATED] Active OTP record successfully stored for ${cleanEmail}. Timestamp: ${otpRecord.createdAt}. Expiration: ${expiresAt}.`,
+    );
 
     // 7. Log this successful request to enforce future rate limits
     await OtpRequestLog.create({
       ip,
       email: cleanEmail,
-      action: 'request'
+      action: 'request',
     });
 
     // 8. Send OTP email asynchronously in the background to keep the API response instant
@@ -412,7 +466,10 @@ class AuthService {
         action: 'otp_auth',
       });
     } catch (err: any) {
-      logger.error(`[OTP EMAIL ERROR] Failed to initiate OTP email for ${cleanEmail}:`, err?.message || err);
+      logger.error(
+        `[OTP EMAIL ERROR] Failed to initiate OTP email for ${cleanEmail}:`,
+        err?.message || err,
+      );
     }
 
     // Always log in development for easier testing and recovery
@@ -423,7 +480,12 @@ class AuthService {
     return otp;
   }
 
-  static async verifyOTP(email: string, otp: string, ip: string = '127.0.0.1', userAgent: string = '') {
+  static async verifyOTP(
+    email: string,
+    otp: string,
+    ip: string = '127.0.0.1',
+    userAgent: string = '',
+  ) {
     if (!email || !otp) {
       throw new ApiError(400, 'Email and OTP are required');
     }
@@ -453,7 +515,10 @@ class AuthService {
       });
 
       if (failedAttemptsCount >= 5) {
-        throw new ApiError(429, 'Too many failed verification attempts. Your IP has been temporarily restricted for 15 minutes.');
+        throw new ApiError(
+          429,
+          'Too many failed verification attempts. Your IP has been temporarily restricted for 15 minutes.',
+        );
       }
     }
 
@@ -492,10 +557,14 @@ class AuthService {
     }
 
     let matchedRecord: (typeof otpRecords)[0] | null = null;
-    logger.info(`[OTP VERIFY DEBUG] Found ${otpRecords.length} active OTP records for ${cleanEmail}. Testing normalized OTP: '${normalizedOtp}'`);
+    logger.info(
+      `[OTP VERIFY DEBUG] Found ${otpRecords.length} active OTP records for ${cleanEmail}. Testing normalized OTP: '${normalizedOtp}'`,
+    );
     for (const record of otpRecords) {
       const isMatch = isBypassConfigured || (await bcrypt.compare(normalizedOtp, record.otpHash));
-      logger.info(`[OTP VERIFY DEBUG] Comparing against record ${record._id} (created at ${record.createdAt}). Match result: ${isMatch}`);
+      logger.info(
+        `[OTP VERIFY DEBUG] Comparing against record ${record._id} (created at ${record.createdAt}). Match result: ${isMatch}`,
+      );
       if (isMatch) {
         matchedRecord = record;
         break;
@@ -503,24 +572,32 @@ class AuthService {
     }
 
     if (!matchedRecord) {
-      logger.error(`[OTP VERIFY DEBUG] No matches found for ${cleanEmail}. The provided OTP did not match any stored hashes.`);
+      logger.error(
+        `[OTP VERIFY DEBUG] No matches found for ${cleanEmail}. The provided OTP did not match any stored hashes.`,
+      );
       await OtpRequestLog.create({ ip, email: cleanEmail, action: 'verify_fail' });
       await recordOtpVerifyFailure(ip);
 
       const updated = await OtpVerification.findOneAndUpdate(
         { _id: activeRecord._id, exhausted: false },
         { $inc: { attempts: 1 } },
-        { new: true }
+        { new: true },
       );
 
       const attemptCount = updated?.attempts ?? activeRecord.attempts + 1;
       logger.warn(
-        `[OTP VERIFY FAIL] Invalid code for ${cleanEmail}. Attempt ${attemptCount}/${maxAttempts}`
+        `[OTP VERIFY FAIL] Invalid code for ${cleanEmail}. Attempt ${attemptCount}/${maxAttempts}`,
       );
 
       if (updated && attemptCount >= maxAttempts) {
-        logger.warn('[AUTH_FAILURE] Max OTP verification attempts exceeded', { email: cleanEmail, ip });
-        await OtpVerification.updateMany({ email: cleanEmail, type: 'auth' }, { $set: { exhausted: true } });
+        logger.warn('[AUTH_FAILURE] Max OTP verification attempts exceeded', {
+          email: cleanEmail,
+          ip,
+        });
+        await OtpVerification.updateMany(
+          { email: cleanEmail, type: 'auth' },
+          { $set: { exhausted: true } },
+        );
         throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
       }
 
@@ -546,13 +623,15 @@ class AuthService {
 
     await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
 
-    logger.info(`[OTP VERIFY OK] Code consumed for ${cleanEmail} (attempts: ${consumed.attempts + 1})`);
+    logger.info(
+      `[OTP VERIFY OK] Code consumed for ${cleanEmail} (attempts: ${consumed.attempts + 1})`,
+    );
 
     // 6. Track verification success request to prevent spam
     await OtpRequestLog.create({
       ip,
       email: cleanEmail,
-      action: 'verify'
+      action: 'verify',
     });
 
     // Check if user already exists
@@ -564,7 +643,7 @@ class AuthService {
       // Auto-create new user
       const namePart = cleanEmail.split('@')[0];
       const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-      
+
       // Always default public registration to customer role
       const role = 'customer';
 
@@ -582,7 +661,7 @@ class AuthService {
         cart: [],
         recentlyViewed: [],
         notificationPreferences: { email: true, marketing: true },
-        accountPreferences: { theme: 'light', language: 'en' }
+        accountPreferences: { theme: 'light', language: 'en' },
       });
 
       // Fire profile enrichment in the background using native fetch (Node 18+)
@@ -594,26 +673,30 @@ class AuthService {
             const res = await fetch(`https://www.gravatar.com/${hash}.json`, {
               headers: { 'User-Agent': 'SiriArtsApp/1.0' },
               signal: controller.signal,
-            }).then((r: any) => {
-              clearTimeout(timeout);
-              return r.ok ? r.json() : null;
-            }).catch(() => {
-              clearTimeout(timeout);
-              return null;
-            });
+            })
+              .then((r: any) => {
+                clearTimeout(timeout);
+                return r.ok ? r.json() : null;
+              })
+              .catch(() => {
+                clearTimeout(timeout);
+                return null;
+              });
 
             if (res && res.entry && res.entry[0]) {
               const entry = res.entry[0];
               const gravatarName = entry.displayName || entry.preferredUsername || capitalizedName;
               const gravatarAvatar = entry.thumbnailUrl || avatar;
-              
+
               await User.findByIdAndUpdate(user!._id, {
                 $set: {
                   name: gravatarName,
-                  avatar: gravatarAvatar
-                }
+                  avatar: gravatarAvatar,
+                },
               });
-              logger.info(`[GRAVATAR BACKGROUND SUCCESS] Profile enriched for new user: ${cleanEmail}`);
+              logger.info(
+                `[GRAVATAR BACKGROUND SUCCESS] Profile enriched for new user: ${cleanEmail}`,
+              );
             }
           }
         } catch (err) {
@@ -740,7 +823,15 @@ class AuthService {
     const user = await User.findOne({ email: cleanEmail }).select('role');
     const dummyHash = await bcrypt.hash('dummy', 12); // Standardize request time
 
-    const adminRoles = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin'];
+    const adminRoles = [
+      'super_admin',
+      'main_admin',
+      'moderator',
+      'support_admin',
+      'order_manager',
+      'content_manager',
+      'admin',
+    ];
     if (!user || !adminRoles.includes(user.role)) {
       await bcrypt.compare('dummy', dummyHash);
       return ''; // Return empty, generic response will be sent
@@ -785,7 +876,7 @@ class AuthService {
     const salt = await bcrypt.genSalt(12);
     user.passwordHash = await bcrypt.hash(newPassword, salt);
     // Subtract 1 second to ensure new timestamp is reliably before new tokens are issued
-    user.passwordChangedAt = new Date(Date.now() - 1000); 
+    user.passwordChangedAt = new Date(Date.now() - 1000);
     await user.save();
 
     await PasswordResetToken.deleteOne({ _id: resetRecord._id });
@@ -813,7 +904,7 @@ class AuthService {
       otpHash,
       attempts: 0,
       type: 'cod',
-      expiresAt
+      expiresAt,
     });
 
     // 5. Send custom COD email asynchronously
@@ -825,7 +916,7 @@ class AuthService {
         subject: '✦ Cash on Delivery Verification Code ✦ Siri Arts & Crafts',
         customHtml: getCodOtpEmailTemplate(otp, 5),
         type: 'security',
-        action: 'cod_otp'
+        action: 'cod_otp',
       });
     } catch (err: any) {
       logger.error(`[COD OTP QUEUE ERROR] Failed to enqueue COD OTP email for ${cleanEmail}:`, err);
@@ -846,10 +937,10 @@ class AuthService {
     const otpClockSkewMs = 5 * 60 * 1000;
     const expiryGraceCutoff = new Date(Date.now() - otpClockSkewMs);
 
-    const otpRecords = await OtpVerification.find({ 
-      email: cleanEmail, 
+    const otpRecords = await OtpVerification.find({
+      email: cleanEmail,
       type: 'cod',
-      expiresAt: { $gt: expiryGraceCutoff }
+      expiresAt: { $gt: expiryGraceCutoff },
     }).sort({ createdAt: -1 });
 
     if (otpRecords.length === 0) {
@@ -857,14 +948,17 @@ class AuthService {
     }
 
     // SECURITY: BYPASS_OTP_CODE is only allowed in development mode
-    const isBypassConfigured = process.env.NODE_ENV === 'development' && process.env.BYPASS_OTP_CODE && otp === process.env.BYPASS_OTP_CODE;
-    
+    const isBypassConfigured =
+      process.env.NODE_ENV === 'development' &&
+      process.env.BYPASS_OTP_CODE &&
+      otp === process.env.BYPASS_OTP_CODE;
+
     let isMatch = false;
     let matchedRecord: (typeof otpRecords)[0] | null = null;
-    let latestRecord = otpRecords[0];
+    const latestRecord = otpRecords[0];
     for (const record of otpRecords) {
       if (new Date() > record.expiresAt) continue;
-      if (isBypassConfigured || await bcrypt.compare(otp, record.otpHash)) {
+      if (isBypassConfigured || (await bcrypt.compare(otp, record.otpHash))) {
         isMatch = true;
         matchedRecord = record;
         break;

@@ -28,7 +28,7 @@ import {
   respondToInvite,
 } from '../controllers/userController';
 import { exportMyData, eraseMyAccount } from '../controllers/privacyController';
-import { requireAuth, requireAdmin, requireSuperAdmin, requireRole } from '../middleware/authMiddleware';
+import { requireAuth, requireSuperAdmin, requireRole } from '../middleware/authMiddleware';
 import { uploadAvatar } from '../middleware/upload';
 
 const router = Router();
@@ -69,7 +69,7 @@ router.get('/team', requireAuth, requireRole(['super_admin', 'main_admin']), get
 router.post('/team/invite', requireAuth, requireSuperAdmin, inviteTeamMember);
 router.delete('/team/invite/:id', requireAuth, requireSuperAdmin, cancelTeamInvite);
 router.get('/team/invite/details', getInviteDetailsByToken); // Public token check
-router.post('/team/invite/respond', respondToInvite);         // Public accept/decline
+router.post('/team/invite/respond', respondToInvite); // Public accept/decline
 
 router.get('/:id', requireAuth, requireRole(['super_admin', 'main_admin']), getUserById);
 router.patch('/:id/role', requireAuth, requireSuperAdmin, updateUserRole);

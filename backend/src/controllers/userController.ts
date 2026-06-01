@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import { ADMIN_ROLES, STAFF_ROLES } from '../config/adminConfig';
+import { STAFF_ROLES } from '../config/adminConfig';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -25,7 +25,7 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
   const { role, search } = req.query;
   const filter: any = {};
-  
+
   if (role) {
     if (role === 'user' || role === 'customer') {
       filter.role = { $in: ['user', 'customer'] };
@@ -54,7 +54,15 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
     User.countDocuments(filter),
   ]);
 
-  res.status(200).json(new ApiResponse(true, 'Users fetched', formatPaginationResponse(users, totalCount, page, limit)));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Users fetched',
+        formatPaginationResponse(users, totalCount, page, limit),
+      ),
+    );
 });
 
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
@@ -66,12 +74,14 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 
   const Order = require('../models/Order').default || require('../models/Order');
   const orders = await Order.find({ user: user._id })
-    .select('totalAmount status createdAt paymentStatus paymentMethod deliveryStatus razorpayOrderId')
+    .select(
+      'totalAmount status createdAt paymentStatus paymentMethod deliveryStatus razorpayOrderId',
+    )
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(Number(limit))
     .lean();
-    
+
   (user as any).orders = orders;
 
   // We fetch total order count directly from the Order model if needed for full pagination,
@@ -108,7 +118,7 @@ export const getProfile = asyncHandler(async (req: any, res: Response) => {
 
 export const updateProfile = asyncHandler(async (req: any, res: Response) => {
   const { name, email, phone, gender, dateOfBirth } = req.body;
-  
+
   if (email) {
     const cleanEmail = canonicalizeEmail(email);
     const existingUser = await User.findOne({ email: cleanEmail, _id: { $ne: req.user.id } });
@@ -141,11 +151,11 @@ export const getAddresses = asyncHandler(async (req: any, res: Response) => {
 export const addAddress = asyncHandler(async (req: any, res: Response) => {
   const Address = require('../models/Address').default;
   const existingAddressesCount = await Address.countDocuments({ user: req.user.id });
-  
+
   await Address.create({
     ...req.body,
     user: req.user.id,
-    isDefault: existingAddressesCount === 0
+    isDefault: existingAddressesCount === 0,
   });
 
   const addresses = await Address.find({ user: req.user.id });
@@ -157,7 +167,7 @@ export const updateAddress = asyncHandler(async (req: any, res: Response) => {
   const address = await Address.findOneAndUpdate(
     { _id: req.params.addressId, user: req.user.id },
     req.body,
-    { new: true }
+    { new: true },
   );
 
   if (!address) throw new ApiError(404, 'Address not found');
@@ -176,13 +186,13 @@ export const deleteAddress = asyncHandler(async (req: any, res: Response) => {
 
 export const setDefaultAddress = asyncHandler(async (req: any, res: Response) => {
   const Address = require('../models/Address').default;
-  
+
   await Address.updateMany({ user: req.user.id }, { isDefault: false });
-  
+
   const address = await Address.findOneAndUpdate(
     { _id: req.params.addressId, user: req.user.id },
     { isDefault: true },
-    { new: true }
+    { new: true },
   );
 
   if (!address) throw new ApiError(404, 'Address not found');
@@ -203,7 +213,7 @@ export const getWishlist = asyncHandler(async (req: any, res: Response) => {
 
   const user = await User.findById(req.user.id).select('wishlist');
   if (!user) throw new ApiError(404, 'User not found');
-  
+
   // Bug-11 Fix: Single optimized query instead of N+1
   const products = await Product.find({ _id: { $in: user.wishlist } })
     .select('title price images rating slug category isActive')
@@ -231,18 +241,25 @@ export const toggleWishlist = asyncHandler(async (req: any, res: Response) => {
 
   await user.save();
   await invalidateUserSessionCaches(String(req.user.id));
-  res.status(200).json(new ApiResponse(true, index === -1 ? 'Added to wishlist' : 'Removed from wishlist', user.wishlist));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        index === -1 ? 'Added to wishlist' : 'Removed from wishlist',
+        user.wishlist,
+      ),
+    );
 });
 
 // Database-driven Cart Management
 const computeAndValidateCart = async (user: any) => {
-  let subtotal = 0;
   const validatedCart = [];
   let cartChanged = false;
 
   const rawCart = Array.isArray(user.cart) ? user.cart : [];
   const productIds = Array.from(
-    new Set<string>(rawCart.map((item: any) => String(item.product)).filter(Boolean))
+    new Set<string>(rawCart.map((item: any) => String(item.product)).filter(Boolean)),
   );
   const products = await Product.find({ _id: { $in: productIds } });
   const productsById = new Map(products.map((product: any) => [product._id.toString(), product]));
@@ -255,6 +272,8 @@ const computeAndValidateCart = async (user: any) => {
       continue; // Auto-prune inactive or deleted products
     }
 
+    const itemType = item.type || 'purchase';
+
     let quantity = Number(item.quantity) || 0;
     if (quantity > 50) {
       quantity = 50;
@@ -266,11 +285,12 @@ const computeAndValidateCart = async (user: any) => {
     }
 
     if (quantity > 0) {
-      subtotal += product.price * quantity;
       validatedCart.push({
         product: product,
         quantity,
-        variant: item.variant || 'Default'
+        variant: item.variant || 'Default',
+        type: itemType,
+        rentalInfo: item.rentalInfo,
       });
     } else {
       cartChanged = true;
@@ -278,38 +298,78 @@ const computeAndValidateCart = async (user: any) => {
   }
 
   if (cartChanged) {
-    user.cart = validatedCart.map(item => ({
+    user.cart = validatedCart.map((item) => ({
       product: item.product._id,
       quantity: item.quantity,
-      variant: item.variant
+      variant: item.variant,
+      type: item.type,
+      rentalInfo: item.rentalInfo,
     }));
-    await User.findOneAndUpdate(
-      { _id: user._id },
-      { $set: { cart: user.cart } }
-    );
+    await User.findOneAndUpdate({ _id: user._id }, { $set: { cart: user.cart } });
   }
 
-  const shippingFee = subtotal > 2000 || subtotal === 0 ? 0 : 100;
-  const platformFee = 0;
-  const discount = 0;
-  const total = subtotal + shippingFee - discount;
+  const computeSummary = (items: any[], isRental: boolean) => {
+    let subtotal = 0;
+    let depositTotal = 0;
 
-  return {
-    items: validatedCart,
-    summary: {
+    items.forEach((item) => {
+      let itemPrice = item.product.price;
+
+      if (isRental && item.rentalInfo?.startDate && item.rentalInfo?.endDate) {
+        const start = new Date(item.rentalInfo.startDate);
+        const end = new Date(item.rentalInfo.endDate);
+        const diffDays =
+          Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+
+        if (item.product.rentalPricing) {
+          if (diffDays >= 30 && item.product.rentalPricing.monthly > 0) {
+            itemPrice = (item.product.rentalPricing.monthly / 30) * diffDays;
+          } else if (diffDays >= 7 && item.product.rentalPricing.weekly > 0) {
+            itemPrice = (item.product.rentalPricing.weekly / 7) * diffDays;
+          } else if (item.product.rentalPricing.daily > 0) {
+            itemPrice = item.product.rentalPricing.daily * diffDays;
+          }
+        }
+        depositTotal += (item.product.securityDeposit || 0) * item.quantity;
+      }
+
+      subtotal += itemPrice * item.quantity;
+    });
+
+    const shippingFee = subtotal > 2000 || subtotal === 0 ? 0 : 100;
+    const platformFee = 0;
+    const discount = 0;
+    const total = subtotal + shippingFee + depositTotal - discount;
+
+    return {
       subtotal,
+      depositTotal,
       shippingFee,
       platformFee,
       discount,
-      total
-    }
+      total,
+    };
+  };
+
+  const purchaseItems = validatedCart.filter((item) => item.type === 'purchase');
+  const rentalItems = validatedCart.filter((item) => item.type === 'rental');
+
+  return {
+    purchaseCart: {
+      items: purchaseItems,
+      summary: computeSummary(purchaseItems, false),
+    },
+    rentalCart: {
+      items: rentalItems,
+      summary: computeSummary(rentalItems, true),
+    },
   };
 };
 
 export const getCart = asyncHandler(async (req: any, res: Response) => {
   const userId = String(req.user.id);
   const cacheKey = sessionKeys.cart(userId);
-  const cached = await getCachedSessionJson<{ items: unknown[]; summary: Record<string, number> }>(cacheKey);
+  const cached = await getCachedSessionJson<any>(cacheKey);
   if (cached) {
     res.setHeader('X-Session-Cache', 'HIT');
     return res.status(200).json(new ApiResponse(true, 'Cart fetched', cached));
@@ -324,22 +384,41 @@ export const getCart = asyncHandler(async (req: any, res: Response) => {
 });
 
 export const addToCart = asyncHandler(async (req: any, res: Response) => {
-  const { productId, quantity } = req.body;
+  const { productId, quantity, type, rentalInfo } = req.body;
   const qty = Math.max(1, Math.min(50, Number(quantity) || 1));
   const product = await Product.findById(productId).select('stock isActive title');
   if (!product || !product.isActive) {
     throw new ApiError(404, 'Product is unavailable');
   }
-  
-  const userHasItem = await User.findOne({ _id: req.user.id, 'cart.product': productId });
+
+  const itemType = type || 'purchase';
+
+  // Find item by product and type. If rental, we might want to check dates too, but for simplicity:
+  const userHasItem = await User.findOne({
+    _id: req.user.id,
+    'cart.product': productId,
+    'cart.type': itemType,
+  });
 
   let updatedUser;
   if (userHasItem) {
-    updatedUser = await User.findOneAndUpdate(
-      { _id: req.user.id, 'cart.product': productId },
-      { $inc: { 'cart.$.quantity': qty } },
-      { new: true }
-    );
+    // If it's a rental and they already have it, we just update the quantity and dates
+    if (itemType === 'rental') {
+      updatedUser = await User.findOneAndUpdate(
+        { _id: req.user.id, 'cart.product': productId, 'cart.type': itemType },
+        {
+          $inc: { 'cart.$.quantity': qty },
+          $set: { 'cart.$.rentalInfo': rentalInfo },
+        },
+        { new: true },
+      );
+    } else {
+      updatedUser = await User.findOneAndUpdate(
+        { _id: req.user.id, 'cart.product': productId, 'cart.type': itemType },
+        { $inc: { 'cart.$.quantity': qty } },
+        { new: true },
+      );
+    }
   } else if (qty > 0) {
     const currentUser = await User.findById(req.user.id).select('cart');
     if (currentUser && currentUser.cart.length >= 50) {
@@ -347,8 +426,18 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
     }
     updatedUser = await User.findOneAndUpdate(
       { _id: req.user.id },
-      { $push: { cart: { product: productId, quantity: qty, variant: 'Default' } } },
-      { new: true }
+      {
+        $push: {
+          cart: {
+            product: productId,
+            quantity: qty,
+            variant: 'Default',
+            type: itemType,
+            rentalInfo,
+          },
+        },
+      },
+      { new: true },
     );
   } else {
     updatedUser = await User.findById(req.user.id);
@@ -367,11 +456,13 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
   if (!user) throw new ApiError(404, 'User not found');
 
   const updatedCart = (cartItems || [])
-    .filter((item: any) => (item.product || item._id || item.id))
+    .filter((item: any) => item.product || item._id || item.id)
     .map((item: any) => ({
       product: item.product || item._id || item.id,
       quantity: Math.max(1, Math.min(50, Number(item.quantity) || 1)),
-      variant: item.variant || 'Default'
+      variant: item.variant || 'Default',
+      type: item.type || 'purchase',
+      rentalInfo: item.rentalInfo,
     }));
 
   if (updatedCart.length > 50) {
@@ -379,12 +470,9 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
   }
 
   user.cart = updatedCart;
-  
+
   // To avoid VersionError on concurrent syncs, use findOneAndUpdate just for the cart
-  await User.findOneAndUpdate(
-    { _id: req.user.id },
-    { $set: { cart: updatedCart } }
-  );
+  await User.findOneAndUpdate({ _id: req.user.id }, { $set: { cart: updatedCart } });
 
   await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await computeAndValidateCart(user);
@@ -396,9 +484,9 @@ export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
   const user = await User.findOneAndUpdate(
     { _id: req.user.id },
     { $pull: { cart: { product: productId } } },
-    { new: true }
+    { new: true },
   );
-  
+
   if (!user) throw new ApiError(404, 'User not found');
 
   await invalidateUserSessionCaches(String(req.user.id));
@@ -410,7 +498,7 @@ export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
 export const getRecentlyViewed = asyncHandler(async (req: any, res: Response) => {
   const user = await User.findById(req.user.id).populate('recentlyViewed.product');
   if (!user) throw new ApiError(404, 'User not found');
-  
+
   const list = (user.recentlyViewed || []).filter((item: any) => item.product != null);
   res.status(200).json(new ApiResponse(true, 'Recently viewed list fetched', list));
 });
@@ -423,7 +511,7 @@ export const trackRecentlyViewed = asyncHandler(async (req: any, res: Response) 
   if (!user.recentlyViewed) user.recentlyViewed = [];
 
   user.recentlyViewed = user.recentlyViewed.filter(
-    (item: any) => item.product.toString() !== productId
+    (item: any) => item.product.toString() !== productId,
   );
 
   user.recentlyViewed.unshift({ product: productId as any, viewedAt: new Date() });
@@ -443,23 +531,25 @@ export const updatePreferences = asyncHandler(async (req: any, res: Response) =>
   if (!user) throw new ApiError(404, 'User not found');
 
   if (notificationPreferences) {
-    user.notificationPreferences = { 
-      ...user.notificationPreferences, 
-      ...notificationPreferences 
+    user.notificationPreferences = {
+      ...user.notificationPreferences,
+      ...notificationPreferences,
     };
   }
   if (accountPreferences) {
-    user.accountPreferences = { 
-      ...user.accountPreferences, 
-      ...accountPreferences 
+    user.accountPreferences = {
+      ...user.accountPreferences,
+      ...accountPreferences,
     };
   }
 
   await user.save();
-  res.status(200).json(new ApiResponse(true, 'Preferences updated successfully', {
-    notificationPreferences: user.notificationPreferences,
-    accountPreferences: user.accountPreferences
-  }));
+  res.status(200).json(
+    new ApiResponse(true, 'Preferences updated successfully', {
+      notificationPreferences: user.notificationPreferences,
+      accountPreferences: user.accountPreferences,
+    }),
+  );
 });
 
 // Upload and Persist Avatar
@@ -475,14 +565,18 @@ export const uploadAvatarController = asyncHandler(async (req: any, res: Respons
   if (user.avatar) {
     const publicId = extractPublicId(user.avatar);
     if (publicId) {
-      deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up old avatar: ${err}`));
+      deleteFromCloudinary(publicId).catch((err) =>
+        logger.error(`Failed to clean up old avatar: ${err}`),
+      );
     }
   }
 
   user.avatar = req.file.path || req.file.secure_url;
   await user.save();
 
-  res.status(200).json(new ApiResponse(true, 'Avatar uploaded successfully', { avatar: user.avatar }));
+  res
+    .status(200)
+    .json(new ApiResponse(true, 'Avatar uploaded successfully', { avatar: user.avatar }));
 });
 
 // Get all team members & invites
@@ -510,7 +604,7 @@ export const getTeamMembers = asyncHandler(async (req: Request, res: Response) =
         limit,
         totalCount: memberCount + inviteCount,
       },
-    })
+    }),
   );
 });
 
@@ -538,13 +632,17 @@ export const inviteTeamMember = asyncHandler(async (req: any, res: Response) => 
     role,
     permissions: permissions || 'Full Access',
     token,
-    invitedBy: req.user.id
+    invitedBy: req.user.id,
   });
 
   // Dynamic notification to member email!
-  const frontendUrl = (process.env.FRONTEND_URLS?.split(',')[0] || process.env.FRONTEND_URL || 'http://localhost:5173').trim();
+  const frontendUrl = (
+    process.env.FRONTEND_URLS?.split(',')[0] ||
+    process.env.FRONTEND_URL ||
+    'http://localhost:5173'
+  ).trim();
   const acceptUrl = `${frontendUrl}/accept-invite?token=${token}`;
-  
+
   const { getTeamInviteEmailTemplate } = require('../utils/emailTemplates');
   const emailHtml = getTeamInviteEmailTemplate(acceptUrl, role, permissions || 'Full Access');
 
@@ -552,7 +650,7 @@ export const inviteTeamMember = asyncHandler(async (req: any, res: Response) => 
     email: cleanEmail,
     subject: 'Invitation to join Siri Arts & Crafts Admin Team',
     message: `You are invited to join the Siri Arts & Crafts team as an ${role}. Visit here to accept: ${acceptUrl}`,
-    html: emailHtml
+    html: emailHtml,
   });
 
   res.status(201).json(new ApiResponse(true, 'Invitation sent successfully', invite));
@@ -562,7 +660,7 @@ export const inviteTeamMember = asyncHandler(async (req: any, res: Response) => 
 export const cancelTeamInvite = asyncHandler(async (req: Request, res: Response) => {
   const invite = await TeamInvite.findById(req.params.id);
   if (!invite) throw new ApiError(404, 'Invitation not found');
-  
+
   if (invite.status !== 'pending') {
     throw new ApiError(400, 'Only pending invitations can be cancelled');
   }
@@ -578,7 +676,7 @@ export const getInviteDetailsByToken = asyncHandler(async (req: Request, res: Re
 
   const invite = await TeamInvite.findOne({ token: String(token) });
   if (!invite) throw new ApiError(404, 'Invalid or expired invitation token');
-  
+
   if (invite.expiresAt && invite.expiresAt < new Date()) {
     throw new ApiError(400, 'This invitation link has expired.');
   }
@@ -612,7 +710,7 @@ export const respondToInvite = asyncHandler(async (req: any, res: Response) => {
         email: cleanEmail,
         name: cleanEmail.split('@')[0],
         role: invite.role,
-        isVerified: true
+        isVerified: true,
       });
     } else {
       user.role = invite.role;

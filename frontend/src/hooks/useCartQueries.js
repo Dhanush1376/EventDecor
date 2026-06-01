@@ -6,6 +6,12 @@ import { getErrorMessage } from '../utils/errorHelpers';
 
 const checkAuthLocal = () => hasSessionMarker();
 
+const emptyCart = {
+  items: [],
+  summary: { subtotal: 0, depositTotal: 0, total: 0, shippingFee: 0, platformFee: 0 },
+};
+const defaultCart = { purchaseCart: emptyCart, rentalCart: emptyCart };
+
 export function useCartQuery() {
   return useQuery({
     queryKey: ['cart'],
@@ -23,20 +29,22 @@ export function useCartMutations() {
   const queryClient = useQueryClient();
 
   const addToCartMutation = useMutation({
-    mutationFn: async ({ productId, quantity }) => {
-      const res = await userService.addToCart(productId, quantity);
+    mutationFn: async ({ productId, quantity, type, rentalInfo }) => {
+      const res = await userService.addToCart(productId, quantity, type, rentalInfo);
       return res.success ? res.data : res;
     },
-    onMutate: async ({ productId, quantity, productInfo }) => {
+    onMutate: async ({ productId, quantity, productInfo, type, rentalInfo }) => {
       await queryClient.cancelQueries({ queryKey: ['cart'] });
-      const previousCart = queryClient.getQueryData(['cart']) || { items: [], summary: { subtotal: 0, total: 0 } };
-      
-      // Compute optimistic items
-      const existingItemIndex = previousCart.items.findIndex(
-        (item) => (item.product?._id || item.product?.id) === productId
+      const previousCart = queryClient.getQueryData(['cart']) || defaultCart;
+
+      const targetKey = type === 'rental' ? 'rentalCart' : 'purchaseCart';
+      const targetCart = previousCart[targetKey] || emptyCart;
+
+      const existingItemIndex = targetCart.items.findIndex(
+        (item) => (item.product?._id || item.product?.id) === productId,
       );
 
-      let updatedItems = [...previousCart.items];
+      let updatedItems = [...targetCart.items];
       if (existingItemIndex >= 0) {
         const existingItem = updatedItems[existingItemIndex];
         updatedItems[existingItemIndex] = {
@@ -44,7 +52,6 @@ export function useCartMutations() {
           quantity: existingItem.quantity + quantity,
         };
       } else if (productInfo) {
-        // If product details are passed, build an optimistic item matching the schema
         updatedItems.push({
           _id: `temp-${Date.now()}`,
           product: {
@@ -60,22 +67,41 @@ export function useCartMutations() {
           },
           quantity,
           variant: 'Default',
+          type: type || 'purchase',
+          rentalInfo,
+          deposit: productInfo.deposit || 0,
         });
       }
 
-      // Optimistic subtotal calculation
       const subtotal = updatedItems.reduce(
         (sum, item) => sum + (item.product?.price || 0) * item.quantity,
-        0
+        0,
       );
+
+      const depositTotal =
+        type === 'rental'
+          ? updatedItems.reduce(
+              (sum, item) =>
+                sum + (item.deposit || item.product?.securityDeposit || 0) * item.quantity,
+              0,
+            )
+          : 0;
 
       const optimisticCart = {
         ...previousCart,
-        items: updatedItems,
-        summary: {
-          ...previousCart.summary,
-          subtotal,
-          total: subtotal + (previousCart.summary?.shippingFee || 0) + (previousCart.summary?.platformFee || 0),
+        [targetKey]: {
+          ...targetCart,
+          items: updatedItems,
+          summary: {
+            ...targetCart.summary,
+            subtotal,
+            depositTotal,
+            total:
+              subtotal +
+              depositTotal +
+              (targetCart.summary?.shippingFee || 0) +
+              (targetCart.summary?.platformFee || 0),
+          },
         },
       };
 
@@ -87,9 +113,7 @@ export function useCartMutations() {
       toast.error(getErrorMessage(err, 'Unable to add item to bag'));
     },
     onSuccess: (data) => {
-      if (data) {
-        queryClient.setQueryData(['cart'], data);
-      }
+      if (data) queryClient.setQueryData(['cart'], data);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -103,24 +127,48 @@ export function useCartMutations() {
     },
     onMutate: async ({ productId }) => {
       await queryClient.cancelQueries({ queryKey: ['cart'] });
-      const previousCart = queryClient.getQueryData(['cart']) || { items: [], summary: { subtotal: 0, total: 0 } };
+      const previousCart = queryClient.getQueryData(['cart']) || defaultCart;
 
-      const updatedItems = previousCart.items.filter(
-        (item) => (item.product?._id || item.product?.id) !== productId
+      // Determine which cart has the item
+      const inPurchase = previousCart.purchaseCart?.items.some(
+        (i) => (i.product?._id || i.product?.id) === productId,
+      );
+      const targetKey = inPurchase ? 'purchaseCart' : 'rentalCart';
+      const targetCart = previousCart[targetKey] || emptyCart;
+
+      const updatedItems = targetCart.items.filter(
+        (item) => (item.product?._id || item.product?.id) !== productId,
       );
 
       const subtotal = updatedItems.reduce(
         (sum, item) => sum + (item.product?.price || 0) * item.quantity,
-        0
+        0,
       );
+
+      const depositTotal =
+        targetKey === 'rentalCart'
+          ? updatedItems.reduce(
+              (sum, item) =>
+                sum + (item.deposit || item.product?.securityDeposit || 0) * item.quantity,
+              0,
+            )
+          : 0;
 
       const optimisticCart = {
         ...previousCart,
-        items: updatedItems,
-        summary: {
-          ...previousCart.summary,
-          subtotal,
-          total: subtotal + (previousCart.summary?.shippingFee || 0) + (previousCart.summary?.platformFee || 0),
+        [targetKey]: {
+          ...targetCart,
+          items: updatedItems,
+          summary: {
+            ...targetCart.summary,
+            subtotal,
+            depositTotal,
+            total:
+              subtotal +
+              depositTotal +
+              (targetCart.summary?.shippingFee || 0) +
+              (targetCart.summary?.platformFee || 0),
+          },
         },
       };
 
@@ -132,9 +180,7 @@ export function useCartMutations() {
       toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
     },
     onSuccess: (data) => {
-      if (data) {
-        queryClient.setQueryData(['cart'], data);
-      }
+      if (data) queryClient.setQueryData(['cart'], data);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -146,50 +192,11 @@ export function useCartMutations() {
       const res = await userService.syncCart(cartItems);
       return res.success ? res.data : res;
     },
-    onMutate: async ({ cartItems }) => {
-      await queryClient.cancelQueries({ queryKey: ['cart'] });
-      const previousCart = queryClient.getQueryData(['cart']) || { items: [], summary: { subtotal: 0, total: 0 } };
-
-      // Optimistically update the items mapping them correctly
-      const updatedItems = previousCart.items.map((item) => {
-        const id = item.product?._id || item.product?.id;
-        const match = cartItems.find((ci) => ci.product === id);
-        if (match) {
-          return { ...item, quantity: match.quantity };
-        }
-        return item;
-      }).filter((item) => {
-        const id = item.product?._id || item.product?.id;
-        const match = cartItems.find((ci) => ci.product === id);
-        return !match || match.quantity > 0;
-      });
-
-      const subtotal = updatedItems.reduce(
-        (sum, item) => sum + (item.product?.price || 0) * item.quantity,
-        0
-      );
-
-      const optimisticCart = {
-        ...previousCart,
-        items: updatedItems,
-        summary: {
-          ...previousCart.summary,
-          subtotal,
-          total: subtotal + (previousCart.summary?.shippingFee || 0) + (previousCart.summary?.platformFee || 0),
-        },
-      };
-
-      queryClient.setQueryData(['cart'], optimisticCart);
-      return { previousCart };
-    },
-    onError: (err, variables, context) => {
-      queryClient.setQueryData(['cart'], context?.previousCart);
+    onError: (err) => {
       toast.error(getErrorMessage(err, 'Unable to sync bag'));
     },
     onSuccess: (data) => {
-      if (data) {
-        queryClient.setQueryData(['cart'], data);
-      }
+      if (data) queryClient.setQueryData(['cart'], data);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -201,8 +208,6 @@ export function useCartMutations() {
     removeFromCart: removeFromCartMutation.mutateAsync,
     syncCart: syncCartMutation.mutateAsync,
     isUpdatingCart:
-      addToCartMutation.isPending ||
-      removeFromCartMutation.isPending ||
-      syncCartMutation.isPending,
+      addToCartMutation.isPending || removeFromCartMutation.isPending || syncCartMutation.isPending,
   };
 }

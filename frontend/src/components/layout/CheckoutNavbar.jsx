@@ -1,6 +1,6 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { SiriLogo } from "../ui/SiriLogo";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { SiriLogo } from '../ui/SiriLogo';
 
 export function CheckoutNavbar() {
   return (
@@ -32,18 +32,16 @@ export function CheckoutNavbar() {
         <div className="flex-1 flex flex-col sm:flex-row items-end sm:items-center justify-end gap-2 sm:gap-6">
           <div className="flex flex-col items-end">
             <span className="font-label text-[9px] uppercase tracking-widest text-secondary/60">
-              Checkout
+              Siri Arts & Crafts
             </span>
             <span className="font-display text-[13px] sm:text-[14px] font-bold text-primary">
-              Step 1 of 3
+              Secure Checkout
             </span>
           </div>
 
           <div className="hidden sm:flex items-center gap-4 text-[10px] font-bold text-secondary border-l border-outline-variant/30 pl-6 h-8">
             <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px] text-green-700">
-                lock
-              </span>
+              <span className="material-symbols-outlined text-[16px] text-green-700">lock</span>
               Secure
             </span>
           </div>
