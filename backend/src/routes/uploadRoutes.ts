@@ -29,6 +29,7 @@ const ALLOWED_UPLOAD_FOLDERS = new Set([
   'event_decor_ecommerce/assets',
   'event_decor_ecommerce/gallery',
   'products',
+  'events',
 ]);
 
 /**

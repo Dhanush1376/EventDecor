@@ -39,8 +39,8 @@ export const compressImage = async (file, maxDimension = 1600) => {
         // Draw image onto canvas
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Compress to WebP
-        const mimeType = 'image/webp';
+        // Compress to JPEG for universal mobile browser support
+        const mimeType = 'image/jpeg';
 
         canvas.toBlob(
           (blob) => {
@@ -53,7 +53,7 @@ export const compressImage = async (file, maxDimension = 1600) => {
               resolve(file);
             } else {
               const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-              const newFile = new File([blob], `${originalName}.webp`, {
+              const newFile = new File([blob], `${originalName}.jpg`, {
                 type: mimeType,
                 lastModified: Date.now(),
               });
