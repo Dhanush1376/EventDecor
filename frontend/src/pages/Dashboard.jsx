@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { SEO } from '../components/seo/SEO';
-import { handleImageError } from '../utils/imageUtils';
+import { handleImageError, getOptimizedUrl } from '../utils/imageUtils';
 import { useAuth } from '../context/AuthContext';
 import { orderService, userService } from '../services/domainServices';
 import { MandalaElement } from '../components/ui/MandalaElement';
@@ -506,7 +506,7 @@ export function Dashboard() {
 
                 {user?.avatar ? (
                   <img
-                    src={user.avatar}
+                    src={getOptimizedUrl(user.avatar, 200, 200)}
                     alt={user.name || 'Avatar'}
                     className="w-full h-full object-cover"
                     onError={handleImageError}
@@ -619,6 +619,7 @@ export function Dashboard() {
                   whileHover={{ x: 3 }}
                   onClick={() => {
                     setActiveTab('rentals');
+                    setOrderFilter('RENTAL');
                     setMobileShowContent(true);
                   }}
                   className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
@@ -1306,7 +1307,7 @@ export function Dashboard() {
               )}
 
               {/* TAB 4: REAL-TIME ORDER HISTORY */}
-              {activeTab === 'orders' && (
+              {(activeTab === 'orders' || activeTab === 'rentals') && (
                 <ErrorBoundary
                   key="orders-error"
                   fallback={
@@ -1352,10 +1353,7 @@ export function Dashboard() {
                       </div>
                     </div>
 
-                    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-3.5 flex items-center gap-2 overflow-x-auto shadow-xs">
-                      <span className="text-[10px] uppercase font-bold text-secondary tracking-widest mr-2 flex-shrink-0">
-                        Sort Parameters:
-                      </span>
+                    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-2.5 flex items-center justify-between gap-2 shadow-xs">
                       {[
                         { id: 'ALL', label: 'All Orders' },
                         { id: 'RENTAL', label: 'Rental Orders' },
@@ -1366,7 +1364,7 @@ export function Dashboard() {
                           whileTap={{ scale: 0.98 }}
                           key={f.id}
                           onClick={() => setOrderFilter(f.id)}
-                          className={`px-3 py-1.5 rounded-full text-[9px] uppercase tracking-wider font-bold transition-all flex-shrink-0 cursor-pointer ${
+                          className={`flex-1 py-2 rounded-full text-[9px] uppercase tracking-wider font-bold transition-all text-center cursor-pointer ${
                             orderFilter === f.id
                               ? 'bg-primary text-surface shadow-xs'
                               : 'bg-surface-container text-secondary hover:bg-outline-variant/20'

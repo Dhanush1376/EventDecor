@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { handleImageError } from "../../utils/imageUtils";
-import { CloudinaryImage } from "./CloudinaryImage";
-
-
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { handleImageError } from '../../utils/imageUtils';
+import { CloudinaryImage } from './CloudinaryImage';
+import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
+import { useAuth } from '../../context/AuthContext';
 export function ShowcaseCard({
   id,
   _id,
@@ -13,26 +13,39 @@ export function ShowcaseCard({
   rentalPrice = 15000,
   setupTimeHours = 2,
   image,
-  category = "Traditional",
+  category = 'Traditional',
   inclusions = [],
   rating = 4.9,
   onOpenShowcase,
 }) {
-  const [wishlisted, setWishlisted] = useState(false);
+  const { isWishlisted } = useWishlistState();
+  const { toggleItem } = useWishlistDispatch();
+  const { runProtectedAction } = useAuth();
+
   const [hovered, setHovered] = useState(false);
 
+  const showcaseId = id || _id;
+  const wishlisted = isWishlisted(showcaseId);
+
   const formatPrice = (val) => {
-    if (!val) return "15,000";
-    return Number(val).toLocaleString("en-IN");
+    if (!val) return '15,000';
+    return Number(val).toLocaleString('en-IN');
   };
 
   const handleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setWishlisted((prev) => !prev);
+    runProtectedAction(() => {
+      toggleItem({
+        id: showcaseId,
+        title,
+        price: rentalPrice,
+        imageSrc: image,
+      });
+    });
   };
 
-  const formattedCat = String(category).replace(/_/g, " ");
+  const formattedCat = String(category).replace(/_/g, ' ');
 
   return (
     <motion.div
@@ -47,7 +60,7 @@ export function ShowcaseCard({
       {/* 1. VISUAL CANVAS */}
       <div className="relative h-44 sm:h-56 md:h-72 w-full overflow-hidden bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5 shadow-2xs">
         <CloudinaryImage
-          src={image || ""}
+          src={image || ''}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover:scale-110"
           containerClassName="w-full h-full"
@@ -61,16 +74,16 @@ export function ShowcaseCard({
         <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 min-h-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
-            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 min-h-0 min-w-0 p-0 aspect-square bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
+            aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <motion.span
               animate={{
                 scale: wishlisted ? [1, 1.4, 1] : 1,
-                color: wishlisted ? "#ff2d55" : "#1a1817",
-                fontVariationSettings: wishlisted ? "'FILL' 1" : "'FILL' 0",
+                color: wishlisted ? '#ff2d55' : '#1a1817',
+                fontVariationSettings: wishlisted ? "'FILL' 1, 'wght' 300" : "'FILL' 0, 'wght' 300",
               }}
-              transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+              transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
               className="material-symbols-outlined text-[14px] md:text-[18px]"
             >
               favorite
@@ -89,7 +102,9 @@ export function ShowcaseCard({
 
           {inclusions && inclusions.length > 0 && (
             <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white/95 backdrop-blur-md text-stone-800 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white z-10 hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-              <span className="leading-none text-[7px] sm:text-[8px] md:text-[10px]">{inclusions.length}</span>
+              <span className="leading-none text-[7px] sm:text-[8px] md:text-[10px]">
+                {inclusions.length}
+              </span>
               <span className="text-[4.5px] sm:text-[5px] md:text-[6px] tracking-tighter opacity-80 uppercase mt-0.5">
                 Props
               </span>
@@ -121,7 +136,6 @@ export function ShowcaseCard({
             </button>
           </div>
         </div>
-
       </div>
 
       {/* 2. REFINED INFO SECTION */}
@@ -160,7 +174,9 @@ export function ShowcaseCard({
           <span className="font-display text-[14px] sm:text-[16px] md:text-[22px] text-black font-medium leading-none">
             ₹{formatPrice(rentalPrice)}
           </span>
-          <span className="font-label text-[8px] sm:text-[9px] md:text-[10px] text-black/40">/ day</span>
+          <span className="font-label text-[8px] sm:text-[9px] md:text-[10px] text-black/40">
+            / day
+          </span>
         </div>
       </div>
     </motion.div>

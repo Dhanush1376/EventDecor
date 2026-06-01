@@ -1,43 +1,53 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useWishlist } from "../context/WishlistContext";
-import { useCart } from "../context/CartContext";
-import { QuickViewModal, CustomDropdown, ProductCard, Skeleton, WishlistPageSkeleton } from "../components/ui";
-import { SEO } from "../components/seo/SEO";
-import { handleImageError } from "../utils/imageUtils";
-import { productService } from "../services/domainServices";
-import { useProducts } from "../hooks/useProductQueries";
-import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useWishlist } from '../context/WishlistContext';
+import { useCart } from '../context/CartContext';
+import {
+  QuickViewModal,
+  CustomDropdown,
+  ProductCard,
+  Skeleton,
+  WishlistPageSkeleton,
+} from '../components/ui';
+import { SEO } from '../components/seo/SEO';
+import { handleImageError } from '../utils/imageUtils';
+import { productService } from '../services/domainServices';
+import { useProducts } from '../hooks/useProductQueries';
+import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 
 export function Wishlist() {
   const { items, removeItem, toggleItem, loading: wishlistLoading } = useWishlist();
   const { addItem: addToCart } = useCart();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("latest");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('latest');
+  const [activeTab, setActiveTab] = useState('all');
   const [quickViewProduct, setQuickViewProduct] = useState(null);
-  const [notification, setNotification] = useState("");
+  const [notification, setNotification] = useState('');
 
   // Track wishlist view
   useRecommendationTracker({
     targetType: 'page',
     targetId: 'wishlist',
-    source: 'wishlist'
+    source: 'wishlist',
   });
 
-  const { data: trendingData = {}, isLoading: trendingLoading } = useProducts({ limit: 4, sort: "Popularity" });
+  const { data: trendingData = {}, isLoading: trendingLoading } = useProducts({
+    limit: 4,
+    sort: 'Popularity',
+  });
   const trendingProducts = trendingData?.items || (Array.isArray(trendingData) ? trendingData : []);
 
   const sortOptions = [
-    { value: "latest", label: "Latest Added" },
-    { value: "price-low", label: "Price: Low to High" },
-    { value: "price-high", label: "Price: High to Low" },
+    { value: 'latest', label: 'Latest Added' },
+    { value: 'price-low', label: 'Price: Low to High' },
+    { value: 'price-high', label: 'Price: High to Low' },
   ];
 
   const triggerNotification = (msg) => {
     setNotification(msg);
-    setTimeout(() => setNotification(""), 3000);
+    setTimeout(() => setNotification(''), 3000);
   };
 
   // Provide realistic eCommerce values for products if minimal data is saved
@@ -45,16 +55,14 @@ export function Wishlist() {
     return items.map((item) => ({
       ...item,
       price: item.price || 12000,
-      oldPrice:
-        item.oldPrice || (item.price ? Math.round(item.price * 1.3) : 15600),
+      oldPrice: item.oldPrice || (item.price ? Math.round(item.price * 1.3) : 15600),
       rating: item.rating || 4.8,
       reviews: item.reviews || 124,
-      category: item.category || "Event Decor",
-      imageSrc:
-        item.imageSrc ||
-        item.image ||
-        item.images?.[0] ||
-        "",
+      category: item.category || 'Event Decor',
+      itemType:
+        item.itemType ||
+        (item.setupTimeHours !== undefined || item.inclusions ? 'event' : 'product'),
+      imageSrc: item.imageSrc || item.image || item.images?.[0] || '',
     }));
   }, [items]);
 
@@ -64,18 +72,21 @@ export function Wishlist() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (item) =>
-          item.title.toLowerCase().includes(q) ||
-          item.category.toLowerCase().includes(q),
+        (item) => item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q),
       );
     }
-    if (sortBy === "price-low") {
+
+    if (activeTab !== 'all') {
+      result = result.filter((item) => item.itemType === activeTab);
+    }
+
+    if (sortBy === 'price-low') {
       result.sort((a, b) => a.price - b.price);
-    } else if (sortBy === "price-high") {
+    } else if (sortBy === 'price-high') {
       result.sort((a, b) => b.price - a.price);
     }
     return result;
-  }, [enhancedItems, searchQuery, sortBy]);
+  }, [enhancedItems, searchQuery, sortBy, activeTab]);
 
   const handleMoveToBag = (item) => {
     addToCart({
@@ -83,7 +94,7 @@ export function Wishlist() {
       title: item.title,
       price: item.price,
       imageSrc: item.imageSrc,
-      variant: item.variant || "Default",
+      variant: item.variant || 'Default',
       quantity: 1,
     });
     removeItem(item.id, item.variant);
@@ -141,10 +152,26 @@ export function Wishlist() {
                 <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-[#1a1c1a]">
                   My Wishlist
                   <span className="font-body text-lg font-normal text-[#685c57]">
-                    {" "}
+                    {' '}
                     ({enhancedItems.length} items)
                   </span>
                 </h2>
+                {/* Partition Tabs */}
+                <div className="flex items-center gap-6 mt-4">
+                  {['all', 'product', 'event'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`pb-1 text-[13px] font-bold uppercase tracking-wider transition-all duration-300 border-b-2 ${
+                        activeTab === tab
+                          ? 'text-[#1a1c1a] border-[#1a1c1a]'
+                          : 'text-[#685c57]/60 border-transparent hover:text-[#685c57]'
+                      }`}
+                    >
+                      {tab === 'all' ? 'All' : tab === 'product' ? 'Products' : 'Events'}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -159,11 +186,12 @@ export function Wishlist() {
                     placeholder="Search my wishlist..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-12 py-3 bg-transparent text-[13px] outline-none text-on-surface placeholder:text-on-surface/20 font-medium relative z-10"
+                    className="w-full pl-12 pr-12 py-3 bg-transparent text-[13px] outline-none focus:outline-none focus:ring-0 border-none rounded-full text-on-surface placeholder:text-on-surface/20 font-medium relative z-10"
+                    style={{ outline: 'none', boxShadow: 'none' }}
                   />
                   {searchQuery && (
                     <button
-                      onClick={() => setSearchQuery("")}
+                      onClick={() => setSearchQuery('')}
                       className="absolute right-3 w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-primary/10 transition-colors z-20 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px] text-on-surface/40">
@@ -172,7 +200,6 @@ export function Wishlist() {
                     </button>
                   )}
                 </div>
-
               </div>
             </div>
           </>
@@ -229,22 +256,18 @@ export function Wishlist() {
                 </Link>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {trendingLoading ? (
-                  [...Array(4)].map((_, i) => (
-                    <ProductCard key={i} loading={true} />
-                  ))
-                ) : (
-                  trendingProducts.map((prod) => (
-                    <ProductCard
-                      key={prod._id || prod.id}
-                      {...prod}
-                      onQuickView={(e) => {
-                        e.preventDefault();
-                        setQuickViewProduct(prod);
-                      }}
-                    />
-                  ))
-                )}
+                {trendingLoading
+                  ? [...Array(4)].map((_, i) => <ProductCard key={i} loading={true} />)
+                  : trendingProducts.map((prod) => (
+                      <ProductCard
+                        key={prod._id || prod.id}
+                        {...prod}
+                        onQuickView={(e) => {
+                          e.preventDefault();
+                          setQuickViewProduct(prod);
+                        }}
+                      />
+                    ))}
               </div>
             </div>
           </div>

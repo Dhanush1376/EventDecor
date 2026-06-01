@@ -1,9 +1,9 @@
-import React, { useMemo, useCallback } from "react";
-import { userService } from "../services/domainServices";
-import { useAuth } from "./AuthContext";
-import { WishlistStateContext, WishlistDispatchContext } from "./WishlistContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import React, { useMemo, useCallback } from 'react';
+import { userService } from '../services/domainServices';
+import { useAuth } from './AuthContext';
+import { WishlistStateContext, WishlistDispatchContext } from './WishlistContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import logger from '../utils/logger';
 import { getErrorMessage } from '../utils/errorHelpers';
 
@@ -19,7 +19,7 @@ export function WishlistProvider({ children }) {
     queryKey: ['wishlist'],
     queryFn: async ({ signal }) => {
       const res = await userService.getWishlist({ signal });
-      return res.success ? (res.data || []) : [];
+      return res.success ? res.data || [] : [];
     },
     enabled: isQueryEnabled,
     staleTime: 5 * 60 * 1000,
@@ -39,21 +39,34 @@ export function WishlistProvider({ children }) {
     mutationFn: async (product) => {
       const res = await userService.toggleWishlist(product._id || product.id);
       if (!res.success) {
-        throw new Error(res.message || "Failed to toggle wishlist");
+        throw new Error(res.message || 'Failed to toggle wishlist');
       }
       return res;
     },
     onMutate: async (product) => {
       await queryClient.cancelQueries({ queryKey: ['wishlist'] });
-      const previousWishlist = queryClient.getQueryData(['wishlist']) || [];
+      let previousData = queryClient.getQueryData(['wishlist']) || [];
+
+      // Defensively extract array if it is wrapped in an ApiResponse
+      let previousWishlist = previousData;
+      if (!Array.isArray(previousData)) {
+        if (previousData.data && Array.isArray(previousData.data)) {
+          previousWishlist = previousData.data;
+        } else if (previousData.items && Array.isArray(previousData.items)) {
+          previousWishlist = previousData.items;
+        } else {
+          previousWishlist = [];
+        }
+      }
+
       const isPresent = previousWishlist.some(
-        (item) => String(item._id || item.id) === String(product._id || product.id)
+        (item) => String(item._id || item.id) === String(product._id || product.id),
       );
 
       let updatedWishlist;
       if (isPresent) {
         updatedWishlist = previousWishlist.filter(
-          (item) => String(item._id || item.id) !== String(product._id || product.id)
+          (item) => String(item._id || item.id) !== String(product._id || product.id),
         );
       } else {
         updatedWishlist = [...previousWishlist, product];
@@ -64,11 +77,11 @@ export function WishlistProvider({ children }) {
     },
     onError: (err, product, context) => {
       queryClient.setQueryData(['wishlist'], context?.previousWishlist);
-      logger.error("Failed to sync wishlist:", err);
-      toast.error(getErrorMessage(err, "Unable to update wishlist. Please try again."));
+      logger.error('Failed to sync wishlist:', err);
+      toast.error(getErrorMessage(err, 'Unable to update wishlist. Please try again.'));
     },
     onSuccess: (data, product, context) => {
-      toast.success(context.isPresent ? "Removed from Wishlist" : "Added to Wishlist");
+      toast.success(context.isPresent ? 'Removed from Wishlist' : 'Added to Wishlist');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
@@ -81,17 +94,17 @@ export function WishlistProvider({ children }) {
         toggleMutation.mutate(product);
       });
     },
-    [runProtectedAction, toggleMutation]
+    [runProtectedAction, toggleMutation],
   );
 
   const addItem = useCallback(
     (product) => {
-      const isPresent = Array.isArray(items) && items.some(
-        (item) => String(item._id || item.id) === String(product._id || product.id)
-      );
+      const isPresent =
+        Array.isArray(items) &&
+        items.some((item) => String(item._id || item.id) === String(product._id || product.id));
       if (!isPresent) toggleItem(product);
     },
-    [items, toggleItem]
+    [items, toggleItem],
   );
 
   const removeItem = useCallback(
@@ -99,7 +112,7 @@ export function WishlistProvider({ children }) {
       const item = items.find((i) => String(i._id || i.id) === String(id));
       if (item) toggleItem(item);
     },
-    [items, toggleItem]
+    [items, toggleItem],
   );
 
   const isWishlisted = useCallback(
@@ -107,7 +120,7 @@ export function WishlistProvider({ children }) {
       if (!Array.isArray(items)) return false;
       return items.some((item) => String(item._id || item.id) === String(id));
     },
-    [items]
+    [items],
   );
 
   const stateValue = useMemo(
@@ -117,7 +130,7 @@ export function WishlistProvider({ children }) {
       count: items.length,
       isWishlisted,
     }),
-    [items, loading, isWishlisted]
+    [items, loading, isWishlisted],
   );
 
   const dispatchValue = useMemo(
@@ -126,7 +139,7 @@ export function WishlistProvider({ children }) {
       removeItem,
       toggleItem,
     }),
-    [addItem, removeItem, toggleItem]
+    [addItem, removeItem, toggleItem],
   );
 
   return (

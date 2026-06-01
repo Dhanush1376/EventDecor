@@ -3,18 +3,13 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SectionWrapper } from '../layout';
 import { ProductCard } from '../ui/ProductCard';
-import { MandalaElement } from "../ui/MandalaElement";
-import { MandalaArtDecor } from "../ui/MandalaArtDecor";
+import { MandalaElement } from '../ui/MandalaElement';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import { usePersonalizedFeed } from '../../hooks/useRecommendationQueries';
 import { useAuth } from '../../context/AuthContext';
 import logger from '../../utils/logger';
 
-export function PersonalizedFeed({
-  title,
-  subtitle,
-  badgeText,
-  limit = 10
-}) {
+export function PersonalizedFeed({ title, subtitle, badgeText, limit = 10 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef(null);
   const containerRef = useRef(null);
@@ -29,11 +24,14 @@ export function PersonalizedFeed({
     return () => clearTimeout(timer);
   }, []);
 
-  const { data: feedData, isPending } = usePersonalizedFeed({
-    page: 'homepage',
-    limit,
-    offset: 0,
-  }, { enabled: shouldFetch });
+  const { data: feedData, isPending } = usePersonalizedFeed(
+    {
+      page: 'homepage',
+      limit,
+      offset: 0,
+    },
+    { enabled: shouldFetch },
+  );
 
   const items = feedData?.items || feedData || [];
   const source = feedData?.source || 'recommended';
@@ -50,15 +48,19 @@ export function PersonalizedFeed({
 
   const sectionTitle = title || 'Personalized Selection';
 
-  const sectionBadge = badgeText || (source === 'personalized'
-    ? 'Personalized Selection'
-    : source === 'cold-start'
-    ? 'Luxury Discoveries'
-    : 'Handpicked Matches');
+  const sectionBadge =
+    badgeText ||
+    (source === 'personalized'
+      ? 'Personalized Selection'
+      : source === 'cold-start'
+        ? 'Luxury Discoveries'
+        : 'Handpicked Matches');
 
-  const sectionSubtitle = subtitle || (isAuthenticated
-    ? "A bespoke collection of event decor inspired by your unique style and recent explorations."
-    : "Handpicked masterpieces carefully selected to elevate your next grand celebration.");
+  const sectionSubtitle =
+    subtitle ||
+    (isAuthenticated
+      ? 'A bespoke collection of event decor inspired by your unique style and recent explorations.'
+      : 'Handpicked masterpieces carefully selected to elevate your next grand celebration.');
 
   const handleDragEnd = (e, { offset }) => {
     const swipe = offset.x;
@@ -82,7 +84,7 @@ export function PersonalizedFeed({
       const { clientWidth } = scrollRef.current;
       scrollRef.current.scrollBy({
         left: clientWidth * 0.8,
-        behavior: "smooth",
+        behavior: 'smooth',
       });
     }
   };
@@ -92,7 +94,7 @@ export function PersonalizedFeed({
       const { clientWidth } = scrollRef.current;
       scrollRef.current.scrollBy({
         left: -(clientWidth * 0.8),
-        behavior: "smooth",
+        behavior: 'smooth',
       });
     }
   };
@@ -137,8 +139,8 @@ export function PersonalizedFeed({
         <motion.div
           initial={{ opacity: 0, y: 35 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ type: "spring", stiffness: 70, damping: 15 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ type: 'spring', stiffness: 70, damping: 15 }}
           className="max-w-2xl flex flex-col items-center md:items-start text-center md:text-left w-full"
         >
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-primary/20 bg-surface/50 mb-5">
@@ -183,36 +185,36 @@ export function PersonalizedFeed({
       <div className="md:hidden relative h-[560px] w-full flex items-center justify-center overflow-visible touch-pan-y z-20 mt-4 mb-10">
         <AnimatePresence>
           {loading ? (
-             <div className="absolute w-[75vw] sm:w-[65vw] h-full flex items-center justify-center">
-                <div className="w-full aspect-[3/4] p-4 bg-white/40 backdrop-blur-md border border-white/20 rounded-[24px] shadow-sm flex flex-col gap-4">
-                  <div className="relative overflow-hidden aspect-[3/4] w-full bg-stone-100 rounded-[18px]">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
-                  </div>
-                  <div className="relative overflow-hidden h-4 w-1/4 bg-stone-100 rounded-full">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
-                  </div>
-                  <div className="relative overflow-hidden h-6 w-3/4 bg-stone-100 rounded-lg">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
-                  </div>
+            <div className="absolute w-[75vw] sm:w-[65vw] h-full flex items-center justify-center">
+              <div className="w-full aspect-[3/4] p-4 bg-white/40 backdrop-blur-md border border-white/20 rounded-[24px] shadow-sm flex flex-col gap-4">
+                <div className="relative overflow-hidden aspect-[3/4] w-full bg-stone-100 rounded-[18px]">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
                 </div>
-             </div>
+                <div className="relative overflow-hidden h-4 w-1/4 bg-stone-100 rounded-full">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
+                </div>
+                <div className="relative overflow-hidden h-6 w-3/4 bg-stone-100 rounded-lg">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.8s_infinite] bg-[length:200%_100%]" />
+                </div>
+              </div>
+            </div>
           ) : (
             items.map((item, idx) => {
-              let x = "0%";
+              let x = '0%';
               let scale = 1;
               let zIndex = 30;
-              let opacity = 1;
+              let filter = 'brightness(1)';
 
               if (idx < activeIndex) {
-                x = `-${60 + (activeIndex - idx) * 10}%`;
+                x = `-${75 + (activeIndex - idx) * 5}%`;
                 scale = 0.85 - (activeIndex - idx) * 0.05;
                 zIndex = 20 - (activeIndex - idx);
-                opacity = 0.5;
+                filter = 'brightness(0.5)';
               } else if (idx > activeIndex) {
-                x = `${60 + (idx - activeIndex) * 10}%`;
+                x = `${75 + (idx - activeIndex) * 5}%`;
                 scale = 0.85 - (idx - activeIndex) * 0.05;
                 zIndex = 20 - (idx - activeIndex);
-                opacity = 0.5;
+                filter = 'brightness(0.5)';
               }
 
               return (
@@ -222,11 +224,11 @@ export function PersonalizedFeed({
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.2}
                   onDragEnd={handleDragEnd}
-                  animate={{ x, scale, zIndex, opacity }}
+                  animate={{ x, scale, zIndex, filter, opacity: 1 }}
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                   className="absolute w-[75vw] sm:w-[65vw] cursor-grab active:cursor-grabbing origin-center"
                 >
-                  <div className="w-full relative bg-surface-bright rounded-[24px] flex flex-col shadow-sm">
+                  <div className="w-full relative bg-surface-bright rounded-2xl flex flex-col shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
                     <ProductCard
                       {...item}
                       id={item.id || item._id}
@@ -246,8 +248,8 @@ export function PersonalizedFeed({
       {loading ? (
         <div className="hidden md:flex gap-9 pb-11 overflow-x-auto no-scrollbar -mx-[var(--spacing-margin-desktop)] px-[var(--spacing-margin-desktop)]">
           {[...Array(4)].map((_, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="min-w-[360px] xl:min-w-[405px] flex flex-col gap-4 p-4 rounded-[28px] bg-white/40 backdrop-blur-md border border-white/20 shadow-sm"
             >
               <div className="relative overflow-hidden aspect-[3/4] w-full bg-stone-100 rounded-[20px]">
@@ -276,9 +278,9 @@ export function PersonalizedFeed({
               key={product._id || product.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
+              viewport={{ once: true, margin: '-50px' }}
               transition={{
-                type: "spring",
+                type: 'spring',
                 stiffness: 70,
                 damping: 15,
                 delay: idx * 0.05,
@@ -304,7 +306,7 @@ export function PersonalizedFeed({
             <div
               key={idx}
               className={`h-1 rounded-full transition-all duration-500 ${
-                activeIndex === idx ? "w-6 bg-primary" : "w-1.5 bg-primary/20"
+                activeIndex === idx ? 'w-6 bg-primary' : 'w-1.5 bg-primary/20'
               }`}
             />
           ))}
@@ -315,9 +317,7 @@ export function PersonalizedFeed({
           className="w-full sm:w-auto px-8 py-4 bg-transparent border border-black/10 text-on-surface rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-black/5 flex items-center justify-center gap-3"
         >
           Explore All Decor
-          <span className="material-symbols-outlined text-[16px]">
-            trending_flat
-          </span>
+          <span className="material-symbols-outlined text-[16px]">trending_flat</span>
         </Link>
       </div>
     </SectionWrapper>

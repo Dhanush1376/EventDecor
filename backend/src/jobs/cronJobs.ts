@@ -60,12 +60,12 @@ export const initJobs = () => {
   // 4. Reconcile admin roles with ADMIN_EMAIL config (daily at 03:00)
   cron.schedule('0 3 * * *', async () => {
     await withCronLock('admin-role-reconcile', 3600, async () => {
-      const result = await AdminRoleReconciliationService.reconcile();
-      if (result.upgraded > 0 || result.downgraded > 0) {
-        logger.info(
-          `[ADMIN RECONCILE] Upgraded: ${result.upgraded}, Downgraded: ${result.downgraded}`,
-        );
-      }
+      // DISABLED: This conflicts with dynamic team invitations by reverting non-env admins to 'user'.
+      // const result = await AdminRoleReconciliationService.reconcile();
+      // if (result.upgraded > 0 || result.downgraded > 0) {
+      //   logger.info(`[ADMIN RECONCILE] Upgraded: ${result.upgraded}, Downgraded: ${result.downgraded}`);
+      // }
+      logger.info('[ADMIN RECONCILE] Skipping reconciliation to preserve dynamic team roles.');
     });
   });
 

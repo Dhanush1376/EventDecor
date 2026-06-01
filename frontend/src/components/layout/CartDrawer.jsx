@@ -1,13 +1,13 @@
-import React, { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { useCart } from "../../context/CartContext";
-import { handleImageError } from "../../utils/imageUtils";
-import { prefetchManager } from "../../utils/prefetchManager";
-import { CloudinaryImage } from "../ui/CloudinaryImage";
+import React, { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
+import { handleImageError } from '../../utils/imageUtils';
+import { prefetchManager } from '../../utils/prefetchManager';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
 
-const EMPTY_CART_ILLU = "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129342/event_decor_ecommerce/assets/event_decor_empty_cart_illustration.jpg";
-
+const EMPTY_CART_ILLU =
+  'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129342/event_decor_ecommerce/assets/event_decor_empty_cart_illustration.jpg';
 
 export function CartDrawer({ isOpen, onClose }) {
   const { items, removeItem, updateQuantity, subtotal, cartCount, loading } = useCart();
@@ -20,7 +20,7 @@ export function CartDrawer({ isOpen, onClose }) {
   useEffect(() => {
     if (isOpen) {
       triggerElementRef.current = document.activeElement;
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
 
       // Simple focus trap
       const focusableElements = drawerRef.current?.querySelectorAll(
@@ -31,8 +31,8 @@ export function CartDrawer({ isOpen, onClose }) {
       }
 
       const handleKeyDown = (e) => {
-        if (e.key === "Escape") onClose();
-        if (e.key === "Tab" && focusableElements) {
+        if (e.key === 'Escape') onClose();
+        if (e.key === 'Tab' && focusableElements) {
           const first = focusableElements[0];
           const last = focusableElements[focusableElements.length - 1];
           if (e.shiftKey && document.activeElement === first) {
@@ -44,10 +44,10 @@ export function CartDrawer({ isOpen, onClose }) {
           }
         }
       };
-      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener('keydown', handleKeyDown);
       return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        document.body.style.overflow = "";
+        window.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = '';
         if (triggerElementRef.current) {
           triggerElementRef.current.focus();
         }
@@ -71,10 +71,10 @@ export function CartDrawer({ isOpen, onClose }) {
           {/* Drawer Panel */}
           <motion.div
             ref={drawerRef}
-            initial={{ x: "100%" }}
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             drag="x"
             dragDirectionLock
             dragConstraints={{ left: 0, right: 100 }}
@@ -109,8 +109,11 @@ export function CartDrawer({ isOpen, onClose }) {
             <div className="flex-1 overflow-y-auto p-6">
               {loading && items.length === 0 ? (
                 <div className="space-y-6">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex gap-4 p-4 rounded-[20px] border border-outline-variant/5 bg-surface-container-low animate-pulse">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="flex gap-4 p-4 rounded-[20px] border border-outline-variant/5 bg-surface-container-low animate-pulse"
+                    >
                       <div className="w-20 h-24 rounded-[12px] bg-surface-container" />
                       <div className="flex-1 py-2 space-y-4">
                         <div className="h-4 bg-surface-container rounded w-3/4" />
@@ -151,126 +154,279 @@ export function CartDrawer({ isOpen, onClose }) {
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  <AnimatePresence mode="popLayout">
-                  {items.map((item) => (
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.9, x: -30, transition: { duration: 0.2 } }}
-                      key={`${item.id}-${item.variant || ""}`}
-                      className="relative flex gap-4 p-4 rounded-[20px] bg-surface-container-low border border-outline-variant/10 shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
-                    >
-                      <div className="w-20 h-24 rounded-[12px] overflow-hidden flex-shrink-0 bg-surface-container">
-                        <CloudinaryImage
-                          src={item.imageSrc || item.image}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                          containerClassName="w-full h-full"
-                          loading="lazy"
-                          width={160}
-                          height={192}
-                          sizes="80px"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-display text-[16px] truncate">
-                          {item.title}
-                        </h3>
-                        {item.variant && (
-                          <p className="font-body text-[12px] text-secondary/60 mt-0.5">
-                            {item.variant}
-                          </p>
-                        )}
-                        <p className="font-display text-[15px] text-primary mt-1">
-                          ₹{item.price?.toLocaleString()}
-                        </p>
-                        <div className="flex items-center gap-3 mt-3">
-                          <div className="flex items-center gap-3 bg-surface p-1 rounded-full border border-outline-variant/10 shadow-sm">
-                            {item.quantity > 1 ? (
-                              <button
-                                onClick={() =>
-                                  updateQuantity(
-                                    item.id,
-                                    item.variant,
-                                    item.quantity - 1,
-                                  )
-                                }
-                                className="w-10 h-10 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
-                                aria-label="Decrease quantity"
+                <div className="flex flex-col gap-8">
+                  {items.filter((item) => item.type !== 'rental').length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="font-display text-[12px] font-bold uppercase tracking-widest text-[#685c57] border-b border-outline-variant/20 pb-2 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">shopping_bag</span>
+                        Purchases
+                      </h4>
+                      <div className="space-y-4">
+                        <AnimatePresence mode="popLayout">
+                          {items
+                            .filter((item) => item.type !== 'rental')
+                            .map((item) => (
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{
+                                  opacity: 0,
+                                  scale: 0.9,
+                                  x: -30,
+                                  transition: { duration: 0.2 },
+                                }}
+                                key={`${item.id}-${item.variant || ''}`}
+                                className="relative flex gap-4 p-4 rounded-[20px] bg-surface-container-low border border-outline-variant/10 shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
                               >
-                                <span className="material-symbols-outlined text-[18px]">
-                                  remove
-                                </span>
-                              </button>
-                            ) : (
-                              <div className="relative">
-                                <button
-                                  onClick={() =>
-                                    setConfirmingRemove({
-                                      id: item.id,
-                                      variant: item.variant,
-                                    })
-                                  }
-                                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${confirmingRemove?.id === item.id ? "bg-error text-white scale-110 shadow-lg" : "text-error/60 hover:bg-error/10 hover:text-error"}`}
-                                  aria-label="Confirm remove"
-                                >
-                                  <span className="material-symbols-outlined text-[18px]">
-                                    {confirmingRemove?.id === item.id
-                                      ? "check"
-                                      : "delete"}
-                                  </span>
-                                </button>
-                                {confirmingRemove?.id === item.id && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] py-1 px-2 rounded whitespace-nowrap z-10"
-                                  >
-                                    Confirm?
-                                  </motion.div>
-                                )}
-                              </div>
-                            )}
-                            <span className="font-body text-[14px] w-6 text-center font-bold">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() =>
-                                updateQuantity(
-                                  item.id,
-                                  item.variant,
-                                  item.quantity + 1,
-                                )
-                              }
-                              className="w-10 h-10 rounded-full flex items-center justify-center text-secondary hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
-                              aria-label="Increase quantity"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">
-                                add
-                              </span>
-                            </button>
-                          </div>
-                          {confirmingRemove?.id === item.id && (
-                            <button
-                              onClick={() => {
-                                removeItem(item.id, item.variant);
-                                setConfirmingRemove(null);
-                              }}
-                              className="absolute inset-0 z-20 bg-error/95 text-white flex items-center justify-center gap-2 rounded-[20px] font-label text-[12px] uppercase tracking-widest font-bold"
-                            >
-                              <span className="material-symbols-outlined text-[20px]">
-                                delete_forever
-                              </span>
-                              Confirm Removal
-                            </button>
-                          )}
-                        </div>
+                                <div className="w-20 h-24 rounded-[12px] overflow-hidden flex-shrink-0 bg-surface-container relative">
+                                  <CloudinaryImage
+                                    src={item.imageSrc || item.image}
+                                    alt={item.title}
+                                    className="w-full h-full object-cover"
+                                    containerClassName="w-full h-full"
+                                    loading="lazy"
+                                    width={160}
+                                    height={192}
+                                    sizes="80px"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                  <div>
+                                    <h3 className="font-display text-[15px] leading-tight truncate">
+                                      {item.title}
+                                    </h3>
+                                    {item.variant && (
+                                      <p className="font-body text-[11px] text-[#685c57] mt-0.5 uppercase tracking-wider font-bold">
+                                        {item.variant}
+                                      </p>
+                                    )}
+                                    <p className="font-display text-[14px] text-primary mt-1 font-bold">
+                                      ₹{item.price?.toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center justify-between mt-2">
+                                    <div className="flex items-center gap-2 bg-surface p-1 rounded-full border border-outline-variant/10 shadow-sm h-9">
+                                      {item.quantity > 1 ? (
+                                        <button
+                                          onClick={() =>
+                                            updateQuantity(item.id, item.variant, item.quantity - 1)
+                                          }
+                                          className="w-7 h-7 rounded-full flex items-center justify-center text-[#685c57] hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
+                                          aria-label="Decrease quantity"
+                                        >
+                                          <span className="material-symbols-outlined text-[16px]">
+                                            remove
+                                          </span>
+                                        </button>
+                                      ) : (
+                                        <div className="relative">
+                                          <button
+                                            onClick={() =>
+                                              setConfirmingRemove({
+                                                id: item.id,
+                                                variant: item.variant,
+                                              })
+                                            }
+                                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-error text-white shadow-md' : 'text-error/60 hover:bg-error/10 hover:text-error'}`}
+                                            aria-label="Confirm remove"
+                                          >
+                                            <span className="material-symbols-outlined text-[14px]">
+                                              {confirmingRemove?.id === item.id &&
+                                              confirmingRemove?.variant === item.variant
+                                                ? 'check'
+                                                : 'delete'}
+                                            </span>
+                                          </button>
+                                          {confirmingRemove?.id === item.id &&
+                                            confirmingRemove?.variant === item.variant && (
+                                              <motion.div
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-[#1a1c1a] text-white text-[9px] py-1 px-2 rounded whitespace-nowrap z-10 font-bold tracking-widest uppercase"
+                                              >
+                                                Confirm?
+                                              </motion.div>
+                                            )}
+                                        </div>
+                                      )}
+                                      <span className="font-body text-[12px] w-5 text-center font-bold">
+                                        {item.quantity}
+                                      </span>
+                                      <button
+                                        onClick={() =>
+                                          updateQuantity(item.id, item.variant, item.quantity + 1)
+                                        }
+                                        className="w-7 h-7 rounded-full flex items-center justify-center text-[#685c57] hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
+                                        aria-label="Increase quantity"
+                                      >
+                                        <span className="material-symbols-outlined text-[16px]">
+                                          add
+                                        </span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                                {confirmingRemove?.id === item.id &&
+                                  confirmingRemove?.variant === item.variant && (
+                                    <button
+                                      onClick={() => {
+                                        removeItem(item.id, item.variant);
+                                        setConfirmingRemove(null);
+                                      }}
+                                      className="absolute inset-0 z-20 bg-error/95 text-white flex items-center justify-center gap-2 rounded-[20px] font-label text-[11px] uppercase tracking-widest font-bold shadow-inner"
+                                    >
+                                      <span className="material-symbols-outlined text-[18px]">
+                                        delete_forever
+                                      </span>
+                                      Confirm Removal
+                                    </button>
+                                  )}
+                              </motion.div>
+                            ))}
+                        </AnimatePresence>
                       </div>
-                    </motion.div>
-                  ))}
-                  </AnimatePresence>
+                    </div>
+                  )}
+
+                  {items.filter((item) => item.type === 'rental').length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="font-display text-[12px] font-bold uppercase tracking-widest text-[#685c57] border-b border-outline-variant/20 pb-2 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">
+                          event_available
+                        </span>
+                        Rentals
+                      </h4>
+                      <div className="space-y-4">
+                        <AnimatePresence mode="popLayout">
+                          {items
+                            .filter((item) => item.type === 'rental')
+                            .map((item) => (
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{
+                                  opacity: 0,
+                                  scale: 0.9,
+                                  x: -30,
+                                  transition: { duration: 0.2 },
+                                }}
+                                key={`${item.id}-${item.variant || ''}`}
+                                className="relative flex gap-4 p-4 rounded-[20px] bg-[#fdfaf5] border border-[#d0c5af]/40 shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
+                              >
+                                <div className="w-20 h-24 rounded-[12px] overflow-hidden flex-shrink-0 bg-surface-container relative">
+                                  <CloudinaryImage
+                                    src={item.imageSrc || item.image}
+                                    alt={item.title}
+                                    className="w-full h-full object-cover"
+                                    containerClassName="w-full h-full"
+                                    loading="lazy"
+                                    width={160}
+                                    height={192}
+                                    sizes="80px"
+                                  />
+                                  <div className="absolute top-1 left-1 bg-[#8c7335] text-white text-[7px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                    Rent
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                  <div>
+                                    <h3 className="font-display text-[15px] leading-tight truncate">
+                                      {item.title}
+                                    </h3>
+                                    {item.variant && (
+                                      <p className="font-body text-[11px] text-[#685c57] mt-0.5 uppercase tracking-wider font-bold">
+                                        {item.variant}
+                                      </p>
+                                    )}
+                                    <p className="font-display text-[14px] text-primary mt-1 font-bold">
+                                      ₹{item.price?.toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center justify-between mt-2">
+                                    <div className="flex items-center gap-2 bg-white p-1 rounded-full border border-outline-variant/10 shadow-sm h-9">
+                                      {item.quantity > 1 ? (
+                                        <button
+                                          onClick={() =>
+                                            updateQuantity(item.id, item.variant, item.quantity - 1)
+                                          }
+                                          className="w-7 h-7 rounded-full flex items-center justify-center text-[#685c57] hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
+                                          aria-label="Decrease quantity"
+                                        >
+                                          <span className="material-symbols-outlined text-[16px]">
+                                            remove
+                                          </span>
+                                        </button>
+                                      ) : (
+                                        <div className="relative">
+                                          <button
+                                            onClick={() =>
+                                              setConfirmingRemove({
+                                                id: item.id,
+                                                variant: item.variant,
+                                              })
+                                            }
+                                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-error text-white shadow-md' : 'text-error/60 hover:bg-error/10 hover:text-error'}`}
+                                            aria-label="Confirm remove"
+                                          >
+                                            <span className="material-symbols-outlined text-[14px]">
+                                              {confirmingRemove?.id === item.id &&
+                                              confirmingRemove?.variant === item.variant
+                                                ? 'check'
+                                                : 'delete'}
+                                            </span>
+                                          </button>
+                                          {confirmingRemove?.id === item.id &&
+                                            confirmingRemove?.variant === item.variant && (
+                                              <motion.div
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-[#1a1c1a] text-white text-[9px] py-1 px-2 rounded whitespace-nowrap z-10 font-bold tracking-widest uppercase"
+                                              >
+                                                Confirm?
+                                              </motion.div>
+                                            )}
+                                        </div>
+                                      )}
+                                      <span className="font-body text-[12px] w-5 text-center font-bold">
+                                        {item.quantity}
+                                      </span>
+                                      <button
+                                        onClick={() =>
+                                          updateQuantity(item.id, item.variant, item.quantity + 1)
+                                        }
+                                        className="w-7 h-7 rounded-full flex items-center justify-center text-[#685c57] hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
+                                        aria-label="Increase quantity"
+                                      >
+                                        <span className="material-symbols-outlined text-[16px]">
+                                          add
+                                        </span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                                {confirmingRemove?.id === item.id &&
+                                  confirmingRemove?.variant === item.variant && (
+                                    <button
+                                      onClick={() => {
+                                        removeItem(item.id, item.variant);
+                                        setConfirmingRemove(null);
+                                      }}
+                                      className="absolute inset-0 z-20 bg-error/95 text-white flex items-center justify-center gap-2 rounded-[20px] font-label text-[11px] uppercase tracking-widest font-bold shadow-inner"
+                                    >
+                                      <span className="material-symbols-outlined text-[18px]">
+                                        delete_forever
+                                      </span>
+                                      Confirm Removal
+                                    </button>
+                                  )}
+                              </motion.div>
+                            ))}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -284,19 +440,15 @@ export function CartDrawer({ isOpen, onClose }) {
                 }}
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-body text-[14px] text-secondary">
-                    Subtotal
-                  </span>
-                  <span className="font-display text-[20px]">
-                    ₹{subtotal.toLocaleString()}
-                  </span>
+                  <span className="font-body text-[14px] text-secondary">Subtotal</span>
+                  <span className="font-display text-[20px]">₹{subtotal.toLocaleString()}</span>
                 </div>
                 <p className="font-body text-[12px] text-secondary/60 font-light">
                   Shipping calculated at checkout
                 </p>
                 <Link
                   to="/checkout"
-                  onMouseEnter={() => prefetchManager.prefetchRoute("/checkout", { kind: "hover" })}
+                  onMouseEnter={() => prefetchManager.prefetchRoute('/checkout', { kind: 'hover' })}
                   onClick={onClose}
                   className="block w-full bg-primary text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-primary/95 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/10"
                 >

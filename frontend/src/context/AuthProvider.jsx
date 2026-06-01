@@ -113,8 +113,8 @@ export function AuthProvider({ children }) {
         }
 
         if (err.response?.status === 401) {
-          logger.warn('[Auth] Session invalid or expired (401) — ignoring to prevent auto-logout');
-          // logout(true);
+          logger.warn('[Auth] Session invalid or expired (401) — logging out');
+          logout(true);
           return false;
         }
 
@@ -132,8 +132,8 @@ export function AuthProvider({ children }) {
               }
             } catch (retryErr) {
               if (retryErr.response?.status === 401) {
-                logger.warn('[Auth] Retry session invalid (401) — ignoring to prevent auto-logout');
-                // logout(true);
+                logger.warn('[Auth] Retry session invalid (401) — logging out');
+                logout(true);
                 return false;
               }
               if (!retryErr.response && (cachedProfile || user)) {
@@ -147,7 +147,7 @@ export function AuthProvider({ children }) {
         }
 
         if (!cachedProfile && !user) {
-          // logout(true);
+          logout(true);
         }
         return false;
       } finally {
@@ -196,7 +196,7 @@ export function AuthProvider({ children }) {
     })();
 
     const handleUnauthorized = () => {
-      // logout(true);
+      logout(true);
     };
 
     window.addEventListener('auth-unauthorized', handleUnauthorized);

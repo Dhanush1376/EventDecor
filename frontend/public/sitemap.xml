@@ -219,7 +219,7 @@
   </url>
   <url>
     <loc>http://localhost:3000/gallery/6a0d5c8fc725a13dd9a95619</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
@@ -229,12 +229,22 @@
   </url>
   <url>
     <loc>http://localhost:3000/gallery/6a11579708fa7569dfc015a1</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
       <image:loc>https://i.pinimg.com/736x/d5/bc/41/d5bc41f6ef178f16df03ae0bd57d9499.jpg</image:loc>
       <image:title>Beaded Coconut Decor</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost:3000/gallery/6a0c781bb048b5d5827cdf8a</loc>
+    <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://i.pinimg.com/736x/35/6a/23/356a2307927067b644d13761ed953f77.jpg</image:loc>
+      <image:title>Pearl Pooja Set</image:title>
     </image:image>
   </url>
   <url>
@@ -248,16 +258,6 @@
     </image:image>
   </url>
   <url>
-    <loc>http://localhost:3000/gallery/6a0c781bb048b5d5827cdf8a</loc>
-    <lastmod>2026-05-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://i.pinimg.com/736x/35/6a/23/356a2307927067b644d13761ed953f77.jpg</image:loc>
-      <image:title>Pearl Pooja Set</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>http://localhost:3000/gallery/6a0c764b9b8633afb920deb5</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>weekly</changefreq>
@@ -268,6 +268,16 @@
     </image:image>
   </url>
   <url>
+    <loc>http://localhost:3000/gallery/6a0c76cc9b8633afb920dec9</loc>
+    <lastmod>2026-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://i1-c.pinimg.com/1200x/47/4b/1a/474b1ab17dbe517a24e6e3686b55400d.jpg</image:loc>
+      <image:title>Jute Jewelry Cart</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>http://localhost:3000/gallery/6a0c75da9b8633afb920dea1</loc>
     <lastmod>2026-05-30</lastmod>
     <changefreq>weekly</changefreq>
@@ -275,16 +285,6 @@
     <image:image>
       <image:loc>https://i.pinimg.com/736x/60/4c/a4/604ca449c7faa4d11a04cbe246a1638f.jpg</image:loc>
       <image:title>Bangle Ceremony Tray</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>http://localhost:3000/gallery/6a0c76cc9b8633afb920dec9</loc>
-    <lastmod>2026-05-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://i1-c.pinimg.com/1200x/47/4b/1a/474b1ab17dbe517a24e6e3686b55400d.jpg</image:loc>
-      <image:title>Jute Jewelry Cart</image:title>
     </image:image>
   </url>
   <url>

@@ -33,13 +33,8 @@ export const isProtectedSuperAdminEmail = (email: string): boolean => {
 /**
  * Roles that are allowed access to admin resources.
  */
-export const ADMIN_ROLES = [
-  'owner',
-  'super_admin',
-  'main_admin',
-  'admin'
-] as const;
-export type AdminRole = typeof ADMIN_ROLES[number];
+export const ADMIN_ROLES = ['owner', 'super_admin', 'main_admin', 'admin'] as const;
+export type AdminRole = (typeof ADMIN_ROLES)[number];
 
 /**
  * All staff/admin roles (superset of ADMIN_ROLES).
@@ -59,7 +54,7 @@ export const STAFF_ROLES = [
   'manager',
   'coordinator',
 ] as const;
-export type StaffRole = typeof STAFF_ROLES[number];
+export type StaffRole = (typeof STAFF_ROLES)[number];
 
 /**
  * Role weight hierarchy mapping for security access checks (higher = more privileged).
@@ -77,20 +72,20 @@ export const ROLE_HIERARCHY: Record<string, number> = {
   manager: 20,
   coordinator: 10,
   customer: 0,
-  user: 0
+  user: 0,
 };
 
 /**
  * Checks if an actor can perform administrative tasks on a target user based on role weights.
- * - Only owner and super_admin can manage other users.
+ * - Users with weight >= 80 (admins) can manage other users.
  * - Owners can manage anyone (except another owner, handled separately for protection).
- * - Super admins can only manage roles strictly lower than super_admin (weight < 90).
+ * - Users can only manage roles strictly lower than their own role weight.
  */
 export const canActorManageTarget = (actorRole: string, targetRole: string): boolean => {
   const actorWeight = ROLE_HIERARCHY[actorRole] ?? 0;
   const targetWeight = ROLE_HIERARCHY[targetRole] ?? 0;
 
-  if (actorWeight < 90) return false;
+  if (actorWeight < 80) return false;
   if (actorRole === 'owner') return true;
 
   return actorWeight > targetWeight;
@@ -98,16 +93,15 @@ export const canActorManageTarget = (actorRole: string, targetRole: string): boo
 
 /**
  * Checks if an actor is authorized to assign/invite a user to a specific role.
- * - Actor must be owner or super_admin.
- * - Super admins cannot assign owner or super_admin roles.
+ * - Users with weight >= 80 (admins) can assign roles.
+ * - Users can only assign roles strictly lower than their own role weight.
  */
 export const canActorAssignRole = (actorRole: string, roleToAssign: string): boolean => {
   const actorWeight = ROLE_HIERARCHY[actorRole] ?? 0;
   const targetWeight = ROLE_HIERARCHY[roleToAssign] ?? 0;
 
-  if (actorWeight < 90) return false;
+  if (actorWeight < 80) return false;
   if (actorRole === 'owner') return true;
 
-  return targetWeight < 90;
+  return actorWeight > targetWeight;
 };
-

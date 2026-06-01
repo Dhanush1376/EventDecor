@@ -48,12 +48,12 @@ export function AdminRentalOrders() {
     try {
       const res = await rentalService.adminGetAll();
       if (res.success) {
-        setRentals(res.data);
+        const payload = res.data ?? [];
+        setRentals(Array.isArray(payload) ? payload : payload.data || []);
       } else {
         toast.error('Failed to load rental orders');
       }
     } catch (err) {
-      console.error(err);
       toast.error('Error loading rentals');
     } finally {
       setDataLoading(false);
@@ -96,6 +96,39 @@ export function AdminRentalOrders() {
     setIsDrawerOpen(true);
   };
 
+  const downloadExcel = () => {
+    const headers = [
+      'Rental ID',
+      'Customer',
+      'Product',
+      'Start Date',
+      'End Date',
+      'Deposit',
+      'Total',
+      'Status',
+    ];
+    const rows = filteredRentals.map((r) => [
+      r._id,
+      r.userId?.name || r.user?.name || 'Guest',
+      `"${(r.productTitle || '').replace(/"/g, '""')}"`,
+      new Date(r.rentalStartDate).toLocaleDateString(),
+      new Date(r.rentalEndDate).toLocaleDateString(),
+      r.securityDeposit,
+      r.totalAmount,
+      r.status,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Rental_Orders_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
@@ -104,7 +137,15 @@ export function AdminRentalOrders() {
         icon="inventory_2"
         iconColor="info"
         mobileRow={true}
-      />
+      >
+        <button
+          onClick={downloadExcel}
+          className="admin-btn-icon text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+          title="Export to Excel"
+        >
+          <span className="material-symbols-outlined text-[24px]">download</span>
+        </button>
+      </PageHeader>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="w-full sm:max-w-md">
@@ -124,7 +165,7 @@ export function AdminRentalOrders() {
             placeholder="Search rentals..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="admin-input pl-10 py-2 w-full text-[12px]"
+            className="admin-input !pl-10 py-2 w-full text-[12px]"
           />
         </div>
       </div>

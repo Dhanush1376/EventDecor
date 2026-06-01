@@ -131,10 +131,10 @@ const dispatchUnauthorized = () => {
     logger.dev('[API] Suppressed auth-unauthorized during session bootstrap');
     return;
   }
-  // setAccessToken(null);
-  // clearAuthStorage();
-  // clearCachedProfile();
-  // window.dispatchEvent(new Event('auth-unauthorized'));
+  setAccessToken(null);
+  clearAuthStorage();
+  clearCachedProfile();
+  window.dispatchEvent(new Event('auth-unauthorized'));
 };
 
 export const refreshAccessToken = async () => {

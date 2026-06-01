@@ -23,6 +23,7 @@ import { SlowConnectionBanner } from './components/ui/SlowConnectionBanner';
 import { safeSessionStorage } from './utils/storage';
 import { GlobalTracker } from './components/ui/GlobalTracker';
 import { NavigationOrchestrator } from './components/ui/NavigationOrchestrator';
+import { ScrollManager } from './components/ui/ScrollManager';
 import { prefetchManager } from './utils/prefetchManager';
 import { useAuth } from './context/AuthContext';
 import { getRouteSkeletonVariant } from './components/ui/RouteSkeleton';
@@ -338,6 +339,7 @@ function App() {
                   <Router>
                     <RouteDiagnostics />
                     <NavigationOrchestrator />
+                    <ScrollManager />
                     <GlobalTracker />
                     <PwaUpdatePrompt />
                     <ErrorBoundary>

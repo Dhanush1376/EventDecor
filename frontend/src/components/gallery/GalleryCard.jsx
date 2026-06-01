@@ -1,8 +1,8 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
-import { CloudinaryImage } from "../ui/CloudinaryImage";
-import { handleImageError } from "../../utils/imageUtils";
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
+import { handleImageError } from '../../utils/imageUtils';
 
 function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager }) {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -14,13 +14,13 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager
       transition={{ duration: 0.5 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{ 
+      style={{
         minHeight: minH,
         isolation: 'isolate',
         transform: 'translateZ(0)',
-        backfaceVisibility: 'hidden'
+        backfaceVisibility: 'hidden',
       }}
-      className="break-inside-avoid mb-2 relative group cursor-pointer rounded-xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
+      className="break-inside-avoid mb-2 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
     >
       {/* Background Image/Video — natural height, no forced aspect ratio */}
       {isHovered && item.video ? (
@@ -38,8 +38,8 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager
           alt={item.altText || item.title}
           className="w-full h-auto block transition-transform duration-[1.5s] group-hover:scale-105 ease-out"
           containerClassName="w-full"
-          loading={eager ? "eager" : "lazy"}
-          fetchPriority={eager ? "high" : "auto"}
+          loading={eager ? 'eager' : 'lazy'}
+          fetchPriority={eager ? 'high' : 'auto'}
           width={600}
           height={800}
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -68,12 +68,12 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager
         <div className="flex flex-col items-end gap-1.5">
           <div
             className={`px-2.5 py-1 rounded-full backdrop-blur-md border text-[8px] uppercase tracking-widest font-extrabold shadow-lg ${
-              item.type === "real-event"
-                ? "bg-[#C4A87C] text-white border-[#C4A87C]/30"
-                : "bg-stone-900/90 text-white border-white/20"
+              item.type === 'real-event'
+                ? 'bg-[#C4A87C] text-white border-[#C4A87C]/30'
+                : 'bg-stone-900/90 text-white border-white/20'
             }`}
           >
-            {item.type === "real-event" ? "Real Event" : "Inspiration"}
+            {item.type === 'real-event' ? 'Real Event' : 'Inspiration'}
           </div>
           {item.video && (
             <div className="px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 bg-amber-600/90 text-white text-[8px] uppercase tracking-widest font-extrabold shadow-lg flex items-center gap-1">
@@ -131,9 +131,7 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager
               className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:bg-primary hover:text-white focus:outline-none focus:ring-0 transition-all duration-300 flex-shrink-0"
               aria-label={`View ${item.title}`}
             >
-              <span className="material-symbols-outlined text-[18px] font-bold">
-                arrow_outward
-              </span>
+              <span className="material-symbols-outlined text-[18px] font-bold">arrow_outward</span>
             </span>
           </div>
 
@@ -156,7 +154,15 @@ export function GalleryCard({ item, onImageClick, minH, eager }) {
   if (!itemId) {
     return (
       <div className="block">
-        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} eager={eager} />
+        <CardContent
+          item={item}
+          displayImage={displayImage}
+          itemId={itemId}
+          linkTo={linkTo}
+          navigate={navigate}
+          minH={minH}
+          eager={eager}
+        />
       </div>
     );
   }
@@ -164,14 +170,30 @@ export function GalleryCard({ item, onImageClick, minH, eager }) {
   if (onImageClick) {
     return (
       <div onClick={onImageClick} className="block">
-        <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} eager={eager} />
+        <CardContent
+          item={item}
+          displayImage={displayImage}
+          itemId={itemId}
+          linkTo={linkTo}
+          navigate={navigate}
+          minH={minH}
+          eager={eager}
+        />
       </div>
     );
   }
 
   return (
     <Link to={linkTo} className="block">
-      <CardContent item={item} displayImage={displayImage} itemId={itemId} linkTo={linkTo} navigate={navigate} minH={minH} eager={eager} />
+      <CardContent
+        item={item}
+        displayImage={displayImage}
+        itemId={itemId}
+        linkTo={linkTo}
+        navigate={navigate}
+        minH={minH}
+        eager={eager}
+      />
     </Link>
   );
 }

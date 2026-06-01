@@ -1,9 +1,9 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useCart } from "../../context/CartContext";
-import { useAuth } from "../../context/AuthContext";
-import { prefetchManager } from "../../utils/prefetchManager";
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { prefetchManager } from '../../utils/prefetchManager';
 
 export function BottomNav() {
   const location = useLocation();
@@ -11,13 +11,13 @@ export function BottomNav() {
   const { isAuthenticated, openAuthModal } = useAuth();
 
   const navItems = [
-    { label: "Home", icon: "home", path: "/" },
-    { label: "Shop", icon: "storefront", path: "/collections" },
-    { label: "Wishlist", icon: "favorite", path: "/wishlist" },
-    { label: "Events", icon: "celebration", path: "/events" },
+    { label: 'Home', icon: 'home', path: '/' },
+    { label: 'Shop', icon: 'storefront', path: '/collections' },
+    { label: 'Wishlist', icon: 'favorite', path: '/wishlist' },
+    { label: 'Events', icon: 'celebration', path: '/events' },
     isAuthenticated
-      ? { label: "Profile", icon: "person", path: "/dashboard" }
-      : { label: "Sign In", icon: "login", isAuth: true },
+      ? { label: 'Profile', icon: 'person', path: '/dashboard' }
+      : { label: 'Sign In', icon: 'login', isAuth: true },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -33,17 +33,14 @@ export function BottomNav() {
     >
       {navItems.map((item) => {
         const active = item.isCart
-          ? isCartOpen || location.pathname === "/cart"
+          ? isCartOpen || location.pathname === '/cart'
           : isActive(item.path);
 
         return (
-          <div
-            key={item.label || item.path}
-            className="flex-1 flex flex-col items-center"
-          >
+          <div key={item.label || item.path} className="flex-1 flex flex-col items-center">
             {item.isCart ? (
               <button
-                onMouseEnter={() => prefetchManager.prefetchRoute("/cart", { kind: "hover" })}
+                onMouseEnter={() => prefetchManager.prefetchRoute('/cart', { kind: 'hover' })}
                 onClick={() => setIsCartOpen(true)}
                 aria-label="Open shopping bag"
                 className="relative flex flex-col items-center justify-center w-12 h-12 group cursor-pointer active:scale-[0.96] transition-transform"
@@ -62,7 +59,7 @@ export function BottomNav() {
             ) : (
               <Link
                 to={item.path}
-                onMouseEnter={() => prefetchManager.prefetchRoute(item.path, { kind: "hover" })}
+                onMouseEnter={() => prefetchManager.prefetchRoute(item.path, { kind: 'hover' })}
                 aria-label={`Navigate to ${item.label}`}
                 className="flex flex-col items-center justify-center w-12 h-12 group active:scale-[0.96] transition-transform cursor-pointer"
               >
@@ -77,16 +74,17 @@ export function BottomNav() {
 }
 
 function NavIcon({ active, icon, label }) {
+  const activeColorClass = label === 'Wishlist' ? 'text-[#ff2d55]' : 'text-primary';
   return (
     <div
-      className={`flex flex-col items-center justify-center transition-all duration-500 ${active ? "text-primary scale-110 drop-shadow-md" : "text-black/50 hover:text-black/80"}`}
+      className={`flex flex-col items-center justify-center transition-all duration-500 ${active ? `${activeColorClass} scale-110 drop-shadow-md` : 'text-black/50 group-hover:text-black'}`}
     >
-      <span
-        className={`material-symbols-outlined text-[24px] ${active ? "font-fill" : ""}`}
-      >
+      <span className={`material-symbols-outlined text-[24px] ${active ? 'font-fill' : ''}`}>
         {icon}
       </span>
-      <span className={`text-[9px] uppercase font-bold tracking-wider mt-0.5 ${active ? "text-primary" : "text-black/50"}`}>
+      <span
+        className={`text-[9px] uppercase font-bold tracking-wider mt-0.5 ${active ? activeColorClass : 'text-black/50 group-hover:text-black'}`}
+      >
         {label}
       </span>
     </div>

@@ -335,38 +335,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
             </span>
           </div>
         )}
-        {/* Quantity Selector (only for purchase) */}
-        {canPurchase && (
-          <div className="flex flex-col gap-3">
-            <h3 className="font-label-sm text-[10px] text-on-surface/35 uppercase tracking-[0.25em] font-medium">
-              Quantity
-            </h3>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center bg-surface-container-low rounded-full border border-outline-variant/30 p-1">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors disabled:opacity-30"
-                  disabled={quantity <= 1}
-                >
-                  <span className="material-symbols-outlined text-[20px]">remove</span>
-                </button>
-                <span className="w-12 text-center font-body-lg font-bold">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
-                  className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors disabled:opacity-30"
-                  disabled={quantity >= maxQuantity}
-                >
-                  <span className="material-symbols-outlined text-[20px]">add</span>
-                </button>
-              </div>
-              {quantity >= maxQuantity && (
-                <span className="text-[10px] text-primary uppercase tracking-wider font-bold">
-                  Max limit reached
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+
         {/* Action Buttons */}
 
         <div className="grid grid-cols-2 gap-3">
@@ -374,7 +343,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
             <button
               ref={atcRef}
               onClick={handleAddToCart}
-              className={`!py-4 rounded-full flex items-center justify-center gap-2 group cursor-pointer shadow-xl transition-all font-bold px-4 ${
+              className={`!py-3 rounded-full flex items-center justify-center gap-2 group cursor-pointer shadow-xl transition-all font-bold px-4 ${
                 added
                   ? 'bg-[#e0d6b8] text-[#1a1c1a]'
                   : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
@@ -382,17 +351,15 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
             >
               {added ? (
                 <>
-                  <span className="material-symbols-outlined text-[18px] shrink-0">check</span>
+                  <span className="material-symbols-outlined text-[16px] shrink-0">check</span>
                   <span className="text-[11px] uppercase tracking-widest">Added</span>
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-[18px] group-hover:rotate-12 transition-transform shrink-0">
+                  <span className="material-symbols-outlined text-[16px] group-hover:rotate-12 transition-transform shrink-0">
                     shopping_bag
                   </span>
-                  <span className="text-[11px] uppercase tracking-widest">
-                    {canRent ? 'Buy' : 'Add to Bag'}
-                  </span>
+                  <span className="text-[11px] uppercase tracking-widest">Bag</span>
                 </>
               )}
             </button>
@@ -400,17 +367,17 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
           {canRent && (
             <button
               onClick={handleRentNow}
-              className={`!py-4 rounded-full flex items-center justify-center gap-2 group cursor-pointer shadow-xl transition-all font-bold px-4 bg-[#8c7335] text-white hover:bg-[#725c29]`}
+              className={`!py-3 rounded-full flex items-center justify-center gap-2 group cursor-pointer shadow-xl transition-all font-bold px-4 bg-[#8c7335] text-white hover:bg-[#725c29]`}
             >
-              <span className="material-symbols-outlined text-[18px] group-hover:scale-110 transition-transform shrink-0">
+              <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
                 event_available
               </span>
-              <span className="text-[11px] uppercase tracking-widest">Rent Now</span>
+              <span className="text-[11px] uppercase tracking-widest">Rent</span>
             </button>
           )}
           <button
             onClick={handleWishlist}
-            className={`${canPurchase && canRent ? 'col-span-2' : ''} bg-white text-black border border-black/10 !py-4 rounded-full flex items-center justify-center gap-2 group cursor-pointer font-bold px-4 hover:border-black/30 transition-all shadow-sm`}
+            className={`${canPurchase && canRent ? 'col-span-2' : ''} bg-white text-black border border-black/10 !py-3 rounded-full flex items-center justify-center gap-2 group cursor-pointer font-bold px-4 hover:border-black/30 transition-all shadow-sm`}
           >
             <motion.span
               animate={{
@@ -419,7 +386,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
               }}
               whileTap={{ scale: 0.8 }}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className="material-symbols-outlined text-[18px] group-hover:scale-110 transition-all duration-300 shrink-0"
+              className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-all duration-300 shrink-0"
               style={{
                 fontVariationSettings: wishlisted ? "'FILL' 1" : "'FILL' 0",
               }}
@@ -427,7 +394,7 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
               favorite
             </motion.span>
             <span className="text-[11px] uppercase tracking-widest">
-              {wishlisted ? 'Saved' : 'Save for Later'}
+              {wishlisted ? 'Saved' : 'Save'}
             </span>
           </button>
         </div>

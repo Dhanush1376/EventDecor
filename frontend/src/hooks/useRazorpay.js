@@ -23,10 +23,10 @@ const loadScript = async (src, retries = 2) => {
   });
 
   let result = await razorpayPromise;
-  
+
   if (!result && retries > 0) {
     logger.warn(`Retrying Razorpay SDK load. Retries left: ${retries}`);
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1000));
     return loadScript(src, retries - 1);
   }
 
@@ -50,9 +50,9 @@ export const useRazorpay = () => {
       logger.warn('Payment already in progress, ignoring duplicate request');
       return;
     }
-    
+
     paymentInProgress.current = true;
-    
+
     const finalize = () => {
       paymentInProgress.current = false;
     };
@@ -69,11 +69,11 @@ export const useRazorpay = () => {
       const response = await orderService.create(orderData, {
         idempotencyKey: orderData.idempotencyKey || createIdempotencyKey(),
       });
-      
+
       if (!response.success) {
         toast.error(response.message || 'Failed to create order');
         onError?.(response);
-        return;
+        return finalize();
       }
 
       const { razorpayOrder } = response.data;
@@ -87,7 +87,9 @@ export const useRazorpay = () => {
         currency: razorpayOrder.currency,
         name: 'Siri Arts & Crafts',
         description: 'Luxury Event Decor Order',
-        image: import.meta.env.VITE_LOGO_URL || 'https://res.cloudinary.com/siriartscrafts/image/upload/v1/SiriLogo.webp',
+        image:
+          import.meta.env.VITE_LOGO_URL ||
+          'https://res.cloudinary.com/siriartscrafts/image/upload/v1/SiriLogo.webp',
         order_id: razorpayOrder.id,
         handler: async (response) => {
           try {
@@ -114,6 +116,7 @@ export const useRazorpay = () => {
         modal: {
           ondismiss: () => {
             onError?.(new Error('Payment modal dismissed'));
+            finalize();
           },
         },
         prefill: {
@@ -126,12 +129,12 @@ export const useRazorpay = () => {
       };
 
       const paymentObject = new window.Razorpay(options);
-      
-      paymentObject.on('payment.failed', function (response){
+
+      paymentObject.on('payment.failed', function (response) {
         logger.error('Payment failed event:', response.error);
         finalize();
       });
-      
+
       paymentObject.open();
     } catch (err) {
       logger.error('Payment error:', err);

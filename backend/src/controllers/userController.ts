@@ -214,14 +214,30 @@ export const getWishlist = asyncHandler(async (req: any, res: Response) => {
   const user = await User.findById(req.user.id).select('wishlist');
   if (!user) throw new ApiError(404, 'User not found');
 
-  // Bug-11 Fix: Single optimized query instead of N+1
-  const products = await Product.find({ _id: { $in: user.wishlist } })
-    .select('title price images rating slug category isActive')
-    .lean();
+  const wishlistArray = user.wishlist || [];
 
-  await cacheWishlist(userId, products);
+  const [products, showcases] = await Promise.all([
+    Product.find({ _id: { $in: wishlistArray } })
+      .select(
+        'name title price rentalPrice image images category isAvailable quantity availableQuantity slug',
+      )
+      .lean(),
+    require('../models/ShowcaseCollection')
+      .default.find({ _id: { $in: wishlistArray } })
+      .select(
+        'title subtitle category rentalPrice description image gallery inclusions colorPalette setupTimeHours popularityScore isActive',
+      )
+      .lean(),
+  ]);
+
+  const combinedWishlist = [
+    ...products.map((p) => ({ ...p, itemType: 'product' })),
+    ...showcases.map((s) => ({ ...s, itemType: 'event' })),
+  ];
+
+  await cacheWishlist(userId, combinedWishlist);
   res.setHeader('X-Session-Cache', 'MISS');
-  res.status(200).json(new ApiResponse(true, 'Wishlist fetched', products));
+  res.status(200).json(new ApiResponse(true, 'Wishlist fetched', combinedWishlist));
 });
 
 export const toggleWishlist = asyncHandler(async (req: any, res: Response) => {
@@ -229,7 +245,7 @@ export const toggleWishlist = asyncHandler(async (req: any, res: Response) => {
   const user = await User.findById(req.user.id);
   if (!user) throw new ApiError(404, 'User not found');
 
-  const index = user.wishlist.indexOf(productId);
+  const index = user.wishlist.findIndex((id: any) => id.toString() === productId);
   if (index === -1) {
     if (user.wishlist.length >= 100) {
       throw new ApiError(400, 'Wishlist capacity reached. Maximum 100 items allowed.');

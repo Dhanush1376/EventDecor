@@ -1,17 +1,18 @@
-import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function CustomDropdown({
   options,
   value,
   onChange,
   label,
-  className = "",
-  buttonClassName = "",
+  className = '',
+  buttonClassName = '',
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [dropdownPosition, setDropdownPosition] = useState("left");
+  const [dropdownPosition, setDropdownPosition] = useState('left');
+  const [openUpwards, setOpenUpwards] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -20,8 +21,8 @@ export function CustomDropdown({
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Edge detection logic
@@ -29,18 +30,28 @@ export function CustomDropdown({
     if (isOpen && dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect();
       const screenWidth = window.innerWidth;
-      // If the dropdown menu (assuming min-w-160px) would overflow the right edge
+
+      // Horizontal edge detection
       if (rect.left + 200 > screenWidth) {
-        setDropdownPosition("right");
+        setDropdownPosition('right');
       } else {
-        setDropdownPosition("left");
+        setDropdownPosition('left');
+      }
+
+      // Vertical edge detection
+      const spaceBelow = window.innerHeight - rect.bottom;
+      // If there's less than ~300px below and more space above, open upwards
+      if (spaceBelow < 300 && rect.top > spaceBelow) {
+        setOpenUpwards(true);
+      } else {
+        setOpenUpwards(false);
       }
     }
   }, [isOpen]);
 
   const handleKeyDown = (e) => {
     if (!isOpen) {
-      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
         setIsOpen(true);
         const currentIdx = options.findIndex((opt) => opt.value === value);
         setActiveIndex(currentIdx >= 0 ? currentIdx : 0);
@@ -50,41 +61,36 @@ export function CustomDropdown({
     }
 
     switch (e.key) {
-      case "Escape":
+      case 'Escape':
         setIsOpen(false);
         e.preventDefault();
         break;
-      case "ArrowDown":
+      case 'ArrowDown':
         setActiveIndex((prev) => (prev + 1) % options.length);
         e.preventDefault();
         break;
-      case "ArrowUp":
+      case 'ArrowUp':
         setActiveIndex((prev) => (prev - 1 + options.length) % options.length);
         e.preventDefault();
         break;
-      case "Enter":
-      case " ":
+      case 'Enter':
+      case ' ':
         if (activeIndex >= 0 && activeIndex < options.length) {
           onChange(options[activeIndex].value);
           setIsOpen(false);
         }
         e.preventDefault();
         break;
-      case "Tab":
+      case 'Tab':
         setIsOpen(false);
         break;
     }
   };
 
-  const selectedOption =
-    options.find((opt) => opt.value === value) || options[0];
+  const selectedOption = options.find((opt) => opt.value === value) || options[0];
 
   return (
-    <div
-      className={`relative ${className}`}
-      ref={dropdownRef}
-      onKeyDown={handleKeyDown}
-    >
+    <div className={`relative ${className}`} ref={dropdownRef} onKeyDown={handleKeyDown}>
       {label && (
         <span className="font-label text-[11px] uppercase tracking-widest text-black/30 font-bold block mb-1.5 ml-1">
           {label}
@@ -102,7 +108,7 @@ export function CustomDropdown({
           {selectedOption.label}
         </span>
         <span
-          className={`material-symbols-outlined text-[18px] text-black/20 group-hover:text-primary transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          className={`material-symbols-outlined text-[18px] text-black/20 group-hover:text-primary transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
         >
           expand_more
         </span>
@@ -111,11 +117,13 @@ export function CustomDropdown({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: openUpwards ? 10 : -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className={`absolute z-[100] mt-2 w-full min-w-[200px] bg-white rounded-2xl shadow-2xl border border-black/5 overflow-hidden py-2 ${dropdownPosition === "right" ? "right-0" : "left-0"}`}
+            exit={{ opacity: 0, y: openUpwards ? 10 : -10, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className={`absolute z-[100] w-full min-w-[200px] bg-white rounded-2xl shadow-2xl border border-black/5 overflow-hidden py-2 ${
+              dropdownPosition === 'right' ? 'right-0' : 'left-0'
+            } ${openUpwards ? 'bottom-full mb-2' : 'top-full mt-2'}`}
           >
             <div
               className="max-h-[280px] overflow-y-auto no-scrollbar"
@@ -135,15 +143,13 @@ export function CustomDropdown({
                   type="button"
                   className={`w-full text-left px-4 py-2.5 font-label text-[11px] uppercase tracking-widest transition-all flex items-center justify-between ${
                     value === option.value || activeIndex === idx
-                      ? "bg-primary/5 text-primary font-bold"
-                      : "text-black/60 hover:bg-gray-50 hover:text-black"
+                      ? 'bg-primary/5 text-primary font-bold'
+                      : 'text-black/60 hover:bg-gray-50 hover:text-black'
                   }`}
                 >
                   {option.label}
                   {value === option.value && (
-                    <span className="material-symbols-outlined text-[14px]">
-                      check
-                    </span>
+                    <span className="material-symbols-outlined text-[14px]">check</span>
                   )}
                 </button>
               ))}

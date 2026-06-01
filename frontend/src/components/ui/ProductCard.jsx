@@ -31,6 +31,7 @@ export const ProductCard = React.memo(function ProductCard({
   rentalPricing,
   compact = false,
   isNonRefundable = false,
+  itemType = 'product', // 'product' or 'event'
 }) {
   const navigate = useNavigate();
   const { isWishlisted } = useWishlistState();
@@ -42,7 +43,7 @@ export const ProductCard = React.memo(function ProductCard({
   if (loading) {
     return (
       <div className="flex flex-col gap-4 animate-pulse">
-        <div className="aspect-[4/5] w-full bg-surface-container-high rounded-2xl md:rounded-[32px] overflow-hidden" />
+        <div className="aspect-[4/5] w-full bg-surface-container-high rounded-2xl overflow-hidden" />
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <div className="h-3 w-1/4 bg-surface-container rounded-full" />
@@ -97,7 +98,7 @@ export const ProductCard = React.memo(function ProductCard({
   const handleCardClick = (e) => {
     // If the user clicked a button or any interactive element inside a button, don't trigger the card link
     if (e.target.closest('button')) return;
-    navigate(`/product/${productId}`);
+    navigate(itemType === 'event' ? `/events/${productId}` : `/product/${productId}`);
   };
 
   const handleWishlist = (e) => {
@@ -130,7 +131,7 @@ export const ProductCard = React.memo(function ProductCard({
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      navigate(`/product/${productId}`);
+      navigate(itemType === 'event' ? `/events/${productId}` : `/product/${productId}`);
     }
   };
 
@@ -140,19 +141,23 @@ export const ProductCard = React.memo(function ProductCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-50px' }}
       transition={{ type: 'spring', stiffness: 70, damping: 15 }}
-      onMouseEnter={() =>
-        prefetchManager.prefetchRoute(`/product/${productId}`, { kind: 'hover', productId })
-      }
+      onMouseEnter={() => {
+        const route = itemType === 'event' ? `/events/${productId}` : `/product/${productId}`;
+        prefetchManager.prefetchRoute(route, { kind: 'hover', productId });
+      }}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="link"
       aria-label={`View details of ${title}`}
-      className="group relative flex flex-col hover-lift-glow cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl md:rounded-[32px]"
+      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl"
     >
       {/* 1. VISUAL CANVAS */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5">
-        <Link to={`/product/${productId}`} className="block h-full">
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl border border-black/5">
+        <Link
+          to={itemType === 'event' ? `/events/${productId}` : `/product/${productId}`}
+          className="block h-full"
+        >
           <OptimizedImage
             src={imageSrc}
             alt={title}
@@ -166,21 +171,21 @@ export const ProductCard = React.memo(function ProductCard({
         </Link>
 
         {/* Floating Utility Actions */}
-        <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex flex-col gap-2">
+        <div className="absolute top-3 right-3 md:top-4 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className={`${compact ? 'w-7 h-7 md:w-8 md:h-8' : 'w-10 h-10 md:w-11 md:h-11'} min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]`}
+            className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]`}
             aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <motion.span
               animate={{
                 scale: wishlisted ? [1, 1.4, 1] : 1,
                 color: wishlisted ? '#ff2d55' : '#1a1817',
-                fontVariationSettings: wishlisted ? "'FILL' 1" : "'FILL' 0",
+                fontVariationSettings: wishlisted ? "'FILL' 1, 'wght' 300" : "'FILL' 0, 'wght' 300",
               }}
               whileTap={{ scale: 0.8 }}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className={`material-symbols-outlined ${compact ? 'text-[14px]' : 'text-[16px] md:text-[18px]'}`}
+              className={`material-symbols-outlined ${compact ? 'text-[10px] md:text-[12px]' : 'text-[12px] md:text-[14px]'}`}
             >
               favorite
             </motion.span>
@@ -188,20 +193,20 @@ export const ProductCard = React.memo(function ProductCard({
         </div>
 
         {/* Badges */}
-        <div className="absolute top-2 left-2 md:top-4 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
+        <div className="absolute top-3 left-3 md:top-4 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
           {canRent && (
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-[#8c7335] text-white rounded-full flex flex-col items-center justify-center font-label text-[7px] md:text-[9px] uppercase font-bold shadow-lg border-2 border-white z-[6] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-              <span className="material-symbols-outlined text-[10px] md:text-[12px] leading-none mb-0.5">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-[#8c7335] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white z-[6] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
+              <span className="material-symbols-outlined text-[10px] md:text-[12px] leading-none mb-[1px]">
                 event_available
               </span>
-              <span className="leading-none">Rent</span>
+              <span className="leading-none text-[6px] md:text-[8px] tracking-tight">RENT</span>
             </div>
           )}
           {discount && canPurchase && (
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[8px] md:text-[10px] uppercase font-bold shadow-lg border-2 border-white z-[5] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-              <span className="leading-none">{discount}%</span>
-              <span className="text-[6px] md:text-[7px] tracking-tighter opacity-80 uppercase mt-0.5">
-                Off
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white z-[5] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
+              <span className="leading-none text-[8px] md:text-[10px]">{discount}%</span>
+              <span className="text-[5px] md:text-[6px] tracking-tight opacity-90 uppercase mt-0.5">
+                OFF
               </span>
             </div>
           )}
@@ -210,13 +215,13 @@ export const ProductCard = React.memo(function ProductCard({
             const displayContent =
               words.length > 1 ? (
                 <>
-                  <span className="leading-none text-[7px] md:text-[9px]">{words[0]}</span>
-                  <span className="text-[5px] md:text-[6px] tracking-tighter opacity-80 uppercase mt-0.5">
+                  <span className="leading-none text-[6px] md:text-[8px]">{words[0]}</span>
+                  <span className="text-[5px] md:text-[6px] tracking-tight opacity-80 uppercase mt-0.5">
                     {words.slice(1).join(' ')}
                   </span>
                 </>
               ) : (
-                <span className="leading-none text-[7px] md:text-[9px] truncate max-w-full px-0.5">
+                <span className="leading-none text-[6px] md:text-[8px] truncate max-w-full px-1">
                   {badge}
                 </span>
               );
@@ -287,10 +292,10 @@ export const ProductCard = React.memo(function ProductCard({
         </div>
 
         {/* Mobile & Tablet Quick Add Button */}
-        <div className="xl:hidden absolute bottom-2 right-2 z-20">
+        <div className="xl:hidden absolute bottom-3 right-3 z-20">
           <button
             onClick={handleAddToCart}
-            className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-11 h-11 md:w-12 md:h-12'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer ${
+            className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer ${
               added
                 ? 'bg-[#e0d6b8] text-[#1a1c1a]'
                 : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
@@ -298,7 +303,7 @@ export const ProductCard = React.memo(function ProductCard({
             aria-label="Add to bag"
           >
             <span
-              className={`material-symbols-outlined ${compact ? 'text-[14px]' : 'text-[18px]'}`}
+              className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
             >
               {added ? 'check' : 'add'}
             </span>

@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "../../context/AuthContext";
-import { adminInviteService } from "../../services/domainServices";
-import api from "../../services/api";
-import toast from "react-hot-toast";
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
+import { adminInviteService } from '../../services/domainServices';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 import {
   PageHeader,
   FilterBar,
   fadeUp,
   stagger,
   SkeletonDashboard,
-} from "../components/AdminUIKit";
+  CustomSelect,
+} from '../components/AdminUIKit';
 
 const ROLE_WEIGHTS = {
   owner: 100,
@@ -26,7 +27,7 @@ const ROLE_WEIGHTS = {
   manager: 20,
   coordinator: 10,
   customer: 0,
-  user: 0
+  user: 0,
 };
 
 export function AdminTeam() {
@@ -35,13 +36,13 @@ export function AdminTeam() {
   const [members, setMembers] = useState([]);
   const [invites, setInvites] = useState([]);
   const [history, setHistory] = useState([]);
-  const [activeTab, setActiveTab] = useState("roster"); // roster, pending, history
+  const [activeTab, setActiveTab] = useState('roster'); // roster, pending, history
 
   // Modal Invitation Drawer
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("admin");
-  const [invitePermissions, setInvitePermissions] = useState("Access Admin Portal & Dashboard");
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('admin');
+  const [invitePermissions, setInvitePermissions] = useState('Access Admin Portal & Dashboard');
   const [submitting, setSubmitting] = useState(false);
 
   // Pagination states
@@ -51,7 +52,7 @@ export function AdminTeam() {
   const fetchTeamData = async () => {
     try {
       // 1. Fetch active roster (members)
-      const res = await api.get("/users/team");
+      const res = await api.get('/users/team');
       if (res.data?.success) {
         setMembers(res.data.data.members || []);
       }
@@ -68,7 +69,7 @@ export function AdminTeam() {
         setHistory(historyRes.data?.data || historyRes.data?.results || historyRes.data || []);
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to sync team listings from database."));
+      toast.error(getErrorMessage(err, 'Failed to sync team listings from database.'));
     } finally {
       setLoading(false);
     }
@@ -81,11 +82,11 @@ export function AdminTeam() {
   // Helper check: Can current user manage target user?
   const canManageMember = (targetRole, targetEmail) => {
     if (!currentUser) return false;
-    
+
     // Protect primary super admin configured in env
     const protectedEmails = [
-      ((import.meta.env?.VITE_SUPER_ADMIN_EMAIL) || "").trim().toLowerCase(),
-      "siriarts.superadmin@gmail.com" // safety fallback
+      (import.meta.env?.VITE_SUPER_ADMIN_EMAIL || '').trim().toLowerCase(),
+      'siriarts.superadmin@gmail.com', // safety fallback
     ];
     if (targetEmail && protectedEmails.includes(targetEmail.toLowerCase())) {
       return false;
@@ -94,10 +95,10 @@ export function AdminTeam() {
     const actorWeight = ROLE_WEIGHTS[currentUser.role] || 0;
     const targetWeight = ROLE_WEIGHTS[targetRole] || 0;
 
-    if (actorWeight < 90) return false; // Only super admins & owners
+    if (actorWeight < 80) return false; // Must be at least admin
     if (currentUser.role === 'owner') return true;
 
-    // Super Admin can only manage roles strictly lower than super_admin
+    // Users can only manage roles strictly lower than their own weight
     return actorWeight > targetWeight;
   };
 
@@ -107,22 +108,24 @@ export function AdminTeam() {
     const actorWeight = ROLE_WEIGHTS[currentUser.role] || 0;
     const targetWeight = ROLE_WEIGHTS[roleToAssign] || 0;
 
-    if (actorWeight < 90) return false;
+    if (actorWeight < 80) return false; // Must be at least admin
     if (currentUser.role === 'owner') return true;
 
-    // Super Admin cannot assign owner or super_admin roles
-    return targetWeight < 90;
+    // Users can only assign roles strictly lower than their own weight
+    return targetWeight < actorWeight;
   };
 
   const handleSendInvite = async (e) => {
     e.preventDefault();
     if (!inviteEmail) {
-      toast.error("Please enter a valid email address.");
+      toast.error('Please enter a valid email address.');
       return;
     }
 
     if (!canAssignRole(inviteRole)) {
-      toast.error("Privilege escalation blocked: You cannot assign a role equal to or higher than your own.");
+      toast.error(
+        'Privilege escalation blocked: You cannot assign a role equal to or higher than your own.',
+      );
       return;
     }
 
@@ -135,125 +138,122 @@ export function AdminTeam() {
       });
       if (res?.success) {
         toast.success(`Access invitation dispatched to ${inviteEmail}!`);
-        setInviteEmail("");
-        setInvitePermissions("Access Admin Portal & Dashboard");
+        setInviteEmail('');
+        setInvitePermissions('Access Admin Portal & Dashboard');
         setIsInviteOpen(false);
         fetchTeamData();
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to create invitation request."));
+      toast.error(getErrorMessage(err, 'Failed to create invitation request.'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleRevokeInvite = async (inviteId) => {
-    if (!window.confirm("Are you sure you want to revoke this pending invitation?")) return;
+    if (!window.confirm('Are you sure you want to revoke this pending invitation?')) return;
     try {
       const res = await adminInviteService.revokeInvite(inviteId);
       if (res?.success) {
-        toast.success("Invitation removed");
+        toast.success('Invitation removed');
         fetchTeamData();
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to revoke invitation."));
+      toast.error(getErrorMessage(err, 'Failed to revoke invitation.'));
     }
   };
 
   const handleUpdateRole = async (userId, targetEmail, currentRole, newRole) => {
     if (!canManageMember(currentRole, targetEmail)) {
-      toast.error("Permission denied: You do not have role clearance to modify this user.");
+      toast.error('Permission denied: You do not have role clearance to modify this user.');
       return;
     }
     if (!canAssignRole(newRole)) {
-      toast.error("Privilege escalation blocked: You cannot elevate a user to a role equal to or higher than your own.");
+      toast.error(
+        'Privilege escalation blocked: You cannot elevate a user to a role equal to or higher than your own.',
+      );
       return;
     }
 
-    const loadToast = toast.loading("Updating permissions...");
+    const loadToast = toast.loading('Updating permissions...');
     try {
       const res = await api.put(`/admin/system/users/${userId}/role`, { role: newRole });
       if (res.data?.success) {
         toast.dismiss(loadToast);
-        toast.success("Role updated");
+        toast.success('Role updated');
         fetchTeamData();
       }
     } catch (err) {
       toast.dismiss(loadToast);
-      toast.error(getErrorMessage(err, "Failed to update role."));
+      toast.error(getErrorMessage(err, 'Failed to update role.'));
     }
   };
 
   const handleRemoveAdmin = async (userId, targetEmail, targetRole) => {
     if (!canManageMember(targetRole, targetEmail)) {
-      toast.error("Permission denied: You do not have role clearance to remove this user.");
+      toast.error('Permission denied: You do not have role clearance to remove this user.');
       return;
     }
-    if (!window.confirm("Are you sure you want to completely revoke admin access for this user? This will downgrade their account to customer status.")) return;
+    if (
+      !window.confirm(
+        'Are you sure you want to completely revoke admin access for this user? This will downgrade their account to customer status.',
+      )
+    )
+      return;
 
-    const loadToast = toast.loading("Revoking privileges...");
+    const loadToast = toast.loading('Revoking privileges...');
     try {
       const res = await api.delete(`/admin/system/users/${userId}`);
       if (res.data?.success) {
         toast.dismiss(loadToast);
-        toast.success("Access revoked");
+        toast.success('Access revoked');
         fetchTeamData();
       }
     } catch (err) {
       toast.dismiss(loadToast);
-      toast.error(getErrorMessage(err, "Failed to revoke admin privileges."));
+      toast.error(getErrorMessage(err, 'Failed to revoke admin privileges.'));
     }
   };
 
   // Filter assignable roles for the invite drawer
   const assignableRoles = Object.keys(ROLE_WEIGHTS).filter(
-    (role) => !['user', 'customer'].includes(role) && canAssignRole(role)
+    (role) => !['user', 'customer'].includes(role) && canAssignRole(role),
   );
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={stagger}
-      className="space-y-6"
-    >
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
         title="Team Workspace & Authorization"
         subtitle="Manage team access and invitations"
         headerAction={
           <div className="w-full sm:max-w-md">
             <FilterBar
-              filters={["roster", "pending", "history"]}
+              filters={['roster', 'pending', 'history']}
               value={activeTab}
               onChange={setActiveTab}
               className="pb-0 border-b border-[var(--admin-border-subtle)]"
               formatLabel={(id) => {
-                if (id === "roster") return `Active Roster (${members.length})`;
-                if (id === "pending") return `Pending Invites (${invites.length})`;
-                if (id === "history") return `Invitation History (${history.length})`;
+                if (id === 'roster') return `Active Roster (${members.length})`;
+                if (id === 'pending') return `Pending Invites (${invites.length})`;
+                if (id === 'history') return `Invitation History (${history.length})`;
                 return id;
               }}
             />
           </div>
         }
       >
-        <button
-          onClick={() => setIsInviteOpen(true)}
-          className="admin-btn admin-btn-primary h-9"
-        >
+        <button onClick={() => setIsInviteOpen(true)} className="admin-btn admin-btn-primary h-9">
           <span className="material-symbols-outlined text-[16px]">person_add</span>
           Invite Team Member
         </button>
       </PageHeader>
-
-
 
       {loading ? (
         <SkeletonDashboard />
       ) : (
         <AnimatePresence mode="wait">
           {/* Roster Tab */}
-          {activeTab === "roster" && (
+          {activeTab === 'roster' && (
             <motion.div
               key="roster"
               initial="hidden"
@@ -263,14 +263,25 @@ export function AdminTeam() {
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
             >
               {members.length === 0 ? (
-                <motion.div variants={fadeUp} className="admin-card py-20 text-center flex flex-col items-center justify-center col-span-full">
-                  <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">search_off</span>
-                  <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">Data Not Found</p>
-                  <p className="text-[12px] text-[var(--admin-text-secondary)]">No active team members found in the database.</p>
+                <motion.div
+                  variants={fadeUp}
+                  className="admin-card py-20 text-center flex flex-col items-center justify-center col-span-full"
+                >
+                  <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">
+                    search_off
+                  </span>
+                  <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">
+                    Data Not Found
+                  </p>
+                  <p className="text-[12px] text-[var(--admin-text-secondary)]">
+                    No active team members found in the database.
+                  </p>
                 </motion.div>
               ) : (
                 members.map((m) => {
-                  const canManage = canManageMember(m.role, m.email) && String(m._id || m.id) !== String(currentUser?._id || currentUser?.id);
+                  const canManage =
+                    canManageMember(m.role, m.email) &&
+                    String(m._id || m.id) !== String(currentUser?._id || currentUser?.id);
                   return (
                     <motion.div
                       variants={fadeUp}
@@ -289,7 +300,11 @@ export function AdminTeam() {
                             ) : (
                               <div className="w-14 h-14 rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] flex items-center justify-center shadow-sm">
                                 <span className="text-[var(--admin-text-primary)] text-[18px] font-bold">
-                                  {m.name?.split(" ")?.map((n) => n[0])?.join("")?.toUpperCase() || "U"}
+                                  {m.name
+                                    ?.split(' ')
+                                    ?.map((n) => n[0])
+                                    ?.join('')
+                                    ?.toUpperCase() || 'U'}
                                 </span>
                               </div>
                             )}
@@ -297,10 +312,10 @@ export function AdminTeam() {
                               <div className="w-2.5 h-2.5 bg-[var(--admin-success)] rounded-full" />
                             </div>
                           </div>
-  
+
                           <div className="min-w-0 flex-1">
                             <h3 className="text-[15px] font-bold text-[var(--admin-text-primary)] leading-tight truncate">
-                              {m.name || "Curator"}
+                              {m.name || 'Curator'}
                             </h3>
                             <p className="text-[10px] text-[var(--admin-accent)] font-bold tracking-wider uppercase mt-1 mb-1.5">
                               {m.role}
@@ -310,7 +325,7 @@ export function AdminTeam() {
                             </p>
                           </div>
                         </div>
-  
+
                         {/* Controls Area */}
                         <div className="pt-4 border-t border-[var(--admin-border-subtle)]">
                           <div className="flex items-center justify-between mb-3">
@@ -326,23 +341,26 @@ export function AdminTeam() {
                               </button>
                             )}
                           </div>
-  
+
                           {canManage ? (
                             <div className="space-y-1.5">
                               <label className="admin-label">Update Role Level</label>
-                              <select
+                              <CustomSelect
                                 value={m.role}
-                                onChange={(e) => handleUpdateRole(m._id || m.id, m.email, m.role, e.target.value)}
-                                className="admin-input h-9 py-0 text-[12px] font-bold uppercase tracking-wider"
-                              >
-                                {Object.keys(ROLE_WEIGHTS)
-                                  .filter((role) => !['user', 'customer'].includes(role) && canAssignRole(role))
-                                  .map((role) => (
-                                    <option key={role} value={role}>
-                                      {role.replace("_", " ")}
-                                    </option>
-                                  ))}
-                              </select>
+                                onChange={(newRole) =>
+                                  handleUpdateRole(m._id || m.id, m.email, m.role, newRole)
+                                }
+                                className="h-9 text-[12px] font-bold uppercase tracking-wider"
+                                options={Object.keys(ROLE_WEIGHTS)
+                                  .filter(
+                                    (role) =>
+                                      !['user', 'customer'].includes(role) && canAssignRole(role),
+                                  )
+                                  .map((role) => ({
+                                    label: role.replace('_', ' ').toUpperCase(),
+                                    value: role,
+                                  }))}
+                              />
                             </div>
                           ) : (
                             <div className="text-[11px] text-[var(--admin-text-secondary)] font-medium bg-[var(--admin-surface-muted)] p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] flex items-center gap-2">
@@ -358,9 +376,9 @@ export function AdminTeam() {
               )}
             </motion.div>
           )}
-  
+
           {/* Pending Invites Tab */}
-          {activeTab === "pending" && (
+          {activeTab === 'pending' && (
             <motion.div
               key="pending"
               initial="hidden"
@@ -370,10 +388,19 @@ export function AdminTeam() {
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
             >
               {invites.length === 0 ? (
-                <motion.div variants={fadeUp} className="admin-card py-20 text-center flex flex-col items-center justify-center col-span-full">
-                  <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">mail_lock</span>
-                  <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">No Pending Invites</p>
-                  <p className="text-[12px] text-[var(--admin-text-secondary)]">All invitations have been processed or expired.</p>
+                <motion.div
+                  variants={fadeUp}
+                  className="admin-card py-20 text-center flex flex-col items-center justify-center col-span-full"
+                >
+                  <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">
+                    mail_lock
+                  </span>
+                  <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">
+                    No Pending Invites
+                  </p>
+                  <p className="text-[12px] text-[var(--admin-text-secondary)]">
+                    All invitations have been processed or expired.
+                  </p>
                 </motion.div>
               ) : (
                 invites.map((inv) => (
@@ -408,19 +435,28 @@ export function AdminTeam() {
                         </button>
                       )}
                     </div>
-  
+
                     <div className="pt-4 border-t border-[var(--admin-border-subtle)] text-[12px] text-[var(--admin-text-secondary)] space-y-2">
                       <div className="flex justify-between">
                         <span className="font-bold">Role Level:</span>
-                        <span className="text-[var(--admin-text-primary)] font-bold uppercase tracking-wider">{inv.roleAssigned.replace("_", " ")}</span>
+                        <span className="text-[var(--admin-text-primary)] font-bold uppercase tracking-wider">
+                          {inv.roleAssigned.replace('_', ' ')}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-bold">Permissions:</span>
-                        <span className="text-[var(--admin-text-primary)] truncate ml-4" title={inv.permissionsSummary}>{inv.permissionsSummary}</span>
+                        <span
+                          className="text-[var(--admin-text-primary)] truncate ml-4"
+                          title={inv.permissionsSummary}
+                        >
+                          {inv.permissionsSummary}
+                        </span>
                       </div>
                       <div className="flex justify-between pt-2 mt-2 border-t border-[var(--admin-border-subtle)] text-[11px]">
                         <span>Invited By:</span>
-                        <span className="text-[var(--admin-text-primary)] font-medium">{inv.invitedBy?.name || inv.invitedBy?.email}</span>
+                        <span className="text-[var(--admin-text-primary)] font-medium">
+                          {inv.invitedBy?.name || inv.invitedBy?.email}
+                        </span>
                       </div>
                       <div className="flex justify-between text-[11px]">
                         <span>Date:</span>
@@ -432,9 +468,9 @@ export function AdminTeam() {
               )}
             </motion.div>
           )}
-  
+
           {/* History Tab */}
-          {activeTab === "history" && (
+          {activeTab === 'history' && (
             <motion.div
               key="history"
               initial={{ opacity: 0, y: 20 }}
@@ -457,7 +493,10 @@ export function AdminTeam() {
                   <tbody>
                     {history.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="text-center py-12 text-[var(--admin-text-tertiary)] text-[12px]">
+                        <td
+                          colSpan="6"
+                          className="text-center py-12 text-[var(--admin-text-tertiary)] text-[12px]"
+                        >
                           No invitation history logs found in database audit trail.
                         </td>
                       </tr>
@@ -465,32 +504,41 @@ export function AdminTeam() {
                       history.map((h) => {
                         const resolvedDate = h.acceptedAt || h.rejectedAt || h.revokedAt;
                         return (
-                          <tr key={h._id} className="hover:bg-[var(--admin-surface-muted)] transition-colors">
-                            <td className="pl-6 font-medium text-[var(--admin-text-primary)]">{h.email}</td>
+                          <tr
+                            key={h._id}
+                            className="hover:bg-[var(--admin-surface-muted)] transition-colors"
+                          >
+                            <td className="pl-6 font-medium text-[var(--admin-text-primary)]">
+                              {h.email}
+                            </td>
                             <td>
                               <span className="admin-badge admin-badge-neutral text-[9px] font-bold tracking-wider">
-                                {h.roleAssigned.replace("_", " ")}
+                                {h.roleAssigned.replace('_', ' ')}
                               </span>
                             </td>
-                            <td className="text-[var(--admin-text-secondary)] font-medium">{h.invitedBy?.name || h.invitedBy?.email}</td>
+                            <td className="text-[var(--admin-text-secondary)] font-medium">
+                              {h.invitedBy?.name || h.invitedBy?.email}
+                            </td>
                             <td>
                               <span
                                 className={`admin-badge border-none font-bold text-[9px] h-5 px-2 tracking-wider ${
-                                  h.status === "accepted"
-                                    ? "bg-[var(--admin-success-light)] text-[var(--admin-success)]"
-                                    : h.status === "rejected"
-                                    ? "bg-[var(--admin-error-light)] text-[var(--admin-error)]"
-                                    : h.status === "revoked"
-                                    ? "bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)]"
-                                    : "bg-[#fffbeb] text-[#d97706]"
+                                  h.status === 'accepted'
+                                    ? 'bg-[var(--admin-success-light)] text-[var(--admin-success)]'
+                                    : h.status === 'rejected'
+                                      ? 'bg-[var(--admin-error-light)] text-[var(--admin-error)]'
+                                      : h.status === 'revoked'
+                                        ? 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)]'
+                                        : 'bg-[#fffbeb] text-[#d97706]'
                                 }`}
                               >
                                 {h.status}
                               </span>
                             </td>
-                            <td className="text-[var(--admin-text-tertiary)] font-medium">{new Date(h.createdAt).toLocaleDateString()}</td>
+                            <td className="text-[var(--admin-text-tertiary)] font-medium">
+                              {new Date(h.createdAt).toLocaleDateString()}
+                            </td>
                             <td className="pr-6 text-[var(--admin-text-secondary)] font-medium">
-                              {resolvedDate ? new Date(resolvedDate).toLocaleDateString() : "—"}
+                              {resolvedDate ? new Date(resolvedDate).toLocaleDateString() : '—'}
                             </td>
                           </tr>
                         );
@@ -505,112 +553,113 @@ export function AdminTeam() {
       )}
 
       {/* Dynamic Slide-Up Bottom-Sheet Curation Drawer */}
-      {typeof document !== "undefined" && createPortal(
-        <AnimatePresence>
-          {isInviteOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[990] flex items-end sm:items-center justify-center admin-section-root p-0 sm:p-4"
-            >
-              <div
-                onClick={() => setIsInviteOpen(false)}
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
-              />
-
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {isInviteOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 50 }}
-                transition={{ type: "spring", damping: 26, stiffness: 220 }}
-                className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] sm:rounded-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] sm:max-h-[85vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t sm:border border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))] sm:pb-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[990] flex items-end sm:items-center justify-center admin-section-root p-0 sm:p-4"
               >
-                {/* Grab Handle (Mobile Only) */}
-                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0 sm:hidden" />
+                <div
+                  onClick={() => setIsInviteOpen(false)}
+                  className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+                />
 
-                <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
-                  <div>
-                    <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">person_add</span>
-                      Invite Team Member
-                    </h3>
-                    <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5 leading-normal">
-                      Grants admin access to an existing user email.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setIsInviteOpen(false)}
-                    className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 50 }}
+                  transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+                  className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] sm:rounded-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] sm:max-h-[85vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t sm:border border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))] sm:pb-8"
+                >
+                  {/* Grab Handle (Mobile Only) */}
+                  <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0 sm:hidden" />
 
-                <form onSubmit={handleSendInvite} className="space-y-4 flex-1">
-                  <div className="space-y-1">
-                    <label className="admin-label">
-                      Member Registered Email *
-                    </label>
-                    <input
-                      required
-                      type="email"
-                      placeholder="e.g. team.member@gmail.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      className="admin-input"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="admin-label">
-                      Team Role Designation *
-                    </label>
-                    <select
-                      value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value)}
-                      className="admin-input capitalize"
+                  <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
+                    <div>
+                      <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
+                          person_add
+                        </span>
+                        Invite Team Member
+                      </h3>
+                      <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5 leading-normal">
+                        Grants admin access to an existing user email.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setIsInviteOpen(false)}
+                      className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
                     >
-                      {assignableRoles.map((role) => (
-                        <option key={role} value={role}>
-                          {role.replace("_", " ")}
-                        </option>
-                      ))}
-                    </select>
+                      <span className="material-symbols-outlined text-[16px]">close</span>
+                    </button>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="admin-label">
-                      Access Scope Permissions
-                    </label>
-                    <input
-                      type="text"
-                      value={invitePermissions}
-                      onChange={(e) => setInvitePermissions(e.target.value)}
-                      placeholder="e.g. Products, Inventory, Custom Blueprints"
-                      className="admin-input"
-                    />
+                  <form onSubmit={handleSendInvite} className="space-y-4 flex-1">
+                    <div className="space-y-1">
+                      <label className="admin-label">Member Registered Email *</label>
+                      <input
+                        required
+                        type="email"
+                        placeholder="e.g. team.member@gmail.com"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        className="admin-input"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="admin-label">Team Role Designation *</label>
+                      <CustomSelect
+                        value={inviteRole}
+                        onChange={setInviteRole}
+                        options={assignableRoles.map((role) => ({
+                          label: role.replace('_', ' ').toUpperCase(),
+                          value: role,
+                        }))}
+                        disabled={assignableRoles.length === 0}
+                        placeholder={
+                          assignableRoles.length === 0
+                            ? 'No assignable roles available'
+                            : 'Select a role'
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="admin-label">Access Scope Permissions</label>
+                      <input
+                        type="text"
+                        value={invitePermissions}
+                        onChange={(e) => setInvitePermissions(e.target.value)}
+                        placeholder="e.g. Products, Inventory, Custom Blueprints"
+                        className="admin-input"
+                      />
+                    </div>
+
+                    <button
+                      disabled={submitting}
+                      type="submit"
+                      className="admin-btn admin-btn-primary w-full py-3 text-[11px] font-bold uppercase tracking-wider mt-6 active:scale-95 shadow-sm"
+                    >
+                      {submitting ? 'Sending...' : 'Send Invitation Request'}
+                    </button>
+                  </form>
+
+                  <div className="border-t border-[var(--admin-border-subtle)] pt-4 mt-5 text-[10.5px] text-[var(--admin-text-tertiary)] leading-relaxed shrink-0">
+                    <strong>SMTP Security Note:</strong> Members invited receive an explicit secure
+                    email. Access rights to the studio panel are pending until the user logs into
+                    their account and clicks accept.
                   </div>
-
-                  <button
-                    disabled={submitting}
-                    type="submit"
-                    className="admin-btn admin-btn-primary w-full py-3 text-[11px] font-bold uppercase tracking-wider mt-6 active:scale-95 shadow-sm"
-                  >
-                    {submitting ? "Sending..." : "Send Invitation Request"}
-                  </button>
-                </form>
-
-                <div className="border-t border-[var(--admin-border-subtle)] pt-4 mt-5 text-[10.5px] text-[var(--admin-text-tertiary)] leading-relaxed shrink-0">
-                  <strong>SMTP Security Note:</strong> Members invited receive an explicit secure email.
-                  Access rights to the studio panel are pending until the user logs into their account and clicks accept.
-                </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
     </motion.div>
   );
 }
