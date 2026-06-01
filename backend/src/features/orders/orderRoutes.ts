@@ -88,18 +88,18 @@ router.post('/send-cod-otp', requireAuth, validateRequest(codOtpEmailBodySchema)
 router.post('/verify-cod-otp', requireAuth, validateRequest(codOtpVerifySchema), verifyCodOtp);
 
 // Admin Routes
-router.get('/', requireAuth, requireRole(['super_admin', 'main_admin']), getAllOrders);
+router.get('/', requireAuth, requireRole(['super_admin', 'main_admin', 'admin']), getAllOrders);
 router.patch(
   '/:id/status',
   requireAuth,
-  requireRole(['super_admin', 'main_admin']),
+  requireRole(['super_admin', 'main_admin', 'admin']),
   validateRequest(updateStatusSchema),
   updateOrderStatus,
 );
 router.patch(
   '/:id/notes',
   requireAuth,
-  requireRole(['super_admin', 'main_admin']),
+  requireRole(['super_admin', 'main_admin', 'admin']),
   validateRequest(orderNotesSchema),
   updateOrderNotes,
 );

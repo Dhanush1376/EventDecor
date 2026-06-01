@@ -231,8 +231,8 @@ export const getWishlist = asyncHandler(async (req: any, res: Response) => {
   ]);
 
   const combinedWishlist = [
-    ...products.map((p) => ({ ...p, itemType: 'product' })),
-    ...showcases.map((s) => ({ ...s, itemType: 'event' })),
+    ...products.map((p: any) => ({ ...p, itemType: 'product' })),
+    ...showcases.map((s: any) => ({ ...s, itemType: 'event' })),
   ];
 
   await cacheWishlist(userId, combinedWishlist);

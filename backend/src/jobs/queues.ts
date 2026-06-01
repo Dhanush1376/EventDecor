@@ -21,7 +21,10 @@ export const connection = new IORedis(redisUrl, {
   enableReadyCheck: false,
   connectTimeout: 10000,
   lazyConnect: true,
-  tls: redisUrl.startsWith('rediss://') || redisUrl.includes('upstash.io') ? { rejectUnauthorized: process.env.REDIS_REJECT_UNAUTHORIZED !== 'false' } : undefined,
+  tls:
+    redisUrl.startsWith('rediss://') || redisUrl.includes('upstash.io')
+      ? { rejectUnauthorized: process.env.REDIS_REJECT_UNAUTHORIZED !== 'false' }
+      : undefined,
   retryStrategy: (retries: number) => {
     const requireRedis = process.env.REQUIRE_REDIS === 'true';
     const isProduction = process.env.NODE_ENV === 'production';
@@ -29,19 +32,27 @@ export const connection = new IORedis(redisUrl, {
       return null; // Stop reconnecting after 5 attempts if not required
     }
     return Math.min(retries * 100, 3000);
-  }
+  },
 });
 
 connection.on('error', (err: any) => {
   if (err.message && err.message.includes('max requests limit exceeded')) {
     if (!(global as any).upstashBullMqDisconnectLogged) {
-      logger.error(`[BULLMQ IOREDIS] Upstash Free Limit Exceeded. Gracefully disconnecting to prevent reconnect loops.`);
+      logger.error(
+        `[BULLMQ IOREDIS] Upstash Free Limit Exceeded. Gracefully disconnecting to prevent reconnect loops.`,
+      );
       (global as any).upstashBullMqDisconnectLogged = true;
     }
     // Disconnect immediately to stop the infinite auto-reconnect cycle
     connection.disconnect();
   } else if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
     logger.warn(`[BULLMQ IOREDIS] Transient connection issue (${err.code}). Will retry.`);
+  } else if (
+    err.code === 'ECONNREFUSED' &&
+    !process.env.REDIS_URL &&
+    process.env.REQUIRE_REDIS !== 'true'
+  ) {
+    // Suppress connection refused logs in local dev when Redis is omitted
   } else {
     logger.error(`[BULLMQ IOREDIS] Connection Error: ${err.message}`);
   }
@@ -70,19 +81,19 @@ let queuesInitialized = false;
 
 export const initQueues = async () => {
   if (queuesInitialized) return;
-  
+
   const requireRedis = process.env.REQUIRE_REDIS === 'true';
   try {
     logger.info('🔄 [BULLMQ] Connecting and initializing queues...');
-    
+
     // Explicitly trigger connection since lazyConnect: true is set
     await connection.connect();
-    
+
     emailQueue = new Queue('emailQueue', defaultQueueOptions);
     notificationQueue = new Queue('notificationQueue', defaultQueueOptions);
     loyaltyQueue = new Queue('loyaltyQueue', defaultQueueOptions);
     recommendationQueue = new Queue('recommendationQueue', defaultQueueOptions);
-    
+
     queuesInitialized = true;
     logger.info('🟢 [BULLMQ] Queues initialized successfully');
   } catch (err: any) {
