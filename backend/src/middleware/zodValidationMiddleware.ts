@@ -25,6 +25,8 @@ export const validateRequest = (schema: ZodSchema) => {
           return acc;
         }, {});
 
+        const errorMessages = Object.values(validationErrors).join(', ');
+
         logger.warn(`[VALIDATION_FAILED] ${req.method} ${req.originalUrl}`, {
           ip: req.ip,
           errors: validationErrors,
@@ -32,11 +34,11 @@ export const validateRequest = (schema: ZodSchema) => {
 
         return res.status(422).json({
           success: false,
-          message: 'Validation failed. Please verify your input.',
+          message: `Validation failed: ${errorMessages || 'Please verify your input.'}`,
           errors: validationErrors,
         });
       }
-      
+
       // If it's not a ZodError, pass it to the global error handler
       return next(error);
     }
