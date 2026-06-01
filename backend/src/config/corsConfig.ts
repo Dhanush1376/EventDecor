@@ -19,7 +19,7 @@ const getDynamicOrigins = (): Set<string> => {
   // Load from environment
   const envOrigins = (process.env.FRONTEND_URLS || '')
     .split(',')
-    .map(u => u.trim())
+    .map((u) => u.trim())
     .filter(Boolean);
 
   for (const origin of envOrigins) {
@@ -49,19 +49,22 @@ export const isOriginAllowed = (origin: string): boolean => {
     const parsedOrigin = parsedUrl.origin;
     const hostname = parsedUrl.hostname;
 
-    // Allow strictly defined origins in development (for mobile LAN testing), but not in Jest tests
-    if (process.env.NODE_ENV === 'development' && !process.env.JEST_WORKER_ID) {
-      if (
-        hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('10.')
-      ) {
-        return true;
-      }
+    // Allow local network IPs for mobile testing (safe since they are local)
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.')
+    ) {
+      return true;
     }
 
     if (allowedOrigins.has(parsedOrigin)) {
+      return true;
+    }
+
+    // Support wildcard for Vercel and Render deployments to prevent CORS blocking on new deployments
+    if (hostname.endsWith('.vercel.app') || hostname.endsWith('.onrender.com')) {
       return true;
     }
 
@@ -84,7 +87,7 @@ export const isOriginAllowed = (origin: string): boolean => {
  */
 export const corsOptions = (req: any, callback: any) => {
   const origin = req.header('Origin');
-  
+
   const options: CorsOptions = {
     credentials: true,
     optionsSuccessStatus: 200, // Legacy browsers choke on 204. Use 200 for preflight.
@@ -97,8 +100,8 @@ export const corsOptions = (req: any, callback: any) => {
       'Accept',
       'Authorization',
       'x-csrf-token',
-      'Cache-Control'
-    ]
+      'Cache-Control',
+    ],
   };
 
   if (!origin) {
