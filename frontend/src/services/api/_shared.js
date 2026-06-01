@@ -1,4 +1,5 @@
 import api from '../api';
+import axios from 'axios';
 import logger from '../../utils/logger';
 
 export const uploadWithRetry = async (uploadFn, formData, retries = 3, delayMs = 1500) => {
@@ -20,7 +21,12 @@ export const uploadWithRetry = async (uploadFn, formData, retries = 3, delayMs =
   throw lastError || new Error(`Upload failed after ${retries} attempts`);
 };
 
-export const uploadDirectToCloudinary = async (formData, isSingle = false, targetFolder = null) => {
+export const uploadDirectToCloudinary = async (
+  formData,
+  isSingle = false,
+  targetFolder = null,
+  onProgress = null,
+) => {
   const url = targetFolder
     ? `/upload/signed-url?folder=${encodeURIComponent(targetFolder)}`
     : '/upload/signed-url';
@@ -55,18 +61,19 @@ export const uploadDirectToCloudinary = async (formData, isSingle = false, targe
     cloudinaryData.append('signature', signature);
     cloudinaryData.append('folder', folder);
 
-    const res = await fetch(
+    const res = await axios.post(
       uploadUrl || `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      cloudinaryData,
       {
-        method: 'POST',
-        body: cloudinaryData,
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(file.name, percent);
+          }
+        },
       },
     );
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Cloudinary direct upload failed: ${errorText}`);
-    }
-    return res.json();
+    return res.data;
   });
 
   const results = await Promise.all(uploadPromises);

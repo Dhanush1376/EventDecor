@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { showcaseService } from '../../services/domainServices';
+import { showcaseService, uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { AdminToggle, SkeletonForm } from '../components/AdminUIKit';
+import { compressImage, formatBytes } from '../../utils/imageCompressor';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideIn = {
@@ -31,6 +32,9 @@ export function AdminAddShowcase() {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [isSaving, setIsSaving] = useState(false);
   const [lastDraftSaved, setLastDraftSaved] = useState(null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionProgress, setCompressionProgress] = useState(0);
+  const [compressionStats, setCompressionStats] = useState([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -445,6 +449,60 @@ export function AdminAddShowcase() {
         <div
           className={`admin-card p-4 sm:p-6 shadow-sm min-h-[480px] flex-col justify-between relative overflow-hidden ${mobileTab === 'form' ? 'flex' : 'hidden lg:flex'}`}
         >
+          {/* Compression / Upload Overlay */}
+          <AnimatePresence>
+            {isCompressing && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-white/95 backdrop-blur-md z-30 flex flex-col items-center justify-center p-8 text-center"
+              >
+                <div className="skeleton-box inline-block w-16 h-16 rounded-md mb-4" />
+                <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+                  {compressionProgress === 100 ? 'Finalizing...' : 'Optimizing & Uploading...'}
+                </h3>
+                <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1 max-w-[280px]">
+                  Compressing imagery for lightning-fast showcase delivery.
+                </p>
+
+                {compressionStats.length > 0 && (
+                  <div className="w-full max-w-sm mt-6 text-left space-y-2 bg-[var(--admin-surface)] p-3 rounded-xl border border-[var(--admin-border)] shadow-sm">
+                    {compressionStats.map((stat, i) => (
+                      <div
+                        key={i}
+                        className="flex flex-col gap-1 text-[10px] font-mono text-[var(--admin-text-secondary)]"
+                      >
+                        <div className="font-bold text-[var(--admin-text-primary)] truncate">
+                          {stat.name}
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>
+                            {stat.originalSize} ➔ {stat.optimizedSize}
+                          </span>
+                          <span className="text-[var(--admin-success)] font-bold">
+                            -{stat.reduction}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="w-full max-w-sm flex items-center justify-between text-[10px] font-bold mt-6 mb-1 text-[var(--admin-text-primary)]">
+                  <span>Upload Progress</span>
+                  <span>{compressionProgress}%</span>
+                </div>
+                <div className="w-full max-w-sm bg-[#E5E7EB] h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-[var(--admin-accent)] h-full transition-all duration-300"
+                    style={{ width: `${compressionProgress}%` }}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Active Step Content */}
           <div className="flex-1">
             <AnimatePresence mode="wait">
@@ -506,15 +564,60 @@ export function AdminAddShowcase() {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                setFormData((prev) => ({ ...prev, image: reader.result }));
-                                toast.success('Image chosen successfully!');
+                          onChange={async (e) => {
+                            const rawFiles = Array.from(e.target.files);
+                            if (rawFiles.length === 0) return;
+                            setIsCompressing(true);
+                            setCompressionProgress(0);
+                            setCompressionStats([]);
+                            try {
+                              const uploadData = new FormData();
+                              const newStats = [];
+
+                              for (let i = 0; i < rawFiles.length; i++) {
+                                const file = rawFiles[i];
+                                const optimizedFile = await compressImage(file);
+                                uploadData.append('images', optimizedFile);
+
+                                newStats.push({
+                                  name: file.name,
+                                  originalSize: formatBytes(file.size),
+                                  optimizedSize: formatBytes(optimizedFile.size),
+                                  reduction:
+                                    file.size > 0
+                                      ? ((1 - optimizedFile.size / file.size) * 100).toFixed(1)
+                                      : 0,
+                                });
+                              }
+                              setCompressionStats(newStats);
+
+                              const onProgress = (filename, percent) => {
+                                setCompressionProgress(percent);
                               };
-                              reader.readAsDataURL(file);
+
+                              const res = await uploadService.uploadImages(
+                                uploadData,
+                                'events',
+                                onProgress,
+                              );
+                              if (res.success && res.images && res.images.length > 0) {
+                                setFormData((prev) => ({ ...prev, image: res.images[0] }));
+                                toast.success(`Showcase image uploaded successfully!`);
+                              }
+                            } catch (err) {
+                              const msg =
+                                err?.response?.status === 401
+                                  ? 'Upload failed: Please log in again or refresh the page'
+                                  : err?.response?.data?.message ||
+                                    err?.message ||
+                                    'Upload failed. Please try again.';
+                              toast.error(msg);
+                            } finally {
+                              setTimeout(() => {
+                                setIsCompressing(false);
+                                setCompressionProgress(0);
+                                setCompressionStats([]);
+                              }, 1500);
                             }
                           }}
                           className="w-full text-[11px] text-[var(--admin-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:uppercase file:tracking-wider file:bg-[var(--admin-accent)] file:text-white hover:file:bg-[var(--admin-accent-hover)] cursor-pointer shadow-sm border border-[var(--admin-border)] rounded-xl p-2 bg-[var(--admin-surface)] focus:border-[var(--admin-accent)] focus:outline-none transition-all"

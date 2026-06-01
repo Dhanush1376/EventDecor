@@ -8,6 +8,7 @@ import { useAdmin } from '../context/AdminContext';
 import { ImageUpload } from '../components/ImageUpload';
 import toast from 'react-hot-toast';
 import { AdminToggle, SkeletonForm } from '../components/AdminUIKit';
+import { compressImage, formatBytes } from '../../utils/imageCompressor';
 
 import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
@@ -74,6 +75,7 @@ export function AdminAddProduct({ editId }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionProgress, setCompressionProgress] = useState(0);
+  const [compressionStats, setCompressionStats] = useState([]);
   const [isAIGenerating, setIsAIGenerating] = useState(false);
 
   const [categoriesList, setCategoriesList] = useState(productCategories);
@@ -811,25 +813,53 @@ export function AdminAddProduct({ editId }) {
         <div
           className={`admin-card p-4 sm:p-6 shadow-sm min-h-[480px] flex-col justify-between relative overflow-hidden ${mobileTab === 'form' ? 'flex' : 'hidden lg:flex'}`}
         >
-          {/* Simulated Compression Loading Overlay */}
+          {/* Compression / Upload Overlay */}
           <AnimatePresence>
             {isCompressing && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-8 text-center"
+                className="absolute inset-0 bg-white/95 backdrop-blur-md z-30 flex flex-col items-center justify-center p-8 text-center"
               >
-                <div className="skeleton-box inline-block w-16 h-16 rounded-md" />
-                <h3 className="text-[11px] font-bold text-[var(--admin-text-primary)]">
-                  Optimizing Image
+                <div className="skeleton-box inline-block w-16 h-16 rounded-md mb-4" />
+                <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+                  {compressionProgress === 100 ? 'Finalizing...' : 'Optimizing & Uploading...'}
                 </h3>
                 <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1 max-w-[280px]">
-                  Compressing & Uploading...
+                  Compressing imagery for lightning-fast storefront delivery.
                 </p>
-                <div className="w-48 bg-[#E5E7EB] h-1.5 rounded-full mt-4 overflow-hidden">
+
+                {compressionStats.length > 0 && (
+                  <div className="w-full max-w-sm mt-6 text-left space-y-2 bg-[var(--admin-surface)] p-3 rounded-xl border border-[var(--admin-border)] shadow-sm">
+                    {compressionStats.map((stat, i) => (
+                      <div
+                        key={i}
+                        className="flex flex-col gap-1 text-[10px] font-mono text-[var(--admin-text-secondary)]"
+                      >
+                        <div className="font-bold text-[var(--admin-text-primary)] truncate">
+                          {stat.name}
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>
+                            {stat.originalSize} ➔ {stat.optimizedSize}
+                          </span>
+                          <span className="text-[var(--admin-success)] font-bold">
+                            -{stat.reduction}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="w-full max-w-sm flex items-center justify-between text-[10px] font-bold mt-6 mb-1 text-[var(--admin-text-primary)]">
+                  <span>Upload Progress</span>
+                  <span>{compressionProgress}%</span>
+                </div>
+                <div className="w-full max-w-sm bg-[#E5E7EB] h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-[var(--admin-accent)] h-full transition-all"
+                    className="bg-[var(--admin-accent)] h-full transition-all duration-300"
                     style={{ width: `${compressionProgress}%` }}
                   />
                 </div>
@@ -888,11 +918,20 @@ export function AdminAddProduct({ editId }) {
                                     'products',
                                   );
                                   if (res.success && res.images) {
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      images: [...prev.images, ...res.images],
-                                      imageSrc: prev.imageSrc || res.images[0],
-                                    }));
+                                    setFormData((prev) => {
+                                      const combined = [...prev.images, ...res.images];
+                                      if (combined.length > 4) {
+                                        toast.error(
+                                          'Maximum 4 images allowed. Only the first 4 were kept.',
+                                        );
+                                      }
+                                      const limitedImages = combined.slice(0, 4);
+                                      return {
+                                        ...prev,
+                                        images: limitedImages,
+                                        imageSrc: limitedImages[0] || '',
+                                      };
+                                    });
                                     toast.success('Image fetched & optimized!');
                                     input.value = '';
                                   }
@@ -925,20 +964,57 @@ export function AdminAddProduct({ editId }) {
                           multiple
                           accept="image/*,.heic,.heif"
                           onChange={async (e) => {
-                            const files = Array.from(e.target.files);
-                            if (files.length === 0) return;
+                            const rawFiles = Array.from(e.target.files);
+                            if (rawFiles.length === 0) return;
                             setIsCompressing(true);
+                            setCompressionProgress(0);
+                            setCompressionStats([]);
                             try {
                               const uploadData = new FormData();
-                              files.forEach((f) => uploadData.append('images', f));
-                              const res = await uploadService.uploadImages(uploadData, 'products');
+                              const newStats = [];
+
+                              for (let i = 0; i < rawFiles.length; i++) {
+                                const file = rawFiles[i];
+                                const optimizedFile = await compressImage(file);
+                                uploadData.append('images', optimizedFile);
+
+                                newStats.push({
+                                  name: file.name,
+                                  originalSize: formatBytes(file.size),
+                                  optimizedSize: formatBytes(optimizedFile.size),
+                                  reduction:
+                                    file.size > 0
+                                      ? ((1 - optimizedFile.size / file.size) * 100).toFixed(1)
+                                      : 0,
+                                });
+                              }
+                              setCompressionStats(newStats);
+
+                              const onProgress = (filename, percent) => {
+                                setCompressionProgress(percent);
+                              };
+
+                              const res = await uploadService.uploadImages(
+                                uploadData,
+                                'products',
+                                onProgress,
+                              );
                               if (res.success && res.images) {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  images: [...prev.images, ...res.images],
-                                  imageSrc: prev.imageSrc || res.images[0],
-                                }));
-                                toast.success(`${res.images.length} photos uploaded!`);
+                                setFormData((prev) => {
+                                  const combined = [...prev.images, ...res.images];
+                                  if (combined.length > 4) {
+                                    toast.error(
+                                      'Maximum 4 images allowed. Only the first 4 were kept.',
+                                    );
+                                  }
+                                  const limitedImages = combined.slice(0, 4);
+                                  return {
+                                    ...prev,
+                                    images: limitedImages,
+                                    imageSrc: limitedImages[0] || '',
+                                  };
+                                });
+                                toast.success(`Photos uploaded successfully!`);
                               }
                             } catch (err) {
                               const msg =
@@ -949,7 +1025,11 @@ export function AdminAddProduct({ editId }) {
                                     'Upload failed. Please try again.';
                               toast.error(msg);
                             } finally {
-                              setIsCompressing(false);
+                              setTimeout(() => {
+                                setIsCompressing(false);
+                                setCompressionProgress(0);
+                                setCompressionStats([]);
+                              }, 1500);
                             }
                           }}
                           className="w-full text-[11px] text-[var(--admin-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:uppercase file:tracking-wider file:bg-[var(--admin-accent)] file:text-white hover:file:bg-[var(--admin-accent-hover)] cursor-pointer shadow-sm border border-[var(--admin-border)] rounded-xl p-2 bg-[var(--admin-surface)] focus:border-[var(--admin-accent)] focus:outline-none transition-all"
@@ -960,29 +1040,70 @@ export function AdminAddProduct({ editId }) {
                       {formData.images.length > 0 && (
                         <div className="pt-2">
                           <h4 className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] uppercase tracking-widest mb-3">
-                            Media Gallery ({formData.images.length})
+                            Media Gallery ({formData.images.length}/4)
                           </h4>
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                             {formData.images.map((img, idx) => (
                               <div
                                 key={idx}
-                                className={`relative aspect-square rounded-xl overflow-hidden border-2 ${formData.imageSrc === img ? 'border-[var(--admin-accent)]' : 'border-[var(--admin-border)]'} group`}
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData('text/plain', idx.toString());
+                                  e.dataTransfer.effectAllowed = 'move';
+                                }}
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  e.dataTransfer.dropEffect = 'move';
+                                }}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  const fromIdx = parseInt(
+                                    e.dataTransfer.getData('text/plain'),
+                                    10,
+                                  );
+                                  const toIdx = idx;
+                                  if (fromIdx === toIdx || isNaN(fromIdx)) return;
+                                  setFormData((prev) => {
+                                    const newImages = [...prev.images];
+                                    const [movedItem] = newImages.splice(fromIdx, 1);
+                                    newImages.splice(toIdx, 0, movedItem);
+                                    return {
+                                      ...prev,
+                                      images: newImages,
+                                      imageSrc: newImages[0] || '',
+                                    };
+                                  });
+                                  toast.success('Images reordered');
+                                }}
+                                className={`relative aspect-square rounded-xl overflow-hidden border-2 cursor-grab active:cursor-grabbing ${idx === 0 ? 'border-[var(--admin-accent)]' : 'border-[var(--admin-border)]'} group`}
                               >
                                 <img
                                   src={img}
                                   className="w-full h-full object-cover"
                                   alt="Gallery"
                                 />
-                                {formData.imageSrc === img && (
-                                  <div className="absolute top-1 left-1 bg-[var(--admin-accent)] text-white text-[11px] sm:text-[11px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                {idx === 0 && (
+                                  <div className="absolute top-1 left-1 bg-[var(--admin-accent)] text-white text-[11px] sm:text-[11px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm z-10 pointer-events-none">
                                     Primary
                                   </div>
                                 )}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                  {formData.imageSrc !== img && (
+                                  {idx !== 0 && (
                                     <button
                                       type="button"
-                                      onClick={() => setFormData({ ...formData, imageSrc: img })}
+                                      onClick={() => {
+                                        setFormData((prev) => {
+                                          const newImages = [...prev.images];
+                                          const [movedItem] = newImages.splice(idx, 1);
+                                          newImages.unshift(movedItem);
+                                          return {
+                                            ...prev,
+                                            images: newImages,
+                                            imageSrc: newImages[0],
+                                          };
+                                        });
+                                        toast.success('Updated primary listing image');
+                                      }}
                                       className="w-7 h-7 bg-[var(--admin-surface)] text-[var(--admin-accent)] rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
                                       title="Make Primary"
                                     >
@@ -994,17 +1115,16 @@ export function AdminAddProduct({ editId }) {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const newArr = formData.images.filter((_, i) => i !== idx);
-                                      setFormData({
-                                        ...formData,
-                                        images: newArr,
-                                        imageSrc:
-                                          formData.imageSrc === img
-                                            ? newArr[0] || ''
-                                            : formData.imageSrc,
+                                      setFormData((prev) => {
+                                        const newImages = prev.images.filter((_, i) => i !== idx);
+                                        return {
+                                          ...prev,
+                                          images: newImages,
+                                          imageSrc: newImages[0] || '',
+                                        };
                                       });
                                     }}
-                                    className="w-7 h-7 bg-[var(--admin-error-light)]0 text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                                    className="w-7 h-7 bg-[var(--admin-error)] text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
                                     title="Delete"
                                   >
                                     <span className="material-symbols-outlined text-[14px]">

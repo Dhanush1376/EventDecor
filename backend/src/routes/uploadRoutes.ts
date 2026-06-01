@@ -28,6 +28,7 @@ const ALLOWED_UPLOAD_FOLDERS = new Set([
   'siri-arts-crafts/identity_docs',
   'event_decor_ecommerce/assets',
   'event_decor_ecommerce/gallery',
+  'products',
 ]);
 
 /**
