@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import Order from '../models/Order';
 import logger from '../config/logger';
 import { RazorpayGateway } from '../utils/RazorpayGateway';
@@ -88,7 +88,7 @@ export class PaymentWebhookService {
           $set: { status: 'processing', lastAttemptAt: new Date() },
           $inc: { processingAttempts: 1 },
         },
-        { new: true },
+        { returnDocument: 'after' },
       );
 
       if (!claimedEvent) {
@@ -136,7 +136,7 @@ export class PaymentWebhookService {
             paymentStatus: { $in: ['pending', 'failed'] },
           } as any,
           { $set: { paymentStatus: 'processing' } },
-          { new: true, session },
+          { returnDocument: 'after', session },
         );
 
         if (!order) {
@@ -299,7 +299,7 @@ export class PaymentWebhookService {
       const paymentEntity = body.payload?.payment?.entity;
       const razorpay_order_id = paymentEntity?.order_id;
       if (razorpay_order_id) {
-        // Use a transaction for atomic webhook status update — prevents re-processing
+        // Use a transaction for atomic webhook status update â€” prevents re-processing
         // if the process crashes between business logic and status mark.
         const session = await mongoose.startSession();
         session.startTransaction();

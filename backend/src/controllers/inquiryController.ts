@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import Inquiry from '../models/Inquiry';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -8,19 +8,19 @@ import { sendDirectEmail } from '../services/notificationService';
 
 export const submitInquiry = asyncHandler(async (req: Request, res: Response) => {
   const inquiry = await Inquiry.create(req.body);
-  
+
   // 1. Notify User
   if (inquiry.email) {
     sendDirectEmail({
       email: inquiry.email,
-      subject: 'We Received Your Vision ✦ Siri Arts & Crafts',
+      subject: 'We Received Your Vision âœ¦ Siri Arts & Crafts',
       templateName: 'Inquiry Submitted',
       templateData: {
         name: inquiry.name,
         subject: inquiry.subject || 'Custom Decor Services',
       },
       type: 'engagement',
-      action: 'inquiry_submitted'
+      action: 'inquiry_submitted',
     });
   }
 
@@ -33,10 +33,10 @@ export const submitInquiry = asyncHandler(async (req: Request, res: Response) =>
     templateData: {
       actionType: 'New Inquiry Submitted',
       timestamp: new Date().toLocaleString(),
-      details: `Name: ${inquiry.name}\nEmail: ${inquiry.email}\nMessage: ${inquiry.message}`
+      details: `Name: ${inquiry.name}\nEmail: ${inquiry.email}\nMessage: ${inquiry.message}`,
     },
     type: 'system',
-    action: 'admin_inquiry_alert'
+    action: 'admin_inquiry_alert',
   });
 
   // 3. Real-time Admin Notification
@@ -64,15 +64,17 @@ export const getInquiries = asyncHandler(async (req: Request, res: Response) => 
 
   const [inquiries, total] = await Promise.all([
     Inquiry.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-    Inquiry.countDocuments()
+    Inquiry.countDocuments(),
   ]);
 
-  res.status(200).json(new ApiResponse(true, 'Inquiries fetched successfully', {
-    items: inquiries,
-    page,
-    totalPages: Math.ceil(total / limit),
-    total
-  }));
+  res.status(200).json(
+    new ApiResponse(true, 'Inquiries fetched successfully', {
+      items: inquiries,
+      page,
+      totalPages: Math.ceil(total / limit),
+      total,
+    }),
+  );
 });
 
 export const updateInquiryStatus = asyncHandler(async (req: Request, res: Response) => {
@@ -80,7 +82,7 @@ export const updateInquiryStatus = asyncHandler(async (req: Request, res: Respon
   const inquiry = await Inquiry.findByIdAndUpdate(
     req.params.id,
     { status },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true },
   );
 
   if (!inquiry) {

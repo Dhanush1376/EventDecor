@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import CustomOrder from '../models/CustomOrder';
 import WebsiteContent from '../models/WebsiteContent';
 import asyncHandler from '../utils/asyncHandler';
@@ -37,10 +37,10 @@ const DEFAULT_CONFIG = {
     { id: 'minimalist', label: 'Minimalist Wooden Craftsmanship', enabled: true },
   ],
   budgetRanges: [
-    { id: 'low', label: '₹10,000 - ₹50,000', enabled: true },
-    { id: 'medium', label: '₹50,000 - ₹1,500,000', enabled: true },
-    { id: 'high', label: '₹1,500,000 - ₹5,000,000', enabled: true },
-    { id: 'ultra', label: '₹5,000,000+', enabled: true },
+    { id: 'low', label: 'â‚¹10,000 - â‚¹50,000', enabled: true },
+    { id: 'medium', label: 'â‚¹50,000 - â‚¹1,500,000', enabled: true },
+    { id: 'high', label: 'â‚¹1,500,000 - â‚¹5,000,000', enabled: true },
+    { id: 'ultra', label: 'â‚¹5,000,000+', enabled: true },
   ],
   bookingTypes: [
     { id: 'video', label: 'Premium Video Consultation', enabled: true },
@@ -234,7 +234,7 @@ export const adminUpdatePriority = asyncHandler(async (req: Request, res: Respon
   const order = await CustomOrder.findByIdAndUpdate(
     req.params.id,
     { priority },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   );
 
   if (!order) {
@@ -248,7 +248,11 @@ export const adminUpdatePriority = asyncHandler(async (req: Request, res: Respon
 // 7. Admin Update Notes
 export const adminUpdateNotes = asyncHandler(async (req: Request, res: Response) => {
   const { adminNotes } = req.body;
-  const order = await CustomOrder.findByIdAndUpdate(req.params.id, { adminNotes }, { new: true });
+  const order = await CustomOrder.findByIdAndUpdate(
+    req.params.id,
+    { adminNotes },
+    { returnDocument: 'after' },
+  );
 
   if (!order) {
     res.status(404).json(new ApiResponse(false, 'Custom order not found'));
@@ -292,7 +296,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
     order.messages.push({
       sender: 'admin',
       senderName: 'System Logger',
-      text: `An itemized studio estimate totaling ₹${grandTotal.toLocaleString('en-IN')} has been compiled and dispatched for review.`,
+      text: `An itemized studio estimate totaling â‚¹${grandTotal.toLocaleString('en-IN')} has been compiled and dispatched for review.`,
       createdAt: new Date(),
     });
 
@@ -395,7 +399,7 @@ export const adminArchiveOrder = asyncHandler(async (req: Request, res: Response
   const order = await CustomOrder.findByIdAndUpdate(
     req.params.id,
     { archived: archived !== false },
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   if (!order) {
@@ -439,7 +443,7 @@ export const adminUpdateCustomOrderConfig = asyncHandler(async (req: any, res: R
       content,
       lastUpdatedBy: req.user._id,
     },
-    { new: true, upsert: true },
+    { returnDocument: 'after', upsert: true },
   );
 
   res

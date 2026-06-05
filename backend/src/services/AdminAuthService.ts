@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+﻿import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import PasswordResetToken from '../models/PasswordResetToken';
@@ -83,7 +83,7 @@ class AdminAuthService {
           lockoutUntil: lockoutUntil || undefined,
           expiresAt: new Date(Date.now() + 15 * 60 * 1000),
         },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       );
 
       if (attempts >= 5) {
@@ -161,7 +161,7 @@ class AdminAuthService {
           lockoutUntil: lockoutUntil || undefined,
           expiresAt: new Date(Date.now() + 15 * 60 * 1000),
         },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       );
       if (attempts >= 5) {
         logger.warn('[AUTH_FAILURE] Admin account lockout due to excessive failed login attempts', {

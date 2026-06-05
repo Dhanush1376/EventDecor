@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import Product from '../../models/Product';
 import RentalOrder from '../../models/RentalOrder';
 import RentalPolicy from '../../models/RentalPolicy';
@@ -321,7 +321,7 @@ export class RentalCheckoutService {
           paymentStatus: { $in: ['pending', 'failed'] },
         },
         { $set: { paymentStatus: 'processing' } },
-        { new: true, session },
+        { returnDocument: 'after', session },
       );
 
       if (!order) {

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import AdminNotification from '../models/AdminNotification';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -36,7 +36,7 @@ export const markNotificationRead = asyncHandler(async (req: Request, res: Respo
   const notification = await AdminNotification.findByIdAndUpdate(
     req.params.id,
     { isRead: true },
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   res.status(200).json(new ApiResponse(true, 'Notification marked as read', notification));

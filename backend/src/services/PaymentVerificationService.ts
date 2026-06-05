@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+﻿import crypto from 'crypto';
 import mongoose from 'mongoose';
 import Order from '../models/Order';
 import ApiError from '../utils/ApiError';
@@ -54,7 +54,7 @@ export class PaymentVerificationService {
           paymentStatus: { $in: ['pending', 'failed'] },
         } as any,
         { $set: { paymentStatus: 'processing' } },
-        { new: true, session },
+        { returnDocument: 'after', session },
       );
 
       if (!order) {
@@ -172,7 +172,7 @@ export class PaymentVerificationService {
           const product = await Product.findByIdAndUpdate(
             item.productId,
             { $inc: { stock: -item.quantity, reservedStock: -item.quantity } },
-            { session, new: true },
+            { session, returnDocument: 'after' },
           );
 
           if (product) {

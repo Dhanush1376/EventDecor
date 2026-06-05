@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import PageLayout from '../models/PageLayout';
 import logger from '../config/logger';
 
@@ -19,13 +19,13 @@ export const getLayoutByPath = async (req: Request, res: Response) => {
           { componentName: 'TrendingSection', props: {}, order: 4, isActive: true },
           { componentName: 'SeasonalHighlights', props: {}, order: 5, isActive: true },
           { componentName: 'StorySection', props: {}, order: 6, isActive: true },
-          { componentName: 'GallerySection', props: {}, order: 7, isActive: true }
+          { componentName: 'GallerySection', props: {}, order: 7, isActive: true },
         ];
         layout = await PageLayout.create({
           pagePath: '/',
           name: 'Default Homepage',
           status: 'published',
-          sections: defaultSections
+          sections: defaultSections,
         });
       } else {
         return res.status(404).json({ success: false, message: 'Layout not found' });
@@ -37,7 +37,9 @@ export const getLayoutByPath = async (req: Request, res: Response) => {
       .filter((s) => s.isActive && s.componentName !== 'VerifiedReviews')
       .sort((a, b) => a.order - b.order);
 
-    res.status(200).json({ success: true, data: { ...layout.toObject(), sections: activeSections } });
+    res
+      .status(200)
+      .json({ success: true, data: { ...layout.toObject(), sections: activeSections } });
   } catch (error: any) {
     logger.error('Error fetching layout', error);
     res.status(500).json({ success: false, message: 'Server Error' });
@@ -48,14 +50,16 @@ export const getAllLayouts = async (req: Request, res: Response) => {
   try {
     logger.info('[PAGE_LAYOUT] Fetching all layouts...');
     const layouts = await PageLayout.find();
-    
+
     // Filter out VerifiedReviews from sections array safely
-    const cleanedLayouts = layouts.map(layout => {
+    const cleanedLayouts = layouts.map((layout) => {
       const obj = layout.toObject();
-      obj.sections = (obj.sections || []).filter((s: any) => s?.componentName !== 'VerifiedReviews');
+      obj.sections = (obj.sections || []).filter(
+        (s: any) => s?.componentName !== 'VerifiedReviews',
+      );
       return obj;
     });
-    
+
     logger.info(`[PAGE_LAYOUT] Found ${cleanedLayouts.length} layouts`);
     res.status(200).json({ success: true, data: cleanedLayouts });
   } catch (error: any) {
@@ -70,7 +74,7 @@ export const createOrUpdateLayout = async (req: Request, res: Response) => {
     const layout = await PageLayout.findOneAndUpdate(
       { pagePath },
       { pagePath, name, sections, status, updatedBy: req.user?.id },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true },
     );
     res.status(200).json({ success: true, data: layout });
   } catch (error: any) {

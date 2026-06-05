@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import Product from '../models/Product';
 import InventoryReservation from '../models/InventoryReservation';
 import InventoryLog from '../models/InventoryLog';
@@ -29,7 +29,7 @@ export class InventoryService {
         $expr: { $gte: [{ $subtract: ['$stock', '$reservedStock'] }, quantity] },
       },
       { $inc: { reservedStock: quantity } },
-      { session: session || null, new: true },
+      { session: session || null, returnDocument: 'after' },
     );
 
     if (!product) {
@@ -69,7 +69,7 @@ export class InventoryService {
           delta: 0,
           reason: 'order_placed' as const,
           performedBy: userId,
-          note: `Reserved ${quantity} units (reservedStock: ${previousReservedStock} → ${product.reservedStock}). ReservationId: ${reservation[0]._id}. TTL: ${ttlMinutes}min`,
+          note: `Reserved ${quantity} units (reservedStock: ${previousReservedStock} â†’ ${product.reservedStock}). ReservationId: ${reservation[0]._id}. TTL: ${ttlMinutes}min`,
         },
       ],
       { session },
@@ -91,7 +91,7 @@ export class InventoryService {
     const product = await Product.findOneAndUpdate(
       { _id: reservation.product },
       { $inc: { stock: -reservation.quantity, reservedStock: -reservation.quantity } },
-      { session: session || null, new: true },
+      { session: session || null, returnDocument: 'after' },
     );
 
     if (!product) throw new ApiError(404, 'Product not found');
@@ -148,7 +148,7 @@ export class InventoryService {
           newStock: product.stock,
           delta: -reservation.quantity,
           reason: 'order_placed' as const,
-          note: `Reservation confirmed. Stock: ${previousStock} → ${product.stock}. ReservedStock: ${previousReservedStock} → ${product.reservedStock}. ReservationId: ${reservationId}`,
+          note: `Reservation confirmed. Stock: ${previousStock} â†’ ${product.stock}. ReservedStock: ${previousReservedStock} â†’ ${product.reservedStock}. ReservationId: ${reservationId}`,
         },
       ],
       { session },
@@ -170,7 +170,7 @@ export class InventoryService {
     const product = await Product.findOneAndUpdate(
       { _id: reservation.product, reservedStock: { $gte: reservation.quantity } },
       { $inc: { reservedStock: -reservation.quantity } },
-      { session: session || null, new: true },
+      { session: session || null, returnDocument: 'after' },
     );
 
     if (!product) {
@@ -199,7 +199,7 @@ export class InventoryService {
           newStock: product?.stock || 0, // stock unchanged on cancel
           delta: 0,
           reason: 'payment_failed' as const,
-          note: `Reservation cancelled. ReservedStock: ${previousReservedStock} → ${product?.reservedStock ?? 0}. ReservationId: ${reservationId}`,
+          note: `Reservation cancelled. ReservedStock: ${previousReservedStock} â†’ ${product?.reservedStock ?? 0}. ReservationId: ${reservationId}`,
         },
       ],
       { session },
@@ -225,7 +225,7 @@ export class InventoryService {
     const product = await Product.findOneAndUpdate(
       { _id: productId },
       { $inc: { stock: quantity } },
-      { session: session || null, new: true },
+      { session: session || null, returnDocument: 'after' },
     );
 
     if (!product) {
@@ -247,7 +247,7 @@ export class InventoryService {
           orderId: orderId ? new mongoose.Types.ObjectId(orderId) : undefined,
           referenceType: referenceType || (orderId ? 'Order' : undefined),
           performedBy: performedBy || 'system',
-          note: `Stock restored: ${previousStock} → ${product.stock} (+${quantity})`,
+          note: `Stock restored: ${previousStock} â†’ ${product.stock} (+${quantity})`,
         },
       ],
       { session },
@@ -271,7 +271,7 @@ export class InventoryService {
     const product = await Product.findOneAndUpdate(
       { _id: productId, reservedStock: { $gte: quantity } },
       { $inc: { reservedStock: -quantity } },
-      { session: session || null, new: true },
+      { session: session || null, returnDocument: 'after' },
     );
 
     if (!product) {
@@ -279,7 +279,7 @@ export class InventoryService {
       const fallbackProduct = await Product.findOneAndUpdate(
         { _id: productId },
         { $set: { reservedStock: 0 } },
-        { session: session || null, new: true },
+        { session: session || null, returnDocument: 'after' },
       );
       if (!fallbackProduct) {
         logger.error(`[INVENTORY] Cannot release reserved stock for missing product ${productId}`);
@@ -300,7 +300,7 @@ export class InventoryService {
             orderId: orderId ? new mongoose.Types.ObjectId(orderId) : undefined,
             referenceType: referenceType || (orderId ? 'Order' : undefined),
             performedBy: performedBy || 'system',
-            note: `ReservedStock released with underflow clamp. ReservedStock → 0 (requested -${quantity})`,
+            note: `ReservedStock released with underflow clamp. ReservedStock â†’ 0 (requested -${quantity})`,
           },
         ],
         { session },
@@ -322,7 +322,7 @@ export class InventoryService {
           orderId: orderId ? new mongoose.Types.ObjectId(orderId) : undefined,
           referenceType: referenceType || (orderId ? 'Order' : undefined),
           performedBy: performedBy || 'system',
-          note: `ReservedStock released: ${previousReservedStock} → ${product.reservedStock} (-${quantity})`,
+          note: `ReservedStock released: ${previousReservedStock} â†’ ${product.reservedStock} (-${quantity})`,
         },
       ],
       { session },
@@ -342,7 +342,7 @@ export class InventoryService {
     const product = await Product.findOneAndUpdate(
       { _id: productId },
       { $inc: { stock: adjustment } },
-      { session: session || null, new: true },
+      { session: session || null, returnDocument: 'after' },
     );
 
     if (!product) throw new ApiError(404, 'Product not found');
@@ -368,7 +368,7 @@ export class InventoryService {
           delta: adjustment,
           reason: 'admin_adjustment' as any,
           performedBy,
-          note: `Manual inventory adjustment by ${performedBy}: ${previousStock} → ${product.stock} (${adjustment >= 0 ? '+' : ''}${adjustment}). Reason: ${reason}`,
+          note: `Manual inventory adjustment by ${performedBy}: ${previousStock} â†’ ${product.stock} (${adjustment >= 0 ? '+' : ''}${adjustment}). Reason: ${reason}`,
         },
       ],
       { session },
@@ -393,7 +393,7 @@ export class InventoryService {
     const product = await Product.findOneAndUpdate(
       { _id: productId },
       { $inc: { stock: -quantity } },
-      { session: session || null, new: true },
+      { session: session || null, returnDocument: 'after' },
     );
 
     if (!product) throw new ApiError(404, 'Product not found');
@@ -450,7 +450,7 @@ export class InventoryService {
         const product = await Product.findOneAndUpdate(
           { _id: res.product, reservedStock: { $gte: res.quantity } },
           { $inc: { reservedStock: -res.quantity } },
-          { session, new: true },
+          { session, returnDocument: 'after' },
         );
 
         if (!product) {
@@ -474,7 +474,7 @@ export class InventoryService {
               delta: 0,
               reason: 'stale_release' as const,
               performedBy: 'system',
-              note: `Expired reservation swept. ReservedStock: ${previousReservedStock} → ${product?.reservedStock ?? 0}. ReservationId: ${res._id}`,
+              note: `Expired reservation swept. ReservedStock: ${previousReservedStock} â†’ ${product?.reservedStock ?? 0}. ReservationId: ${res._id}`,
             },
           ],
           { session },

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import RefundRecord from '../models/RefundRecord';
 import logger from '../config/logger';
 import { RazorpayGateway } from '../utils/RazorpayGateway';
@@ -60,7 +60,7 @@ export class PaymentRefundService {
     const refundRecord = await RefundRecord.findOneAndUpdate(
       { _id: refundRecordId, status: { $in: ['pending', 'failed'] } },
       { $set: { status: 'processing' }, $inc: { retryCount: 1 } },
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     if (!refundRecord) {

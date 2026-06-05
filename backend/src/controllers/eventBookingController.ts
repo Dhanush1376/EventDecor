@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import EventBooking from '../models/EventBooking';
 import Event from '../models/Event';
 import { EventBookingMailService } from '../services/eventBookingMailService';
@@ -183,7 +183,7 @@ export const customerSubmitPayment = asyncHandler(async (req: any, res: Response
     if (rzpAmount !== paymentAmt) {
       throw new ApiError(
         400,
-        `Payment amount mismatch. Expected ₹${paymentAmt}, found ₹${rzpAmount}`,
+        `Payment amount mismatch. Expected â‚¹${paymentAmt}, found â‚¹${rzpAmount}`,
       );
     }
 
@@ -223,7 +223,7 @@ export const customerSubmitPayment = asyncHandler(async (req: any, res: Response
   await BookingMessage.create({
     bookingId: booking._id,
     sender: 'client',
-    message: `LODGED TRANSACTION REF: ${transactionId || 'STUDIO'}. Logged milestone payment of ₹${paymentAmt.toLocaleString('en-IN')}.`,
+    message: `LODGED TRANSACTION REF: ${transactionId || 'STUDIO'}. Logged milestone payment of â‚¹${paymentAmt.toLocaleString('en-IN')}.`,
     timestamp: new Date(),
   });
 
@@ -524,7 +524,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
   await BookingMessage.create({
     bookingId: booking._id,
     sender: 'admin',
-    message: `STUDIO PROPOSAL: A refined luxury estimate totaling ₹${total.toLocaleString('en-IN')} has been calculated and dispatched for your final approval.`,
+    message: `STUDIO PROPOSAL: A refined luxury estimate totaling â‚¹${total.toLocaleString('en-IN')} has been calculated and dispatched for your final approval.`,
     timestamp: new Date(),
   });
 
@@ -573,7 +573,7 @@ export const adminUpdateNotes = asyncHandler(async (req: any, res: Response) => 
   const booking = await EventBooking.findByIdAndUpdate(
     req.params.id,
     { adminNotes },
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   if (!booking) {

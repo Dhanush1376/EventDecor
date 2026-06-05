@@ -1,10 +1,10 @@
-import logger from '../config/logger';
+﻿import logger from '../config/logger';
 import mongoose from 'mongoose';
 
 type FallbackHandler = (jobName: string, data: any) => Promise<void>;
 
 /**
- * DurableFallbackQueue — MongoDB-backed queue that persists jobs to survive process restarts.
+ * DurableFallbackQueue â€” MongoDB-backed queue that persists jobs to survive process restarts.
  *
  * When BullMQ/Redis is unavailable, jobs are written to MongoDB (FallbackJob collection)
  * and processed in-memory. On process restart, pending jobs are recovered from MongoDB
@@ -60,7 +60,7 @@ class FallbackQueue {
         );
       } else {
         logger.warn(
-          `[QUEUE FALLBACK] MongoDB unavailable — job ${jobName} in ${this.name} will be lost if process restarts`,
+          `[QUEUE FALLBACK] MongoDB unavailable â€” job ${jobName} in ${this.name} will be lost if process restarts`,
         );
       }
     } catch (err: any) {
@@ -81,7 +81,7 @@ class FallbackQueue {
       const job = await FallbackJob.findOneAndUpdate(
         { queueName: this.name, status: 'pending' },
         { $set: { status: 'processing' }, $inc: { retries: 1 } },
-        { sort: { createdAt: 1 }, new: true },
+        { sort: { createdAt: 1 }, returnDocument: 'after' },
       );
 
       if (!job) {
@@ -117,7 +117,7 @@ class FallbackQueue {
           try {
             const { createAdminNotification } = require('./notificationService');
             await createAdminNotification({
-              title: '⚠️ Fallback Queue Dead Letter',
+              title: 'âš ï¸ Fallback Queue Dead Letter',
               message: `Job "${job.jobName}" in queue "${this.name}" failed after ${MAX_RETRIES} attempts: ${err.message}`,
               type: 'system',
             });
@@ -142,7 +142,7 @@ class FallbackQueue {
   }
 
   async close() {
-    // No-op — jobs are persisted in MongoDB
+    // No-op â€” jobs are persisted in MongoDB
   }
 }
 

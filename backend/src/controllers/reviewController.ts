@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Review from '../models/Review';
 import Product from '../models/Product';
@@ -13,29 +13,29 @@ import { getPaginationOptions, formatPaginationResponse } from '../utils/paginat
  */
 export const updateProductRating = async (productId: string | mongoose.Types.ObjectId) => {
   if (!productId) return;
-  
+
   const stats = await Review.aggregate([
     { $match: { product: new mongoose.Types.ObjectId(productId), status: 'approved' } },
     {
       $group: {
         _id: '$product',
         avgRating: { $avg: '$rating' },
-        reviewCount: { $sum: 1 }
-      }
-    }
+        reviewCount: { $sum: 1 },
+      },
+    },
   ]);
 
   if (stats.length > 0) {
     const { avgRating, reviewCount } = stats[0];
     await Product.findByIdAndUpdate(productId, {
       rating: Math.round(avgRating * 10) / 10,
-      reviews: reviewCount
+      reviews: reviewCount,
     });
   } else {
     // Zero out if there are no approved reviews remaining
     await Product.findByIdAndUpdate(productId, {
       rating: 0,
-      reviews: 0
+      reviews: 0,
     });
   }
 };
@@ -49,11 +49,29 @@ export const getProductReviews = asyncHandler(async (req: Request, res: Response
     Review.countDocuments(filter),
   ]);
 
-  res.status(200).json(new ApiResponse(true, 'Reviews fetched', formatPaginationResponse(reviews, totalCount, page, limit)));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Reviews fetched',
+        formatPaginationResponse(reviews, totalCount, page, limit),
+      ),
+    );
 });
 
 export const createReview = asyncHandler(async (req: Request, res: Response) => {
-  const { productId, rating, comment, images, location, eventType, favoriteElement, category, verified } = req.body;
+  const {
+    productId,
+    rating,
+    comment,
+    images,
+    location,
+    eventType,
+    favoriteElement,
+    category,
+    verified,
+  } = req.body;
 
   if (productId) {
     // Verify product exists
@@ -106,11 +124,25 @@ export const getAllReviews = asyncHandler(async (req: Request, res: Response) =>
   if (status) filter.status = status;
 
   const [reviews, totalCount] = await Promise.all([
-    Review.find(filter).populate('product', 'title imageSrc').populate('customer', 'name email').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Review.find(filter)
+      .populate('product', 'title imageSrc')
+      .populate('customer', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Review.countDocuments(filter),
   ]);
 
-  res.status(200).json(new ApiResponse(true, 'All reviews fetched', formatPaginationResponse(reviews, totalCount, page, limit)));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'All reviews fetched',
+        formatPaginationResponse(reviews, totalCount, page, limit),
+      ),
+    );
 });
 
 export const updateReviewStatus = asyncHandler(async (req: Request, res: Response) => {
@@ -119,7 +151,11 @@ export const updateReviewStatus = asyncHandler(async (req: Request, res: Respons
     throw new ApiError(400, 'Invalid review status');
   }
 
-  const review = await Review.findByIdAndUpdate(req.params.id, { status }, { new: true });
+  const review = await Review.findByIdAndUpdate(
+    req.params.id,
+    { status },
+    { returnDocument: 'after' },
+  );
   if (!review) throw new ApiError(404, 'Review not found');
 
   // Recalculate product rating atomically using MongoDB aggregation pipeline directly in database
@@ -142,12 +178,12 @@ export const deleteReview = asyncHandler(async (req: Request, res: Response) => 
       const publicId = extractPublicId(imgUrl);
       if (publicId) {
         deleteFromCloudinary(publicId).catch((err: any) =>
-          logger.error(`Failed to clean up review image from Cloudinary: ${err}`)
+          logger.error(`Failed to clean up review image from Cloudinary: ${err}`),
         );
       }
     }
   }
-  
+
   // Recalculate product rating atomically using MongoDB aggregation pipeline directly in database
   if (review.product) {
     await updateProductRating(review.product);
@@ -161,11 +197,24 @@ export const getPublicReviews = asyncHandler(async (req: Request, res: Response)
   const filter = { status: 'approved' as const, isMock: { $ne: true } };
 
   const [reviews, totalCount] = await Promise.all([
-    Review.find(filter).populate('product', 'title imageSrc').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Review.find(filter)
+      .populate('product', 'title imageSrc')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Review.countDocuments(filter),
   ]);
 
-  res.status(200).json(new ApiResponse(true, 'Public approved reviews fetched', formatPaginationResponse(reviews, totalCount, page, limit)));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Public approved reviews fetched',
+        formatPaginationResponse(reviews, totalCount, page, limit),
+      ),
+    );
 });
 
 export const incrementHelpful = asyncHandler(async (req: Request, res: Response) => {
@@ -174,7 +223,7 @@ export const incrementHelpful = asyncHandler(async (req: Request, res: Response)
   const review = await Review.findById(req.params.id);
   if (!review) throw new ApiError(404, 'Review not found');
 
-  const alreadyVoted = review.helpfulBy && review.helpfulBy.some(id => id.toString() === userId);
+  const alreadyVoted = review.helpfulBy && review.helpfulBy.some((id) => id.toString() === userId);
   if (alreadyVoted) {
     throw new ApiError(400, 'You have already voted this review as helpful');
   }
@@ -183,9 +232,9 @@ export const incrementHelpful = asyncHandler(async (req: Request, res: Response)
     req.params.id,
     {
       $inc: { helpfulCount: 1 },
-      $push: { helpfulBy: userId }
+      $push: { helpfulBy: userId },
     },
-    { new: true }
+    { returnDocument: 'after' },
   );
 
   res.status(200).json(new ApiResponse(true, 'Helpful count incremented', updatedReview));
@@ -198,9 +247,13 @@ export const canReview = asyncHandler(async (req: Request, res: Response) => {
 
   const alreadyReviewed = !!(await Review.findOne({ product: productId, customer: userId }));
   if (alreadyReviewed) {
-    return res.status(200).json(new ApiResponse(true, 'Review eligibility checked', {
-      canReview: false, alreadyReviewed: true, reason: 'already_reviewed',
-    }));
+    return res.status(200).json(
+      new ApiResponse(true, 'Review eligibility checked', {
+        canReview: false,
+        alreadyReviewed: true,
+        reason: 'already_reviewed',
+      }),
+    );
   }
 
   const purchasedOrder = await Order.findOne({
@@ -210,12 +263,20 @@ export const canReview = asyncHandler(async (req: Request, res: Response) => {
   });
 
   if (!purchasedOrder) {
-    return res.status(200).json(new ApiResponse(true, 'Review eligibility checked', {
-      canReview: false, alreadyReviewed: false, reason: 'not_purchased',
-    }));
+    return res.status(200).json(
+      new ApiResponse(true, 'Review eligibility checked', {
+        canReview: false,
+        alreadyReviewed: false,
+        reason: 'not_purchased',
+      }),
+    );
   }
 
-  return res.status(200).json(new ApiResponse(true, 'Review eligibility checked', {
-    canReview: true, alreadyReviewed: false, reason: 'eligible',
-  }));
+  return res.status(200).json(
+    new ApiResponse(true, 'Review eligibility checked', {
+      canReview: true,
+      alreadyReviewed: false,
+      reason: 'eligible',
+    }),
+  );
 });

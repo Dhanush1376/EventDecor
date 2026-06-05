@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import User from '../models/User';
 import { STAFF_ROLES, canActorAssignRole } from '../config/adminConfig';
 import asyncHandler from '../utils/asyncHandler';
@@ -122,7 +122,7 @@ export const updateUserRole = asyncHandler(async (req: Request, res: Response) =
     );
   }
 
-  const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true });
+  const user = await User.findByIdAndUpdate(req.params.id, { role }, { returnDocument: 'after' });
   if (!user) throw new ApiError(404, 'User not found');
   res.status(200).json(new ApiResponse(true, 'User role updated', user));
 });
@@ -190,7 +190,7 @@ export const updateAddress = asyncHandler(async (req: any, res: Response) => {
   const address = await Address.findOneAndUpdate(
     { _id: req.params.addressId, user: req.user.id },
     req.body,
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   if (!address) throw new ApiError(404, 'Address not found');
@@ -215,7 +215,7 @@ export const setDefaultAddress = asyncHandler(async (req: any, res: Response) =>
   const address = await Address.findOneAndUpdate(
     { _id: req.params.addressId, user: req.user.id },
     { isDefault: true },
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   if (!address) throw new ApiError(404, 'Address not found');
@@ -449,13 +449,13 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
           $inc: { 'cart.$.quantity': qty },
           $set: { 'cart.$.rentalInfo': rentalInfo },
         },
-        { new: true },
+        { returnDocument: 'after' },
       );
     } else {
       updatedUser = await User.findOneAndUpdate(
         { _id: req.user.id, 'cart.product': productId, 'cart.type': itemType },
         { $inc: { 'cart.$.quantity': qty } },
-        { new: true },
+        { returnDocument: 'after' },
       );
     }
   } else if (qty > 0) {
@@ -476,7 +476,7 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
           },
         },
       },
-      { new: true },
+      { returnDocument: 'after' },
     );
   } else {
     updatedUser = await User.findById(req.user.id);
@@ -523,7 +523,7 @@ export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
   const user = await User.findOneAndUpdate(
     { _id: req.user.id },
     { $pull: { cart: { product: productId } } },
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   if (!user) throw new ApiError(404, 'User not found');

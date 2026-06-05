@@ -1,11 +1,11 @@
-import PaymentWebhookEvent from '../models/PaymentWebhookEvent';
+﻿import PaymentWebhookEvent from '../models/PaymentWebhookEvent';
 import { UnifiedWebhookRouter } from './payments/UnifiedWebhookRouter';
 import logger from '../config/logger';
 import * as Sentry from '@sentry/node';
 import { createAdminNotification } from './notificationService';
 
 /**
- * WebhookDeadLetterService — Recovers failed or stuck webhook events.
+ * WebhookDeadLetterService â€” Recovers failed or stuck webhook events.
  *
  * Finds PaymentWebhookEvent records stuck in 'pending' or 'failed' state
  * and replays them through UnifiedWebhookRouter.
@@ -59,7 +59,7 @@ export class WebhookDeadLetterService {
             $set: { status: 'processing', lastAttemptAt: new Date() },
             $inc: { processingAttempts: 1 },
           },
-          { new: true },
+          { returnDocument: 'after' },
         );
 
         if (!claimed) {
@@ -141,7 +141,7 @@ export class WebhookDeadLetterService {
 
     // Admin notification
     await createAdminNotification({
-      title: '⚠️ Webhook Dead Letter',
+      title: 'âš ï¸ Webhook Dead Letter',
       message: `Payment webhook ${event.razorpayEventId} (${event.eventType}) failed after ${event.processingAttempts} attempts and has been moved to dead letter. Manual investigation required.`,
       type: 'payment',
       actionLink: `/admin/payments/webhooks?status=dead_letter`,
@@ -173,7 +173,7 @@ export class WebhookDeadLetterService {
       {
         $set: { status: 'pending', processingAttempts: 0, errorLog: 'Manually retried by admin' },
       },
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     if (!event) return false;

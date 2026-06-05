@@ -1,4 +1,4 @@
-import { InventoryService } from '../services/InventoryService';
+﻿import { InventoryService } from '../services/InventoryService';
 import InventoryReservation from '../models/InventoryReservation';
 import Product from '../models/Product';
 import InventoryLog from '../models/InventoryLog';
@@ -39,7 +39,7 @@ describe('InventoryService', () => {
         $expr: { $gte: [{ $subtract: ['$stock', '$reservedStock'] }, 2] },
       },
       { $inc: { reservedStock: 2 } },
-      { session: mockSession, new: true },
+      { session: mockSession, returnDocument: 'after' },
     );
     expect(InventoryReservation.create).toHaveBeenCalled();
     expect(reservation._id).toBe('res_1');
@@ -91,7 +91,7 @@ describe('InventoryService', () => {
     expect(Product.findOneAndUpdate).toHaveBeenCalledWith(
       { _id: 'prod_1' },
       { $inc: { stock: -2, reservedStock: -2 } },
-      { session: mockSession, new: true },
+      { session: mockSession, returnDocument: 'after' },
     );
 
     expect(InventoryLog.create).toHaveBeenCalled();

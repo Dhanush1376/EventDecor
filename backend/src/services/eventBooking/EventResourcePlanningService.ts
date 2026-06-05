@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+﻿import mongoose, { Schema, Document } from 'mongoose';
 import ApiError from '../../utils/ApiError';
 
 export interface IDailyEventCapacity extends Document {
@@ -50,7 +50,7 @@ export class EventResourcePlanningService {
         $inc: { slotsUsed: 1 },
         $push: { bookings: bookingId },
       },
-      { session, new: true },
+      { session, returnDocument: 'after' },
     );
 
     if (!result) {

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import Event from '../models/Event';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -19,9 +19,15 @@ export const getEvents = asyncHandler(async (req: Request, res: Response) => {
   ]);
 
   res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
-  res.status(200).json(
-    new ApiResponse(true, 'Events fetched', formatPaginationResponse(events, totalCount, page, limit))
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Events fetched',
+        formatPaginationResponse(events, totalCount, page, limit),
+      ),
+    );
 });
 
 export const getEventById = asyncHandler(async (req: Request, res: Response) => {
@@ -39,7 +45,7 @@ export const createEvent = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const updateEvent = asyncHandler(async (req: Request, res: Response) => {
-  const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  const event = await Event.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
   if (!event) throw new ApiError(404, 'Event not found');
   await bumpPublicCacheVersion();
   res.status(200).json(new ApiResponse(true, 'Event updated', event));

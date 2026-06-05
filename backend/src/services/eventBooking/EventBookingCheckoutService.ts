@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import EventBooking from '../../models/EventBooking';
 import Event from '../../models/Event';
 import User from '../../models/User';
@@ -238,7 +238,7 @@ export class EventBookingCheckoutService {
           status: { $in: ['pending_payment', 'failed'] },
         },
         { $set: { status: 'payment_processing' } },
-        { new: true, session },
+        { returnDocument: 'after', session },
       ).populate('user');
 
       if (!booking) {

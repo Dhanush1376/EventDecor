@@ -1,4 +1,4 @@
-import UserInteraction from '../../models/UserInteraction';
+﻿import UserInteraction from '../../models/UserInteraction';
 import UserPreferenceProfile from '../../models/UserPreferenceProfile';
 import { computeEngagementScore } from './scoringEngine';
 import logger from '../../config/logger';
@@ -135,7 +135,13 @@ export async function rebuildUserProfile(userId: string): Promise<void> {
 
     // Infer price preference from interaction metadata
     const priceAgg = await UserInteraction.aggregate([
-      { $match: { userId: userOid, 'metadata.priceRange': { $exists: true }, timestamp: { $gte: ninetyDaysAgo } } },
+      {
+        $match: {
+          userId: userOid,
+          'metadata.priceRange': { $exists: true },
+          timestamp: { $gte: ninetyDaysAgo },
+        },
+      },
       { $group: { _id: '$metadata.priceRange', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 1 },
@@ -158,7 +164,7 @@ export async function rebuildUserProfile(userId: string): Promise<void> {
         .filter(Boolean) as string[],
       purchaseHistory: {
         categories: purchaseAgg.length > 0 ? (purchaseAgg[0].categories || []).filter(Boolean) : [],
-        avgPrice: 0, // Would need product price join — simplified for now
+        avgPrice: 0, // Would need product price join â€” simplified for now
         totalSpent: 0,
         bookingCount: purchaseAgg.length > 0 ? purchaseAgg[0].bookingCount : 0,
       },
@@ -168,10 +174,12 @@ export async function rebuildUserProfile(userId: string): Promise<void> {
     await UserPreferenceProfile.findOneAndUpdate(
       { userId: userOid },
       { $set: profileData, $inc: { profileVersion: 1 } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' },
     );
 
-    logger.info(`[PROFILE BUILDER] Rebuilt profile for user ${userId} (${interactionCount} interactions, engagement: ${engagementScore})`);
+    logger.info(
+      `[PROFILE BUILDER] Rebuilt profile for user ${userId} (${interactionCount} interactions, engagement: ${engagementScore})`,
+    );
   } catch (err: any) {
     logger.error(`[PROFILE BUILDER] Error rebuilding profile for ${userId}: ${err.message}`);
   }
@@ -215,7 +223,9 @@ export async function rebuildStaleProfiles(): Promise<number> {
     }
 
     if (rebuilt > 0) {
-      logger.info(`[PROFILE BUILDER] Rebuilt ${rebuilt} stale profiles out of ${staleUserIds.length} pending`);
+      logger.info(
+        `[PROFILE BUILDER] Rebuilt ${rebuilt} stale profiles out of ${staleUserIds.length} pending`,
+      );
     }
 
     return rebuilt;

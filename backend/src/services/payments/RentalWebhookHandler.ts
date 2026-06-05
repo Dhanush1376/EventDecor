@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import RentalOrder from '../../models/RentalOrder';
 import PaymentAudit from '../../models/PaymentAudit';
 import OutboxEvent from '../../models/OutboxEvent';
@@ -7,7 +7,7 @@ import logger from '../../config/logger';
 import * as Sentry from '@sentry/node';
 
 /**
- * RentalWebhookHandler — Handles Razorpay webhook events for RentalOrder entities.
+ * RentalWebhookHandler â€” Handles Razorpay webhook events for RentalOrder entities.
  *
  * PROBLEM SOLVED: If a customer's browser closes after Razorpay captures the rental payment
  * but before the frontend calls verifyRentalPayment, this webhook handler ensures the
@@ -57,7 +57,7 @@ export class RentalWebhookHandler {
             paymentStatus: { $in: ['pending', 'failed'] },
           },
           { $set: { paymentStatus: 'processing' } }, // Atomic lock
-          { new: true, session },
+          { returnDocument: 'after', session },
         );
 
         if (!rental) {
@@ -198,7 +198,7 @@ export class RentalWebhookHandler {
             paymentStatus: { $in: ['pending'] },
           },
           { $set: { paymentStatus: 'failed' } },
-          { new: true, session },
+          { returnDocument: 'after', session },
         );
 
         if (rental) {
@@ -207,7 +207,7 @@ export class RentalWebhookHandler {
 
           rental.statusHistory.push({
             status: 'pending',
-            note: 'Payment failed — Razorpay webhook notification',
+            note: 'Payment failed â€” Razorpay webhook notification',
             performedBy: 'system',
           } as any);
           await rental.save({ session });

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+﻿import { Request, Response, NextFunction } from 'express';
 import Policy from '../models/Policy';
 import ApiError from '../utils/ApiError';
 
@@ -56,7 +56,7 @@ export const updatePolicy = async (req: Request, res: Response, next: NextFuncti
     const policy = await Policy.findByIdAndUpdate(
       id,
       { ...req.body, lastUpdatedBy: (req as any).user?._id },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true },
     );
     if (!policy) {
       throw new ApiError(404, 'Policy not found');

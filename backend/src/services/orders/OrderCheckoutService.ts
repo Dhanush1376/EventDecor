@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+﻿import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { RazorpayGateway } from '../../utils/RazorpayGateway';
 import Order from '../../models/Order';
@@ -146,7 +146,7 @@ export class OrderCheckoutService {
             $inc: { usedCount: 1 },
             $push: { usedBy: { userId, orderId: pendingOrderId } },
           },
-          { new: true, session },
+          { returnDocument: 'after', session },
         );
 
         if (coupon && new Date() <= coupon.expiryDate && subtotal >= coupon.minOrderAmount) {
@@ -320,18 +320,18 @@ export class OrderCheckoutService {
         );
         return resultCod;
       } else {
-        // ════════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // ENTERPRISE FIX: Create Order FIRST, then Razorpay order.
         //
         // Previously: Razorpay order created OUTSIDE the transaction.
         // If the process crashed between Razorpay.create() and Order.save(),
-        // a real Razorpay order existed with no matching DB record — the
+        // a real Razorpay order existed with no matching DB record â€” the
         // customer's money could be charged with no order to fulfill.
         //
         // Now: Save Order in 'pending' state first (inside transaction),
         // commit, then create Razorpay order, then atomically link them.
         // If Razorpay fails, the Order exists for reconciliation recovery.
-        // ════════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         order = new Order({
           _id: pendingOrderId,
@@ -385,7 +385,7 @@ export class OrderCheckoutService {
 
         await session.commitTransaction();
 
-        // ── Razorpay Order Creation (OUTSIDE transaction, AFTER Order is persisted) ──
+        // â”€â”€ Razorpay Order Creation (OUTSIDE transaction, AFTER Order is persisted) â”€â”€
 
         const options = {
           amount: Math.round(total * 100),

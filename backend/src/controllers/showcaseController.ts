@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import ShowcaseCollection from '../models/ShowcaseCollection';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -24,28 +24,40 @@ export const getShowcaseById = asyncHandler(async (req: Request, res: Response) 
 export const createShowcase = asyncHandler(async (req: Request, res: Response) => {
   const collection = new ShowcaseCollection(req.body);
   await collection.save();
-  res.status(201).json(new ApiResponse(true, 'Showcase collection created successfully', collection));
+  res
+    .status(201)
+    .json(new ApiResponse(true, 'Showcase collection created successfully', collection));
 });
 
 export const updateShowcase = asyncHandler(async (req: Request, res: Response) => {
-  const collection = await ShowcaseCollection.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  const collection = await ShowcaseCollection.findByIdAndUpdate(req.params.id, req.body, {
+    returnDocument: 'after',
+  });
   if (!collection) throw new ApiError(404, 'Showcase collection not found');
-  res.status(200).json(new ApiResponse(true, 'Showcase collection updated successfully', collection));
+  res
+    .status(200)
+    .json(new ApiResponse(true, 'Showcase collection updated successfully', collection));
 });
 
 export const deleteShowcase = asyncHandler(async (req: Request, res: Response) => {
   const collection = await ShowcaseCollection.findByIdAndDelete(req.params.id);
   if (!collection) throw new ApiError(404, 'Showcase collection not found');
-  
+
   if (collection.image) {
     const publicId = extractPublicId(collection.image);
-    if (publicId) deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up showcase image: ${err}`));
+    if (publicId)
+      deleteFromCloudinary(publicId).catch((err) =>
+        logger.error(`Failed to clean up showcase image: ${err}`),
+      );
   }
-  
+
   if (collection.gallery && Array.isArray(collection.gallery)) {
     for (const img of collection.gallery) {
-       const publicId = extractPublicId(img);
-       if (publicId) deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up showcase gallery image: ${err}`));
+      const publicId = extractPublicId(img);
+      if (publicId)
+        deleteFromCloudinary(publicId).catch((err) =>
+          logger.error(`Failed to clean up showcase gallery image: ${err}`),
+        );
     }
   }
 

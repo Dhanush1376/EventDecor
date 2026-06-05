@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import ServiceArea from '../models/ServiceArea';
 import RentalService from '../services/rentalService';
 import asyncHandler from '../utils/asyncHandler';
@@ -17,7 +17,7 @@ export const createServiceArea = asyncHandler(async (req: Request, res: Response
 
 export const updateServiceArea = asyncHandler(async (req: Request, res: Response) => {
   const area = await ServiceArea.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   });
   if (!area) throw new ApiError(404, 'Service area not found');

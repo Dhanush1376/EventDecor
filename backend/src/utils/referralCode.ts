@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import User from '../models/User';
 import { LoyaltyService } from '../services/loyaltyService';
 import logger from '../config/logger';
@@ -10,9 +10,11 @@ const MAX_REFERRAL_SAVE_ATTEMPTS = 3;
 export const saveUniqueReferralCode = async (
   userId: mongoose.Types.ObjectId | string,
   name: string,
-  session?: mongoose.ClientSession
+  session?: mongoose.ClientSession,
 ): Promise<string> => {
-  const existing = await User.findById(userId).select('referralCode').session(session || null);
+  const existing = await User.findById(userId)
+    .select('referralCode')
+    .session(session || null);
   if (existing?.referralCode) return existing.referralCode;
 
   for (let attempt = 1; attempt <= MAX_REFERRAL_SAVE_ATTEMPTS; attempt++) {
@@ -21,11 +23,13 @@ export const saveUniqueReferralCode = async (
       const updated = await User.findOneAndUpdate(
         { _id: userId, referralCode: { $exists: false } },
         { $set: { referralCode: code } },
-        { new: true, session }
+        { returnDocument: 'after', session },
       );
       if (updated?.referralCode) return updated.referralCode;
 
-      const raced = await User.findById(userId).select('referralCode').session(session || null);
+      const raced = await User.findById(userId)
+        .select('referralCode')
+        .session(session || null);
       if (raced?.referralCode) return raced.referralCode;
     } catch (err: any) {
       if (err?.code === DUPLICATE_KEY_CODE && attempt < MAX_REFERRAL_SAVE_ATTEMPTS) {

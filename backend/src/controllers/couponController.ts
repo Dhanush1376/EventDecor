@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import Coupon from '../models/Coupon';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -83,7 +83,7 @@ export const updateCoupon = asyncHandler(async (req: Request, res: Response) => 
   const coupon = await Coupon.findByIdAndUpdate(
     req.params.id,
     { $set: dto },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   );
   if (!coupon) throw new ApiError(404, 'Coupon not found');
   res.status(200).json(new ApiResponse(true, 'Coupon updated', coupon));
@@ -115,7 +115,7 @@ export const applyCoupon = asyncHandler(async (req: Request, res: Response) => {
   }
 
   if (orderAmount < coupon.minOrderAmount)
-    throw new ApiError(400, `Minimum order amount is ₹${coupon.minOrderAmount}`);
+    throw new ApiError(400, `Minimum order amount is â‚¹${coupon.minOrderAmount}`);
 
   const rawDiscount =
     coupon.discountType === 'percentage'

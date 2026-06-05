@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import Product, { IProduct } from '../models/Product';
 import Gallery from '../models/Gallery';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
@@ -254,7 +254,10 @@ class ProductService {
       enforceSmartPricing(data, oldProduct as IProduct);
     }
 
-    const product = await Product.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+    const product = await Product.findByIdAndUpdate(id, data, {
+      returnDocument: 'after',
+      runValidators: true,
+    });
 
     if (oldProduct && product) {
       // Clean up primary product image if replaced

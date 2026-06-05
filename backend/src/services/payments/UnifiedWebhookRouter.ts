@@ -1,4 +1,4 @@
-import Order from '../../models/Order';
+﻿import Order from '../../models/Order';
 import EventBooking from '../../models/EventBooking';
 import RentalOrder from '../../models/RentalOrder';
 import logger from '../../config/logger';
@@ -9,7 +9,7 @@ import { RentalWebhookHandler } from './RentalWebhookHandler';
 import PaymentWebhookEvent from '../../models/PaymentWebhookEvent';
 
 /**
- * UnifiedWebhookRouter — Routes Razorpay webhook events to the correct entity handler.
+ * UnifiedWebhookRouter â€” Routes Razorpay webhook events to the correct entity handler.
  *
  * PROBLEM SOLVED: Previously, PaymentWebhookService only handled Order entities.
  * EventBooking and RentalOrder payments that arrived via webhook (browser close,
@@ -74,7 +74,7 @@ export class UnifiedWebhookRouter {
         $set: { status: 'processing', lastAttemptAt: new Date() },
         $inc: { processingAttempts: 1 },
       },
-      { new: true },
+      { returnDocument: 'after' },
     );
 
     if (!claimedEvent) {

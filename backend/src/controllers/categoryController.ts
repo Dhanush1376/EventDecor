@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import Category from '../models/Category';
 import Product from '../models/Product';
 import Gallery from '../models/Gallery';
@@ -59,7 +59,11 @@ export const updateCategory = async (req: Request, res: Response) => {
     };
     Object.keys(dto).forEach((k) => (dto as any)[k] === undefined && delete (dto as any)[k]);
 
-    const category = await Category.findByIdAndUpdate(req.params.id, { $set: dto }, { new: true });
+    const category = await Category.findByIdAndUpdate(
+      req.params.id,
+      { $set: dto },
+      { returnDocument: 'after' },
+    );
     if (!category) {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
@@ -77,7 +81,7 @@ export const updateCategory = async (req: Request, res: Response) => {
         .reduce((sum, r) => sum + (r.value?.modifiedCount || 0), 0);
       if (cascadedCount > 0) {
         logger.info(
-          `[CATEGORY] Cascaded rename "${oldName}" → "${req.body.name}" across ${cascadedCount} document(s)`,
+          `[CATEGORY] Cascaded rename "${oldName}" â†’ "${req.body.name}" across ${cascadedCount} document(s)`,
         );
       }
     }

@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import logger from '../config/logger';
 
@@ -6,7 +6,7 @@ dotenv.config();
 
 if (process.env.NODE_ENV === 'production') {
   logger.error(
-    '❌ SEEDING SHIELD: Seeding operations are strictly disabled in production mode to prevent accidental data loss.',
+    'âŒ SEEDING SHIELD: Seeding operations are strictly disabled in production mode to prevent accidental data loss.',
   );
   process.exit(1);
 }
@@ -41,7 +41,7 @@ const initialWebsiteContent = {
     mobileBackgroundImage:
       'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779181764/event_decor_ecommerce/assets/event_decor_mobile%20hero%20background.png',
     badgeText: 'Artisan Excellence Since 2015',
-    rotatingSealText: '• HANDCRAFTED LUXURY • HERITAGE ARTISTRY •',
+    rotatingSealText: 'â€¢ HANDCRAFTED LUXURY â€¢ HERITAGE ARTISTRY â€¢',
     floatingCardTitle: 'Heritage Craft.',
     floatingCardDesc: 'Meticulously detailed by master artisans over 120 hours.',
     floatingCardCtaText: 'Explore Technique',
@@ -89,7 +89,7 @@ const initialWebsiteContent = {
     founderName: 'Siri Devi',
     founderRole: 'Founder & Master Artisan',
     founderStory:
-      'Born into a family of traditional artisans in Ongole, Siri Devi founded Siri Arts & Crafts with a singular vision — to preserve the dying art of ceremonial decoration while bringing it to modern celebrations.',
+      'Born into a family of traditional artisans in Ongole, Siri Devi founded Siri Arts & Crafts with a singular vision â€” to preserve the dying art of ceremonial decoration while bringing it to modern celebrations.',
     missionStatement:
       'To honor the sacred art of Indian ceremonial decoration by creating handcrafted masterpieces that blend timeless heritage with contemporary elegance.',
     stats: [
@@ -233,7 +233,7 @@ const initialWebsiteContent = {
     businessHours: 'Mon - Sat: 10 AM - 7 PM',
   },
   seo: {
-    globalTitle: 'Siri Arts & Crafts — Luxury Handcrafted Event Decorations',
+    globalTitle: 'Siri Arts & Crafts â€” Luxury Handcrafted Event Decorations',
     globalDescription:
       'Premium handcrafted wedding, engagement, and ceremonial decorations rooted in South Indian heritage.',
     globalKeywords: 'wedding decorations, Indian wedding, handcrafted decor',
@@ -394,7 +394,7 @@ const initialWebsiteContent = {
         'https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204',
     },
     promo: {
-      title: 'Seasonal Decor —',
+      title: 'Seasonal Decor â€”',
       highlightText: 'Up to 40% Off',
       description:
         'Bring home heritage-inspired elegance with our exclusive handcrafted seasonal curation. Limited stock available for high-fidelity pieces.',
@@ -432,7 +432,7 @@ const initialWebsiteContent = {
     title: 'The Art of Celebration',
     subtitle: 'Where ancient craftsmanship meets modern elegance',
     description:
-      'Every creation at Siri Arts & Crafts is a labor of love — hand-carved, hand-painted, and hand-assembled by master artisans who have inherited their skills across generations.\n\nOur studio honors the sacred art of Indian ceremonial decoration by creating handcrafted masterpieces that blend timeless heritage with contemporary elegance.',
+      'Every creation at Siri Arts & Crafts is a labor of love â€” hand-carved, hand-painted, and hand-assembled by master artisans who have inherited their skills across generations.\n\nOur studio honors the sacred art of Indian ceremonial decoration by creating handcrafted masterpieces that blend timeless heritage with contemporary elegance.',
     ctaText: 'Our Story',
     ctaLink: '/about',
     image: IMAGES.templeStyleMandap,
@@ -579,7 +579,8 @@ const masterEventsData = [
 const galleryInspirations = [
   {
     title: 'Traditional Wedding Decor',
-    teluguTitle: 'సాంప్రదాయ తెలుగు పెళ్లి అలంకరణలు',
+    teluguTitle:
+      'à°¸à°¾à°‚à°ªà±à°°à°¦à°¾à°¯ à°¤à±†à°²à±à°—à± à°ªà±†à°³à±à°²à°¿ à°…à°²à°‚à°•à°°à°£à°²à±',
     category: 'Traditional Wedding Decor',
     event: 'Wedding Ceremony',
     style: 'Royal Heritage',
@@ -592,7 +593,7 @@ const galleryInspirations = [
   },
   {
     title: 'Floral Decoration Sets',
-    teluguTitle: 'పూల అలంకరణలు',
+    teluguTitle: 'à°ªà±‚à°² à°…à°²à°‚à°•à°°à°£à°²à±',
     category: 'Floral Decoration Sets',
     event: 'Traditional Pooja Setup',
     style: 'Vibrant Traditional',
@@ -604,7 +605,7 @@ const galleryInspirations = [
   },
   {
     title: 'Plate Decoration & Packing',
-    teluguTitle: 'ప్లేట్ ప్యాకింగ్ & అలంకరణ',
+    teluguTitle: 'à°ªà±à°²à±‡à°Ÿà± à°ªà±à°¯à°¾à°•à°¿à°‚à°—à± & à°…à°²à°‚à°•à°°à°£',
     category: 'Plate Decoration & Packing',
     event: 'Engagement Ceremony',
     style: 'Minimal Modern',
@@ -620,7 +621,7 @@ const seed = async () => {
   // 1. Seed Protection & Read-Only Production Mode
   if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
     logger.error(
-      '❌ SAFETY GATE: Seed script execution is blocked in production. Set ALLOW_PRODUCTION_SEED=true to override.',
+      'âŒ SAFETY GATE: Seed script execution is blocked in production. Set ALLOW_PRODUCTION_SEED=true to override.',
     );
     process.exit(1);
   }
@@ -628,7 +629,7 @@ const seed = async () => {
   // 2. Confirmation Gate
   if (process.env.DELETE_PRODUCTION_DATA !== 'CONFIRMED') {
     logger.error(
-      '❌ SAFETY GATE: You must set DELETE_PRODUCTION_DATA=CONFIRMED to authorize destructive operations. Run: DELETE_PRODUCTION_DATA=CONFIRMED npm run seed',
+      'âŒ SAFETY GATE: You must set DELETE_PRODUCTION_DATA=CONFIRMED to authorize destructive operations. Run: DELETE_PRODUCTION_DATA=CONFIRMED npm run seed',
     );
     process.exit(1);
   }
@@ -650,7 +651,7 @@ const seed = async () => {
     // await ContentSection.deleteMany();
     // await User.deleteMany();
     // await Review.deleteMany();
-    // logger.info('🗑️ Data cleared (including reviews)');
+    // logger.info('ðŸ—‘ï¸ Data cleared (including reviews)');
 
     // 1. Create Admin Users
     const defaultPassword = process.env.ADMIN_PASSWORD || 'SuperAdminPassword123!';
@@ -692,7 +693,7 @@ const seed = async () => {
     }
 
     if (adminsToSeed.length === 0) {
-      logger.warn('⚠️ Skipping admin seed: set ADMIN_EMAIL and/or SUPER_ADMIN_EMAIL in .env');
+      logger.warn('âš ï¸ Skipping admin seed: set ADMIN_EMAIL and/or SUPER_ADMIN_EMAIL in .env');
     }
 
     for (const admin of adminsToSeed) {
@@ -707,7 +708,7 @@ const seed = async () => {
             passwordChangedAt: admin.passwordChangedAt,
           },
         },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       );
     }
     logger.info(`Admin & Super Admin users seeded/updated with password: ${defaultPassword}`);

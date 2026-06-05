@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import logger from '../config/logger';
 import { OrderQueryService } from '../services/orders/OrderQueryService';
 import { OrderCheckoutService } from '../services/orders/OrderCheckoutService';
@@ -146,21 +146,21 @@ export const handleRazorpayWebhook = asyncHandler(async (req: Request, res: Resp
   }
 
   if (!signature) {
-    logger.warn('⚠️ Webhook verification aborted: Missing x-razorpay-signature header.');
+    logger.warn('âš ï¸ Webhook verification aborted: Missing x-razorpay-signature header.');
     throw new ApiError(400, 'Webhook signature missing');
   }
 
   const rawBody = (req as any).rawBody as Buffer | undefined;
   if (!rawBody) {
     logger.error(
-      '🏥 [SECURITY CRITICAL] [WEBHOOK_ERROR] Webhook received without raw body — middleware misconfiguration!',
+      'ðŸ¥ [SECURITY CRITICAL] [WEBHOOK_ERROR] Webhook received without raw body â€” middleware misconfiguration!',
     );
     throw new ApiError(500, 'Webhook processing error');
   }
 
   if (!PaymentWebhookService.verifyWebhookSignature(signature, rawBody, webhookSecret)) {
     logger.error(
-      '🏥 [SECURITY CRITICAL] [WEBHOOK_ERROR] Invalid Razorpay webhook signature detected!',
+      'ðŸ¥ [SECURITY CRITICAL] [WEBHOOK_ERROR] Invalid Razorpay webhook signature detected!',
       { ip: req.ip },
     );
     throw new ApiError(400, 'Invalid webhook signature');
@@ -216,7 +216,7 @@ export const updateOrderNotes = asyncHandler(async (req: Request, res: Response)
   const order = await Order.findByIdAndUpdate(
     req.params.id,
     { $set: { notes: notes || '' } },
-    { new: true },
+    { returnDocument: 'after' },
   );
   if (!order) throw new ApiError(404, 'Order not found');
 

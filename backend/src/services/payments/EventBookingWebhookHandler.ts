@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import EventBooking from '../../models/EventBooking';
 import PaymentAudit from '../../models/PaymentAudit';
 import OutboxEvent from '../../models/OutboxEvent';
@@ -9,7 +9,7 @@ import logger from '../../config/logger';
 import * as Sentry from '@sentry/node';
 
 /**
- * EventBookingWebhookHandler — Handles Razorpay webhook events for EventBooking entities.
+ * EventBookingWebhookHandler â€” Handles Razorpay webhook events for EventBooking entities.
  *
  * PROBLEM SOLVED: If a customer's browser closes after Razorpay captures the deposit payment
  * but before the frontend calls verifyBookingCheckout, this webhook handler ensures the
@@ -69,7 +69,7 @@ export class EventBookingWebhookHandler {
             status: { $in: ['pending_payment', 'payment_processing', 'failed'] },
           },
           { $set: { status: 'payment_processing' } },
-          { new: true, session },
+          { returnDocument: 'after', session },
         );
 
         if (!booking) {
@@ -116,7 +116,7 @@ export class EventBookingWebhookHandler {
           booking.statusHistory.push({
             status: 'failed',
             timestamp: new Date(),
-            note: 'Payment validation failed via webhook — amount or currency mismatch',
+            note: 'Payment validation failed via webhook â€” amount or currency mismatch',
             updatedBy: 'system',
           });
           await booking.save({ session });
@@ -192,7 +192,7 @@ export class EventBookingWebhookHandler {
           booking.statusHistory.push({
             status: 'failed',
             timestamp: new Date(),
-            note: 'Date fully booked — automatic refund initiated via webhook',
+            note: 'Date fully booked â€” automatic refund initiated via webhook',
             updatedBy: 'system',
           });
           await booking.save({ session });
@@ -305,7 +305,7 @@ export class EventBookingWebhookHandler {
             status: { $in: ['pending_payment', 'payment_processing'] },
           },
           { $set: { status: 'failed' } },
-          { new: true, session },
+          { returnDocument: 'after', session },
         );
 
         if (booking) {
@@ -314,7 +314,7 @@ export class EventBookingWebhookHandler {
             date: new Date(),
             transactionId: razorpay_payment_id,
             status: 'failed',
-            note: 'Payment failed — Razorpay webhook notification',
+            note: 'Payment failed â€” Razorpay webhook notification',
           });
           booking.statusHistory.push({
             status: 'failed',

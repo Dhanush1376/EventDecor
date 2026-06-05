@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import Gallery from '../models/Gallery';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -72,7 +72,7 @@ export const updateGalleryItem = asyncHandler(async (req: Request, res: Response
   const oldItem = await Gallery.findById(req.params.id);
 
   const item = await Gallery.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   });
   if (!item) throw new ApiError(404, 'Gallery item not found');
@@ -139,7 +139,7 @@ export const likeGalleryItem = asyncHandler(async (req: any, res: Response) => {
       $addToSet: { likedBy: req.user.id },
       $inc: { likes: 1 },
     },
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   if (!item) {
