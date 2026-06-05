@@ -77,7 +77,9 @@ export function useDraft({
         setLastSavedAt(Date.now());
         hasUnsavedChanges.current = false;
       } catch (error) {
-        console.error('Failed to auto-save draft:', error);
+        import('../../utils/logger').then(({ default: logger }) => {
+          logger.error('Failed to auto-save draft:', error);
+        });
         setDraftStatus('error');
       }
     }, debounceMs),

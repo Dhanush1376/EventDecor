@@ -135,22 +135,13 @@ describe('Payment Integration & State Machine', () => {
       ) as PromiseFulfilledResult<any>[];
       expect(fulfilled.length).toBe(10); // They all fulfill because the core returns a 200/409 object rather than throwing
 
-      // Debug log results
-      console.log(
-        'Webhook Idempotency Results:',
-        fulfilled.map((r) => r.value),
-      );
+      // Debug log results removed
 
       const events = await PaymentWebhookEvent.find({ razorpayEventId: 'evt_test_123' });
       expect(events.length).toBe(1); // Unique index constraint
 
       const updatedOrder = await Order.findById(order._id);
-      console.log(
-        'Updated Order Payment Status:',
-        updatedOrder?.paymentStatus,
-        'History:',
-        updatedOrder?.statusHistory,
-      );
+      // Log removed
       expect(updatedOrder?.paymentStatus).toBe('paid');
     });
   });

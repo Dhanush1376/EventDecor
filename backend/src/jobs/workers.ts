@@ -1,6 +1,6 @@
 import '../config/loadEnv';
 import { Worker, Job } from 'bullmq';
-import { connection } from './queues';
+import { connection, usingFallback } from './queues';
 import logger from '../config/logger';
 import { sendDirectEmailProcessor } from '../services/notificationService';
 import {
@@ -37,6 +37,14 @@ export const initWorkers = async () => {
 
   try {
     logger.info('🔄 [WORKER] Initializing background workers...');
+
+    if (usingFallback) {
+      logger.info(
+        'ℹ️ [WORKER] Using in-memory fallback queues, skipping BullMQ worker initialization.',
+      );
+      workersInitialized = true;
+      return;
+    }
 
     // Email Worker
     emailWorker = new Worker(

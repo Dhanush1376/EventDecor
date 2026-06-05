@@ -1,4 +1,5 @@
 import { openDB } from 'idb';
+import logger from '../../utils/logger';
 
 const DB_NAME = 'admin_drafts_db';
 const STORE_NAME = 'drafts';
@@ -37,7 +38,7 @@ export async function saveDraft(draftKey, draftData) {
     };
     await db.put(STORE_NAME, payload);
   } catch (error) {
-    console.error(`[DraftService] Failed to save draft ${draftKey}:`, error);
+    logger.error(`[DraftService] Failed to save draft ${draftKey}:`, error);
   }
 }
 
@@ -51,7 +52,7 @@ export async function getDraft(draftKey) {
     const db = await getDraftDB();
     return await db.get(STORE_NAME, draftKey);
   } catch (error) {
-    console.error(`[DraftService] Failed to get draft ${draftKey}:`, error);
+    logger.error(`[DraftService] Failed to get draft ${draftKey}:`, error);
     return null;
   }
 }
@@ -66,7 +67,7 @@ export async function deleteDraft(draftKey) {
     const db = await getDraftDB();
     await db.delete(STORE_NAME, draftKey);
   } catch (error) {
-    console.error(`[DraftService] Failed to delete draft ${draftKey}:`, error);
+    logger.error(`[DraftService] Failed to delete draft ${draftKey}:`, error);
   }
 }
 
@@ -81,7 +82,7 @@ export async function getAllDrafts() {
     // Return sorted descending (newest first)
     return drafts.reverse();
   } catch (error) {
-    console.error('[DraftService] Failed to get all drafts:', error);
+    logger.error('[DraftService] Failed to get all drafts:', error);
     return [];
   }
 }
@@ -95,7 +96,7 @@ export async function deleteAllDrafts() {
     const db = await getDraftDB();
     await db.clear(STORE_NAME);
   } catch (error) {
-    console.error('[DraftService] Failed to delete all drafts:', error);
+    logger.error('[DraftService] Failed to delete all drafts:', error);
   }
 }
 
@@ -111,7 +112,7 @@ export async function getStorageStats() {
     const estimatedBytes = new Blob([JSON.stringify(drafts)]).size;
     return { count, estimatedBytes };
   } catch (error) {
-    console.error('[DraftService] Failed to get storage stats:', error);
+    logger.error('[DraftService] Failed to get storage stats:', error);
     return { count: 0, estimatedBytes: 0 };
   }
 }
@@ -140,11 +141,11 @@ export async function cleanExpiredDrafts(maxAgeDays = 30) {
 
     await tx.done;
     if (deletedCount > 0) {
-      console.log(`[DraftService] Cleaned up ${deletedCount} expired drafts.`);
+      logger.info(`[DraftService] Cleaned up ${deletedCount} expired drafts.`);
     }
     return deletedCount;
   } catch (error) {
-    console.error('[DraftService] Failed to clean expired drafts:', error);
+    logger.error('[DraftService] Failed to clean expired drafts:', error);
     return 0;
   }
 }

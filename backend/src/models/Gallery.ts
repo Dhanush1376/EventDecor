@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import logger from '../config/logger';
 
 export interface IGallery extends Document {
   title: string;
@@ -89,7 +90,7 @@ const cleanupCloudinaryImages = async (doc: any) => {
     const publicId = extractPublicId(url);
     if (publicId) {
       deleteFromCloudinary(publicId).catch((err) =>
-        console.error(`[Cloudinary GC] Failed to delete orphaned gallery media: ${url}`, err),
+        logger.error(`[Cloudinary GC] Failed to delete orphaned gallery media: ${url}`, err),
       );
     }
   }
