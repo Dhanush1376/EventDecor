@@ -142,8 +142,10 @@ class DatabaseManager {
       process.exit(1);
     }
 
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+
     // Production safety: reject localhost/direct MongoDB URIs (require Atlas SRV)
-    if (process.env.NODE_ENV === 'production') {
+    if (isProduction) {
       if (MONGO_URI.includes('localhost') || MONGO_URI.includes('127.0.0.1')) {
         logger.error('[DATABASE] CRITICAL: MONGO_URI must not point to localhost in production');
         process.exit(1);
@@ -152,7 +154,7 @@ class DatabaseManager {
 
     // Environment Protection: reject production Atlas URIs in local development
     if (
-      process.env.NODE_ENV !== 'production' &&
+      !isProduction &&
       MONGO_URI.includes('mongodb.net') &&
       process.env.ALLOW_PROD_DB_LOCAL?.trim() !== 'true'
     ) {
