@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import {
   getOptimizedUrl,
   getBlurredPlaceholder,
@@ -6,7 +6,7 @@ import {
   handleImageError,
 } from '../../utils/imageUtils';
 
-export function OptimizedImage({
+function BaseOptimizedImage({
   src,
   alt,
   width,
@@ -20,12 +20,15 @@ export function OptimizedImage({
   eager = false,
   ...props
 }) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(eager || loading === 'eager');
   const [hasError, setHasError] = useState(false);
   const [isInView, setIsInView] = useState(eager || loading === 'eager');
+
   const containerRef = useRef(null);
   const imgRef = useRef(null);
+  const prevSrcRef = useRef(src);
 
+  // Handle visibility tracking
   useEffect(() => {
     if (eager || loading === 'eager' || !containerRef.current) {
       setIsInView(true);
@@ -46,12 +49,16 @@ export function OptimizedImage({
     return () => observer.disconnect();
   }, [eager, loading]);
 
+  // Handle actual src changes (reference check bypassed, actual value check)
   useEffect(() => {
-    setIsLoaded(eager || loading === 'eager');
-    setHasError(false);
+    if (src !== prevSrcRef.current) {
+      setIsLoaded(eager || loading === 'eager');
+      setHasError(false);
+      prevSrcRef.current = src;
+    }
 
     const checkComplete = () => {
-      if (imgRef.current && imgRef.current.complete) {
+      if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
         setIsLoaded(true);
       }
     };
@@ -66,9 +73,8 @@ export function OptimizedImage({
 
   const isDataUrl = src.startsWith('data:') || src.startsWith('blob:');
   const optimizedUrl = isDataUrl ? src : getOptimizedUrl(src, width, height);
-  const avifSrcSet = isDataUrl ? null : getSrcSet(src, [320, 640, 768, 1024, 1280, 1536], 'avif');
-  const webpSrcSet = isDataUrl ? null : getSrcSet(src, [320, 640, 768, 1024, 1280, 1536], 'webp');
-  const fallbackSrcSet = isDataUrl ? null : getSrcSet(src, [320, 640, 768, 1024, 1280, 1536]);
+  // Using only f_auto srcSet to leverage Cloudinary's content negotiation, reducing total URLs generated
+  const autoSrcSet = isDataUrl ? null : getSrcSet(src, [320, 640, 1024, 1536]);
   const placeholderUrl = isDataUrl ? null : getBlurredPlaceholder(src);
 
   const hasPositioning =
@@ -101,12 +107,10 @@ export function OptimizedImage({
         <div className="absolute inset-0 skeleton-box rounded-[inherit]" />
       )}
 
-      {/* Picture tag for AVIF, WebP and Fallback support */}
+      {/* Picture tag utilizing Cloudinary's auto-format logic via getSrcSet */}
       {isInView && !hasError && (
         <picture>
-          {avifSrcSet && <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} />}
-          {webpSrcSet && <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} />}
-          {fallbackSrcSet && <source srcSet={fallbackSrcSet} sizes={sizes} />}
+          {autoSrcSet && <source srcSet={autoSrcSet} sizes={sizes} />}
 
           {optimizedUrl && (
             <img
@@ -124,8 +128,8 @@ export function OptimizedImage({
                 setHasError(true);
                 setIsLoaded(true);
               }}
-              className={`w-full ${isImageAutoHeight ? 'h-auto block' : 'h-full object-cover'} rounded-[inherit] transition-all duration-700 ease-out will-change-transform transform-gpu ${className} ${
-                isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.03]'
+              className={`w-full ${isImageAutoHeight ? 'h-auto block' : 'h-full object-cover'} rounded-[inherit] transition-opacity duration-500 ease-out will-change-opacity transform-gpu ${className} ${
+                isLoaded ? 'opacity-100' : 'opacity-0'
               }`}
               {...props}
             />
@@ -135,6 +139,8 @@ export function OptimizedImage({
     </div>
   );
 }
+
+export const OptimizedImage = memo(BaseOptimizedImage);
 
 // Export as CloudinaryImage for backward compatibility
 export const CloudinaryImage = OptimizedImage;

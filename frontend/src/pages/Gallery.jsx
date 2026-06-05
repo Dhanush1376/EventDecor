@@ -70,24 +70,11 @@ export function Gallery() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const {
-    data: products = [],
-    isLoading: isProductsLoading,
-    isError: isProductsError,
-  } = useQuery({
-    queryKey: ['products'],
-    queryFn: async () => {
-      const res = await productService.getAll();
-      return res.success ? res.data.data || res.data.items || res.data || [] : [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
   useEffect(() => {
-    if (isGalleryError || isCategoriesError || isProductsError) {
+    if (isGalleryError || isCategoriesError) {
       toast.error('Failed to load some gallery resources.');
     }
-  }, [isGalleryError, isCategoriesError, isProductsError]);
+  }, [isGalleryError, isCategoriesError]);
 
   // Keep slideshow index within bounds of filtered items list (e.g. during search query updates)
   useEffect(() => {
@@ -100,7 +87,7 @@ export function Gallery() {
     }
   }, [filteredItems.length, slideshowIndex]);
 
-  const isLoading = isGalleryLoading || isCategoriesLoading || isProductsLoading;
+  const isLoading = isGalleryLoading || isCategoriesLoading;
 
   const handleCategorySelect = (cat) => {
     setActiveCategory(cat);
@@ -344,18 +331,20 @@ export function Gallery() {
           <GallerySkeleton />
         ) : (
           <>
-            {/* Pinterest Masonry Grid — Virtualized for 10k+ items */}
             <VirtualizedMasonry
               items={filteredItems}
               loadMore={fetchNextPage}
               hasMore={hasNextPage}
               isLoading={isFetchingNextPage}
-              renderItem={(item, index) => (
-                <GalleryCard
-                  item={item}
-                  eager={index < 4}
-                  onImageClick={isGalleryMode ? () => setSlideshowIndex(index) : undefined}
-                />
+              renderItem={React.useCallback(
+                (item, index) => (
+                  <GalleryCard
+                    item={item}
+                    eager={index < 4}
+                    onImageClick={isGalleryMode ? () => setSlideshowIndex(index) : undefined}
+                  />
+                ),
+                [isGalleryMode],
               )}
               columns={{ sm: 2, md: 2, lg: 4, xl: 5 }}
               gap="gap-2 sm:gap-3"

@@ -123,10 +123,11 @@ export function VirtualizedMasonry({
           <motion.div
             key={item._id || item.id || index}
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '50px' }}
             transition={{
               duration: 0.4,
-              delay: Math.min(index * 0.03, 0.3), // Stagger with cap
+              delay: Math.min((index % batchSize) * 0.03, 0.3), // Stagger relative to batch
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
             className="break-inside-avoid mb-2 sm:mb-3"

@@ -3,7 +3,15 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 
-function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager }) {
+const CardContent = React.memo(function CardContent({
+  item,
+  displayImage,
+  itemId,
+  linkTo,
+  navigate,
+  minH,
+  eager,
+}) {
   const [isHovered, setIsHovered] = React.useState(false);
 
   return (
@@ -142,17 +150,49 @@ function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager
       <div className="absolute inset-0 bg-marble opacity-0 group-hover:opacity-[0.05] transition-opacity pointer-events-none mix-blend-overlay" />
     </motion.div>
   );
-}
+});
 
-export function GalleryCard({ item, onImageClick, minH, eager }) {
-  const navigate = useNavigate();
-  const itemId = item._id || item.id;
-  const linkTo = `/gallery/${itemId}`;
-  const displayImage = item.image || item.imageSrc;
+export const GalleryCard = React.memo(
+  function GalleryCard({ item, onImageClick, minH, eager }) {
+    const navigate = useNavigate();
+    const itemId = item._id || item.id;
+    const linkTo = `/gallery/${itemId}`;
+    const displayImage = item.image || item.imageSrc;
 
-  if (!itemId) {
+    if (!itemId) {
+      return (
+        <div className="block">
+          <CardContent
+            item={item}
+            displayImage={displayImage}
+            itemId={itemId}
+            linkTo={linkTo}
+            navigate={navigate}
+            minH={minH}
+            eager={eager}
+          />
+        </div>
+      );
+    }
+
+    if (onImageClick) {
+      return (
+        <div onClick={onImageClick} className="block">
+          <CardContent
+            item={item}
+            displayImage={displayImage}
+            itemId={itemId}
+            linkTo={linkTo}
+            navigate={navigate}
+            minH={minH}
+            eager={eager}
+          />
+        </div>
+      );
+    }
+
     return (
-      <div className="block">
+      <Link to={linkTo} className="block">
         <CardContent
           item={item}
           displayImage={displayImage}
@@ -162,37 +202,17 @@ export function GalleryCard({ item, onImageClick, minH, eager }) {
           minH={minH}
           eager={eager}
         />
-      </div>
+      </Link>
     );
-  }
-
-  if (onImageClick) {
+  },
+  (prevProps, nextProps) => {
     return (
-      <div onClick={onImageClick} className="block">
-        <CardContent
-          item={item}
-          displayImage={displayImage}
-          itemId={itemId}
-          linkTo={linkTo}
-          navigate={navigate}
-          minH={minH}
-          eager={eager}
-        />
-      </div>
+      (prevProps.item._id || prevProps.item.id) === (nextProps.item._id || nextProps.item.id) &&
+      (prevProps.item.image || prevProps.item.imageSrc) ===
+        (nextProps.item.image || nextProps.item.imageSrc) &&
+      prevProps.minH === nextProps.minH &&
+      prevProps.eager === nextProps.eager &&
+      prevProps.onImageClick === nextProps.onImageClick
     );
-  }
-
-  return (
-    <Link to={linkTo} className="block">
-      <CardContent
-        item={item}
-        displayImage={displayImage}
-        itemId={itemId}
-        linkTo={linkTo}
-        navigate={navigate}
-        minH={minH}
-        eager={eager}
-      />
-    </Link>
-  );
-}
+  },
+);

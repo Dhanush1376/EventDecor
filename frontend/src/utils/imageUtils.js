@@ -12,6 +12,8 @@ export const resolveStaticAssetUrl = (localPath) => {
   return cloudImageMappings[key] || localPath;
 };
 
+const urlCache = new Map();
+
 /**
  * Generate an optimized image URL with dynamic transformations.
  * Supports Cloudinary CDN parameters as well as backend /api/v1/media/optimize fallback.
@@ -19,53 +21,66 @@ export const resolveStaticAssetUrl = (localPath) => {
 export const getOptimizedUrl = (url, width, height, quality = 'auto', format = 'auto') => {
   if (!url) return '';
 
+  const cacheKey = `${url}|${width}|${height}|${quality}|${format}`;
+  if (urlCache.has(cacheKey)) {
+    return urlCache.get(cacheKey);
+  }
+
   const isCloudinary = url.includes('cloudinary.com');
+  let resultUrl = url;
 
   if (isCloudinary) {
     const parts = url.split('/upload/');
-    if (parts.length !== 2) return url;
+    if (parts.length === 2) {
+      let transforms = [];
+      if (format && format !== 'auto') transforms.push(`f_${format}`);
+      else transforms.push('f_auto');
 
-    let transforms = [];
-    if (format && format !== 'auto') transforms.push(`f_${format}`);
-    else transforms.push('f_auto');
+      if (quality && quality !== 'auto') transforms.push(`q_${quality}`);
+      else transforms.push('q_auto');
 
-    if (quality && quality !== 'auto') transforms.push(`q_${quality}`);
-    else transforms.push('q_auto');
+      if (width) transforms.push(`w_${width}`);
+      if (height) transforms.push(`h_${height}`);
 
-    if (width) transforms.push(`w_${width}`);
-    if (height) transforms.push(`h_${height}`);
+      const transformStr = transforms.join(',');
 
-    const transformStr = transforms.join(',');
-
-    let path = parts[1];
-    if (path.includes('/') && !path.startsWith('v')) {
-      const firstSegment = path.split('/')[0];
-      if (firstSegment.includes('_') || firstSegment.includes(',')) {
-        path = path.substring(path.indexOf('/') + 1);
+      let path = parts[1];
+      if (path.includes('/') && !path.startsWith('v')) {
+        const firstSegment = path.split('/')[0];
+        if (firstSegment.includes('_') || firstSegment.includes(',')) {
+          path = path.substring(path.indexOf('/') + 1);
+        }
       }
-    }
 
-    return `${parts[0]}/upload/${transformStr}/${path}`;
+      resultUrl = `${parts[0]}/upload/${transformStr}/${path}`;
+    }
   } else {
     // Local/static images route through backend dynamic media optimization pipeline
-    if (url.startsWith('data:') || url.startsWith('blob:')) {
-      return url;
+    if (!url.startsWith('data:') && !url.startsWith('blob:')) {
+      let targetUrl = `${window.location.origin}/api/v1/media/optimize?url=${encodeURIComponent(url)}`;
+
+      if (!import.meta.env.DEV) {
+        const apiRoot = getApiRootUrl();
+        targetUrl = `${apiRoot}/v1/media/optimize?url=${encodeURIComponent(url)}`;
+      }
+
+      if (width) targetUrl += `&w=${width}`;
+      if (height) targetUrl += `&h=${height}`;
+      if (quality && quality !== 'auto') targetUrl += `&q=${quality}`;
+      if (format && format !== 'auto') targetUrl += `&fmt=${format}`;
+
+      resultUrl = targetUrl;
     }
-
-    let targetUrl = `${window.location.origin}/api/v1/media/optimize?url=${encodeURIComponent(url)}`;
-
-    if (!import.meta.env.DEV) {
-      const apiRoot = getApiRootUrl();
-      targetUrl = `${apiRoot}/v1/media/optimize?url=${encodeURIComponent(url)}`;
-    }
-
-    if (width) targetUrl += `&w=${width}`;
-    if (height) targetUrl += `&h=${height}`;
-    if (quality && quality !== 'auto') targetUrl += `&q=${quality}`;
-    if (format && format !== 'auto') targetUrl += `&fmt=${format}`;
-
-    return targetUrl;
   }
+
+  urlCache.set(cacheKey, resultUrl);
+  // Prevent memory leaks by bounding the cache
+  if (urlCache.size > 1000) {
+    const firstKey = urlCache.keys().next().value;
+    urlCache.delete(firstKey);
+  }
+
+  return resultUrl;
 };
 
 /**
@@ -101,7 +116,7 @@ export const getBlurredPlaceholder = (url) => {
 /**
  * Generate a srcset for responsive images
  */
-export const getSrcSet = (url, widths = [320, 640, 768, 1024, 1280, 1536], format = 'auto') => {
+export const getSrcSet = (url, widths = [320, 640, 1024, 1536], format = 'auto') => {
   if (!url) return null;
   if (url.startsWith('data:') || url.startsWith('blob:')) return null;
 

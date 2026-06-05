@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { OptimizedImage } from './OptimizedImage';
 
 /**
- * Enhanced lazy image component with IntersectionObserver,
- * smooth fade-in reveal, skeleton placeholder, and error state.
+ * Enhanced lazy image component with
+ * error state handling. Delegates observation to OptimizedImage.
  */
 export function LazyImage({
   src,
@@ -17,41 +17,11 @@ export function LazyImage({
   eager = false,
   ...props
 }) {
-  const [isInView, setIsInView] = useState(eager);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const imgRef = useRef(null);
-
-  useEffect(() => {
-    if (eager || !imgRef.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '200px 0px' }, // Start loading 200px before visible
-    );
-
-    observer.observe(imgRef.current);
-    return () => observer.disconnect();
-  }, [eager]);
-
   const aspectStyle = aspectRatio ? { aspectRatio } : undefined;
 
   return (
-    <div
-      ref={imgRef}
-      className={`relative overflow-hidden ${containerClassName}`}
-      style={aspectStyle}
-    >
-      {/* Skeleton placeholder */}
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 skeleton-box rounded-[inherit]" />
-      )}
-
+    <div className={`relative overflow-hidden ${containerClassName}`} style={aspectStyle}>
       {/* Error state */}
       {hasError && (
         <div className="absolute inset-0 bg-surface-container flex flex-col items-center justify-center rounded-[inherit]">
@@ -64,8 +34,8 @@ export function LazyImage({
         </div>
       )}
 
-      {/* Actual image — only render src when in view */}
-      {isInView && !hasError && (
+      {/* Actual image — observation handled by OptimizedImage */}
+      {!hasError && (
         <OptimizedImage
           src={src}
           alt={alt}
@@ -74,15 +44,10 @@ export function LazyImage({
           sizes={sizes}
           loading={eager ? 'eager' : 'lazy'}
           priority={eager}
-          onLoad={() => setIsLoaded(true)}
           onError={() => {
             setHasError(true);
-            setIsLoaded(true);
           }}
-          className={`w-full h-full object-cover rounded-[inherit] transition-all duration-500 ${className} ${
-            isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.02]'
-          }`}
-          style={{ transitionTimingFunction: 'var(--ease-smooth)' }}
+          className={`w-full h-full object-cover rounded-[inherit] ${className}`}
           {...props}
         />
       )}

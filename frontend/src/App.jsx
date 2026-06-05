@@ -1,10 +1,11 @@
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { lazyWithRetry as lazy } from './utils/lazyWithRetry';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { logRouteDiagnostic } from './utils/diagnostics';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { ensureCsrfToken } from './services/api';
+import { perfMonitor } from './utils/performanceMonitor';
 
 import { RouteSkeleton } from './components/ui/RouteSkeleton';
 import { CartProvider } from './context/CartProvider';
