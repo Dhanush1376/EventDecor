@@ -36,3 +36,5 @@ dist-ssr
 # Audit Artifacts & Temp Scripts
 backend_architecture.md
 scripts/extract_arch.js
+git_products_history.txt
+backend/test-mongoose.js
