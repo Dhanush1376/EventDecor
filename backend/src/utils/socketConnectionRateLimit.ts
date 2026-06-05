@@ -7,7 +7,24 @@ const MAX_CONNECTIONS_PER_IP = 10;
 type MemoryEntry = { count: number; resetAt: number };
 const memoryCounters = new Map<string, MemoryEntry>();
 
-const getClientIp = (socket: { handshake: { address?: string; headers?: Record<string, string | string[] | undefined> } }): string => {
+// Add a cleanup interval to prevent memory leaks from unbounded map growth
+const cleanupInterval = setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of memoryCounters.entries()) {
+    if (now > entry.resetAt) {
+      memoryCounters.delete(ip);
+    }
+  }
+}, WINDOW_MS);
+
+// Avoid blocking node process termination
+if (cleanupInterval && cleanupInterval.unref) {
+  cleanupInterval.unref();
+}
+
+const getClientIp = (socket: {
+  handshake: { address?: string; headers?: Record<string, string | string[] | undefined> };
+}): string => {
   const forwarded = socket.handshake.headers?.['x-forwarded-for'];
   if (typeof forwarded === 'string' && forwarded.length > 0) {
     return forwarded.split(',')[0].trim();
@@ -15,9 +32,9 @@ const getClientIp = (socket: { handshake: { address?: string; headers?: Record<s
   return socket.handshake.address || 'unknown';
 };
 
-export const checkSocketConnectionRateLimit = async (
-  socket: { handshake: { address?: string; headers?: Record<string, string | string[] | undefined> } }
-): Promise<{ allowed: boolean; ip: string }> => {
+export const checkSocketConnectionRateLimit = async (socket: {
+  handshake: { address?: string; headers?: Record<string, string | string[] | undefined> };
+}): Promise<{ allowed: boolean; ip: string }> => {
   const ip = getClientIp(socket);
   const key = `socket:conn:${ip}`;
 

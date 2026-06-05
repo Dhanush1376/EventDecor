@@ -118,7 +118,15 @@
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -147,6 +155,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -157,6 +169,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -173,21 +189,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import mongoose, { ClientSession } from 'mongoose';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">﻿import mongoose, { ClientSession } from 'mongoose';
 import User from '../models/User';
 import ApiError from './ApiError';
 &nbsp;
-/** Atomic wallet debit — returns updated user or null if insufficient balance. */
+/** Atomic wallet debit â€” returns updated user or null if insufficient balance. */
 export const debitWalletBalance = <span class="fstat-no" title="function not covered" >async </span>(
   userId: mongoose.Types.ObjectId | string,
   amount: number,
-  session?: ClientSession
+  session?: ClientSession,
 ) =&gt; {
 <span class="cstat-no" title="statement not covered" >  if (amount &lt;= 0) <span class="cstat-no" title="statement not covered" >return User.findById(userId).session(session || null);</span></span>
 <span class="cstat-no" title="statement not covered" >  return User.findOneAndUpdate(</span>
     { _id: userId, walletBalance: { $gte: amount } },
     { $inc: { walletBalance: -amount } },
-    { new: true, session }
+    { returnDocument: 'after', session },
   );
 };
 &nbsp;
@@ -195,33 +211,41 @@ export const debitWalletBalance = <span class="fstat-no" title="function not cov
 export const creditWalletBalance = <span class="fstat-no" title="function not covered" >async </span>(
   userId: mongoose.Types.ObjectId | string,
   amount: number,
-  session?: ClientSession
+  session?: ClientSession,
 ) =&gt; {
 <span class="cstat-no" title="statement not covered" >  if (amount &lt;= 0) <span class="cstat-no" title="statement not covered" >return User.findById(userId).session(session || null);</span></span>
-<span class="cstat-no" title="statement not covered" >  return User.findByIdAndUpdate(userId, { $inc: { walletBalance: amount } }, { new: true, session });</span>
+<span class="cstat-no" title="statement not covered" >  return User.findByIdAndUpdate(</span>
+    userId,
+    { $inc: { walletBalance: amount } },
+    { returnDocument: 'after', session },
+  );
 };
 &nbsp;
 /** Atomic siriCoins credit. */
 export const creditSiriCoins = <span class="fstat-no" title="function not covered" >async </span>(
   userId: mongoose.Types.ObjectId | string,
   amount: number,
-  session?: ClientSession
+  session?: ClientSession,
 ) =&gt; {
 <span class="cstat-no" title="statement not covered" >  if (amount &lt;= 0) <span class="cstat-no" title="statement not covered" >return User.findById(userId).session(session || null);</span></span>
-<span class="cstat-no" title="statement not covered" >  return User.findByIdAndUpdate(userId, { $inc: { siriCoins: amount } }, { new: true, session });</span>
+<span class="cstat-no" title="statement not covered" >  return User.findByIdAndUpdate(</span>
+    userId,
+    { $inc: { siriCoins: amount } },
+    { returnDocument: 'after', session },
+  );
 };
 &nbsp;
-/** Atomic siriCoins debit — throws if balance would go negative. */
+/** Atomic siriCoins debit â€” throws if balance would go negative. */
 export const debitSiriCoins = <span class="fstat-no" title="function not covered" >async </span>(
   userId: mongoose.Types.ObjectId | string,
   amount: number,
-  session?: ClientSession
+  session?: ClientSession,
 ) =&gt; {
 <span class="cstat-no" title="statement not covered" >  if (amount &lt;= 0) <span class="cstat-no" title="statement not covered" >return User.findById(userId).session(session || null);</span></span>
   const updated = <span class="cstat-no" title="statement not covered" >await User.findOneAndUpdate(</span>
     { _id: userId, siriCoins: { $gte: amount } },
     { $inc: { siriCoins: -amount } },
-    { new: true, session }
+    { returnDocument: 'after', session },
   );
 <span class="cstat-no" title="statement not covered" >  if (!updated) {</span>
 <span class="cstat-no" title="statement not covered" >    throw new ApiError(400, 'Insufficient Siri Coins balance');</span>
@@ -235,7 +259,7 @@ export const debitSiriCoins = <span class="fstat-no" title="function not covered
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-05T08:23:51.226Z
+                at 2026-06-05T17:42:55.080Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

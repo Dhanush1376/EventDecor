@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">71.89% </span>
+                <span class="strong">72.25% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>110/153</span>
+                <span class='fraction'>112/155</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.36% </span>
+                <span class="strong">72.72% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>110/152</span>
+                <span class='fraction'>112/154</span>
             </div>
         
             
@@ -379,10 +379,7 @@
 <a name='L314'></a><a href='#L314'>314</a>
 <a name='L315'></a><a href='#L315'>315</a>
 <a name='L316'></a><a href='#L316'>316</a>
-<a name='L317'></a><a href='#L317'>317</a>
-<a name='L318'></a><a href='#L318'>318</a>
-<a name='L319'></a><a href='#L319'>319</a>
-<a name='L320'></a><a href='#L320'>320</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">8x</span>
+<a name='L317'></a><a href='#L317'>317</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
@@ -392,13 +389,12 @@
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
@@ -576,6 +572,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
@@ -590,10 +587,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
@@ -700,6 +693,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import express, { Application, Request, Response } from 'express';
 import os from 'os';
@@ -711,13 +705,12 @@ import mongoSanitize from 'express-mongo-sanitize';
 const xss = require('xss-clean');
 &nbsp;
 import cookieParser from 'cookie-parser';
-import { pingRedis } from './utils/redis';
 import { globalLimiter, apiFloodingLimiter } from './middleware/rateLimiter';
 import errorMiddleware from './middleware/errorMiddleware';
 import { registerApiRoutes } from './routes/registerApiRoutes';
 import healthRoutes from './routes/healthRoutes';
+import metricsRoutes from './routes/metricsRoutes';
 import { HealthController } from './controllers/healthController';
-import { checkCloudinaryCdn, getCachedCdnHealth } from './utils/cdnHealth';
 import logger from './config/logger';
 import { getSocketAdapterMode } from './config/socketState';
 import { generateSitemap } from './utils/sitemapGenerator';
@@ -735,7 +728,7 @@ import { queryGuard } from './middleware/queryGuard';
 import { secretLeakInterceptor } from './config/secretAudit';
 import { noCacheMiddleware } from './middleware/noCacheMiddleware';
 import { requestTimeout } from './middleware/queryTimeout';
-import { pingDb, getDbMetrics } from './config/db';
+import { getDbMetrics } from './config/db';
 import { cacheHeadersMiddleware } from './middleware/cacheHeaders';
 &nbsp;
 // Use require for the inner xss-clean function
@@ -895,6 +888,7 @@ app.head('/health', noCacheMiddleware, <span class="fstat-no" title="function no
 });
 &nbsp;
 app.use(['/health', '/api/health', '/api/v1/health'], noCacheMiddleware, healthRoutes);
+app.use(['/api/business-metrics', '/api/v1/business-metrics'], noCacheMiddleware, metricsRoutes);
 &nbsp;
 // Prometheus metrics endpoint for SRE monitoring
 app.get('/metrics', <span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {
@@ -908,11 +902,7 @@ app.get('/metrics', <span class="fstat-no" title="function not covered" >async <
 });
 &nbsp;
 // Readiness Probe (Tracks HTTP readiness, not DB readiness to prevent Render crash loops)
-app.get(
-  ['/api/readiness', '/api/v1/readiness'],
-  noCacheMiddleware,
-  HealthController.readiness
-);
+app.get(['/api/readiness', '/api/v1/readiness'], noCacheMiddleware, HealthController.readiness);
 &nbsp;
 // Ignore favicon
 app.get('/favicon.ico', <span class="fstat-no" title="function not covered" >(r</span>eq, res) =&gt; <span class="cstat-no" title="statement not covered" >res.status(204).end())</span>;
@@ -1019,6 +1009,7 @@ registerApiRoutes(app, '/api/v1', 'v1');
 // 9. Global Error Handler
 app.use(errorMiddleware);
 &nbsp;
+// Trigger reload for .env change
 export default app;
 &nbsp;</pre></td></tr></table></pre>
 
@@ -1027,7 +1018,7 @@ export default app;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-05T08:23:51.226Z
+                at 2026-06-05T17:42:55.080Z
             </div>
         <script src="../prettify.js"></script>
         <script>

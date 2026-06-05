@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">51.42% </span>
+                <span class="strong">52.77% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>18/35</span>
+                <span class='fraction'>19/36</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">58.06% </span>
+                <span class="strong">57.57% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>18/31</span>
+                <span class='fraction'>19/33</span>
             </div>
         
             
@@ -158,7 +158,23 @@
 <a name='L93'></a><a href='#L93'>93</a>
 <a name='L94'></a><a href='#L94'>94</a>
 <a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -208,6 +224,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -223,6 +252,8 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -252,8 +283,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import mongoose, { Schema, Document } from 'mongoose';
+import logger from '../config/logger';
 &nbsp;
 export interface IGallery extends Document {
   title: string;
@@ -299,10 +330,23 @@ const GallerySchema: Schema = new Schema(
     likedBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 &nbsp;
-GallerySchema.index({ title: 'text', tags: 'text', category: 'text', style: 'text', teluguTitle: 'text', description: 'text' }, { name: 'FullTextIndex', weights: { title: 10, tags: 8, category: 5, style: 5, teluguTitle: 8, description: 1 } });
+GallerySchema.index(
+  {
+    title: 'text',
+    tags: 'text',
+    category: 'text',
+    style: 'text',
+    teluguTitle: 'text',
+    description: 'text',
+  },
+  {
+    name: 'FullTextIndex',
+    weights: { title: 10, tags: 8, category: 5, style: 5, teluguTitle: 8, description: 1 },
+  },
+);
 GallerySchema.index({ category: 1 });
 GallerySchema.index({ event: 1 });
 GallerySchema.index({ type: 1 });
@@ -317,7 +361,9 @@ GallerySchema.index({ isActive: 1, views: -1 }); // Global popularity sort (cold
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 &nbsp;
-GallerySchema.post('save', <span class="fstat-no" title="function not covered" >() =</span>&gt; { <span class="cstat-no" title="statement not covered" >triggerSitemapUpdate(); </span>});
+GallerySchema.post('save', <span class="fstat-no" title="function not covered" >() =</span>&gt; {
+<span class="cstat-no" title="statement not covered" >  triggerSitemapUpdate();</span>
+});
 &nbsp;
 const cleanupCloudinaryImages = <span class="fstat-no" title="function not covered" >async </span>(doc: any) =&gt; {
 <span class="cstat-no" title="statement not covered" >  if (!doc) <span class="cstat-no" title="statement not covered" >return;</span></span>
@@ -328,8 +374,8 @@ const cleanupCloudinaryImages = <span class="fstat-no" title="function not cover
 <span class="cstat-no" title="statement not covered" >  for (const url of urlsToClean) {</span>
     const publicId = <span class="cstat-no" title="statement not covered" >extractPublicId(url);</span>
 <span class="cstat-no" title="statement not covered" >    if (publicId) {</span>
-<span class="cstat-no" title="statement not covered" >      deleteFromCloudinary(publicId).catch(<span class="fstat-no" title="function not covered" >(e</span>rr) =&gt; </span>
-<span class="cstat-no" title="statement not covered" >        console.error(`[Cloudinary GC] Failed to delete orphaned gallery media: ${url}`, err)</span>
+<span class="cstat-no" title="statement not covered" >      deleteFromCloudinary(publicId).catch(<span class="fstat-no" title="function not covered" >(e</span>rr) =&gt;</span>
+<span class="cstat-no" title="statement not covered" >        logger.error(`[Cloudinary GC] Failed to delete orphaned gallery media: ${url}`, err),</span>
       );
     }
   }
@@ -347,7 +393,6 @@ GallerySchema.post('findOneAndDelete', <span class="fstat-no" title="function no
 &nbsp;
 const Gallery = mongoose.model&lt;IGallery&gt;('Gallery', GallerySchema);
 export default Gallery;
-&nbsp;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -355,7 +400,7 @@ export default Gallery;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-05T08:23:51.226Z
+                at 2026-06-05T17:42:55.080Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

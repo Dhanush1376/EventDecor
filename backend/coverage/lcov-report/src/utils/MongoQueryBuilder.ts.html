@@ -167,11 +167,7 @@
 <a name='L102'></a><a href='#L102'>102</a>
 <a name='L103'></a><a href='#L103'>103</a>
 <a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a>
-<a name='L106'></a><a href='#L106'>106</a>
-<a name='L107'></a><a href='#L107'>107</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L105'></a><a href='#L105'>105</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -275,9 +271,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import mongoose from 'mongoose';
-&nbsp;
-/**
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * A clean builder pattern for constructing complex Mongoose search queries
  * safely and efficiently, avoiding raw inline aggregation/regex explosion.
  */
@@ -297,7 +291,7 @@ export class MongoQueryBuilder&lt;T&gt; {
   public <span class="fstat-no" title="function not covered" >withTextSearch(</span>terms: string[]): this {
 <span class="cstat-no" title="statement not covered" >    if (terms &amp;&amp; terms.length &gt; 0) {</span>
       // Filter out overly short strings that bloat text search
-      const validTerms = <span class="cstat-no" title="statement not covered" >terms.filter(<span class="fstat-no" title="function not covered" >t </span>=&gt; <span class="cstat-no" title="statement not covered" >t.length &gt; 2)</span>;</span>
+      const validTerms = <span class="cstat-no" title="statement not covered" >terms.filter(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; <span class="cstat-no" title="statement not covered" >t.length &gt; 2)</span>;</span>
 <span class="cstat-no" title="statement not covered" >      if (validTerms.length &gt; 0) {</span>
 <span class="cstat-no" title="statement not covered" >        this.query.$text = { $search: validTerms.join(' ') };</span>
       }
@@ -323,7 +317,7 @@ export class MongoQueryBuilder&lt;T&gt; {
       const priceFilter: any = <span class="cstat-no" title="statement not covered" >{};</span>
 <span class="cstat-no" title="statement not covered" >      if (minPrice !== undefined) <span class="cstat-no" title="statement not covered" >priceFilter.$gte = minPrice;</span></span>
 <span class="cstat-no" title="statement not covered" >      if (maxPrice !== undefined) <span class="cstat-no" title="statement not covered" >priceFilter.$lte = maxPrice;</span></span>
-      
+&nbsp;
       (<span class="cstat-no" title="statement not covered" >this.query as any)[priceField] = priceFilter;</span>
     }
 <span class="cstat-no" title="statement not covered" >    return this;</span>
@@ -338,7 +332,7 @@ export class MongoQueryBuilder&lt;T&gt; {
 <span class="cstat-no" title="statement not covered" >        this.query.$or = [];</span>
       }
 <span class="cstat-no" title="statement not covered" >      this.query.$or.push({</span>
-        [targetField]: { $in: tags.map(<span class="fstat-no" title="function not covered" >t </span>=&gt; <span class="cstat-no" title="statement not covered" >new RegExp(this.escapeRegex(t), 'i'))</span> }
+        [targetField]: { $in: tags.map(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; <span class="cstat-no" title="statement not covered" >new RegExp(this.escapeRegex(t), 'i'))</span> },
       } as any);
     }
 <span class="cstat-no" title="statement not covered" >    return this;</span>
@@ -349,13 +343,13 @@ export class MongoQueryBuilder&lt;T&gt; {
    */
   public <span class="fstat-no" title="function not covered" >withRegexFallback(</span>terms: string[], fields: string[]): this {
 <span class="cstat-no" title="statement not covered" >    if (terms &amp;&amp; terms.length &gt; 0 &amp;&amp; fields &amp;&amp; fields.length &gt; 0) {</span>
-      const validTerms = <span class="cstat-no" title="statement not covered" >terms.filter(<span class="fstat-no" title="function not covered" >t </span>=&gt; <span class="cstat-no" title="statement not covered" >t.length &gt;= 2)</span>.slice(0, 15);</span> // Capped to prevent ReDoS
+      const validTerms = <span class="cstat-no" title="statement not covered" >terms.filter(<span class="fstat-no" title="function not covered" >(t</span>) =&gt; <span class="cstat-no" title="statement not covered" >t.length &gt;= 2)</span>.slice(0, 15);</span> // Capped to prevent ReDoS
 <span class="cstat-no" title="statement not covered" >      if (validTerms.length === 0) <span class="cstat-no" title="statement not covered" >return this;</span></span>
-      
+&nbsp;
       const regexPatterns = <span class="cstat-no" title="statement not covered" >validTerms.map(<span class="fstat-no" title="function not covered" >(t</span>erm) =&gt; <span class="cstat-no" title="statement not covered" >new RegExp(this.escapeRegex(term), 'i'))</span>;</span>
-      
-      const orConditions = <span class="cstat-no" title="statement not covered" >fields.map(<span class="fstat-no" title="function not covered" >field </span>=&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
-        [field]: { $in: regexPatterns }
+&nbsp;
+      const orConditions = <span class="cstat-no" title="statement not covered" >fields.map(<span class="fstat-no" title="function not covered" >(f</span>ield) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+        [field]: { $in: regexPatterns },
       }));
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (!this.query.$or) {</span>
@@ -388,7 +382,7 @@ export class MongoQueryBuilder&lt;T&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-05T08:23:51.226Z
+                at 2026-06-05T17:42:55.080Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

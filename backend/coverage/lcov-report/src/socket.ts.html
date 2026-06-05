@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.94% </span>
+                <span class="strong">66.66% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>81/121</span>
+                <span class='fraction'>80/120</span>
             </div>
         
             
@@ -324,8 +324,7 @@
 <a name='L259'></a><a href='#L259'>259</a>
 <a name='L260'></a><a href='#L260'>260</a>
 <a name='L261'></a><a href='#L261'>261</a>
-<a name='L262'></a><a href='#L262'>262</a>
-<a name='L263'></a><a href='#L263'>263</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L262'></a><a href='#L262'>262</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">11x</span>
@@ -342,10 +341,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -385,6 +380,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -392,7 +389,6 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -485,6 +481,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -537,7 +536,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -603,11 +601,7 @@ let io: Server;
 &nbsp;
 type SocketUser = { _id: { toString(): string }; role: string; email: string };
 &nbsp;
-const socketLogContext = (
-  socket: Socket,
-  namespace: '/admin' | '/user',
-  user: SocketUser
-) =&gt; ({
+const socketLogContext = (socket: Socket, namespace: '/admin' | '/user', user: SocketUser) =&gt; ({
   correlationId: socket.id,
   socketId: socket.id,
   namespace,
@@ -633,7 +627,7 @@ const assertRedisForSocket = (hasRedisAdapter: boolean): void =&gt; {
   <span class="missing-if-branch" title="if path not taken" >I</span>if (requireRedis || (isProduction &amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >multiInstance)</span>) {
 <span class="cstat-no" title="statement not covered" >    logger.error(</span>
       '[SOCKET CRITICAL] Redis adapter is required when REQUIRE_REDIS=true or when running multiple instances. ' +
-        'Aborting startup to prevent split-brain real-time delivery.'
+        'Aborting startup to prevent split-brain real-time delivery.',
     );
 <span class="cstat-no" title="statement not covered" >    process.exit(1);</span>
   }
@@ -643,24 +637,25 @@ const assertRedisForSocket = (hasRedisAdapter: boolean): void =&gt; {
   <span class="missing-if-branch" title="if path not taken" >I</span>if (isProduction) {
 <span class="cstat-no" title="statement not covered" >    logger.warn(</span>
       `[SOCKET] ${isConfigured ? 'Redis connection unavailable' : 'REDIS_URL not set'} — using in-memory Socket.io adapter. ` +
-        'Real-time alerts only reach clients on the same instance.'
+        'Real-time alerts only reach clients on the same instance.',
     );
   } else {
-    logger.warn(`[SOCKET] ${isConfigured ? <span class="branch-0 cbranch-no" title="branch not covered" >'Redis unavailable' </span>: 'REDIS_URL not set'} — using in-memory adapter (OK for local single-instance dev).`);
+    logger.warn(
+      `[SOCKET] ${isConfigured ? <span class="branch-0 cbranch-no" title="branch not covered" >'Redis unavailable' </span>: 'REDIS_URL not set'} — using in-memory adapter (OK for local single-instance dev).`,
+    );
   }
 };
 &nbsp;
 const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) =&gt; void) =&gt; {
   try {
     const token =
-      socket.handshake.auth?.token ||
-      socket.handshake.headers?.authorization?.split(' ')[1];
+      socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
 &nbsp;
     if (!token) {
       return next(new Error('Authentication error: Token missing'));
     }
 &nbsp;
-    const jwtSecrets = (process.env.JWT_SECRET || <span class="branch-1 cbranch-no" title="branch not covered" >'')</span>.split(',').map(s =&gt; s.trim());
+    const jwtSecrets = (process.env.JWT_SECRET || <span class="branch-1 cbranch-no" title="branch not covered" >'')</span>.split(',').map((s) =&gt; s.trim());
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!jwtSecrets.length || !jwtSecrets[0]) {
 <span class="cstat-no" title="statement not covered" >      return next(new Error('Authentication error: Server misconfigured'));</span>
     }
@@ -706,7 +701,7 @@ const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) =&gt; vo
 const enforceSingleAdminSession = <span class="fstat-no" title="function not covered" >async </span>(
   namespace: Namespace,
   userId: string,
-  currentSocketId: string
+  currentSocketId: string,
 ): Promise&lt;void&gt; =&gt; {
   const sockets = <span class="cstat-no" title="statement not covered" >await namespace.fetchSockets();</span>
 <span class="cstat-no" title="statement not covered" >  for (const remote of sockets) {</span>
@@ -745,7 +740,10 @@ const registerNamespace = (namespace: Namespace, options: { adminOnly?: boolean 
 <span class="cstat-no" title="statement not covered" >      await enforceSingleAdminSession(namespace, user._id.toString(), socket.id);</span>
 <span class="cstat-no" title="statement not covered" >      logger.info('[Socket /admin] Connected', socketLogContext(socket, ns, user));</span>
 <span class="cstat-no" title="statement not covered" >      socket.join('admin-alerts');</span>
-<span class="cstat-no" title="statement not covered" >      logger.info('[Socket /admin] Room join', { ...socketLogContext(socket, ns, user), room: 'admin-alerts' });</span>
+<span class="cstat-no" title="statement not covered" >      logger.info('[Socket /admin] Room join', {</span>
+        ...socketLogContext(socket, ns, user),
+        room: 'admin-alerts',
+      });
     } else {
       logger.info('[Socket /user] Connected', socketLogContext(socket, ns, user));
       const room = `user-${user._id}`;
@@ -801,7 +799,6 @@ export const initSocket = (server: HttpServer) =&gt; {
 <span class="cstat-no" title="statement not covered" >    next();</span>
   });
 &nbsp;
-&nbsp;
   // Default namespace is not used — reject stray connections immediately
   io.on('connection', <span class="fstat-no" title="function not covered" >(s</span>ocket) =&gt; {
 <span class="cstat-no" title="statement not covered" >    logger.warn('[SOCKET] Rejected connection on default namespace', { socketId: socket.id });</span>
@@ -812,7 +809,7 @@ export const initSocket = (server: HttpServer) =&gt; {
   registerNamespace(io.of('/user'), { adminOnly: false });
 &nbsp;
   logger.info(
-    `[SOCKET] Namespaces ready (/admin, /user) — adapter: ${hasRedisAdapter ? <span class="branch-0 cbranch-no" title="branch not covered" >'redis' </span>: 'memory'}`
+    `[SOCKET] Namespaces ready (/admin, /user) — adapter: ${hasRedisAdapter ? <span class="branch-0 cbranch-no" title="branch not covered" >'redis' </span>: 'memory'}`,
   );
   return io;
 };
@@ -856,7 +853,7 @@ export const emitUserEvent = <span class="fstat-no" title="function not covered"
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-05T08:23:51.226Z
+                at 2026-06-05T17:42:55.080Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -112,6 +112,9 @@ export const sendDirectEmail = (options: EmailOptions) => {
       : 0;
     emailQueue.add('sendEmail', options, { delay }).catch((err: any) => {
       logger.error('Failed to enqueue email to BullMQ:', err);
+      // Fallback to local memory queue if BullMQ fails after returning isQueuesReady() = true
+      const { emailQueue: fallbackQueue } = require('./emailQueueService');
+      fallbackQueue.enqueue(options);
     });
   } else {
     // Fallback to local memory queue if Redis/BullMQ is down

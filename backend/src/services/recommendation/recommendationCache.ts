@@ -16,13 +16,24 @@ const isRedisReady = (): boolean => {
 };
 
 /**
- * Unified cache get — tries Redis first, falls back to MemoryCache.
+ * Unified cache get — tries MemoryCache first (L1 Cache), then Redis.
  */
 async function cacheGet<T>(key: string, fallbackCache: MemoryCache): Promise<T | null> {
+  // L1 Cache check
+  const memCached = fallbackCache.get<T>(key);
+  if (memCached !== undefined && memCached !== null) {
+    return memCached;
+  }
+
   if (isRedisReady()) {
     try {
       const raw = await redisClient!.get(key);
-      if (raw) return JSON.parse(raw) as T;
+      if (raw) {
+        const parsed = JSON.parse(raw) as T;
+        // Populate L1 cache on Redis hit
+        fallbackCache.set(key, parsed);
+        return parsed;
+      }
     } catch (err: any) {
       if (err.message && err.message.includes('max requests limit exceeded')) {
         if (!(global as any).upstashWarningLogged) {
@@ -34,13 +45,18 @@ async function cacheGet<T>(key: string, fallbackCache: MemoryCache): Promise<T |
       }
     }
   }
-  return fallbackCache.get<T>(key);
+  return null;
 }
 
 /**
  * Unified cache set — writes to Redis (with TTL in seconds) and MemoryCache simultaneously.
  */
-async function cacheSet<T>(key: string, value: T, ttlSeconds: number, fallbackCache: MemoryCache): Promise<void> {
+async function cacheSet<T>(
+  key: string,
+  value: T,
+  ttlSeconds: number,
+  fallbackCache: MemoryCache,
+): Promise<void> {
   const ttlMs = ttlSeconds * 1000;
   fallbackCache.set(key, value, ttlMs);
 
@@ -149,16 +165,22 @@ export const RecommendationCache = {
     await cacheSet(`reco:session:${sessionId}:context`, data, 1800, sessionCache); // 30 min
   },
   async updateSessionContext(sessionId: string, update: any) {
-    const existing = await this.getSessionContext(sessionId) || {
+    const existing = (await this.getSessionContext(sessionId)) || {
       recentCategories: [],
       recentStyles: [],
       recentTargetIds: [],
       interactionCount: 0,
     };
     const merged = {
-      recentCategories: [...new Set([...(update.category ? [update.category] : []), ...existing.recentCategories])].slice(0, 10),
-      recentStyles: [...new Set([...(update.style ? [update.style] : []), ...existing.recentStyles])].slice(0, 5),
-      recentTargetIds: [...new Set([...(update.targetId ? [update.targetId] : []), ...existing.recentTargetIds])].slice(0, 20),
+      recentCategories: [
+        ...new Set([...(update.category ? [update.category] : []), ...existing.recentCategories]),
+      ].slice(0, 10),
+      recentStyles: [
+        ...new Set([...(update.style ? [update.style] : []), ...existing.recentStyles]),
+      ].slice(0, 5),
+      recentTargetIds: [
+        ...new Set([...(update.targetId ? [update.targetId] : []), ...existing.recentTargetIds]),
+      ].slice(0, 20),
       interactionCount: existing.interactionCount + 1,
       lastEventType: update.eventType || existing.lastEventType,
     };
@@ -177,22 +199,8 @@ export const RecommendationCache = {
   // ── CTR Tracking ──
   async incrementCTR(type: string, date: string, field: 'impressions' | 'clicks') {
     const key = `reco:analytics:ctr:${type}:${date}`;
-    if (isRedisReady()) {
-      try {
-        await redisClient!.hIncrBy(key, field, 1);
-        await redisClient!.expire(key, 86400 * 7); // 7-day retention for CTR
-      } catch (err: any) {
-        if (err.message && err.message.includes('max requests limit exceeded')) {
-          if (!(global as any).upstashWarningLogged) {
-            logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
-            (global as any).upstashWarningLogged = true;
-          }
-        } else {
-          logger.warn(`[RECO CTR] Redis CTR increment failed: ${err.message}`);
-        }
-      }
-    }
-    // Fallback: use memory counter (loses on restart — acceptable for dev)
+
+    // Pure memory aggregation to prevent massive Redis write volume
     const cached = ctrCache.get<Record<string, number>>(key) || { impressions: 0, clicks: 0 };
     cached[field] = (cached[field] || 0) + 1;
     ctrCache.set(key, cached, 86400 * 1000);
@@ -200,26 +208,6 @@ export const RecommendationCache = {
 
   async getCTR(type: string, date: string) {
     const key = `reco:analytics:ctr:${type}:${date}`;
-    if (isRedisReady()) {
-      try {
-        const data = await redisClient!.hGetAll(key);
-        if (data && Object.keys(data).length > 0) {
-          return {
-            impressions: parseInt(data.impressions || '0', 10),
-            clicks: parseInt(data.clicks || '0', 10),
-          };
-        }
-      } catch (err: any) {
-        if (err.message && err.message.includes('max requests limit exceeded')) {
-          if (!(global as any).upstashWarningLogged) {
-            logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
-            (global as any).upstashWarningLogged = true;
-          }
-        } else {
-          logger.warn(`[RECO CTR] Redis CTR get failed: ${err.message}`);
-        }
-      }
-    }
     return ctrCache.get<Record<string, number>>(key) || { impressions: 0, clicks: 0 };
   },
 };

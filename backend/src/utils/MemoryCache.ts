@@ -18,16 +18,23 @@ export class MemoryCache {
   private static instanceCount = 0;
   private static readonly MAX_ENTRY_SIZE_BYTES = 512 * 1024; // 512KB per entry max
 
-  constructor(options: { defaultTtlMs?: number; maxKeys?: number; cleanupIntervalMs?: number; name?: string } = {}) {
+  constructor(
+    options: {
+      defaultTtlMs?: number;
+      maxKeys?: number;
+      cleanupIntervalMs?: number;
+      name?: string;
+    } = {},
+  ) {
     this.defaultTtlMs = options.defaultTtlMs || 5 * 60 * 1000; // default 5 minutes
-    this.maxKeys = options.maxKeys || 1000;
+    this.maxKeys = options.maxKeys || 200; // Reduced from 1000 to prevent OOM
     this.name = options.name || `cache_${MemoryCache.instanceCount}`;
     MemoryCache.instanceCount++;
-    
+
     // Periodically sweep expired entries to prevent memory leaks
     const interval = options.cleanupIntervalMs || 60 * 1000; // default 1 minute
     this.cleanupInterval = (globalThis as any).setInterval(() => this.sweep(), interval);
-    
+
     // Avoid blocking node process termination in tests or script executions
     if (this.cleanupInterval && this.cleanupInterval.unref) {
       this.cleanupInterval.unref();
@@ -38,7 +45,9 @@ export class MemoryCache {
     // Rough entry size estimation to prevent caching very large objects
     const estimatedSize = this.estimateSize(value);
     if (estimatedSize > MemoryCache.MAX_ENTRY_SIZE_BYTES) {
-      logger.warn(`[MemoryCache:${this.name}] Rejected oversized entry (${Math.round(estimatedSize / 1024)}KB) for key: ${key.substring(0, 50)}`);
+      logger.warn(
+        `[MemoryCache:${this.name}] Rejected oversized entry (${Math.round(estimatedSize / 1024)}KB) for key: ${key.substring(0, 50)}`,
+      );
       return;
     }
 
@@ -61,7 +70,9 @@ export class MemoryCache {
 
     // Log cache pressure when instance is at >90% capacity
     if (this.cache.size > this.maxKeys * 0.9 && this.cache.size % 50 === 0) {
-      logger.warn(`[MemoryCache:${this.name}] Cache pressure: ${this.cache.size}/${this.maxKeys} entries (global: ${MemoryCache.totalEntries})`);
+      logger.warn(
+        `[MemoryCache:${this.name}] Cache pressure: ${this.cache.size}/${this.maxKeys} entries (global: ${MemoryCache.totalEntries})`,
+      );
     }
   }
 
@@ -103,7 +114,9 @@ export class MemoryCache {
       }
     }
     if (swept > 0) {
-      logger.debug(`[MemoryCache:${this.name} Sweep] Purged ${swept} expired items. (instance: ${this.cache.size}, global: ${MemoryCache.totalEntries})`);
+      logger.debug(
+        `[MemoryCache:${this.name} Sweep] Purged ${swept} expired items. (instance: ${this.cache.size}, global: ${MemoryCache.totalEntries})`,
+      );
     }
   }
 
@@ -157,12 +170,18 @@ if (subClient) {
     if (channel === 'cache:invalidate') {
       try {
         const { cacheName, key, action } = JSON.parse(message);
-        const targetCache = 
-          cacheName === 'categoryCache' ? categoryCache :
-          cacheName === 'cmsCache' ? cmsCache :
-          cacheName === 'featuredProductCache' ? featuredProductCache :
-          cacheName === 'safetyLockCache' ? safetyLockCache : 
-          cacheName === 'analyticsCache' ? analyticsCache : null;
+        const targetCache =
+          cacheName === 'categoryCache'
+            ? categoryCache
+            : cacheName === 'cmsCache'
+              ? cmsCache
+              : cacheName === 'featuredProductCache'
+                ? featuredProductCache
+                : cacheName === 'safetyLockCache'
+                  ? safetyLockCache
+                  : cacheName === 'analyticsCache'
+                    ? analyticsCache
+                    : null;
 
         if (targetCache) {
           if (action === 'clear') {
@@ -183,12 +202,16 @@ if (subClient) {
 // Global broadcast helpers
 export const broadcastCacheClear = (cacheName: string) => {
   if (pubClient) {
-    pubClient.publish('cache:invalidate', JSON.stringify({ cacheName, action: 'clear' })).catch(() => {});
+    pubClient
+      .publish('cache:invalidate', JSON.stringify({ cacheName, action: 'clear' }))
+      .catch(() => {});
   }
 };
 
 export const broadcastCacheDelete = (cacheName: string, key: string) => {
   if (pubClient) {
-    pubClient.publish('cache:invalidate', JSON.stringify({ cacheName, action: 'delete', key })).catch(() => {});
+    pubClient
+      .publish('cache:invalidate', JSON.stringify({ cacheName, action: 'delete', key }))
+      .catch(() => {});
   }
 };

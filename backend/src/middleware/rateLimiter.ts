@@ -41,7 +41,11 @@ export const accountKeyGenerator = (req: Request, _res: Response): string => {
 };
 
 // Factory for creating a rate limiter with standard security defaults and abuse logging
-export const createRateLimiter = (name: string, options: Partial<Options>) => {
+export const createRateLimiter = (
+  name: string,
+  options: Partial<Options>,
+  forceMemory: boolean = false,
+) => {
   const customHandler = (req: Request, res: Response, next: NextFunction, optionsRef: any) => {
     // Log abuse detection to Winston
     logger.warn(`[ABUSE_DETECTED] Rate limit exceeded for limiter: ${name}`, {
@@ -80,6 +84,10 @@ export const createRateLimiter = (name: string, options: Partial<Options>) => {
   let redisDownLogged = false;
 
   return (req: Request, res: Response, next: NextFunction) => {
+    if (forceMemory) {
+      return memoryLimiter(req, res, next);
+    }
+
     // Use redis if available
     if (redisClient && redisClient.isReady) {
       if (redisDownLogged) {
@@ -129,18 +137,26 @@ export const createRateLimiter = (name: string, options: Partial<Options>) => {
 // ==========================================
 
 // Global limiter: 500 requests per 15 minutes per IP
-export const globalLimiter = createRateLimiter('globalLimiter', {
-  windowMs: 15 * 60 * 1000,
-  limit: 500,
-  message: 'Too many requests from this IP, please try again after 15 minutes.',
-});
+export const globalLimiter = createRateLimiter(
+  'globalLimiter',
+  {
+    windowMs: 15 * 60 * 1000,
+    limit: 500,
+    message: 'Too many requests from this IP, please try again after 15 minutes.',
+  },
+  true,
+); // forceMemory = true
 
 // API Flooding limiter: 50 requests per 10 seconds per IP
-export const apiFloodingLimiter = createRateLimiter('apiFloodingLimiter', {
-  windowMs: 10 * 1000,
-  limit: 50,
-  message: 'API flooding detected. Please slow down your requests.',
-});
+export const apiFloodingLimiter = createRateLimiter(
+  'apiFloodingLimiter',
+  {
+    windowMs: 10 * 1000,
+    limit: 50,
+    message: 'API flooding detected. Please slow down your requests.',
+  },
+  true,
+); // forceMemory = true
 
 // Auth limiter: 10 requests per 15 minutes per IP (protects login/register/admin-login)
 export const authLimiter = createRateLimiter('authLimiter', {
@@ -172,19 +188,27 @@ export const contactLimiter = createRateLimiter('contactLimiter', {
 });
 
 // Search limiter: 50 requests per 10 minutes per IP
-export const searchLimiter = createRateLimiter('searchLimiter', {
-  windowMs: 10 * 60 * 1000,
-  limit: 50,
-  message: 'Too many search requests. Please try again after 10 minutes.',
-});
+export const searchLimiter = createRateLimiter(
+  'searchLimiter',
+  {
+    windowMs: 10 * 60 * 1000,
+    limit: 50,
+    message: 'Too many search requests. Please try again after 10 minutes.',
+  },
+  true,
+); // forceMemory = true
 
 // Recommendation/Tracking limiter: 100 requests per 10 minutes per IP/User
-export const recommendationLimiter = createRateLimiter('recommendationLimiter', {
-  windowMs: 10 * 60 * 1000,
-  limit: 100,
-  message: 'Too many recommendation or tracking requests. Please try again after 10 minutes.',
-  keyGenerator: accountKeyGenerator,
-});
+export const recommendationLimiter = createRateLimiter(
+  'recommendationLimiter',
+  {
+    windowMs: 10 * 60 * 1000,
+    limit: 100,
+    message: 'Too many recommendation or tracking requests. Please try again after 10 minutes.',
+    keyGenerator: accountKeyGenerator,
+  },
+  true,
+); // forceMemory = true
 
 // Upload limiter: 20 requests per 15 minutes per IP/User (protects Cloudinary/Network bandwidth)
 export const uploadLimiter = createRateLimiter('uploadLimiter', {

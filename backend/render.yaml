@@ -84,6 +84,8 @@ services:
         value: "true"
       - key: ENABLE_CRON
         value: "true"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=1536"
       - key: BACKEND_URL
         fromConfig: true
       - key: SECRET_ROTATION_REMINDER
@@ -147,6 +149,8 @@ services:
         value: "true"
       - key: ENABLE_CRON
         value: "true"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=1536"
       - key: BACKEND_URL
         fromConfig: true
       - key: SECRET_ROTATION_REMINDER
