@@ -67,17 +67,21 @@ const defaultQueueOptions: QueueOptions = {
       delay: 2000,
     },
     removeOnComplete: true,
-    removeOnFail: false,
+    removeOnFail: { count: 1000 },
   },
 };
 
-// Declare core application queues as let (live bindings)
 export let emailQueue: Queue;
 export let notificationQueue: Queue;
 export let loyaltyQueue: Queue;
 export let recommendationQueue: Queue;
+export let webhookQueue: Queue;
+export let refundQueue: Queue;
+export let systemQueue: Queue;
+export let deadLetterQueue: Queue;
 
 let queuesInitialized = false;
+export let usingFallback = false;
 
 export const initQueues = async () => {
   if (queuesInitialized) return;
@@ -93,6 +97,10 @@ export const initQueues = async () => {
     notificationQueue = new Queue('notificationQueue', defaultQueueOptions);
     loyaltyQueue = new Queue('loyaltyQueue', defaultQueueOptions);
     recommendationQueue = new Queue('recommendationQueue', defaultQueueOptions);
+    webhookQueue = new Queue('webhookQueue', defaultQueueOptions);
+    refundQueue = new Queue('refundQueue', defaultQueueOptions);
+    systemQueue = new Queue('systemQueue', defaultQueueOptions);
+    deadLetterQueue = new Queue('deadLetterQueue', defaultQueueOptions);
 
     queuesInitialized = true;
     logger.info('🟢 [BULLMQ] Queues initialized successfully');
@@ -101,13 +109,29 @@ export const initQueues = async () => {
     if (requireRedis) {
       throw err;
     } else {
-      logger.warn('🟡 [BULLMQ] Continuing without queues due to REQUIRE_REDIS=false');
+      logger.warn(
+        '🟡 [BULLMQ] Continuing with fallback in-memory queues due to REQUIRE_REDIS=false',
+      );
+
+      const { QueueFallbackService } = require('../services/QueueFallbackService');
+
+      emailQueue = QueueFallbackService.getQueue('emailQueue');
+      notificationQueue = QueueFallbackService.getQueue('notificationQueue');
+      loyaltyQueue = QueueFallbackService.getQueue('loyaltyQueue');
+      recommendationQueue = QueueFallbackService.getQueue('recommendationQueue');
+      webhookQueue = QueueFallbackService.getQueue('webhookQueue');
+      refundQueue = QueueFallbackService.getQueue('refundQueue');
+      systemQueue = QueueFallbackService.getQueue('systemQueue');
+      deadLetterQueue = QueueFallbackService.getQueue('deadLetterQueue');
+
+      usingFallback = true;
+      queuesInitialized = true;
     }
   }
 };
 
 export const isQueuesReady = (): boolean => {
-  return queuesInitialized && connection.status === 'ready';
+  return queuesInitialized && (connection.status === 'ready' || usingFallback);
 };
 
 export const closeQueues = async () => {
@@ -116,6 +140,10 @@ export const closeQueues = async () => {
     if (notificationQueue) await notificationQueue.close();
     if (loyaltyQueue) await loyaltyQueue.close();
     if (recommendationQueue) await recommendationQueue.close();
+    if (webhookQueue) await webhookQueue.close();
+    if (refundQueue) await refundQueue.close();
+    if (systemQueue) await systemQueue.close();
+    if (deadLetterQueue) await deadLetterQueue.close();
   }
   connection.disconnect();
 };

@@ -1,18 +1,17 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { MandalaElement } from "../ui/MandalaElement";
-import { useWebsiteContent } from "../../hooks/useWebsiteContent";
-import { CONTACT_EMAIL, SOCIAL_INSTAGRAM, SOCIAL_PINTEREST } from "../../constants/brandEnv";
-import { SiriLogo } from "../ui/SiriLogo";
+import { Link } from 'react-router-dom';
+import { MandalaElement } from '../ui/MandalaElement';
+import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import { CONTACT_EMAIL, SOCIAL_INSTAGRAM, SOCIAL_PINTEREST } from '../../constants/brandEnv';
+import { SiriLogo } from '../ui/SiriLogo';
 
 export function Footer() {
   const { contact, footer, navigation } = useWebsiteContent();
-  const logoText = navigation?.logo?.text || "SIRI ARTS & CRAFTS";
-  const logoWords = logoText.split(" ");
-  const firstWord = logoWords[0] || "SIRI";
-  const restWords = logoWords.slice(1).join(" ") || "ARTS & CRAFTS";
+  const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
+  const logoWords = logoText.split(' ');
+  const firstWord = logoWords[0] || 'SIRI';
+  const restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
   const currentYear = new Date().getFullYear();
-  const phone = contact?.phone || footer?.phone || "";
+  const phone = contact?.phone || footer?.phone || '';
   const email = contact?.email || footer?.email || CONTACT_EMAIL;
   const instagramLink = footer?.socialLinks?.instagram || SOCIAL_INSTAGRAM;
   const pinterestLink = footer?.socialLinks?.pinterest || SOCIAL_PINTEREST;
@@ -32,7 +31,7 @@ export function Footer() {
             <SiriLogo size="32px" />
           </Link>
           <p className="font-body text-on-surface-variant/80 max-w-sm leading-relaxed font-light text-[11px] md:px-0">
-            {footer?.description || "Ancient craftsmanship meets modern elegance."}
+            {footer?.description || 'Ancient craftsmanship meets modern elegance.'}
           </p>
         </div>
 
@@ -99,7 +98,7 @@ export function Footer() {
                     href={`tel:${phone}`}
                     className="hover:text-primary transition-colors whitespace-nowrap"
                   >
-                    +91 {phone.replace("+91", "").trim()}
+                    +91 {phone.replace('+91', '').trim()}
                   </a>
                 </div>
                 <a
@@ -116,45 +115,41 @@ export function Footer() {
           <div className="col-span-1 md:col-span-6 lg:col-span-4 flex flex-col gap-3.5 md:items-start lg:items-end">
             <div className="flex items-center gap-2 md:gap-3.5">
               {instagramLink && (
-              <a
-                aria-label="Instagram"
-                className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
-                href={instagramLink}
-                target="_blank" rel="noopener noreferrer"
-                
-              >
-                <span className="material-symbols-outlined font-light text-[16px]">
-                  photo_camera
-                </span>
-                <span className="font-label-sm text-[10px] uppercase tracking-widest font-bold">
-                  Insta
-                </span>
-              </a>
+                <a
+                  aria-label="Instagram"
+                  className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
+                  href={instagramLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="material-symbols-outlined font-light text-[16px]">
+                    photo_camera
+                  </span>
+                  <span className="font-label-sm text-[10px] uppercase tracking-widest font-bold">
+                    Insta
+                  </span>
+                </a>
               )}
               {pinterestLink && (
-              <a
-                aria-label="Pinterest"
-                className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
-                href={pinterestLink}
-                target="_blank" rel="noopener noreferrer"
-                
-              >
-                <span className="material-symbols-outlined font-light text-[16px]">
-                  push_pin
-                </span>
-                <span className="font-label-sm text-[10px] uppercase tracking-widest font-bold">
-                  Pin
-                </span>
-              </a>
+                <a
+                  aria-label="Pinterest"
+                  className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
+                  href={pinterestLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="material-symbols-outlined font-light text-[16px]">push_pin</span>
+                  <span className="font-label-sm text-[10px] uppercase tracking-widest font-bold">
+                    Pin
+                  </span>
+                </a>
               )}
               <a
                 aria-label="Email"
                 className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
                 href={`mailto:${email}`}
               >
-                <span className="material-symbols-outlined font-light text-[16px]">
-                  mail
-                </span>
+                <span className="material-symbols-outlined font-light text-[16px]">mail</span>
                 <span className="font-label-sm text-[10px] uppercase tracking-widest font-bold">
                   Email
                 </span>
@@ -195,7 +190,7 @@ export function Footer() {
             </Link>
           </div>
         </div>
-        
+
         {/* Version Display for Production Diagnostics */}
         <div className="mt-4 flex justify-center md:justify-start">
           <p className="font-mono text-[9px] text-black/20 uppercase tracking-widest">

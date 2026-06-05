@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
 
 // ═══════════════════════════════════════════════════════════════
 // SHARED ANIMATION VARIANTS
@@ -283,7 +284,16 @@ export function ChartCard({ title, subtitle, legend, children, className = '' })
           </div>
         )}
       </div>
-      {children}
+      <ErrorBoundary
+        fallback={
+          <div className="h-[200px] flex items-center justify-center bg-[var(--admin-error-light)] border border-[var(--admin-error-border)] rounded-[var(--admin-radius-lg)] text-[var(--admin-error)] text-xs p-4 text-center flex-col gap-2">
+            <span className="material-symbols-outlined text-2xl">error_outline</span>
+            Failed to load chart
+          </div>
+        }
+      >
+        {children}
+      </ErrorBoundary>
     </motion.div>
   );
 }

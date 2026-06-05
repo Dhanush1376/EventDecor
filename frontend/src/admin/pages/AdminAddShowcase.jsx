@@ -3,8 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { showcaseService, uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import { AdminToggle, SkeletonForm } from '../components/AdminUIKit';
+import { SkeletonForm } from '../components/AdminUIKit';
 import { compressImage, formatBytes } from '../../utils/imageCompressor';
+import { useDraft } from '../hooks/useDraft';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideIn = {
@@ -36,22 +40,48 @@ export function AdminAddShowcase() {
   const [compressionProgress, setCompressionProgress] = useState(0);
   const [compressionStats, setCompressionStats] = useState([]);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    subtitle: '',
-    category: 'engagement_gift',
-    rentalPrice: 15000,
-    description: '',
-    image: '',
-    galleryImages: ['', ''],
-    inclusionsText: 'Traditional carved wooden ring tray, Beaded shagun boxes, Mogra garland drops',
-    colorPalette: '#8B0000, #FFD700, #FFF8DC',
-    suggestedProps: 'Traditional carved wooden ring tray, Beaded shagun boxes',
-    setupTimeHours: 2,
-    seoTitle: '',
-    seoDescription: '',
-    isActive: true,
+  const {
+    formData,
+    setFormData,
+    pageState,
+    setPageState,
+    draftStatus,
+    showRestoreModal,
+    restoreDraft,
+    discardDraft,
+    deleteDraft,
+    lastSavedAt,
+    blocker,
+  } = useDraft({
+    draftKey: isEditMode ? `admin:showcases:edit:${id}` : 'admin:showcases:add',
+    module: 'Showcases',
+    pageTitle: isEditMode ? `Edit Showcase ${id}` : 'New Showcase',
+    initialData: {
+      title: '',
+      subtitle: '',
+      category: 'engagement_gift',
+      rentalPrice: 15000,
+      description: '',
+      image: '',
+      galleryImages: ['', ''],
+      inclusionsText:
+        'Traditional carved wooden ring tray, Beaded shagun boxes, Mogra garland drops',
+      colorPalette: '#8B0000, #FFD700, #FFF8DC',
+      suggestedProps: 'Traditional carved wooden ring tray, Beaded shagun boxes',
+      setupTimeHours: 2,
+      seoTitle: '',
+      seoDescription: '',
+      isActive: true,
+    },
+    initialPageState: { activeStep: 0, mobileTab: 'form' },
+    enabled: true,
   });
+
+  // Sync state
+  useEffect(() => {
+    if (pageState.activeStep !== undefined) setCurrentStep(pageState.activeStep);
+    if (pageState.mobileTab !== undefined) setMobileTab(pageState.mobileTab);
+  }, [pageState]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -93,15 +123,6 @@ export function AdminAddShowcase() {
       fetchShowcase();
     }
   }, [id, isEditMode, navigate]);
-
-  useEffect(() => {
-    if (!isEditMode && formData.title) {
-      const timeoutId = setTimeout(() => {
-        setLastDraftSaved(new Date());
-      }, 1500);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [formData, isEditMode]);
 
   const handleAiAutofill = () => {
     if (!formData.image) {
@@ -164,12 +185,14 @@ export function AdminAddShowcase() {
     }
     if (currentStep < WIZARD_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
+      setPageState((prev) => ({ ...prev, activeStep: currentStep + 1 }));
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      setPageState((prev) => ({ ...prev, activeStep: currentStep - 1 }));
     }
   };
 
@@ -189,7 +212,6 @@ export function AdminAddShowcase() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        setLastDraftSaved(new Date());
         toast.success('Draft saved (in-memory)!', { duration: 1500 });
       }
       if (e.key === 'Escape') {
@@ -245,6 +267,7 @@ export function AdminAddShowcase() {
         : await showcaseService.create(payload);
 
       if (res.success) {
+        await deleteDraft(); // Clear draft on success
         toast.success(isEditMode ? 'Design updated!' : 'Design published!');
         navigate('/admin/events');
       }
@@ -299,13 +322,9 @@ export function AdminAddShowcase() {
 
         {/* Keyboard Shortcut Banner + Auto-save */}
         <div className="flex items-center gap-3">
-          {lastDraftSaved && !isEditMode && (
-            <div className="hidden md:flex items-center gap-1.5 text-[11px] text-[var(--admin-success)] font-semibold bg-[var(--admin-success-light)] border border-emerald-100 px-2.5 py-1.5 rounded-full">
-              <span className="material-symbols-outlined text-[12px]">cloud_done</span>
-              Draft saved{' '}
-              {lastDraftSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </div>
-          )}
+          <div className="hidden md:flex">
+            <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
+          </div>
           <div className="hidden md:flex items-center gap-2 text-[11px] text-[var(--admin-text-secondary)] font-semibold bg-[var(--admin-surface)] border border-[var(--admin-border)] px-3 py-1.5 rounded-full uppercase tracking-wider">
             <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px]">
               Alt + →
@@ -421,7 +440,10 @@ export function AdminAddShowcase() {
       <div className="flex lg:hidden bg-[var(--admin-surface-muted)] p-1 rounded-xl border border-[var(--admin-border)]/60 w-full">
         <button
           type="button"
-          onClick={() => setMobileTab('form')}
+          onClick={() => {
+            setMobileTab('form');
+            setPageState((prev) => ({ ...prev, mobileTab: 'form' }));
+          }}
           className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
             mobileTab === 'form'
               ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40'
@@ -432,7 +454,10 @@ export function AdminAddShowcase() {
         </button>
         <button
           type="button"
-          onClick={() => setMobileTab('preview')}
+          onClick={() => {
+            setMobileTab('preview');
+            setPageState((prev) => ({ ...prev, mobileTab: 'preview' }));
+          }}
           className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
             mobileTab === 'preview'
               ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40'
@@ -1128,6 +1153,16 @@ export function AdminAddShowcase() {
           </div>
         </div>
       </div>
+
+      <DraftRestoreModal
+        isOpen={showRestoreModal}
+        onRestore={restoreDraft}
+        onDiscard={discardDraft}
+        moduleName="Showcases"
+        lastSavedAt={lastSavedAt}
+      />
+
+      <UnsavedChangesGuard blocker={blocker} />
     </div>
   );
 }

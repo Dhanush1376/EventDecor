@@ -9,6 +9,13 @@ export interface IAdminAuditLog extends Document {
   statusCode: number;
   ip?: string;
   userAgent?: string;
+  // Enterprise entity tracking
+  entityType?: string; // e.g. 'Order', 'RentalOrder', 'EventBooking', 'Product'
+  entityId?: string;
+  action?: string; // e.g. 'status_update', 'refund_initiated', 'team_assigned'
+  changes?: Record<string, { previous: any; new: any }>;
+  previousValue?: any;
+  newValue?: any;
   createdAt: Date;
 }
 
@@ -22,15 +29,23 @@ const AdminAuditLogSchema = new Schema(
     statusCode: { type: Number, required: true },
     ip: { type: String },
     userAgent: { type: String },
+    // Enterprise entity tracking
+    entityType: { type: String, index: true },
+    entityId: { type: String, index: true },
+    action: { type: String, index: true },
+    changes: { type: Schema.Types.Mixed },
+    previousValue: { type: Schema.Types.Mixed },
+    newValue: { type: Schema.Types.Mixed },
   },
-  { timestamps: { createdAt: true, updatedAt: false } }
+  { timestamps: { createdAt: true, updatedAt: false } },
 );
 
 AdminAuditLogSchema.index({ actorId: 1, createdAt: -1 });
 AdminAuditLogSchema.index({ path: 1, createdAt: -1 });
+AdminAuditLogSchema.index({ entityType: 1, entityId: 1, createdAt: -1 });
 
-// TTL: Auto-cleanup audit logs after 90 days
-AdminAuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+// TTL: Auto-cleanup audit logs after 365 days (extended from 90 for compliance)
+AdminAuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 365 * 24 * 60 * 60 });
 
 const AdminAuditLog = mongoose.model<IAdminAuditLog>('AdminAuditLog', AdminAuditLogSchema);
 export default AdminAuditLog;

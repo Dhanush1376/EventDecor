@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
-import { motion } from "framer-motion";
-import { MandalaElement } from "./MandalaElement";
-import { SiriLogo } from "./SiriLogo";
+import { useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { MandalaElement } from './MandalaElement';
+import { SiriLogo } from './SiriLogo';
 
 export function SplashScreen({ onComplete }) {
   useEffect(() => {
@@ -20,7 +20,7 @@ export function SplashScreen({ onComplete }) {
       onClick={onComplete}
       onKeyDown={(e) => e.key === 'Escape' && onComplete()}
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: "blur(6px)", scale: 1.02 }}
+      exit={{ opacity: 0, filter: 'blur(6px)', scale: 1.02 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       className="fixed inset-0 z-[99999] bg-surface flex flex-col items-center justify-center overflow-hidden cursor-pointer"
     >
@@ -30,11 +30,7 @@ export function SplashScreen({ onComplete }) {
       <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-secondary-container/20 rounded-full blur-[100px] pointer-events-none mix-blend-overlay" />
 
       {/* Floating Mandalas */}
-      <MandalaElement
-        size={600}
-        duration={160}
-        className="absolute -top-32 -right-32 opacity-10"
-      />
+      <MandalaElement size={600} duration={160} className="absolute -top-32 -right-32 opacity-10" />
       <MandalaElement
         size={800}
         duration={240}
@@ -54,7 +50,7 @@ export function SplashScreen({ onComplete }) {
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1.6, opacity: 0 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeOut' }}
             className="absolute inset-0 border border-primary/30 rounded-full"
           />
           <motion.div
@@ -64,7 +60,7 @@ export function SplashScreen({ onComplete }) {
               duration: 3,
               delay: 0.8,
               repeat: Infinity,
-              ease: "easeOut",
+              ease: 'easeOut',
             }}
             className="absolute inset-0 border border-primary/20 rounded-full"
           />
@@ -73,7 +69,7 @@ export function SplashScreen({ onComplete }) {
           <motion.div
             initial={{ rotate: 0 }}
             animate={{ rotate: 360 }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
             className="absolute inset-0 border border-primary/40 rounded-full border-t-transparent border-b-transparent opacity-60"
           />
 
@@ -101,14 +97,14 @@ export function SplashScreen({ onComplete }) {
           </div>
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: "60px" }}
+            animate={{ width: '60px' }}
             transition={{ duration: 1.2, delay: 1.6, ease: [0.16, 1, 0.3, 1] }}
             className="h-px bg-primary/40 mb-4"
           />
           <motion.p
-            initial={{ opacity: 0, filter: "blur(4px)" }}
-            animate={{ opacity: 1, filter: "blur(0px)" }}
-            transition={{ duration: 1.2, delay: 2, ease: "easeOut" }}
+            initial={{ opacity: 0, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, filter: 'blur(0px)' }}
+            transition={{ duration: 1.2, delay: 2, ease: 'easeOut' }}
             className="font-label-sm text-[9px] md:text-[10px] tracking-[0.4em] uppercase text-on-surface-variant/70 italic"
           >
             Crafting Traditions with Elegance

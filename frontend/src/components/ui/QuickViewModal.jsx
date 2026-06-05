@@ -1,13 +1,11 @@
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useWishlist } from "../../context/WishlistContext";
-import { useCart } from "../../context/CartContext";
-import { useAuth } from "../../context/AuthContext";
-import { handleImageError } from "../../utils/imageUtils";
-import toast from "react-hot-toast";
-import { CloudinaryImage } from "./CloudinaryImage";
-
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useWishlist } from '../../context/WishlistContext';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import toast from 'react-hot-toast';
+import { CloudinaryImage } from './CloudinaryImage';
 
 export const QuickViewModal = ({ isOpen, onClose, product }) => {
   const modalRef = React.useRef(null);
@@ -34,18 +32,18 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
         price: product.price,
         imageSrc: product.imageSrc,
         quantity: 1,
-        variant: "Default",
+        variant: 'Default',
       });
       onClose();
-      toast.success("Added to Bag!");
+      toast.success('Added to Bag!');
     });
   };
 
   React.useEffect(() => {
     if (isOpen) {
       triggerElementRef.current = document.activeElement;
-      document.body.style.overflow = "hidden";
-      document.body.classList.add("quickview-active");
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('quickview-active');
 
       const focusableElements = modalRef.current?.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
@@ -55,12 +53,12 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
       }
 
       const handleKeyDown = (e) => {
-        if (e.key === "Escape") {
+        if (e.key === 'Escape') {
           onClose();
           return;
         }
-        
-        if (e.key === "Tab") {
+
+        if (e.key === 'Tab') {
           const focusableElements = modalRef.current?.querySelectorAll(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
           );
@@ -82,11 +80,11 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
           }
         }
       };
-      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener('keydown', handleKeyDown);
       return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        document.body.style.overflow = "";
-        document.body.classList.remove("quickview-active");
+        window.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = '';
+        document.body.classList.remove('quickview-active');
         if (triggerElementRef.current) {
           triggerElementRef.current.focus();
         }
@@ -107,7 +105,12 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-10" role="dialog" aria-modal="true" aria-labelledby="quickview-title">
+        <div
+          className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-10"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quickview-title"
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -118,10 +121,10 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
 
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, y: "100%", scale: 1 }}
+            initial={{ opacity: 0, y: '100%', scale: 1 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: "100%", scale: 1 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            exit={{ opacity: 0, y: '100%', scale: 1 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             drag="y"
             dragDirectionLock
             dragConstraints={{ top: 0, bottom: 150 }}
@@ -139,9 +142,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
               className="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 rounded-full border border-outline-variant/30 bg-surface/80 backdrop-blur-md flex items-center justify-center hover:bg-surface-container-low transition-colors cursor-pointer z-[60] shadow-sm icon-button-touch-target"
               aria-label="Close product quick view"
             >
-              <span className="material-symbols-outlined text-[20px] md:text-[24px]">
-                close
-              </span>
+              <span className="material-symbols-outlined text-[20px] md:text-[24px]">close</span>
             </button>
 
             <div className="w-full md:w-1/2 relative bg-surface-container-low overflow-hidden aspect-[4/3] md:aspect-auto h-[300px] md:h-auto shrink-0">
@@ -183,17 +184,20 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                   {product.teluguTitle || product.nameTE || product.teluguName}
                 </span>
               )}
-              <h2 id="quickview-title" className="font-headline text-[24px] md:text-headline-lg text-on-surface mb-4 md:mb-6 font-bold leading-tight">
+              <h2
+                id="quickview-title"
+                className="font-headline text-[24px] md:text-headline-lg text-on-surface mb-4 md:mb-6 font-bold leading-tight"
+              >
                 {product.title}
               </h2>
 
               <div className="flex items-baseline gap-4 mb-6 md:mb-10">
                 <span className="font-body font-bold text-[28px] md:text-[36px] text-on-surface">
-                  ₹{product.price.toLocaleString("en-IN")}
+                  ₹{product.price.toLocaleString('en-IN')}
                 </span>
                 {product.oldPrice && (
                   <span className="font-body text-on-surface-variant/30 line-through text-[18px] md:text-[20px]">
-                    ₹{product.oldPrice.toLocaleString("en-IN")}
+                    ₹{product.oldPrice.toLocaleString('en-IN')}
                   </span>
                 )}
               </div>
@@ -204,7 +208,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                 </h3>
                 <p className="font-body text-on-surface-variant/70 font-light leading-relaxed text-[15px] md:text-[17px]">
                   {product.description ||
-                    "A masterfully handcrafted piece that seamlessly blends traditional Indian artistry with contemporary design."}
+                    'A masterfully handcrafted piece that seamlessly blends traditional Indian artistry with contemporary design.'}
                 </p>
               </div>
 
@@ -213,9 +217,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                   onClick={handleAddToCart}
                   className="w-full btn-primary !py-4 md:!py-5 flex items-center justify-center gap-3 font-bold cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"
                 >
-                  <span className="material-symbols-outlined text-[20px]">
-                    shopping_bag
-                  </span>
+                  <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
                   Add to Collection
                 </button>
 
@@ -227,24 +229,22 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                     <motion.span
                       animate={{
                         scale: wishlisted ? [1, 1.3, 1] : 1,
-                        color: wishlisted ? "#ff2d55" : "inherit",
+                        color: wishlisted ? '#ff2d55' : 'inherit',
                       }}
                       whileTap={{ scale: 0.8 }}
                       transition={{
                         duration: 0.3,
-                        type: "spring",
+                        type: 'spring',
                         stiffness: 300,
                       }}
                       className="material-symbols-outlined text-[18px] md:text-[20px] transition-transform group-hover:scale-110"
                       style={{
-                        fontVariationSettings: wishlisted
-                          ? "'FILL' 1"
-                          : "'FILL' 0",
+                        fontVariationSettings: wishlisted ? "'FILL' 1" : "'FILL' 0",
                       }}
                     >
                       favorite
                     </motion.span>
-                    {wishlisted ? "Saved" : "Save"}
+                    {wishlisted ? 'Saved' : 'Save'}
                   </button>
                   <button
                     onClick={handleViewDetails}

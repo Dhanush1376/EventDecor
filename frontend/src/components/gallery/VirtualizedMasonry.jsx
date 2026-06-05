@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 /**
  * VirtualizedMasonry — high-performance masonry grid with viewport-based rendering.
- * 
+ *
  * Only renders items visible in the viewport + a configurable buffer zone,
  * making it efficient for 10k+ items. Uses CSS columns for natural masonry flow
  * with an IntersectionObserver for infinite scroll loading.
- * 
+ *
  * Features:
  * - Viewport-based rendering (only visible items + buffer)
  * - IntersectionObserver-based infinite loading
@@ -83,7 +83,7 @@ export function VirtualizedMasonry({
       {
         rootMargin: '200px 0px', // Trigger slightly earlier but not too early
         threshold: 0.1,
-      }
+      },
     );
 
     observer.observe(sentinelRef.current);
@@ -142,9 +142,18 @@ export function VirtualizedMasonry({
       {/* Loading indicator */}
       {isLoading && (
         <div className="flex items-center justify-center py-12 gap-3">
-          <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          <div
+            className="w-2 h-2 bg-primary/40 rounded-full animate-bounce"
+            style={{ animationDelay: '0ms' }}
+          />
+          <div
+            className="w-2 h-2 bg-primary/40 rounded-full animate-bounce"
+            style={{ animationDelay: '150ms' }}
+          />
+          <div
+            className="w-2 h-2 bg-primary/40 rounded-full animate-bounce"
+            style={{ animationDelay: '300ms' }}
+          />
         </div>
       )}
 

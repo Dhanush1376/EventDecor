@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SearchBar } from '../SearchBar';
@@ -58,14 +57,14 @@ describe('SearchBar Component', () => {
     });
     expect(handleChange).toHaveBeenCalledTimes(1);
     expect(handleChange).toHaveBeenCalledWith(
-      expect.objectContaining({ target: { value: 'pooja sets' } })
+      expect.objectContaining({ target: { value: 'pooja sets' } }),
     );
   });
 
   it('fires onChange immediately and clears input when the reset button is clicked', () => {
     const handleChange = vi.fn();
     render(<SearchBar value="marigold" onChange={handleChange} />);
-    
+
     const clearBtn = screen.getByLabelText('Clear search');
     expect(clearBtn).toBeInTheDocument();
 
@@ -77,9 +76,7 @@ describe('SearchBar Component', () => {
     expect(inputEl.value).toBe('');
     // Callback is immediately fired (no debounce delay needed for clearing)
     expect(handleChange).toHaveBeenCalledTimes(1);
-    expect(handleChange).toHaveBeenCalledWith(
-      expect.objectContaining({ target: { value: '' } })
-    );
+    expect(handleChange).toHaveBeenCalledWith(expect.objectContaining({ target: { value: '' } }));
   });
 
   it('synchronizes local input state with external value changes dynamically', () => {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { compressImage } from '../../utils/imageCompressor';

@@ -41,6 +41,13 @@ export interface IRentedInventory {
   notes?: string;
 }
 
+export interface IBookingStatusHistory {
+  status: string;
+  timestamp?: Date;
+  note?: string;
+  updatedBy?: string;
+}
+
 export interface IEventBooking extends Document {
   bookingId?: string;
   user: mongoose.Types.ObjectId;
@@ -49,6 +56,7 @@ export interface IEventBooking extends Document {
   eventType: string;
   date: Date;
   bookingDateStr?: string;
+  normalizedVenueAddress?: string;
   rentalDurationDays?: number;
   timing: {
     start: string;
@@ -85,22 +93,32 @@ export interface IEventBooking extends Document {
   payments?: IBookingPayment[];
   status:
     | 'draft'
+    | 'consultation_scheduled'
+    | 'quote_sent'
+    | 'contract_signed'
     | 'pending_payment'
     | 'payment_processing'
     | 'confirmed'
+    | 'design_approved'
+    | 'vendor_procurement'
+    | 'team_assigned'
+    | 'setup_in_progress'
+    | 'execution'
+    | 'completed'
+    | 'post_event_review'
     | 'cancelled'
     | 'refunded'
-    | 'failed'
-    | 'completed'
-    | 'team_assigned'
-    | 'setup_in_progress';
+    | 'failed';
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;
   assignedTeam?: IAssignedTeam[];
   rentedInventory?: IRentedInventory[];
+  statusHistory: IBookingStatusHistory[];
   adminNotes?: string;
   clientApproved: boolean;
+  idempotencyKey?: string;
+  cancellationReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -155,7 +173,7 @@ const EventBookingSchema: Schema = new Schema(
     },
     setupTiming: { type: Date },
     pickupTiming: { type: Date },
-    guestCount: { type: Number, required: true },
+    guestCount: { type: Number, required: true, min: 1, max: 10000 },
     venue: {
       address: { type: String, required: true },
       name: { type: String },
@@ -168,6 +186,7 @@ const EventBookingSchema: Schema = new Schema(
       googleMapsLink: { type: String },
       isOutdoor: { type: Boolean, default: false },
     },
+    normalizedVenueAddress: { type: String },
     customization: BookingCustomizationSchema,
     selectedAddons: [BookingAddonSchema],
     inspirationImages: [{ type: String }],
@@ -186,15 +205,22 @@ const EventBookingSchema: Schema = new Schema(
       type: String,
       enum: [
         'draft',
+        'consultation_scheduled',
+        'quote_sent',
+        'contract_signed',
         'pending_payment',
         'payment_processing',
         'confirmed',
+        'design_approved',
+        'vendor_procurement',
+        'team_assigned',
+        'setup_in_progress',
+        'execution',
+        'completed',
+        'post_event_review',
         'cancelled',
         'refunded',
         'failed',
-        'completed',
-        'team_assigned',
-        'setup_in_progress'
       ],
       default: 'draft',
     },
@@ -203,26 +229,45 @@ const EventBookingSchema: Schema = new Schema(
     razorpaySignature: { type: String },
     assignedTeam: [AssignedTeamSchema],
     rentedInventory: [RentedInventorySchema],
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+        note: { type: String },
+        updatedBy: { type: String },
+      },
+    ],
     adminNotes: { type: String },
     clientApproved: { type: Boolean, default: false },
+    idempotencyKey: { type: String, unique: true, sparse: true },
+    cancellationReason: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 EventBookingSchema.index({ user: 1 });
 EventBookingSchema.index({ date: 1 });
 EventBookingSchema.index({ status: 1 });
+EventBookingSchema.index({ razorpayOrderId: 1 }); // CRITICAL: Fixes O(N) Webhook Scan
 
 // Double Booking Prevention
 EventBookingSchema.index(
-  { bookingDateStr: 1, 'venue.address': 1 },
-  { 
-    unique: true, 
+  { bookingDateStr: 1, normalizedVenueAddress: 1 },
+  {
+    unique: true,
     name: 'unique_booking_venue_date_v2',
-    partialFilterExpression: { 
-      status: { $in: ['confirmed', 'payment_processing', 'pending_payment', 'setup_in_progress', 'team_assigned'] } 
-    }
-  }
+    partialFilterExpression: {
+      status: {
+        $in: [
+          'confirmed',
+          'payment_processing',
+          'pending_payment',
+          'setup_in_progress',
+          'team_assigned',
+        ],
+      },
+    },
+  },
 );
 
 EventBookingSchema.pre('save', function () {
@@ -230,6 +275,13 @@ EventBookingSchema.pre('save', function () {
   if (doc.isModified('date') || !doc.bookingDateStr) {
     if (doc.date) {
       doc.bookingDateStr = new Date(doc.date).toISOString().split('T')[0];
+    }
+  }
+  if (doc.isModified('venue') || !doc.normalizedVenueAddress) {
+    if (doc.venue && doc.venue.address) {
+      doc.normalizedVenueAddress = doc.venue.address.trim().toLowerCase().replace(/\s+/g, '_');
+    } else {
+      doc.normalizedVenueAddress = 'tbd';
     }
   }
 });

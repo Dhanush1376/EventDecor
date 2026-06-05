@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { fadeUp, stagger, AdminToggle, SkeletonForm } from '../components/AdminUIKit';
+import { fadeUp, AdminToggle, SkeletonForm } from '../components/AdminUIKit';
 import { getErrorMessage } from '../../utils/errorHelpers';
+import { useDraft } from '../hooks/useDraft';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 export function AdminAddCategory() {
   const { id } = useParams();
@@ -13,11 +17,28 @@ export function AdminAddCategory() {
 
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    type: 'product',
-    isActive: true,
+
+  const {
+    formData,
+    setFormData,
+    draftStatus,
+    showRestoreModal,
+    restoreDraft,
+    discardDraft,
+    deleteDraft,
+    lastSavedAt,
+    blocker,
+  } = useDraft({
+    draftKey: isEditMode ? `admin:categories:edit:${id}` : 'admin:categories:add',
+    module: 'Categories',
+    pageTitle: isEditMode ? `Edit Category ${id}` : 'New Category',
+    initialData: {
+      name: '',
+      slug: '',
+      type: 'product',
+      isActive: true,
+    },
+    enabled: true,
   });
 
   useEffect(() => {
@@ -26,7 +47,7 @@ export function AdminAddCategory() {
         try {
           const res = await api.get('/categories');
           if (res.data?.success) {
-            const cat = res.data.data.find(c => c._id === id);
+            const cat = res.data.data.find((c) => c._id === id);
             if (cat) {
               setFormData({
                 name: cat.name || '',
@@ -35,12 +56,12 @@ export function AdminAddCategory() {
                 isActive: cat.isActive !== undefined ? cat.isActive : true,
               });
             } else {
-              toast.error("Category not found");
-              navigate("/admin/categories");
+              toast.error('Category not found');
+              navigate('/admin/categories');
             }
           }
         } catch (err) {
-          toast.error("Failed to load category details");
+          toast.error('Failed to load category details');
         } finally {
           setIsLoading(false);
         }
@@ -54,9 +75,10 @@ export function AdminAddCategory() {
     setFormData((prev) => ({
       ...prev,
       name: val,
-      slug: prev.slug === prev.name.toLowerCase().replace(/[\s\W-]+/g, '-') 
-        ? val.toLowerCase().replace(/[\s\W-]+/g, '-') 
-        : prev.slug,
+      slug:
+        prev.slug === prev.name.toLowerCase().replace(/[\s\W-]+/g, '-')
+          ? val.toLowerCase().replace(/[\s\W-]+/g, '-')
+          : prev.slug,
     }));
   };
 
@@ -75,7 +97,8 @@ export function AdminAddCategory() {
         await api.post('/categories', formData);
         toast.success('Category created successfully');
       }
-      navigate("/admin/categories");
+      await deleteDraft(); // Clear draft on success
+      navigate('/admin/categories');
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to save category'));
     } finally {
@@ -96,7 +119,10 @@ export function AdminAddCategory() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate("/admin/categories")} className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm">
+          <button
+            onClick={() => navigate('/admin/categories')}
+            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm"
+          >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
           <div>
@@ -105,25 +131,25 @@ export function AdminAddCategory() {
                 {isEditMode ? 'edit_note' : 'category'}
               </span>
               {isEditMode ? 'Edit Category' : 'Create Category'}
+              <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
             </h2>
             <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
-              {isEditMode ? 'Update category properties and display scope' : 'Specify name, scope type, and publishing rules'}
+              {isEditMode
+                ? 'Update category properties and display scope'
+                : 'Specify name, scope type, and publishing rules'}
             </p>
           </div>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto">
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          animate="show"
-          className="space-y-6"
-        >
+        <motion.div variants={fadeUp} initial="hidden" animate="show" className="space-y-6">
           <div className="admin-card p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-1.5">
-                <label className="admin-label">Category Name <span className="text-error">*</span></label>
+                <label className="admin-label">
+                  Category Name <span className="text-error">*</span>
+                </label>
                 <input
                   required
                   type="text"
@@ -135,19 +161,28 @@ export function AdminAddCategory() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="admin-label">Slug / URL Path <span className="text-error">*</span></label>
+                <label className="admin-label">
+                  Slug / URL Path <span className="text-error">*</span>
+                </label>
                 <input
                   required
                   type="text"
                   placeholder="e.g. traditional-mandaps"
                   value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[\s\W-]+/g, '-') })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      slug: e.target.value.toLowerCase().replace(/[\s\W-]+/g, '-'),
+                    })
+                  }
                   className="admin-input font-mono"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="admin-label">Category Scope Type <span className="text-error">*</span></label>
+                <label className="admin-label">
+                  Category Scope Type <span className="text-error">*</span>
+                </label>
                 <select
                   className="admin-select"
                   value={formData.type}
@@ -172,7 +207,7 @@ export function AdminAddCategory() {
               <div className="flex gap-3 pt-6 border-t border-[var(--admin-border-subtle)] mt-8">
                 <button
                   type="button"
-                  onClick={() => navigate("/admin/categories")}
+                  onClick={() => navigate('/admin/categories')}
                   className="admin-btn admin-btn-outline flex-1 py-3"
                 >
                   Cancel
@@ -189,6 +224,16 @@ export function AdminAddCategory() {
           </div>
         </motion.div>
       </div>
+
+      <DraftRestoreModal
+        isOpen={showRestoreModal}
+        onRestore={restoreDraft}
+        onDiscard={discardDraft}
+        moduleName="Categories"
+        lastSavedAt={lastSavedAt}
+      />
+
+      <UnsavedChangesGuard blocker={blocker} />
     </div>
   );
 }

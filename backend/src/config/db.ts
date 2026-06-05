@@ -2,6 +2,30 @@ import mongoose from 'mongoose';
 import os from 'os';
 import logger from './logger';
 
+// Enforce global maxTimeMS to prevent runaway database queries
+mongoose.plugin((schema) => {
+  const defaultTimeout = 15000; // 15 seconds for regular queries
+  const aggTimeout = 30000; // 30 seconds for aggregations
+
+  schema.pre('find', function () {
+    if (!(this as any).options.maxTimeMS) (this as any).maxTimeMS(defaultTimeout);
+  });
+  schema.pre('findOne', function () {
+    if (!(this as any).options.maxTimeMS) (this as any).maxTimeMS(defaultTimeout);
+  });
+  schema.pre('findOneAndUpdate', function () {
+    if (!(this as any).options.maxTimeMS) (this as any).maxTimeMS(defaultTimeout);
+  });
+  schema.pre('countDocuments', function () {
+    if (!(this as any).options.maxTimeMS) (this as any).maxTimeMS(defaultTimeout);
+  });
+  schema.pre('aggregate', function () {
+    // Add maxTimeMS to aggregation pipeline options
+    const options = (this as any).options;
+    if (!options.maxTimeMS) options.maxTimeMS = aggTimeout;
+  });
+});
+
 export interface DbMetrics {
   readyState: number;
   readyStateName: string;
@@ -19,7 +43,7 @@ class DatabaseManager {
   private cachedConnectionPromise: Promise<typeof mongoose> | null = null;
   private healthCheckInterval: NodeJS.Timeout | null = null;
   private isReconnecting = false;
-  
+
   // Metrics tracking
   private lastPingSuccess: boolean | null = null;
   private lastPingTime: Date | null = null;
@@ -74,18 +98,25 @@ class DatabaseManager {
     const calculatedMax = Math.max(10, Math.floor(TOTAL_BUDGET / instances));
     const calculatedMin = Math.max(2, Math.floor(calculatedMax / 5));
 
-    logger.info(`[DATABASE] Dynamic connection pool: ${instances} instances detected. Configured maxPoolSize=${calculatedMax}, minPoolSize=${calculatedMin}`);
+    logger.info(
+      `[DATABASE] Dynamic connection pool: ${instances} instances detected. Configured maxPoolSize=${calculatedMax}, minPoolSize=${calculatedMin}`,
+    );
 
     return { maxPoolSize: calculatedMax, minPoolSize: calculatedMin };
   }
 
   public getReadyStateName(): string {
     switch (mongoose.connection.readyState) {
-      case 0: return 'disconnected';
-      case 1: return 'connected';
-      case 2: return 'connecting';
-      case 3: return 'disconnecting';
-      default: return 'unknown';
+      case 0:
+        return 'disconnected';
+      case 1:
+        return 'connected';
+      case 2:
+        return 'connecting';
+      case 3:
+        return 'disconnecting';
+      default:
+        return 'unknown';
     }
   }
 
@@ -119,6 +150,18 @@ class DatabaseManager {
       }
     }
 
+    // Environment Protection: reject production Atlas URIs in local development
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      MONGO_URI.includes('mongodb.net') &&
+      process.env.ALLOW_PROD_DB_LOCAL?.trim() !== 'true'
+    ) {
+      logger.error(
+        '[DATABASE] CRITICAL: Accessing Atlas Production cluster from local development is forbidden. Set ALLOW_PROD_DB_LOCAL=true to override.',
+      );
+      process.exit(1);
+    }
+
     // Reuse existing connection if ready
     if (mongoose.connection.readyState === 1) {
       logger.info('🟢 [DATABASE] Reusing established MongoDB connection singleton');
@@ -127,7 +170,9 @@ class DatabaseManager {
 
     // Await existing connection attempt if currently connecting
     if (mongoose.connection.readyState === 2 && this.cachedConnectionPromise) {
-      logger.info('🟡 [DATABASE] MongoDB connection already in progress, awaiting existing promise...');
+      logger.info(
+        '🟡 [DATABASE] MongoDB connection already in progress, awaiting existing promise...',
+      );
       return this.cachedConnectionPromise;
     }
 
@@ -139,14 +184,14 @@ class DatabaseManager {
       autoIndex: process.env.NODE_ENV !== 'production',
       maxPoolSize: this.maxPoolSize,
       minPoolSize: this.minPoolSize,
-      serverSelectionTimeoutMS: 5000,   // Fail fast if database is unreachable
-      socketTimeoutMS: 30000,           // Clean up hung sockets after 30s
-      heartbeatFrequencyMS: 10000,      // Perform keep-alive check every 10s
-      maxIdleTimeMS: 30000,             // Release idle sockets after 30s to conserve database resources
-      waitQueueTimeoutMS: 10000,        // How long to wait for connection pool slot before failing
-      family: 4,                        // Force IPv4 DNS resolution
-      bufferCommands: false,            // Disable buffering to fail-fast during transient database issues
-      compressors: ['zstd', 'snappy'],  // Enable wire protocol network compression
+      serverSelectionTimeoutMS: 5000, // Fail fast if database is unreachable
+      socketTimeoutMS: 30000, // Clean up hung sockets after 30s
+      heartbeatFrequencyMS: 10000, // Perform keep-alive check every 10s
+      maxIdleTimeMS: 30000, // Release idle sockets after 30s to conserve database resources
+      waitQueueTimeoutMS: 10000, // How long to wait for connection pool slot before failing
+      family: 4, // Force IPv4 DNS resolution
+      bufferCommands: false, // Disable buffering to fail-fast during transient database issues
+      compressors: ['zstd', 'snappy'], // Enable wire protocol network compression
       retryReads: true,
       retryWrites: true,
       serverApi: { version: '1' as const, strict: false, deprecationErrors: true },
@@ -157,7 +202,7 @@ class DatabaseManager {
       mongoose.connection.on('connected', () => {
         logger.info('🟢 [DATABASE] MongoDB connection established');
         this.reconnectAttempts = 0; // Reset reconnect count on successful connection
-        this.startHealthCheck();    // Start monitoring health pings
+        this.startHealthCheck(); // Start monitoring health pings
       });
 
       mongoose.connection.on('error', (err) => {
@@ -190,10 +235,12 @@ class DatabaseManager {
         return conn;
       } catch (err: any) {
         logger.error(`❌ [DATABASE] MongoDB connection attempt ${attempt} failed: ${err.message}`);
-        
+
         if (attempt === maxRetries) {
           this.cachedConnectionPromise = null; // Reset cached promise on final failure to allow retry triggers later
-          throw new Error(`Failed to connect to MongoDB after ${maxRetries} attempts.`);
+          throw new Error(`Failed to connect to MongoDB after ${maxRetries} attempts.`, {
+            cause: err,
+          });
         }
 
         // Exponential backoff with jitter (up to 15s) to prevent thundering herd
@@ -221,7 +268,7 @@ class DatabaseManager {
    */
   private startHealthCheck() {
     this.stopHealthCheck();
-    
+
     // Check every 30 seconds
     const intervalMs = 30000;
     this.healthCheckInterval = setInterval(async () => {
@@ -249,14 +296,19 @@ class DatabaseManager {
         this.lastPingTime = new Date();
         this.pingDurationMs = null;
         this.totalFailedPings++;
-        
-        logger.warn('[DATABASE] Health check failed: No active connection. Triggering self-healing...');
+
+        logger.warn(
+          '[DATABASE] Health check failed: No active connection. Triggering self-healing...',
+        );
         this.triggerSelfHealing();
         return false;
       }
 
       const admin = mongoose.connection.db.admin();
-      const result = await admin.ping();
+      const result = await Promise.race([
+        admin.ping(),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Ping timeout')), 3000)),
+      ]);
       const isOk = result && result.ok === 1;
 
       this.pingDurationMs = Math.round(performance.now() - startTime);
@@ -265,7 +317,9 @@ class DatabaseManager {
 
       if (!isOk) {
         this.totalFailedPings++;
-        logger.warn('[DATABASE] Health check ping returned unhealthy status. Triggering self-healing...');
+        logger.warn(
+          '[DATABASE] Health check ping returned unhealthy status. Triggering self-healing...',
+        );
         this.triggerSelfHealing();
         return false;
       }
@@ -295,8 +349,10 @@ class DatabaseManager {
     if (mongoose.connection.readyState === 0) {
       this.isReconnecting = true;
       this.reconnectAttempts++;
-      logger.info(`[DATABASE] Self-healing: Connection is disconnected. Attempting to reconnect (Attempt ${this.reconnectAttempts})...`);
-      
+      logger.info(
+        `[DATABASE] Self-healing: Connection is disconnected. Attempting to reconnect (Attempt ${this.reconnectAttempts})...`,
+      );
+
       this.cachedConnectionPromise = null;
       this.connect()
         .then(() => {
@@ -304,7 +360,9 @@ class DatabaseManager {
         })
         .catch((err) => {
           this.isReconnecting = false;
-          logger.error(`[DATABASE] Self-healing reconnect attempt ${this.reconnectAttempts} failed: ${err.message}`);
+          logger.error(
+            `[DATABASE] Self-healing reconnect attempt ${this.reconnectAttempts} failed: ${err.message}`,
+          );
         });
     }
   }

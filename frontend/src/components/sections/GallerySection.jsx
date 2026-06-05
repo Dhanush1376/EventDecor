@@ -1,13 +1,13 @@
-import React, { useRef, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { SectionWrapper } from "../layout/SectionWrapper";
-import { MandalaElement } from "../ui/MandalaElement";
-import { MandalaArtDecor } from "../ui/MandalaArtDecor";
-import { useWebsiteContent } from "../../hooks/useWebsiteContent";
-import { galleryService } from "../../services/domainServices";
-import { CloudinaryImage } from "../ui/CloudinaryImage";
-import { GallerySkeleton } from "../ui/Skeleton";
+import { useRef, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { SectionWrapper } from '../layout/SectionWrapper';
+import { MandalaElement } from '../ui/MandalaElement';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
+import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import { galleryService } from '../../services/domainServices';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
+import { GallerySkeleton } from '../ui/Skeleton';
 
 import logger from '../../utils/logger';
 export function GallerySection() {
@@ -26,7 +26,7 @@ export function GallerySection() {
           setRawGalleryItems(res.data.data || []);
         }
       } catch (err) {
-        logger.error("Failed to fetch gallery preview", err);
+        logger.error('Failed to fetch gallery preview', err);
       } finally {
         setLoading(false);
       }
@@ -37,17 +37,21 @@ export function GallerySection() {
   useEffect(() => {
     if (rawGalleryItems.length > 0) {
       if (galleryPreview?.galleryIds && galleryPreview.galleryIds.length > 0) {
-         const filtered = rawGalleryItems.filter(item => galleryPreview.galleryIds.includes(item._id));
-         setGalleryItems(filtered.length > 0 ? filtered : rawGalleryItems.slice(0, galleryPreview.maxDisplay || 6));
+        const filtered = rawGalleryItems.filter((item) =>
+          galleryPreview.galleryIds.includes(item._id),
+        );
+        setGalleryItems(
+          filtered.length > 0 ? filtered : rawGalleryItems.slice(0, galleryPreview.maxDisplay || 6),
+        );
       } else {
-         setGalleryItems(rawGalleryItems.slice(0, galleryPreview?.maxDisplay || 6));
+        setGalleryItems(rawGalleryItems.slice(0, galleryPreview?.maxDisplay || 6));
       }
     }
   }, [rawGalleryItems, galleryPreview]);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start end", "end start"],
+    offset: ['start end', 'end start'],
   });
 
   const headerY = useTransform(scrollYProgress, [0, 0.5], [50, 0]);
@@ -87,10 +91,7 @@ export function GallerySection() {
         spinDuration={190}
       />
 
-      <motion.div
-        style={{ y: headerY }}
-        className="text-center mb-14 md:mb-22 relative z-10"
-      >
+      <motion.div style={{ y: headerY }} className="text-center mb-14 md:mb-22 relative z-10">
         <span className="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 mb-5.5">
           <span className="font-label-sm text-[9px] text-primary uppercase tracking-[0.4em] font-bold">
             {galleryPreview.sectionSubtitle}
@@ -104,66 +105,63 @@ export function GallerySection() {
       {/* Cinematic Pinterest-style Layout */}
       <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-5.5 space-y-3 md:space-y-5.5 relative z-10 px-0 md:px-4">
         {galleryItems.map((item, idx) => (
-            <motion.div
-              key={item._id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{
-                type: "spring",
-                stiffness: 75,
-                damping: 16,
-                delay: idx * 0.08,
-              }}
-              className={`break-inside-avoid relative rounded-[22px] md:rounded-[28px] overflow-hidden shadow-ambient border border-black/5 group cursor-pointer hover-lift-glow ${
-                (!item.height || item.height === "aspect-square")
-                  ? (idx % 4 === 0
-                    ? "aspect-[2/3]"
-                    : idx % 4 === 1
-                      ? "aspect-square"
-                      : idx % 4 === 2
-                        ? "aspect-[4/5]"
-                        : "aspect-[3/4]")
-                  : item.height
-              }`}
-            >
-              <Link to={`/gallery/${item._id || item.id}`}>
-                <CloudinaryImage
-                  src={item.image}
-                  alt={item.title}
-                  className="transition-transform duration-[2s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.1]"
-                  containerClassName="w-full h-full"
-                  loading="lazy"
-                  width={400}
-                  height={600}
-                />
+          <motion.div
+            key={item._id}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{
+              type: 'spring',
+              stiffness: 75,
+              damping: 16,
+              delay: idx * 0.08,
+            }}
+            className={`break-inside-avoid relative rounded-[22px] md:rounded-[28px] overflow-hidden shadow-ambient border border-black/5 group cursor-pointer hover-lift-glow ${
+              !item.height || item.height === 'aspect-square'
+                ? idx % 4 === 0
+                  ? 'aspect-[2/3]'
+                  : idx % 4 === 1
+                    ? 'aspect-square'
+                    : idx % 4 === 2
+                      ? 'aspect-[4/5]'
+                      : 'aspect-[3/4]'
+                : item.height
+            }`}
+          >
+            <Link to={`/gallery/${item._id || item.id}`}>
+              <CloudinaryImage
+                src={item.image}
+                alt={item.title}
+                className="transition-transform duration-[2s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.1]"
+                containerClassName="w-full h-full"
+                loading="lazy"
+                width={400}
+                height={600}
+              />
 
-                {/* Elegant Hover Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-700 ease-out" />
+              {/* Elegant Hover Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-700 ease-out" />
 
-                <div className="absolute inset-0 p-3 md:p-5.5 flex flex-col justify-end items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-700 delay-100 text-center">
-                  <span className="font-display text-white text-[15px] md:text-xl transform translate-y-0 md:translate-y-3.5 md:group-hover:translate-y-0 transition-transform duration-700">
-                    {item.title}
-                  </span>
-                  <span className="font-label-sm text-white/90 md:text-white/70 text-[7px] md:text-[8px] uppercase tracking-widest mt-1.5 md:mt-2 transform translate-y-0 md:translate-y-3.5 md:group-hover:translate-y-0 transition-transform duration-700 delay-75 flex items-center gap-1 md:gap-2">
-                    View Details{" "}
-                    <span className="material-symbols-outlined text-[13px]">
-                      open_in_new
-                    </span>
-                  </span>
-                </div>
-              </Link>
-            </motion.div>
-          ))
-        }
+              <div className="absolute inset-0 p-3 md:p-5.5 flex flex-col justify-end items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-700 delay-100 text-center">
+                <span className="font-display text-white text-[15px] md:text-xl transform translate-y-0 md:translate-y-3.5 md:group-hover:translate-y-0 transition-transform duration-700">
+                  {item.title}
+                </span>
+                <span className="font-label-sm text-white/90 md:text-white/70 text-[7px] md:text-[8px] uppercase tracking-widest mt-1.5 md:mt-2 transform translate-y-0 md:translate-y-3.5 md:group-hover:translate-y-0 transition-transform duration-700 delay-75 flex items-center gap-1 md:gap-2">
+                  View Details{' '}
+                  <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                </span>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
 
         {/* Cinematic View All CTA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, margin: '-50px' }}
           transition={{
-            type: "spring",
+            type: 'spring',
             stiffness: 75,
             damping: 16,
             delay: galleryItems.length * 0.08,
@@ -184,7 +182,7 @@ export function GallerySection() {
             </div>
             <h3 className="font-display text-[22px] mb-2">Explore Gallery</h3>
             <span className="font-label-sm text-[9px] uppercase tracking-[0.3em] font-bold flex items-center gap-2">
-              View All{" "}
+              View All{' '}
               <span className="material-symbols-outlined text-[13px] group-hover:translate-x-1 transition-transform">
                 arrow_forward
               </span>

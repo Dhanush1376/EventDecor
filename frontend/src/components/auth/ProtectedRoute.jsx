@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { RouteSkeleton } from "../ui/RouteSkeleton";
+import { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { RouteSkeleton } from '../ui/RouteSkeleton';
 
 export function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading, isAuthenticated, isAuthInitialized, openAuthModal } = useAuth();
@@ -22,8 +22,20 @@ export function ProtectedRoute({ children, adminOnly = false }) {
     return <Navigate to={loginPath} replace />;
   }
 
-  const allowedAdminRoles = ['owner', 'super_admin', 'main_admin', 'moderator', 'support_admin', 'support', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
-  
+  const allowedAdminRoles = [
+    'owner',
+    'super_admin',
+    'main_admin',
+    'moderator',
+    'support_admin',
+    'support',
+    'order_manager',
+    'content_manager',
+    'admin',
+    'manager',
+    'coordinator',
+  ];
+
   if (adminOnly && !allowedAdminRoles.includes(user?.role)) {
     return <Navigate to="/" replace />;
   }

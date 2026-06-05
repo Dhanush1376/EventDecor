@@ -1,6 +1,5 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { handleImageError } from "../../utils/imageUtils";
+import { motion } from 'framer-motion';
+import { handleImageError } from '../../utils/imageUtils';
 
 export function PromoBanner({
   backgroundImage,
@@ -12,7 +11,7 @@ export function PromoBanner({
   ctaText,
   onCtaClick,
   timer = null,
-  className = "",
+  className = '',
 }) {
   return (
     <section
@@ -29,7 +28,7 @@ export function PromoBanner({
           <motion.img
             initial={{ scale: 1.1 }}
             whileHover={{ scale: 1.05 }}
-            transition={{ duration: 10, ease: "linear" }}
+            transition={{ duration: 10, ease: 'linear' }}
             onError={handleImageError}
             src={backgroundImage}
             className="w-full h-full object-cover opacity-45 select-none pointer-events-none"
@@ -49,8 +48,10 @@ export function PromoBanner({
 
           <div className="flex flex-row items-center gap-2 sm:gap-4 min-w-0">
             <h3 className="font-display text-[9.5px] xs:text-[11px] sm:text-[16px] md:text-[18px] lg:text-[22px] text-white font-medium leading-none truncate">
-              {title}{" "}
-              <span className="text-gold italic ml-0.5 sm:ml-1 whitespace-nowrap">{highlightText}</span>
+              {title}{' '}
+              <span className="text-gold italic ml-0.5 sm:ml-1 whitespace-nowrap">
+                {highlightText}
+              </span>
             </h3>
             {statusText && (
               <span className="hidden sm:inline-flex text-white/40 font-label-sm text-[10px] uppercase tracking-[0.2em] flex items-center gap-1.5 font-bold whitespace-nowrap">

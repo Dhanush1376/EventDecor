@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function FAQAccordion({ faqs, title = "Frequently Asked Questions" }) {
+export function FAQAccordion({ faqs, title = 'Frequently Asked Questions' }) {
   const [activeIndex, setActiveIndex] = useState(null);
 
   if (!faqs || faqs.length === 0) return null;
@@ -18,12 +18,12 @@ export function FAQAccordion({ faqs, title = "Frequently Asked Questions" }) {
           {title}
         </h2>
       )}
-      
+
       <div className="space-y-4">
         {faqs.map((faq, index) => {
           const isActive = activeIndex === index;
           return (
-            <div 
+            <div
               key={index}
               className="bg-surface/60 backdrop-blur-md border border-outline-variant/30 rounded-2xl overflow-hidden transition-colors hover:bg-surface/80"
             >
@@ -34,18 +34,18 @@ export function FAQAccordion({ faqs, title = "Frequently Asked Questions" }) {
                 aria-expanded={isActive}
               >
                 <span className="font-medium text-left text-on-surface pr-4">{faq.question}</span>
-                <ChevronDown 
+                <ChevronDown
                   className={`w-5 h-5 text-primary shrink-0 transition-transform duration-300 ${isActive ? 'rotate-180' : ''}`}
                 />
               </button>
-              
+
               <AnimatePresence initial={false}>
                 {isActive && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
                   >
                     <div className="px-6 pb-5 pt-0 text-on-surface-variant leading-relaxed">
                       {faq.answer}

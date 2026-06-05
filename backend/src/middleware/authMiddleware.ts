@@ -15,6 +15,7 @@ import {
   sessionKeys,
   coalesceRequest,
 } from '../utils/userSessionCache';
+import { isTokenBlacklisted } from '../utils/jwtBlacklist';
 
 interface JwtPayload {
   id: string;
@@ -56,7 +57,9 @@ const verifyTokenWithRotation = (token: string): JwtPayload => {
     // Start with the last known good secret index to optimize verification speed
     const currentIndex = (activeSecretIndex + i) % numSecrets;
     try {
-      const payload = jwt.verify(token, jwtSecrets[currentIndex]) as JwtPayload;
+      const payload = jwt.verify(token, jwtSecrets[currentIndex], {
+        algorithms: ['HS256'],
+      }) as JwtPayload;
       // On success, cache this index as the active secret
       activeSecretIndex = currentIndex;
       return payload;
@@ -134,6 +137,10 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     throw new ApiError(401, 'Not authorized to access this route');
   }
 
+  if (await isTokenBlacklisted(token)) {
+    throw new ApiError(401, 'Token has been revoked. Please log in again.');
+  }
+
   if (jwtSecrets.length === 0) {
     throw new ApiError(500, 'Server authentication configuration error');
   }
@@ -150,7 +157,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
       user = await coalesceRequest(`mongo:profile:${decoded.id}`, async () => {
         // Promise.race to enforce a strict timeout (10 seconds) if MongoDB is hanging
         const mongoQuery = User.findById(decoded.id)
-          .select('role email isVerified passwordChangedAt')
+          .select('role email isVerified passwordChangedAt isLocked')
           .lean()
           .exec();
         const timeout = new Promise((_, reject) =>
@@ -176,6 +183,11 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     if (!user || !user.isVerified) {
       logger.warn(`requireAuth failed: User not found or not verified for ID ${decoded.id}`);
       throw new ApiError(401, 'Not authorized to access this route');
+    }
+
+    if (user.isLocked) {
+      logger.warn(`requireAuth failed: User account is locked for ID ${decoded.id}`);
+      throw new ApiError(403, 'Account is locked. Please contact support.');
     }
 
     if (
@@ -213,6 +225,10 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
       throw new ApiError(503, 'Authentication service temporarily unavailable');
     }
 
+    if (err.name === 'TokenExpiredError') {
+      throw new ApiError(401, 'Token expired. Please log in again.');
+    }
+
     throw new ApiError(401, 'Not authorized to access this route');
   }
 });
@@ -224,6 +240,8 @@ export const optionalAuth = asyncHandler(
       token = req.headers.authorization.split(' ')[1];
     }
     if (!token) return next();
+
+    if (await isTokenBlacklisted(token)) return next();
 
     if (jwtSecrets.length === 0) return next();
 
@@ -238,7 +256,7 @@ export const optionalAuth = asyncHandler(
         // Coalesce concurrent requests for the same user profile (Cache Stampede mitigation)
         user = await coalesceRequest(`mongo:profile:${decoded.id}`, async () => {
           const mongoQuery = User.findById(decoded.id)
-            .select('role email isVerified passwordChangedAt')
+            .select('role email isVerified passwordChangedAt isLocked')
             .lean()
             .exec();
           const timeout = new Promise((_, reject) =>
@@ -259,7 +277,7 @@ export const optionalAuth = asyncHandler(
         }
       }
 
-      if (user && user.isVerified) {
+      if (user && user.isVerified && !user.isLocked) {
         if (
           !(
             user.passwordChangedAt &&

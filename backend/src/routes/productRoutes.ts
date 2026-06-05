@@ -1,31 +1,33 @@
 import { Router } from 'express';
-import { 
-  getProducts, 
-  getProductById, 
-  createProduct, 
-  updateProduct, 
-  deleteProduct, 
+import {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
   toggleFeatured,
   getCategories,
-  aiAutofillProduct
+  aiAutofillProduct,
+  refineAiProduct,
 } from '../controllers/productController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
-import { productValidator } from '../validators/productValidator';
-import { validate } from '../middleware/validateMiddleware';
+import { createProductSchema, updateProductSchema } from '../validators/productValidator';
+import { validate } from '../middleware/validate';
 import { cacheResponse } from '../middleware/cacheMiddleware';
-import { redisResponseCache } from '../middleware/redisResponseCache';
+import { dynamicResponseCache } from '../middleware/dynamicCacheMiddleware';
 
 const router = Router();
 
-router.get('/', redisResponseCache(120), cacheResponse(120), getProducts);
-router.get('/categories', redisResponseCache(300), cacheResponse(300), getCategories);
-router.get('/:id', redisResponseCache(120), cacheResponse(120), getProductById);
+router.get('/', dynamicResponseCache(120, 'public'), cacheResponse(120), getProducts);
+router.get('/categories', dynamicResponseCache(300, 'public'), cacheResponse(300), getCategories);
+router.get('/:id', dynamicResponseCache(120, 'public'), cacheResponse(120), getProductById);
 
 // Protected Admin Routes
-router.post('/', requireAuth, requireAdmin, productValidator, validate, createProduct);
-router.put('/:id', requireAuth, requireAdmin, productValidator, validate, updateProduct);
+router.post('/', requireAuth, requireAdmin, validate(createProductSchema), createProduct);
+router.put('/:id', requireAuth, requireAdmin, validate(updateProductSchema), updateProduct);
 router.delete('/:id', requireAuth, requireAdmin, deleteProduct);
 router.patch('/:id/toggle-featured', requireAuth, requireAdmin, toggleFeatured);
 router.post('/ai-autofill', requireAuth, requireAdmin, aiAutofillProduct);
+router.post('/ai-refine', requireAuth, requireAdmin, refineAiProduct);
 
 export default router;

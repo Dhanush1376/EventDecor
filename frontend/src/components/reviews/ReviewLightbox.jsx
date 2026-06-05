@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { OptimizedImage } from "../ui/OptimizedImage";
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { OptimizedImage } from '../ui/OptimizedImage';
 
 export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(activeIndex);
@@ -59,7 +59,7 @@ export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose })
             transition={{ duration: 0.25 }}
             className="w-full h-full flex items-center justify-center relative"
           >
-            {currentItem.type === "video" ? (
+            {currentItem.type === 'video' ? (
               <div className="relative w-full h-full flex items-center justify-center bg-black">
                 <video
                   src={currentItem.url}
@@ -74,9 +74,9 @@ export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose })
                   className="absolute bottom-6 right-6 z-30 px-4 py-2 bg-black/70 hover:bg-black text-white text-xs rounded-full border border-white/20 flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-md font-bold"
                 >
                   <span className="material-symbols-outlined text-sm">
-                    {isMuted ? "volume_off" : "volume_up"}
+                    {isMuted ? 'volume_off' : 'volume_up'}
                   </span>
-                  {isMuted ? "Unmute Audio" : "Mute"}
+                  {isMuted ? 'Unmute Audio' : 'Mute'}
                 </button>
               </div>
             ) : (
@@ -128,17 +128,26 @@ export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose })
           {media.map((itm, i) => (
             <div
               key={i}
-              onClick={(e) => { e.stopPropagation(); setCurrentIndex(i); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentIndex(i);
+              }}
               className={`w-14 h-14 rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
-                currentIndex === i ? "border-[#D4AF37] scale-110 shadow-lg ring-2 ring-[var(--color-gold-dark)]" : "border-white/20 opacity-50 hover:opacity-100"
+                currentIndex === i
+                  ? 'border-[#D4AF37] scale-110 shadow-lg ring-2 ring-[var(--color-gold-dark)]'
+                  : 'border-white/20 opacity-50 hover:opacity-100'
               }`}
             >
-              {itm.type === "video" ? (
+              {itm.type === 'video' ? (
                 <div className="w-full h-full bg-[var(--color-gold-dark)] flex items-center justify-center text-white text-[10px] font-bold">
                   VID
                 </div>
               ) : (
-                <OptimizedImage src={itm.url || itm} className="w-full h-full object-cover" alt="Thumb" />
+                <OptimizedImage
+                  src={itm.url || itm}
+                  className="w-full h-full object-cover"
+                  alt="Thumb"
+                />
               )}
             </div>
           ))}

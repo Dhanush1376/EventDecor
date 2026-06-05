@@ -25,11 +25,17 @@ export const uploadImages = asyncHandler(async (req: Request, res: Response) => 
   if (req.files && (req.files as Express.Multer.File[]).length > 0) {
     const files = req.files as Express.Multer.File[];
     for (const file of files) {
+      const cloudinaryUrl = (file as any).secure_url || file.path;
+      if ((file as any).cloudinaryUploaded && cloudinaryUrl) {
+        urls.push(cloudinaryUrl);
+        continue;
+      }
+
       const response = await uploadOnCloudinary(file.path);
       if (response) {
         urls.push(response.secure_url);
       }
-      if (fs.existsSync(file.path)) {
+      if (file.path && fs.existsSync(file.path)) {
         fs.unlinkSync(file.path);
       }
     }

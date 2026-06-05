@@ -1,15 +1,7 @@
-import React, { useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAdmin } from "../context/AdminContext";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAdmin } from '../context/AdminContext';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   PageHeader,
   StatCard,
@@ -19,13 +11,15 @@ import {
   fadeUp,
   stagger,
   SkeletonDashboard,
-} from "../components/AdminUIKit";
+} from '../components/AdminUIKit';
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] shadow-[var(--admin-shadow-lg)] border border-[var(--admin-border-subtle)] px-4 py-3">
-      <p className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">{label}</p>
+      <p className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+        {label}
+      </p>
       <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">
         {formatCurrency(payload[0].value)}
       </p>
@@ -54,8 +48,21 @@ export function AdminPayments() {
 
     // Initialize month labels dynamically based on past 6 months to avoid hardcoding
     const monthlyMap = {};
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
     const currentMonthIndex = new Date().getMonth();
     for (let i = 5; i >= 0; i--) {
       const idx = (currentMonthIndex - i + 12) % 12;
@@ -70,9 +77,9 @@ export function AdminPayments() {
       const orderDate = o.date ? new Date(o.date) : new Date();
       const monthLabel = monthNames[orderDate.getMonth()];
 
-      if (o.payment === "Paid") {
+      if (o.payment === 'Paid') {
         totalCollected += amount;
-        
+
         // Add to monthly aggregates
         if (monthlyMap[monthLabel] !== undefined) {
           monthlyMap[monthLabel] += amount;
@@ -84,7 +91,7 @@ export function AdminPayments() {
         if (monthLabel === currentMonthName) {
           thisMonth += amount;
         }
-      } else if (o.status === "Cancelled") {
+      } else if (o.status === 'Cancelled') {
         refunded += amount;
       } else {
         pending += amount;
@@ -98,30 +105,34 @@ export function AdminPayments() {
     }));
 
     // Create a transaction record list directly linked to storefront checkouts
-    let transactions = orders.map((o) => {
-      const orderNum = o.id && o.id.length > 8 ? o.id.slice(-6).toUpperCase() : o.id;
-      const paymentMethod = o.rawOrder?.paymentMethod || (o.payment === "COD" ? "COD" : "UPI");
-      const statusLabel = o.payment === "Paid" ? "Completed" : o.status === "Cancelled" ? "Refunded" : "Pending";
+    let transactions = orders
+      .map((o) => {
+        const orderNum = o.id && o.id.length > 8 ? o.id.slice(-6).toUpperCase() : o.id;
+        const paymentMethod = o.rawOrder?.paymentMethod || (o.payment === 'COD' ? 'COD' : 'UPI');
+        const statusLabel =
+          o.payment === 'Paid' ? 'Completed' : o.status === 'Cancelled' ? 'Refunded' : 'Pending';
 
-      return {
-        id: `TXN-${o.rawOrder?.paymentInfo?.razorpayPaymentId?.slice(-8).toUpperCase() || o.id.slice(-8).toUpperCase()}`,
-        order: `ORD-${orderNum}`,
-        customer: o.customer || "Anonymous Buyer",
-        amount: o.total || 0,
-        method: paymentMethod,
-        status: statusLabel,
-        date: o.date || new Date().toISOString().split("T")[0],
-      };
-    }).sort((a, b) => new Date(b.date) - new Date(a.date));
+        return {
+          id: `TXN-${o.rawOrder?.paymentInfo?.razorpayPaymentId?.slice(-8).toUpperCase() || o.id.slice(-8).toUpperCase()}`,
+          order: `ORD-${orderNum}`,
+          customer: o.customer || 'Anonymous Buyer',
+          amount: o.total || 0,
+          method: paymentMethod,
+          status: statusLabel,
+          date: o.date || new Date().toISOString().split('T')[0],
+        };
+      })
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      transactions = transactions.filter(t => 
-        (t.id || "").toLowerCase().includes(q) ||
-        (t.order || "").toLowerCase().includes(q) ||
-        (t.customer || "").toLowerCase().includes(q) ||
-        (t.method || "").toLowerCase().includes(q) ||
-        (t.status || "").toLowerCase().includes(q)
+      transactions = transactions.filter(
+        (t) =>
+          (t.id || '').toLowerCase().includes(q) ||
+          (t.order || '').toLowerCase().includes(q) ||
+          (t.customer || '').toLowerCase().includes(q) ||
+          (t.method || '').toLowerCase().includes(q) ||
+          (t.status || '').toLowerCase().includes(q),
       );
     }
 
@@ -136,17 +147,8 @@ export function AdminPayments() {
   }, [orders, searchQuery]);
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={stagger}
-      className="space-y-6"
-    >
-      <PageHeader
-        title="Payments"
-        subtitle="Track payments and sales revenue"
-        mobileRow={true}
-      >
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
+      <PageHeader title="Payments" subtitle="Track payments and sales revenue" mobileRow={true}>
         <button className="admin-btn admin-btn-ghost" title="Export Report">
           <span className="material-symbols-outlined text-[20px]">download</span>
         </button>
@@ -193,7 +195,10 @@ export function AdminPayments() {
           <ChartCard title="Monthly Collections (Sales Vol.)">
             <div className="h-[280px] w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={metrics.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <BarChart
+                  data={metrics.chartData}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke="var(--admin-border-subtle)"
@@ -201,19 +206,22 @@ export function AdminPayments() {
                   />
                   <XAxis
                     dataKey="month"
-                    tick={{ fontSize: 11, fill: "var(--admin-text-tertiary)", fontWeight: 600 }}
+                    tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
                     dy={10}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: "var(--admin-text-tertiary)", fontWeight: 600 }}
+                    tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(v) => `₹${v >= 100000 ? `${v / 100000}L` : `${v / 1000}K`}`}
                     dx={-10}
                   />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--admin-surface-muted)' }} />
+                  <Tooltip
+                    content={<ChartTooltip />}
+                    cursor={{ fill: 'var(--admin-surface-muted)' }}
+                  />
                   <Bar
                     dataKey="amount"
                     fill="var(--admin-accent)"
@@ -231,13 +239,15 @@ export function AdminPayments() {
                 <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)]">
                   Recent Transactions
                 </h3>
-                <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-1">Payments received across all methods.</p>
+                <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-1">
+                  Payments received across all methods.
+                </p>
               </div>
               <span className="admin-badge admin-badge-neutral font-bold uppercase tracking-wider">
                 {metrics.transactions.length} total
               </span>
             </div>
-            
+
             <div className="overflow-x-auto">
               <AnimatePresence mode="wait">
                 {metrics.transactions.length === 0 ? (
@@ -248,9 +258,15 @@ export function AdminPayments() {
                     exit={{ opacity: 0 }}
                     className="p-16 text-center flex flex-col items-center justify-center"
                   >
-                    <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">search_off</span>
-                    <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">No results</p>
-                    <p className="text-[12px] text-[var(--admin-text-secondary)]">No transactions matched your search.</p>
+                    <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-4">
+                      search_off
+                    </span>
+                    <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-1">
+                      No results
+                    </p>
+                    <p className="text-[12px] text-[var(--admin-text-secondary)]">
+                      No transactions matched your search.
+                    </p>
                   </motion.div>
                 ) : (
                   <motion.table
@@ -273,16 +289,23 @@ export function AdminPayments() {
                     </thead>
                     <tbody>
                       {metrics.transactions.map((p) => (
-                        <tr key={p.id} className="hover:bg-[var(--admin-surface-muted)] transition-colors">
+                        <tr
+                          key={p.id}
+                          className="hover:bg-[var(--admin-surface-muted)] transition-colors"
+                        >
                           <td>
-                            <p className="font-bold text-[var(--admin-text-primary)] text-[12px] uppercase tracking-wider">{p.id}</p>
+                            <p className="font-bold text-[var(--admin-text-primary)] text-[12px] uppercase tracking-wider">
+                              {p.id}
+                            </p>
                           </td>
                           <td>
                             <p className="font-bold text-[var(--admin-text-tertiary)] text-[12px] uppercase tracking-wider">
                               {p.order}
                             </p>
                           </td>
-                          <td className="font-bold text-[var(--admin-text-secondary)]">{p.customer}</td>
+                          <td className="font-bold text-[var(--admin-text-secondary)]">
+                            {p.customer}
+                          </td>
                           <td className="font-bold text-[var(--admin-text-primary)] text-[13px]">
                             {formatCurrency(p.amount)}
                           </td>

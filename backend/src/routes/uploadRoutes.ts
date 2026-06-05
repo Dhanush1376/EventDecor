@@ -26,6 +26,8 @@ const checkContentLength = (req: Request, res: Response, next: import('express')
 const ALLOWED_UPLOAD_FOLDERS = new Set([
   'siri-arts-crafts/direct-uploads',
   'siri-arts-crafts/identity_docs',
+  'siri-arts-crafts/products',
+  'siri-arts-crafts/events',
   'event_decor_ecommerce/assets',
   'event_decor_ecommerce/gallery',
   'products',
@@ -51,9 +53,24 @@ router.get(
       throw new ApiError(400, 'Invalid upload folder');
     }
 
+    const adminOnlyFolders = new Set([
+      'products',
+      'events',
+      'siri-arts-crafts/products',
+      'siri-arts-crafts/events',
+      'event_decor_ecommerce/gallery',
+      'event_decor_ecommerce/assets',
+    ]);
+    if (adminOnlyFolders.has(folder)) {
+      const userRole = req.user?.role || 'customer';
+      if (!['admin', 'super_admin', 'main_admin', 'owner', 'manager'].includes(userRole)) {
+        throw new ApiError(403, 'You are not authorized to upload to this folder');
+      }
+    }
+
     const resourceType = String(req.query.resource_type || 'image');
-    if (!['image', 'video', 'raw'].includes(resourceType)) {
-      throw new ApiError(400, 'resource_type must be image, video, or raw');
+    if (!['image', 'video'].includes(resourceType)) {
+      throw new ApiError(400, 'resource_type must be image or video');
     }
 
     const timestamp = Math.round(Date.now() / 1000);
@@ -98,7 +115,7 @@ router.post(
   requireAuth,
   requireAdmin,
   checkContentLength,
-  ...uploadProducts.array('images', 10),
+  ...uploadProducts.array('images', 4),
   (req, res) => {
     const files = req.files as Express.Multer.File[];
     const imageUrls = files.map((file: any) => file.path);
@@ -139,7 +156,7 @@ router.post(
   requireAuth,
   requireAdmin,
   checkContentLength,
-  ...uploadProducts.array('images', 5),
+  ...uploadProducts.array('images', 4),
   (req, res) => {
     const files = req.files as Express.Multer.File[];
     const imageUrls = files.map((file: any) => file.path);

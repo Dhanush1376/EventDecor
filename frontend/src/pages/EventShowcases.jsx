@@ -15,23 +15,13 @@ import {
   ShowcaseCard,
   EventShowcaseFilterPanel,
 } from '../components/ui';
-import { handleImageError } from '../utils/imageUtils';
+import { OptimizedImage } from '../components/ui/OptimizedImage';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { useQuery } from '@tanstack/react-query';
 import { useScrollDirection } from '../hooks/useScrollDirection';
-import logger from '../utils/logger';
-
-const SHOWCASE_CATEGORIES = [
-  'All',
-  'Telugu Heritage',
-  'Engagement Gift',
-  'Ring Ceremony',
-  'Tambulam Showcase',
-  'Coconut Decor',
-  'Jewelry Tray',
-];
+import { SHOWCASE_CATEGORIES } from '../config/constants';
 
 const CATEGORY_MAP = {
   'Telugu Heritage': 'telugu_heritage',
@@ -342,11 +332,11 @@ export function EventShowcases() {
           transition={{ duration: 1.5 }}
           className="absolute inset-0"
         >
-          <img
-            onError={handleImageError}
+          <OptimizedImage
             src={eventsPageContent.hero.backgroundImage}
             className="w-full h-full object-cover"
             alt="Showcase Hero"
+            priority={true}
           />
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-surface" />
@@ -613,7 +603,7 @@ export function EventShowcases() {
               className="relative w-full max-w-[620px] h-full bg-white shadow-2xl flex flex-col z-10 overflow-y-auto"
             >
               <div className="relative h-64 md:h-72 w-full overflow-hidden shrink-0">
-                <img
+                <OptimizedImage
                   src={selectedShowcase.image}
                   className="w-full h-full object-cover"
                   alt={selectedShowcase.title}
@@ -844,7 +834,7 @@ export function EventShowcases() {
                         onClick={() => handleOpenShowcase(sug)}
                         className="flex items-center gap-3 p-2.5 bg-stone-50/80 border border-stone-200/60 rounded-2xl cursor-pointer hover:bg-stone-50 hover:shadow-xs transition-all"
                       >
-                        <img
+                        <OptimizedImage
                           src={sug.image}
                           className="w-14 h-14 object-cover rounded-xl shadow-2xs"
                           alt={sug.title}

@@ -181,6 +181,13 @@ const navSections = [
         domain: 'users',
       },
       {
+        label: 'Drafts Manager',
+        icon: 'draft',
+        path: '/admin/drafts',
+        keywords: 'drafts, auto-save, unsaved, offline',
+        domain: 'settings',
+      },
+      {
         label: 'Settings',
         icon: 'settings',
         path: '/admin/settings',

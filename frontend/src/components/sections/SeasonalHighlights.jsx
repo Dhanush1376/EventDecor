@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SectionWrapper } from '../layout';
@@ -75,9 +75,9 @@ const DEFAULT_THEME = {
 };
 
 export function SeasonalHighlights({
-  title = "Seasonal Inspirations",
-  subtitle = "Curated masterpieces perfectly suited for the exquisite {season} celebrations.",
-  limit = 12
+  title = 'Seasonal Inspirations',
+  subtitle = 'Curated masterpieces perfectly suited for the exquisite {season} celebrations.',
+  limit = 12,
 }) {
   const [items, setItems] = useState([]);
   const [seasonal, setSeasonal] = useState(null);
@@ -114,7 +114,9 @@ export function SeasonalHighlights({
   return (
     <SectionWrapper className="!py-20 md:!py-32 relative bg-[#FAF9F6] border-y border-black/5 overflow-hidden">
       {/* Immersive Seasonal Backdrop */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${theme.gradient} pointer-events-none transition-colors duration-1000`} />
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${theme.gradient} pointer-events-none transition-colors duration-1000`}
+      />
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-white/40 rounded-full blur-[120px] translate-x-1/3 -translate-y-1/3 pointer-events-none" />
 
       <div className="relative z-10 max-w-max-width mx-auto">
@@ -127,11 +129,15 @@ export function SeasonalHighlights({
           className="text-center mb-12 md:mb-16 px-4"
         >
           {/* Season badge */}
-          <div className={`inline-flex items-center gap-3 px-5 py-2 rounded-full border ${theme.border} bg-white/60 backdrop-blur-md mb-6 shadow-sm`}>
+          <div
+            className={`inline-flex items-center gap-3 px-5 py-2 rounded-full border ${theme.border} bg-white/60 backdrop-blur-md mb-6 shadow-sm`}
+          >
             <span className={`material-symbols-outlined text-[16px] font-light ${theme.accent}`}>
               {theme.icon}
             </span>
-            <span className={`font-label text-[10px] uppercase tracking-[0.3em] font-bold ${theme.accent}`}>
+            <span
+              className={`font-label text-[10px] uppercase tracking-[0.3em] font-bold ${theme.accent}`}
+            >
               {seasonName}
             </span>
           </div>
@@ -162,7 +168,7 @@ export function SeasonalHighlights({
         {/* Carousel Content */}
         <AnimatePresence mode="wait">
           {loading ? (
-            <motion.div 
+            <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -170,7 +176,11 @@ export function SeasonalHighlights({
               className="flex gap-6 overflow-hidden px-4 md:px-12"
             >
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="min-w-[300px] animate-pulse opacity-50" style={{ animationDelay: `${i * 100}ms` }}>
+                <div
+                  key={i}
+                  className="min-w-[300px] animate-pulse opacity-50"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                >
                   <div className="bg-surface-container rounded-[24px] aspect-[3/4] mb-5 shadow-sm" />
                   <div className="h-3 bg-surface-container rounded w-1/4 mb-3" />
                   <div className="h-5 bg-surface-container rounded w-3/4 mb-4" />

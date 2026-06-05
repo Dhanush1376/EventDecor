@@ -41,7 +41,7 @@ export const registerApiRoutes = (
   apiRouter.use('/upload', lazyRouter('./uploadRoutes'));
   apiRouter.use('/auth', noCacheMiddleware, lazyRouter('./authRoutes'));
   apiRouter.use('/events', lazyRouter('./eventRoutes'));
-  apiRouter.use('/orders', noCacheMiddleware, lazyRouter('../features/orders/orderRoutes'));
+  apiRouter.use('/orders', noCacheMiddleware, lazyRouter('../routes/orderRoutes'));
   apiRouter.use('/cms', lazyRouter('./cmsRoutes'));
   apiRouter.use('/analytics', noCacheMiddleware, lazyRouter('./analyticsRoutes'));
   apiRouter.use('/gallery', lazyRouter('./galleryRoutes'));
@@ -64,6 +64,8 @@ export const registerApiRoutes = (
     noCacheMiddleware,
     lazyRouter('./recommendationAnalyticsRoutes'),
   );
+
+  apiRouter.use('/refunds', noCacheMiddleware, lazyRouter('./refundRoutes'));
 
   // Aggregated endpoints
   apiRouter.use('/homepage', lazyRouter('./homepageRoutes'));

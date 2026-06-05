@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { recommendationService } from '../services/recommendationService';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../config/apiConfig';
 
 /**
  * useRecommendationTracker — automatic behavioral tracking hook.
@@ -24,7 +25,7 @@ export function useRecommendationTracker({
 } = {}) {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const mountTimeRef = useRef(Date.now());
+  const mountTimeRef = useRef(null);
   const maxScrollRef = useRef(0);
   const batchBufferRef = useRef([]);
   const flushTimerRef = useRef(null);
@@ -40,27 +41,30 @@ export function useRecommendationTracker({
   }, []);
 
   // Queue an event to the batch buffer
-  const queueEvent = useCallback((eventType, tType, tId, metadata = {}) => {
-    if (!tType || !tId) return;
-    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(tId);
-    const isValidTargetType = ['product', 'event', 'gallery', 'showcase'].includes(tType);
-    if (!isValidTargetType || !isValidObjectId) return;
+  const queueEvent = useCallback(
+    (eventType, tType, tId, metadata = {}) => {
+      if (!tType || !tId) return;
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(tId);
+      const isValidTargetType = ['product', 'event', 'gallery', 'showcase'].includes(tType);
+      if (!isValidTargetType || !isValidObjectId) return;
 
-    batchBufferRef.current.push({
-      eventType,
-      targetType: tType,
-      targetId: tId,
-      metadata: {
-        ...metadata,
-        source: metadata.source || source || inferSource(location.pathname),
-      },
-    });
+      batchBufferRef.current.push({
+        eventType,
+        targetType: tType,
+        targetId: tId,
+        metadata: {
+          ...metadata,
+          source: metadata.source || source || inferSource(location.pathname),
+        },
+      });
 
-    // Auto-flush if buffer is large
-    if (batchBufferRef.current.length >= 10) {
-      flushBatch();
-    }
-  }, [source, location.pathname]);
+      // Auto-flush if buffer is large
+      if (batchBufferRef.current.length >= 10) {
+        flushBatch();
+      }
+    },
+    [source, location.pathname],
+  );
 
   // Flush the batch buffer
   const flushBatch = useCallback(() => {
@@ -73,8 +77,7 @@ export function useRecommendationTracker({
     if (navigator.sendBeacon && events.length <= 5) {
       try {
         const blob = new Blob([JSON.stringify({ events })], { type: 'application/json' });
-        const apiUrl = import.meta.env.VITE_API_URL || '/api';
-        navigator.sendBeacon(`${apiUrl}/tracking/batch`, blob);
+        navigator.sendBeacon(`${getApiUrl()}/tracking/batch`, blob);
         return;
       } catch {
         // Fall through to regular API
@@ -85,21 +88,24 @@ export function useRecommendationTracker({
   }, []);
 
   // Track a single event explicitly (for use in component event handlers)
-  const trackEvent = useCallback((eventType, tType, tId, metadata = {}) => {
-    if (!tType || !tId) return;
-    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(tId);
-    const isValidTargetType = ['product', 'event', 'gallery', 'showcase'].includes(tType);
-    if (!isValidTargetType || !isValidObjectId) return;
+  const trackEvent = useCallback(
+    (eventType, tType, tId, metadata = {}) => {
+      if (!tType || !tId) return;
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(tId);
+      const isValidTargetType = ['product', 'event', 'gallery', 'showcase'].includes(tType);
+      if (!isValidTargetType || !isValidObjectId) return;
 
-    recommendationService.trackEvent(eventType, tType, tId, {
-      category,
-      style,
-      tags,
-      priceRange: getPriceRange(price),
-      ...metadata,
-      source: metadata.source || source || inferSource(location.pathname),
-    });
-  }, [category, style, tags, price, source, location.pathname, getPriceRange]);
+      recommendationService.trackEvent(eventType, tType, tId, {
+        category,
+        style,
+        tags,
+        priceRange: getPriceRange(price),
+        ...metadata,
+        source: metadata.source || source || inferSource(location.pathname),
+      });
+    },
+    [category, style, tags, price, source, location.pathname, getPriceRange],
+  );
 
   // Track a search query
   const trackSearch = useCallback((query) => {
@@ -113,14 +119,17 @@ export function useRecommendationTracker({
   }, []);
 
   // Track category exploration
-  const trackCategoryExplore = useCallback((cat) => {
-    if (!cat) return;
+  const trackCategoryExplore = useCallback(
+    (cat) => {
+      if (!cat) return;
 
-    recommendationService.trackEvent('category_explore', 'product', '000000000000000000000000', {
-      category: cat,
-      source: inferSource(location.pathname),
-    });
-  }, [location.pathname]);
+      recommendationService.trackEvent('category_explore', 'product', '000000000000000000000000', {
+        category: cat,
+        source: inferSource(location.pathname),
+      });
+    },
+    [location.pathname],
+  );
 
   // ── Automatic page view tracking ──
   useEffect(() => {
@@ -148,7 +157,17 @@ export function useRecommendationTracker({
     // Reset mount time for dwell tracking
     mountTimeRef.current = Date.now();
     maxScrollRef.current = 0;
-  }, [targetType, targetId, category, style, tags, price, source, location.pathname, getPriceRange]);
+  }, [
+    targetType,
+    targetId,
+    category,
+    style,
+    tags,
+    price,
+    source,
+    location.pathname,
+    getPriceRange,
+  ]);
 
   // ── Scroll depth tracking (throttled) ──
   useEffect(() => {
@@ -185,28 +204,30 @@ export function useRecommendationTracker({
       const isValidTargetType = ['product', 'event', 'gallery', 'showcase'].includes(targetType);
       if (!isValidTargetType || !isValidObjectId) return;
 
+      if (!mountTimeRef.current) return;
       const dwellTimeMs = Date.now() - mountTimeRef.current;
 
       // Only track if user spent meaningful time (>2 seconds)
       if (dwellTimeMs > 2000) {
-        const events = [{
-          eventType: `${targetType}_click`, // Use click to indicate engaged view
-          targetType,
-          targetId,
-          metadata: {
-            category,
-            style,
-            dwellTimeMs,
-            scrollDepth: maxScrollRef.current,
-            source: source || 'page-exit',
+        const events = [
+          {
+            eventType: `${targetType}_click`, // Use click to indicate engaged view
+            targetType,
+            targetId,
+            metadata: {
+              category,
+              style,
+              dwellTimeMs,
+              scrollDepth: maxScrollRef.current,
+              source: source || 'page-exit',
+            },
           },
-        }];
+        ];
 
         // sendBeacon is reliable on page unload
         try {
           const blob = new Blob([JSON.stringify({ events })], { type: 'application/json' });
-          const apiUrl = import.meta.env.VITE_API_URL || '/api';
-          navigator.sendBeacon(`${apiUrl}/tracking/batch`, blob);
+          navigator.sendBeacon(`${getApiUrl()}/tracking/batch`, blob);
         } catch {
           // Best effort
         }

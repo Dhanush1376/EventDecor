@@ -1,11 +1,11 @@
-import debounce from "lodash.debounce";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import debounce from 'lodash.debounce';
+import { useState, useEffect, useMemo } from 'react';
 
 export function SearchBar({
-  value = "",
+  value = '',
   onChange,
-  placeholder = "Search collections...",
-  className = "",
+  placeholder = 'Search collections...',
+  className = '',
 }) {
   const [localValue, setLocalValue] = useState(value);
 
@@ -14,15 +14,9 @@ export function SearchBar({
     setLocalValue(value);
   }, [value]);
 
-  const onChangeRef = React.useRef(onChange);
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
-
-  // eslint-disable-next-line react-hooks/refs
   const debouncedOnChange = useMemo(
-    () => debounce((newVal) => onChangeRef.current?.({ target: { value: newVal } }), 200),
-    []
+    () => debounce((newVal) => onChange?.({ target: { value: newVal } }), 400),
+    [onChange],
   );
 
   useEffect(() => {
@@ -36,9 +30,9 @@ export function SearchBar({
   };
 
   const handleClear = () => {
-    setLocalValue("");
+    setLocalValue('');
     debouncedOnChange.cancel();
-    onChange?.({ target: { value: "" } });
+    onChange?.({ target: { value: '' } });
   };
 
   return (
@@ -54,7 +48,13 @@ export function SearchBar({
         onChange={handleInputChange}
         placeholder={placeholder}
         className="w-full pl-12 pr-12 py-3 bg-transparent border-none outline-none appearance-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50 search-portal-input"
-        style={{ outline: 'none', border: 'none', boxShadow: 'none', WebkitAppearance: 'none', appearance: 'none' }}
+        style={{
+          outline: 'none',
+          border: 'none',
+          boxShadow: 'none',
+          WebkitAppearance: 'none',
+          appearance: 'none',
+        }}
         aria-label="Search"
       />
       {localValue && (

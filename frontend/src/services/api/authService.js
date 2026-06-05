@@ -1,6 +1,5 @@
 import api, { refreshAccessToken } from '../api';
 import { hasSessionMarker } from '../../utils/authStorage';
-import logger from '../../utils/logger';
 
 const checkAuthLocal = () => hasSessionMarker();
 
@@ -53,4 +52,3 @@ export const authService = {
     return response.data;
   },
 };
-

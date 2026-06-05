@@ -26,7 +26,7 @@ export const enforceHttps = (req: Request, res: Response, next: NextFunction): v
 
   // Validate Host header to prevent open-redirect attacks via header injection
   // Allow alphanumeric, dots, colons (port), and hyphens only
-  if (!host || /[^a-zA-Z0-9.:\-]/.test(host)) {
+  if (!host || /[^a-zA-Z0-9.:-]/.test(host)) {
     logger.warn(`[HTTPS] Blocked redirect — invalid Host header: ${host}`);
     res.status(400).json({ success: false, message: 'Invalid request' });
     return;

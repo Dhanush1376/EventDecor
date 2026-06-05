@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { OptimizedImage } from "./OptimizedImage";
+import { useState, useRef, useEffect } from 'react';
+import { OptimizedImage } from './OptimizedImage';
 
 /**
  * Enhanced lazy image component with IntersectionObserver,
@@ -8,11 +8,11 @@ import { OptimizedImage } from "./OptimizedImage";
 export function LazyImage({
   src,
   alt,
-  className = "",
-  containerClassName = "",
+  className = '',
+  containerClassName = '',
   width,
   height,
-  sizes = "(max-width: 768px) 100vw, 50vw",
+  sizes = '(max-width: 768px) 100vw, 50vw',
   aspectRatio,
   eager = false,
   ...props
@@ -32,7 +32,7 @@ export function LazyImage({
           observer.disconnect();
         }
       },
-      { rootMargin: "200px 0px" } // Start loading 200px before visible
+      { rootMargin: '200px 0px' }, // Start loading 200px before visible
     );
 
     observer.observe(imgRef.current);
@@ -72,7 +72,7 @@ export function LazyImage({
           width={width}
           height={height}
           sizes={sizes}
-          loading={eager ? "eager" : "lazy"}
+          loading={eager ? 'eager' : 'lazy'}
           priority={eager}
           onLoad={() => setIsLoaded(true)}
           onError={() => {
@@ -80,9 +80,9 @@ export function LazyImage({
             setIsLoaded(true);
           }}
           className={`w-full h-full object-cover rounded-[inherit] transition-all duration-500 ${className} ${
-            isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-[1.02]"
+            isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.02]'
           }`}
-          style={{ transitionTimingFunction: "var(--ease-smooth)" }}
+          style={{ transitionTimingFunction: 'var(--ease-smooth)' }}
           {...props}
         />
       )}

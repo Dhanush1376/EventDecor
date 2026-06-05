@@ -10,7 +10,7 @@ export function useTrendingRecommendations(params, options = {}) {
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    ...options
+    ...options,
   });
 }
 
@@ -23,7 +23,7 @@ export function usePersonalizedFeed(params, options = {}) {
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    ...options
+    ...options,
   });
 }
 
@@ -37,21 +37,23 @@ export function useSimilarRecommendations(targetType, targetId, limit = 8, optio
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
     ...options,
-    enabled: Boolean(targetType && targetId) && (options.enabled !== false),
+    enabled: Boolean(targetType && targetId) && options.enabled !== false,
   });
 }
 
-export function useCompleteSetup(targetId, limit = 6, options = {}) {
+export function useCompleteSetup(targetId, targetType = 'product', limit = 6, options = {}) {
   return useQuery({
-    queryKey: ['recommendations', 'completeSetup', targetId, limit],
+    queryKey: ['recommendations', 'completeSetup', targetId, targetType, limit],
     queryFn: async ({ signal }) => {
-      const res = await recommendationService.getCompleteSetup(targetId, limit, { signal });
+      const res = await recommendationService.getCompleteSetup(targetId, targetType, limit, {
+        signal,
+      });
       return res.success ? res.data : res;
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
     ...options,
-    enabled: Boolean(targetId) && (options.enabled !== false),
+    enabled: Boolean(targetId) && options.enabled !== false,
   });
 }
 
@@ -59,12 +61,14 @@ export function useAlsoViewed(targetId, targetType = 'product', limit = 8, optio
   return useQuery({
     queryKey: ['recommendations', 'alsoViewed', targetId, targetType, limit],
     queryFn: async ({ signal }) => {
-      const res = await recommendationService.getAlsoViewed(targetId, targetType, limit, { signal });
+      const res = await recommendationService.getAlsoViewed(targetId, targetType, limit, {
+        signal,
+      });
       return res.success ? res.data : res;
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
     ...options,
-    enabled: Boolean(targetId) && (options.enabled !== false),
+    enabled: Boolean(targetId) && options.enabled !== false,
   });
 }

@@ -1,21 +1,24 @@
 import getCloudinary from '../config/cloudinary';
 import logger from '../config/logger';
+import { cloudinaryCircuitBreaker } from './CircuitBreaker';
 
 export const uploadOnCloudinary = async (localFilePath: string) => {
   try {
     if (!localFilePath) return null;
     const cloudinary = getCloudinary();
-    const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: 'auto',
-      folder: 'siri-arts-crafts',
-      transformation: [
-        { fetch_format: 'auto', quality: 'auto' }
-      ]
+
+    const response = await cloudinaryCircuitBreaker.execute(async () => {
+      return await cloudinary.uploader.upload(localFilePath, {
+        resource_type: 'auto',
+        folder: 'siri-arts-crafts',
+        transformation: [{ fetch_format: 'auto', quality: 'auto' }],
+      });
     });
+
     logger.info(`File uploaded to Cloudinary: ${response.url}`);
     return response;
   } catch (error) {
-    logger.error(`Cloudinary upload failed: ${error}`);
+    logger.error(`Cloudinary upload failed (or circuit open): ${error}`);
     return null;
   }
 };
@@ -26,7 +29,7 @@ export const uploadOnCloudinary = async (localFilePath: string) => {
  */
 export const getOptimizedUrl = (url: string, width?: number, height?: number) => {
   if (!url || !url.includes('cloudinary.com')) return url;
-  
+
   const parts = url.split('/upload/');
   if (parts.length !== 2) return url;
 
@@ -43,7 +46,7 @@ export const getOptimizedUrl = (url: string, width?: number, height?: number) =>
  */
 export const getBlurredPlaceholder = (url: string) => {
   if (!url || !url.includes('cloudinary.com')) return url;
-  
+
   const parts = url.split('/upload/');
   if (parts.length !== 2) return url;
 
@@ -53,9 +56,11 @@ export const getBlurredPlaceholder = (url: string) => {
 export const deleteFromCloudinary = async (publicId: string) => {
   try {
     const cloudinary = getCloudinary();
-    await cloudinary.uploader.destroy(publicId);
+    await cloudinaryCircuitBreaker.execute(async () => {
+      await cloudinary.uploader.destroy(publicId);
+    });
   } catch (error) {
-    logger.error(`Cloudinary delete failed: ${error}`);
+    logger.error(`Cloudinary delete failed (or circuit open): ${error}`);
   }
 };
 
@@ -64,16 +69,16 @@ export const extractPublicId = (url: string): string | null => {
   try {
     const parts = url.split('/upload/');
     if (parts.length < 2) return null;
-    
+
     let publicIdWithExt = parts[1];
-    
+
     if (publicIdWithExt.startsWith('v')) {
       const slashIndex = publicIdWithExt.indexOf('/');
       if (slashIndex !== -1) {
         publicIdWithExt = publicIdWithExt.substring(slashIndex + 1);
       }
     }
-    
+
     const dotIndex = publicIdWithExt.lastIndexOf('.');
     if (dotIndex !== -1) {
       return publicIdWithExt.substring(0, dotIndex);
@@ -103,4 +108,3 @@ export const extractAllCloudinaryUrls = (obj: any): string[] => {
 };
 
 export default getCloudinary;
-

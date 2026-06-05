@@ -1,22 +1,22 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { SectionWrapper } from "../components/layout";
-import { ProductCard, FilterPanel, ShareButton } from "../components/ui";
-import { fadeUp } from "../animations/variants";
-import { SEO } from "../components/seo/SEO";
-import { handleImageError } from "../utils/imageUtils";
-import { productService } from "../services/domainServices";
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { SectionWrapper } from '../components/layout';
+import { ProductCard, FilterPanel, ShareButton } from '../components/ui';
+import { fadeUp } from '../animations/variants';
+import { SEO } from '../components/seo/SEO';
+import { handleImageError } from '../utils/imageUtils';
+import { productService } from '../services/domainServices';
 
 const fallbackHero =
-  "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129318/event_decor_ecommerce/assets/event_decor_collection_wedding.png";
+  'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129318/event_decor_ecommerce/assets/event_decor_collection_wedding.png';
 
-const humanizeSlug = (value = "") =>
+const humanizeSlug = (value = '') =>
   value
-    .split("-")
+    .split('-')
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+    .join(' ');
 
 const getProductsFromResponse = (payload) => {
   const data = payload?.data || payload;
@@ -32,7 +32,7 @@ export function CollectionDetail() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const requestedCategory = useMemo(() => humanizeSlug(id), [id]);
 
@@ -41,20 +41,22 @@ export function CollectionDetail() {
 
     const loadCollection = async () => {
       setLoading(true);
-      setError("");
+      setError('');
 
       try {
         const categoriesResult = await productService.getCategories();
         const liveCategories = categoriesResult?.data || categoriesResult || [];
         const matchedCategory =
-          liveCategories.find((category) => category.toLowerCase() === requestedCategory.toLowerCase()) ||
-          liveCategories.find((category) => category.toLowerCase().replace(/\s+/g, "-") === id) ||
+          liveCategories.find(
+            (category) => category.toLowerCase() === requestedCategory.toLowerCase(),
+          ) ||
+          liveCategories.find((category) => category.toLowerCase().replace(/\s+/g, '-') === id) ||
           requestedCategory;
 
         const productsResult = await productService.getAll({
           category: matchedCategory,
           limit: 24,
-          sort: "newest",
+          sort: 'newest',
         });
 
         if (!active) return;
@@ -62,7 +64,7 @@ export function CollectionDetail() {
         setProducts(getProductsFromResponse(productsResult));
       } catch (err) {
         if (!active) return;
-        setError(err?.response?.data?.message || "Unable to load this collection right now.");
+        setError(err?.response?.data?.message || 'Unable to load this collection right now.');
         setProducts([]);
       } finally {
         if (active) setLoading(false);
@@ -77,7 +79,9 @@ export function CollectionDetail() {
   }, [id, requestedCategory]);
 
   const heroProduct = products.find((product) => product.imageSrc) || products[0];
-  const collectionTitle = categories.find((category) => category.toLowerCase() === requestedCategory.toLowerCase()) || requestedCategory;
+  const collectionTitle =
+    categories.find((category) => category.toLowerCase() === requestedCategory.toLowerCase()) ||
+    requestedCategory;
   const heroImage = heroProduct?.imageSrc || fallbackHero;
   const description =
     heroProduct?.seoDescription ||
@@ -153,8 +157,8 @@ export function CollectionDetail() {
               transition={{ delay: 0.3 }}
               className="flex justify-center"
             >
-              <ShareButton 
-                url={window.location.href} 
+              <ShareButton
+                url={window.location.href}
                 title={`${collectionTitle} - Siri Arts & Crafts`}
                 description={description}
                 variant="primary"
@@ -172,7 +176,7 @@ export function CollectionDetail() {
             <div className="lg:col-span-9">
               <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-10">
                 <p className="font-label text-[11px] uppercase tracking-widest text-secondary/60">
-                  {loading ? "Loading live catalog" : `${products.length} Artisanal Selections`}
+                  {loading ? 'Loading live catalog' : `${products.length} Artisanal Selections`}
                 </p>
                 <Link
                   to={`/collections?category=${encodeURIComponent(collectionTitle)}`}
@@ -209,7 +213,8 @@ export function CollectionDetail() {
                     No live pieces found
                   </h2>
                   <p className="font-body text-sm text-on-surface/60 max-w-md mx-auto">
-                    This collection is connected to the product database, but no active products currently match it.
+                    This collection is connected to the product database, but no active products
+                    currently match it.
                   </p>
                 </div>
               )}

@@ -407,10 +407,12 @@ export const getForYou = async (req: Request, res: Response) => {
 export const getCompleteSetup = async (req: Request, res: Response) => {
   try {
     const { targetId } = req.params;
+    const targetType = (req.query.targetType as string) || 'product';
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 6, 12);
 
     // Check cache
-    const cached = await RecommendationCache.getCompleteSetup(targetId as string);
+    const cacheKey = targetType === 'event' ? `event:${targetId}` : targetId;
+    const cached = await RecommendationCache.getCompleteSetup(cacheKey as string);
     if (cached) {
       return res
         .status(200)
@@ -418,36 +420,63 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
     }
 
     // Cache miss: serve fast fallback
-    const product = await Product.findById(targetId).select('category').lean();
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
+    let fallbackItems: any[] = [];
+    if (targetType === 'product') {
+      const product = await Product.findById(targetId).select('category').lean();
+      if (!product) {
+        return res.status(404).json({ success: false, message: 'Product not found' });
+      }
+
+      const fallbackProducts = await Product.find({
+        category: product.category,
+        _id: { $ne: targetId },
+        isActive: true,
+      })
+        .select('_id title imageSrc category price rating reviews slug')
+        .limit(limit)
+        .lean();
+
+      fallbackItems = fallbackProducts.map((p) => ({
+        _id: p._id.toString(),
+        targetType: 'product',
+        title: p.title,
+        imageSrc: p.imageSrc,
+        category: p.category,
+        price: p.price,
+        rating: p.rating,
+        reviews: p.reviews,
+        slug: p.slug,
+      }));
+    } else {
+      const event = await Event.findById(targetId).select('category').lean();
+      if (!event) {
+        return res.status(404).json({ success: false, message: 'Event not found' });
+      }
+
+      const fallbackEvents = await Event.find({
+        category: event.category,
+        _id: { $ne: targetId },
+        isActive: true,
+      })
+        .select('_id title image category style basePrice')
+        .limit(limit)
+        .lean();
+
+      fallbackItems = fallbackEvents.map((e) => ({
+        _id: e._id.toString(),
+        targetType: 'event',
+        title: e.title,
+        image: e.image,
+        category: e.category,
+        style: e.style,
+        basePrice: e.basePrice,
+      }));
     }
-
-    const fallbackProducts = await Product.find({
-      category: product.category,
-      _id: { $ne: targetId },
-      isActive: true,
-    })
-      .select('_id title imageSrc category price rating reviews slug')
-      .limit(limit)
-      .lean();
-
-    const fallbackItems = fallbackProducts.map((p) => ({
-      _id: p._id.toString(),
-      targetType: 'product',
-      title: p.title,
-      imageSrc: p.imageSrc,
-      category: p.category,
-      price: p.price,
-      rating: p.rating,
-      reviews: p.reviews,
-      slug: p.slug,
-    }));
 
     // Trigger background precomputation
     if (isQueuesReady()) {
       recommendationQueue
-        .add('precompute-similar', { targetType: 'product', targetId }, { priority: 4 })
+        .add('precompute-similar', { targetType, targetId }, { priority: 4 })
         .catch((err: any) => {
           logger.error(
             `[RECO API] Failed to enqueue precompute-similar job for setup: ${err.message}`,

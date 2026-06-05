@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
@@ -15,6 +15,9 @@ import {
   SkeletonList,
   EmptyState,
 } from '../components/AdminUIKit';
+import { useDraft } from '../hooks/useDraft';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 const slideDrawer = {
   hidden: { x: '100%', opacity: 0 },
@@ -145,8 +148,36 @@ export function AdminOrders() {
   // Derive selected order data from orders list dynamically
   const selectedOrderData = selectedOrder ? orders.find((o) => o.id === selectedOrder.id) : null;
 
-  const handleSaveNote = async (orderId, noteText) => {
-    await updateOrderNotes(orderId, noteText);
+  // Draft integration for staff note
+  const {
+    formData: orderNoteDraft,
+    setFormData: setOrderNoteDraft,
+    deleteDraft,
+    hasDraft,
+    restoreDraft,
+    discardDraft,
+    resetData,
+    showRestoreModal,
+    setShowRestoreModal,
+    blocker,
+  } = useDraft({
+    draftKey: selectedOrder ? `admin:order:note:${selectedOrder.id}` : null,
+    module: 'Orders',
+    pageTitle: 'Staff Note',
+    initialData: { text: '' },
+    enabled: !!selectedOrder,
+  });
+
+  useEffect(() => {
+    if (selectedOrder && !hasDraft) {
+      resetData({ text: selectedOrderData?.notes || '' });
+    }
+  }, [selectedOrder, selectedOrderData, hasDraft, resetData]);
+
+  const handleSaveNoteDraft = async (e) => {
+    const text = e.target.value;
+    await updateOrderNotes(selectedOrder.id, text);
+    await deleteDraft();
   };
 
   const filteredOrders = useMemo(() => {
@@ -992,8 +1023,9 @@ export function AdminOrders() {
                   <textarea
                     rows={3}
                     placeholder="Type logistics references, customer specifications, or event notes..."
-                    defaultValue={selectedOrderData?.notes || ''}
-                    onBlur={(e) => handleSaveNote(selectedOrder.id, e.target.value)}
+                    value={orderNoteDraft.text}
+                    onChange={(e) => setOrderNoteDraft({ text: e.target.value })}
+                    onBlur={handleSaveNoteDraft}
                     className="admin-textarea bg-[var(--admin-surface)]"
                   />
                   <p className="text-[10px] text-[var(--admin-text-tertiary)] pl-1">
@@ -1049,6 +1081,14 @@ export function AdminOrders() {
           </>
         )}
       </AnimatePresence>
+
+      <DraftRestoreModal
+        isOpen={showRestoreModal}
+        onClose={() => setShowRestoreModal(false)}
+        onRestore={restoreDraft}
+        onDiscard={discardDraft}
+      />
+      <UnsavedChangesGuard blocker={blocker} />
     </motion.div>
   );
 }

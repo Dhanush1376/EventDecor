@@ -1,26 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import api from "../services/api";
-import toast from "react-hot-toast";
+import { useEffect, useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export function AcceptInvite() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get('token');
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [invite, setInvite] = useState(null);
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (!token) {
       const timer = setTimeout(() => {
-        setError("Invitation token is missing. Please verify your email link.");
+        setError('Invitation token is missing. Please verify your email link.');
         setLoading(false);
       }, 0);
       return () => clearTimeout(timer);
@@ -32,10 +32,10 @@ export function AcceptInvite() {
         if (res.data?.success) {
           setInvite(res.data.data);
         } else {
-          setError("Failed to load invitation details.");
+          setError('Failed to load invitation details.');
         }
       } catch (err) {
-        setError(err.response?.data?.message || "Invalid or expired invitation token.");
+        setError(err.response?.data?.message || 'Invalid or expired invitation token.');
       } finally {
         setLoading(false);
       }
@@ -47,20 +47,20 @@ export function AcceptInvite() {
   const handleRespond = async (status) => {
     setActionLoading(true);
     try {
-      const res = await api.post("/users/team/invite/respond", { token, status });
+      const res = await api.post('/users/team/invite/respond', { token, status });
       if (res.data?.success) {
-        if (status === "accepted") {
+        if (status === 'accepted') {
           setSuccessMessage(
-            "Welcome aboard! You have successfully accepted the invitation. Your credentials have been authorized."
+            'Welcome aboard! You have successfully accepted the invitation. Your credentials have been authorized.',
           );
-          toast.success("Welcome to the team!");
+          toast.success('Welcome to the team!');
         } else {
-          setSuccessMessage("Invitation declined successfully. We appreciate your consideration!");
-          toast.success("Invitation declined");
+          setSuccessMessage('Invitation declined successfully. We appreciate your consideration!');
+          toast.success('Invitation declined');
         }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to respond to invitation");
+      toast.error(err.response?.data?.message || 'Failed to respond to invitation');
     } finally {
       setActionLoading(false);
     }
@@ -112,7 +112,7 @@ export function AcceptInvite() {
               <p className="text-[13px] text-outline leading-relaxed">{error}</p>
             </div>
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate('/')}
               className="w-full py-4 bg-surface-container-low hover:bg-surface-container-high text-outline hover:text-primary font-bold rounded-2xl text-[12px] uppercase tracking-wider transition-all border border-surface-container-highest/40 cursor-pointer"
             >
               Return to Storefront
@@ -130,16 +130,16 @@ export function AcceptInvite() {
               <p className="text-[13px] text-outline leading-relaxed">{successMessage}</p>
             </div>
 
-            {successMessage.includes("Welcome aboard") ? (
+            {successMessage.includes('Welcome aboard') ? (
               <button
-                onClick={() => navigate("/admin")}
+                onClick={() => navigate('/admin')}
                 className="w-full py-4 bg-primary text-white font-bold rounded-2xl text-[12px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary-container transition-all cursor-pointer"
               >
                 Sign In to Admin Portal
               </button>
             ) : (
               <button
-                onClick={() => navigate("/")}
+                onClick={() => navigate('/')}
                 className="w-full py-4 bg-surface-container-low text-outline font-bold rounded-2xl text-[12px] uppercase tracking-wider transition-all cursor-pointer border border-surface-container-highest/40"
               >
                 Go to Storefront
@@ -160,32 +160,32 @@ export function AcceptInvite() {
                 Join our Creative Team
               </h2>
               <p className="text-[13px] text-outline leading-relaxed px-2">
-                You have been invited to join Siri Arts & Crafts as a designated{" "}
+                You have been invited to join Siri Arts & Crafts as a designated{' '}
                 <strong className="text-primary uppercase tracking-wider font-semibold font-mono">
                   {invite?.role}
-                </strong>{" "}
-                with authorization permissions set to{" "}
+                </strong>{' '}
+                with authorization permissions set to{' '}
                 <span className="font-semibold text-on-surface">"{invite?.permissions}"</span>.
               </p>
             </div>
 
             {/* Email card lock */}
             <div className="bg-[#fcfbf9] border border-surface-container-highest/50 rounded-2xl p-4 text-[12px] font-semibold text-outline-variant font-mono">
-              Authorized Email:{" "}
+              Authorized Email:{' '}
               <span className="text-on-surface font-bold font-sans">{invite?.email}</span>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <button
                 disabled={actionLoading}
-                onClick={() => handleRespond("declined")}
+                onClick={() => handleRespond('declined')}
                 className="flex-1 py-4 bg-surface text-outline border border-surface-container-highest hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 font-bold rounded-2xl text-[12px] uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
               >
                 No, Decline
               </button>
               <button
                 disabled={actionLoading}
-                onClick={() => handleRespond("accepted")}
+                onClick={() => handleRespond('accepted')}
                 className="flex-1 py-4 bg-primary text-white hover:bg-primary-container font-bold rounded-2xl text-[12px] uppercase tracking-wider shadow-lg shadow-primary/15 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {actionLoading && (

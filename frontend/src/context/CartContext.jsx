@@ -1,17 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useMemo,
-  useEffect,
-  useRef,
-  useCallback,
-} from "react";
-import { userService } from "../services/domainServices";
-import { useAuth } from "./AuthContext";
-import toast from "react-hot-toast";
+import { createContext, useContext } from 'react';
 
-import logger from '../utils/logger';
 export const CartStateContext = createContext(null);
 export const CartDispatchContext = createContext(null);
 
@@ -20,7 +8,7 @@ export function useCart() {
   const state = useContext(CartStateContext);
   const dispatch = useContext(CartDispatchContext);
   if (!state || !dispatch) {
-    throw new Error("useCart must be used within a CartProvider");
+    throw new Error('useCart must be used within a CartProvider');
   }
   return { ...state, ...dispatch };
 }
@@ -28,12 +16,12 @@ export function useCart() {
 // Optimized hooks
 export function useCartState() {
   const context = useContext(CartStateContext);
-  if (!context) throw new Error("useCartState must be used within CartProvider");
+  if (!context) throw new Error('useCartState must be used within CartProvider');
   return context;
 }
 
 export function useCartDispatch() {
   const context = useContext(CartDispatchContext);
-  if (!context) throw new Error("useCartDispatch must be used within CartProvider");
+  if (!context) throw new Error('useCartDispatch must be used within CartProvider');
   return context;
 }

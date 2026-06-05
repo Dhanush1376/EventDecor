@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { policyService } from '../../services/domainServices';
 import { toast } from 'react-hot-toast';
-import {
-  PageHeader,
-  AdminSkeleton,
-  StatusBadge,
-  fadeUp,
-  stagger
-} from '../components/AdminUIKit';
+import { getErrorMessage } from '../../utils/errorHelpers';
+import { PageHeader, AdminSkeleton, StatusBadge, fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminPolicies() {
   const navigate = useNavigate();
@@ -49,9 +44,7 @@ export function AdminPolicies() {
     {
       key: 'status',
       label: 'Status',
-      render: (val) => (
-        <StatusBadge status={val} />
-      ),
+      render: (val) => <StatusBadge status={val} />,
     },
     {
       key: 'updatedAt',
@@ -87,7 +80,7 @@ export function AdminPolicies() {
         subtitle="Manage legal and storefront policies across your platform."
       >
         <button
-          onClick={() => navigate("/admin/policies/add")}
+          onClick={() => navigate('/admin/policies/add')}
           className="admin-btn admin-btn-primary h-9"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
@@ -112,16 +105,16 @@ export function AdminPolicies() {
             <table className="admin-table w-full min-w-[600px]">
               <thead>
                 <tr>
-                  {columns.map((c, i) => <th key={i}>{c.label}</th>)}
+                  {columns.map((c, i) => (
+                    <th key={i}>{c.label}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {policies.map(row => (
+                {policies.map((row) => (
                   <tr key={row._id}>
                     {columns.map((c, i) => (
-                      <td key={i}>
-                        {c.render ? c.render(row[c.key], row) : row[c.key]}
-                      </td>
+                      <td key={i}>{c.render ? c.render(row[c.key], row) : row[c.key]}</td>
                     ))}
                   </tr>
                 ))}
@@ -130,7 +123,6 @@ export function AdminPolicies() {
           </div>
         )}
       </motion.div>
-
     </motion.div>
   );
 }

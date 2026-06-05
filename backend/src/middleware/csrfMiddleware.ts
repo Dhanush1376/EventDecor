@@ -10,9 +10,7 @@ export const CSRF_HEADER_NAME = 'x-csrf-token';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 /** Paths that must not require CSRF (webhooks, external providers). */
-const CSRF_EXEMPT_PATHS = new Set([
-  '/api/orders/webhook',
-]);
+const CSRF_EXEMPT_PATHS = new Set(['/api/orders/webhook']);
 
 /** Auth routes that must work on cold load before CSRF cookie is established. */
 const CSRF_EXEMPT_SUFFIXES = [
@@ -72,29 +70,31 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   const cookieToken = String(req.cookies?.[CSRF_COOKIE_NAME] || '');
   const headerToken = String(req.headers[CSRF_HEADER_NAME] || '');
 
+  let isMatch = false;
+  if (cookieToken && headerToken && cookieToken.length === headerToken.length) {
+    isMatch = crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken));
+  }
+
   // In cross-origin deployments, third-party cookies (like the CSRF cookie) are often blocked
   // by browsers (e.g., Safari ITP). We fallback to verifying the Origin header against our
   // explicit CORS allowlist, or relying on the Bearer token (which isn't vulnerable to CSRF).
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
-    const origin = req.headers.origin;
-    const isAllowedOrigin = origin && isOriginAllowed(origin);
+  if (!isMatch) {
     const hasBearerToken = req.headers.authorization?.startsWith('Bearer ');
+    const origin = req.headers.origin;
 
-    if (isAllowedOrigin || hasBearerToken) {
+    if (hasBearerToken) {
+      // With strict Bearer tokens, CSRF vectors are mitigated because attackers cannot forge the Authorization header.
+      // Additionally, we verify Origin matches CORS whitelist as a secondary defense in depth.
+      if (origin && !isOriginAllowed(origin)) {
+        logger.error(`[CSRF_FAILED] Origin mismatch or missing: ${origin}`);
+        res.status(403).json({ success: false, message: 'Invalid Origin for secure request' });
+        return;
+      }
       return next();
     }
 
-    logger.error(`[CSRF_FAILED] path=${req.path} cookieToken=${cookieToken} headerToken=${headerToken} origin=${origin}`);
-    res.status(403).json({
-      success: false,
-      message: 'Invalid or missing CSRF token',
-    });
-    return;
-  }
-
-  const cookieBuf = Buffer.from(cookieToken);
-  const headerBuf = Buffer.from(headerToken);
-  if (!crypto.timingSafeEqual(cookieBuf, headerBuf)) {
+    // Do not log actual tokens in error logs to prevent sensitive info leakage
+    logger.error(`[CSRF_FAILED] Invalid or missing token on path=${req.path}`);
     res.status(403).json({
       success: false,
       message: 'Invalid or missing CSRF token',

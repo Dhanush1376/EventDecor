@@ -4,564 +4,33 @@ import RentalOrder from '../models/RentalOrder';
 import RentalCalendar from '../models/RentalCalendar';
 import RentalPolicy from '../models/RentalPolicy';
 import RentalInspection from '../models/RentalInspection';
-import ServiceArea from '../models/ServiceArea';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
-import getRazorpay from '../config/razorpay';
 import { formatPaginationResponse } from '../utils/pagination';
-import User from '../models/User';
-import { createAdminNotification, sendDirectEmail } from './notificationService';
-import { generateInvoicePDF } from '../utils/pdfGenerator';
-import { getAdminEmails } from '../config/adminConfig';
-import { compileTemplate } from '../utils/templateEngine';
+import { RentalAvailabilityService } from './rentals/RentalAvailabilityService';
+import { RentalStateMachine } from './rentals/RentalStateMachine';
+import { PaymentRefundService } from './PaymentRefundService';
+import { RentalCheckoutService } from './rentals/RentalCheckoutService';
 
 class RentalService {
-  /**
-   * Calculate the rental cost server-side — NEVER trust frontend calculations.
-   */
-  static async calculateRentalCost(productId: string, startDate: Date, endDate: Date) {
-    const product = await Product.findById(productId).lean();
-    if (!product) throw new ApiError(404, 'Product not found');
-    if (!product.rentalEnabled) throw new ApiError(400, 'This product is not available for rent');
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-
-    if (start < now) throw new ApiError(400, 'Rental start date cannot be in the past');
-    if (end <= start) throw new ApiError(400, 'End date must be after start date');
-
-    const durationMs = end.getTime() - start.getTime();
-    const durationDays = Math.ceil(durationMs / (1000 * 60 * 60 * 24));
-
-    if (durationDays < product.rentalMinDays) {
-      throw new ApiError(400, `Minimum rental duration is ${product.rentalMinDays} day(s)`);
-    }
-    if (durationDays > product.rentalMaxDays) {
-      throw new ApiError(400, `Maximum rental duration is ${product.rentalMaxDays} day(s)`);
-    }
-
-    // Determine best rate for customer
-    const pricing = product.rentalPricing;
-    let rentalCharge = 0;
-    let rateType: 'daily' | 'weekly' | 'monthly' | 'custom' = 'daily';
-    let rateUsed = 0;
-
-    if (durationDays >= 30 && pricing.monthly > 0) {
-      const months = Math.floor(durationDays / 30);
-      const remainingDays = durationDays % 30;
-      rentalCharge =
-        months * pricing.monthly + remainingDays * (pricing.daily || pricing.monthly / 30);
-      rateType = 'monthly';
-      rateUsed = pricing.monthly;
-    } else if (durationDays >= 7 && pricing.weekly > 0) {
-      const weeks = Math.floor(durationDays / 7);
-      const remainingDays = durationDays % 7;
-      rentalCharge = weeks * pricing.weekly + remainingDays * (pricing.daily || pricing.weekly / 7);
-      rateType = 'weekly';
-      rateUsed = pricing.weekly;
-    } else if (pricing.daily > 0) {
-      rentalCharge = durationDays * pricing.daily;
-      rateType = 'daily';
-      rateUsed = pricing.daily;
-    } else if (pricing.customDurationEnabled && pricing.customPricePerDay > 0) {
-      rentalCharge = durationDays * pricing.customPricePerDay;
-      rateType = 'custom';
-      rateUsed = pricing.customPricePerDay;
-    } else {
-      throw new ApiError(400, 'No rental pricing configured for this product');
-    }
-
-    rentalCharge = Math.round(rentalCharge * 100) / 100;
-
-    const securityDeposit = product.securityDeposit || 0;
-    const deliveryCharge = 0; // Future: calculate based on distance
-    const taxRate = 0.18; // 18% GST
-    const tax = Math.round(rentalCharge * taxRate * 100) / 100;
-    const totalAmount =
-      Math.round((rentalCharge + securityDeposit + deliveryCharge + tax) * 100) / 100;
-
-    return {
-      productId: product._id,
-      productTitle: product.title,
-      durationDays,
-      rentalRate: { type: rateType, rate: rateUsed },
-      rentalCharge,
-      securityDeposit,
-      isDepositRefundable: product.isDepositRefundable,
-      deliveryCharge,
-      tax,
-      totalAmount,
-      startDate: start,
-      endDate: end,
-    };
-  }
-
-  /**
-   * Check if a product is available for the requested date range.
-   */
   static async checkAvailability(productId: string, startDate: Date, endDate: Date) {
-    const product = await Product.findById(productId).lean();
-    if (!product) throw new ApiError(404, 'Product not found');
-    if (!product.rentalEnabled) throw new ApiError(400, 'This product is not available for rent');
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    // Check rental stock
-    if (product.rentalStock <= 0) {
-      return { available: false, reason: 'No rental stock available' };
-    }
-
-    // Check for overlapping bookings
-    const overlappingCount = await RentalCalendar.countDocuments({
-      product: productId,
-      status: 'booked',
-      $or: [{ startDate: { $lt: end }, endDate: { $gt: start } }],
-    });
-
-    if (overlappingCount >= product.rentalStock) {
-      return {
-        available: false,
-        reason: 'Product is fully booked for the selected dates',
-        nextAvailable: await this.getNextAvailableDate(productId, start),
-      };
-    }
-
-    return { available: true };
+    return await RentalAvailabilityService.checkAvailability(productId, startDate, endDate);
   }
 
-  /**
-   * Find the next available date for a product.
-   */
-  static async getNextAvailableDate(productId: string, fromDate: Date): Promise<Date | null> {
-    const bookings = await RentalCalendar.find({
-      product: productId,
-      status: 'booked',
-      endDate: { $gte: fromDate },
-    })
-      .sort({ endDate: 1 })
-      .limit(5)
-      .lean();
-
-    if (bookings.length === 0) return fromDate;
-
-    // Return the earliest endDate
-    return bookings[0].endDate;
+  static async calculateRentalCost(productId: string, startDate: Date, endDate: Date) {
+    return await RentalCheckoutService.calculateRentalCost(productId, startDate, endDate);
   }
 
-  /**
-   * Check if coordinates fall within any active service area.
-   * Uses the Haversine formula for distance calculation.
-   */
   static async checkServiceArea(lat: number, lng: number) {
-    const serviceAreas = await ServiceArea.find({ isActive: true }).lean();
-
-    if (serviceAreas.length === 0) {
-      // No service areas configured = allow all
-      return { eligible: true, message: 'Delivery available' };
-    }
-
-    for (const area of serviceAreas) {
-      const distance = this.haversineDistance(lat, lng, area.center.lat, area.center.lng);
-      if (distance <= area.radiusKm) {
-        return {
-          eligible: true,
-          message: `Delivery available from ${area.name}`,
-          serviceArea: area.name,
-          distanceKm: Math.round(distance * 10) / 10,
-        };
-      }
-    }
-
-    return {
-      eligible: false,
-      message: 'Sorry, rental delivery is not available in your area',
-    };
+    return await RentalCheckoutService.checkServiceArea(lat, lng);
   }
 
-  /**
-   * Haversine formula to calculate distance between two lat/lng points in km.
-   */
-  static haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    const R = 6371; // Earth's radius in km
-    const dLat = this.toRadians(lat2 - lat1);
-    const dLng = this.toRadians(lng2 - lng1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.toRadians(lat1)) *
-        Math.cos(this.toRadians(lat2)) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  static toRadians(degrees: number): number {
-    return degrees * (Math.PI / 180);
-  }
-
-  /**
-   * Create a rental order with full transactional safety.
-   */
   static async createRentalOrder(data: any, userId: string) {
-    const {
-      productId,
-      rentalStartDate,
-      rentalEndDate,
-      shippingAddress,
-      identityDocuments,
-      agreementAccepted,
-      paymentMethod,
-      aadhaarNumber,
-    } = data;
-
-    // Server-side recalculate — NEVER trust frontend pricing
-    const costBreakdown = await this.calculateRentalCost(productId, rentalStartDate, rentalEndDate);
-
-    // Check availability
-    const availability = await this.checkAvailability(productId, rentalStartDate, rentalEndDate);
-    if (!availability.available) {
-      throw new ApiError(400, availability.reason || 'Product not available for selected dates');
-    }
-
-    // Check service area
-    const activeServiceAreas = await ServiceArea.countDocuments({ isActive: true });
-    if (activeServiceAreas > 0) {
-      if (!shippingAddress.latitude || !shippingAddress.longitude) {
-        throw new ApiError(
-          400,
-          'Delivery coordinates are required to verify service area eligibility',
-        );
-      }
-      const serviceCheck = await this.checkServiceArea(
-        shippingAddress.latitude,
-        shippingAddress.longitude,
-      );
-      if (!serviceCheck.eligible) {
-        throw new ApiError(400, serviceCheck.message);
-      }
-    }
-
-    // Check rental policy for identity verification
-    const policy = await RentalPolicy.findOne({ isActive: true }).lean();
-    if (policy?.identityVerificationRequired) {
-      if (!identityDocuments || identityDocuments.length === 0) {
-        throw new ApiError(400, 'Identity verification documents are required');
-      }
-      if (policy.requiredDocuments.length > 0) {
-        const providedTypes = identityDocuments.map((d: any) => d.type);
-        const missingDocs = policy.requiredDocuments.filter(
-          (req: string) => !providedTypes.includes(req),
-        );
-        if (missingDocs.length > 0) {
-          throw new ApiError(400, `Missing required documents: ${missingDocs.join(', ')}`);
-        }
-      }
-    }
-
-    if (!agreementAccepted) {
-      throw new ApiError(400, 'Rental agreement must be accepted');
-    }
-
-    const product = await Product.findById(productId);
-    if (!product) throw new ApiError(404, 'Product not found');
-
-    // Create Razorpay order if not COD
-    const isCod = paymentMethod === 'cod';
-    let razorpayOrder = null;
-
-    if (!isCod) {
-      const razorpay = getRazorpay();
-      if (!razorpay) {
-        throw new ApiError(500, 'Payment gateway is not configured');
-      }
-
-      razorpayOrder = await razorpay.orders.create({
-        amount: Math.round(costBreakdown.totalAmount * 100),
-        currency: 'INR',
-        receipt: `rental_${Date.now()}`,
-        notes: {
-          type: 'rental',
-          productId: productId,
-          userId: userId,
-        },
-      });
-    }
-
-    // Transactional order creation
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      // Acquire a write lock on the product to serialize calendar overlap checks and prevent double bookings
-      const updatedProduct = await Product.findOneAndUpdate(
-        { _id: productId },
-        { $set: { updatedAt: new Date() } },
-        { new: true, session },
-      );
-
-      if (!updatedProduct) {
-        throw new ApiError(400, 'Product not found during reservation');
-      }
-
-      // Re-verify calendar overlaps inside the transaction
-      const overlappingCount = await RentalCalendar.countDocuments({
-        product: productId,
-        status: 'booked',
-        $or: [
-          { startDate: { $lt: costBreakdown.endDate }, endDate: { $gt: costBreakdown.startDate } },
-        ],
-      }).session(session);
-
-      if (overlappingCount >= updatedProduct.rentalStock) {
-        throw new ApiError(400, 'Product is fully booked for the selected dates');
-      }
-
-      // Create rental order
-      const [rentalOrder] = await RentalOrder.create(
-        [
-          {
-            user: userId,
-            product: productId,
-            productTitle: product.title,
-            productImage: product.imageSrc,
-            rentalStartDate: costBreakdown.startDate,
-            rentalEndDate: costBreakdown.endDate,
-            durationDays: costBreakdown.durationDays,
-            rentalRate: costBreakdown.rentalRate,
-            rentalCharge: costBreakdown.rentalCharge,
-            securityDeposit: costBreakdown.securityDeposit,
-            deliveryCharge: costBreakdown.deliveryCharge,
-            tax: costBreakdown.tax,
-            totalAmount: costBreakdown.totalAmount,
-            status: isCod ? 'confirmed' : 'pending',
-            paymentMethod: isCod ? 'cod' : 'razorpay',
-            paymentStatus: isCod ? 'Pending COD' : 'pending',
-            shippingAddress,
-            identityDocuments: identityDocuments || [],
-            agreementAcceptedAt: new Date(),
-            razorpayOrderId: razorpayOrder?.id,
-            statusHistory: [
-              {
-                status: isCod ? 'confirmed' : 'pending',
-                note: isCod ? 'Rental COD order placed' : 'Rental order created, awaiting payment',
-              },
-            ],
-          },
-        ],
-        { session },
-      );
-
-      // Block calendar dates
-      await RentalCalendar.create(
-        [
-          {
-            product: productId,
-            rentalOrder: rentalOrder._id,
-            startDate: costBreakdown.startDate,
-            endDate: costBreakdown.endDate,
-            status: 'booked',
-          },
-        ],
-        { session },
-      );
-
-      await session.commitTransaction();
-      session.endSession();
-
-      if (isCod) {
-        return { rentalOrder };
-      }
-
-      return {
-        rentalOrder,
-        razorpayOrderId: razorpayOrder?.id,
-        razorpayKeyId: process.env.RAZORPAY_KEY_ID,
-        amount: Math.round(costBreakdown.totalAmount * 100),
-      };
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      throw error;
-    }
+    return await RentalCheckoutService.createRentalOrder(data, userId);
   }
 
-  /**
-   * Verify rental payment — mirrors the existing PaymentService pattern.
-   */
   static async verifyRentalPayment(paymentData: any, userId: string) {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = paymentData;
-    const crypto = require('crypto');
-
-    const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!razorpayKeySecret) throw new ApiError(500, 'Payment verification not configured');
-
-    // Verify signature
-    const shasum = crypto.createHmac('sha256', razorpayKeySecret);
-    shasum.update(`${razorpayOrderId}|${razorpayPaymentId}`);
-    const digest = shasum.digest('hex');
-    const expected = Buffer.from(digest, 'utf8');
-    const received = Buffer.from(razorpaySignature || '', 'utf8');
-    const isValid =
-      expected.length === received.length && crypto.timingSafeEqual(expected, received);
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      const order = await RentalOrder.findOne({
-        razorpayOrderId,
-        paymentStatus: { $in: ['pending', 'failed'] },
-      }).session(session);
-
-      if (!order) {
-        const existing = await RentalOrder.findOne({ razorpayOrderId }).lean();
-        if (existing?.paymentStatus === 'paid') {
-          await session.abortTransaction();
-          session.endSession();
-          return existing;
-        }
-        throw new ApiError(404, 'Rental order not found');
-      }
-
-      if (order.user.toString() !== userId) {
-        throw new ApiError(403, 'Not authorized to verify this payment');
-      }
-
-      if (!isValid) {
-        // Release calendar block
-        await RentalCalendar.deleteOne({ rentalOrder: order._id }, { session });
-        order.paymentStatus = 'failed';
-        order.statusHistory.push({ status: 'pending', note: 'Payment verification failed' } as any);
-        await order.save({ session });
-        await session.commitTransaction();
-        session.endSession();
-        throw new ApiError(400, 'Payment verification failed');
-      }
-
-      order.paymentStatus = 'paid';
-      order.status = 'confirmed';
-      order.razorpayPaymentId = razorpayPaymentId;
-      order.razorpaySignature = razorpaySignature;
-      order.statusHistory.push({
-        status: 'confirmed',
-        note: 'Payment verified and rental order confirmed',
-      } as any);
-      await order.save({ session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      logger.info(`[RENTAL] Payment verified for rental order: ${order.rentalOrderId}`);
-
-      try {
-        const user = await User.findById(userId);
-        const adminEmails = getAdminEmails();
-
-        // 1. Admin Real-time Notification
-        await createAdminNotification({
-          title: 'New Rental Order',
-          message: `${user?.name || 'A customer'} placed a new rental order (₹${order.totalAmount}) via Razorpay.`,
-          type: 'order',
-          actionLink: `/admin/rental-orders/${order._id}`,
-        });
-
-        // 2. PDF Invoice
-        const pdfBuffer = await generateInvoicePDF({
-          orderId: order.rentalOrderId,
-          date: order.createdAt || new Date(),
-          customerName: user?.name || 'Customer',
-          shippingAddress:
-            typeof order.shippingAddress === 'string'
-              ? order.shippingAddress
-              : order.shippingAddress?.address || '',
-          items: [
-            {
-              name: order.productTitle,
-              quantity: 1,
-              price: order.rentalCharge,
-            },
-          ],
-          subtotal: order.rentalCharge + order.securityDeposit,
-          shipping: order.deliveryCharge,
-          total: order.totalAmount,
-        });
-
-        if (user) {
-          const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
-
-          // 3. Compile HTML Template
-          const htmlContent = compileTemplate('order-confirmation', {
-            customerName: user.name,
-            orderId: order.rentalOrderId,
-            orderDate: new Date().toISOString(),
-            paymentMethod: 'Online Payment (Razorpay)',
-            items: [
-              {
-                name: order.productTitle,
-                quantity: 1,
-                price: order.rentalCharge,
-                image: order.productImage,
-              },
-            ],
-            subtotal: order.rentalCharge + order.securityDeposit,
-            shipping: order.deliveryCharge,
-            total: order.totalAmount,
-            shippingAddress:
-              typeof order.shippingAddress === 'string'
-                ? order.shippingAddress
-                : order.shippingAddress?.address || '',
-            dashboardUrl: `${frontendUrl}/dashboard?tab=orders`,
-            currentYear: new Date().getFullYear(),
-          });
-
-          // 4. Send Customer Email
-          await sendDirectEmail({
-            email: user.email,
-            subject: `Rental Order Confirmed! ✦ Siri Arts & Crafts [${order.rentalOrderId}]`,
-            customHtml: htmlContent,
-            type: 'order',
-            action: 'order_placed',
-            userId: user._id.toString(),
-            attachments: [
-              {
-                filename: `Invoice_${order.rentalOrderId}.pdf`,
-                content: pdfBuffer,
-                contentType: 'application/pdf',
-              },
-            ],
-          });
-
-          // 5. Send Admin Alert Email
-          if (adminEmails.length > 0) {
-            await sendDirectEmail({
-              email: adminEmails[0],
-              subject: `New Rental Received - ₹${order.totalAmount} [${order.rentalOrderId}]`,
-              customHtml: htmlContent,
-              type: 'system',
-              action: 'admin_order_alert',
-              attachments: [
-                {
-                  filename: `Invoice_${order.rentalOrderId}.pdf`,
-                  content: pdfBuffer,
-                  contentType: 'application/pdf',
-                },
-              ],
-            });
-          }
-        }
-      } catch (emailErr) {
-        logger.error('Failed to dispatch rental confirmation email/PDF:', emailErr);
-      }
-
-      return order;
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      throw error;
-    }
+    return await RentalCheckoutService.verifyRentalPayment(paymentData, userId);
   }
 
   /**
@@ -632,19 +101,12 @@ class RentalService {
     const rental = await RentalOrder.findById(rentalId);
     if (!rental) throw new ApiError(404, 'Rental order not found');
 
-    rental.status = status as any;
-    rental.statusHistory.push({ status, note, performedBy: adminId } as any);
-
-    // Auto-set active_rental when delivered
     if (status === 'delivered') {
-      rental.status = 'active_rental';
-      rental.statusHistory.push({
-        status: 'active_rental',
-        note: 'Rental period started',
-        performedBy: 'system',
-      } as any);
+      status = 'active_rental';
+      note = note || 'Rental period started (marked as delivered)';
     }
 
+    RentalStateMachine.transition(rental, status as any, note, adminId);
     await rental.save();
     logger.info(`[RENTAL] Status updated to ${status} for ${rental.rentalOrderId} by ${adminId}`);
     return rental;
@@ -662,12 +124,13 @@ class RentalService {
       throw new ApiError(400, `Cannot request return when status is "${rental.status}"`);
     }
 
-    rental.status = 'return_requested';
+    RentalStateMachine.transition(
+      rental,
+      'return_requested',
+      'Customer requested product return',
+      userId,
+    );
     rental.returnRequestedAt = new Date();
-    rental.statusHistory.push({
-      status: 'return_requested',
-      note: 'Customer requested product return',
-    } as any);
 
     await rental.save();
     return rental;
@@ -741,7 +204,6 @@ class RentalService {
       );
 
       // Update rental order
-      rental.status = 'returned';
       rental.actualReturnDate = new Date();
       rental.inspectionResult = {
         condition,
@@ -753,11 +215,14 @@ class RentalService {
         images: images || [],
         inspectedAt: new Date(),
       };
-      rental.statusHistory.push({
-        status: 'returned',
-        note: `Item returned and inspected. Condition: ${condition}`,
-        performedBy: adminId,
-      } as any);
+
+      RentalStateMachine.transition(
+        rental,
+        'returned',
+        `Item returned and inspected. Condition: ${condition}`,
+        adminId,
+      );
+
       await rental.save({ session });
 
       // If product is lost, reduce the physical rentalStock capacity
@@ -804,14 +269,37 @@ class RentalService {
       reason,
       processedBy: adminId,
     };
-    rental.status = 'completed';
-    rental.statusHistory.push({
-      status: 'completed',
-      note: `Deposit of ₹${amount} released. Reason: ${reason}`,
-      performedBy: adminId,
-    } as any);
+
+    RentalStateMachine.transition(
+      rental,
+      'completed',
+      `Deposit of ₹${amount} released. Reason: ${reason}`,
+      adminId,
+    );
 
     await rental.save();
+
+    // Initiate actual Razorpay refund for the deposit amount
+    if (amount > 0 && rental.razorpayPaymentId) {
+      try {
+        await PaymentRefundService.initiateAsyncRefund({
+          amount,
+          currency: 'INR',
+          originalTransactionId: rental.razorpayPaymentId,
+          entityType: 'Rental',
+          entityId: rental._id,
+        });
+        logger.info(
+          `[RENTAL] Razorpay deposit refund of ₹${amount} initiated for ${rental.rentalOrderId}`,
+        );
+      } catch (refundErr: any) {
+        logger.error(
+          `[CRITICAL] Failed to enqueue Razorpay deposit refund for rental ${rental._id}:`,
+          refundErr,
+        );
+      }
+    }
+
     logger.info(`[RENTAL] Deposit ₹${amount} released for ${rental.rentalOrderId} by ${adminId}`);
     return rental;
   }
@@ -881,13 +369,29 @@ class RentalService {
         { session },
       );
 
-      rental.status = 'cancelled';
-      rental.statusHistory.push({
-        status: 'cancelled',
-        note: `Order cancelled. Refund: ${refundPercent}%`,
-        performedBy: isAdmin ? 'admin' : userId,
-      } as any);
+      RentalStateMachine.transition(
+        rental,
+        'cancelled',
+        `Order cancelled. Refund: ${refundPercent}%`,
+        isAdmin ? 'admin' : userId,
+      );
       await rental.save({ session });
+
+      if (rental.paymentStatus === 'paid' && refundPercent > 0 && rental.razorpayPaymentId) {
+        const refundAmount = (rental.totalAmount * refundPercent) / 100;
+        await PaymentRefundService.initiateAsyncRefund({
+          amount: Math.min(refundAmount, rental.totalAmount),
+          currency: 'INR',
+          originalTransactionId: rental.razorpayPaymentId,
+          entityType: 'Rental',
+          entityId: rental._id,
+        }).catch((err: any) => {
+          logger.error(
+            `[CRITICAL] Failed to enqueue refund for rental cancellation: ${rental._id}`,
+            err,
+          );
+        });
+      }
 
       await session.commitTransaction();
       session.endSession();

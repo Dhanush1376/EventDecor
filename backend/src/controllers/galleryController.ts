@@ -19,7 +19,7 @@ export const getGalleryItems = asyncHandler(async (req: Request, res: Response) 
   if (search) {
     const cleanSearch = (search as string).trim();
     if (cleanSearch) {
-      const escapedSearch = cleanSearch.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const escapedSearch = cleanSearch.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&');
       const searchRegex = new RegExp(escapedSearch, 'i');
       filter.$or = [
         { title: searchRegex },
@@ -28,7 +28,7 @@ export const getGalleryItems = asyncHandler(async (req: Request, res: Response) 
         { event: searchRegex },
         { style: searchRegex },
         { tags: searchRegex },
-        { description: searchRegex }
+        { description: searchRegex },
       ];
     }
   }
@@ -38,7 +38,15 @@ export const getGalleryItems = asyncHandler(async (req: Request, res: Response) 
     Gallery.countDocuments(filter),
   ]);
 
-  res.status(200).json(new ApiResponse(true, 'Gallery items fetched', formatPaginationResponse(items, totalCount, page, limit)));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Gallery items fetched',
+        formatPaginationResponse(items, totalCount, page, limit),
+      ),
+    );
 });
 
 export const getGalleryById = asyncHandler(async (req: Request, res: Response) => {
@@ -63,20 +71,27 @@ export const createGalleryItem = asyncHandler(async (req: Request, res: Response
 export const updateGalleryItem = asyncHandler(async (req: Request, res: Response) => {
   const oldItem = await Gallery.findById(req.params.id);
 
-  const item = await Gallery.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  const item = await Gallery.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
   if (!item) throw new ApiError(404, 'Gallery item not found');
 
   if (oldItem && req.body.image && oldItem.image !== req.body.image) {
     const publicId = extractPublicId(oldItem.image);
     if (publicId) {
-      deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up old gallery image: ${err}`));
+      deleteFromCloudinary(publicId).catch((err) =>
+        logger.error(`Failed to clean up old gallery image: ${err}`),
+      );
     }
   }
 
   if (oldItem && oldItem.video && oldItem.video !== req.body.video) {
     const publicId = extractPublicId(oldItem.video);
     if (publicId) {
-      deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up old gallery video: ${err}`));
+      deleteFromCloudinary(publicId).catch((err) =>
+        logger.error(`Failed to clean up old gallery video: ${err}`),
+      );
     }
   }
 
@@ -93,14 +108,18 @@ export const deleteGalleryItem = asyncHandler(async (req: Request, res: Response
   if (item.image) {
     const publicId = extractPublicId(item.image);
     if (publicId) {
-      deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up gallery image: ${err}`));
+      deleteFromCloudinary(publicId).catch((err) =>
+        logger.error(`Failed to clean up gallery image: ${err}`),
+      );
     }
   }
 
   if (item.video) {
     const publicId = extractPublicId(item.video);
     if (publicId) {
-      deleteFromCloudinary(publicId).catch(err => logger.error(`Failed to clean up gallery video: ${err}`));
+      deleteFromCloudinary(publicId).catch((err) =>
+        logger.error(`Failed to clean up gallery video: ${err}`),
+      );
     }
   }
 
@@ -116,11 +135,11 @@ export const likeGalleryItem = asyncHandler(async (req: any, res: Response) => {
   // Find item and only increment if the user's ID is not already in the likedBy array
   const item = await Gallery.findOneAndUpdate(
     { _id: req.params.id, likedBy: { $ne: req.user.id } },
-    { 
+    {
       $addToSet: { likedBy: req.user.id },
-      $inc: { likes: 1 } 
+      $inc: { likes: 1 },
     },
-    { new: true }
+    { new: true },
   );
 
   if (!item) {

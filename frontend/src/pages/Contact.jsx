@@ -1,52 +1,51 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { MandalaElement } from "../components/ui/MandalaElement";
-import { SEO } from "../components/seo/SEO";
-import { Link } from "react-router-dom";
-import { useWebsiteContent } from "../hooks/useWebsiteContent";
-import { inquiryService } from "../services/domainServices";
-import { FormField } from "../components/ui/FormField";
-import { ContactSkeleton } from "../components/ui/Skeleton";
-import toast from "react-hot-toast";
-import { MOTION_PRESETS, EASE, DURATION } from "../constants/design-tokens";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { SEO } from '../components/seo/SEO';
+import { Link } from 'react-router-dom';
+import { useWebsiteContent } from '../hooks/useWebsiteContent';
+import { inquiryService } from '../services/domainServices';
+import { ContactSkeleton } from '../components/ui/Skeleton';
+import toast from 'react-hot-toast';
+import { MOTION_PRESETS, EASE, DURATION } from '../constants/design-tokens';
 
 import logger from '../utils/logger';
 
 export function Contact() {
   const { contact, loading } = useWebsiteContent();
-  const [formState, setFormState] = useState("idle"); // idle, sending, success
+  const [formState, setFormState] = useState('idle'); // idle, sending, success
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "General Inquiry",
-    message: "",
+    name: '',
+    email: '',
+    phone: '',
+    subject: 'General Inquiry',
+    message: '',
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormState("sending");
+    setFormState('sending');
 
     try {
       const response = await inquiryService.create(formData);
       if (response.success) {
-        setFormState("success");
-        toast.success("Inquiry sent successfully!");
+        setFormState('success');
+        toast.success('Inquiry sent successfully!');
         setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          subject: "General Inquiry",
-          message: "",
+          name: '',
+          email: '',
+          phone: '',
+          subject: 'General Inquiry',
+          message: '',
         });
       } else {
-        setFormState("idle");
-        toast.error("Failed to send inquiry. Please try again.");
+        setFormState('idle');
+        toast.error('Failed to send inquiry. Please try again.');
       }
     } catch (err) {
       logger.error(err);
-      setFormState("idle");
-      toast.error("An error occurred. Please try again.");
+      setFormState('idle');
+      toast.error('An error occurred. Please try again.');
     }
   };
 
@@ -108,9 +107,8 @@ export function Contact() {
                 transition={{ delay: 0.1, duration: DURATION.slow, ease: EASE.smooth }}
                 className="font-body text-on-surface-variant/70 text-lg leading-relaxed max-w-lg"
               >
-                Whether you're planning a grand royal wedding or a sacred
-                intimate pooja, our studio is dedicated to weaving your vision
-                into a heritage reality.
+                Whether you're planning a grand royal wedding or a sacred intimate pooja, our studio
+                is dedicated to weaving your vision into a heritage reality.
               </motion.p>
             </div>
 
@@ -122,16 +120,18 @@ export function Contact() {
                   href={method.link}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + idx * 0.1, duration: DURATION.slow, ease: EASE.smooth }}
+                  transition={{
+                    delay: 0.2 + idx * 0.1,
+                    duration: DURATION.slow,
+                    ease: EASE.smooth,
+                  }}
                   className="group block space-y-3"
                 >
                   <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-primary text-[20px] group-hover:scale-110 transition-transform">
                       {method.icon}
                     </span>
-                    <span className="form-label !mb-0 !ml-0">
-                      {method.title}
-                    </span>
+                    <span className="form-label !mb-0 !ml-0">{method.title}</span>
                   </div>
                   <p className="font-display text-xl text-on-surface group-hover:text-primary transition-colors">
                     {method.value}
@@ -139,8 +139,6 @@ export function Contact() {
                 </motion.a>
               ))}
             </div>
-
-
           </div>
 
           {/* Right Side: Redesigned Luxury Minimalistic Form Card */}
@@ -155,7 +153,7 @@ export function Contact() {
 
             {/* Success Overlay */}
             <AnimatePresence>
-              {formState === "success" && (
+              {formState === 'success' && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -170,11 +168,11 @@ export function Contact() {
                     Message Received
                   </h2>
                   <p className="font-body text-on-surface-variant/70 text-xs mb-8 max-w-[260px] leading-relaxed">
-                    Our design concierge will review your inquiry and respond
-                    within 24 business hours.
+                    Our design concierge will review your inquiry and respond within 24 business
+                    hours.
                   </p>
                   <button
-                    onClick={() => setFormState("idle")}
+                    onClick={() => setFormState('idle')}
                     className="btn-minimal text-[10px] tracking-widest uppercase font-bold"
                   >
                     Send Another Message
@@ -185,13 +183,18 @@ export function Contact() {
 
             <div className="flex items-center gap-2 mb-8 select-none">
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="font-label text-[9px] uppercase tracking-[0.25em] text-primary font-bold">Studio Concierge</span>
+              <span className="font-label text-[9px] uppercase tracking-[0.25em] text-primary font-bold">
+                Studio Concierge
+              </span>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative group">
-                  <label htmlFor="contact-name" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
+                  <label
+                    htmlFor="contact-name"
+                    className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
+                  >
                     Your Name <span className="text-error font-normal">*</span>
                   </label>
                   <input
@@ -207,7 +210,10 @@ export function Contact() {
                 </div>
 
                 <div className="relative group">
-                  <label htmlFor="contact-email" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
+                  <label
+                    htmlFor="contact-email"
+                    className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
+                  >
                     Digital Mail <span className="text-error font-normal">*</span>
                   </label>
                   <input
@@ -225,7 +231,10 @@ export function Contact() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative group">
-                  <label htmlFor="contact-phone" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
+                  <label
+                    htmlFor="contact-phone"
+                    className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
+                  >
                     Phone (Optional)
                   </label>
                   <input
@@ -240,7 +249,10 @@ export function Contact() {
                 </div>
 
                 <div className="relative group">
-                  <label htmlFor="contact-subject" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
+                  <label
+                    htmlFor="contact-subject"
+                    className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
+                  >
                     Inquiry Nature
                   </label>
                   <div className="relative">
@@ -264,7 +276,10 @@ export function Contact() {
               </div>
 
               <div className="relative group">
-                <label htmlFor="contact-message" className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300">
+                <label
+                  htmlFor="contact-message"
+                  className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
+                >
                   Your Vision <span className="text-error font-normal">*</span>
                 </label>
                 <textarea
@@ -280,10 +295,10 @@ export function Contact() {
 
               <button
                 type="submit"
-                disabled={formState === "sending"}
+                disabled={formState === 'sending'}
                 className="w-full py-4.5 bg-black hover:bg-[#735c00] text-white rounded-xl font-label text-[10px] uppercase tracking-[0.25em] font-bold flex items-center justify-center gap-3 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 group cursor-pointer"
               >
-                {formState === "sending" ? (
+                {formState === 'sending' ? (
                   <>
                     <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
                     Transmitting...

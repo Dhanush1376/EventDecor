@@ -1,10 +1,9 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { couponService } from "../../services/domainServices";
-import { useAdmin } from "../context/AdminContext";
-import toast from "react-hot-toast";
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { couponService } from '../../services/domainServices';
+import { useAdmin } from '../context/AdminContext';
+import toast from 'react-hot-toast';
 import {
   PageHeader,
   AdminToggle,
@@ -13,7 +12,7 @@ import {
   SkeletonCard,
   fadeUp,
   stagger,
-} from "../components/AdminUIKit";
+} from '../components/AdminUIKit';
 
 export function AdminCoupons() {
   const navigate = useNavigate();
@@ -23,13 +22,13 @@ export function AdminCoupons() {
   // Route-based creation instead of drawer
 
   const { data: coupons = [], isLoading: loading } = useQuery({
-    queryKey: ["adminCoupons"],
+    queryKey: ['adminCoupons'],
     queryFn: async () => {
       const res = await couponService.getAll();
-      if (!res.success) throw new Error("Failed to load discount coupons");
+      if (!res.success) throw new Error('Failed to load discount coupons');
       return res.data?.data || res.data?.items || (Array.isArray(res.data) ? res.data : []);
     },
-    onError: () => toast.error("Failed to load discount coupons"),
+    onError: () => toast.error('Failed to load discount coupons'),
   });
 
   const filteredCoupons = coupons.filter((c) => {
@@ -37,26 +36,26 @@ export function AdminCoupons() {
       !searchQuery ||
       c.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.discountType?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+      (c.description || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, isActive }) => couponService.update(id, { isActive }),
     onSuccess: (_, variables) => {
-      toast.success(`Coupon ${variables.isActive ? "activated" : "deactivated"}`);
-      queryClient.invalidateQueries({ queryKey: ["adminCoupons"] });
+      toast.success(`Coupon ${variables.isActive ? 'activated' : 'deactivated'}`);
+      queryClient.invalidateQueries({ queryKey: ['adminCoupons'] });
     },
-    onError: () => toast.error("Failed to update coupon status"),
+    onError: () => toast.error('Failed to update coupon status'),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => couponService.delete(id),
     onSuccess: () => {
-      toast.success("Coupon deleted");
-      queryClient.invalidateQueries({ queryKey: ["adminCoupons"] });
+      toast.success('Coupon deleted');
+      queryClient.invalidateQueries({ queryKey: ['adminCoupons'] });
     },
-    onError: () => toast.error("Failed to delete coupon"),
+    onError: () => toast.error('Failed to delete coupon'),
   });
 
   const handleToggleActive = (id, currentStatus) => {
@@ -64,24 +63,19 @@ export function AdminCoupons() {
   };
 
   const handleDelete = (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this coupon?")) return;
+    if (!window.confirm('Are you sure you want to permanently delete this coupon?')) return;
     deleteMutation.mutate(id);
   };
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={stagger}
-      className="space-y-6"
-    >
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       {/* Header */}
       <PageHeader
         title="Coupons & Offers"
         subtitle={`${coupons.filter((c) => c.isActive).length} active coupons in store catalog`}
       >
         <button
-          onClick={() => navigate("/admin/coupons/add")}
+          onClick={() => navigate('/admin/coupons/add')}
           className="admin-btn admin-btn-primary h-9"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
@@ -104,7 +98,7 @@ export function AdminCoupons() {
           action={
             <button
               onClick={() => {
-                navigate("/admin/coupons/add");
+                navigate('/admin/coupons/add');
               }}
               className="admin-btn admin-btn-primary admin-btn-sm"
             >
@@ -119,13 +113,10 @@ export function AdminCoupons() {
           description="Try adjusting your coupon code keywords or active filters."
         />
       ) : (
-        <motion.div
-          variants={stagger}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        >
+        <motion.div variants={stagger} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredCoupons.map((c) => {
             const hasLimit = c.usageLimit && c.usageLimit > 0;
-            const remaining = hasLimit ? Math.max(0, c.usageLimit - c.usedCount) : "∞";
+            const remaining = hasLimit ? Math.max(0, c.usageLimit - c.usedCount) : '∞';
             const percentUsed = hasLimit ? Math.round((c.usedCount / c.usageLimit) * 100) : 0;
             const isExpired = new Date() > new Date(c.expiryDate);
 
@@ -134,7 +125,7 @@ export function AdminCoupons() {
                 key={c._id || c.id}
                 variants={fadeUp}
                 className={`admin-card p-5 transition-all hover:shadow-[var(--admin-shadow-md)] hover:border-[var(--admin-border-strong)] ${
-                  !c.isActive || isExpired ? "opacity-60" : ""
+                  !c.isActive || isExpired ? 'opacity-60' : ''
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
@@ -142,13 +133,11 @@ export function AdminCoupons() {
                     <div
                       className={`w-11 h-11 rounded-[var(--admin-radius-lg)] flex items-center justify-center shrink-0 ${
                         c.isActive && !isExpired
-                          ? "bg-[var(--admin-accent-light)] text-[var(--admin-accent)]"
-                          : "bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)]"
+                          ? 'bg-[var(--admin-accent-light)] text-[var(--admin-accent)]'
+                          : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)]'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[22px]">
-                        sell
-                      </span>
+                      <span className="material-symbols-outlined text-[22px]">sell</span>
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -157,10 +146,10 @@ export function AdminCoupons() {
                         </span>
                       </div>
                       <p className="text-[12px] text-[var(--admin-text-secondary)] mt-0.5">
-                        {c.discountType === "percentage"
+                        {c.discountType === 'percentage'
                           ? `${c.discountValue}% off`
-                          : `₹${c.discountValue} off`}
-                        {" "}· Min order ₹{c.minOrderAmount?.toLocaleString() || 0}
+                          : `₹${c.discountValue} off`}{' '}
+                        · Min order ₹{c.minOrderAmount?.toLocaleString() || 0}
                       </p>
                     </div>
                   </div>
@@ -171,20 +160,27 @@ export function AdminCoupons() {
                       disabled={isExpired}
                     />
                     <StatusBadge
-                      status={isExpired ? "Cancelled" : c.isActive ? "Active" : "Inactive"}
+                      status={isExpired ? 'Cancelled' : c.isActive ? 'Active' : 'Inactive'}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   {[
-                    { label: "Used", value: c.usedCount || 0 },
-                    { label: "Remaining", value: remaining },
-                    { label: "Max Off", value: c.maxDiscount ? `₹${c.maxDiscount}` : "∞" },
+                    { label: 'Used', value: c.usedCount || 0 },
+                    { label: 'Remaining', value: remaining },
+                    { label: 'Max Off', value: c.maxDiscount ? `₹${c.maxDiscount}` : '∞' },
                   ].map((stat, i) => (
-                    <div key={i} className="text-center p-2.5 bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
-                      <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">{stat.value}</p>
-                      <p className="text-[10px] text-[var(--admin-text-tertiary)] font-semibold uppercase tracking-wider mt-0.5">{stat.label}</p>
+                    <div
+                      key={i}
+                      className="text-center p-2.5 bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]"
+                    >
+                      <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+                        {stat.value}
+                      </p>
+                      <p className="text-[10px] text-[var(--admin-text-tertiary)] font-semibold uppercase tracking-wider mt-0.5">
+                        {stat.label}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -208,7 +204,8 @@ export function AdminCoupons() {
 
                 <div className="flex items-center justify-between pt-3 border-t border-[var(--admin-border-subtle)]">
                   <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium">
-                    Valid: {new Date(c.startDate).toLocaleDateString()} to {new Date(c.expiryDate).toLocaleDateString()}
+                    Valid: {new Date(c.startDate).toLocaleDateString()} to{' '}
+                    {new Date(c.expiryDate).toLocaleDateString()}
                   </span>
                   <div className="flex gap-1">
                     <button
@@ -216,18 +213,14 @@ export function AdminCoupons() {
                       className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
                       title="Edit Coupon"
                     >
-                      <span className="material-symbols-outlined text-[16px]">
-                        edit
-                      </span>
+                      <span className="material-symbols-outlined text-[16px]">edit</span>
                     </button>
                     <button
                       onClick={() => handleDelete(c._id || c.id)}
                       className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
                       title="Delete Coupon"
                     >
-                      <span className="material-symbols-outlined text-[16px]">
-                        delete
-                      </span>
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
                     </button>
                   </div>
                 </div>
@@ -236,7 +229,6 @@ export function AdminCoupons() {
           })}
         </motion.div>
       )}
-
     </motion.div>
   );
 }

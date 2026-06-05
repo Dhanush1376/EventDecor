@@ -39,18 +39,15 @@ export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Respon
   // Compute lifetime spend progress using fast MongoDB aggregation
   const spendAggregation = await Order.aggregate([
     { $match: { user: user._id, orderStatus: { $nin: ['Cancelled', 'Refunded'] } } },
-    { $group: { _id: null, totalSpend: { $sum: "$total" } } }
+    { $group: { _id: null, totalSpend: { $sum: '$total' } } },
   ]);
   const lifetimeSpend = spendAggregation[0]?.totalSpend || 0;
 
-  const { LOYALTY_TIERS, getTierBySpend } = require('../constants/loyaltyTiers');
-  
-  let nextTier = 'Silver';
-  let spendRequired = Math.max(0, 5000 - lifetimeSpend);
-  let progressPercentage = Math.min(100, Math.round((lifetimeSpend / 5000) * 100));
-
   const currentTierIndex = LOYALTY_TIERS.findIndex((t: any) => t.tier === user.loyaltyTier);
   const nextTierObj = LOYALTY_TIERS[currentTierIndex + 1];
+  let nextTier: string;
+  let spendRequired: number;
+  let progressPercentage: number;
 
   if (nextTierObj) {
     nextTier = nextTierObj.tier;
@@ -58,7 +55,10 @@ export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Respon
     const currentTierSpend = LOYALTY_TIERS[currentTierIndex].minSpend;
     const tierRange = nextTierObj.minSpend - currentTierSpend;
     const currentProgress = lifetimeSpend - currentTierSpend;
-    progressPercentage = Math.max(0, Math.min(100, Math.round((currentProgress / tierRange) * 100)));
+    progressPercentage = Math.max(
+      0,
+      Math.min(100, Math.round((currentProgress / tierRange) * 100)),
+    );
   } else {
     nextTier = 'None (Max Tier reached)';
     spendRequired = 0;
@@ -77,8 +77,8 @@ export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Respon
       spendRequired,
       progressPercentage,
       transactions,
-      coupons: activeCoupons
-    })
+      coupons: activeCoupons,
+    }),
   );
 });
 
@@ -92,9 +92,15 @@ export const applyReferralCode = asyncHandler(async (req: Request, res: Response
 
   const result = await LoyaltyService.applyReferralCode(userId, referralCode);
 
-  res.status(200).json(
-    new ApiResponse(true, `Referral code successfully registered! Welcomed with ₹50 wallet cash. Referrer will receive ₹150 upon your first purchase.`, result)
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        `Referral code successfully registered! Welcomed with ₹50 wallet cash. Referrer will receive ₹150 upon your first purchase.`,
+        result,
+      ),
+    );
 });
 
 // Admin Review Moderation with Payout Rewards
@@ -116,14 +122,20 @@ export const getAdminReviews = asyncHandler(async (req: Request, res: Response) 
     Review.countDocuments(filter),
   ]);
 
-  res.status(200).json(
-    new ApiResponse(true, 'Fetched reviews list for moderation', formatPaginationResponse(reviews, totalCount, page, limit))
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Fetched reviews list for moderation',
+        formatPaginationResponse(reviews, totalCount, page, limit),
+      ),
+    );
 });
 
 export const moderateReview = asyncHandler(async (req: Request, res: Response) => {
   const { reviewId, action } = req.body; // action: 'approve' | 'reject'
-  
+
   if (!reviewId || !['approve', 'reject'].includes(action)) {
     throw new ApiError(400, 'Review ID and valid action are required');
   }
@@ -149,16 +161,24 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
     // Reward Reviewer instantly based on review quality (Text: ₹10, Photo: ₹25, Video: ₹50)
     const hasPhoto = review.images && review.images.length > 0;
     const hasVideo = false; // Video features simulated
-    
+
     await LoyaltyService.processReviewRewards(
       review.customer.toString(),
       review.rating,
       hasPhoto,
       hasVideo,
-      review._id.toString()
+      review._id.toString(),
     );
 
-    res.status(200).json(new ApiResponse(true, 'Review successfully approved and rewards dispatched to reviewer wallet!', review));
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          true,
+          'Review successfully approved and rewards dispatched to reviewer wallet!',
+          review,
+        ),
+      );
   } else {
     review.status = 'rejected';
     await review.save();
@@ -168,6 +188,8 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
       await updateProductRating(review.product);
     }
 
-    res.status(200).json(new ApiResponse(true, 'Review has been rejected. No rewards were credited.', review));
+    res
+      .status(200)
+      .json(new ApiResponse(true, 'Review has been rejected. No rewards were credited.', review));
   }
 });

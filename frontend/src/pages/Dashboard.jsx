@@ -4,14 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { SEO } from '../components/seo/SEO';
-import { handleImageError, getOptimizedUrl } from '../utils/imageUtils';
 import { useAuth } from '../context/AuthContext';
-import { orderService, userService } from '../services/domainServices';
+import { userService } from '../services/domainServices';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { WriteReviewModal } from '../components/sections/ProductReviews';
 import toast from 'react-hot-toast';
 import Barcode from 'react-barcode';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
+import { OptimizedImage } from '../components/ui/OptimizedImage';
 
 const InvoiceTemplate = React.lazy(() =>
   import('../components/ui').then((m) => ({ default: m.InvoiceTemplate })),
@@ -505,11 +505,11 @@ export function Dashboard() {
                 ) : null}
 
                 {user?.avatar ? (
-                  <img
-                    src={getOptimizedUrl(user.avatar, 200, 200)}
+                  <OptimizedImage
+                    src={user.avatar}
                     alt={user.name || 'Avatar'}
                     className="w-full h-full object-cover"
-                    onError={handleImageError}
+                    priority={true}
                   />
                 ) : (
                   <span className="font-display text-[26px] text-primary font-light">
@@ -1473,8 +1473,7 @@ export function Dashboard() {
                                       key={itemIdx}
                                       className="flex gap-4 items-start pb-2 border-b border-dashed border-outline-variant/10 last:border-0 last:pb-0"
                                     >
-                                      <img
-                                        onError={handleImageError}
+                                      <OptimizedImage
                                         src={prodImage}
                                         alt="Traditional wedding event decoration"
                                         className="w-14 h-16 bg-surface-container rounded object-cover flex-shrink-0 border border-outline-variant/20 shadow-2xs"

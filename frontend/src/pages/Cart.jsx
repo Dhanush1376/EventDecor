@@ -81,12 +81,14 @@ export function Cart() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const activeCouponsList =
-    couponsData?.data || couponsData?.items || (Array.isArray(couponsData) ? couponsData : []);
-  const activeCoupons = activeCouponsList.filter((c) => {
-    const isExpired = new Date() > new Date(c.expiryDate);
-    return c.isActive && !isExpired && (!c.usageLimit || c.usedCount < c.usageLimit);
-  });
+  const activeCoupons = React.useMemo(() => {
+    const list =
+      couponsData?.data || couponsData?.items || (Array.isArray(couponsData) ? couponsData : []);
+    return list.filter((c) => {
+      const isExpired = new Date() > new Date(c.expiryDate);
+      return c.isActive && !isExpired && (!c.usageLimit || c.usedCount < c.usageLimit);
+    });
+  }, [couponsData]);
 
   const triggerNotification = (msg) => {
     setNotification(msg);
@@ -112,9 +114,11 @@ export function Cart() {
       : 0;
 
   // Find the closest coupon that the user is yet to unlock
-  const nextAvailableCoupon = activeCoupons
-    .filter((c) => c.minPurchaseAmount && c.minPurchaseAmount > actualSubtotal)
-    .sort((a, b) => a.minPurchaseAmount - b.minPurchaseAmount)[0];
+  const nextAvailableCoupon = React.useMemo(() => {
+    return activeCoupons
+      .filter((c) => c.minPurchaseAmount && c.minPurchaseAmount > actualSubtotal)
+      .sort((a, b) => a.minPurchaseAmount - b.minPurchaseAmount)[0];
+  }, [activeCoupons, actualSubtotal]);
 
   const couponGap = nextAvailableCoupon
     ? nextAvailableCoupon.minPurchaseAmount - actualSubtotal
@@ -230,7 +234,7 @@ export function Cart() {
 
         {/* CART TABS - Rectangular Below Navbar */}
         <div className="w-full bg-surface-bright border-b border-outline-variant/40">
-          <div className="max-w-[1240px] mx-auto flex px-2 sm:px-6">
+          <div className="max-w-[1240px] mx-auto flex justify-center px-2 sm:px-6">
             <button
               onClick={() => setActiveCartMode('purchase')}
               className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-8 py-4 sm:py-4 text-[11px] sm:text-[13px] font-bold tracking-widest transition-all uppercase whitespace-nowrap border-b-2 cursor-pointer ${activeCartMode === 'purchase' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-on-surface hover:bg-surface-container-lowest'}`}

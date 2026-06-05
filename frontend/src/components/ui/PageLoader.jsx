@@ -1,5 +1,3 @@
-import React from "react";
-
 /**
  * Premium branded page loader — used as Suspense fallback.
  * Uses the "S" monogram and elegant spinning rings consistent with SplashScreen.
@@ -14,8 +12,8 @@ export const PageLoader = () => (
     <div
       className="h-full w-1/3"
       style={{
-        background: "var(--color-gold, #d4af37)",
-        animation: "loader-shimmer 1.5s linear infinite",
+        background: 'var(--color-gold, #d4af37)',
+        animation: 'loader-shimmer 1.5s linear infinite',
       }}
     />
     <style>{`

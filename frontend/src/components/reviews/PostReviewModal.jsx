@@ -1,21 +1,41 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import toast from "react-hot-toast";
-import { REVIEW_SAMPLE_IMAGES } from "../../constants/placeholderImages";
-import { OptimizedImage } from "../ui/OptimizedImage";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
+import { REVIEW_SAMPLE_IMAGES } from '../../constants/placeholderImages';
+import { OptimizedImage } from '../ui/OptimizedImage';
 
 const EXPERIENCE_TYPES = [
-  { id: "product", title: "Product Masterpiece", desc: "Handcrafted decor, brass diyas, artisanal trays & divine idola", icon: "diamond" },
-  { id: "event", title: "Event Setup Experience", desc: "Full venue styling, floral archways & engagement stage curation", icon: "celebration" },
-  { id: "showcase", title: "Showcase Rental Experience", desc: "Royal side-stage props, traditional backdrops & premium pedestals", icon: "styler" },
-  { id: "overall", title: "Overall Brand Story", desc: "Your overarching narrative with Siri Arts & Crafts concierge", icon: "auto_awesome" },
+  {
+    id: 'product',
+    title: 'Product Masterpiece',
+    desc: 'Handcrafted decor, brass diyas, artisanal trays & divine idola',
+    icon: 'diamond',
+  },
+  {
+    id: 'event',
+    title: 'Event Setup Experience',
+    desc: 'Full venue styling, floral archways & engagement stage curation',
+    icon: 'celebration',
+  },
+  {
+    id: 'showcase',
+    title: 'Showcase Rental Experience',
+    desc: 'Royal side-stage props, traditional backdrops & premium pedestals',
+    icon: 'styler',
+  },
+  {
+    id: 'overall',
+    title: 'Overall Brand Story',
+    desc: 'Your overarching narrative with Siri Arts & Crafts concierge',
+    icon: 'auto_awesome',
+  },
 ];
 
 const SMART_PROMPTS = [
-  "The brass carving details were absolutely flawless for our ceremony...",
-  "Our guests were mesmerized by the royal mandap showcase arrangement...",
-  "The delivery concierge arrived perfectly on schedule and set up flawlessly...",
-  "The handcrafted coconut decor added such an authentic traditional aura...",
+  'The brass carving details were absolutely flawless for our ceremony...',
+  'Our guests were mesmerized by the royal mandap showcase arrangement...',
+  'The delivery concierge arrived perfectly on schedule and set up flawlessly...',
+  'The handcrafted coconut decor added such an authentic traditional aura...',
 ];
 
 export function PostReviewModal({ isOpen, onClose, onSubmit }) {
@@ -23,7 +43,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
-  const [experienceType, setExperienceType] = useState("event");
+  const [experienceType, setExperienceType] = useState('event');
   const [ratings, setRatings] = useState({
     overall: 5,
     quality: 5,
@@ -33,13 +53,15 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
     communication: 5,
   });
   const [hoverRatings, setHoverRatings] = useState({});
-  const [customerName, setCustomerName] = useState("Aarav Singhania");
-  const [eventType, setEventType] = useState("Royal Engagement Ceremony");
-  const [favoriteElement, setFavoriteElement] = useState("Antique Gold Brass Urli & Floral Backdrop");
-  const [comment, setComment] = useState("");
+  const [customerName, setCustomerName] = useState('Aarav Singhania');
+  const [eventType, setEventType] = useState('Royal Engagement Ceremony');
+  const [favoriteElement, setFavoriteElement] = useState(
+    'Antique Gold Brass Urli & Floral Backdrop',
+  );
+  const [comment, setComment] = useState('');
   const [isAiPolishing, setIsAiPolishing] = useState(false);
   const [mediaList, setMediaList] = useState([]);
-  const [newMediaUrl, setNewMediaUrl] = useState("");
+  const [newMediaUrl, setNewMediaUrl] = useState('');
 
   if (!isOpen) return null;
 
@@ -51,25 +73,26 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
     setHoverRatings((prev) => ({ ...prev, [category]: value }));
   };
 
-  const addSampleMedia = (url, type = "image") => {
+  const addSampleMedia = (url, type = 'image') => {
     if (!mediaList.some((m) => m.url === url)) {
       setMediaList((prev) => [...prev, { url, type }]);
-      toast.success("Event memory media attached successfully!");
+      toast.success('Event memory media attached successfully!');
     }
   };
 
   const handleCustomMediaAdd = (e) => {
     e.preventDefault();
     if (!newMediaUrl.trim()) return;
-    const isVid = newMediaUrl.includes("mp4") || newMediaUrl.includes("reel") || newMediaUrl.includes("video");
-    setMediaList((prev) => [...prev, { url: newMediaUrl.trim(), type: isVid ? "video" : "image" }]);
-    setNewMediaUrl("");
-    toast.success("Custom media link attached!");
+    const isVid =
+      newMediaUrl.includes('mp4') || newMediaUrl.includes('reel') || newMediaUrl.includes('video');
+    setMediaList((prev) => [...prev, { url: newMediaUrl.trim(), type: isVid ? 'video' : 'image' }]);
+    setNewMediaUrl('');
+    toast.success('Custom media link attached!');
   };
 
   const triggerAiPolish = () => {
     if (!comment.trim()) {
-      toast.error("Please enter some preliminary thoughts first!");
+      toast.error('Please enter some preliminary thoughts first!');
       return;
     }
     setIsAiPolishing(true);
@@ -77,7 +100,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
       const polished = `"${comment.replace(/^"|"$/g, '').trim()}" — The handcrafted excellence of Siri Arts elevated our entire celebration. The intricate design language and impeccable attention to detail truly made our venue radiate with timeless heritage. Every guest inquired about the majestic decor setup!`;
       setComment(polished);
       setIsAiPolishing(false);
-      toast.success("AI Concierge successfully refined your testimonial!", { icon: "✨" });
+      toast.success('AI Concierge successfully refined your testimonial!', { icon: '✨' });
     }, 1200);
   };
 
@@ -87,31 +110,36 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
       const rewardAmount = mediaList.length > 0 ? 50 : 25;
       const newReviewData = {
         id: Date.now(),
-        user: customerName || "Bespoke Patron",
-        eventType: eventType || "Milestone Celebration",
-        favoriteElement: favoriteElement || "Handcrafted Masterpieces",
-        location: "Ongole, India",
+        user: customerName || 'Bespoke Patron',
+        eventType: eventType || 'Milestone Celebration',
+        favoriteElement: favoriteElement || 'Handcrafted Masterpieces',
+        location: 'Ongole, India',
         rating: ratings.overall,
         subRatings: ratings,
-        date: "Today",
-        comment: comment || "An absolutely spectacular luxury decor experience that exceeded all expectations.",
-        images: mediaList.filter((m) => m.type === "image").map((m) => m.url),
-        video: mediaList.find((m) => m.type === "video")?.url || null,
+        date: 'Today',
+        comment:
+          comment ||
+          'An absolutely spectacular luxury decor experience that exceeded all expectations.',
+        images: mediaList.filter((m) => m.type === 'image').map((m) => m.url),
+        video: mediaList.find((m) => m.type === 'video')?.url || null,
         verified: true,
         helpfulCount: 0,
         experienceType,
-        aiPolished: comment.includes("timeless heritage") || comment.includes("intricate design"),
+        aiPolished: comment.includes('timeless heritage') || comment.includes('intricate design'),
       };
 
       if (onSubmit) {
         await onSubmit(newReviewData, rewardAmount);
       }
-      toast.success(`Testimonial Published! ₹${rewardAmount} Siri Cash Disbursed to your Wallet.`, { icon: "💎", duration: 5000 });
+      toast.success(`Testimonial Published! ₹${rewardAmount} Siri Cash Disbursed to your Wallet.`, {
+        icon: '💎',
+        duration: 5000,
+      });
       onClose();
       // reset
       setStep(1);
     } catch (err) {
-      toast.error("Could not finalize review submission.");
+      toast.error('Could not finalize review submission.');
     } finally {
       setIsSubmitting(false);
     }
@@ -154,25 +182,29 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] transition-all ${
                     step === st
-                      ? "bg-[var(--color-gold-dark)] text-white ring-2 ring-[#D4AF37]/50"
+                      ? 'bg-[var(--color-gold-dark)] text-white ring-2 ring-[#D4AF37]/50'
                       : step > st
-                      ? "bg-[#D4AF37] text-white"
-                      : "bg-[#EAE5DA] text-[#8C8270]"
+                        ? 'bg-[#D4AF37] text-white'
+                        : 'bg-[#EAE5DA] text-[#8C8270]'
                   }`}
                 >
-                  {step > st ? "✓" : st}
+                  {step > st ? '✓' : st}
                 </div>
                 {st < 5 && <div className="w-4 h-[2px] bg-[#D4AF37]/20" />}
               </div>
             ))}
           </div>
           <span className="font-label uppercase text-[10px] font-bold text-[var(--color-gold-dark)]">
-            Step {step} of 5: {
-              step === 1 ? "Experience Type" :
-              step === 2 ? "Multi-Dimension Rating" :
-              step === 3 ? "Detailed Narrative" :
-              step === 4 ? "Event Media Showcase" : "Live Luxury Preview"
-            }
+            Step {step} of 5:{' '}
+            {step === 1
+              ? 'Experience Type'
+              : step === 2
+                ? 'Multi-Dimension Rating'
+                : step === 3
+                  ? 'Detailed Narrative'
+                  : step === 4
+                    ? 'Event Media Showcase'
+                    : 'Live Luxury Preview'}
           </span>
         </div>
 
@@ -188,9 +220,12 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                 className="space-y-6"
               >
                 <div className="text-center max-w-md mx-auto">
-                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">What would you like to review?</h3>
+                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">
+                    What would you like to review?
+                  </h3>
                   <p className="text-xs text-[#7F7663] mt-1 leading-relaxed">
-                    Select the dimension of your engagement with Siri Arts & Crafts to categorize your story.
+                    Select the dimension of your engagement with Siri Arts & Crafts to categorize
+                    your story.
                   </p>
                 </div>
 
@@ -201,27 +236,43 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                       onClick={() => setExperienceType(exp.id)}
                       className={`p-5 rounded-3xl border transition-all cursor-pointer flex flex-col justify-between ${
                         experienceType === exp.id
-                          ? "bg-gradient-to-br from-[var(--color-gold-dark)] to-[var(--color-gold-darker)] border-[#D4AF37] text-white shadow-xl scale-[1.02]"
-                          : "bg-white border-[#D4AF37]/20 hover:border-[#D4AF37]/60 text-[#2D2B29]"
+                          ? 'bg-gradient-to-br from-[var(--color-gold-dark)] to-[var(--color-gold-darker)] border-[#D4AF37] text-white shadow-xl scale-[1.02]'
+                          : 'bg-white border-[#D4AF37]/20 hover:border-[#D4AF37]/60 text-[#2D2B29]'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                          experienceType === exp.id ? "bg-white/10 text-[#D4AF37]" : "bg-[#F8F5F0] text-[var(--color-gold-dark)]"
-                        }`}>
+                        <div
+                          className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                            experienceType === exp.id
+                              ? 'bg-white/10 text-[#D4AF37]'
+                              : 'bg-[#F8F5F0] text-[var(--color-gold-dark)]'
+                          }`}
+                        >
                           <span className="material-symbols-outlined text-2xl">{exp.icon}</span>
                         </div>
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          experienceType === exp.id ? "border-[#D4AF37] bg-[#D4AF37] text-white" : "border-zinc-300"
-                        }`}>
-                          {experienceType === exp.id && <span className="material-symbols-outlined text-xs">check</span>}
+                        <div
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            experienceType === exp.id
+                              ? 'border-[#D4AF37] bg-[#D4AF37] text-white'
+                              : 'border-zinc-300'
+                          }`}
+                        >
+                          {experienceType === exp.id && (
+                            <span className="material-symbols-outlined text-xs">check</span>
+                          )}
                         </div>
                       </div>
                       <div>
-                        <h4 className="font-display font-bold text-base leading-tight">{exp.title}</h4>
-                        <p className={`text-xs mt-1 leading-relaxed ${
-                          experienceType === exp.id ? "text-white/80" : "text-[#7F7663]"
-                        }`}>{exp.desc}</p>
+                        <h4 className="font-display font-bold text-base leading-tight">
+                          {exp.title}
+                        </h4>
+                        <p
+                          className={`text-xs mt-1 leading-relaxed ${
+                            experienceType === exp.id ? 'text-white/80' : 'text-[#7F7663]'
+                          }`}
+                        >
+                          {exp.desc}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -238,27 +289,37 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                 className="space-y-6"
               >
                 <div className="text-center max-w-md mx-auto">
-                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">Rate Your Experience Dimensions</h3>
+                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">
+                    Rate Your Experience Dimensions
+                  </h3>
                   <p className="text-xs text-[#7F7663] mt-1 leading-relaxed">
-                    Provide a multi-dimensional assessment of our artisanal craftsmanship, delivery accuracy, and setup excellence.
+                    Provide a multi-dimensional assessment of our artisanal craftsmanship, delivery
+                    accuracy, and setup excellence.
                   </p>
                 </div>
 
                 <div className="bg-white border border-[#D4AF37]/20 rounded-3xl p-6 space-y-5">
                   {/* Overall Star Rating Banner */}
                   <div className="pb-5 border-b border-[#D4AF37]/10 text-center">
-                    <span className="text-xs uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-2">Overall Satisfaction</span>
+                    <span className="text-xs uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-2">
+                      Overall Satisfaction
+                    </span>
                     <div className="flex justify-center gap-2 text-[#D4AF37]">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <span
                           key={star}
-                          onClick={() => handleStarClick("overall", star)}
-                          onMouseEnter={() => handleStarHover("overall", star)}
-                          onMouseLeave={() => handleStarHover("overall", null)}
+                          onClick={() => handleStarClick('overall', star)}
+                          onMouseEnter={() => handleStarHover('overall', star)}
+                          onMouseLeave={() => handleStarHover('overall', null)}
                           className="material-symbols-outlined text-4xl cursor-pointer hover:scale-125 transition-transform"
                           style={{
-                            fontVariationSettings: "'FILL' " + (star <= (hoverRatings.overall || ratings.overall) ? "1" : "0"),
-                            color: star <= (hoverRatings.overall || ratings.overall) ? "#D4AF37" : "#E2DACB"
+                            fontVariationSettings:
+                              "'FILL' " +
+                              (star <= (hoverRatings.overall || ratings.overall) ? '1' : '0'),
+                            color:
+                              star <= (hoverRatings.overall || ratings.overall)
+                                ? '#D4AF37'
+                                : '#E2DACB',
                           }}
                         >
                           star
@@ -266,22 +327,39 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                       ))}
                     </div>
                     <span className="text-xs text-[#2D2B29] font-semibold mt-2 block">
-                      {ratings.overall === 5 ? "👑 Absolute Luxury Perfection" : ratings.overall === 4 ? "✨ Superb Artisanal Quality" : "🌟 Satisfactory Experience"}
+                      {ratings.overall === 5
+                        ? '👑 Absolute Luxury Perfection'
+                        : ratings.overall === 4
+                          ? '✨ Superb Artisanal Quality'
+                          : '🌟 Satisfactory Experience'}
                     </span>
                   </div>
 
                   {/* Sub-categories */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     {[
-                      { key: "quality", label: "Handcrafted Quality", icon: "workspace_premium" },
-                      { key: "design", label: "Design Elegance & Aesthetics", icon: "palette" },
-                      { key: "delivery", label: "Punctual Delivery Logistics", icon: "local_shipping" },
-                      { key: "setup", label: "Venue Setup Professionalism", icon: "architecture" },
-                      { key: "communication", label: "Concierge Communication", icon: "support_agent" },
+                      { key: 'quality', label: 'Handcrafted Quality', icon: 'workspace_premium' },
+                      { key: 'design', label: 'Design Elegance & Aesthetics', icon: 'palette' },
+                      {
+                        key: 'delivery',
+                        label: 'Punctual Delivery Logistics',
+                        icon: 'local_shipping',
+                      },
+                      { key: 'setup', label: 'Venue Setup Professionalism', icon: 'architecture' },
+                      {
+                        key: 'communication',
+                        label: 'Concierge Communication',
+                        icon: 'support_agent',
+                      },
                     ].map((cat) => (
-                      <div key={cat.key} className="flex items-center justify-between p-3.5 bg-[#FAF9F6] rounded-2xl border border-black/5">
+                      <div
+                        key={cat.key}
+                        className="flex items-center justify-between p-3.5 bg-[#FAF9F6] rounded-2xl border border-black/5"
+                      >
                         <div className="flex items-center gap-2.5">
-                          <span className="material-symbols-outlined text-base text-[var(--color-gold-dark)]">{cat.icon}</span>
+                          <span className="material-symbols-outlined text-base text-[var(--color-gold-dark)]">
+                            {cat.icon}
+                          </span>
                           <span className="text-xs font-semibold text-[#2D2B29]">{cat.label}</span>
                         </div>
                         <div className="flex gap-1">
@@ -293,8 +371,13 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                               onMouseLeave={() => handleStarHover(cat.key, null)}
                               className="material-symbols-outlined text-base cursor-pointer hover:scale-125 transition-transform"
                               style={{
-                                fontVariationSettings: "'FILL' " + (st <= (hoverRatings[cat.key] || ratings[cat.key]) ? "1" : "0"),
-                                color: st <= (hoverRatings[cat.key] || ratings[cat.key]) ? "var(--color-gold-dark)" : "#E2DACB"
+                                fontVariationSettings:
+                                  "'FILL' " +
+                                  (st <= (hoverRatings[cat.key] || ratings[cat.key]) ? '1' : '0'),
+                                color:
+                                  st <= (hoverRatings[cat.key] || ratings[cat.key])
+                                    ? 'var(--color-gold-dark)'
+                                    : '#E2DACB',
                               }}
                             >
                               star
@@ -317,15 +400,20 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                 className="space-y-5"
               >
                 <div className="text-center max-w-md mx-auto">
-                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">Write Your Story</h3>
+                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">
+                    Write Your Story
+                  </h3>
                   <p className="text-xs text-[#7F7663] mt-1 leading-relaxed">
-                    Share emotional details of how Siri Arts made your milestone celebration unforgettable.
+                    Share emotional details of how Siri Arts made your milestone celebration
+                    unforgettable.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">Your Full Name</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">
+                      Your Full Name
+                    </label>
                     <input
                       type="text"
                       value={customerName}
@@ -335,7 +423,9 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">Celebration Event</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">
+                      Celebration Event
+                    </label>
                     <input
                       type="text"
                       value={eventType}
@@ -345,7 +435,9 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">Favorite Decor Piece</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">
+                      Favorite Decor Piece
+                    </label>
                     <input
                       type="text"
                       value={favoriteElement}
@@ -358,7 +450,9 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)]">Your Detailed Review</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)]">
+                      Your Detailed Review
+                    </label>
                     <button
                       type="button"
                       onClick={triggerAiPolish}
@@ -372,8 +466,8 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                         </>
                       ) : (
                         <>
-                          <span className="material-symbols-outlined text-xs">auto_awesome</span>
-                          ✨ Polish with AI Concierge
+                          <span className="material-symbols-outlined text-xs">auto_awesome</span>✨
+                          Polish with AI Concierge
                         </>
                       )}
                     </button>
@@ -390,13 +484,15 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
 
                 {/* Smart Prompts Starters */}
                 <div className="space-y-2">
-                  <span className="text-[10px] uppercase tracking-wider text-[#7F7663] font-bold block">💡 Click a Smart Starter to begin writing:</span>
+                  <span className="text-[10px] uppercase tracking-wider text-[#7F7663] font-bold block">
+                    💡 Click a Smart Starter to begin writing:
+                  </span>
                   <div className="flex flex-wrap gap-2">
                     {SMART_PROMPTS.map((prompt, idx) => (
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => setComment((prev) => (prev ? prev + " " : "") + prompt)}
+                        onClick={() => setComment((prev) => (prev ? prev + ' ' : '') + prompt)}
                         className="text-[11px] bg-white border border-[#D4AF37]/20 hover:border-[var(--color-gold-dark)] text-[#2D2B29] px-3 py-1.5 rounded-full transition-all cursor-pointer"
                       >
                         {prompt}
@@ -416,9 +512,12 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                 className="space-y-6"
               >
                 <div className="text-center max-w-md mx-auto">
-                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">Upload Photos & Video Memories</h3>
+                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">
+                    Upload Photos & Video Memories
+                  </h3>
                   <p className="text-xs text-[#7F7663] mt-1 leading-relaxed">
-                    Attach venue photos, closeups of brass trays, or video highlight clips. Earn ₹50 Siri Cash for photo/video stories!
+                    Attach venue photos, closeups of brass trays, or video highlight clips. Earn ₹50
+                    Siri Cash for photo/video stories!
                   </p>
                 </div>
 
@@ -431,12 +530,18 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     {REVIEW_SAMPLE_IMAGES.map((sample, idx) => (
                       <div
                         key={idx}
-                        onClick={() => addSampleMedia(sample.url, "image")}
+                        onClick={() => addSampleMedia(sample.url, 'image')}
                         className="group relative aspect-video rounded-xl overflow-hidden border border-[#D4AF37]/30 cursor-pointer shadow-xs"
                       >
-                        <OptimizedImage src={sample.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Sample" />
+                        <OptimizedImage
+                          src={sample.url}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          alt="Sample"
+                        />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-[10px] text-white font-bold bg-[var(--color-gold-dark)] px-2 py-1 rounded-md">＋ Attach</span>
+                          <span className="text-[10px] text-white font-bold bg-[var(--color-gold-dark)] px-2 py-1 rounded-md">
+                            ＋ Attach
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -463,16 +568,27 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                 {/* Uploaded Media Preview Rack */}
                 {mediaList.length > 0 && (
                   <div className="space-y-2">
-                    <span className="text-xs font-bold text-[#2D2B29]">Attached Memories ({mediaList.length}):</span>
+                    <span className="text-xs font-bold text-[#2D2B29]">
+                      Attached Memories ({mediaList.length}):
+                    </span>
                     <div className="flex flex-wrap gap-3">
                       {mediaList.map((media, idx) => (
-                        <div key={idx} className="relative w-20 h-20 rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-sm group">
-                          {media.type === "video" ? (
+                        <div
+                          key={idx}
+                          className="relative w-20 h-20 rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-sm group"
+                        >
+                          {media.type === 'video' ? (
                             <div className="w-full h-full bg-[var(--color-gold-dark)] flex items-center justify-center text-white">
-                              <span className="material-symbols-outlined text-2xl">play_circle</span>
+                              <span className="material-symbols-outlined text-2xl">
+                                play_circle
+                              </span>
                             </div>
                           ) : (
-                            <OptimizedImage src={media.url} className="w-full h-full object-cover" alt="Uploaded Preview" />
+                            <OptimizedImage
+                              src={media.url}
+                              className="w-full h-full object-cover"
+                              alt="Uploaded Preview"
+                            />
                           )}
                           <button
                             type="button"
@@ -498,9 +614,12 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                 className="space-y-6"
               >
                 <div className="text-center max-w-md mx-auto">
-                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">Review Final Luxury Card</h3>
+                  <h3 className="text-lg font-display font-bold text-[#2D2B29]">
+                    Review Final Luxury Card
+                  </h3>
                   <p className="text-xs text-[#7F7663] mt-1 leading-relaxed">
-                    Here is how your testimonial will be showcased in the Siri Arts Client Narratives Gallery.
+                    Here is how your testimonial will be showcased in the Siri Arts Client
+                    Narratives Gallery.
                   </p>
                 </div>
 
@@ -511,36 +630,63 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[var(--color-gold-dark)] to-[#D4AF37] text-white flex items-center justify-center font-display text-lg font-bold shadow-md">
-                        {customerName ? customerName.substring(0, 2).toUpperCase() : "SA"}
+                        {customerName ? customerName.substring(0, 2).toUpperCase() : 'SA'}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <h4 className="font-display font-bold text-base text-[#2D2B29]">{customerName || "Bespoke Patron"}</h4>
-                          <span className="material-symbols-outlined text-sm text-emerald-600 font-bold" title="Verified Patron">verified</span>
+                          <h4 className="font-display font-bold text-base text-[#2D2B29]">
+                            {customerName || 'Bespoke Patron'}
+                          </h4>
+                          <span
+                            className="material-symbols-outlined text-sm text-emerald-600 font-bold"
+                            title="Verified Patron"
+                          >
+                            verified
+                          </span>
                         </div>
-                        <p className="text-[11px] text-[var(--color-gold-dark)] font-semibold">{eventType} · {favoriteElement}</p>
+                        <p className="text-[11px] text-[var(--color-gold-dark)] font-semibold">
+                          {eventType} · {favoriteElement}
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-0.5 text-[#D4AF37]">
                       {[...Array(5)].map((_, i) => (
-                        <span key={i} className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                        <span
+                          key={i}
+                          className="material-symbols-outlined text-base"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          star
+                        </span>
                       ))}
                     </div>
                   </div>
 
                   <p className="text-xs text-[#2D2B29]/90 leading-relaxed italic bg-[#FAF9F6] p-4 rounded-2xl border border-black/5 font-serif">
-                    "{comment || 'An exquisite masterwork of timeless decor that elevated our venue into a royal sanctuary.'}"
+                    "
+                    {comment ||
+                      'An exquisite masterwork of timeless decor that elevated our venue into a royal sanctuary.'}
+                    "
                   </p>
 
                   {/* Media rack */}
                   {mediaList.length > 0 && (
                     <div className="flex gap-2.5 overflow-x-auto pb-1">
                       {mediaList.map((m, idx) => (
-                        <div key={idx} className="w-16 h-16 rounded-xl overflow-hidden border border-[#D4AF37]/30 shrink-0 shadow-xs">
-                          {m.type === "video" ? (
-                            <div className="w-full h-full bg-[var(--color-gold-dark)] flex items-center justify-center text-white text-xs font-bold">VIDEO</div>
+                        <div
+                          key={idx}
+                          className="w-16 h-16 rounded-xl overflow-hidden border border-[#D4AF37]/30 shrink-0 shadow-xs"
+                        >
+                          {m.type === 'video' ? (
+                            <div className="w-full h-full bg-[var(--color-gold-dark)] flex items-center justify-center text-white text-xs font-bold">
+                              VIDEO
+                            </div>
                           ) : (
-                            <OptimizedImage src={m.url} className="w-full h-full object-cover" alt="Preview" />
+                            <OptimizedImage
+                              src={m.url}
+                              className="w-full h-full object-cover"
+                              alt="Preview"
+                            />
                           )}
                         </div>
                       ))}
@@ -549,8 +695,8 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
 
                   <div className="flex items-center justify-between text-[11px] text-[#7F7663] pt-2 border-t border-black/5">
                     <span className="flex items-center gap-1 text-emerald-700 font-bold">
-                      <span className="material-symbols-outlined text-xs">loyalty</span>
-                      ₹{mediaList.length > 0 ? 50 : 25} Siri Cash Reward Secured
+                      <span className="material-symbols-outlined text-xs">loyalty</span>₹
+                      {mediaList.length > 0 ? 50 : 25} Siri Cash Reward Secured
                     </span>
                     <span>Just now · Verified Event</span>
                   </div>

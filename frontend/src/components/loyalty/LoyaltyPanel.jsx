@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { loyaltyService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
@@ -65,8 +65,8 @@ export function LoyaltyPanel() {
       style: {
         background: '#121110',
         color: '#d4af37',
-        border: '1px solid #d4af37/30'
-      }
+        border: '1px solid #d4af37/30',
+      },
     });
   };
 
@@ -92,7 +92,7 @@ export function LoyaltyPanel() {
           border: 'border-[#746f8c]/40',
           text: 'text-[#e2e1e6]',
           badge: 'bg-[#746f8c] text-white',
-          glow: 'shadow-[0_0_20px_rgba(116,111,140,0.25)]'
+          glow: 'shadow-[0_0_20px_rgba(116,111,140,0.25)]',
         };
       case 'Gold':
         return {
@@ -100,7 +100,7 @@ export function LoyaltyPanel() {
           border: 'border-[#d4af37]/35',
           text: 'text-[#f4e6d4]',
           badge: 'bg-[#d4af37] text-[#121110]',
-          glow: 'shadow-[0_0_25px_rgba(212,175,55,0.2)]'
+          glow: 'shadow-[0_0_25px_rgba(212,175,55,0.2)]',
         };
       case 'Silver':
         return {
@@ -108,7 +108,7 @@ export function LoyaltyPanel() {
           border: 'border-[#a8b2bd]/40',
           text: 'text-[#f1f3f5]',
           badge: 'bg-[#adb5bd] text-[#212529]',
-          glow: 'shadow-[0_0_15px_rgba(173,181,189,0.15)]'
+          glow: 'shadow-[0_0_15px_rgba(173,181,189,0.15)]',
         };
       default: // Bronze starting tier
         return {
@@ -116,7 +116,7 @@ export function LoyaltyPanel() {
           border: 'border-[#cd7f32]/40',
           text: 'text-[#f5ebec]',
           badge: 'bg-[#cd7f32] text-white',
-          glow: 'shadow-none'
+          glow: 'shadow-none',
         };
     }
   };
@@ -133,30 +133,37 @@ export function LoyaltyPanel() {
     >
       {/* 1. GAMIFIED TIER CARD SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        
         {/* Luxury Member Pass Card */}
-        <div className={`lg:col-span-7 rounded-xl border p-6 ${tier.bg} ${tier.border} ${tier.glow} relative overflow-hidden flex flex-col justify-between group`}>
+        <div
+          className={`lg:col-span-7 rounded-xl border p-6 ${tier.bg} ${tier.border} ${tier.glow} relative overflow-hidden flex flex-col justify-between group`}
+        >
           {/* Subtle metallic reflection effects */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
           <div className="absolute top-0 right-0 -translate-y-10 translate-x-10 w-44 h-44 bg-white/5 rounded-full blur-xl pointer-events-none" />
-          
+
           <div className="flex justify-between items-start z-10 gap-2">
             <div>
-              <span className={`text-[8px] sm:text-[10px] font-bold uppercase tracking-widest ${tier.text} opacity-60 block leading-snug`}>
+              <span
+                className={`text-[8px] sm:text-[10px] font-bold uppercase tracking-widest ${tier.text} opacity-60 block leading-snug`}
+              >
                 Bespoke Membership Pass
               </span>
               <h3 className="font-display text-[18px] sm:text-2xl font-light text-white tracking-widest uppercase mt-1">
                 {data.loyaltyTier} MEMBER
               </h3>
             </div>
-            <span className={`text-[8px] sm:text-[10px] font-bold tracking-widest uppercase px-2 sm:px-3 py-1 rounded-full ${tier.badge} shadow-sm shrink-0 whitespace-nowrap mt-1`}>
+            <span
+              className={`text-[8px] sm:text-[10px] font-bold tracking-widest uppercase px-2 sm:px-3 py-1 rounded-full ${tier.badge} shadow-sm shrink-0 whitespace-nowrap mt-1`}
+            >
               ✦ {data.loyaltyTier}
             </span>
           </div>
 
           <div className="mt-6 mb-5 z-10 flex items-center justify-between gap-1 sm:gap-2">
             <div className="space-y-1 flex-1">
-              <span className={`text-[8px] sm:text-[9px] uppercase tracking-widest font-bold ${tier.text} opacity-55 block truncate`}>
+              <span
+                className={`text-[8px] sm:text-[9px] uppercase tracking-widest font-bold ${tier.text} opacity-55 block truncate`}
+              >
                 Siri Pay Wallet
               </span>
               <div className="text-[22px] sm:text-3xl font-display font-light text-white flex items-baseline gap-1">
@@ -168,7 +175,9 @@ export function LoyaltyPanel() {
             <div className="w-[1px] h-10 bg-white/10 shrink-0" />
 
             <div className="space-y-1 text-right flex-1">
-              <span className={`text-[8px] sm:text-[9px] uppercase tracking-widest font-bold ${tier.text} opacity-55 block truncate`}>
+              <span
+                className={`text-[8px] sm:text-[9px] uppercase tracking-widest font-bold ${tier.text} opacity-55 block truncate`}
+              >
                 Bespoke Siri Coins
               </span>
               <div className="text-[18px] sm:text-2xl font-display font-light text-[#ffdf79] flex items-center justify-end gap-1.5">
@@ -183,9 +192,12 @@ export function LoyaltyPanel() {
               {data.loyaltyTier === 'Bronze' && '✦ Earn 2% Cashback & 1 Coin per ₹10 spent'}
               {data.loyaltyTier === 'Silver' && '✦ Earn 5% Cashback & 1 Coin per ₹10 spent'}
               {data.loyaltyTier === 'Gold' && '✦ Earn 8% Cashback & 1 Coin per ₹10 spent'}
-              {data.loyaltyTier === 'Platinum' && '✦ Earn 12% Platinum Cashback & VIP Priority Perks'}
+              {data.loyaltyTier === 'Platinum' &&
+                '✦ Earn 12% Platinum Cashback & VIP Priority Perks'}
             </div>
-            <span className="font-mono text-[9px] text-white/50 tracking-wider bg-black/20 px-2 py-1 rounded self-start sm:self-auto">SIRI-PASS-{data.referralCode?.split('-')[2] || '9999'}</span>
+            <span className="font-mono text-[9px] text-white/50 tracking-wider bg-black/20 px-2 py-1 rounded self-start sm:self-auto">
+              SIRI-PASS-{data.referralCode?.split('-')[2] || '9999'}
+            </span>
           </div>
         </div>
 
@@ -206,7 +218,7 @@ export function LoyaltyPanel() {
               <span className="text-secondary font-medium">Progress to {data.nextTier}</span>
               <span className="font-bold text-primary">{data.progressPercentage}%</span>
             </div>
-            
+
             <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden relative">
               <motion.div
                 initial={{ width: 0 }}
@@ -218,7 +230,11 @@ export function LoyaltyPanel() {
 
             {data.spendRequired > 0 ? (
               <span className="text-[9px] text-secondary font-light block text-center">
-                Spend another <strong className="font-semibold text-on-surface">₹{data.spendRequired.toLocaleString('en-IN')}</strong> to unlock {data.nextTier} status!
+                Spend another{' '}
+                <strong className="font-semibold text-on-surface">
+                  ₹{data.spendRequired.toLocaleString('en-IN')}
+                </strong>{' '}
+                to unlock {data.nextTier} status!
               </span>
             ) : (
               <span className="text-[9px] text-green-600 font-semibold block text-center">
@@ -230,7 +246,9 @@ export function LoyaltyPanel() {
           <div className="bg-surface-container-low rounded-lg p-3 text-[10px] text-secondary space-y-1.5">
             <div className="flex items-center justify-between">
               <span>Lifetime Valid Spending:</span>
-              <strong className="text-on-surface font-semibold">₹{data.lifetimeSpend.toLocaleString('en-IN')}</strong>
+              <strong className="text-on-surface font-semibold">
+                ₹{data.lifetimeSpend.toLocaleString('en-IN')}
+              </strong>
             </div>
             <div className="flex items-center justify-between">
               <span>Current Referral Count:</span>
@@ -242,7 +260,6 @@ export function LoyaltyPanel() {
 
       {/* 2. REFERRAL & REWARD PROGRAM */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-outline-variant/30">
-        
         {/* Refer Friends Panel */}
         <div className="space-y-4">
           <div className="flex items-start gap-3">
@@ -254,7 +271,10 @@ export function LoyaltyPanel() {
                 Refer & Earn Siri Cash
               </h4>
               <span className="text-[10px] text-secondary font-light block">
-                Share your code. They get <strong className="text-on-surface font-semibold">₹50 welcome cash</strong>. You earn <strong className="text-on-surface font-semibold">₹150</strong> on their first order!
+                Share your code. They get{' '}
+                <strong className="text-on-surface font-semibold">₹50 welcome cash</strong>. You
+                earn <strong className="text-on-surface font-semibold">₹150</strong> on their first
+                order!
               </span>
             </div>
           </div>
@@ -268,7 +288,12 @@ export function LoyaltyPanel() {
                 {`${window.location.origin}/auth?ref=${data.referralCode}`}
               </span>
               <button
-                onClick={() => copyToClipboard(`${window.location.origin}/auth?ref=${data.referralCode}`, 'Referral link copied! Share with your friends.')}
+                onClick={() =>
+                  copyToClipboard(
+                    `${window.location.origin}/auth?ref=${data.referralCode}`,
+                    'Referral link copied! Share with your friends.',
+                  )
+                }
                 className="bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 py-1.5 rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors cursor-pointer shrink-0"
               >
                 Copy Link
@@ -338,7 +363,9 @@ export function LoyaltyPanel() {
               <motion.div
                 key={coupon._id || coupon.code}
                 whileHover={{ y: -2 }}
-                onClick={() => copyToClipboard(coupon.code, `Coupon "${coupon.code}" copied! Paste at checkout.`)}
+                onClick={() =>
+                  copyToClipboard(coupon.code, `Coupon "${coupon.code}" copied! Paste at checkout.`)
+                }
                 className="bg-surface-container-low border border-outline-variant/30 rounded-lg p-4 flex flex-col justify-between cursor-pointer group shadow-xs hover:border-primary/40 hover:shadow-sm transition-all"
               >
                 <div className="flex justify-between items-start">
@@ -347,10 +374,9 @@ export function LoyaltyPanel() {
                       {coupon.code}
                     </span>
                     <div className="text-[10px] font-medium text-secondary mt-1">
-                      {coupon.discountType === 'percentage' 
-                        ? `${coupon.discountValue}% discount up to ₹${coupon.maxDiscount || '200'}` 
-                        : `Flat ₹${coupon.discountValue} Off`
-                      }
+                      {coupon.discountType === 'percentage'
+                        ? `${coupon.discountValue}% discount up to ₹${coupon.maxDiscount || '200'}`
+                        : `Flat ₹${coupon.discountValue} Off`}
                     </div>
                   </div>
                   <span className="text-[8px] bg-primary/10 text-primary font-bold uppercase tracking-wider px-2 py-0.5 rounded flex-shrink-0">
@@ -361,7 +387,8 @@ export function LoyaltyPanel() {
                 <div className="mt-4 pt-3 border-t border-outline-variant/20 flex justify-between items-center text-[9px] text-secondary">
                   <span>Min order: ₹{coupon.minOrderAmount}</span>
                   <span className="font-semibold text-primary group-hover:underline flex items-center gap-1">
-                    TAP TO COPY <span className="material-symbols-outlined text-[12px]">content_copy</span>
+                    TAP TO COPY{' '}
+                    <span className="material-symbols-outlined text-[12px]">content_copy</span>
                   </span>
                 </div>
               </motion.div>
@@ -392,26 +419,31 @@ export function LoyaltyPanel() {
               return (
                 <div key={tx._id} className="relative text-[11px] group">
                   {/* Ledger node marker icon */}
-                  <div className={`absolute -left-[33px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 ${
-                    isCredit 
-                      ? 'bg-green-50 border-green-500 text-green-600' 
-                      : 'bg-red-50 border-red-400 text-red-500'
-                  }`}>
+                  <div
+                    className={`absolute -left-[33px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 ${
+                      isCredit
+                        ? 'bg-green-50 border-green-500 text-green-600'
+                        : 'bg-red-50 border-red-400 text-red-500'
+                    }`}
+                  >
                     <span className="text-[8px] font-bold font-mono">{isCredit ? '+' : '-'}</span>
                   </div>
 
                   <div className="flex justify-between items-start gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <strong className="text-on-surface font-semibold">
-                          {tx.description}
-                        </strong>
-                        <span className={`text-[8px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${
-                          tx.source === 'purchase_cashback' ? 'bg-amber-50 text-amber-700 border border-amber-200/50' :
-                          tx.source === 'referral_bonus' ? 'bg-green-50 text-green-700 border border-green-200/50' :
-                          tx.source === 'checkout_redeem' ? 'bg-red-50 text-red-700 border border-red-200/50' :
-                          'bg-surface-container text-secondary'
-                        }`}>
+                        <strong className="text-on-surface font-semibold">{tx.description}</strong>
+                        <span
+                          className={`text-[8px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${
+                            tx.source === 'purchase_cashback'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
+                              : tx.source === 'referral_bonus'
+                                ? 'bg-green-50 text-green-700 border border-green-200/50'
+                                : tx.source === 'checkout_redeem'
+                                  ? 'bg-red-50 text-red-700 border border-red-200/50'
+                                  : 'bg-surface-container text-secondary'
+                          }`}
+                        >
                           {tx.source}
                         </span>
                       </div>
@@ -423,7 +455,7 @@ export function LoyaltyPanel() {
                             month: 'short',
                             year: 'numeric',
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
                           })}
                         </span>
                         {tx.orderId && (
@@ -434,9 +466,11 @@ export function LoyaltyPanel() {
                       </div>
                     </div>
 
-                    <div className={`font-mono text-xs font-bold whitespace-nowrap text-right ${
-                      isCredit ? 'text-green-600' : 'text-red-500'
-                    }`}>
+                    <div
+                      className={`font-mono text-xs font-bold whitespace-nowrap text-right ${
+                        isCredit ? 'text-green-600' : 'text-red-500'
+                      }`}
+                    >
                       {isCredit ? '+' : '-'} ₹{tx.amount.toLocaleString('en-IN')}
                     </div>
                   </div>
@@ -446,11 +480,11 @@ export function LoyaltyPanel() {
           </div>
         ) : (
           <div className="text-center py-8 text-[11px] text-secondary italic">
-            No transactions found. Make purchases, write reviews, or invite friends to accumulate Siri Cash!
+            No transactions found. Make purchases, write reviews, or invite friends to accumulate
+            Siri Cash!
           </div>
         )}
       </div>
-
     </motion.div>
   );
 }

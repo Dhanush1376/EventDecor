@@ -1,18 +1,18 @@
-import React, { useEffect, Suspense } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { TopNavbar } from "../components/layout/TopNavbar";
-import { Footer } from "../components/layout/Footer";
-import { BottomNav } from "../components/layout/BottomNav";
-import { CartDrawer } from "../components/layout/CartDrawer";
-import { CheckoutNavbar } from "../components/layout/CheckoutNavbar";
-import { ConsentPopup } from "../components/layout/ConsentPopup";
-import { useCart } from "../context/CartContext";
-import { SEO } from "../components/seo/SEO";
-import { MandalaElement } from "../components/ui/MandalaElement";
-import { ErrorBoundary } from "../components/ui/ErrorBoundary";
-import { WhatsAppWidget } from "../components/ui/WhatsAppWidget";
-import { getRouteSkeletonVariant, RouteSkeleton } from "../components/ui/RouteSkeleton";
-import { AuthGate } from "../components/auth/AuthGate";
+import { useEffect, Suspense } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { TopNavbar } from '../components/layout/TopNavbar';
+import { Footer } from '../components/layout/Footer';
+import { BottomNav } from '../components/layout/BottomNav';
+import { CartDrawer } from '../components/layout/CartDrawer';
+import { CheckoutNavbar } from '../components/layout/CheckoutNavbar';
+import { ConsentPopup } from '../components/layout/ConsentPopup';
+import { useCart } from '../context/CartContext';
+import { SEO } from '../components/seo/SEO';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
+import { WhatsAppWidget } from '../components/ui/WhatsAppWidget';
+import { getRouteSkeletonVariant, RouteSkeleton } from '../components/ui/RouteSkeleton';
+import { AuthGate } from '../components/auth/AuthGate';
 
 export function MainLayout() {
   const { pathname } = useLocation();
@@ -20,12 +20,11 @@ export function MainLayout() {
 
   // Scroll to top on route change with a slight delay to allow exit animations if any
   useEffect(() => {
-    const originalScrollBehavior =
-      document.documentElement.style.scrollBehavior;
-    document.documentElement.style.scrollBehavior = "auto";
+    const originalScrollBehavior = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = 'auto';
 
     const timer = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: "instant" });
+      window.scrollTo({ top: 0, behavior: 'instant' });
       // Restore after a short delay
       setTimeout(() => {
         document.documentElement.style.scrollBehavior = originalScrollBehavior;
@@ -38,7 +37,7 @@ export function MainLayout() {
     };
   }, [pathname]);
 
-  const isHighDensityPage = pathname === "/auth" || pathname === "/checkout";
+  const isHighDensityPage = pathname === '/auth' || pathname === '/checkout';
 
   const fallbackVariant = getRouteSkeletonVariant(pathname);
 
@@ -50,28 +49,17 @@ export function MainLayout() {
         <div
           className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
           aria-hidden="true"
-          style={{ contentVisibility: "auto" }}
+          style={{ contentVisibility: 'auto' }}
         >
           {/* Enhanced Global Cinematic Glows - Reduced intensity for clarity */}
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_0%_0%,rgba(212,175,55,0.06)_0%,transparent_70%),radial-gradient(circle_at_100%_100%,rgba(212,175,55,0.04)_0%,transparent_70%)]" />
 
           {/* Subtle Heritage Mandalas - Minimal presence to avoid clutter */}
           <div className="absolute -top-[10%] -right-[10%] w-[300px] sm:w-[500px] lg:w-[800px] h-[300px] sm:h-[500px] lg:h-[800px] will-change-transform">
-            <MandalaElement
-              size={800}
-              opacity={0.03}
-              rotate={false}
-              skipFade={true}
-            />
+            <MandalaElement size={800} opacity={0.03} rotate={false} skipFade={true} />
           </div>
           <div className="absolute -bottom-[15%] -left-[10%] w-[400px] sm:w-[600px] lg:w-[1000px] h-[400px] sm:h-[600px] lg:h-[1000px] will-change-transform">
-            <MandalaElement
-              size={1000}
-              opacity={0.02}
-              rotate={false}
-              variant={2}
-              skipFade={true}
-            />
+            <MandalaElement size={1000} opacity={0.02} rotate={false} variant={2} skipFade={true} />
           </div>
         </div>
       )}
@@ -90,8 +78,8 @@ export function MainLayout() {
           </AuthGate>
         </ErrorBoundary>
       </main>
-      {pathname !== "/cart" && <Footer />}
-      {pathname !== "/cart" && <BottomNav />}
+      {pathname !== '/cart' && <Footer />}
+      {pathname !== '/cart' && <BottomNav />}
       <WhatsAppWidget />
       <ConsentPopup />
     </div>
@@ -105,7 +93,7 @@ export function MinimalLayout() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname]);
 
   return (

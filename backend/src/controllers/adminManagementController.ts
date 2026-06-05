@@ -3,9 +3,15 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import User from '../models/User';
+import PaymentWebhookEvent from '../models/PaymentWebhookEvent';
 import bcrypt from 'bcryptjs';
 import { canonicalizeEmail } from '../utils/emailHelper';
-import { isProtectedSuperAdminEmail, ADMIN_ROLES, canActorManageTarget, canActorAssignRole } from '../config/adminConfig';
+import {
+  isProtectedSuperAdminEmail,
+  ADMIN_ROLES,
+  canActorManageTarget,
+  canActorAssignRole,
+} from '../config/adminConfig';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { setPaginationHeaders } from '../utils/paginationHeaders';
 
@@ -18,14 +24,24 @@ export const getAdmins = asyncHandler(async (req: Request, res: Response) => {
   const filter = { role: { $in: ADMIN_ROLES } };
 
   const [admins, totalCount] = await Promise.all([
-    User.find(filter).select('-passwordHash -twoFactorSecret').sort({ createdAt: -1 }).skip(skip).limit(limit),
+    User.find(filter)
+      .select('-passwordHash -twoFactorSecret')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
     User.countDocuments(filter),
   ]);
 
   setPaginationHeaders(res, totalCount, page, limit);
-  res.status(200).json(
-    new ApiResponse(true, 'Admins retrieved successfully', formatPaginationResponse(admins, totalCount, page, limit))
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Admins retrieved successfully',
+        formatPaginationResponse(admins, totalCount, page, limit),
+      ),
+    );
 });
 
 /**
@@ -35,7 +51,7 @@ export const getAdmins = asyncHandler(async (req: Request, res: Response) => {
 export const addAdmin = asyncHandler(async (req: Request, res: Response) => {
   const { name, email, role, password } = req.body;
   const actorRole = (req as any).user!.role;
-  
+
   if (!name || !email || !role || !password) {
     throw new ApiError(400, 'Name, email, role, and temporary password are required');
   }
@@ -56,8 +72,10 @@ export const addAdmin = asyncHandler(async (req: Request, res: Response) => {
       existingUser.role = role;
       existingUser.passwordChangedAt = new Date();
       await existingUser.save();
-      
-      return res.status(200).json(new ApiResponse(true, 'Existing user upgraded to admin', existingUser));
+
+      return res
+        .status(200)
+        .json(new ApiResponse(true, 'Existing user upgraded to admin', existingUser));
     }
     throw new ApiError(400, 'User with this email already exists and is an admin');
   }
@@ -71,7 +89,7 @@ export const addAdmin = asyncHandler(async (req: Request, res: Response) => {
     role,
     passwordHash,
     isVerified: true,
-    passwordChangedAt: new Date()
+    passwordChangedAt: new Date(),
   });
 
   res.status(201).json(new ApiResponse(true, 'Admin created successfully', newAdmin));
@@ -107,7 +125,10 @@ export const updateAdminRole = asyncHandler(async (req: Request, res: Response) 
 
   // Verify actor can manage the target admin's current role
   if (!canActorManageTarget(actorRole, admin.role)) {
-    throw new ApiError(403, `You do not have permission to manage this admin (Role: "${admin.role}").`);
+    throw new ApiError(
+      403,
+      `You do not have permission to manage this admin (Role: "${admin.role}").`,
+    );
   }
 
   // Verify actor can assign the new role
@@ -115,8 +136,25 @@ export const updateAdminRole = asyncHandler(async (req: Request, res: Response) 
     throw new ApiError(403, `You do not have permission to assign the role "${role}".`);
   }
 
+  const previousRole = admin.role;
   admin.role = role;
   await admin.save();
+
+  const { AdminAuditService } = require('../services/AdminAuditService');
+  await AdminAuditService.logAction({
+    actorId: req.user?.id,
+    actorEmail: req.user?.email,
+    actorRole: req.user?.role,
+    method: req.method,
+    path: req.originalUrl,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+    entityType: 'User',
+    entityId: admin._id.toString(),
+    action: 'update_role',
+    previousValue: { role: previousRole },
+    newValue: { role },
+  });
 
   res.status(200).json(new ApiResponse(true, 'Admin role updated successfully', admin));
 });
@@ -146,13 +184,112 @@ export const removeAdmin = asyncHandler(async (req: Request, res: Response) => {
 
   // Verify actor can manage/revoke target user's role
   if (!canActorManageTarget(actorRole, admin.role)) {
-    throw new ApiError(403, `You do not have permission to revoke privileges for this admin (Role: "${admin.role}").`);
+    throw new ApiError(
+      403,
+      `You do not have permission to revoke privileges for this admin (Role: "${admin.role}").`,
+    );
   }
 
-  // Downgrade to customer and remove password hash
+  const previousRole = admin.role;
   admin.role = 'customer';
   admin.passwordHash = undefined;
   await admin.save();
 
+  const { AdminAuditService } = require('../services/AdminAuditService');
+  await AdminAuditService.logAction({
+    actorId: req.user?.id,
+    actorEmail: req.user?.email,
+    actorRole: req.user?.role,
+    method: req.method,
+    path: req.originalUrl,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+    entityType: 'User',
+    entityId: admin._id.toString(),
+    action: 'revoke_admin',
+    previousValue: { role: previousRole },
+    newValue: { role: 'customer' },
+  });
+
   res.status(200).json(new ApiResponse(true, 'Admin privileges revoked successfully', null));
+});
+
+/**
+ * Fetch Dead Letter Queue Webhooks
+ * Protected by requireSuperAdmin
+ */
+export const getDeadLetterWebhooks = asyncHandler(async (req: Request, res: Response) => {
+  const { page, limit, skip } = getPaginationOptions(req.query);
+
+  // Allow filtering by status, default to both failed and dead_letter
+  const statusFilter = req.query.status ? req.query.status : { $in: ['failed', 'dead_letter'] };
+  const filter: any = { status: statusFilter };
+
+  const [events, totalCount] = await Promise.all([
+    PaymentWebhookEvent.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
+    PaymentWebhookEvent.countDocuments(filter),
+  ]);
+
+  setPaginationHeaders(res, totalCount, page, limit);
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'DLQ webhooks retrieved',
+        formatPaginationResponse(events, totalCount, page, limit),
+      ),
+    );
+});
+
+/**
+ * Retry a DLQ webhook by resetting status to pending and re-enqueueing to webhookQueue
+ * Protected by requireSuperAdmin
+ */
+export const retryDeadLetterWebhook = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const event = await PaymentWebhookEvent.findById(id);
+  if (!event) throw new ApiError(404, 'Webhook event not found');
+  if (event.status !== 'dead_letter' && event.status !== 'failed') {
+    throw new ApiError(400, 'Only failed or dead_letter webhooks can be retried');
+  }
+
+  // Reset status to pending
+  const previousStatus = event.status;
+  event.status = 'pending';
+  event.processingAttempts = 0;
+  event.errorLog = undefined;
+  await event.save();
+
+  // Re-enqueue into webhookQueue
+  const { webhookQueue, isQueuesReady } = require('../jobs/queues');
+  if (isQueuesReady()) {
+    await webhookQueue.add('processWebhook', { eventId: event.razorpayEventId });
+  } else {
+    // If BullMQ is down, fallback to memory queue
+    const { webhookQueue: fallbackQueue } = require('../services/webhookQueueService');
+    if (fallbackQueue && typeof fallbackQueue.enqueue === 'function') {
+      fallbackQueue.enqueue({ eventId: event.razorpayEventId });
+    }
+  }
+
+  // Log audit
+  const { AdminAuditService } = require('../services/AdminAuditService');
+  await AdminAuditService.logAction({
+    actorId: (req as any).user?.id,
+    actorEmail: (req as any).user?.email,
+    actorRole: (req as any).user?.role,
+    method: req.method,
+    path: req.originalUrl,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+    entityType: 'PaymentWebhookEvent',
+    entityId: event._id.toString(),
+    action: 'retry_dlq_webhook',
+    previousValue: { status: previousStatus },
+    newValue: { status: 'pending' },
+  });
+
+  res.status(200).json(new ApiResponse(true, 'Webhook re-enqueued successfully', event));
 });

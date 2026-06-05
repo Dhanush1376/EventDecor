@@ -1,5 +1,5 @@
 import { CookieOptions, Response } from 'express';
-import AuthService from '../services/authService';
+import SessionAuthService from '../services/SessionAuthService';
 import { getAuthCookieOptions, getAuthCookieName } from '../config/cookieConfig';
 
 export const CUSTOMER_REFRESH_COOKIE = getAuthCookieName('siri_refresh_token');
@@ -10,7 +10,7 @@ export const ADMIN_REFRESH_COOKIE = getAuthCookieName('siri_admin_refresh_token'
  * path=/api covers both /api/v1/auth/* and legacy /api/auth/* routes.
  */
 export const getRefreshCookieOptions = (): CookieOptions => {
-  return getAuthCookieOptions(AuthService.getRefreshTokenTtlMs(), '/api');
+  return getAuthCookieOptions(SessionAuthService.getRefreshTokenTtlMs(), '/api');
 };
 
 export const setCustomerRefreshCookie = (res: Response, refreshToken: string) => {
@@ -22,7 +22,7 @@ export const clearCustomerRefreshCookie = (res: Response) => {
 };
 
 export const getAdminRefreshCookieOptions = (): CookieOptions => {
-  return getAuthCookieOptions(AuthService.getRefreshTokenTtlMs(), '/api');
+  return getAuthCookieOptions(SessionAuthService.getRefreshTokenTtlMs(), '/api');
 };
 
 export const setAdminRefreshCookie = (res: Response, refreshToken: string) => {

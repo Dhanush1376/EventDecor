@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-
+import logger from '../config/logger';
 export interface IRentalPricing {
   daily: number;
   weekly: number;
@@ -28,10 +28,19 @@ export interface IProduct extends Document {
   seoTitle?: string;
   seoDescription?: string;
   stock: number;
+  reservedStock: number;
+  lowStockThreshold: number;
   featured: boolean;
   isActive: boolean;
   isNonRefundable: boolean;
   showInGallery: boolean;
+  variants: {
+    id: string | number;
+    name: string;
+    value: string;
+    price?: number | string;
+    stock?: number | string;
+  }[];
   // Rental fields
   rentalEnabled: boolean;
   availabilityMode: 'purchase_only' | 'rent_only' | 'both';
@@ -67,10 +76,21 @@ const ProductSchema: Schema = new Schema(
     seoTitle: { type: String },
     seoDescription: { type: String },
     stock: { type: Number, default: 0, min: 0 },
+    reservedStock: { type: Number, default: 0, min: 0 },
+    lowStockThreshold: { type: Number, default: 5, min: 0 },
     featured: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     isNonRefundable: { type: Boolean, default: false },
     showInGallery: { type: Boolean, default: false },
+    variants: [
+      {
+        id: { type: Schema.Types.Mixed },
+        name: { type: String, required: true },
+        value: { type: String, required: true },
+        price: { type: Schema.Types.Mixed },
+        stock: { type: Schema.Types.Mixed },
+      },
+    ],
     // Rental fields
     rentalEnabled: { type: Boolean, default: false },
     availabilityMode: {
@@ -121,15 +141,38 @@ ProductSchema.index({ isActive: 1, rentalEnabled: 1, category: 1 });
 ProductSchema.index({ isActive: 1, availabilityMode: 1, category: 1 });
 
 // Sitemap Auto-Update Trigger
+// Sitemap and Cloudinary Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
+import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
+
 ProductSchema.post('save', () => {
   triggerSitemapUpdate();
 });
-ProductSchema.post('deleteOne', () => {
+
+const cleanupCloudinaryImages = async (doc: any) => {
+  if (!doc) return;
+  const urlsToClean: string[] = [];
+  if (doc.imageSrc) urlsToClean.push(doc.imageSrc);
+  if (doc.images && Array.isArray(doc.images)) urlsToClean.push(...doc.images);
+
+  for (const url of urlsToClean) {
+    const publicId = extractPublicId(url);
+    if (publicId) {
+      deleteFromCloudinary(publicId).catch((err) =>
+        logger.error(`[Cloudinary GC] Failed to delete orphaned product image: ${url}`, err),
+      );
+    }
+  }
+};
+
+ProductSchema.post('deleteOne', { document: true, query: false }, async function () {
   triggerSitemapUpdate();
+  await cleanupCloudinaryImages(this);
 });
-ProductSchema.post('findOneAndDelete', () => {
+
+ProductSchema.post('findOneAndDelete', async function (doc) {
   triggerSitemapUpdate();
+  await cleanupCloudinaryImages(doc);
 });
 
 const Product = mongoose.model<IProduct>('Product', ProductSchema);

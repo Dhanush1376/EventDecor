@@ -3,7 +3,7 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import { TwoFactorService } from '../services/twoFactorService';
-import AuthService from '../services/authService';
+import SessionAuthService from '../services/SessionAuthService';
 import { consumeTwoFactorPending } from '../utils/twoFactorPending';
 import User from '../models/User';
 import { setCustomerRefreshCookie } from '../utils/authCookies';
@@ -17,7 +17,15 @@ export const getTwoFactorStatus = asyncHandler(async (req: Request, res: Respons
 export const setupTwoFactor = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const setup = await TwoFactorService.beginSetup(userId);
-  res.status(200).json(new ApiResponse(true, 'Scan the OTP URI in your authenticator app, then call /2fa/enable', setup));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Scan the OTP URI in your authenticator app, then call /2fa/enable',
+        setup,
+      ),
+    );
 });
 
 export const enableTwoFactor = asyncHandler(async (req: Request, res: Response) => {
@@ -56,7 +64,7 @@ export const verifyTwoFactorLogin = asyncHandler(async (req: Request, res: Respo
   }
 
   const userAgent = req.headers['user-agent'] || '';
-  const session = await AuthService.createSession(user, userAgent);
+  const session = await SessionAuthService.createSession(user, userAgent);
   setCustomerRefreshCookie(res, session.refreshToken);
 
   res.status(200).json(
@@ -64,6 +72,6 @@ export const verifyTwoFactorLogin = asyncHandler(async (req: Request, res: Respo
       user: session.user,
       accessToken: session.accessToken,
       token: session.accessToken,
-    })
+    }),
   );
 });

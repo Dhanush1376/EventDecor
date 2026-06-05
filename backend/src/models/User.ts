@@ -90,27 +90,42 @@ const UserSchema: Schema = new Schema(
       default: 'customer',
     },
     avatar: { type: String, default: '' },
-    gender: { type: String, default: '', trim: true },
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other', 'prefer_not_to_say', ''],
+      default: '',
+      trim: true,
+    },
     dateOfBirth: { type: String, default: '', trim: true },
-    wishlist: [{ type: Schema.Types.ObjectId, ref: 'Product', default: [] }],
-    cart: [
-      {
-        product: { type: Schema.Types.ObjectId, ref: 'Product' },
-        quantity: { type: Number, default: 1 },
-        variant: { type: String, default: 'Default' },
-        type: { type: String, enum: ['purchase', 'rental'], default: 'purchase' },
-        rentalInfo: {
-          startDate: { type: Date },
-          endDate: { type: Date },
+    wishlist: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
+      default: [],
+      validate: [(val: any[]) => val.length <= 100, '{PATH} exceeds the limit of 100 items'],
+    },
+    cart: {
+      type: [
+        {
+          product: { type: Schema.Types.ObjectId, ref: 'Product' },
+          quantity: { type: Number, default: 1 },
+          variant: { type: String, default: 'Default' },
+          type: { type: String, enum: ['purchase', 'rental'], default: 'purchase' },
+          rentalInfo: {
+            startDate: { type: Date },
+            endDate: { type: Date },
+          },
         },
-      },
-    ],
-    recentlyViewed: [
-      {
-        product: { type: Schema.Types.ObjectId, ref: 'Product' },
-        viewedAt: { type: Date, default: Date.now },
-      },
-    ],
+      ],
+      validate: [(val: any[]) => val.length <= 50, '{PATH} exceeds the limit of 50 items'],
+    },
+    recentlyViewed: {
+      type: [
+        {
+          product: { type: Schema.Types.ObjectId, ref: 'Product' },
+          viewedAt: { type: Date, default: Date.now },
+        },
+      ],
+      validate: [(val: any[]) => val.length <= 50, '{PATH} exceeds the limit of 50 items'],
+    },
     notificationPreferences: {
       email: { type: Boolean, default: true },
       marketing: { type: Boolean, default: true },
@@ -161,6 +176,7 @@ UserSchema.index({ role: 1 });
 UserSchema.index({ isVerified: 1 });
 UserSchema.index({ 'recentlyViewed.product': 1 });
 UserSchema.index({ loyaltyTier: 1 });
+UserSchema.index({ phone: 1 });
 
 // High-Performance Production Compound Index for Paginated Staff and Admin Lists
 UserSchema.index({ role: 1, createdAt: -1 });

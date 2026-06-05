@@ -1,19 +1,23 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import toast from "react-hot-toast";
-import { safeLocalStorage } from "../utils/storage";
-import { isPrerendering } from "../utils/prerender";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import toast from 'react-hot-toast';
+import { safeLocalStorage } from '../utils/storage';
+import { isPrerendering } from '../utils/prerender';
 import logger from '../utils/logger';
 import { getApiRootUrl } from '../config/apiConfig';
-import { NetworkContext } from "./NetworkContext";
+import { NetworkContext } from './NetworkContext';
 
 export function NetworkProvider({ children }) {
-  const [networkState, setNetworkState] = useState(() => navigator.onLine ? 'online' : 'reconnecting');
+  const [networkState, setNetworkState] = useState(() =>
+    navigator.onLine ? 'online' : 'reconnecting',
+  );
   const [latency, setLatency] = useState(0);
-  const [connectionQuality, setConnectionQuality] = useState(() => (navigator.onLine ? "good" : "offline"));
+  const [connectionQuality, setConnectionQuality] = useState(() =>
+    navigator.onLine ? 'good' : 'offline',
+  );
   const [isSyncing, setIsSyncing] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
   const failedPingsRef = useRef(0);
-  
+
   // Turn off booting state after 25 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -24,7 +28,7 @@ export function NetworkProvider({ children }) {
 
   // Initialize queue from localStorage
   const [pendingQueue, setPendingQueue] = useState(() => {
-    const stored = safeLocalStorage.getItem("siri_offline_sync_queue");
+    const stored = safeLocalStorage.getItem('siri_offline_sync_queue');
     return stored ? JSON.parse(stored) : [];
   });
 
@@ -47,21 +51,21 @@ export function NetworkProvider({ children }) {
     const handleConnectionChange = () => {
       const conn = navigator.connection;
       if (!navigator.onLine) {
-        setConnectionQuality("offline");
+        setConnectionQuality('offline');
         return;
       }
-      
+
       // Map Effective Connection Type (ECT)
-      if (conn.effectiveType === "2g" || conn.effectiveType === "3g" || conn.rtt > 2000) {
-        setConnectionQuality("poor");
+      if (conn.effectiveType === '2g' || conn.effectiveType === '3g' || conn.rtt > 2000) {
+        setConnectionQuality('poor');
       } else {
-        setConnectionQuality("good");
+        setConnectionQuality('good');
       }
     };
 
-    navigator.connection.addEventListener("change", handleConnectionChange);
+    navigator.connection.addEventListener('change', handleConnectionChange);
     return () => {
-      navigator.connection?.removeEventListener("change", handleConnectionChange);
+      navigator.connection?.removeEventListener('change', handleConnectionChange);
     };
   }, []);
 
@@ -73,10 +77,10 @@ export function NetworkProvider({ children }) {
     try {
       const readinessUrl = `${getApiRootUrl()}/readiness`;
       const response = await fetch(`${readinessUrl}?t=${Date.now()}`, {
-        method: "GET",
+        method: 'GET',
         credentials: 'include',
         headers: {
-          "Accept": "application/json"
+          Accept: 'application/json',
         },
         signal: controller.signal,
       });
@@ -85,34 +89,34 @@ export function NetworkProvider({ children }) {
         const endTime = performance.now();
         const rtt = Math.round(endTime - startTime);
         setLatency(rtt);
-        
+
         failedPingsRef.current = 0;
         setNetworkState('online');
         setIsBooting(false);
-        toast.dismiss("backend-cold-start");
-        
+        toast.dismiss('backend-cold-start');
+
         if (rtt > 2000 || (navigator.connection && navigator.connection.rtt > 2000)) {
-          setConnectionQuality("poor");
+          setConnectionQuality('poor');
         } else {
-          setConnectionQuality("good");
+          setConnectionQuality('good');
         }
         return true;
       }
     } catch (error) {
-      logger.warn("🌐 [Network Check] API Health check failed:", error.message);
+      logger.warn('🌐 [Network Check] API Health check failed:', error.message);
     } finally {
       clearTimeout(timeoutId);
     }
 
     // Ping failed. Debounce the offline state
     failedPingsRef.current += 1;
-    
-    setNetworkState(prev => {
+
+    setNetworkState((prev) => {
       if (isBooting) {
         // Show a friendly loading toast on second failure if it's during initial boot to avoid false positives on fast local refresh
         if (failedPingsRef.current === 2) {
-          toast.loading("Warming up the server. This might take a moment on cold start...", {
-            id: "backend-cold-start",
+          toast.loading('Warming up the server. This might take a moment on cold start...', {
+            id: 'backend-cold-start',
             duration: 12000,
           });
         }
@@ -122,8 +126,8 @@ export function NetworkProvider({ children }) {
       if (failedPingsRef.current === 1 && prev === 'online') {
         return 'reconnecting';
       } else if (failedPingsRef.current >= 2) {
-        setConnectionQuality("offline");
-        toast.dismiss("backend-cold-start");
+        setConnectionQuality('offline');
+        toast.dismiss('backend-cold-start');
         return 'offline';
       }
       return prev;
@@ -169,17 +173,18 @@ export function NetworkProvider({ children }) {
       data: requestData.data,
       headers: requestData.headers ? { ...requestData.headers } : {},
       timestamp: Date.now(),
-      description: requestData.description || `${requestData.method} to ${requestData.url.split("/").pop()}`,
+      description:
+        requestData.description || `${requestData.method} to ${requestData.url.split('/').pop()}`,
     };
 
     setPendingQueue((prev) => {
       const updated = [...prev, newQueueItem];
-      safeLocalStorage.setItem("siri_offline_sync_queue", JSON.stringify(updated));
+      safeLocalStorage.setItem('siri_offline_sync_queue', JSON.stringify(updated));
       return updated;
     });
 
     toast.success(`Action saved offline: ${newQueueItem.description}`, {
-      icon: "💾",
+      icon: '💾',
       duration: 5000,
     });
 
@@ -190,7 +195,7 @@ export function NetworkProvider({ children }) {
   const dequeueRequest = useCallback((id) => {
     setPendingQueue((prev) => {
       const updated = prev.filter((item) => item.id !== id);
-      safeLocalStorage.setItem("siri_offline_sync_queue", JSON.stringify(updated));
+      safeLocalStorage.setItem('siri_offline_sync_queue', JSON.stringify(updated));
       return updated;
     });
   }, []);
@@ -201,11 +206,11 @@ export function NetworkProvider({ children }) {
     if (currentQueue.length === 0 || isSyncing) return;
 
     setIsSyncing(true);
-    const apiModule = await import("../services/api");
+    const apiModule = await import('../services/api');
     const api = apiModule.default;
 
     toast.loading(`Synchronizing ${currentQueue.length} offline action(s)...`, {
-      id: "sync-toast",
+      id: 'sync-toast',
     });
 
     let successCount = 0;
@@ -220,7 +225,7 @@ export function NetworkProvider({ children }) {
           // Re-verify connection first
           const online = await checkConnection();
           if (!online) {
-            toast.error("Sync suspended: Connection lost.", { id: "sync-toast" });
+            toast.error('Sync suspended: Connection lost.', { id: 'sync-toast' });
             setIsSyncing(false);
             return;
           }
@@ -232,7 +237,7 @@ export function NetworkProvider({ children }) {
             data: item.data,
             headers: {
               ...item.headers,
-              "x-offline-sync-id": item.id,
+              'x-offline-sync-id': item.id,
             },
             _bypassOfflineQueue: true,
           });
@@ -242,18 +247,24 @@ export function NetworkProvider({ children }) {
           dequeueRequest(item.id);
         } catch (error) {
           attempts++;
-          const isClientError = error.response && error.response.status >= 400 && error.response.status < 500;
-          
+          const isClientError =
+            error.response && error.response.status >= 400 && error.response.status < 500;
+
           if (isClientError) {
             // Discard client/validation errors to prevent queue blockage but notify user
-            logger.error(`⚠️ [Offline Sync] Permanent sync rejection for ${item.description}:`, error);
+            logger.error(
+              `⚠️ [Offline Sync] Permanent sync rejection for ${item.description}:`,
+              error,
+            );
             dequeueRequest(item.id);
             failedCount++;
             succeeded = true; // Break loop
           } else {
             // Server error or timeout: Wait with exponential backoff before retry
             const delay = Math.pow(2, attempts) * 1000;
-            logger.warn(`🔄 [Offline Sync] Sync attempt ${attempts} failed for ${item.description}. Retrying in ${delay}ms...`);
+            logger.warn(
+              `🔄 [Offline Sync] Sync attempt ${attempts} failed for ${item.description}. Retrying in ${delay}ms...`,
+            );
             await new Promise((res) => setTimeout(res, delay));
           }
         }
@@ -267,17 +278,17 @@ export function NetworkProvider({ children }) {
     setIsSyncing(false);
     if (successCount > 0) {
       toast.success(`Successfully synchronized ${successCount} offline action(s)!`, {
-        id: "sync-toast",
+        id: 'sync-toast',
         duration: 5000,
-        icon: "✨",
+        icon: '✨',
       });
     } else if (failedCount > 0) {
       toast.error(`Sync completed with ${failedCount} failure(s).`, {
-        id: "sync-toast",
+        id: 'sync-toast',
         duration: 4000,
       });
     } else {
-      toast.dismiss("sync-toast");
+      toast.dismiss('sync-toast');
     }
   }, [dequeueRequest, isSyncing, checkConnection]);
 
@@ -286,10 +297,10 @@ export function NetworkProvider({ children }) {
     // navigator.onLine fires, we should trigger a fast health check immediately
     const isReallyOnline = await checkConnection();
     if (isReallyOnline && syncQueueRef.current.length > 0) {
-      toast.success("Back online! Reconnecting to services...", {
-        id: "network-status",
+      toast.success('Back online! Reconnecting to services...', {
+        id: 'network-status',
         duration: 4000,
-        icon: "⚡",
+        icon: '⚡',
       });
       syncQueue();
     }
@@ -307,8 +318,8 @@ export function NetworkProvider({ children }) {
       setIsBooting(false);
       return;
     }
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     const runInitialCheck = () => checkConnection();
     if (typeof requestIdleCallback === 'function') {
@@ -318,8 +329,8 @@ export function NetworkProvider({ children }) {
     }
 
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, [handleOnline, handleOffline, checkConnection]);
 

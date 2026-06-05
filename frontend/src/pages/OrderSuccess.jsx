@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QRCodeSVG } from 'qrcode.react';
 
 import { SEO } from '../components/seo/SEO';
 import { handleImageError } from '../utils/imageUtils';
@@ -9,7 +8,6 @@ import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { InvoiceTemplate, OrderSuccessSkeleton } from '../components/ui';
 import { orderService, rentalService } from '../services/domainServices';
 import confetti from 'canvas-confetti';
-import toast from 'react-hot-toast';
 
 import logger from '../utils/logger';
 const BarcodeSVG = ({ val }) => (
@@ -215,7 +213,6 @@ export function OrderSuccess() {
       fetchOrder();
     }, 0);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   if (loading) {

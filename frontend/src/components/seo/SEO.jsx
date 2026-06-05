@@ -1,4 +1,3 @@
-import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
@@ -11,9 +10,12 @@ import {
   TWITTER_HANDLE,
 } from '../../constants/brandEnv';
 
-const DEFAULT_DESCRIPTION = 'Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor.';
+const DEFAULT_DESCRIPTION =
+  'Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor.';
 const DEFAULT_TITLE = 'Luxury Event Decor & Artisanal Heritage';
-const priceValidUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+const priceValidUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  .toISOString()
+  .split('T')[0];
 
 /**
  * Normalize a URL path: strip trailing slashes (except root "/")
@@ -46,14 +48,24 @@ export function SEO({
   const sameAs = buildSameAsLinks(footer?.socialLinks);
   const siteName = SITE_NAME || 'Siri Arts & Crafts';
   const siteUrl = SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
-  const contactPhone = contact?.phone ? `+91-${String(contact.phone).replace(/^\+91-?/, '')}` : CONTACT_PHONE;
+  const contactPhone = contact?.phone
+    ? `+91-${String(contact.phone).replace(/^\+91-?/, '')}`
+    : CONTACT_PHONE;
 
-  const fullTitle = title ? `${title} | ${siteName}` : (siteName ? `${siteName} | ${DEFAULT_TITLE}` : DEFAULT_TITLE);
+  const fullTitle = title
+    ? `${title} | ${siteName}`
+    : siteName
+      ? `${siteName} | ${DEFAULT_TITLE}`
+      : DEFAULT_TITLE;
   const metaDescription = description || DEFAULT_DESCRIPTION;
   const normalizedPath = normalizeUrl(location.pathname);
   const currentUrl = canonicalUrl || (siteUrl ? `${siteUrl}${normalizedPath}` : normalizedPath);
   const metaImage = ogImage || OG_IMAGE_URL;
-  const metaImageType = metaImage.endsWith('.png') ? 'image/png' : metaImage.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+  const metaImageType = metaImage.endsWith('.png')
+    ? 'image/png'
+    : metaImage.endsWith('.webp')
+      ? 'image/webp'
+      : 'image/jpeg';
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -85,7 +97,8 @@ export function SEO({
     image: OG_IMAGE_URL || metaImage,
     url: siteUrl,
     telephone: contactPhone,
-    description: 'Premium handcrafted event decor, wedding trays, and heritage pooja essentials. Woven with tradition and refined for the modern aesthetic.',
+    description:
+      'Premium handcrafted event decor, wedding trays, and heritage pooja essentials. Woven with tradition and refined for the modern aesthetic.',
     address: {
       '@type': 'PostalAddress',
       addressLocality: contact?.address ? undefined : 'Ongole',
@@ -201,7 +214,10 @@ export function SEO({
       {noindex ? (
         <meta name="robots" content="noindex, nofollow" />
       ) : (
-        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta
+          name="robots"
+          content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+        />
       )}
 
       <meta property="og:type" content={ogType} />
@@ -213,7 +229,10 @@ export function SEO({
       {metaImage && <meta property="og:image:type" content={metaImageType} />}
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={title ? `${title} — ${siteName}` : `${siteName} — Premium Handcrafted Event Decor`} />
+      <meta
+        property="og:image:alt"
+        content={title ? `${title} — ${siteName}` : `${siteName} — Premium Handcrafted Event Decor`}
+      />
       <meta property="og:locale" content="en_IN" />
 
       <meta name="twitter:card" content="summary_large_image" />
@@ -222,7 +241,10 @@ export function SEO({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={metaDescription} />
       {metaImage && <meta name="twitter:image" content={metaImage} />}
-      <meta name="twitter:image:alt" content={title ? `${title} — ${siteName}` : `${siteName} — Premium Handcrafted Event Decor`} />
+      <meta
+        name="twitter:image:alt"
+        content={title ? `${title} — ${siteName}` : `${siteName} — Premium Handcrafted Event Decor`}
+      />
 
       {article && (
         <>
@@ -238,37 +260,17 @@ export function SEO({
       {currentUrl && <link rel="alternate" hrefLang="en-in" href={currentUrl} />}
       {currentUrl && <link rel="alternate" hrefLang="x-default" href={currentUrl} />}
 
-      <script type="application/ld+json">
-        {JSON.stringify(organizationSchema)}
-      </script>
-      <script type="application/ld+json">
-        {JSON.stringify(websiteSchema)}
-      </script>
+      <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
+      <script type="application/ld+json">{JSON.stringify(websiteSchema)}</script>
       {isHomePage && (
-        <script type="application/ld+json">
-          {JSON.stringify(localBusinessSchema)}
-        </script>
+        <script type="application/ld+json">{JSON.stringify(localBusinessSchema)}</script>
       )}
-      {schema && (
-        <script type="application/ld+json">
-          {JSON.stringify(schema)}
-        </script>
-      )}
+      {schema && <script type="application/ld+json">{JSON.stringify(schema)}</script>}
       {breadcrumbSchema && (
-        <script type="application/ld+json">
-          {JSON.stringify(breadcrumbSchema)}
-        </script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
       )}
-      {productSchema && (
-        <script type="application/ld+json">
-          {JSON.stringify(productSchema)}
-        </script>
-      )}
-      {faqSchema && (
-        <script type="application/ld+json">
-          {JSON.stringify(faqSchema)}
-        </script>
-      )}
+      {productSchema && <script type="application/ld+json">{JSON.stringify(productSchema)}</script>}
+      {faqSchema && <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>}
     </Helmet>
   );
 }

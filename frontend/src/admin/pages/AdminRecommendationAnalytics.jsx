@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   AreaChart,
   Area,
@@ -13,19 +13,18 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
-import api from "../../services/api";
-import logger from "../../utils/logger";
+} from 'recharts';
+import api from '../../services/api';
+import logger from '../../utils/logger';
 import {
   PageHeader,
   StatCard,
   ChartCard,
   ChartTooltip,
   SkeletonDashboard,
-  fadeUp,
   stagger,
   CHART_COLORS,
-} from "../components/AdminUIKit";
+} from '../components/AdminUIKit';
 
 export function AdminRecommendationAnalytics() {
   const [stats, setStats] = useState(null);
@@ -36,11 +35,11 @@ export function AdminRecommendationAnalytics() {
       setLoading(true);
       try {
         const [overviewRes, ctrRes, trendingRes, interestsRes, conversionRes] = await Promise.all([
-          api.get("/analytics/recommendations/overview"),
-          api.get("/analytics/recommendations/ctr?days=7"),
-          api.get("/analytics/recommendations/trending-history?limit=1"),
-          api.get("/analytics/recommendations/user-interests"),
-          api.get("/analytics/recommendations/conversion-impact"),
+          api.get('/analytics/recommendations/overview'),
+          api.get('/analytics/recommendations/ctr?days=7'),
+          api.get('/analytics/recommendations/trending-history?limit=1'),
+          api.get('/analytics/recommendations/user-interests'),
+          api.get('/analytics/recommendations/conversion-impact'),
         ]);
 
         const aggregatedStats = {
@@ -72,7 +71,7 @@ export function AdminRecommendationAnalytics() {
         // Populate CTR by type from the latest day
         if (ctrRes.data?.data?.days?.length > 0) {
           const latestDay = ctrRes.data.data.days[0];
-          ["feed", "similar", "trending", "seasonal"].forEach((type) => {
+          ['feed', 'similar', 'trending', 'seasonal'].forEach((type) => {
             if (latestDay[type]) {
               aggregatedStats.conversionMetrics.clickThroughRateByType[type] =
                 latestDay[type].ctr / 100;
@@ -82,7 +81,7 @@ export function AdminRecommendationAnalytics() {
 
         setStats(aggregatedStats);
       } catch (err) {
-        logger.error("Failed to fetch recommendation analytics", err);
+        logger.error('Failed to fetch recommendation analytics', err);
       } finally {
         setLoading(false);
       }
@@ -101,18 +100,13 @@ export function AdminRecommendationAnalytics() {
   // Map CTR array for charts
   const ctrData = stats.conversionMetrics?.clickThroughRateByType
     ? Object.keys(stats.conversionMetrics.clickThroughRateByType).map((key) => ({
-        name: key.replace("_", " ").toUpperCase(),
+        name: key.replace('_', ' ').toUpperCase(),
         ctr: parseFloat((stats.conversionMetrics.clickThroughRateByType[key] * 100).toFixed(1)),
       }))
     : [];
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={stagger}
-      className="space-y-6"
-    >
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
         title="AI Engine Analytics"
         subtitle="Insights into Hybrid Recommendation performance & User Behavior"
@@ -147,7 +141,7 @@ export function AdminRecommendationAnalytics() {
         <StatCard
           icon="trending_up"
           label="Top Trending"
-          value={stats.trendingMetrics?.topCategories?.[0]?._id || "N/A"}
+          value={stats.trendingMetrics?.topCategories?.[0]?._id || 'N/A'}
           change="Updated"
           changeType="up"
           color="var(--admin-warning)"
@@ -161,10 +155,15 @@ export function AdminRecommendationAnalytics() {
           subtitle="Views, clicks, and explicit interactions over last 30 days"
         >
           <div className="h-[300px]">
-            {!stats.engagementMetrics?.interactionsByDay || stats.engagementMetrics.interactionsByDay.length === 0 ? (
+            {!stats.engagementMetrics?.interactionsByDay ||
+            stats.engagementMetrics.interactionsByDay.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
-                <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">timeline</span>
-                <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No Timeline Data</span>
+                <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
+                  timeline
+                </span>
+                <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
+                  No Timeline Data
+                </span>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -175,17 +174,21 @@ export function AdminRecommendationAnalytics() {
                       <stop offset="95%" stopColor="var(--admin-accent)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--admin-border-subtle)" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="var(--admin-border-subtle)"
+                  />
                   <XAxis
                     dataKey="_id"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 10, fill: "var(--admin-text-tertiary)" }}
+                    tick={{ fontSize: 10, fill: 'var(--admin-text-tertiary)' }}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 10, fill: "var(--admin-text-tertiary)" }}
+                    tick={{ fontSize: 10, fill: 'var(--admin-text-tertiary)' }}
                   />
                   <Tooltip content={<ChartTooltip />} />
                   <Area
@@ -209,21 +212,29 @@ export function AdminRecommendationAnalytics() {
         >
           <div className="h-[300px]">
             {ctrData.length === 0 ? (
-               <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
-                 <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">bar_chart</span>
-                 <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No CTR Data</span>
-               </div>
+              <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
+                <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
+                  bar_chart
+                </span>
+                <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
+                  No CTR Data
+                </span>
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ctrData} layout="vertical" margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--admin-border-subtle)" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                    stroke="var(--admin-border-subtle)"
+                  />
                   <XAxis type="number" hide />
                   <YAxis
                     dataKey="name"
                     type="category"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 10, fill: "var(--admin-text-secondary)" }}
+                    tick={{ fontSize: 10, fill: 'var(--admin-text-secondary)' }}
                     width={100}
                   />
                   <Tooltip content={<ChartTooltip />} />
@@ -241,16 +252,18 @@ export function AdminRecommendationAnalytics() {
         </ChartCard>
 
         {/* Top Trending Categories */}
-        <ChartCard
-          title="Top Trending Categories"
-          subtitle="Based on recent real-time velocity"
-        >
+        <ChartCard title="Top Trending Categories" subtitle="Based on recent real-time velocity">
           <div className="h-[300px]">
-            {!stats.trendingMetrics?.topCategories || stats.trendingMetrics.topCategories.length === 0 ? (
-               <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
-                 <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">pie_chart</span>
-                 <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No Trending Data</span>
-               </div>
+            {!stats.trendingMetrics?.topCategories ||
+            stats.trendingMetrics.topCategories.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
+                <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
+                  pie_chart
+                </span>
+                <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
+                  No Trending Data
+                </span>
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -266,7 +279,10 @@ export function AdminRecommendationAnalytics() {
                     strokeWidth={0}
                   >
                     {stats.trendingMetrics.topCategories.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip content={<ChartTooltip />} />
@@ -277,8 +293,14 @@ export function AdminRecommendationAnalytics() {
           {stats.trendingMetrics?.topCategories?.length > 0 && (
             <div className="flex flex-wrap gap-3 justify-center mt-4">
               {stats.trendingMetrics.topCategories.map((entry, index) => (
-                <div key={index} className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--admin-text-secondary)]">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
+                <div
+                  key={index}
+                  className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--admin-text-secondary)]"
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+                  />
                   {entry._id}
                 </div>
               ))}
@@ -287,27 +309,36 @@ export function AdminRecommendationAnalytics() {
         </ChartCard>
 
         {/* Active Profile Affinities */}
-        <ChartCard
-          title="User Top Affinities"
-          subtitle="Aggregated from active user profiles"
-        >
+        <ChartCard title="User Top Affinities" subtitle="Aggregated from active user profiles">
           <div className="h-[300px]">
             {!stats.userMetrics?.topAffinities || stats.userMetrics.topAffinities.length === 0 ? (
-               <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
-                 <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">groups</span>
-                 <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">No Affinity Data</span>
-               </div>
+              <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
+                <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
+                  groups
+                </span>
+                <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
+                  No Affinity Data
+                </span>
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.userMetrics.topAffinities} layout="vertical" margin={{ left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--admin-border-subtle)" />
+                <BarChart
+                  data={stats.userMetrics.topAffinities}
+                  layout="vertical"
+                  margin={{ left: -10 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                    stroke="var(--admin-border-subtle)"
+                  />
                   <XAxis type="number" hide />
                   <YAxis
                     dataKey="_id"
                     type="category"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 10, fill: "var(--admin-text-secondary)" }}
+                    tick={{ fontSize: 10, fill: 'var(--admin-text-secondary)' }}
                     width={120}
                   />
                   <Tooltip content={<ChartTooltip />} />

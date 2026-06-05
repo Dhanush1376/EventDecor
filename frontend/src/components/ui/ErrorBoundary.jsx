@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import * as Sentry from '@sentry/react';
 
 import logger from '../../utils/logger';
@@ -46,7 +46,8 @@ export class ErrorBoundary extends Component {
         return this.props.fallback;
       }
 
-      const isChunkError = this.state.error?.message?.includes('Loading chunk') ||
+      const isChunkError =
+        this.state.error?.message?.includes('Loading chunk') ||
         this.state.error?.message?.includes('Failed to fetch dynamically imported module');
 
       return (
@@ -74,7 +75,7 @@ export class ErrorBoundary extends Component {
             <p className="font-body-md text-on-surface-variant/70 mb-8 text-sm md:text-base leading-relaxed max-w-sm mx-auto">
               {isChunkError
                 ? 'A new version of the app is available. Please refresh to get the latest experience.'
-                : 'Our studio encountered an unexpected error. We\'ve been notified and are working on it.'}
+                : "Our studio encountered an unexpected error. We've been notified and are working on it."}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -98,13 +99,21 @@ export class ErrorBoundary extends Component {
 
             {/* Navigation fallback */}
             <div className="mt-10 pt-6 border-t border-outline-variant/20">
-              <p className="font-label-sm text-[9px] uppercase tracking-[0.2em] text-on-surface-variant/40 mb-4 font-bold">Or navigate to:</p>
+              <p className="font-label-sm text-[9px] uppercase tracking-[0.2em] text-on-surface-variant/40 mb-4 font-bold">
+                Or navigate to:
+              </p>
               <div className="flex items-center justify-center gap-4 text-xs font-label uppercase tracking-widest font-bold">
-                <a href="/" className="text-primary hover:underline">Home</a>
+                <a href="/" className="text-primary hover:underline">
+                  Home
+                </a>
                 <span className="text-outline-variant/50">·</span>
-                <a href="/collections" className="text-primary hover:underline">Collections</a>
+                <a href="/collections" className="text-primary hover:underline">
+                  Collections
+                </a>
                 <span className="text-outline-variant/50">·</span>
-                <a href="/contact" className="text-primary hover:underline">Contact</a>
+                <a href="/contact" className="text-primary hover:underline">
+                  Contact
+                </a>
               </div>
             </div>
 

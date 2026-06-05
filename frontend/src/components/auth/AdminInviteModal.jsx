@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "../../context/AuthContext";
-import { adminInviteService } from "../../services/domainServices";
-import { refreshAccessToken } from "../../services/api";
-import toast from "react-hot-toast";
-import logger from "../../utils/logger";
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
+import { adminInviteService } from '../../services/domainServices';
+import { refreshAccessToken } from '../../services/api';
+import toast from 'react-hot-toast';
+import logger from '../../utils/logger';
 
 export function AdminInviteModal() {
   const { user, isAuthenticated, checkAuth } = useAuth();
@@ -25,7 +25,7 @@ export function AdminInviteModal() {
         }
       } catch (err) {
         if (err?.response?.status !== 401 && err?.code !== 'ERR_NO_SESSION') {
-          logger.error("Failed to check pending admin invitations:", err);
+          logger.error('Failed to check pending admin invitations:', err);
         }
       }
     };
@@ -45,16 +45,16 @@ export function AdminInviteModal() {
   const handleResponse = async (action) => {
     if (!invite || submitting) return;
     setSubmitting(true);
-    const actionText = action === "accept" ? "accepting" : "rejecting";
+    const actionText = action === 'accept' ? 'accepting' : 'rejecting';
     const loadingToast = toast.loading(`Processing invitation...`);
 
     try {
       const res = await adminInviteService.respondToInvite(invite._id, action);
       if (res?.success) {
         toast.dismiss(loadingToast);
-        if (action === "accept") {
-          toast.success("Welcome to the Admin Portal! Upgrading your access privileges...");
-          
+        if (action === 'accept') {
+          toast.success('Welcome to the Admin Portal! Upgrading your access privileges...');
+
           // Refresh access token to encode the new administrative role in the JWT
           const token = await refreshAccessToken();
           if (token) {
@@ -63,10 +63,10 @@ export function AdminInviteModal() {
 
           // Small delay for micro-animations, then redirect to admin dashboard
           setTimeout(() => {
-            window.location.href = "/admin";
+            window.location.href = '/admin';
           }, 1000);
         } else {
-          toast.success("Invitation declined successfully.");
+          toast.success('Invitation declined successfully.');
         }
         setIsOpen(false);
         setInvite(null);
@@ -96,7 +96,7 @@ export function AdminInviteModal() {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.5 }}
+            transition={{ type: 'spring', duration: 0.5 }}
             className="relative w-full max-w-[480px] bg-white/90 dark:bg-[#121824]/90 backdrop-blur-2xl border border-outline-variant/30 dark:border-slate-800 rounded-[2.5rem] shadow-Luxury p-8 overflow-hidden font-body text-on-surface"
           >
             {/* Elegant Background Glow */}
@@ -120,7 +120,11 @@ export function AdminInviteModal() {
                   </h2>
                 </div>
                 <p className="text-[13px] text-slate-500 dark:text-slate-400 font-light leading-relaxed max-w-[340px]">
-                  You have been invited by <strong className="font-semibold text-slate-800 dark:text-slate-200">{invite.invitedBy?.name || invite.invitedBy?.email}</strong> to join the administrative team.
+                  You have been invited by{' '}
+                  <strong className="font-semibold text-slate-800 dark:text-slate-200">
+                    {invite.invitedBy?.name || invite.invitedBy?.email}
+                  </strong>{' '}
+                  to join the administrative team.
                 </p>
               </div>
 
@@ -149,14 +153,14 @@ export function AdminInviteModal() {
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   disabled={submitting}
-                  onClick={() => handleResponse("reject")}
+                  onClick={() => handleResponse('reject')}
                   className="flex-1 h-12 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center font-bold text-[12px] uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors disabled:opacity-40 cursor-pointer"
                 >
                   Decline
                 </button>
                 <button
                   disabled={submitting}
-                  onClick={() => handleResponse("accept")}
+                  onClick={() => handleResponse('accept')}
                   className="flex-1 h-12 bg-primary text-white rounded-full flex items-center justify-center gap-2 font-bold text-[12px] uppercase tracking-wider hover:bg-[#0F172A] dark:hover:bg-white dark:hover:text-black transition-all shadow-md shadow-primary/10 disabled:opacity-40 cursor-pointer"
                 >
                   {submitting ? (
@@ -172,7 +176,8 @@ export function AdminInviteModal() {
 
               <div className="text-center">
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal max-w-[360px] mx-auto">
-                  Accepting this invitation grants immediate workspace access permissions. You will be redirected to the admin portal console.
+                  Accepting this invitation grants immediate workspace access permissions. You will
+                  be redirected to the admin portal console.
                 </p>
               </div>
             </div>

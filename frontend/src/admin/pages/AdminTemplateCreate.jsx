@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom";
-import { notificationService } from "../../services/domainServices";
-import toast from "react-hot-toast";
-import { fadeUp, stagger } from "../components/AdminUIKit";
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate, useParams } from 'react-router-dom';
+import { notificationService } from '../../services/domainServices';
+import toast from 'react-hot-toast';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 import logger from '../../utils/logger';
 import { getErrorMessage } from '../../utils/errorHelpers';
+import { useDraft } from '../hooks/useDraft';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 export function AdminTemplateCreate() {
   const navigate = useNavigate();
@@ -13,11 +17,28 @@ export function AdminTemplateCreate() {
   const isEditMode = Boolean(id);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [templateForm, setTemplateForm] = useState({
-    name: "",
-    subjectLine: "",
-    htmlContent: "",
-    type: "marketing",
+
+  const {
+    formData: templateForm,
+    setFormData: setTemplateForm,
+    draftStatus,
+    showRestoreModal,
+    restoreDraft,
+    discardDraft,
+    deleteDraft,
+    lastSavedAt,
+    blocker,
+  } = useDraft({
+    draftKey: isEditMode ? `admin:template:edit:${id}` : 'admin:template:add',
+    module: 'Templates',
+    pageTitle: isEditMode ? `Edit Template ${id}` : 'New Template',
+    initialData: {
+      name: '',
+      subjectLine: '',
+      htmlContent: '',
+      type: 'marketing',
+    },
+    enabled: true,
   });
 
   useEffect(() => {
@@ -27,22 +48,22 @@ export function AdminTemplateCreate() {
           const res = await notificationService.getTemplates();
           if (res.success) {
             const list = res.data || [];
-            const temp = list.find(t => t._id === id);
+            const temp = list.find((t) => t._id === id);
             if (temp) {
               setTemplateForm({
-                name: temp.name || "",
-                subjectLine: temp.subjectLine || "",
-                htmlContent: temp.htmlContent || "",
-                type: temp.type || "marketing",
+                name: temp.name || '',
+                subjectLine: temp.subjectLine || '',
+                htmlContent: temp.htmlContent || '',
+                type: temp.type || 'marketing',
               });
             } else {
-              toast.error("Template not found");
-              navigate("/admin/campaigns");
+              toast.error('Template not found');
+              navigate('/admin/campaigns');
             }
           }
         } catch (err) {
-          logger.error("Failed to load template", err);
-          toast.error("Failed to load template details");
+          logger.error('Failed to load template', err);
+          toast.error('Failed to load template details');
         }
       };
       fetchTemplate();
@@ -52,7 +73,7 @@ export function AdminTemplateCreate() {
   const handleTemplateUpdate = async (e) => {
     e.preventDefault();
     if (!templateForm.name || !templateForm.htmlContent) {
-      toast.error("Name and HTML Content are required");
+      toast.error('Name and HTML Content are required');
       return;
     }
 
@@ -66,42 +87,58 @@ export function AdminTemplateCreate() {
       }
 
       if (res.success) {
-        toast.success(isEditMode ? "Template updated" : "Template created");
-        navigate("/admin/campaigns");
+        await deleteDraft();
+        toast.success(isEditMode ? 'Template updated' : 'Template created');
+        navigate('/admin/campaigns');
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to save template modifications"));
+      toast.error(getErrorMessage(err, 'Failed to save template modifications'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="max-w-[1000px] mx-auto space-y-6 pb-20 p-4 sm:p-0">
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="max-w-[1000px] mx-auto space-y-6 pb-20 p-4 sm:p-0"
+    >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--admin-border-subtle)] pb-5">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate("/admin/campaigns")}
+            onClick={() => navigate('/admin/campaigns')}
             className="w-10 h-10 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95 shadow-sm"
           >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
           <div>
             <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">brush</span>
-              {isEditMode ? "Modify Seeded Layout" : "Seed Design Template"}
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
+                brush
+              </span>
+              {isEditMode ? 'Modify Seeded Layout' : 'Seed Design Template'}
             </h3>
-            <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5">
-              Draft rich HTML email templates with core system variables
-            </p>
+            <div className="flex items-center gap-3 mt-0.5">
+              <p className="text-[10.5px] text-[var(--admin-text-tertiary)]">
+                Draft rich HTML email templates with core system variables
+              </p>
+              <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
+            </div>
           </div>
         </div>
       </div>
 
-      <motion.div variants={fadeUp} className="bg-[var(--admin-surface)] p-6 md:p-8 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
+      <motion.div
+        variants={fadeUp}
+        className="bg-[var(--admin-surface)] p-6 md:p-8 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]"
+      >
         <form onSubmit={handleTemplateUpdate} className="space-y-6">
           <div>
-            <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Template Name *</label>
+            <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">
+              Template Name *
+            </label>
             <input
               type="text"
               required
@@ -113,7 +150,9 @@ export function AdminTemplateCreate() {
           </div>
 
           <div>
-            <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Subject Fallback</label>
+            <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">
+              Subject Fallback
+            </label>
             <input
               type="text"
               value={templateForm.subjectLine}
@@ -124,7 +163,9 @@ export function AdminTemplateCreate() {
           </div>
 
           <div>
-            <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">Template Category *</label>
+            <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1">
+              Template Category *
+            </label>
             <select
               value={templateForm.type}
               onChange={(e) => setTemplateForm({ ...templateForm, type: e.target.value })}
@@ -139,8 +180,8 @@ export function AdminTemplateCreate() {
           <div>
             <label className="text-[9px] uppercase font-bold tracking-wider text-black/45 block mb-1 flex items-center justify-between">
               <span>HTML Source Code *</span>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => {
                   const previewWindow = window.open();
                   previewWindow.document.write(templateForm.htmlContent);
@@ -164,7 +205,7 @@ export function AdminTemplateCreate() {
           <div className="flex gap-3 pt-6 border-t border-[var(--admin-border-subtle)] mt-8">
             <button
               type="button"
-              onClick={() => navigate("/admin/campaigns")}
+              onClick={() => navigate('/admin/campaigns')}
               className="admin-btn admin-btn-outline flex-1 py-3"
             >
               Cancel
@@ -174,11 +215,21 @@ export function AdminTemplateCreate() {
               type="submit"
               className="admin-btn admin-btn-primary flex-[2] py-3 shadow-md"
             >
-              {isSubmitting ? "Saving..." : isEditMode ? "Save Changes" : "Create Template"}
+              {isSubmitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Create Template'}
             </button>
           </div>
         </form>
       </motion.div>
+
+      <DraftRestoreModal
+        isOpen={showRestoreModal}
+        onRestore={restoreDraft}
+        onDiscard={discardDraft}
+        moduleName="Templates"
+        lastSavedAt={lastSavedAt}
+      />
+
+      <UnsavedChangesGuard blocker={blocker} />
     </motion.div>
   );
 }

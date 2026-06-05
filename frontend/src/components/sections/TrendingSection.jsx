@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SectionWrapper } from '../layout';
 import { RecommendationCarousel } from '../ui/RecommendationCarousel';
 import { ProductCard } from '../ui/ProductCard';
 import { RecommendationSkeleton } from '../ui/Skeleton';
 import { useTrendingRecommendations } from '../../hooks/useRecommendationQueries';
-import logger from '../../utils/logger';
 
 const FEED_TABS = [
   { key: 'trendingNow', label: 'Trending Now', icon: 'local_fire_department' },
@@ -13,20 +12,23 @@ const FEED_TABS = [
   { key: 'popularThisSeason', label: 'In Season', icon: 'wb_sunny' },
 ];
 
-export function TrendingSection({ 
-  title = "Trending Elegance", 
-  subtitle = "Discover the masterpieces defining luxury celebrations right now.",
-  badgeText = "Real-Time Insights",
-  limit = 12
+export function TrendingSection({
+  title = 'Trending Elegance',
+  subtitle = 'Discover the masterpieces defining luxury celebrations right now.',
+  badgeText = 'Real-Time Insights',
+  limit = 12,
 }) {
   const [activeTab, setActiveTab] = useState('trendingNow');
 
   const trendingQuery = useTrendingRecommendations({ limit });
-  const bookedQuery = useTrendingRecommendations({ feed: 'mostBooked', limit: Math.max(10, limit - 2) });
+  const bookedQuery = useTrendingRecommendations({
+    feed: 'mostBooked',
+    limit: Math.max(10, limit - 2),
+  });
   const seasonalQuery = useTrendingRecommendations({ feed: 'popularThisSeason', limit });
 
   const loading = trendingQuery.isLoading || bookedQuery.isLoading || seasonalQuery.isLoading;
-  
+
   const feeds = {
     trendingNow: trendingQuery.data?.items || trendingQuery.data || [],
     mostBooked: bookedQuery.data?.items || bookedQuery.data || [],
@@ -85,7 +87,9 @@ export function TrendingSection({
                     : 'text-[#1A1C1A]/70 hover:text-[#1A1C1A] bg-black/5 md:bg-transparent hover:bg-black/10 font-medium border border-black/5 md:border-transparent'
                 }`}
               >
-                <span className="material-symbols-outlined text-[14px] md:text-[16px] font-light">{tab.icon}</span>
+                <span className="material-symbols-outlined text-[14px] md:text-[16px] font-light">
+                  {tab.icon}
+                </span>
                 {tab.label}
               </button>
             );
@@ -95,7 +99,7 @@ export function TrendingSection({
         {/* Dynamic Carousel Content */}
         <AnimatePresence mode="wait">
           {loading ? (
-            <motion.div 
+            <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -126,14 +130,18 @@ export function TrendingSection({
               />
             </motion.div>
           ) : (
-            <motion.div 
+            <motion.div
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-center py-20"
             >
-              <span className="material-symbols-outlined text-[40px] text-black/20 mb-4 font-light">hourglass_empty</span>
-              <p className="font-body text-black/50 tracking-wide">Gathering insights. Check back soon for trending decor.</p>
+              <span className="material-symbols-outlined text-[40px] text-black/20 mb-4 font-light">
+                hourglass_empty
+              </span>
+              <p className="font-body text-black/50 tracking-wide">
+                Gathering insights. Check back soon for trending decor.
+              </p>
             </motion.div>
           )}
         </AnimatePresence>

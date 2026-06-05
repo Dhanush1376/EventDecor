@@ -1,9 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-import { handleImageError } from '../utils/imageUtils';
 import { useCheckout } from './CheckoutProvider';
 
 export default function CheckoutPaymentStep() {

@@ -50,10 +50,16 @@ const EventSchema: Schema = new Schema(
     seoDescription: { type: String },
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-EventSchema.index({ title: 'text', description: 'text', category: 'text', style: 'text', features: 'text' }, { name: 'FullTextIndex', weights: { title: 10, category: 5, style: 5, features: 3, description: 1 } });
+EventSchema.index(
+  { title: 'text', description: 'text', category: 'text', style: 'text', features: 'text' },
+  {
+    name: 'FullTextIndex',
+    weights: { title: 10, category: 5, style: 5, features: 3, description: 1 },
+  },
+);
 EventSchema.index({ category: 1 });
 EventSchema.index({ style: 1 });
 
@@ -64,12 +70,43 @@ EventSchema.index({ isActive: 1, category: 1, createdAt: -1 }); // Recommendatio
 EventSchema.index({ isActive: 1, category: 1, basePrice: -1 }); // Search price sort
 EventSchema.index({ isActive: 1, createdAt: -1 }); // Global listing sort
 
-// Sitemap Auto-Update Trigger
+// Sitemap and Cloudinary Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
-EventSchema.post('save', () => { triggerSitemapUpdate(); });
-EventSchema.post('deleteOne', () => { triggerSitemapUpdate(); });
-EventSchema.post('findOneAndDelete', () => { triggerSitemapUpdate(); });
+import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
+
+EventSchema.post('save', () => {
+  triggerSitemapUpdate();
+});
+
+const cleanupCloudinaryImages = async (doc: any) => {
+  if (!doc) return;
+  const urlsToClean: string[] = [];
+  if (doc.image) urlsToClean.push(doc.image);
+  if (doc.gallery && Array.isArray(doc.gallery)) urlsToClean.push(...doc.gallery);
+  if (doc.beforeAfterImages) {
+    if (doc.beforeAfterImages.before) urlsToClean.push(doc.beforeAfterImages.before);
+    if (doc.beforeAfterImages.after) urlsToClean.push(doc.beforeAfterImages.after);
+  }
+
+  for (const url of urlsToClean) {
+    const publicId = extractPublicId(url);
+    if (publicId) {
+      deleteFromCloudinary(publicId).catch((err) =>
+        console.error(`[Cloudinary GC] Failed to delete orphaned event image: ${url}`, err),
+      );
+    }
+  }
+};
+
+EventSchema.post('deleteOne', { document: true, query: false }, async function () {
+  triggerSitemapUpdate();
+  await cleanupCloudinaryImages(this);
+});
+
+EventSchema.post('findOneAndDelete', async function (doc) {
+  triggerSitemapUpdate();
+  await cleanupCloudinaryImages(doc);
+});
 
 const Event = mongoose.model<IEvent>('Event', EventSchema);
 export default Event;
-

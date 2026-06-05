@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { policyService } from '../../services/domainServices';
 import { createSafeHtml } from '../../utils/sanitize';
 import { toast } from 'react-hot-toast';
-import { SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
+import { SkeletonDashboard, stagger } from '../components/AdminUIKit';
+import { getErrorMessage } from '../../utils/errorHelpers';
+import { useDraft } from '../hooks/useDraft';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 export function AdminPolicyEditor() {
   const navigate = useNavigate();
@@ -14,26 +18,30 @@ export function AdminPolicyEditor() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('write'); // 'write' or 'preview'
-  
-  const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    content: '',
-    status: 'draft',
-    seoMetadata: { title: '', description: '' }
-  });
 
-  useEffect(() => {
-    if (isNew) {
-      setFormData({
-        title: '',
-        slug: '',
-        content: '',
-        status: 'draft',
-        seoMetadata: { title: '', description: '' }
-      });
-    }
-  }, [id, isNew]);
+  const {
+    formData,
+    setFormData,
+    draftStatus,
+    showRestoreModal,
+    restoreDraft,
+    discardDraft,
+    deleteDraft,
+    lastSavedAt,
+    blocker,
+  } = useDraft({
+    draftKey: isNew ? 'admin:policy:add' : `admin:policy:edit:${id}`,
+    module: 'Policies',
+    pageTitle: isNew ? 'New Policy' : `Edit Policy ${id}`,
+    initialData: {
+      title: '',
+      slug: '',
+      content: '',
+      status: 'draft',
+      seoMetadata: { title: '', description: '' },
+    },
+    enabled: true,
+  });
 
   useEffect(() => {
     if (!isNew) {
@@ -61,11 +69,12 @@ export function AdminPolicyEditor() {
     try {
       if (isNew) {
         await policyService.create(formData);
-        toast.success("Policy created");
+        toast.success('Policy created');
       } else {
         await policyService.update(id, formData);
-        toast.success("Policy updated");
+        toast.success('Policy updated');
       }
+      await deleteDraft();
       handleSuccessAction();
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to save policy'));
@@ -92,7 +101,7 @@ export function AdminPolicyEditor() {
           <input
             type="text"
             value={formData.title}
-            onChange={e => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             placeholder="e.g. Privacy Policy"
             className="admin-input text-base font-semibold"
           />
@@ -102,7 +111,9 @@ export function AdminPolicyEditor() {
           <input
             type="text"
             value={formData.slug}
-            onChange={e => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+            onChange={(e) =>
+              setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })
+            }
             placeholder="e.g. privacy-policy"
             className="admin-input text-base font-mono"
           />
@@ -129,28 +140,37 @@ export function AdminPolicyEditor() {
           {activeTab === 'write' ? (
             <textarea
               value={formData.content}
-              onChange={e => setFormData({ ...formData, content: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               placeholder="<p>Enter your policy content here using HTML tags...</p>"
               className="admin-textarea w-full h-[300px] p-4 font-mono text-sm bg-[var(--admin-bg-subtle)]"
             />
           ) : (
-            <div 
+            <div
               className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-[var(--admin-text-primary)] prose-p:text-[var(--admin-text-secondary)] prose-p:leading-relaxed p-6 border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-surface)]"
-              dangerouslySetInnerHTML={createSafeHtml(formData.content || '<p class="text-gray-400">No content provided yet.</p>')}
+              dangerouslySetInnerHTML={createSafeHtml(
+                formData.content || '<p class="text-gray-400">No content provided yet.</p>',
+              )}
             />
           )}
         </div>
       </div>
 
       <div className="border-t border-[var(--admin-border-subtle)] pt-6 space-y-4">
-        <h3 className="text-xs font-bold text-[var(--admin-text-primary)] uppercase tracking-wider">Search Engine Optimization</h3>
+        <h3 className="text-xs font-bold text-[var(--admin-text-primary)] uppercase tracking-wider">
+          Search Engine Optimization
+        </h3>
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="admin-label">Meta Title</label>
             <input
               type="text"
               value={formData.seoMetadata?.title || ''}
-              onChange={e => setFormData({ ...formData, seoMetadata: { ...formData.seoMetadata, title: e.target.value } })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  seoMetadata: { ...formData.seoMetadata, title: e.target.value },
+                })
+              }
               className="admin-input"
               placeholder="Enter meta title"
             />
@@ -159,7 +179,12 @@ export function AdminPolicyEditor() {
             <label className="admin-label">Meta Description</label>
             <textarea
               value={formData.seoMetadata?.description || ''}
-              onChange={e => setFormData({ ...formData, seoMetadata: { ...formData.seoMetadata, description: e.target.value } })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  seoMetadata: { ...formData.seoMetadata, description: e.target.value },
+                })
+              }
               className="admin-textarea h-24"
               placeholder="Enter meta description"
             />
@@ -170,7 +195,7 @@ export function AdminPolicyEditor() {
       <div className="pt-6 border-t border-[var(--admin-border-subtle)] flex items-center justify-end gap-3">
         <select
           value={formData.status}
-          onChange={e => setFormData({ ...formData, status: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
           className="admin-select min-h-[40px] py-2 w-32"
         >
           <option value="draft">Draft</option>
@@ -188,16 +213,20 @@ export function AdminPolicyEditor() {
           disabled={saving}
           className="admin-btn admin-btn-primary min-h-[40px] px-6"
         >
-          <span className="material-symbols-outlined text-[16px]">{saving ? "sync" : "save"}</span>
+          <span className="material-symbols-outlined text-[16px]">{saving ? 'sync' : 'save'}</span>
           {saving ? 'Saving...' : 'Save Policy'}
         </button>
       </div>
     </div>
   );
 
-
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="max-w-4xl mx-auto space-y-6 pb-24">
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="max-w-4xl mx-auto space-y-6 pb-24"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center sticky top-0 bg-[var(--admin-surface)] z-10 py-4 border-b border-[var(--admin-border-subtle)]">
         <div className="flex items-center gap-4">
@@ -212,10 +241,17 @@ export function AdminPolicyEditor() {
         </div>
       </div>
 
-      <div className="admin-card p-6 lg:p-8">
-        {editorContent}
-      </div>
+      <div className="admin-card p-6 lg:p-8">{editorContent}</div>
+
+      <DraftRestoreModal
+        isOpen={showRestoreModal}
+        onRestore={restoreDraft}
+        onDiscard={discardDraft}
+        moduleName="Policies"
+        lastSavedAt={lastSavedAt}
+      />
+
+      <UnsavedChangesGuard blocker={blocker} />
     </motion.div>
   );
 }
-

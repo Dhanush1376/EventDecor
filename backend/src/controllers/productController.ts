@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
+import dns from 'dns/promises';
 import path from 'path';
 import ProductService from '../services/productService';
 import asyncHandler from '../utils/asyncHandler';
@@ -48,12 +49,23 @@ export const toggleFeatured = asyncHandler(async (req: Request, res: Response) =
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
-  res.status(200).json(new ApiResponse(true, `Product ${product.featured ? 'featured' : 'unfeatured'} successfully`, product));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        `Product ${product.featured ? 'featured' : 'unfeatured'} successfully`,
+        product,
+      ),
+    );
 });
 
 export const getCategories = asyncHandler(async (req: Request, res: Response) => {
   const categories = await ProductService.getDistinctCategories();
-  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
+  res.setHeader(
+    'Cache-Control',
+    'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
+  );
   res.status(200).json(new ApiResponse(true, 'Categories fetched successfully', categories));
 });
 
@@ -61,7 +73,10 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
   const { title, imageSrc, categoryList } = req.body;
 
   if (!process.env.GROQ_API_KEY) {
-    throw new ApiError(400, 'Groq API Key is not configured. Please add GROQ_API_KEY to your backend .env file.');
+    throw new ApiError(
+      400,
+      'Groq API Key is not configured. Please add GROQ_API_KEY to your backend .env file.',
+    );
   }
 
   if (!title && !imageSrc) {
@@ -92,29 +107,66 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
         if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
           throw new ApiError(400, 'Only HTTP/HTTPS image URLs are allowed');
         }
-        // Block private/internal network ranges
-        const hostname = parsedUrl.hostname.toLowerCase();
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('10.') || 
-            hostname.startsWith('192.168.') || hostname.startsWith('172.') || hostname.endsWith('.internal')) {
+        // SSRF Protection: Resolve IP to prevent obfuscation (octal/hex) and block private ranges
+        let address = '';
+        try {
+          const lookupResult = await dns.lookup(parsedUrl.hostname);
+          address = lookupResult.address;
+        } catch {
+          throw new ApiError(400, 'Invalid or unresolvable hostname');
+        }
+
+        let checkIp = address;
+        if (checkIp.includes(':') && checkIp.toLowerCase().startsWith('::ffff:')) {
+          checkIp = checkIp.substring(7);
+        }
+
+        let isPrivate = false;
+        if (checkIp === '::1' || checkIp.toLowerCase().startsWith('fe80:')) {
+          isPrivate = true;
+        } else {
+          const parts = checkIp.split('.');
+          if (parts.length === 4) {
+            const [p1, p2] = [parseInt(parts[0], 10), parseInt(parts[1], 10)];
+            if (
+              p1 === 10 ||
+              p1 === 127 ||
+              p1 === 0 ||
+              (p1 === 169 && p2 === 254) ||
+              (p1 === 172 && p2 >= 16 && p2 <= 31) ||
+              (p1 === 192 && p2 === 168)
+            ) {
+              isPrivate = true;
+            }
+          }
+        }
+
+        if (isPrivate || parsedUrl.hostname.toLowerCase().endsWith('.internal')) {
           throw new ApiError(400, 'Internal network URLs are not allowed');
         }
 
+        // We checked the IP to prevent basic SSRF.
+        // Node native fetch fails with ERR_TLS_CERT_ALTNAME_INVALID if we swap hostname for IP.
+        const safeUrl = parsedUrl.toString();
+
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
-        
-        const response = await fetch(imageSrc, { signal: controller.signal });
+
+        const response = await fetch(safeUrl, {
+          signal: controller.signal,
+        });
         clearTimeout(timeout);
-        
+
         // Validate content length (max 2MB)
         const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
         if (contentLength > 2 * 1024 * 1024) {
           throw new ApiError(400, 'Image too large for AI analysis (max 2MB)');
         }
-        
+
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         base64Image = buffer.toString('base64');
-        
+
         const contentType = response.headers.get('content-type');
         if (contentType) mimeType = contentType;
       }
@@ -172,31 +224,45 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
     userContent.push({
       type: 'image_url',
       image_url: {
-        url: `data:${mimeType};base64,${base64Image}`
-      }
+        url: `data:${mimeType};base64,${base64Image}`,
+      },
     });
   }
 
   messages.push({
     role: 'user',
-    content: userContent
+    content: userContent,
   });
 
-  const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      messages,
-      response_format: {
-        type: 'json_object'
+  const groqController = new AbortController();
+  const groqTimeout = setTimeout(() => groqController.abort(), 15000); // 15s timeout
+
+  let groqResponse;
+  try {
+    groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      temperature: 0.2
-    })
-  });
+      signal: groqController.signal,
+      body: JSON.stringify({
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        messages,
+        response_format: {
+          type: 'json_object',
+        },
+        temperature: 0.2,
+      }),
+    });
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new ApiError(504, 'Groq API timeout. The request took too long.');
+    }
+    throw new ApiError(500, 'Failed to connect to Groq AI API.');
+  } finally {
+    clearTimeout(groqTimeout);
+  }
 
   if (!groqResponse.ok) {
     const errorText = await groqResponse.text();
@@ -206,14 +272,96 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
 
   const responseData: any = await groqResponse.json();
   const textResponse = responseData.choices?.[0]?.message?.content;
-  
+
   if (!textResponse) {
     throw new ApiError(500, 'Invalid response received from Groq AI API.');
   }
 
   try {
     const parsedData = JSON.parse(textResponse.trim());
-    res.status(200).json(new ApiResponse(true, 'AI specifications generated successfully', parsedData));
+    res
+      .status(200)
+      .json(new ApiResponse(true, 'AI specifications generated successfully', parsedData));
+  } catch (err) {
+    logger.error('Failed to parse Groq JSON:', textResponse);
+    throw new ApiError(500, 'AI response could not be parsed as clean JSON.');
+  }
+});
+
+export const refineAiProduct = asyncHandler(async (req: Request, res: Response) => {
+  const { previousResult, prompt: userPrompt } = req.body;
+
+  if (!process.env.GROQ_API_KEY) {
+    throw new ApiError(
+      400,
+      'Groq API Key is not configured. Please add GROQ_API_KEY to your backend .env file.',
+    );
+  }
+
+  if (!previousResult || !userPrompt) {
+    throw new ApiError(400, 'Please provide the previous AI result and a prompt.');
+  }
+
+  const prompt = `
+    You are an expert Indian handicraft catalog analyst for "Siri Arts & Crafts".
+    You previously generated the following product curation data:
+    ${JSON.stringify(previousResult, null, 2)}
+    
+    The user wants to make the following modification:
+    "${userPrompt}"
+    
+    Please output an UPDATED clean JSON object matching the EXACT same structure as the previous data, incorporating the user's requested changes.
+    Output ONLY the raw JSON object, without any markdown formatting or ticks.
+  `;
+
+  const messages: any[] = [{ role: 'user', content: [{ type: 'text', text: prompt }] }];
+
+  const groqController = new AbortController();
+  const groqTimeout = setTimeout(() => groqController.abort(), 15000); // 15s timeout
+
+  let groqResponse;
+  try {
+    groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      signal: groqController.signal,
+      body: JSON.stringify({
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        messages,
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+      }),
+    });
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new ApiError(504, 'Groq API timeout. The request took too long.');
+    }
+    throw new ApiError(500, 'Failed to connect to Groq AI API.');
+  } finally {
+    clearTimeout(groqTimeout);
+  }
+
+  if (!groqResponse.ok) {
+    const errorText = await groqResponse.text();
+    logger.error('Groq API Error:', errorText);
+    throw new ApiError(500, 'Failed to refine product details from Groq AI API.');
+  }
+
+  const responseData: any = await groqResponse.json();
+  const textResponse = responseData.choices?.[0]?.message?.content;
+
+  if (!textResponse) {
+    throw new ApiError(500, 'Invalid response received from Groq AI API.');
+  }
+
+  try {
+    const parsedData = JSON.parse(textResponse.trim());
+    res
+      .status(200)
+      .json(new ApiResponse(true, 'AI specifications refined successfully', parsedData));
   } catch (err) {
     logger.error('Failed to parse Groq JSON:', textResponse);
     throw new ApiError(500, 'AI response could not be parsed as clean JSON.');

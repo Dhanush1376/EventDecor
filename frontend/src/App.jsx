@@ -2,16 +2,15 @@ import React, { Suspense, useState } from 'react';
 import { lazyWithRetry as lazy } from './utils/lazyWithRetry';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { logRouteDiagnostic } from './utils/diagnostics';
-import { AnimatePresence } from 'framer-motion';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { ensureCsrfToken } from './services/api';
 
-import { PageLoader } from './components/ui/PageLoader';
 import { RouteSkeleton } from './components/ui/RouteSkeleton';
 import { CartProvider } from './context/CartProvider';
 import { WishlistProvider } from './context/WishlistProvider';
 import { AuthProvider } from './context/AuthProvider';
+import { UserSocketProvider } from './context/UserSocketProvider';
 import { MainLayout, MinimalLayout } from './layouts/MainLayout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -20,12 +19,10 @@ import { NetworkProvider } from './context/NetworkProvider';
 import { ConfigProvider } from './context/ConfigContext';
 import { PwaUpdatePrompt } from './components/ui/PwaUpdatePrompt';
 import { SlowConnectionBanner } from './components/ui/SlowConnectionBanner';
-import { safeSessionStorage } from './utils/storage';
 import { GlobalTracker } from './components/ui/GlobalTracker';
 import { NavigationOrchestrator } from './components/ui/NavigationOrchestrator';
 import { ScrollManager } from './components/ui/ScrollManager';
 import { prefetchManager } from './utils/prefetchManager';
-import { useAuth } from './context/AuthContext';
 import { getRouteSkeletonVariant } from './components/ui/RouteSkeleton';
 
 function AppRouteFallback() {
@@ -106,6 +103,9 @@ const LocationLanding = lazy(() =>
 // ─── Admin Portal (Lazy Loaded) ───
 const AdminLayout = lazy(() =>
   import('./admin/layouts/AdminLayout').then((m) => ({ default: m.AdminLayout })),
+);
+const AdminDrafts = lazy(() =>
+  import('./admin/pages/AdminDrafts').then((m) => ({ default: m.AdminDrafts })),
 );
 const AdminDashboard = lazy(() =>
   import('./admin/pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
@@ -227,8 +227,9 @@ const AdminServiceAreas = lazy(() => import('./admin/pages/AdminServiceAreas'));
 
 // All /admin/* pages are React.lazy() — not in the storefront initial JS bundle (see npm run build:report).
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
 import { hydrateQueryClientCache, subscribeToQueryCache } from './utils/queryPersister';
+import toast from 'react-hot-toast';
 
 function RouteDiagnostics() {
   const location = useLocation();
@@ -240,6 +241,26 @@ function RouteDiagnostics() {
 }
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      // Fallback for background refetch failures or unhandled query errors
+      if (query.state.data !== undefined) {
+        toast.error(`Background update failed: ${error.message || 'Network error'}`);
+      }
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, mutation) => {
+      // Only show global toast if the mutation didn't define its own custom onError handler
+      if (!mutation.options.onError) {
+        toast.error(
+          error.response?.data?.message ||
+            error.message ||
+            'An error occurred while processing your request.',
+        );
+      }
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
@@ -308,178 +329,174 @@ function App() {
             <AuthProvider>
               <CartProvider>
                 <WishlistProvider>
-                  {isMounted && (
-                    <Toaster
-                      position="bottom-right"
-                      toastOptions={{
-                        duration: 4000,
-                        style: {
-                          background: 'rgba(255, 255, 255, 0.92)',
-                          backdropFilter: 'blur(20px)',
-                          WebkitBackdropFilter: 'blur(20px)',
-                          border: '1px solid rgba(208, 197, 175, 0.15)',
-                          color: 'var(--color-on-surface)',
-                          fontSize: '12px',
-                          fontFamily: 'var(--font-body)',
-                          fontWeight: '600',
-                          borderRadius: 'var(--radius-full)',
-                          padding: '8px 16px',
-                          boxShadow: 'var(--shadow-xl)',
-                        },
-                      }}
-                    />
-                  )}
+                  <UserSocketProvider>
+                    {isMounted && (
+                      <Toaster
+                        position="bottom-right"
+                        toastOptions={{
+                          duration: 4000,
+                          style: {
+                            background: 'rgba(255, 255, 255, 0.92)',
+                            backdropFilter: 'blur(20px)',
+                            WebkitBackdropFilter: 'blur(20px)',
+                            border: '1px solid rgba(208, 197, 175, 0.15)',
+                            color: 'var(--color-on-surface)',
+                            fontSize: '12px',
+                            fontFamily: 'var(--font-body)',
+                            fontWeight: '600',
+                            borderRadius: 'var(--radius-full)',
+                            padding: '8px 16px',
+                            boxShadow: 'var(--shadow-xl)',
+                          },
+                        }}
+                      />
+                    )}
 
-                  {isMounted && (
-                    <Suspense fallback={null}>
-                      <AuthModal />
-                    </Suspense>
-                  )}
-                  {isMounted && <AdminInviteModal />}
-                  <Router>
-                    <RouteDiagnostics />
-                    <NavigationOrchestrator />
-                    <ScrollManager />
-                    <GlobalTracker />
-                    <PwaUpdatePrompt />
-                    <ErrorBoundary>
-                      <Suspense fallback={<AppRouteFallback />}>
-                        <Routes>
-                          <Route element={<MainLayout />}>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/blog" element={<BlogListing />} />
-                            <Route path="/blog/:slug" element={<BlogPost />} />
-                            <Route
-                              path="/:city(wedding-decorations-hyderabad|event-decorators-telangana|event-decorators-secunderabad|event-decorators-ongole|wedding-decorations-ongole|handmade-gifts-ongole|event-decorators-vijayawada|event-decorators-guntur|wedding-decorations-bangalore|event-decorators-chennai)"
-                              element={<LocationLanding />}
-                            />
-                            <Route path="/collections" element={<ProductListing />} />
-                            <Route path="/product/:id" element={<ProductDetails />} />
-                            <Route path="/cart" element={<Cart />} />
-                            <Route path="/order-success" element={<OrderSuccess />} />
-                            <Route path="/about" element={<About />} />
-                            <Route path="/custom-orders" element={<CustomOrders />} />
-                            <Route path="/gallery" element={<Gallery />} />
-                            <Route path="/gallery/:id" element={<GalleryDetail />} />
-                            <Route path="/contact" element={<Contact />} />
-                            <Route path="/wishlist" element={<Wishlist />} />
-                            <Route path="/collection/:id" element={<CollectionDetail />} />
-                            <Route
-                              path="/dashboard"
-                              element={
-                                <ProtectedRoute>
-                                  <Dashboard />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route path="/track/:orderId" element={<OrderTrackingPublic />} />
-                            <Route path="/events" element={<EventShowcases />} />
-                            <Route path="/events/collections" element={<EventCollections />} />
-                            <Route path="/events/:id" element={<EventDetail />} />
-                            <Route path="/events/book" element={<EventBookingWizard />} />
-                            <Route path="/booking-success/:id" element={<EventBookingSuccess />} />
-                            <Route
-                              path="/events/dashboard"
-                              element={
-                                <ProtectedRoute>
-                                  <EventCustomerDashboard />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route path="/showcases" element={<EventShowcases />} />
-                            <Route path="/shipping" element={<Shipping />} />
-                            <Route path="/returns" element={<Returns />} />
-                            <Route path="/privacy" element={<Privacy />} />
-                            <Route path="/terms" element={<Terms />} />
-                            <Route path="/accept-invite" element={<AcceptInvite />} />
-                            <Route path="*" element={<NotFound />} />
-                          </Route>
-                          <Route element={<MinimalLayout />}>
-                            <Route path="/checkout" element={<Checkout />} />
-                          </Route>
-                          <Route
-                            path="/admin"
-                            element={
-                              <ProtectedRoute adminOnly>
-                                <AdminLayout />
-                              </ProtectedRoute>
-                            }
-                          >
-                            <Route index element={<AdminDashboard />} />
-                            <Route path="homepage" element={<AdminContent />} />
-                            <Route path="products" element={<AdminProducts />} />
-                            <Route path="settings" element={<AdminSettings />} />
-                            <Route path="config" element={<AdminConfig />} />
-                            <Route path="layouts" element={<AdminLayouts />} />
-                            <Route path="policies" element={<AdminPolicies />} />
-                            <Route path="policies/add" element={<AdminPolicyEditor />} />
-                            <Route path="policies/edit/:id" element={<AdminPolicyEditor />} />
-                            <Route
-                              path="recommendations"
-                              element={<AdminRecommendationAnalytics />}
-                            />
-                            <Route path="products/add" element={<AdminAddProduct />} />
-                            <Route path="products/edit/:id" element={<AdminAddProduct />} />
-                            <Route path="orders" element={<AdminOrders />} />
-                            <Route path="orders/:orderId" element={<AdminOrderDetail />} />
-                            <Route path="rentals" element={<AdminRentalOrders />} />
-                            <Route path="rental-calendar" element={<AdminRentalCalendar />} />
-                            <Route path="rental-policies" element={<AdminRentalPolicies />} />
-                            <Route path="service-areas" element={<AdminServiceAreas />} />
-                            <Route path="custom-orders" element={<AdminInquiries />} />
-                            <Route path="customers" element={<AdminCustomers />} />
-                            <Route
-                              path="customers/:customerId"
-                              element={<AdminCustomerProfile />}
-                            />
-                            <Route path="gallery" element={<AdminGallery />} />
-                            <Route path="gallery/add" element={<AdminAddGalleryItem />} />
-                            <Route path="gallery/edit/:id" element={<AdminAddGalleryItem />} />
-                            <Route path="categories" element={<AdminCategories />} />
-                            <Route path="categories/add" element={<AdminAddCategory />} />
-                            <Route path="categories/edit/:id" element={<AdminAddCategory />} />
-                            <Route path="events" element={<AdminEvents />} />
-                            <Route path="events/add" element={<AdminAddEvent />} />
-                            <Route path="events/edit/:id" element={<AdminAddEvent />} />
-                            <Route path="showcases/add" element={<AdminAddShowcase />} />
-                            <Route path="showcases/edit/:id" element={<AdminAddShowcase />} />
-                            <Route path="events/:bookingId" element={<AdminBookingDetail />} />
-                            <Route path="analytics" element={<AdminAnalytics />} />
-                            <Route
-                              path="recommendations"
-                              element={<AdminRecommendationAnalytics />}
-                            />
-                            <Route path="inventory" element={<AdminInventory />} />
-                            <Route path="coupons" element={<AdminCoupons />} />
-                            <Route path="coupons/create" element={<AdminCreateCoupon />} />
-                            <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
-                            <Route path="payments" element={<AdminPayments />} />
-                            <Route path="notifications" element={<AdminNotifications />} />
-                            <Route path="campaigns" element={<AdminCampaigns />} />
-                            <Route path="campaigns/add" element={<AdminCampaignCreate />} />
-                            <Route
-                              path="campaigns/templates/add"
-                              element={<AdminTemplateCreate />}
-                            />
-                            <Route
-                              path="campaigns/templates/edit/:id"
-                              element={<AdminTemplateCreate />}
-                            />
-                            <Route path="coupons" element={<AdminCoupons />} />
-                            <Route path="coupons/add" element={<AdminCreateCoupon />} />
-                            <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
-                            <Route path="content" element={<AdminContent />} />
-                            <Route path="team" element={<AdminTeam />} />
-                            <Route path="system-users" element={<AdminSystemUsers />} />
-                            <Route path="settings" element={<AdminSettings />} />
-                            <Route path="policies" element={<AdminPolicies />} />
-                            <Route path="policies/:id" element={<AdminPolicyEditor />} />
-                            <Route path="reviews" element={<AdminReviews />} />
-                          </Route>
-                        </Routes>
+                    {isMounted && (
+                      <Suspense fallback={null}>
+                        <AuthModal />
                       </Suspense>
-                    </ErrorBoundary>
-                  </Router>
+                    )}
+                    {isMounted && <AdminInviteModal />}
+                    <Router>
+                      <RouteDiagnostics />
+                      <NavigationOrchestrator />
+                      <ScrollManager />
+                      <GlobalTracker />
+                      <PwaUpdatePrompt />
+                      <ErrorBoundary>
+                        <Suspense fallback={<AppRouteFallback />}>
+                          <Routes>
+                            <Route element={<MainLayout />}>
+                              <Route path="/" element={<Home />} />
+                              <Route path="/blog" element={<BlogListing />} />
+                              <Route path="/blog/:slug" element={<BlogPost />} />
+                              <Route
+                                path="/:city(wedding-decorations-hyderabad|event-decorators-telangana|event-decorators-secunderabad|event-decorators-ongole|wedding-decorations-ongole|handmade-gifts-ongole|event-decorators-vijayawada|event-decorators-guntur|wedding-decorations-bangalore|event-decorators-chennai)"
+                                element={<LocationLanding />}
+                              />
+                              <Route path="/collections" element={<ProductListing />} />
+                              <Route path="/product/:id" element={<ProductDetails />} />
+                              <Route path="/cart" element={<Cart />} />
+                              <Route path="/order-success" element={<OrderSuccess />} />
+                              <Route path="/about" element={<About />} />
+                              <Route path="/custom-orders" element={<CustomOrders />} />
+                              <Route path="/gallery" element={<Gallery />} />
+                              <Route path="/gallery/:id" element={<GalleryDetail />} />
+                              <Route path="/contact" element={<Contact />} />
+                              <Route path="/wishlist" element={<Wishlist />} />
+                              <Route path="/collection/:id" element={<CollectionDetail />} />
+                              <Route
+                                path="/dashboard"
+                                element={
+                                  <ProtectedRoute>
+                                    <Dashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route path="/track/:orderId" element={<OrderTrackingPublic />} />
+                              <Route path="/events" element={<EventShowcases />} />
+                              <Route path="/events/collections" element={<EventCollections />} />
+                              <Route path="/events/:id" element={<EventDetail />} />
+                              <Route path="/events/book" element={<EventBookingWizard />} />
+                              <Route
+                                path="/booking-success/:id"
+                                element={<EventBookingSuccess />}
+                              />
+                              <Route
+                                path="/events/dashboard"
+                                element={
+                                  <ProtectedRoute>
+                                    <EventCustomerDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route path="/showcases" element={<EventShowcases />} />
+                              <Route path="/shipping" element={<Shipping />} />
+                              <Route path="/returns" element={<Returns />} />
+                              <Route path="/privacy" element={<Privacy />} />
+                              <Route path="/terms" element={<Terms />} />
+                              <Route path="/accept-invite" element={<AcceptInvite />} />
+                              <Route path="*" element={<NotFound />} />
+                            </Route>
+                            <Route element={<MinimalLayout />}>
+                              <Route path="/checkout" element={<Checkout />} />
+                            </Route>
+                            <Route
+                              path="/admin"
+                              element={
+                                <ProtectedRoute adminOnly>
+                                  <AdminLayout />
+                                </ProtectedRoute>
+                              }
+                            >
+                              <Route index element={<AdminDashboard />} />
+                              <Route path="drafts" element={<AdminDrafts />} />
+                              <Route path="homepage" element={<AdminContent />} />
+                              <Route path="products" element={<AdminProducts />} />
+                              <Route path="settings" element={<AdminSettings />} />
+                              <Route path="config" element={<AdminConfig />} />
+                              <Route path="layouts" element={<AdminLayouts />} />
+                              <Route path="policies" element={<AdminPolicies />} />
+                              <Route path="policies/add" element={<AdminPolicyEditor />} />
+                              <Route path="policies/edit/:id" element={<AdminPolicyEditor />} />
+                              <Route
+                                path="recommendations"
+                                element={<AdminRecommendationAnalytics />}
+                              />
+                              <Route path="products/add" element={<AdminAddProduct />} />
+                              <Route path="products/edit/:id" element={<AdminAddProduct />} />
+                              <Route path="orders" element={<AdminOrders />} />
+                              <Route path="orders/:orderId" element={<AdminOrderDetail />} />
+                              <Route path="rentals" element={<AdminRentalOrders />} />
+                              <Route path="rental-calendar" element={<AdminRentalCalendar />} />
+                              <Route path="rental-policies" element={<AdminRentalPolicies />} />
+                              <Route path="service-areas" element={<AdminServiceAreas />} />
+                              <Route path="custom-orders" element={<AdminInquiries />} />
+                              <Route path="customers" element={<AdminCustomers />} />
+                              <Route
+                                path="customers/:customerId"
+                                element={<AdminCustomerProfile />}
+                              />
+                              <Route path="gallery" element={<AdminGallery />} />
+                              <Route path="gallery/add" element={<AdminAddGalleryItem />} />
+                              <Route path="gallery/edit/:id" element={<AdminAddGalleryItem />} />
+                              <Route path="categories" element={<AdminCategories />} />
+                              <Route path="categories/add" element={<AdminAddCategory />} />
+                              <Route path="categories/edit/:id" element={<AdminAddCategory />} />
+                              <Route path="events" element={<AdminEvents />} />
+                              <Route path="events/add" element={<AdminAddEvent />} />
+                              <Route path="events/edit/:id" element={<AdminAddEvent />} />
+                              <Route path="showcases/add" element={<AdminAddShowcase />} />
+                              <Route path="showcases/edit/:id" element={<AdminAddShowcase />} />
+                              <Route path="events/:bookingId" element={<AdminBookingDetail />} />
+                              <Route path="analytics" element={<AdminAnalytics />} />
+                              <Route path="inventory" element={<AdminInventory />} />
+                              <Route path="coupons" element={<AdminCoupons />} />
+                              <Route path="coupons/create" element={<AdminCreateCoupon />} />
+                              <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
+                              <Route path="payments" element={<AdminPayments />} />
+                              <Route path="notifications" element={<AdminNotifications />} />
+                              <Route path="campaigns" element={<AdminCampaigns />} />
+                              <Route path="campaigns/add" element={<AdminCampaignCreate />} />
+                              <Route
+                                path="campaigns/templates/add"
+                                element={<AdminTemplateCreate />}
+                              />
+                              <Route
+                                path="campaigns/templates/edit/:id"
+                                element={<AdminTemplateCreate />}
+                              />
+                              <Route path="content" element={<AdminContent />} />
+                              <Route path="team" element={<AdminTeam />} />
+                              <Route path="system-users" element={<AdminSystemUsers />} />
+                              <Route path="reviews" element={<AdminReviews />} />
+                            </Route>
+                          </Routes>
+                        </Suspense>
+                      </ErrorBoundary>
+                    </Router>
+                  </UserSocketProvider>
                 </WishlistProvider>
               </CartProvider>
             </AuthProvider>

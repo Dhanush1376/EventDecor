@@ -1,6 +1,5 @@
-import api, { refreshAccessToken } from '../api';
+import api from '../api';
 import { hasSessionMarker } from '../../utils/authStorage';
-import logger from '../../utils/logger';
 
 const checkAuthLocal = () => hasSessionMarker();
 
@@ -20,5 +19,5 @@ export const loyaltyService = {
   adminModerateReview: async (reviewId, action) => {
     const response = await api.post('/loyalty/admin/moderate-review', { reviewId, action });
     return response.data;
-  }
+  },
 };

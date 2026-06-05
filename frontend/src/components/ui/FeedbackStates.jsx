@@ -1,16 +1,15 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { Button } from "./Button";
+import { motion } from 'framer-motion';
+import { Button } from './Button';
 
 export function EmptyState({
-  title = "Nothing found",
+  title = 'Nothing found',
   description = "We couldn't find what you were looking for.",
-  icon = "search_off",
+  icon = 'search_off',
   actionLabel,
   onAction,
 }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -29,7 +28,11 @@ export function EmptyState({
         {description}
       </p>
       {actionLabel && (
-        <Button variant="outline" onClick={onAction} className="px-10 rounded-full font-label text-[11px] uppercase tracking-widest font-bold">
+        <Button
+          variant="outline"
+          onClick={onAction}
+          className="px-10 rounded-full font-label text-[11px] uppercase tracking-widest font-bold"
+        >
           {actionLabel}
         </Button>
       )}
@@ -38,12 +41,12 @@ export function EmptyState({
 }
 
 export function ErrorState({
-  title = "Something went wrong",
+  title = 'Something went wrong',
   description = "We're having trouble loading this right now. Please try again later.",
   onRetry,
 }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -51,9 +54,7 @@ export function ErrorState({
     >
       <div className="relative mb-8">
         <div className="w-24 h-24 rounded-full bg-rose-50/50 border border-rose-100/50 flex items-center justify-center text-rose-500/80 shadow-sm transition-transform duration-500 hover:scale-105">
-          <span className="material-symbols-outlined text-[42px] font-light">
-            error_outline
-          </span>
+          <span className="material-symbols-outlined text-[42px] font-light">error_outline</span>
         </div>
         <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-rose-500/10 rounded-full blur-xl animate-pulse" />
       </div>
@@ -64,11 +65,14 @@ export function ErrorState({
         {description}
       </p>
       {onRetry && (
-        <Button variant="primary" onClick={onRetry} className="px-10 rounded-full font-label text-[11px] uppercase tracking-widest font-bold">
+        <Button
+          variant="primary"
+          onClick={onRetry}
+          className="px-10 rounded-full font-label text-[11px] uppercase tracking-widest font-bold"
+        >
           Try Again
         </Button>
       )}
     </motion.div>
   );
 }
-

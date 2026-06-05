@@ -1,13 +1,13 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 export function WhatsAppWidget() {
   const { pathname } = useLocation();
   const [isVisible, setIsVisible] = useState(true);
 
   // Hide on checkout for a distraction-free experience or if dismissed
-  if (pathname === "/checkout" || !isVisible) return null;
+  if (pathname === '/checkout' || !isVisible) return null;
 
   return (
     <AnimatePresence>
@@ -18,7 +18,7 @@ export function WhatsAppWidget() {
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0, x: 100 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="whatsapp-widget fixed bottom-28 right-6 md:bottom-10 md:right-10 z-[40]"
         >
           {/* Symmetrical Close Button */}

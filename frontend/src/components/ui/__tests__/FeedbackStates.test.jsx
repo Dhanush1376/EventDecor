@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { EmptyState, ErrorState } from '../FeedbackStates';
@@ -18,7 +17,7 @@ describe('FeedbackStates Component Suites', () => {
           title="No wedding items available"
           description="Please check back in wedding season."
           icon="event_busy"
-        />
+        />,
       );
       expect(screen.getByText('No wedding items available')).toBeInTheDocument();
       expect(screen.getByText('Please check back in wedding season.')).toBeInTheDocument();
@@ -27,12 +26,7 @@ describe('FeedbackStates Component Suites', () => {
 
     it('renders a custom action CTA button if actionLabel prop is provided', () => {
       const handleActionClick = vi.fn();
-      render(
-        <EmptyState
-          actionLabel="Clear Filters"
-          onAction={handleActionClick}
-        />
-      );
+      render(<EmptyState actionLabel="Clear Filters" onAction={handleActionClick} />);
 
       const actionButton = screen.getByRole('button', { name: /clear filters/i });
       expect(actionButton).toBeInTheDocument();
@@ -52,7 +46,9 @@ describe('FeedbackStates Component Suites', () => {
     it('renders default titles and description if no props are supplied', () => {
       render(<ErrorState />);
       expect(screen.getByText('Something went wrong')).toBeInTheDocument();
-      expect(screen.getByText("We're having trouble loading this right now. Please try again later.")).toBeInTheDocument();
+      expect(
+        screen.getByText("We're having trouble loading this right now. Please try again later."),
+      ).toBeInTheDocument();
       expect(screen.getByText('error_outline')).toBeInTheDocument();
     });
 
@@ -61,7 +57,7 @@ describe('FeedbackStates Component Suites', () => {
         <ErrorState
           title="Network Connection Timed Out"
           description="Please verify your internet router status."
-        />
+        />,
       );
       expect(screen.getByText('Network Connection Timed Out')).toBeInTheDocument();
       expect(screen.getByText('Please verify your internet router status.')).toBeInTheDocument();

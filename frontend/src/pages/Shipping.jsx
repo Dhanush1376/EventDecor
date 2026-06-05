@@ -1,26 +1,26 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  PolicySidebar,
-  MobilePolicyNav,
-} from "../components/layout/PolicySidebar";
-import { SEO } from "../components/seo/SEO";
-import { useQuery } from "@tanstack/react-query";
-import { policyService } from "../services/domainServices";
-import { createSafeHtml } from "../utils/sanitize";
-import { Skeleton } from "../components/ui";
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { PolicySidebar, MobilePolicyNav } from '../components/layout/PolicySidebar';
+import { SEO } from '../components/seo/SEO';
+import { useQuery } from '@tanstack/react-query';
+import { policyService } from '../services/domainServices';
+import { createSafeHtml } from '../utils/sanitize';
+import { Skeleton } from '../components/ui';
 
 export function Shipping() {
-  const { data: response, isLoading, isError } = useQuery({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['policy', 'shipping-policy'],
     queryFn: () => policyService.getBySlug('shipping-policy'),
   });
 
   const shipping = response?.data || {
-    title: "Shipping Policy",
-    content: "<p>Policy content is not available.</p>",
-    updatedAt: new Date().toISOString()
+    title: 'Shipping Policy',
+    content: '<p>Policy content is not available.</p>',
+    updatedAt: new Date().toISOString(),
   };
   return (
     <motion.div
@@ -33,7 +33,7 @@ export function Shipping() {
         title="Shipping Policy"
         description="Learn about our domestic and international shipping policies at Siri Arts & Crafts."
       />
-      
+
       <div className="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12">
         {/* Help Center Header - Huge Typography */}
         <div className="mb-12 md:mb-20 text-center md:text-left">
@@ -50,7 +50,11 @@ export function Shipping() {
             {isLoading ? <Skeleton className="h-10 w-64" /> : shipping.title}
           </h2>
           <p className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">
-            {isLoading ? <Skeleton className="h-4 w-40" /> : `Last updated: ${new Date(shipping.updatedAt).toLocaleDateString()}`}
+            {isLoading ? (
+              <Skeleton className="h-4 w-40" />
+            ) : (
+              `Last updated: ${new Date(shipping.updatedAt).toLocaleDateString()}`
+            )}
           </p>
         </div>
 
@@ -71,7 +75,7 @@ export function Shipping() {
               ) : isError ? (
                 <div className="text-red-500">Failed to load policy. Please try again later.</div>
               ) : (
-                <div 
+                <div
                   className="text-[13px] text-on-surface/80 leading-relaxed font-normal space-y-3"
                   dangerouslySetInnerHTML={createSafeHtml(shipping.content)}
                 />

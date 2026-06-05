@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import AuthService from '../services/authService';
+import SessionAuthService from '../services/SessionAuthService';
+import AdminAuthService from '../services/AdminAuthService';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -21,7 +22,7 @@ const issueAdminSession = async (req: Request, res: Response, userId: string) =>
   }
 
   const userAgent = req.headers['user-agent'] || '';
-  const session = await AuthService.createSession(user, userAgent);
+  const session = await SessionAuthService.createSession(user, userAgent);
   setAdminRefreshCookie(res, session.refreshToken);
 
   // Regenerate CSRF token post-login to prevent session fixation
@@ -32,7 +33,7 @@ const issueAdminSession = async (req: Request, res: Response, userId: string) =>
       user: session.user,
       accessToken: session.accessToken,
       csrfToken,
-    })
+    }),
   );
 };
 
@@ -46,7 +47,17 @@ const assertAdminPendingAuth = async (userId: string) => {
   if (!user || !user.isVerified) {
     throw new ApiError(401, 'Invalid user');
   }
-  const adminRoles = ['super_admin', 'main_admin', 'moderator', 'support_admin', 'order_manager', 'content_manager', 'admin', 'manager', 'coordinator'];
+  const adminRoles = [
+    'super_admin',
+    'main_admin',
+    'moderator',
+    'support_admin',
+    'order_manager',
+    'content_manager',
+    'admin',
+    'manager',
+    'coordinator',
+  ];
   if (!adminRoles.includes(user.role)) {
     throw new ApiError(403, 'Administrative access required');
   }
@@ -61,7 +72,12 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response) => {
 
   logger.info(`[ADMIN AUTH] Attempting admin login for: ${email}`);
   const userAgent = req.headers['user-agent'] || '';
-  const result = await AuthService.adminLogin(email, password, req.ip || '127.0.0.1', userAgent);
+  const result = await AdminAuthService.adminLogin(
+    email,
+    password,
+    req.ip || '127.0.0.1',
+    userAgent,
+  );
 
   if ('requires2FA' in result && result.requires2FA) {
     return res.status(200).json(
@@ -69,7 +85,7 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response) => {
         requires2FA: true,
         userId: result.userId,
         user: result.user,
-      })
+      }),
     );
   }
 
@@ -79,7 +95,7 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response) => {
         requires2FASetup: true,
         userId: result.userId,
         user: result.user,
-      })
+      }),
     );
   }
 
@@ -141,7 +157,7 @@ export const adminLogout = asyncHandler(async (req: Request, res: Response) => {
 
   logger.info('[ADMIN AUTH] Admin manual logout requested');
   if (refreshToken) {
-    await AuthService.revokeSession(refreshToken);
+    await SessionAuthService.revokeSession(refreshToken);
   }
   clearAdminRefreshCookie(res);
   clearCsrfCookie(res);
@@ -155,14 +171,17 @@ export const adminForgotPassword = asyncHandler(async (req: Request, res: Respon
     throw new ApiError(400, 'Email is required');
   }
 
-  const token = await AuthService.generateAdminPasswordResetToken(email, req.ip || '127.0.0.1');
+  const token = await AdminAuthService.generateAdminPasswordResetToken(
+    email,
+    req.ip || '127.0.0.1',
+  );
 
   if (token) {
     // Send email with the token (this is typically done via a background job, but we dispatch it here)
     const { sendDirectEmail } = require('../services/notificationService');
     const frontendUrl = process.env.ADMIN_FRONTEND_URL || 'http://localhost:5173/admin';
     const resetLink = `${frontendUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
-    
+
     try {
       sendDirectEmail({
         email,
@@ -177,7 +196,14 @@ export const adminForgotPassword = asyncHandler(async (req: Request, res: Respon
   }
 
   // Generic response to prevent email enumeration
-  res.status(200).json(new ApiResponse(true, 'If your email is registered as an admin, a password reset link has been sent.'));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'If your email is registered as an admin, a password reset link has been sent.',
+      ),
+    );
 });
 
 export const adminResetPassword = asyncHandler(async (req: Request, res: Response) => {
@@ -187,7 +213,14 @@ export const adminResetPassword = asyncHandler(async (req: Request, res: Respons
     throw new ApiError(400, 'Email, token, and new password are required');
   }
 
-  await AuthService.resetAdminPassword(email, token, newPassword);
+  await AdminAuthService.resetAdminPassword(email, token, newPassword);
 
-  res.status(200).json(new ApiResponse(true, 'Password has been successfully reset. Please log in with your new password.'));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Password has been successfully reset. Please log in with your new password.',
+      ),
+    );
 });

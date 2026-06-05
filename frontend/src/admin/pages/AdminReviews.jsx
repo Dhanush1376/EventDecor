@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from"react";
-import { motion } from"framer-motion";
-import { loyaltyService } from"../../services/domainServices";
-import toast from"react-hot-toast";
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { loyaltyService } from '../../services/domainServices';
+import toast from 'react-hot-toast';
+import { getErrorMessage } from '../../utils/errorHelpers';
 
 import logger from '../../utils/logger';
 import { SkeletonDashboard, PageHeader, FilterBar } from '../components/AdminUIKit';
@@ -10,8 +11,8 @@ const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 export function AdminReviews() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchReviews = async () => {
     setLoading(true);
@@ -22,8 +23,8 @@ export function AdminReviews() {
         setReviews(Array.isArray(payload) ? payload : payload?.data || []);
       }
     } catch (err) {
-      logger.error("Failed to load reviews:", err);
-      toast.error(getErrorMessage(err, "Could not fetch customer reviews feed."));
+      logger.error('Failed to load reviews:', err);
+      toast.error(getErrorMessage(err, 'Could not fetch customer reviews feed.'));
     } finally {
       setLoading(false);
     }
@@ -37,28 +38,30 @@ export function AdminReviews() {
   }, []);
 
   const handleModerate = async (reviewId, action) => {
-    const toastId = toast.loading(action === 'approve' ?"Disbursing review rewards..." :"Rejecting review...");
+    const toastId = toast.loading(
+      action === 'approve' ? 'Disbursing review rewards...' : 'Rejecting review...',
+    );
     try {
       const res = await loyaltyService.adminModerateReview(reviewId, action);
       if (res.success) {
         toast.success(res.message || `Review ${action}d! `, { id: toastId, duration: 4000 });
         fetchReviews(); // Refresh feed
       } else {
-        toast.error(res.message ||"Failed to update review status", { id: toastId });
+        toast.error(res.message || 'Failed to update review status', { id: toastId });
       }
     } catch (err) {
-      logger.error("Error moderating review:", err);
-      toast.error("Review moderation action failed.", { id: toastId });
+      logger.error('Error moderating review:', err);
+      toast.error('Review moderation action failed.', { id: toastId });
     }
   };
 
   const filtered = reviews.filter((r) => {
-    const statusVal = r.status ||"pending";
-    const matchesFilter = filter ==="all" || statusVal === filter;
-    
-    const customer = r.user?.name ||"Bespoke Customer";
-    const product = r.product?.title ||"Handcrafted Product";
-    const comment = r.comment ||"";
+    const statusVal = r.status || 'pending';
+    const matchesFilter = filter === 'all' || statusVal === filter;
+
+    const customer = r.user?.name || 'Bespoke Customer';
+    const product = r.product?.title || 'Handcrafted Product';
+    const comment = r.comment || '';
 
     const matchesSearch =
       !searchQuery ||
@@ -78,11 +81,11 @@ export function AdminReviews() {
       {/* Title block */}
       <PageHeader
         title="Reviews & Testimonials"
-        subtitle={`${reviews.length} total reviews · ${reviews.filter((r) => r.status ==="pending").length} pending approval payout`}
+        subtitle={`${reviews.length} total reviews · ${reviews.filter((r) => r.status === 'pending').length} pending approval payout`}
         headerAction={
           <div className="w-full sm:max-w-md">
             <FilterBar
-              filters={["all", "pending", "approved", "rejected"]}
+              filters={['all', 'pending', 'approved', 'rejected']}
               value={filter}
               onChange={setFilter}
               className="pb-0"
@@ -108,20 +111,26 @@ export function AdminReviews() {
           <SkeletonDashboard />
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center admin-card flex flex-col items-center justify-center p-6 shadow-sm">
-            <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-secondary)]/40 mb-2 block">search_off</span>
-            <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">No Reviews Found</p>
-            <p className="text-[12px] text-[var(--admin-text-secondary)] max-w-[280px]">No testimonials or reviews matched your active filters or search terms.</p>
+            <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-secondary)]/40 mb-2 block">
+              search_off
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">
+              No Reviews Found
+            </p>
+            <p className="text-[12px] text-[var(--admin-text-secondary)] max-w-[280px]">
+              No testimonials or reviews matched your active filters or search terms.
+            </p>
           </div>
         ) : (
           filtered.map((r) => {
-            const customer = r.user?.name ||"Bespoke Customer";
-            const product = r.product?.title ||"Handcrafted Product";
-            const comment = r.comment ||"";
+            const customer = r.user?.name || 'Bespoke Customer';
+            const product = r.product?.title || 'Handcrafted Product';
+            const comment = r.comment || '';
             const rating = r.rating || 5;
-            const date = new Date(r.createdAt).toLocaleDateString("en-IN", {
+            const date = new Date(r.createdAt).toLocaleDateString('en-IN', {
               day: 'numeric',
               month: 'short',
-              year: 'numeric'
+              year: 'numeric',
             });
 
             return (
@@ -142,7 +151,9 @@ export function AdminReviews() {
                         <p className="text-[14px] font-semibold text-[var(--admin-text-primary)]">
                           {customer}
                         </p>
-                        <span className="text-[11px] sm:text-[11px] sm:text-[11px] text-secondary font-mono">({r.user?.email})</span>
+                        <span className="text-[11px] sm:text-[11px] sm:text-[11px] text-secondary font-mono">
+                          ({r.user?.email})
+                        </span>
                       </div>
                       <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-tertiary)]">
                         {product} · {date}
@@ -159,9 +170,9 @@ export function AdminReviews() {
                           style={{
                             color:
                               i < rating
-                                ?"var(--color-primary)"
-                                :"var(--color-surface-container-highest)",
-                            fontVariationSettings:"'FILL' 1",
+                                ? 'var(--color-primary)'
+                                : 'var(--color-surface-container-highest)',
+                            fontVariationSettings: "'FILL' 1",
                           }}
                         >
                           star
@@ -170,28 +181,30 @@ export function AdminReviews() {
                     </div>
                     <span
                       className={`px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider font-bold ${
-                        r.status ==="approved" ?"text-[var(--admin-success)] bg-[var(--admin-success-light)] border border-[var(--admin-success-border)]/50" :
-                        r.status ==="rejected" ?"text-[var(--admin-error)] bg-[var(--admin-error-light)] border border-[var(--admin-error-border)]/50" :"text-amber-700 bg-amber-50 border border-amber-200/50"
+                        r.status === 'approved'
+                          ? 'text-[var(--admin-success)] bg-[var(--admin-success-light)] border border-[var(--admin-success-border)]/50'
+                          : r.status === 'rejected'
+                            ? 'text-[var(--admin-error)] bg-[var(--admin-error-light)] border border-[var(--admin-error-border)]/50'
+                            : 'text-amber-700 bg-amber-50 border border-amber-200/50'
                       }`}
                     >
-                      {r.status ||"pending"}
+                      {r.status || 'pending'}
                     </span>
                   </div>
                 </div>
 
-                <p className="text-[13px] text-[var(--admin-text-secondary)] leading-relaxed mb-4 italic">"{comment}"
+                <p className="text-[13px] text-[var(--admin-text-secondary)] leading-relaxed mb-4 italic">
+                  "{comment}"
                 </p>
 
                 <div className="flex items-center gap-3 border-t border-[var(--admin-border-subtle)] pt-3">
-                  {r.status ==="pending" && (
+                  {r.status === 'pending' && (
                     <>
                       <button
                         onClick={() => handleModerate(r._id, 'approve')}
                         className="admin-btn admin-btn-ghost admin-btn-sm group !bg-emerald-600 !text-white !border-emerald-600 !py-1.5 !px-3 !text-[11px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer rounded-lg hover:brightness-110 transition-all"
                       >
-                        <span className="material-symbols-outlined text-[14px]">
-                          check
-                        </span>
+                        <span className="material-symbols-outlined text-[14px]">check</span>
                         Approve & Pay ₹20 Reward
                       </button>
 
@@ -199,22 +212,20 @@ export function AdminReviews() {
                         onClick={() => handleModerate(r._id, 'reject')}
                         className="admin-btn admin-btn-ghost admin-btn-sm group !text-[var(--admin-error)] !border-red-100 hover:!bg-[var(--admin-error-light)] !py-1.5 !px-3 !text-[11px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer rounded-lg transition-all"
                       >
-                        <span className="material-symbols-outlined text-[14px]">
-                          close
-                        </span>
+                        <span className="material-symbols-outlined text-[14px]">close</span>
                         Reject
                       </button>
                     </>
                   )}
 
-                  {r.status ==="approved" && (
+                  {r.status === 'approved' && (
                     <span className="text-[11px] text-[var(--admin-success)] font-bold flex items-center gap-1">
                       <span className="material-symbols-outlined text-[11px]">verified</span>
                       Approved and cash disbursed
                     </span>
                   )}
 
-                  {r.status ==="rejected" && (
+                  {r.status === 'rejected' && (
                     <span className="text-[11px] text-[var(--admin-error)] font-bold flex items-center gap-1">
                       <span className="material-symbols-outlined text-[11px]">block</span>
                       Review rejected from listing feed

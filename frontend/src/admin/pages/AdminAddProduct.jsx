@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { productCategories } from '../data/adminData';
 import { productService, uploadService } from '../../services/domainServices';
 import { useAdmin } from '../context/AdminContext';
-import { ImageUpload } from '../components/ImageUpload';
 import toast from 'react-hot-toast';
 import { AdminToggle, SkeletonForm } from '../components/AdminUIKit';
 import { compressImage, formatBytes } from '../../utils/imageCompressor';
+import { useDraft } from '../hooks/useDraft';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
+import { DraftConflictViewer } from '../components/DraftConflictViewer';
 
 import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
@@ -23,8 +26,8 @@ const calculateRentalPricing = (price, category) => {
   if (numPrice <= 0) return null;
   const cat = String(category || '').toLowerCase();
 
-  let dailyRate = 0.05;
-  let depositRate = 0;
+  let dailyRate;
+  let depositRate;
 
   if (cat.includes('furniture')) {
     dailyRate = 0.04;
@@ -70,7 +73,6 @@ export function AdminAddProduct({ editId }) {
   const { refreshProducts } = useAdmin();
   const isEditMode = Boolean(id);
 
-  const [currentStep, setCurrentStep] = useState(0);
   const [mobileTab, setMobileTab] = useState('form');
   const [isLoading, setIsLoading] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -82,108 +84,132 @@ export function AdminAddProduct({ editId }) {
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [aiAnalysisResult, setAiAnalysisResult] = useState(null);
   const [showAIHUD, setShowAIHUD] = useState(false);
+  const [aiChatInput, setAiChatInput] = useState('');
+  const [isAILearning, setIsAILearning] = useState(false);
   const [isApplyingFields, setIsApplyingFields] = useState(false);
   const [focusedField, setFocusedField] = useState('');
 
-  // Form State
-  const [formData, setFormData] = useState({
-    title: '',
-    teluguTitle: '',
-    slug: '',
-    category: '',
-    material: '',
-    tags: '',
-    price: '',
-    oldPrice: '',
-    stock: '',
-    imageSrc: '',
-    images: [],
-    badges: '',
-    description: '',
-    dimensions: '',
-    weight: '',
-    seoTitle: '',
-    seoDescription: '',
-    featured: false,
-    isActive: true,
-    isNonRefundable: false,
-    showInGallery: false,
-    variants: [], // Color/Size variants array
-    // Rental fields
-    rentalEnabled: false,
-    availabilityMode: 'purchase_only',
-    rentalPricing: {
-      daily: '',
-      weekly: '',
-      monthly: '',
-      customDurationEnabled: false,
-      customPricePerDay: '',
+  // Draft System Integration
+  const {
+    formData,
+    setFormData,
+    pageState,
+    setPageState,
+    draftStatus,
+    showRestoreModal,
+    restoreDraft,
+    discardDraft,
+    deleteDraft,
+    lastSavedAt,
+    blocker,
+  } = useDraft({
+    draftKey: isEditMode ? `admin:products:edit:${id}` : 'admin:products:add',
+    module: 'Products',
+    pageTitle: isEditMode ? `Edit Product ${id}` : 'New Product',
+    initialData: {
+      title: '',
+      teluguTitle: '',
+      slug: '',
+      category: '',
+      material: '',
+      tags: '',
+      price: '',
+      oldPrice: '',
+      stock: '',
+      imageSrc: '',
+      images: [],
+      badges: '',
+      description: '',
+      dimensions: '',
+      weight: '',
+      seoTitle: '',
+      seoDescription: '',
+      featured: false,
+      isActive: true,
+      isNonRefundable: false,
+      showInGallery: false,
+      variants: [],
+      rentalEnabled: false,
+      availabilityMode: 'purchase_only',
+      rentalPricing: {
+        daily: '',
+        weekly: '',
+        monthly: '',
+        customDurationEnabled: false,
+        customPricePerDay: '',
+      },
+      securityDeposit: '',
+      isDepositRefundable: true,
+      rentalStock: '',
+      rentalMinDays: '1',
+      rentalMaxDays: '365',
+      isManualRentalPricing: false,
     },
-    securityDeposit: '',
-    isDepositRefundable: true,
-    rentalStock: '',
-    rentalMinDays: '1',
-    rentalMaxDays: '365',
-    isManualRentalPricing: false,
+    initialPageState: { activeStep: 0 },
+    enabled: true,
   });
-  const [showRentalSettings, setShowRentalSettings] = useState(false);
 
-  const handleAIAutoFill = async () => {
-    if (!formData.title && !formData.imageSrc) {
-      return toast.error('Please provide a Title or Image first for the AI to analyze.');
+  const currentStep = pageState.activeStep || 0;
+  const setCurrentStep = (step) => setPageState((prev) => ({ ...prev, activeStep: step }));
+
+  const [showRentalSettings, setShowRentalSettings] = useState(false);
+  const [serverData, setServerData] = useState(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+
+  const handleAIFill = async (fileObj) => {
+    // If fileObj is a React synthetic event, ignore it
+    const isEvent = fileObj && fileObj.nativeEvent;
+    const actualFile = isEvent ? null : fileObj;
+
+    if (!actualFile && !formData.imageSrc) {
+      toast.error('Please add an image first');
+      return;
     }
 
     setIsAIGenerating(true);
-    const loadingToast = toast.loading(
-      'Groq Llama 4 Scout Vision is analyzing product image and details...',
-    );
-
     try {
-      const res = await productService.aiAutofill(
-        formData.title,
-        formData.imageSrc,
-        categoriesList,
+      let imageToAnalyze = actualFile;
+      if (!imageToAnalyze && formData.imageSrc && typeof formData.imageSrc === 'string') {
+        imageToAnalyze = formData.imageSrc;
+      }
+
+      const categoryList = categoriesList;
+      const title = formData.title || '';
+
+      const generatedData = await productService.aiAutofill(
+        title,
+        typeof imageToAnalyze === 'string' ? imageToAnalyze : null,
+        categoryList,
       );
 
-      if (res.success && res.data) {
-        const generatedData = res.data;
-
-        // Strict category mapping mapping logic fallback
-        if (!generatedData.category && generatedData.detected_object) {
-          const lowerObj = generatedData.detected_object.toLowerCase();
-          const categoryMap = {
-            coconut: 'Traditional Wedding Decor',
-            tray: 'Engagement Tray Decor',
-            plate: 'Decorative Plates',
-            basket: 'Gift Hampers',
-            garland: 'Floral Decorations',
-            mandala: 'Wall Decor',
-            diya: 'Festival Decor',
-          };
-          for (const [key, cat] of Object.entries(categoryMap)) {
-            if (lowerObj.includes(key)) {
-              generatedData.category = cat;
-              break;
-            }
-          }
-        }
-
-        // Save for the Curation HUD
-        setAiAnalysisResult(generatedData);
+      if (generatedData?.success && generatedData?.data) {
+        setAiAnalysisResult(generatedData.data);
         setShowAIHUD(true);
-
-        toast.success('AI filled product details', { id: loadingToast });
-      } else {
-        toast.error('Failed to generate details. Please try again.', { id: loadingToast });
       }
     } catch (err) {
-      logger.error('AI AutoFill Error:', err);
-      const errorMessage =
-        err.response?.data?.message ||
-        'AI service is offline. Please make sure GROQ_API_KEY is configured in your backend .env file.';
-      toast.error(errorMessage, { id: loadingToast, duration: 6000 });
+      toast.error('AI Auto-fill failed. Please try again.');
+      logger.error('AI Error:', err);
     } finally {
       setIsAIGenerating(false);
+    }
+  };
+
+  const handleAiChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!aiChatInput.trim() || !aiAnalysisResult) return;
+    setIsAILearning(true);
+    try {
+      const result = await productService.refineAiProduct(aiAnalysisResult, aiChatInput);
+      if (result.success && result.data) {
+        setAiAnalysisResult(result.data);
+        setAiChatInput('');
+        toast.success('AI updated the curation successfully!');
+      }
+    } catch (err) {
+      toast.error('AI refinement failed.');
+      logger.error('AI refinement error:', err);
+    } finally {
+      setIsAILearning(false);
     }
   };
 
@@ -362,6 +388,21 @@ export function AdminAddProduct({ editId }) {
         isActive: true,
         showInGallery: false,
         variants: [],
+        // Rental fields
+        rentalEnabled: false,
+        availabilityMode: 'purchase_only',
+        rentalPricing: {
+          daily: '',
+          weekly: '',
+          monthly: '',
+          customDurationEnabled: false,
+          customPricePerDay: '',
+        },
+        securityDeposit: '',
+        isDepositRefundable: true,
+        rentalStock: '',
+        rentalMinDays: '1',
+        rentalMaxDays: '365',
         isManualRentalPricing: false,
       });
       setCurrentStep(0);
@@ -397,9 +438,9 @@ export function AdminAddProduct({ editId }) {
         setFormData((prev) => {
           // Check if it's already the same to avoid unnecessary re-renders
           if (
-            prev.rentalPricing.daily === calculated.daily &&
-            prev.rentalPricing.weekly === calculated.weekly &&
-            prev.rentalPricing.monthly === calculated.monthly &&
+            prev.rentalPricing?.daily === calculated.daily &&
+            prev.rentalPricing?.weekly === calculated.weekly &&
+            prev.rentalPricing?.monthly === calculated.monthly &&
             prev.securityDeposit === calculated.securityDeposit
           ) {
             return prev;
@@ -407,7 +448,7 @@ export function AdminAddProduct({ editId }) {
           return {
             ...prev,
             rentalPricing: {
-              ...prev.rentalPricing,
+              ...(prev.rentalPricing || {}),
               daily: calculated.daily,
               weekly: calculated.weekly,
               monthly: calculated.monthly,
@@ -607,6 +648,7 @@ export function AdminAddProduct({ editId }) {
         : await productService.create(payload);
 
       if (res.success) {
+        await deleteDraft(); // Delete draft on success
         toast.success(isEditMode ? 'Product updated' : 'Product published');
         if (refreshProducts) {
           try {
@@ -663,13 +705,9 @@ export function AdminAddProduct({ editId }) {
 
         {/* Keyboard Shortcut Banner + Auto-save */}
         <div className="flex items-center gap-3">
-          {lastDraftSaved && !isEditMode && (
-            <div className="hidden md:flex items-center gap-1.5 text-[11px] text-[var(--admin-success)] font-semibold bg-[var(--admin-success-light)] border border-emerald-100 px-2.5 py-1.5 rounded-full">
-              <span className="material-symbols-outlined text-[12px]">cloud_done</span>
-              Draft saved{' '}
-              {lastDraftSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </div>
-          )}
+          <div className="hidden md:flex">
+            <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
+          </div>
           <div className="hidden md:flex items-center gap-2 text-[11px] text-[var(--admin-text-secondary)] font-semibold bg-[var(--admin-surface)] border border-[var(--admin-border)] px-3 py-1.5 rounded-full uppercase tracking-wider">
             <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px] sm:text-[11px]">
               Alt + →
@@ -1159,7 +1197,7 @@ export function AdminAddProduct({ editId }) {
                       </div>
                       <button
                         type="button"
-                        onClick={handleAIAutoFill}
+                        onClick={handleAIFill}
                         disabled={isAIGenerating}
                         className="bg-[var(--admin-accent)] text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
                       >
@@ -1322,7 +1360,7 @@ export function AdminAddProduct({ editId }) {
                       </div>
                       <button
                         type="button"
-                        onClick={handleAIAutoFill}
+                        onClick={handleAIFill}
                         disabled={isAIGenerating}
                         className="bg-[var(--admin-accent)] text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
                       >
@@ -2650,6 +2688,36 @@ export function AdminAddProduct({ editId }) {
               </div>
             </div>
 
+            {/* Chat Box for AI Refinement */}
+            <div className="px-6 pb-2">
+              <form
+                onSubmit={handleAiChatSubmit}
+                className="flex items-center gap-2 bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded-xl p-1.5 focus-within:border-[var(--admin-accent)]/50 transition-colors"
+              >
+                <input
+                  type="text"
+                  value={aiChatInput}
+                  onChange={(e) => setAiChatInput(e.target.value)}
+                  placeholder="Ask AI to change title, category, style, etc..."
+                  className="flex-1 bg-transparent !border-none text-[12px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] px-3 py-1.5 focus:outline-none focus:!border-none focus:!outline-none focus:!ring-0"
+                  disabled={isAILearning}
+                />
+                <button
+                  type="submit"
+                  disabled={!aiChatInput.trim() || isAILearning}
+                  className="bg-[var(--admin-accent)] text-white p-1.5 rounded-lg flex items-center justify-center disabled:opacity-50 cursor-pointer hover:brightness-110 transition-all"
+                >
+                  {isAILearning ? (
+                    <span className="material-symbols-outlined text-[16px] animate-spin">
+                      refresh
+                    </span>
+                  ) : (
+                    <span className="material-symbols-outlined text-[16px] pr-0.5">send</span>
+                  )}
+                </button>
+              </form>
+            </div>
+
             {/* Footer Actions */}
             <div className="p-4 bg-[var(--admin-bg-subtle)] border-t border-[var(--admin-border)] flex flex-col sm:flex-row gap-2.5">
               <button
@@ -2674,6 +2742,28 @@ export function AdminAddProduct({ editId }) {
           </div>
         </div>
       )}
+
+      <DraftRestoreModal
+        isOpen={showRestoreModal}
+        onRestore={restoreDraft}
+        onDiscard={discardDraft}
+        moduleName="Products"
+        lastSavedAt={lastSavedAt}
+      />
+
+      <DraftConflictViewer
+        isOpen={showConflictModal}
+        serverData={serverData}
+        draftData={formData}
+        onKeepServer={() => {
+          setFormData(serverData);
+          setShowConflictModal(false);
+        }}
+        onKeepDraft={() => setShowConflictModal(false)}
+        moduleName="Product"
+      />
+
+      <UnsavedChangesGuard blocker={blocker} />
     </div>
   );
 

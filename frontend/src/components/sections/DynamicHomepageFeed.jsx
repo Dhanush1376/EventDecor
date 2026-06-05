@@ -1,4 +1,4 @@
-import React, { Component, useMemo } from 'react';
+import { Component, useEffect, useState } from 'react';
 import { usePersonalizedSections } from '../../hooks/usePersonalizedSections';
 import { RecommendationCarousel } from '../ui/RecommendationCarousel';
 import { motion } from 'framer-motion';
@@ -23,18 +23,21 @@ class ErrorBoundary extends Component {
 }
 
 function DynamicHomepageFeedContent() {
-  const sessionId = useMemo(() => {
+  const [sessionId, setSessionId] = useState('anonymous-session');
+
+  useEffect(() => {
     try {
       let stored = localStorage.getItem('sessionId');
       if (!stored) {
-        stored = typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : Math.random().toString(36).substring(2, 15);
+        stored =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `${Date.now().toString(36)}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         localStorage.setItem('sessionId', stored);
       }
-      return stored;
+      setSessionId(stored);
     } catch {
-      return 'anonymous-session';
+      setSessionId('anonymous-session');
     }
   }, []);
 
@@ -48,7 +51,10 @@ function DynamicHomepageFeedContent() {
             <div className="h-8 w-64 bg-black/5 rounded animate-pulse mb-6" />
             <div className="flex gap-4 overflow-hidden">
               {[...Array(4)].map((_, j) => (
-                <div key={j} className="min-w-[280px] md:min-w-[320px] aspect-[4/5] bg-black/5 rounded-2xl animate-pulse" />
+                <div
+                  key={j}
+                  className="min-w-[280px] md:min-w-[320px] aspect-[4/5] bg-black/5 rounded-2xl animate-pulse"
+                />
               ))}
             </div>
           </div>
@@ -67,18 +73,18 @@ function DynamicHomepageFeedContent() {
     const targetType = item.targetType || 'product';
     recommendationService.trackEvent(`${targetType}_click`, targetType, item._id || item.id, {
       source: sectionKey,
-      path: window.location.pathname
+      path: window.location.pathname,
     });
   };
 
   return (
     <div className="w-full py-16 space-y-20 bg-surface-bright">
       {sections.map((section, idx) => (
-        <motion.div 
+        <motion.div
           key={section.key}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 0.8, delay: idx * 0.1 }}
           className="max-w-[2000px] mx-auto"
         >
@@ -89,15 +95,13 @@ function DynamicHomepageFeedContent() {
                   {section.badge}
                 </span>
               )}
-              <h2 className="font-display text-3xl md:text-4xl text-on-surface">
-                {section.title}
-              </h2>
+              <h2 className="font-display text-3xl md:text-4xl text-on-surface">{section.title}</h2>
             </div>
           </div>
-          
-          <RecommendationCarousel 
-            items={section.items} 
-            title="" 
+
+          <RecommendationCarousel
+            items={section.items}
+            title=""
             onItemClick={(item) => handleItemClick(item, section.key)}
           />
         </motion.div>

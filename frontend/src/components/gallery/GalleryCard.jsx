@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
-import { handleImageError } from '../../utils/imageUtils';
 
 function CardContent({ item, displayImage, itemId, linkTo, navigate, minH, eager }) {
   const [isHovered, setIsHovered] = React.useState(false);

@@ -35,7 +35,15 @@ export interface ICustomOrder extends Document {
   eventDate?: Date;
   city?: string;
   bookingType: string;
-  status: 'Pending' | 'Reviewing' | 'Quote Sent' | 'Approved' | 'In Progress' | 'Ready' | 'Delivered' | 'Cancelled';
+  status:
+    | 'Pending'
+    | 'Reviewing'
+    | 'Quote Sent'
+    | 'Approved'
+    | 'In Progress'
+    | 'Ready'
+    | 'Delivered'
+    | 'Cancelled';
   priority: 'low' | 'medium' | 'high';
   quotation: IQuotation;
   messages: IMessage[];
@@ -47,7 +55,7 @@ export interface ICustomOrder extends Document {
 
 const QuotationItemSchema = new Schema({
   description: { type: String, required: true },
-  amount: { type: Number, required: true }
+  amount: { type: Number, required: true },
 });
 
 const QuotationSchema = new Schema({
@@ -59,8 +67,8 @@ const QuotationSchema = new Schema({
   status: {
     type: String,
     enum: ['draft', 'sent', 'approved', 'rejected'],
-    default: 'draft'
-  }
+    default: 'draft',
+  },
 });
 
 const MessageSchema = new Schema({
@@ -68,7 +76,7 @@ const MessageSchema = new Schema({
   senderName: { type: String, required: true },
   text: { type: String, required: true },
   attachments: { type: [String], default: [] },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
 });
 
 const CustomOrderSchema: Schema = new Schema(
@@ -87,27 +95,37 @@ const CustomOrderSchema: Schema = new Schema(
     bookingType: { type: String, default: 'Video Meet' },
     status: {
       type: String,
-      enum: ['Pending', 'Reviewing', 'Quote Sent', 'Approved', 'In Progress', 'Ready', 'Delivered', 'Cancelled'],
+      enum: [
+        'Pending',
+        'Reviewing',
+        'Quote Sent',
+        'Approved',
+        'In Progress',
+        'Ready',
+        'Delivered',
+        'Cancelled',
+      ],
       default: 'Pending',
-      index: true
+      index: true,
     },
     priority: {
       type: String,
       enum: ['low', 'medium', 'high'],
       default: 'medium',
-      index: true
+      index: true,
     },
     quotation: { type: QuotationSchema, default: () => ({}) },
     messages: { type: [MessageSchema], default: [] },
     adminNotes: { type: String },
-    archived: { type: Boolean, default: false, index: true }
+    archived: { type: Boolean, default: false, index: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // High-Performance Production Compound Indexes for Paginated Bespoke Pipelines
 CustomOrderSchema.index({ customerEmail: 1, createdAt: -1 });
 CustomOrderSchema.index({ archived: 1, status: 1, createdAt: -1 });
 CustomOrderSchema.index({ archived: 1, priority: 1, createdAt: -1 });
+CustomOrderSchema.index({ eventDate: 1 });
 
 export default mongoose.model<ICustomOrder>('CustomOrder', CustomOrderSchema);

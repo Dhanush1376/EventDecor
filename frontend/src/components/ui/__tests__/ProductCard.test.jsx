@@ -1,9 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ProductCard } from '../ProductCard';
 import { BrowserRouter } from 'react-router-dom';
-import { WishlistProvider } from '../../../context/WishlistContext';
-import { CartProvider } from '../../../context/CartContext';
 
 // Mock dependencies
 vi.mock('../../../context/WishlistContext', () => ({
@@ -53,7 +51,7 @@ describe('ProductCard Component', () => {
     render(
       <BrowserRouter>
         <ProductCard {...mockProduct} />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     expect(screen.getByText('Luxury Varma Decor')).toBeInTheDocument();
@@ -65,9 +63,9 @@ describe('ProductCard Component', () => {
     render(
       <BrowserRouter>
         <ProductCard loading={true} />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
-    
+
     // Check for animate-pulse class which is in the loading state
     const loadingSkeleton = document.querySelector('.animate-pulse');
     expect(loadingSkeleton).toBeInTheDocument();

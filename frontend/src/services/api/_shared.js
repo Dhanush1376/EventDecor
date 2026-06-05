@@ -1,6 +1,8 @@
 import api from '../api';
 import axios from 'axios';
 import logger from '../../utils/logger';
+import imageCompression from 'browser-image-compression';
+import { getApiRootUrl } from '../../config/apiConfig';
 
 export const uploadWithRetry = async (uploadFn, formData, retries = 3, delayMs = 1500) => {
   let lastError;
@@ -38,14 +40,84 @@ export const uploadDirectToCloudinary = async (
   const files = [];
   for (let value of formData.values()) {
     if (value instanceof File || value instanceof Blob) {
-      files.push(value);
+      // Compress if it's a valid image (skip SVGs and GIFs as they shouldn't/can't be compressed well)
+      if (
+        value.type.startsWith('image/') &&
+        !value.type.includes('svg') &&
+        !value.type.includes('gif')
+      ) {
+        try {
+          const options = {
+            maxSizeMB: 1, // maximum size in MB
+            maxWidthOrHeight: 1920, // max resolution
+            useWebWorker: true, // Use multi-threading
+            initialQuality: 0.8, // default quality
+          };
+          const compressedFile = await imageCompression(value, options);
+          logger.debug(
+            `[UPLOAD] Compressed ${value.name}: ${(value.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
+          );
+          files.push(compressedFile);
+        } catch (error) {
+          logger.error('[UPLOAD] Error compressing image, using original file', error);
+          files.push(value);
+        }
+      } else {
+        files.push(value);
+      }
     } else if (typeof value === 'string' && value.startsWith('http')) {
       // Handle direct URLs (Cloudinary supports uploading from remote URLs)
       const urls = value
         .split(',')
         .map((s) => s.trim())
         .filter((s) => s.startsWith('http'));
-      files.push(...urls);
+
+      for (const u of urls) {
+        let fileObj = null;
+        try {
+          // Route through backend proxy to bypass CORS/Hotlink protection
+          const apiRoot = getApiRootUrl();
+          const origin = apiRoot.startsWith('/') ? window.location.origin : '';
+          const proxyUrl = `${origin}${apiRoot}/v1/media/optimize?url=${encodeURIComponent(u)}&q=100`;
+
+          const response = await fetch(proxyUrl);
+          if (!response.ok) throw new Error(`Proxy fetch failed: HTTP ${response.status}`);
+          const blob = await response.blob();
+
+          let fileName = u.split('/').pop()?.split('?')[0] || 'remote_image.jpg';
+          if (!fileName.includes('.')) fileName += '.jpg';
+          fileObj = new File([blob], fileName, { type: blob.type });
+
+          // Apply compression on the downloaded file
+          if (
+            fileObj.type.startsWith('image/') &&
+            !fileObj.type.includes('svg') &&
+            !fileObj.type.includes('gif')
+          ) {
+            const options = {
+              maxSizeMB: 1,
+              maxWidthOrHeight: 1920,
+              useWebWorker: true,
+              initialQuality: 0.8,
+            };
+            const compressedFile = await imageCompression(fileObj, options);
+            logger.debug(
+              `[UPLOAD] Compressed Remote URL ${u}: ${(fileObj.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
+            );
+            files.push(compressedFile);
+          } else {
+            files.push(fileObj);
+          }
+        } catch (e) {
+          logger.error(`Error processing remote URL ${u}:`, e);
+          if (fileObj) {
+            logger.warn(`Fallback: Uploading uncompressed remote image file for ${u}`);
+            files.push(fileObj);
+          } else {
+            throw new Error(`Failed to fetch remote image via proxy: ${e.message}`);
+          }
+        }
+      }
     }
   }
 

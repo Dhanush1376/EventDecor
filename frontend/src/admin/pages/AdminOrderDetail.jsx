@@ -7,8 +7,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { InvoiceTemplate } from '../../components/ui';
 import { playSuccessBeep, playErrorBeep } from '../../utils/audioUtils';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../../utils/errorHelpers';
 import {
-  PageHeader,
   StatusBadge,
   formatCurrency,
   fadeUp,

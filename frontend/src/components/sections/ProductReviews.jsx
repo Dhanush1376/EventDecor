@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { reviewService } from "../../services/domainServices";
-import { useAuth } from "../../context/AuthContext";
-import toast from "react-hot-toast";
+import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { reviewService } from '../../services/domainServices';
+import { useAuth } from '../../context/AuthContext';
+import toast from 'react-hot-toast';
 
 // ─── Star Component ─────────────────────────────────────────────────────────
 function StarRating({ value = 0, max = 5, interactive = false, size = 20, onChange }) {
   const [hovered, setHovered] = useState(0);
-  const display = interactive ? (hovered || value) : value;
+  const display = interactive ? hovered || value : value;
 
   return (
     <div className="flex items-center gap-0.5">
@@ -22,15 +22,15 @@ function StarRating({ value = 0, max = 5, interactive = false, size = 20, onChan
             onClick={() => interactive && onChange?.(i + 1)}
             onMouseEnter={() => interactive && setHovered(i + 1)}
             onMouseLeave={() => interactive && setHovered(0)}
-            className={`transition-transform ${interactive ? "cursor-pointer hover:scale-125" : "cursor-default"}`}
-            aria-label={`${i + 1} star${i !== 0 ? "s" : ""}`}
+            className={`transition-transform ${interactive ? 'cursor-pointer hover:scale-125' : 'cursor-default'}`}
+            aria-label={`${i + 1} star${i !== 0 ? 's' : ''}`}
           >
             <svg
               width={size}
               height={size}
               viewBox="0 0 24 24"
-              fill={filled ? "#D4A853" : "none"}
-              stroke={filled ? "#D4A853" : "#d1c4a8"}
+              fill={filled ? '#D4A853' : 'none'}
+              stroke={filled ? '#D4A853' : '#d1c4a8'}
               strokeWidth="1.5"
             >
               <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
@@ -44,16 +44,20 @@ function StarRating({ value = 0, max = 5, interactive = false, size = 20, onChan
 
 // ─── Review Card ─────────────────────────────────────────────────────────────
 function ReviewCard({ review }) {
-  const initials = (review.customerName || "A")
-    .split(" ")
+  const initials = (review.customerName || 'A')
+    .split(' ')
     .map((n) => n[0])
-    .join("")
+    .join('')
     .toUpperCase()
     .slice(0, 2);
 
   const date = review.createdAt
-    ? new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-    : "";
+    ? new Date(review.createdAt).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : '';
 
   return (
     <motion.div
@@ -68,7 +72,9 @@ function ReviewCard({ review }) {
             <span className="font-display text-primary text-sm font-bold">{initials}</span>
           </div>
           <div>
-            <p className="font-body text-sm font-semibold text-black leading-tight">{review.customerName || "Customer"}</p>
+            <p className="font-body text-sm font-semibold text-black leading-tight">
+              {review.customerName || 'Customer'}
+            </p>
             <div className="flex items-center gap-2 mt-0.5">
               {review.verified && (
                 <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-green-100">
@@ -94,29 +100,29 @@ function ReviewCard({ review }) {
 // ─── Write Review Modal ───────────────────────────────────────────────────────
 export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }) {
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (rating === 0) return toast.error("Please select a star rating.");
-    if (comment.trim().length < 10) return toast.error("Please write at least 10 characters.");
+    if (rating === 0) return toast.error('Please select a star rating.');
+    if (comment.trim().length < 10) return toast.error('Please write at least 10 characters.');
 
     setSubmitting(true);
     try {
       await reviewService.create({ productId, rating, comment: comment.trim() });
-      toast.success("Your review has been submitted for approval!");
+      toast.success('Your review has been submitted for approval!');
       onSuccess?.();
       onClose();
     } catch (err) {
-      const msg = err?.response?.data?.message || "Failed to submit review.";
+      const msg = err?.response?.data?.message || 'Failed to submit review.';
       toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const ratingLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+  const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 
   const modalContent = (
     <motion.div
@@ -130,14 +136,16 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 80, opacity: 0 }}
-        transition={{ type: "spring", damping: 24, stiffness: 280 }}
+        transition={{ type: 'spring', damping: 24, stiffness: 280 }}
         className="bg-white w-full md:max-w-lg rounded-t-[32px] md:rounded-[28px] p-6 md:p-8 shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="font-display text-xl font-bold text-black">Write a Review</h3>
-            <p className="font-body text-[12px] text-black/40 mt-0.5 line-clamp-1">{productTitle}</p>
+            <p className="font-body text-[12px] text-black/40 mt-0.5 line-clamp-1">
+              {productTitle}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -150,7 +158,9 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Star Picker */}
           <div className="flex flex-col items-center gap-2 py-4 bg-amber-50/50 rounded-2xl border border-amber-100">
-            <p className="font-label text-[10px] uppercase tracking-widest text-black/40 font-bold">Your Rating</p>
+            <p className="font-label text-[10px] uppercase tracking-widest text-black/40 font-bold">
+              Your Rating
+            </p>
             <StarRating value={rating} interactive size={36} onChange={setRating} />
             {rating > 0 && (
               <motion.p
@@ -198,9 +208,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
     </motion.div>
   );
 
-  return typeof document !== "undefined"
-    ? createPortal(modalContent, document.body)
-    : null;
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }
 
 // ─── Main ProductReviews Section ─────────────────────────────────────────────
@@ -215,23 +223,26 @@ export function ProductReviews({ productId, productTitle }) {
   const [totalPages, setTotalPages] = useState(1);
 
   // ── Fetch reviews ──────────────────────────────────────────────────────────
-  const fetchReviews = useCallback(async (p = 1) => {
-    setLoading(true);
-    try {
-      const res = await reviewService.getProductReviews(productId, { page: p, limit: 5 });
-      if (res.success) {
-        const data = res.data;
-        const list = data.items || data.data || data || [];
-        setReviews(p === 1 ? list : (prev) => [...prev, ...list]);
-        setTotalPages(data.totalPages || 1);
-        setPage(p);
+  const fetchReviews = useCallback(
+    async (p = 1) => {
+      setLoading(true);
+      try {
+        const res = await reviewService.getProductReviews(productId, { page: p, limit: 5 });
+        if (res.success) {
+          const data = res.data;
+          const list = data.items || data.data || data || [];
+          setReviews(p === 1 ? list : (prev) => [...prev, ...list]);
+          setTotalPages(data.totalPages || 1);
+          setPage(p);
+        }
+      } catch {
+        // silently fail — reviews are non-critical
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      // silently fail — reviews are non-critical
-    } finally {
-      setLoading(false);
-    }
-  }, [productId]);
+    },
+    [productId],
+  );
 
   // ── Fetch eligibility (only when logged in) ────────────────────────────────
   const fetchEligibility = useCallback(async () => {
@@ -246,16 +257,13 @@ export function ProductReviews({ productId, productTitle }) {
 
   useEffect(() => {
     if (productId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchReviews(1);
       fetchEligibility();
     }
   }, [productId, fetchReviews, fetchEligibility]);
 
   // ── Average rating ────────────────────────────────────────────────────────
-  const avgRating = reviews.length
-    ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
-    : 0;
+  const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
 
   const ratingCounts = [5, 4, 3, 2, 1].map((star) => ({
     star,
@@ -288,7 +296,10 @@ export function ProductReviews({ productId, productTitle }) {
 
     if (eligibility.alreadyReviewed) {
       return (
-        <div title="You've reviewed this product" className="w-8 h-8 flex items-center justify-center bg-green-50 text-green-700 rounded-full border border-green-100 animate-fade-in">
+        <div
+          title="You've reviewed this product"
+          className="w-8 h-8 flex items-center justify-center bg-green-50 text-green-700 rounded-full border border-green-100 animate-fade-in"
+        >
           <span className="material-symbols-outlined text-[16px]">check</span>
         </div>
       );
@@ -310,7 +321,10 @@ export function ProductReviews({ productId, productTitle }) {
 
     // reason === 'not_purchased'
     return (
-      <div title="Purchase to review" className="w-8 h-8 flex items-center justify-center bg-neutral-100 text-black/40 rounded-full border border-black/5 animate-fade-in">
+      <div
+        title="Purchase to review"
+        className="w-8 h-8 flex items-center justify-center bg-neutral-100 text-black/40 rounded-full border border-black/5 animate-fade-in"
+      >
         <span className="material-symbols-outlined text-[16px]">lock</span>
       </div>
     );
@@ -325,7 +339,10 @@ export function ProductReviews({ productId, productTitle }) {
   }
 
   return (
-    <section id="reviews-section" className="relative z-10 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16">
+    <section
+      id="reviews-section"
+      className="relative z-10 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16"
+    >
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 md:mb-10">
         <div>
@@ -351,7 +368,7 @@ export function ProductReviews({ productId, productTitle }) {
             </span>
             <StarRating value={avgRating} size={16} />
             <span className="font-label text-[10px] uppercase tracking-wider text-black/40 font-bold">
-              {reviews.length} review{reviews.length !== 1 ? "s" : ""}
+              {reviews.length} review{reviews.length !== 1 ? 's' : ''}
             </span>
           </div>
 
@@ -361,19 +378,30 @@ export function ProductReviews({ productId, productTitle }) {
               const pct = reviews.length ? Math.round((count / reviews.length) * 100) : 0;
               return (
                 <div key={star} className="flex items-center gap-3">
-                  <span className="font-label text-[11px] font-bold text-black/50 w-4 shrink-0">{star}</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#D4A853" stroke="#D4A853" strokeWidth="1.5">
+                  <span className="font-label text-[11px] font-bold text-black/50 w-4 shrink-0">
+                    {star}
+                  </span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="#D4A853"
+                    stroke="#D4A853"
+                    strokeWidth="1.5"
+                  >
                     <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
                   </svg>
                   <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
                       className="h-full bg-amber-400 rounded-full"
                     />
                   </div>
-                  <span className="font-label text-[10px] text-black/30 w-8 text-right">{pct}%</span>
+                  <span className="font-label text-[10px] text-black/30 w-8 text-right">
+                    {pct}%
+                  </span>
                 </div>
               );
             })}
@@ -385,7 +413,10 @@ export function ProductReviews({ productId, productTitle }) {
       {loading && reviews.length === 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="skeleton-box bg-white rounded-[20px] border border-black/5 p-5 space-y-3">
+            <div
+              key={i}
+              className="skeleton-box bg-white rounded-[20px] border border-black/5 p-5 space-y-3"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-neutral-100/50" />
                 <div className="space-y-1.5">
@@ -401,9 +432,13 @@ export function ProductReviews({ productId, productTitle }) {
         </div>
       ) : reviews.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-[24px] border border-black/5">
-          <span className="material-symbols-outlined text-[48px] text-primary/30 mb-4">rate_review</span>
+          <span className="material-symbols-outlined text-[48px] text-primary/30 mb-4">
+            rate_review
+          </span>
           <p className="font-display text-lg text-black/50 font-medium">No reviews yet</p>
-          <p className="font-body text-sm text-black/30 mt-1">Be the first verified buyer to share your experience.</p>
+          <p className="font-body text-sm text-black/30 mt-1">
+            Be the first verified buyer to share your experience.
+          </p>
         </div>
       ) : (
         <>
@@ -421,7 +456,11 @@ export function ProductReviews({ productId, productTitle }) {
                 disabled={loading}
                 className="px-8 py-3 rounded-full border border-black/10 font-label text-[11px] uppercase tracking-widest font-bold text-black/60 hover:border-primary hover:text-primary transition-all flex items-center justify-center"
               >
-                {loading ? <div className="skeleton-box inline-block w-24 h-4 rounded-full bg-current/20 border-transparent" /> : "Load More Reviews"}
+                {loading ? (
+                  <div className="skeleton-box inline-block w-24 h-4 rounded-full bg-current/20 border-transparent" />
+                ) : (
+                  'Load More Reviews'
+                )}
               </button>
             </div>
           )}
@@ -435,7 +474,10 @@ export function ProductReviews({ productId, productTitle }) {
             productId={productId}
             productTitle={productTitle}
             onClose={() => setShowModal(false)}
-            onSuccess={() => { fetchReviews(1); fetchEligibility(); }}
+            onSuccess={() => {
+              fetchReviews(1);
+              fetchEligibility();
+            }}
           />
         )}
       </AnimatePresence>

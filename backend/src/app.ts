@@ -8,14 +8,16 @@ import mongoSanitize from 'express-mongo-sanitize';
 const xss = require('xss-clean');
 
 import cookieParser from 'cookie-parser';
-import { pingRedis } from './utils/redis';
 import { globalLimiter, apiFloodingLimiter } from './middleware/rateLimiter';
 import errorMiddleware from './middleware/errorMiddleware';
 import { registerApiRoutes } from './routes/registerApiRoutes';
-import { checkCloudinaryCdn, getCachedCdnHealth } from './utils/cdnHealth';
+import healthRoutes from './routes/healthRoutes';
+import metricsRoutes from './routes/metricsRoutes';
+import { HealthController } from './controllers/healthController';
 import logger from './config/logger';
 import { getSocketAdapterMode } from './config/socketState';
 import { generateSitemap } from './utils/sitemapGenerator';
+import { PrometheusService } from './services/PrometheusService';
 import * as Sentry from '@sentry/node';
 import { requestTrackerMiddleware } from './middleware/requestTracker';
 import { requestLogger } from './middleware/requestLogger';
@@ -29,7 +31,7 @@ import { queryGuard } from './middleware/queryGuard';
 import { secretLeakInterceptor } from './config/secretAudit';
 import { noCacheMiddleware } from './middleware/noCacheMiddleware';
 import { requestTimeout } from './middleware/queryTimeout';
-import { pingDb, getDbMetrics } from './config/db';
+import { getDbMetrics } from './config/db';
 import { cacheHeadersMiddleware } from './middleware/cacheHeaders';
 
 // Use require for the inner xss-clean function
@@ -44,6 +46,9 @@ app.disable('x-powered-by');
 // If moving to Cloudflare + Render, this should be updated to 2.
 app.set('trust proxy', 1);
 logger.info(`[STARTUP] Express trust proxy hops: 1`);
+
+// Initialize Prometheus Metrics
+PrometheusService.initialize();
 
 // Production: redirect HTTP → HTTPS with host validation (prevents open-redirect via header injection)
 app.use(enforceHttps);
@@ -100,7 +105,7 @@ app.post(
   },
   (req: Request, res: Response, next: express.NextFunction) => {
     try {
-      const controller = require('./features/orders/orderController');
+      const controller = require('./controllers/orderController');
       controller.handleRazorpayWebhook(req, res, next);
     } catch (err) {
       next(err);
@@ -181,17 +186,26 @@ app.get('/', noCacheMiddleware, (req: Request, res: Response) => {
 });
 
 // Root-level health check endpoint supporting both GET and HEAD methods for uptime monitoring
-app.get('/health', noCacheMiddleware, (req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-  });
-});
-
 app.head('/health', noCacheMiddleware, (req: Request, res: Response) => {
   res.status(200).end();
 });
+
+app.use(['/health', '/api/health', '/api/v1/health'], noCacheMiddleware, healthRoutes);
+app.use(['/api/business-metrics', '/api/v1/business-metrics'], noCacheMiddleware, metricsRoutes);
+
+// Prometheus metrics endpoint for SRE monitoring
+app.get('/metrics', async (req: Request, res: Response) => {
+  try {
+    res.set('Content-Type', PrometheusService.getContentType());
+    const metrics = await PrometheusService.getMetrics();
+    res.send(metrics);
+  } catch (err) {
+    res.status(500).send('Error gathering metrics');
+  }
+});
+
+// Readiness Probe (Tracks HTTP readiness, not DB readiness to prevent Render crash loops)
+app.get(['/api/readiness', '/api/v1/readiness'], noCacheMiddleware, HealthController.readiness);
 
 // Ignore favicon
 app.get('/favicon.ico', (req, res) => res.status(204).end());
@@ -215,86 +229,6 @@ app.use(requestTimeout(15000));
 // Apply global rate limiting and API flooding protection
 app.use('/api/', apiFloodingLimiter);
 app.use('/api/', globalLimiter);
-
-// 5. Caching & Performance telemetry already loaded above
-
-// 6. Health Check — lite by default (no CDN probe); ?full=1 runs delivery probe for dashboards
-app.get(
-  ['/api/health', '/api/v1/health'],
-  noCacheMiddleware,
-  async (req: Request, res: Response) => {
-    const dbState = mongoose.connection.readyState;
-    let dbStatus = dbState === 1 ? 'UP' : 'DOWN';
-    const redisStatus = await pingRedis();
-    const fullProbe = req.query.full === '1' || req.query.full === 'true';
-    const cdnStatus = fullProbe ? await checkCloudinaryCdn() : getCachedCdnHealth();
-    const requireRedis = process.env.REQUIRE_REDIS === 'true';
-
-    if (fullProbe && dbState === 1) {
-      const isPingOk = await pingDb();
-      if (!isPingOk) {
-        dbStatus = 'DEGRADED';
-      }
-    }
-
-    const redisRequiredDown =
-      requireRedis && (redisStatus === 'down' || redisStatus === 'not_configured');
-
-    const dbHealthFail = dbState !== 1 || dbStatus === 'DEGRADED' || redisRequiredDown;
-
-    const healthData = {
-      success: !dbHealthFail,
-      status: dbHealthFail ? 'critical' : 'healthy',
-      message: 'Siri Arts API Status',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      database: {
-        status: dbStatus,
-        state: dbState,
-      },
-      redis: {
-        status: redisStatus,
-        required: requireRedis,
-      },
-      cdn: {
-        provider: 'cloudinary',
-        status: cdnStatus,
-        advisory: true,
-        probed: fullProbe,
-      },
-      system: {
-        memory: {
-          free: os.freemem(),
-          total: os.totalmem(),
-          usage: `${Math.round((1 - os.freemem() / os.totalmem()) * 100)}%`,
-        },
-        cpuLoad: os.loadavg(),
-      },
-      realtime: {
-        adapter: getSocketAdapterMode(),
-        degraded: process.env.NODE_ENV === 'production' && getSocketAdapterMode() === 'memory',
-      },
-    };
-
-    if (dbHealthFail) {
-      logger.error('[HEALTH] Critical dependency down', healthData);
-      return res.status(503).json(healthData);
-    }
-
-    return res.status(200).json(healthData);
-  },
-);
-
-// Readiness Probe (Tracks HTTP readiness, not DB readiness to prevent Render crash loops)
-app.get(
-  ['/api/readiness', '/api/v1/readiness'],
-  noCacheMiddleware,
-  (req: Request, res: Response) => {
-    // Return 200 immediately if HTTP server is reachable.
-    // DB degradation should be handled via circuit breakers and bufferCommands: false, NOT pod restarts.
-    res.status(200).json({ ready: true, timestamp: new Date().toISOString() });
-  },
-);
 
 // Version endpoint — minimal public payload (no environment disclosure)
 app.get(['/api/version', '/api/v1/version'], noCacheMiddleware, (req: Request, res: Response) => {
@@ -368,18 +302,6 @@ app.use('/api/v1/upload', (req: Request, res: Response, next: express.NextFuncti
 });
 
 // 7. API Routes
-// Deprecation rewrite for legacy /api consumers
-app.use('/api', (req: Request, res: Response, next: express.NextFunction) => {
-  if (req.path.startsWith('/v1/')) {
-    return next();
-  }
-  res.setHeader('Deprecation', 'true');
-  res.setHeader('Link', '</api/v1>; rel="successor-version"');
-  logger.warn(`[DEPRECATION] Legacy API accessed: ${req.originalUrl} by ${req.ip}`);
-  req.url = `/v1${req.url === '/' ? '' : req.url}`;
-  next();
-});
-
 registerApiRoutes(app, '/api/v1', 'v1');
 
 // 8. Sentry Error Handler (must be before any other error middleware)
@@ -390,4 +312,5 @@ if (process.env.SENTRY_DSN) {
 // 9. Global Error Handler
 app.use(errorMiddleware);
 
+// Trigger reload for .env change
 export default app;

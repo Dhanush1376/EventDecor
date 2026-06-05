@@ -1,11 +1,6 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
-import { handleImageError } from '../utils/imageUtils';
 import { useCheckout } from './CheckoutProvider';
-import CheckoutRecommendations from './CheckoutRecommendations';
 
 export default function CheckoutSidebar() {
   const {

@@ -1,5 +1,3 @@
-import React from "react";
-
 /**
  * Reusable form field component with consistent styling.
  * Wraps label + input/select/textarea + error message in a unified layout.
@@ -8,10 +6,10 @@ import React from "react";
 export function FormField({
   label,
   id,
-  type = "text",
+  type = 'text',
   required = false,
   error,
-  className = "",
+  className = '',
   children,
   ...inputProps
 }) {
@@ -24,31 +22,34 @@ export function FormField({
       return children;
     }
 
-    if (type === "textarea") {
+    if (type === 'textarea') {
       return (
         <textarea
           id={inputId}
           required={required}
           className={`form-field resize-none ${error ? '!border-error/50 !ring-error/10' : ''} ${className}`}
-          aria-invalid={error ? "true" : undefined}
+          aria-invalid={error ? 'true' : undefined}
           aria-describedby={error ? `${inputId}-error` : undefined}
           {...inputProps}
         />
       );
     }
 
-    if (type === "select") {
+    if (type === 'select') {
       return (
         <select
           id={inputId}
           required={required}
           className={`form-field appearance-none cursor-pointer ${error ? '!border-error/50 !ring-error/10' : ''} ${className}`}
-          aria-invalid={error ? "true" : undefined}
+          aria-invalid={error ? 'true' : undefined}
           aria-describedby={error ? `${inputId}-error` : undefined}
           {...inputProps}
         >
           {inputProps.options?.map((opt) => (
-            <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
+            <option
+              key={typeof opt === 'string' ? opt : opt.value}
+              value={typeof opt === 'string' ? opt : opt.value}
+            >
               {typeof opt === 'string' ? opt : opt.label}
             </option>
           ))}
@@ -62,7 +63,7 @@ export function FormField({
         type={type}
         required={required}
         className={`form-field ${error ? '!border-error/50 !ring-error/10' : ''} ${className}`}
-        aria-invalid={error ? "true" : undefined}
+        aria-invalid={error ? 'true' : undefined}
         aria-describedby={error ? `${inputId}-error` : undefined}
         {...inputProps}
       />

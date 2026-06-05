@@ -7,6 +7,14 @@ import {
 } from '../services/searchService';
 import logger from '../config/logger';
 
+const stripUnsafeControlChars = (value: string) =>
+  Array.from(value)
+    .filter((char) => {
+      const code = char.charCodeAt(0);
+      return code >= 32 && code !== 127;
+    })
+    .join('');
+
 /**
  * GET /search/autocomplete?q=...
  * Fast autocomplete suggestions with visual previews.
@@ -17,11 +25,10 @@ export const autocomplete = async (req: Request, res: Response) => {
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 8, 12);
 
     // Security: strip null bytes, control chars, HTML tags, and cap length
-    const sanitizedQuery = query
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Control chars
-      .replace(/[<>]/g, '')                                 // HTML angle brackets
+    const sanitizedQuery = stripUnsafeControlChars(query)
+      .replace(/[<>]/g, '') // HTML angle brackets
       .trim()
-      .substring(0, 200);                                   // Hard length cap
+      .substring(0, 200); // Hard length cap
 
     if (sanitizedQuery.length < 2) {
       return res.status(200).json({
@@ -65,8 +72,7 @@ export const searchResults = async (req: Request, res: Response) => {
     const priceMax = req.query.priceMax ? parseFloat(req.query.priceMax as string) : undefined;
 
     // Security: strip null bytes, control chars, HTML tags, and cap length
-    const sanitizedQuery = query
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    const sanitizedQuery = stripUnsafeControlChars(query)
       .replace(/[<>]/g, '')
       .trim()
       .substring(0, 200);

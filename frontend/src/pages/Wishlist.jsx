@@ -1,18 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
-import {
-  QuickViewModal,
-  CustomDropdown,
-  ProductCard,
-  Skeleton,
-  WishlistPageSkeleton,
-} from '../components/ui';
+import { QuickViewModal, ProductCard, WishlistPageSkeleton } from '../components/ui';
 import { SEO } from '../components/seo/SEO';
-import { handleImageError } from '../utils/imageUtils';
-import { productService } from '../services/domainServices';
 import { useProducts } from '../hooks/useProductQueries';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 
@@ -50,14 +42,10 @@ export function Wishlist() {
     setTimeout(() => setNotification(''), 3000);
   };
 
-  // Provide realistic eCommerce values for products if minimal data is saved
+  // Provide default types if missing
   const enhancedItems = useMemo(() => {
     return items.map((item) => ({
       ...item,
-      price: item.price || 12000,
-      oldPrice: item.oldPrice || (item.price ? Math.round(item.price * 1.3) : 15600),
-      rating: item.rating || 4.8,
-      reviews: item.reviews || 124,
       category: item.category || 'Event Decor',
       itemType:
         item.itemType ||

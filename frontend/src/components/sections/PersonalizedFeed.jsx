@@ -7,7 +7,6 @@ import { MandalaElement } from '../ui/MandalaElement';
 import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import { usePersonalizedFeed } from '../../hooks/useRecommendationQueries';
 import { useAuth } from '../../context/AuthContext';
-import logger from '../../utils/logger';
 
 export function PersonalizedFeed({ title, subtitle, badgeText, limit = 10 }) {
   const [activeIndex, setActiveIndex] = useState(0);

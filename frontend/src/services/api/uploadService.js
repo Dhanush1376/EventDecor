@@ -1,6 +1,5 @@
-import api, { refreshAccessToken } from '../api';
+import api from '../api';
 import { hasSessionMarker } from '../../utils/authStorage';
-import logger from '../../utils/logger';
 
 const checkAuthLocal = () => hasSessionMarker();
 
@@ -8,8 +7,13 @@ import { uploadWithRetry } from './_shared';
 import { uploadDirectToCloudinary } from './_shared';
 export const uploadService = {
   uploadImages: async (formData, folder = 'siri-arts-crafts/direct-uploads', onProgress = null) => {
-    // If user asks for identity_docs, construct full path
-    const targetFolder = folder === 'identity_docs' ? 'siri-arts-crafts/identity_docs' : folder;
+    let targetFolder = folder;
+    if (
+      !targetFolder.startsWith('siri-arts-crafts/') &&
+      !targetFolder.startsWith('event_decor_ecommerce/')
+    ) {
+      targetFolder = `siri-arts-crafts/${folder}`;
+    }
     return uploadWithRetry(async (fd) => {
       return await uploadDirectToCloudinary(fd, false, targetFolder, onProgress);
     }, formData);

@@ -14,11 +14,7 @@ let io: Server;
 
 type SocketUser = { _id: { toString(): string }; role: string; email: string };
 
-const socketLogContext = (
-  socket: Socket,
-  namespace: '/admin' | '/user',
-  user: SocketUser
-) => ({
+const socketLogContext = (socket: Socket, namespace: '/admin' | '/user', user: SocketUser) => ({
   correlationId: socket.id,
   socketId: socket.id,
   namespace,
@@ -44,7 +40,7 @@ const assertRedisForSocket = (hasRedisAdapter: boolean): void => {
   if (requireRedis || (isProduction && multiInstance)) {
     logger.error(
       '[SOCKET CRITICAL] Redis adapter is required when REQUIRE_REDIS=true or when running multiple instances. ' +
-        'Aborting startup to prevent split-brain real-time delivery.'
+        'Aborting startup to prevent split-brain real-time delivery.',
     );
     process.exit(1);
   }
@@ -54,24 +50,25 @@ const assertRedisForSocket = (hasRedisAdapter: boolean): void => {
   if (isProduction) {
     logger.warn(
       `[SOCKET] ${isConfigured ? 'Redis connection unavailable' : 'REDIS_URL not set'} — using in-memory Socket.io adapter. ` +
-        'Real-time alerts only reach clients on the same instance.'
+        'Real-time alerts only reach clients on the same instance.',
     );
   } else {
-    logger.warn(`[SOCKET] ${isConfigured ? 'Redis unavailable' : 'REDIS_URL not set'} — using in-memory adapter (OK for local single-instance dev).`);
+    logger.warn(
+      `[SOCKET] ${isConfigured ? 'Redis unavailable' : 'REDIS_URL not set'} — using in-memory adapter (OK for local single-instance dev).`,
+    );
   }
 };
 
 const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void) => {
   try {
     const token =
-      socket.handshake.auth?.token ||
-      socket.handshake.headers?.authorization?.split(' ')[1];
+      socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
 
     if (!token) {
       return next(new Error('Authentication error: Token missing'));
     }
 
-    const jwtSecrets = (process.env.JWT_SECRET || '').split(',').map(s => s.trim());
+    const jwtSecrets = (process.env.JWT_SECRET || '').split(',').map((s) => s.trim());
     if (!jwtSecrets.length || !jwtSecrets[0]) {
       return next(new Error('Authentication error: Server misconfigured'));
     }
@@ -117,7 +114,7 @@ const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void)
 const enforceSingleAdminSession = async (
   namespace: Namespace,
   userId: string,
-  currentSocketId: string
+  currentSocketId: string,
 ): Promise<void> => {
   const sockets = await namespace.fetchSockets();
   for (const remote of sockets) {
@@ -156,7 +153,10 @@ const registerNamespace = (namespace: Namespace, options: { adminOnly?: boolean 
       await enforceSingleAdminSession(namespace, user._id.toString(), socket.id);
       logger.info('[Socket /admin] Connected', socketLogContext(socket, ns, user));
       socket.join('admin-alerts');
-      logger.info('[Socket /admin] Room join', { ...socketLogContext(socket, ns, user), room: 'admin-alerts' });
+      logger.info('[Socket /admin] Room join', {
+        ...socketLogContext(socket, ns, user),
+        room: 'admin-alerts',
+      });
     } else {
       logger.info('[Socket /user] Connected', socketLogContext(socket, ns, user));
       const room = `user-${user._id}`;
@@ -195,7 +195,7 @@ export const initSocket = (server: HttpServer) => {
     pingInterval: 15000,
     maxHttpBufferSize: 1e6,
     connectionStateRecovery: {
-      maxDisconnectionDuration: 2 * 60 * 1000,
+      maxDisconnectionDuration: process.env.NODE_ENV === 'production' ? 30 * 1000 : 2 * 60 * 1000,
     },
     adapter: hasRedisAdapter ? createAdapter(pubClient!, subClient!) : undefined,
   });
@@ -212,7 +212,6 @@ export const initSocket = (server: HttpServer) => {
     next();
   });
 
-
   // Default namespace is not used — reject stray connections immediately
   io.on('connection', (socket) => {
     logger.warn('[SOCKET] Rejected connection on default namespace', { socketId: socket.id });
@@ -223,7 +222,7 @@ export const initSocket = (server: HttpServer) => {
   registerNamespace(io.of('/user'), { adminOnly: false });
 
   logger.info(
-    `[SOCKET] Namespaces ready (/admin, /user) — adapter: ${hasRedisAdapter ? 'redis' : 'memory'}`
+    `[SOCKET] Namespaces ready (/admin, /user) — adapter: ${hasRedisAdapter ? 'redis' : 'memory'}`,
   );
   return io;
 };
@@ -233,6 +232,15 @@ export const getIO = () => {
     throw new Error('Socket.io has not been initialized');
   }
   return io;
+};
+
+export const getSocketCounts = () => {
+  if (!io) return { total: 0, admin: 0, user: 0 };
+  return {
+    total: io.engine.clientsCount,
+    admin: io.of('/admin').sockets.size,
+    user: io.of('/user').sockets.size,
+  };
 };
 
 export const emitAdminNotification = (payload: unknown) => {

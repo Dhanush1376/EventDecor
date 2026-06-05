@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 
 export function ScrollManager() {

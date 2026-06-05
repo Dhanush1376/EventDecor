@@ -5,8 +5,12 @@ export interface INotificationLog extends Document {
   recipientEmail: string;
   campaignId?: mongoose.Types.ObjectId;
   type: 'marketing' | 'order' | 'account' | 'engagement' | 'system' | 'security';
+  channel: 'email' | 'sms' | 'push' | 'websocket';
   action: string; // e.g. welcome_email, otp_verification, order_placed, abandoned_cart
-  status: 'pending' | 'delivered' | 'failed';
+  status: 'queued' | 'pending' | 'sent' | 'delivered' | 'failed' | 'retried';
+  scheduledAt?: Date;
+  queuedAt?: Date;
+  retryCount: number;
   errorDetails?: string;
   trackingToken: string;
   openedAt?: Date;
@@ -23,28 +27,36 @@ const NotificationLogSchema: Schema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
     recipientEmail: { type: String, required: true, lowercase: true, trim: true },
     campaignId: { type: Schema.Types.ObjectId, ref: 'EmailCampaign' },
-    type: { 
-      type: String, 
-      enum: ['marketing', 'order', 'account', 'engagement', 'system', 'security'], 
-      required: true 
+    type: {
+      type: String,
+      enum: ['marketing', 'order', 'account', 'engagement', 'system', 'security'],
+      required: true,
+    },
+    channel: {
+      type: String,
+      enum: ['email', 'sms', 'push', 'websocket'],
+      default: 'email',
     },
     action: { type: String, required: true },
-    status: { 
-      type: String, 
-      enum: ['pending', 'delivered', 'failed'], 
-      default: 'pending' 
+    status: {
+      type: String,
+      enum: ['queued', 'pending', 'sent', 'delivered', 'failed', 'retried'],
+      default: 'pending',
     },
+    scheduledAt: { type: Date },
+    queuedAt: { type: Date },
+    retryCount: { type: Number, default: 0 },
     errorDetails: { type: String },
     trackingToken: { type: String, required: true, unique: true },
     openedAt: { type: Date },
     clicks: [
       {
         url: { type: String, required: true },
-        clickedAt: { type: Date, default: Date.now }
-      }
-    ]
+        clickedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 NotificationLogSchema.index({ recipientEmail: 1 });

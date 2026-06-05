@@ -1,5 +1,4 @@
-import React from "react";
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 
 export default function ProfileTab({
   profileForm,
@@ -22,7 +21,10 @@ export default function ProfileTab({
       <form onSubmit={handleProfileSave} className="space-y-5 max-w-2xl text-[11px]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label htmlFor="dashboard-profile-name" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
+            <label
+              htmlFor="dashboard-profile-name"
+              className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+            >
               Full Account Name
             </label>
             <input
@@ -44,7 +46,7 @@ export default function ProfileTab({
             <input
               type="email"
               disabled
-              value={user?.email || ""}
+              value={user?.email || ''}
               className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none font-semibold text-secondary cursor-not-allowed"
             />
             <span className="text-[9px] text-secondary/50 block mt-1">
@@ -55,7 +57,10 @@ export default function ProfileTab({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div>
-            <label htmlFor="dashboard-profile-phone" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
+            <label
+              htmlFor="dashboard-profile-phone"
+              className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+            >
               Mobile Number
             </label>
             <input
@@ -87,7 +92,10 @@ export default function ProfileTab({
           </div>
 
           <div className="min-w-0">
-            <label htmlFor="dashboard-profile-dob" className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
+            <label
+              htmlFor="dashboard-profile-dob"
+              className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+            >
               Date Of Birth (DOB)
             </label>
             <input

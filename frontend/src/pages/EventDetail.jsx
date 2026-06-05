@@ -1,24 +1,27 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { SEO } from "../components/seo/SEO";
-import { useWishlist } from "../context/WishlistContext";
-import { handleImageError } from "../utils/imageUtils";
-import { MandalaElement } from "../components/ui/MandalaElement";
-import { EventDetailSkeleton } from "../components/ui/Skeleton";
-import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
-import { ShareButton } from "../components/ui/ShareButton";
-import { eventService, showcaseService, bookingService } from "../services/domainServices";
-import toast from "react-hot-toast";
-import { useAuth } from "../context/AuthContext";
-import { LocationSelectorModal } from "../components/ui/LocationSelectorModal";
-import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SEO } from '../components/seo/SEO';
+
+import { OptimizedImage } from '../components/ui/OptimizedImage';
+import { useWishlist } from '../context/WishlistContext';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { EventDetailSkeleton } from '../components/ui/Skeleton';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { ShareButton } from '../components/ui/ShareButton';
+import { eventService, showcaseService, bookingService } from '../services/domainServices';
+import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
+import { LocationSelectorModal } from '../components/ui/LocationSelectorModal';
+import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 
 import logger from '../utils/logger';
 
 const RecommendationSystem = React.lazy(() =>
-  import("../components/sections/RecommendationSystem").then((m) => ({ default: m.RecommendationSystem }))
+  import('../components/sections/RecommendationSystem').then((m) => ({
+    default: m.RecommendationSystem,
+  })),
 );
 
 const loadRazorpayScript = () => {
@@ -32,13 +35,48 @@ const loadRazorpayScript = () => {
 };
 
 const EVENT_TYPES = [
-  { id: "wedding", label: "Wedding / Vivaham", icon: "church", desc: "Grand traditional structures, modular mandaps & royal backdrops" },
-  { id: "engagement", label: "Engagement Ceremony", icon: "diamond", desc: "Modern floral panels, elegant backdrops & grand entrances" },
-  { id: "haldi", label: "Haldi & Mehndi", icon: "palette", desc: "Vibrant yellow marigold blasting, traditional swings & photo booths" },
-  { id: "reception", label: "Reception Gala", icon: "celebration", desc: "Bespoke stage styling, luxury uplighting & contemporary look" },
-  { id: "birthday", label: "Birthday / Cradle", icon: "child_care", desc: "Vibrant custom themes, balloon archways & kid-friendly elements" },
-  { id: "festival", label: "Festival / Puja Decor", icon: "spa", desc: "Traditional South Indian mango leaves, lotus hangings & brass props" },
-  { id: "other", label: "Other Celebration", icon: "more_horiz", desc: "Specify your custom milestone celebration and setup blueprints" },
+  {
+    id: 'wedding',
+    label: 'Wedding / Vivaham',
+    icon: 'church',
+    desc: 'Grand traditional structures, modular mandaps & royal backdrops',
+  },
+  {
+    id: 'engagement',
+    label: 'Engagement Ceremony',
+    icon: 'diamond',
+    desc: 'Modern floral panels, elegant backdrops & grand entrances',
+  },
+  {
+    id: 'haldi',
+    label: 'Haldi & Mehndi',
+    icon: 'palette',
+    desc: 'Vibrant yellow marigold blasting, traditional swings & photo booths',
+  },
+  {
+    id: 'reception',
+    label: 'Reception Gala',
+    icon: 'celebration',
+    desc: 'Bespoke stage styling, luxury uplighting & contemporary look',
+  },
+  {
+    id: 'birthday',
+    label: 'Birthday / Cradle',
+    icon: 'child_care',
+    desc: 'Vibrant custom themes, balloon archways & kid-friendly elements',
+  },
+  {
+    id: 'festival',
+    label: 'Festival / Puja Decor',
+    icon: 'spa',
+    desc: 'Traditional South Indian mango leaves, lotus hangings & brass props',
+  },
+  {
+    id: 'other',
+    label: 'Other Celebration',
+    icon: 'more_horiz',
+    desc: 'Specify your custom milestone celebration and setup blueprints',
+  },
 ];
 
 export function EventDetail() {
@@ -52,15 +90,15 @@ export function EventDetail() {
 
   useEffect(() => {
     if (isLightboxOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.classList.add("slideshow-active");
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('slideshow-active');
     } else {
-      document.body.style.overflow = "";
-      document.body.classList.remove("slideshow-active");
+      document.body.style.overflow = '';
+      document.body.classList.remove('slideshow-active');
     }
     return () => {
-      document.body.style.overflow = "";
-      document.body.classList.remove("slideshow-active");
+      document.body.style.overflow = '';
+      document.body.classList.remove('slideshow-active');
     };
   }, [isLightboxOpen]);
 
@@ -71,7 +109,7 @@ export function EventDetail() {
       if (lightboxScrollRef.current) {
         lightboxScrollRef.current.scrollTo({
           left: idx * lightboxScrollRef.current.clientWidth,
-          behavior: "instant"
+          behavior: 'instant',
         });
       }
     }, 10);
@@ -85,26 +123,26 @@ export function EventDetail() {
   // Ported Customizer States
   const [customInclusions, setCustomInclusions] = useState([]);
   const [rentalDurationDays, setRentalDurationDays] = useState(1);
-  const [selectedPaletteColor, setSelectedPaletteColor] = useState("");
-  const [placementPreference, setPlacementPreference] = useState("Side-Stage Showcase Corner");
-  const [uploadedReferenceName, setUploadedReferenceName] = useState("");
-  const [customNote, setCustomNote] = useState("");
-  const [bookingDate, setBookingDate] = useState("");
+  const [selectedPaletteColor, setSelectedPaletteColor] = useState('');
+  const [placementPreference, setPlacementPreference] = useState('Side-Stage Showcase Corner');
+  const [uploadedReferenceName, setUploadedReferenceName] = useState('');
+  const [customNote, setCustomNote] = useState('');
+  const [bookingDate, setBookingDate] = useState('');
   const [venueDetails, setVenueDetails] = useState(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isManualLocationInput, setIsManualLocationInput] = useState(false);
-  const [manualVenueName, setManualVenueName] = useState("");
-  const [manualAddress, setManualAddress] = useState("");
-  const [manualCity, setManualCity] = useState("");
-  const [manualState, setManualState] = useState("");
-  const [manualPincode, setManualPincode] = useState("");
+  const [manualVenueName, setManualVenueName] = useState('');
+  const [manualAddress, setManualAddress] = useState('');
+  const [manualCity, setManualCity] = useState('');
+  const [manualState, setManualState] = useState('');
+  const [manualPincode, setManualPincode] = useState('');
   const [guestCount, setGuestCount] = useState(100);
-  const [startTime, setStartTime] = useState("09:00 AM");
-  const [endTime, setEndTime] = useState("09:00 PM");
+  const [startTime, setStartTime] = useState('09:00 AM');
+  const [endTime, setEndTime] = useState('09:00 PM');
   const [isOutdoor, setIsOutdoor] = useState(false);
   const [customizerStep, setCustomizerStep] = useState(1);
-  const [eventType, setEventType] = useState("wedding");
-  const [customOccasion, setCustomOccasion] = useState("");
+  const [eventType, setEventType] = useState('wedding');
+  const [customOccasion, setCustomOccasion] = useState('');
   const customizerCardRef = useRef(null);
 
   // Track event view
@@ -118,32 +156,33 @@ export function EventDetail() {
 
   useEffect(() => {
     if (venueDetails) {
-      setManualVenueName(venueDetails.name || "");
-      setManualAddress(venueDetails.address || "");
-      setManualCity(venueDetails.city || "");
-      setManualState(venueDetails.state || "");
-      setManualPincode(venueDetails.pincode || "");
+      setManualVenueName(venueDetails.name || '');
+      setManualAddress(venueDetails.address || '');
+      setManualCity(venueDetails.city || '');
+      setManualState(venueDetails.state || '');
+      setManualPincode(venueDetails.pincode || '');
     }
   }, [venueDetails]);
 
   const handleManualFieldChange = (field, value) => {
     const updated = {
       ...(venueDetails || {
-        name: "",
-        address: "",
-        city: "",
-        state: "",
-        country: "India",
-        pincode: "",
+        name: '',
+        address: '',
+        city: '',
+        state: '',
+        country: 'India',
+        pincode: '',
         latitude: null,
         longitude: null,
-        googleMapsLink: ""
+        googleMapsLink: '',
       }),
-      [field]: value
+      [field]: value,
     };
 
-    const namePart = updated.name ? updated.name + ", " : "";
-    const fullSearch = `${namePart}${updated.address} ${updated.city} ${updated.state} ${updated.pincode}`.trim();
+    const namePart = updated.name ? updated.name + ', ' : '';
+    const fullSearch =
+      `${namePart}${updated.address} ${updated.city} ${updated.state} ${updated.pincode}`.trim();
     updated.googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullSearch)}`;
 
     setVenueDetails(updated);
@@ -167,8 +206,8 @@ export function EventDetail() {
       lastScrollY.current = currentScrollY;
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
@@ -181,7 +220,7 @@ export function EventDetail() {
       ([entry]) => {
         setShowMobileSticky(!entry.isIntersecting);
       },
-      { threshold: 0 }
+      { threshold: 0 },
     );
 
     observer.observe(reserveButtonRef.current);
@@ -196,7 +235,7 @@ export function EventDetail() {
         try {
           res = await showcaseService.getById(id);
         } catch (err) {
-          logger.warn("Not found in showcases, trying events service", err);
+          logger.warn('Not found in showcases, trying events service', err);
         }
 
         if (!res || !res.success || !res.data) {
@@ -209,34 +248,34 @@ export function EventDetail() {
           // Pre-populate customizer defaults
           const sc = res.data;
           const defaultInclusions = [
-            { name: "Traditional Backdrop Panel Setup", defaultQty: 1 },
-            { name: "Mysore Brass Urlis & Diyas", defaultQty: 2 },
-            { name: "Fresh Marigold Garland Hangings", defaultQty: 4 }
+            { name: 'Traditional Backdrop Panel Setup', defaultQty: 1 },
+            { name: 'Mysore Brass Urlis & Diyas', defaultQty: 2 },
+            { name: 'Fresh Marigold Garland Hangings', defaultQty: 4 },
           ];
           setCustomInclusions(
-            sc.inclusions?.map(inc => ({ ...inc, selected: true, qty: inc.defaultQty || 1 })) ||
-            defaultInclusions.map(inc => ({ ...inc, selected: true, qty: inc.defaultQty }))
+            sc.inclusions?.map((inc) => ({ ...inc, selected: true, qty: inc.defaultQty || 1 })) ||
+              defaultInclusions.map((inc) => ({ ...inc, selected: true, qty: inc.defaultQty })),
           );
-          setSelectedPaletteColor(sc.colorPalette?.[0] || "#8B0000");
+          setSelectedPaletteColor(sc.colorPalette?.[0] || '#8B0000');
 
           // Pre-populate occasion category matching
-          const cat = sc.category?.toLowerCase() || "wedding";
-          if (EVENT_TYPES.some(t => t.id === cat)) {
+          const cat = sc.category?.toLowerCase() || 'wedding';
+          if (EVENT_TYPES.some((t) => t.id === cat)) {
             setEventType(cat);
           } else {
-            setEventType("other");
-            setCustomOccasion(sc.category || "");
+            setEventType('other');
+            setCustomOccasion(sc.category || '');
           }
         }
 
         const relatedRes = await showcaseService.getAll();
         if (relatedRes.success) {
           const relatedItems = relatedRes.data || [];
-          setRelatedEvents(relatedItems.filter(e => e._id !== id && e.id !== id).slice(0, 4));
+          setRelatedEvents(relatedItems.filter((e) => e._id !== id && e.id !== id).slice(0, 4));
         }
       } catch (err) {
-        logger.error("Failed to fetch event masteries", err);
-        setError("Could not load event details.");
+        logger.error('Failed to fetch event masteries', err);
+        setError('Could not load event details.');
       } finally {
         setLoading(false);
       }
@@ -247,15 +286,15 @@ export function EventDetail() {
   }, [id]);
 
   const toggleInclusion = (name) => {
-    setCustomInclusions(prev => prev.map(inc =>
-      inc.name === name ? { ...inc, selected: !inc.selected } : inc
-    ));
+    setCustomInclusions((prev) =>
+      prev.map((inc) => (inc.name === name ? { ...inc, selected: !inc.selected } : inc)),
+    );
   };
 
   const updateInclusionQty = (name, delta) => {
-    setCustomInclusions(prev => prev.map(inc =>
-      inc.name === name ? { ...inc, qty: Math.max(1, inc.qty + delta) } : inc
-    ));
+    setCustomInclusions((prev) =>
+      prev.map((inc) => (inc.name === name ? { ...inc, qty: Math.max(1, inc.qty + delta) } : inc)),
+    );
   };
 
   const calculateLivePrice = () => {
@@ -266,65 +305,70 @@ export function EventDetail() {
       if (event.rentalPrice) {
         basePrice = Number(event.rentalPrice);
       } else if (event.pricing) {
-        basePrice = parseInt(event.pricing.replace(/[^0-9]/g, "")) || 35000;
+        basePrice = parseInt(event.pricing.replace(/[^0-9]/g, '')) || 35000;
       }
     }
 
-    const durationMultiplier = rentalDurationDays === 1 ? 1 : rentalDurationDays === 2 ? 1.5 : 1.5 + (rentalDurationDays - 2) * 0.4;
+    const durationMultiplier =
+      rentalDurationDays === 1
+        ? 1
+        : rentalDurationDays === 2
+          ? 1.5
+          : 1.5 + (rentalDurationDays - 2) * 0.4;
     return Math.round(basePrice * durationMultiplier);
   };
 
   const validateStep1 = () => {
-    if (eventType === "other" && !customOccasion.trim()) {
-      toast.error("Please specify your custom occasion.");
+    if (eventType === 'other' && !customOccasion.trim()) {
+      toast.error('Please specify your custom occasion.');
       return false;
     }
     if (!bookingDate) {
-      toast.error("Please select a Ceremony Date.");
+      toast.error('Please select a Ceremony Date.');
       return false;
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const selected = new Date(bookingDate);
     if (selected < today) {
-      toast.error("Ceremony Date cannot be in the past.");
+      toast.error('Ceremony Date cannot be in the past.');
       return false;
     }
     return true;
   };
 
   const validateStep3 = () => {
-    const finalAddress = isManualLocationInput 
+    const finalAddress = isManualLocationInput
       ? `${manualVenueName ? manualVenueName + ', ' : ''}${manualAddress} ${manualCity} ${manualState} ${manualPincode}`.trim()
-      : (venueDetails?.address || "");
+      : venueDetails?.address || '';
 
     if (!finalAddress) {
-      toast.error("Please configure your venue location (either by map or manual entry).");
+      toast.error('Please configure your venue location (either by map or manual entry).');
       return false;
     }
     if (isManualLocationInput) {
       if (!manualVenueName.trim()) {
-        toast.error("Please enter a Venue Name.");
+        toast.error('Please enter a Venue Name.');
         return false;
       }
       if (!manualAddress.trim()) {
-        toast.error("Please enter the Full Address.");
+        toast.error('Please enter the Full Address.');
         return false;
       }
       if (!manualCity.trim()) {
-        toast.error("Please enter the City.");
+        toast.error('Please enter the City.');
         return false;
       }
       if (!manualState.trim()) {
-        toast.error("Please enter the State.");
+        toast.error('Please enter the State.');
         return false;
       }
       if (!manualPincode.trim()) {
-        toast.error("Please enter the Pincode.");
+        toast.error('Please enter the Pincode.');
         return false;
       }
       if (!/^\d{6}$/.test(manualPincode.trim())) {
-        toast.error("Pincode must be exactly 6 digits.");
+        toast.error('Pincode must be exactly 6 digits.');
         return false;
       }
     }
@@ -347,39 +391,41 @@ export function EventDetail() {
       return;
     }
 
-    const loadId = toast.loading("Initializing secure checkout...");
+    const loadId = toast.loading('Initializing secure checkout...');
     try {
       const isScriptLoaded = await loadRazorpayScript();
       if (!isScriptLoaded) {
         toast.dismiss(loadId);
-        toast.error("Failed to load payment gateway. Please check your connection.");
+        toast.error('Failed to load payment gateway. Please check your connection.');
         return;
       }
 
       // Prepare venue payload
-      const venuePayload = isManualLocationInput ? {
-        name: manualVenueName,
-        address: manualAddress,
-        city: manualCity,
-        state: manualState,
-        pincode: manualPincode,
-        country: "India",
-        isOutdoor: isOutdoor,
-        googleMapsLink: venueDetails?.googleMapsLink || ""
-      } : {
-        name: venueDetails?.name,
-        address: venueDetails?.address,
-        city: venueDetails?.city,
-        state: venueDetails?.state,
-        pincode: venueDetails?.pincode,
-        country: venueDetails?.country || "India",
-        latitude: venueDetails?.latitude,
-        longitude: venueDetails?.longitude,
-        googleMapsLink: venueDetails?.googleMapsLink,
-        isOutdoor: isOutdoor
-      };
+      const venuePayload = isManualLocationInput
+        ? {
+            name: manualVenueName,
+            address: manualAddress,
+            city: manualCity,
+            state: manualState,
+            pincode: manualPincode,
+            country: 'India',
+            isOutdoor: isOutdoor,
+            googleMapsLink: venueDetails?.googleMapsLink || '',
+          }
+        : {
+            name: venueDetails?.name,
+            address: venueDetails?.address,
+            city: venueDetails?.city,
+            state: venueDetails?.state,
+            pincode: venueDetails?.pincode,
+            country: venueDetails?.country || 'India',
+            latitude: venueDetails?.latitude,
+            longitude: venueDetails?.longitude,
+            googleMapsLink: venueDetails?.googleMapsLink,
+            isOutdoor: isOutdoor,
+          };
 
-      const finalEventType = eventType === "other" ? customOccasion : eventType;
+      const finalEventType = eventType === 'other' ? customOccasion : eventType;
 
       const checkoutPayload = {
         eventPackageId: event._id || event.id,
@@ -391,21 +437,21 @@ export function EventDetail() {
         guestCount,
         venue: venuePayload,
         customization: {
-          themeColor: selectedPaletteColor || (event.colorPalette?.[0] || "Standard"),
-          floralPreference: "Standard Garlands",
-          lightingPreference: "Standard Lighting",
-          stageSize: "Standard",
-          additionalRequests: customNote || ""
+          themeColor: selectedPaletteColor || event.colorPalette?.[0] || 'Standard',
+          floralPreference: 'Standard Garlands',
+          lightingPreference: 'Standard Lighting',
+          stageSize: 'Standard',
+          additionalRequests: customNote || '',
         },
         selectedAddons: [],
-        inspirationImages: []
+        inspirationImages: [],
       };
 
       // 1. Initialize Booking Checkout
       const initRes = await bookingService.initializeCheckout(checkoutPayload);
       if (!initRes.success || !initRes.data) {
         toast.dismiss(loadId);
-        toast.error(initRes.message || "Failed to initialize checkout.");
+        toast.error(initRes.message || 'Failed to initialize checkout.');
         return;
       }
 
@@ -417,11 +463,11 @@ export function EventDetail() {
         key,
         amount: amount * 100, // in paise
         currency,
-        name: "Siri Arts Event Decor",
+        name: 'Siri Arts Event Decor',
         description: `Advance Deposit for ${event.title}`,
         order_id: razorpayOrderId,
         handler: async function (response) {
-          const verifyLoadId = toast.loading("Verifying your payment securely...");
+          const verifyLoadId = toast.loading('Verifying your payment securely...');
           try {
             // 3. Verify Payment Signature
             const verifyRes = await bookingService.verifyCheckout({
@@ -433,23 +479,23 @@ export function EventDetail() {
 
             toast.dismiss(verifyLoadId);
             if (verifyRes.success) {
-              toast.success("Payment successful! Your luxury event is confirmed.");
+              toast.success('Payment successful! Your luxury event is confirmed.');
               navigate(`/booking-success/${bookingId}`);
             } else {
-              toast.error(verifyRes.message || "Payment verification failed.");
+              toast.error(verifyRes.message || 'Payment verification failed.');
             }
           } catch (err) {
             toast.dismiss(verifyLoadId);
-            logger.error("Verification Error:", err);
-            toast.error("An error occurred during verification. Contact support.");
+            logger.error('Verification Error:', err);
+            toast.error('An error occurred during verification. Contact support.');
           }
         },
         prefill: {
-          name: "Customer",
-          email: "customer@example.com",
+          name: 'Customer',
+          email: 'customer@example.com',
         },
         theme: {
-          color: "var(--color-gold-dark)",
+          color: 'var(--color-gold-dark)',
         },
       };
 
@@ -458,11 +504,13 @@ export function EventDetail() {
         toast.error(`Payment Failed: ${response.error.description}`);
       });
       paymentObject.open();
-
     } catch (err) {
       toast.dismiss(loadId);
       logger.error(err);
-      toast.error(err.response?.data?.message || "An error occurred. Please verify required fields and login state.");
+      toast.error(
+        err.response?.data?.message ||
+          'An error occurred. Please verify required fields and login state.',
+      );
     }
   };
 
@@ -474,9 +522,7 @@ export function EventDetail() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
         <div className="text-center">
-          <h2 className="font-display text-3xl mb-4 text-on-surface">
-            Event not found
-          </h2>
+          <h2 className="font-display text-3xl mb-4 text-on-surface">Event not found</h2>
           <Link to="/events" className="btn-primary">
             Back to Events
           </Link>
@@ -485,44 +531,48 @@ export function EventDetail() {
     );
   }
 
-  const formattedCategory = event.category ? String(event.category).replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Traditional Setup";
+  const formattedCategory = event.category
+    ? String(event.category)
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    : 'Traditional Setup';
 
   const stats = [
-    { label: "Design Style", value: event.style || "Traditional Royal", icon: "palette" },
-    { label: "Decor Elements", value: event.decorCount || "95+ Elements", icon: "dashboard" },
-    { label: "Venue Type", value: event.venueType || "Indoor & Outdoor", icon: "meeting_room" },
-    { label: "Master Category", value: formattedCategory, icon: "verified" },
+    { label: 'Design Style', value: event.style || 'Traditional Royal', icon: 'palette' },
+    { label: 'Decor Elements', value: event.decorCount || '95+ Elements', icon: 'dashboard' },
+    { label: 'Venue Type', value: event.venueType || 'Indoor & Outdoor', icon: 'meeting_room' },
+    { label: 'Master Category', value: formattedCategory, icon: 'verified' },
   ];
 
   const eventSchema = {
-    "@context": "https://schema.org",
-    "@type": "Event",
-    "name": event.title,
-    "description": event.description,
-    "image": event.image,
-    "startDate": bookingDate || new Date().toISOString().split('T')[0],
-    "endDate": bookingDate || new Date().toISOString().split('T')[0],
-    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-    "eventStatus": "https://schema.org/EventScheduled",
-    "location": {
-      "@type": "Place",
-      "name": venueDetails?.name || "Client Venue",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": venueDetails?.address || "",
-        "addressLocality": venueDetails?.city || "",
-        "addressRegion": venueDetails?.state || "",
-        "postalCode": venueDetails?.pincode || "",
-        "addressCountry": "IN"
-      }
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event.title,
+    description: event.description,
+    image: event.image,
+    startDate: bookingDate || new Date().toISOString().split('T')[0],
+    endDate: bookingDate || new Date().toISOString().split('T')[0],
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    eventStatus: 'https://schema.org/EventScheduled',
+    location: {
+      '@type': 'Place',
+      name: venueDetails?.name || 'Client Venue',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: venueDetails?.address || '',
+        addressLocality: venueDetails?.city || '',
+        addressRegion: venueDetails?.state || '',
+        postalCode: venueDetails?.pincode || '',
+        addressCountry: 'IN',
+      },
     },
-    "offers": {
-      "@type": "Offer",
-      "url": typeof window !== "undefined" ? window.location.href : "",
-      "price": event.basePrice || event.rentalPrice || 35000,
-      "priceCurrency": "INR",
-      "availability": "https://schema.org/InStock"
-    }
+    offers: {
+      '@type': 'Offer',
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      price: event.basePrice || event.rentalPrice || 35000,
+      priceCurrency: 'INR',
+      availability: 'https://schema.org/InStock',
+    },
   };
 
   return (
@@ -548,9 +598,7 @@ export function EventDetail() {
           <Link to="/events" className="hover:text-primary transition-colors">
             Event Masteries
           </Link>
-          <span className="material-symbols-outlined text-[14px] opacity-20">
-            chevron_right
-          </span>
+          <span className="material-symbols-outlined text-[14px] opacity-20">chevron_right</span>
           <span className="text-primary font-bold">{formattedCategory}</span>
         </nav>
       </div>
@@ -558,7 +606,6 @@ export function EventDetail() {
       {/* 2. MAIN DETAILS PAGE SECTION */}
       <section className="pt-[72px] md:pt-4 pb-20 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
-
           {/* Left Column: Event Gallery & Specs */}
           <div className="lg:col-span-7 space-y-8">
             <motion.div
@@ -571,9 +618,7 @@ export function EventDetail() {
                 onClick={() => navigate(-1)}
                 className="md:hidden absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-black/5 active:scale-90"
               >
-                <span className="material-symbols-outlined text-[20px] text-black">
-                  arrow_back
-                </span>
+                <span className="material-symbols-outlined text-[20px] text-black">arrow_back</span>
               </button>
 
               {/* Overlay Action Buttons (Visible on Mobile & Desktop) */}
@@ -585,7 +630,7 @@ export function EventDetail() {
                   <motion.span
                     animate={{
                       scale: isWishlisted(event.id) ? [1, 1.3, 1] : 1,
-                      color: isWishlisted(event.id) ? "#ff2d55" : "#1a1817",
+                      color: isWishlisted(event.id) ? '#ff2d55' : '#1a1817',
                       fontVariationSettings: isWishlisted(event.id) ? "'FILL' 1" : "'FILL' 0",
                     }}
                     className="material-symbols-outlined text-[20px]"
@@ -605,42 +650,45 @@ export function EventDetail() {
 
               {/* Mobile Horizontal Scroll Gallery */}
               <div className="md:hidden flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full w-full">
-                {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, i) => (
-                  <div
-                    key={i}
-                    onClick={() => openLightbox(i)}
-                    className="flex-shrink-0 w-full h-full snap-center cursor-zoom-in"
-                  >
-                    <img
-                      src={img}
-                      className="w-full h-full object-cover"
-                      alt={`${event.title} perspective ${i + 1}`}
-                      onError={handleImageError}
-                    />
-                  </div>
-                ))}
+                {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map(
+                  (img, i) => (
+                    <div
+                      key={i}
+                      onClick={() => openLightbox(i)}
+                      className="flex-shrink-0 w-full h-full snap-center cursor-zoom-in"
+                    >
+                      <OptimizedImage
+                        src={img}
+                        className="w-full h-full object-cover"
+                        alt={`${event.title} perspective ${i + 1}`}
+                      />
+                    </div>
+                  ),
+                )}
               </div>
 
               {/* Desktop-Only Fade Gallery */}
               <div className="hidden md:block h-full w-full relative">
-                <>
-                  <motion.img
-                    key={activeGalleryIndex}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.6 }}
+                <motion.div
+                  key={activeGalleryIndex}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6 }}
+                  onClick={() => openLightbox(activeGalleryIndex)}
+                  className="w-full h-full cursor-zoom-in"
+                >
+                  <OptimizedImage
                     src={event.gallery?.[activeGalleryIndex] || event.image}
-                    onClick={() => openLightbox(activeGalleryIndex)}
-                    className="w-full h-full object-cover cursor-zoom-in"
+                    className="w-full h-full object-cover"
                     alt={event.title}
-                    onError={handleImageError}
+                    priority={true}
                   />
-                </>
+                </motion.div>
               </div>
 
               {/* Floating Perspective Badges */}
-              {(event.gallery && event.gallery.length > 1) && (
+              {event.gallery && event.gallery.length > 1 && (
                 <div className="absolute bottom-6 left-6 md:bottom-8 md:left-8 flex gap-2.5 z-10">
                   {event.gallery.map((_, i) => (
                     <button
@@ -649,17 +697,17 @@ export function EventDetail() {
                         if (window.innerWidth >= 768) {
                           setActiveGalleryIndex(i);
                         } else {
-                          const container = document.querySelector(".snap-x");
+                          const container = document.querySelector('.snap-x');
                           if (container) {
                             container.scrollTo({
                               left: i * container.offsetWidth,
-                              behavior: "smooth",
+                              behavior: 'smooth',
                             });
                           }
                           setActiveGalleryIndex(i);
                         }
                       }}
-                      className={`w-8 h-8 md:w-9 md:h-9 rounded-full backdrop-blur-md border transition-all duration-500 flex items-center justify-center font-display text-[13px] md:text-[14px] ${activeGalleryIndex === i ? "bg-white border-white text-black shadow-lg scale-110" : "bg-black/20 border-white/30 text-white/80 hover:bg-black/40 hover:border-white/50"}`}
+                      className={`w-8 h-8 md:w-9 md:h-9 rounded-full backdrop-blur-md border transition-all duration-500 flex items-center justify-center font-display text-[13px] md:text-[14px] ${activeGalleryIndex === i ? 'bg-white border-white text-black shadow-lg scale-110' : 'bg-black/20 border-white/30 text-white/80 hover:bg-black/40 hover:border-white/50'}`}
                     >
                       {i + 1}
                     </button>
@@ -669,15 +717,15 @@ export function EventDetail() {
             </motion.div>
 
             {/* Visual Indicators Strip */}
-            {(event.gallery && event.gallery.length > 1) && (
+            {event.gallery && event.gallery.length > 1 && (
               <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                 {event.gallery.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveGalleryIndex(i)}
-                    className={`relative w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden shrink-0 transition-all duration-500 ${activeGalleryIndex === i ? "ring-2 ring-primary ring-offset-2 scale-95" : "opacity-45 grayscale-[70%] hover:opacity-100 hover:grayscale-0"}`}
+                    className={`relative w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden shrink-0 transition-all duration-500 ${activeGalleryIndex === i ? 'ring-2 ring-primary ring-offset-2 scale-95' : 'opacity-45 grayscale-[70%] hover:opacity-100 hover:grayscale-0'}`}
                   >
-                    <img
+                    <OptimizedImage
                       src={img}
                       className="w-full h-full object-cover"
                       alt={`Thumb ${i}`}
@@ -690,7 +738,7 @@ export function EventDetail() {
             {/* Header Information */}
             <div className="space-y-3 py-6 border-t border-b border-black/5 mt-4">
               <span className="font-label-sm text-primary uppercase tracking-[0.4em] font-bold text-[10px] md:text-[12px] block">
-                {event.subtitle || "The Digital Studio Mastery"}
+                {event.subtitle || 'The Digital Studio Mastery'}
               </span>
               <h2 className="font-display text-black text-[32px] md:text-[44px] font-normal leading-tight tracking-tight">
                 {event.title}
@@ -704,13 +752,20 @@ export function EventDetail() {
             {event.features && event.features.length > 0 && (
               <div className="bg-[#FAF6F0] p-6 rounded-[2rem] border border-[#C4A87C]/20 space-y-3">
                 <span className="font-label-sm text-[10px] uppercase tracking-[0.3em] text-[var(--color-gold-dark)] font-bold flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px] text-primary">verified</span>
+                  <span className="material-symbols-outlined text-[16px] text-primary">
+                    verified
+                  </span>
                   Signature Masterpieces Included
                 </span>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1.5">
                   {event.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-stone-700 text-xs font-semibold leading-relaxed">
-                      <span className="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">star</span>
+                    <li
+                      key={i}
+                      className="flex items-start gap-2.5 text-stone-700 text-xs font-semibold leading-relaxed"
+                    >
+                      <span className="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">
+                        star
+                      </span>
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -725,12 +780,21 @@ export function EventDetail() {
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {stats.map((stat, i) => (
-                  <div key={i} className="bg-white border border-stone-200/50 p-4 rounded-2xl space-y-1.5 shadow-2xs">
+                  <div
+                    key={i}
+                    className="bg-white border border-stone-200/50 p-4 rounded-2xl space-y-1.5 shadow-2xs"
+                  >
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary text-[16px]">{stat.icon}</span>
-                      <span className="font-label text-[8px] uppercase tracking-wider text-black/40 font-bold">{stat.label}</span>
+                      <span className="material-symbols-outlined text-primary text-[16px]">
+                        {stat.icon}
+                      </span>
+                      <span className="font-label text-[8px] uppercase tracking-wider text-black/40 font-bold">
+                        {stat.label}
+                      </span>
                     </div>
-                    <span className="font-body text-black font-semibold text-[13px] block">{stat.value}</span>
+                    <span className="font-body text-black font-semibold text-[13px] block">
+                      {stat.value}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -739,44 +803,55 @@ export function EventDetail() {
 
           {/* Right Column: Artisan Customizer Form */}
           <div ref={customizerCardRef} className="lg:col-span-5 flex flex-col gap-6">
-
             {/* 2. Customizer Crate Form */}
             <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-[#C4A87C]/20 p-6 md:p-8 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)]">
               <div className="flex items-center justify-between pb-3 border-b border-black/5">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary text-[18px]">tune</span>
-                  <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">Artisan Customizer</span>
+                  <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">
+                    Artisan Customizer
+                  </span>
                 </div>
-                <span className="text-[10px] text-stone-400 font-bold">Step {customizerStep} of 4</span>
+                <span className="text-[10px] text-stone-400 font-bold">
+                  Step {customizerStep} of 4
+                </span>
               </div>
 
               {/* Stepper Progress Indicator */}
               <div className="flex items-center justify-between pb-2">
                 {[
-                  { number: 1, label: "Occasion" },
-                  { number: 2, label: "Schedule" },
-                  { number: 3, label: "Venue" },
-                  { number: 4, label: "Confirm" }
+                  { number: 1, label: 'Occasion' },
+                  { number: 2, label: 'Schedule' },
+                  { number: 3, label: 'Venue' },
+                  { number: 4, label: 'Confirm' },
                 ].map((s, idx) => (
                   <React.Fragment key={s.number}>
                     <div className="flex flex-col items-center gap-1">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center font-display text-[10px] font-bold transition-all duration-300 ${
-                        customizerStep === s.number
-                          ? "bg-black text-white scale-110 shadow-md"
-                          : customizerStep > s.number
-                          ? "bg-primary text-black"
-                          : "bg-stone-100 text-stone-400"
-                      }`}>
-                        {customizerStep > s.number ? "✓" : s.number}
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center font-display text-[10px] font-bold transition-all duration-300 ${
+                          customizerStep === s.number
+                            ? 'bg-black text-white scale-110 shadow-md'
+                            : customizerStep > s.number
+                              ? 'bg-primary text-black'
+                              : 'bg-stone-100 text-stone-400'
+                        }`}
+                      >
+                        {customizerStep > s.number ? '✓' : s.number}
                       </div>
-                      <span className={`text-[8px] uppercase tracking-wider font-semibold ${
-                        customizerStep === s.number ? "text-black" : "text-stone-400"
-                      }`}>{s.label}</span>
+                      <span
+                        className={`text-[8px] uppercase tracking-wider font-semibold ${
+                          customizerStep === s.number ? 'text-black' : 'text-stone-400'
+                        }`}
+                      >
+                        {s.label}
+                      </span>
                     </div>
                     {idx < 3 && (
-                      <div className={`h-[1px] flex-1 border-t ${
-                        customizerStep > s.number ? "border-primary" : "border-stone-200"
-                      } -mt-4`} />
+                      <div
+                        className={`h-[1px] flex-1 border-t ${
+                          customizerStep > s.number ? 'border-primary' : 'border-stone-200'
+                        } -mt-4`}
+                      />
                     )}
                   </React.Fragment>
                 ))}
@@ -787,21 +862,27 @@ export function EventDetail() {
                 <div className="space-y-4 pt-2">
                   {/* Select Your Occasion */}
                   <div className="space-y-1.5">
-                    <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Select Your Occasion *</label>
+                    <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                      Select Your Occasion *
+                    </label>
                     <select
                       value={eventType}
                       onChange={(e) => setEventType(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
                     >
-                      {EVENT_TYPES.map(type => (
-                        <option key={type.id} value={type.id}>{type.label}</option>
+                      {EVENT_TYPES.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.label}
+                        </option>
                       ))}
                     </select>
                   </div>
 
-                  {eventType === "other" && (
+                  {eventType === 'other' && (
                     <div className="space-y-1.5 bg-primary/5 p-4 rounded-2xl border border-primary/20">
-                      <label className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">Specify Custom Occasion *</label>
+                      <label className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">
+                        Specify Custom Occasion *
+                      </label>
                       <input
                         type="text"
                         placeholder="e.g. Housewarming, Baby Shower"
@@ -815,7 +896,9 @@ export function EventDetail() {
                   {/* Date & Duration Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Ceremony Date *</label>
+                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                        Ceremony Date *
+                      </label>
                       <input
                         type="date"
                         value={bookingDate}
@@ -824,7 +907,9 @@ export function EventDetail() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Rental Days</label>
+                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                        Rental Days
+                      </label>
                       <select
                         value={rentalDurationDays}
                         onChange={(e) => setRentalDurationDays(Number(e.target.value))}
@@ -839,7 +924,9 @@ export function EventDetail() {
 
                   {/* Setup Environment Toggle */}
                   <div className="space-y-2">
-                    <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">Setup Environment</label>
+                    <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">
+                      Setup Environment
+                    </label>
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -867,7 +954,9 @@ export function EventDetail() {
                 <div className="space-y-4 pt-2">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Setup Start Time</label>
+                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                        Setup Start Time
+                      </label>
                       <select
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
@@ -881,7 +970,9 @@ export function EventDetail() {
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Ceremony End Time</label>
+                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                        Ceremony End Time
+                      </label>
                       <select
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
@@ -898,7 +989,9 @@ export function EventDetail() {
 
                   {/* Placement Preference */}
                   <div className="space-y-2">
-                    <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">Placement Destination</label>
+                    <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">
+                      Placement Destination
+                    </label>
                     <select
                       value={placementPreference}
                       onChange={(e) => setPlacementPreference(e.target.value)}
@@ -907,7 +1000,9 @@ export function EventDetail() {
                       <option value="Side-Stage Showcase Corner">Side-Stage Showcase Corner</option>
                       <option value="Entrance Presentation Desk">Entrance Presentation Desk</option>
                       <option value="Traditional Mandap Flanks">Traditional Mandap Flanks</option>
-                      <option value="Groom/Bride Seating Podiums">Groom/Bride Seating Podiums</option>
+                      <option value="Groom/Bride Seating Podiums">
+                        Groom/Bride Seating Podiums
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -918,10 +1013,15 @@ export function EventDetail() {
                 <div className="space-y-4 pt-2">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <label className="font-label text-[9px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">Select Event Venue *</label>
+                      <label className="font-label text-[9px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
+                        Select Event Venue *
+                      </label>
                       {venueDetails && (
                         <span className="text-[10px] text-green-600 font-bold flex items-center gap-0.5 animate-pulse">
-                          <span className="material-symbols-outlined text-[12px]">check_circle</span> Verified
+                          <span className="material-symbols-outlined text-[12px]">
+                            check_circle
+                          </span>{' '}
+                          Verified
                         </span>
                       )}
                     </div>
@@ -935,7 +1035,9 @@ export function EventDetail() {
                         }}
                         className="flex-1 bg-white hover:bg-stone-50 text-black border border-black/10 py-2.5 px-3 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[16px] text-primary">map</span>
+                        <span className="material-symbols-outlined text-[16px] text-primary">
+                          map
+                        </span>
                         <span>Choose on Map</span>
                       </button>
                       <button
@@ -952,28 +1054,32 @@ export function EventDetail() {
                     {isManualLocationInput && (
                       <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/20 space-y-3">
                         <div className="space-y-1">
-                          <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">Venue Name *</label>
+                          <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
+                            Venue Name *
+                          </label>
                           <input
                             type="text"
                             placeholder="e.g. Grand Palace Hall, Temple Flanks"
                             value={manualVenueName}
                             onChange={(e) => {
                               setManualVenueName(e.target.value);
-                              handleManualFieldChange("name", e.target.value);
+                              handleManualFieldChange('name', e.target.value);
                             }}
                             className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
                           />
                         </div>
 
                         <div className="space-y-1">
-                          <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">Full Address *</label>
+                          <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
+                            Full Address *
+                          </label>
                           <input
                             type="text"
                             placeholder="e.g. 123 Heritage Lane, Near Old Circle"
                             value={manualAddress}
                             onChange={(e) => {
                               setManualAddress(e.target.value);
-                              handleManualFieldChange("address", e.target.value);
+                              handleManualFieldChange('address', e.target.value);
                             }}
                             className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
                           />
@@ -981,40 +1087,46 @@ export function EventDetail() {
 
                         <div className="grid grid-cols-3 gap-2">
                           <div className="space-y-1">
-                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">City *</label>
+                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
+                              City *
+                            </label>
                             <input
                               type="text"
                               placeholder="e.g. Bengaluru"
                               value={manualCity}
                               onChange={(e) => {
                                 setManualCity(e.target.value);
-                                handleManualFieldChange("city", e.target.value);
+                                handleManualFieldChange('city', e.target.value);
                               }}
                               className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">State *</label>
+                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
+                              State *
+                            </label>
                             <input
                               type="text"
                               placeholder="e.g. Karnataka"
                               value={manualState}
                               onChange={(e) => {
                                 setManualState(e.target.value);
-                                handleManualFieldChange("state", e.target.value);
+                                handleManualFieldChange('state', e.target.value);
                               }}
                               className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">Pincode *</label>
+                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
+                              Pincode *
+                            </label>
                             <input
                               type="text"
                               placeholder="e.g. 560001"
                               value={manualPincode}
                               onChange={(e) => {
                                 setManualPincode(e.target.value);
-                                handleManualFieldChange("pincode", e.target.value);
+                                handleManualFieldChange('pincode', e.target.value);
                               }}
                               className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
                             />
@@ -1024,15 +1136,19 @@ export function EventDetail() {
                     )}
 
                     {/* Venue Detail Card Preview */}
-                    {(venueDetails && !isManualLocationInput) ? (
+                    {venueDetails && !isManualLocationInput ? (
                       <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/25 space-y-2 relative overflow-hidden">
                         <div className="flex items-start justify-between gap-2 z-10 relative">
                           <div className="space-y-0.5">
                             <h4 className="text-xs font-bold text-black flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-primary text-[16px]">storefront</span>
+                              <span className="material-symbols-outlined text-primary text-[16px]">
+                                storefront
+                              </span>
                               {venueDetails.name}
                             </h4>
-                            <p className="text-[11px] text-stone-600 leading-normal font-light">{venueDetails.address}</p>
+                            <p className="text-[11px] text-stone-600 leading-normal font-light">
+                              {venueDetails.address}
+                            </p>
                             <div className="flex gap-x-2 text-[9px] text-stone-500 font-semibold font-mono pt-1">
                               {venueDetails.city && <span>City: {venueDetails.city}</span>}
                               {venueDetails.pincode && <span>Pincode: {venueDetails.pincode}</span>}
@@ -1040,25 +1156,31 @@ export function EventDetail() {
                           </div>
                           <a
                             href={venueDetails.googleMapsLink}
-                            target="_blank" rel="noopener noreferrer"
-                            
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="w-7 h-7 rounded-full bg-white border border-black/5 flex items-center justify-center text-primary hover:bg-stone-50 shrink-0 transition-colors shadow-sm"
                             title="Open in Google Maps"
                           >
-                            <span className="material-symbols-outlined text-[16px]">directions</span>
+                            <span className="material-symbols-outlined text-[16px]">
+                              directions
+                            </span>
                           </a>
                         </div>
                       </div>
-                    ) : (!isManualLocationInput && (
-                      <div className="bg-stone-50 border border-dashed border-black/10 p-4 rounded-2xl text-center text-stone-400 font-light text-xs">
-                        No venue location specified yet. Tap "Choose on Map" to configure.
-                      </div>
-                    ))}
+                    ) : (
+                      !isManualLocationInput && (
+                        <div className="bg-stone-50 border border-dashed border-black/10 p-4 rounded-2xl text-center text-stone-400 font-light text-xs">
+                          No venue location specified yet. Tap "Choose on Map" to configure.
+                        </div>
+                      )
+                    )}
                   </div>
 
                   {/* Custom notes */}
                   <div className="space-y-2">
-                    <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">Arrangement Notes</label>
+                    <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">
+                      Arrangement Notes
+                    </label>
                     <textarea
                       placeholder="Traditional naming, gift tray customize, placement dimensions..."
                       value={customNote}
@@ -1073,36 +1195,60 @@ export function EventDetail() {
               {customizerStep === 4 && (
                 <div className="space-y-4 pt-2">
                   <div className="bg-stone-50 p-4 rounded-2xl border border-black/5 space-y-3">
-                    <span className="font-label text-[9px] uppercase tracking-widest text-black/40 font-bold block">Booking Summary</span>
-                    
+                    <span className="font-label text-[9px] uppercase tracking-widest text-black/40 font-bold block">
+                      Booking Summary
+                    </span>
+
                     <div className="grid grid-cols-2 gap-y-2.5 gap-x-2 text-[11px] font-semibold text-stone-700">
                       <div>
-                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Occasion</span>
-                        <span className="text-black capitalize truncate block">{eventType === "other" ? customOccasion : eventType}</span>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                          Occasion
+                        </span>
+                        <span className="text-black capitalize truncate block">
+                          {eventType === 'other' ? customOccasion : eventType}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Ceremony Date</span>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                          Ceremony Date
+                        </span>
                         <span className="text-black">{bookingDate}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Rental Duration</span>
-                        <span className="text-black">{rentalDurationDays} Day{rentalDurationDays > 1 ? 's' : ''}</span>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                          Rental Duration
+                        </span>
+                        <span className="text-black">
+                          {rentalDurationDays} Day{rentalDurationDays > 1 ? 's' : ''}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Environment</span>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                          Environment
+                        </span>
                         <span className="text-black">{isOutdoor ? 'Outdoor' : 'Indoor'}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Setup Start</span>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                          Setup Start
+                        </span>
                         <span className="text-black">{startTime}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Ceremony End</span>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                          Ceremony End
+                        </span>
                         <span className="text-black">{endTime}</span>
                       </div>
                       <div className="col-span-2">
-                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">Venue Location</span>
-                        <span className="text-black line-clamp-1">{isManualLocationInput ? `${manualVenueName}, ${manualAddress}` : (venueDetails?.name || "TBD")}</span>
+                        <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                          Venue Location
+                        </span>
+                        <span className="text-black line-clamp-1">
+                          {isManualLocationInput
+                            ? `${manualVenueName}, ${manualAddress}`
+                            : venueDetails?.name || 'TBD'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1121,32 +1267,46 @@ export function EventDetail() {
                         className="translate-x-4 mix-blend-darken"
                       />
                     </div>
-                    
+
                     <div className="relative z-10 space-y-2 text-xs">
                       <div className="flex justify-between items-center text-stone-600">
                         <span>Base Package Rental</span>
-                        <span>₹{(event.basePrice || 35000).toLocaleString("en-IN")}</span>
+                        <span>₹{(event.basePrice || 35000).toLocaleString('en-IN')}</span>
                       </div>
                       {rentalDurationDays > 1 && (
                         <div className="flex justify-between items-center text-stone-600 text-[11px]">
                           <span>Duration Multiplier ({rentalDurationDays} Days)</span>
-                          <span>x{rentalDurationDays === 2 ? '1.5' : (1.5 + (rentalDurationDays - 2) * 0.4).toFixed(1)}</span>
+                          <span>
+                            x
+                            {rentalDurationDays === 2
+                              ? '1.5'
+                              : (1.5 + (rentalDurationDays - 2) * 0.4).toFixed(1)}
+                          </span>
                         </div>
                       )}
                       <div className="flex justify-between items-center font-bold text-black border-t border-black/5 pt-2 text-[14px]">
                         <span>Grand Total Price</span>
-                        <span>₹{calculateLivePrice().toLocaleString("en-IN")}</span>
+                        <span>₹{calculateLivePrice().toLocaleString('en-IN')}</span>
                       </div>
                       <div className="flex justify-between items-center font-bold text-primary border-t border-dashed border-primary/20 pt-2 text-[14px] bg-primary/5 -mx-4 px-4 py-1.5 rounded-lg">
                         <div className="flex flex-col">
                           <span>50% Secure Deposit</span>
-                          <span className="text-[8px] font-normal text-stone-500 leading-none">Paid now to confirm booking</span>
+                          <span className="text-[8px] font-normal text-stone-500 leading-none">
+                            Paid now to confirm booking
+                          </span>
                         </div>
-                        <span>₹{Math.round(calculateLivePrice() * 0.50).toLocaleString("en-IN")}</span>
+                        <span>
+                          ₹{Math.round(calculateLivePrice() * 0.5).toLocaleString('en-IN')}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center text-stone-500 text-[10px]">
                         <span>Remaining Balance</span>
-                        <span>₹{(calculateLivePrice() - Math.round(calculateLivePrice() * 0.50)).toLocaleString("en-IN")}</span>
+                        <span>
+                          ₹
+                          {(
+                            calculateLivePrice() - Math.round(calculateLivePrice() * 0.5)
+                          ).toLocaleString('en-IN')}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1159,7 +1319,7 @@ export function EventDetail() {
                   {customizerStep > 1 && (
                     <button
                       type="button"
-                      onClick={() => setCustomizerStep(prev => prev - 1)}
+                      onClick={() => setCustomizerStep((prev) => prev - 1)}
                       className="w-1/3 bg-stone-100 hover:bg-stone-200 text-stone-700 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-1 active:scale-95 cursor-pointer border border-stone-250"
                     >
                       <span className="material-symbols-outlined text-[14px]">chevron_left</span>
@@ -1191,7 +1351,9 @@ export function EventDetail() {
                       className="w-2/3 bg-black text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary hover:text-black transition-all flex items-center justify-center gap-1.5 group active:scale-95 cursor-pointer"
                     >
                       <span>Pay Deposit & Reserve</span>
-                      <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">trending_flat</span>
+                      <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
+                        trending_flat
+                      </span>
                     </button>
                   )}
                 </div>
@@ -1205,7 +1367,6 @@ export function EventDetail() {
           </div>
         </div>
       </section>
-
 
       {/* 4. FURTHER DISCOVERY JOURNEYS */}
       <section className="pt-12 pb-0 md:pt-24 md:pb-8">
@@ -1223,13 +1384,9 @@ export function EventDetail() {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {relatedEvents.map((rel) => (
-              <Link
-                key={rel._id}
-                to={`/events/${rel._id}`}
-                className="group space-y-4"
-              >
+              <Link key={rel._id} to={`/events/${rel._id}`} className="group space-y-4">
                 <div className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-gray-100 shadow-lg">
-                  <img
+                  <OptimizedImage
                     src={rel.image}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     alt={rel.title}
@@ -1273,7 +1430,11 @@ export function EventDetail() {
           </div>
         }
       >
-        <RecommendationSystem category={event.category} currentProductId={event._id || event.id} targetType="event" />
+        <RecommendationSystem
+          category={event.category}
+          currentProductId={event._id || event.id}
+          targetType="event"
+        />
       </React.Suspense>
 
       {/* 4. STICKY MOBILE PRICE CARD (Floats above mobile bottom navigation) */}
@@ -1283,7 +1444,7 @@ export function EventDetail() {
             initial={{ y: 150, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 150, opacity: 0 }}
-            transition={{ type: "spring", damping: 28, stiffness: 220 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
             className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[72px] z-[100] md:hidden bg-white/95 backdrop-blur-3xl border border-[#C4A87C]/20 px-6 flex items-center justify-between gap-3 shadow-[0_20px_60px_rgba(115,92,0,0.10)] rounded-full select-none overflow-hidden"
           >
             {/* Elegant Floral Mandala Watermark backdrop */}
@@ -1304,13 +1465,13 @@ export function EventDetail() {
                 Estimated Rental
               </span>
               <p className="font-display text-[15px] text-black font-bold leading-none mt-1 font-sans">
-                ₹{calculateLivePrice().toLocaleString("en-IN")}
+                ₹{calculateLivePrice().toLocaleString('en-IN')}
               </p>
             </div>
 
             <button
               onClick={() => {
-                customizerCardRef.current?.scrollIntoView({ behavior: "smooth" });
+                customizerCardRef.current?.scrollIntoView({ behavior: 'smooth' });
               }}
               className="bg-black text-white h-10 px-5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer relative z-10 shrink-0"
             >
@@ -1318,7 +1479,6 @@ export function EventDetail() {
               <span className="material-symbols-outlined text-[14px]">tune</span>
             </button>
           </motion.div>
-
         )}
       </AnimatePresence>
 
@@ -1330,98 +1490,127 @@ export function EventDetail() {
       />
 
       {/* Fullscreen Swipeable Lightbox (Rendered at root to escape stacking context) */}
-      {typeof document !== "undefined" && createPortal(
-        <AnimatePresence>
-          {isLightboxOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[99999] bg-white flex items-center justify-center touch-none"
-              onClick={() => setIsLightboxOpen(false)}
-            >
-              <div
-                className="w-full h-full flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {isLightboxOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[99999] bg-white flex items-center justify-center touch-none"
+                onClick={() => setIsLightboxOpen(false)}
               >
-                {/* Header Controls */}
-                <div className="w-full flex justify-between items-center px-4 pt-2 shrink-0 z-10">
-                  <span className="text-black/40 font-label-sm text-[10px] md:text-[12px] uppercase tracking-[0.4em] font-bold">
-                    {activeGalleryIndex + 1} / {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).length}
-                  </span>
-                  <button
-                    onClick={() => setIsLightboxOpen(false)}
-                    className="w-10 h-10 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors"
-                    aria-label="Close lightbox"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Lightbox Swipeable Viewport */}
-                <div 
-                  ref={lightboxScrollRef}
-                  onScroll={(e) => {
-                    const width = e.currentTarget.clientWidth;
-                    if (!width) return;
-                    const currentSlide = Math.round(e.currentTarget.scrollLeft / width);
-                    const images = event.gallery && event.gallery.length > 0 ? event.gallery : [event.image];
-                    if (currentSlide !== activeGalleryIndex && currentSlide >= 0 && currentSlide < images.length) {
-                      setActiveGalleryIndex(currentSlide);
-                    }
-                  }}
-                  className="flex-1 w-full flex overflow-x-auto snap-x snap-mandatory items-center my-3 overflow-hidden min-h-0"
-                  style={{ scrollbarWidth: "none" }}
+                <div
+                  className="w-full h-full flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, idx) => (
-                    <div key={idx} className="w-full h-full shrink-0 snap-center flex items-center justify-center p-4 relative">
-                      <img
-                        src={img}
-                        alt={`Lightbox view ${idx + 1}`}
-                        className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Lightbox Thumbnail Strip */}
-                <div className="w-full pb-2 pt-2 px-4 flex gap-2.5 overflow-x-auto no-scrollbar justify-center items-center shrink-0 border-t border-black/5 mt-1 z-10">
-                  {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map((img, idx) => (
+                  {/* Header Controls */}
+                  <div className="w-full flex justify-between items-center px-4 pt-2 shrink-0 z-10">
+                    <span className="text-black/40 font-label-sm text-[10px] md:text-[12px] uppercase tracking-[0.4em] font-bold">
+                      {activeGalleryIndex + 1} /{' '}
+                      {
+                        (event.gallery && event.gallery.length > 0 ? event.gallery : [event.image])
+                          .length
+                      }
+                    </span>
                     <button
-                      key={idx}
-                      onClick={() => {
-                        setActiveGalleryIndex(idx);
-                        if (lightboxScrollRef.current) {
-                          lightboxScrollRef.current.scrollTo({
-                            left: idx * lightboxScrollRef.current.clientWidth,
-                            behavior: "smooth"
-                          });
-                        }
-                      }}
-                      className={`shrink-0 w-11 h-11 rounded-lg overflow-hidden border-2 transition-all duration-300 snap-center ${
-                        activeGalleryIndex === idx
-                          ? "border-[#C4A87C] scale-105 shadow-sm"
-                          : "border-transparent opacity-50 hover:opacity-100"
-                      }`}
+                      onClick={() => setIsLightboxOpen(false)}
+                      className="w-10 h-10 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors"
+                      aria-label="Close lightbox"
                     >
-                      <img
-                        src={img}
-                        alt={`Thumbnail ${idx + 1}`}
-                        className="w-full h-full object-cover pointer-events-none"
-                      />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
                     </button>
-                  ))}
+                  </div>
+
+                  {/* Lightbox Swipeable Viewport */}
+                  <div
+                    ref={lightboxScrollRef}
+                    onScroll={(e) => {
+                      const width = e.currentTarget.clientWidth;
+                      if (!width) return;
+                      const currentSlide = Math.round(e.currentTarget.scrollLeft / width);
+                      const images =
+                        event.gallery && event.gallery.length > 0 ? event.gallery : [event.image];
+                      if (
+                        currentSlide !== activeGalleryIndex &&
+                        currentSlide >= 0 &&
+                        currentSlide < images.length
+                      ) {
+                        setActiveGalleryIndex(currentSlide);
+                      }
+                    }}
+                    className="flex-1 w-full flex overflow-x-auto snap-x snap-mandatory items-center my-3 overflow-hidden min-h-0"
+                    style={{ scrollbarWidth: 'none' }}
+                  >
+                    {(event.gallery && event.gallery.length > 0
+                      ? event.gallery
+                      : [event.image]
+                    ).map((img, idx) => (
+                      <div
+                        key={idx}
+                        className="w-full h-full shrink-0 snap-center flex items-center justify-center p-4 relative"
+                      >
+                        <OptimizedImage
+                          src={img}
+                          alt={`Lightbox view ${idx + 1}`}
+                          className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Lightbox Thumbnail Strip */}
+                  <div className="w-full pb-2 pt-2 px-4 flex gap-2.5 overflow-x-auto no-scrollbar justify-center items-center shrink-0 border-t border-black/5 mt-1 z-10">
+                    {(event.gallery && event.gallery.length > 0
+                      ? event.gallery
+                      : [event.image]
+                    ).map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setActiveGalleryIndex(idx);
+                          if (lightboxScrollRef.current) {
+                            lightboxScrollRef.current.scrollTo({
+                              left: idx * lightboxScrollRef.current.clientWidth,
+                              behavior: 'smooth',
+                            });
+                          }
+                        }}
+                        className={`shrink-0 w-11 h-11 rounded-lg overflow-hidden border-2 transition-all duration-300 snap-center ${
+                          activeGalleryIndex === idx
+                            ? 'border-[#C4A87C] scale-105 shadow-sm'
+                            : 'border-transparent opacity-50 hover:opacity-100'
+                        }`}
+                      >
+                        <OptimizedImage
+                          src={img}
+                          alt={`Thumbnail ${idx + 1}`}
+                          className="w-full h-full object-cover pointer-events-none"
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
     </div>
   );
 }

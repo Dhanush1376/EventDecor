@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { userService } from '../services/domainServices';
 import { useAuth } from './AuthContext';
 import { WishlistStateContext, WishlistDispatchContext } from './WishlistContext';

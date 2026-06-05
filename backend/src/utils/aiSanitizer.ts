@@ -56,6 +56,20 @@ const MODERATION_BLOCKLIST: RegExp[] = [
  */
 const MAX_INPUT_LENGTH = 200;
 
+const stripUnsafeControlChars = (value: string) =>
+  Array.from(value)
+    .filter((char) => {
+      const code = char.charCodeAt(0);
+      return code === 9 || code === 10 || code === 13 || (code >= 32 && code !== 127);
+    })
+    .join('');
+
+const containsIndicScript = (value: string) =>
+  Array.from(value).some((char) => {
+    const code = char.charCodeAt(0);
+    return (code >= 0x0c00 && code <= 0x0c7f) || (code >= 0x0900 && code <= 0x097f);
+  });
+
 /**
  * Sanitize user input before embedding it in an AI/LLM prompt.
  *
@@ -74,7 +88,7 @@ export function sanitizePromptInput(raw: string): {
   let threatScore = 0;
 
   // Strip null bytes and control characters (except newlines/tabs)
-  let sanitized = raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  let sanitized = stripUnsafeControlChars(raw);
 
   // Truncate to max length
   if (sanitized.length > MAX_INPUT_LENGTH) {
@@ -103,11 +117,11 @@ export function sanitizePromptInput(raw: string): {
   }
 
   // Check for excessive unicode (potential homoglyph or flood attack)
-  const nonAsciiRatio = (sanitized.replace(/[\x20-\x7E]/g, '').length) / Math.max(sanitized.length, 1);
+  const nonAsciiRatio =
+    sanitized.replace(/[\x20-\x7E]/g, '').length / Math.max(sanitized.length, 1);
   if (nonAsciiRatio > 0.5 && sanitized.length > 10) {
     // Allow Telugu/Hindi scripts but flag if it looks like unicode flooding
-    const hasIndicScript = /[\u0c00-\u0c7f\u0900-\u097f]/.test(sanitized);
-    if (!hasIndicScript) {
+    if (!containsIndicScript(sanitized)) {
       reasons.push('unicode_flood');
       threatScore += 3;
     }
@@ -116,7 +130,7 @@ export function sanitizePromptInput(raw: string): {
   // Check for repetitive content (spam indicator)
   const words = sanitized.split(/\s+/);
   if (words.length > 5) {
-    const uniqueWords = new Set(words.map(w => w.toLowerCase()));
+    const uniqueWords = new Set(words.map((w) => w.toLowerCase()));
     if (uniqueWords.size < words.length * 0.3) {
       reasons.push('repetitive_content');
       threatScore += 3;
@@ -137,7 +151,6 @@ export function sanitizePromptInput(raw: string): {
 
   return { sanitized: sanitized.trim(), threatScore, blocked, reasons };
 }
-
 
 // ══════════════════════════════════════════════
 // AI OUTPUT SANITIZATION
@@ -169,7 +182,7 @@ export function sanitizeOutputStrings<T>(obj: T): T {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeOutputStrings(item)) as unknown as T;
+    return obj.map((item) => sanitizeOutputStrings(item)) as unknown as T;
   }
 
   if (typeof obj === 'object') {
@@ -202,31 +215,45 @@ export function validateAIResponse(data: any): {
   if (!data || typeof data !== 'object') return null;
 
   // Validate and coerce string fields
-  const detectedLanguage = typeof data.detectedLanguage === 'string'
-    ? data.detectedLanguage.substring(0, 20)
-    : 'english';
+  const detectedLanguage =
+    typeof data.detectedLanguage === 'string' ? data.detectedLanguage.substring(0, 20) : 'english';
 
-  const correctedQuery = typeof data.correctedQuery === 'string'
-    ? htmlEscapeString(data.correctedQuery.substring(0, MAX_INPUT_LENGTH))
-    : '';
+  const correctedQuery =
+    typeof data.correctedQuery === 'string'
+      ? htmlEscapeString(data.correctedQuery.substring(0, MAX_INPUT_LENGTH))
+      : '';
 
   // Validate category against known whitelist
   const VALID_CATEGORIES = new Set([
-    'Wedding', 'Birthday', 'Pooja', 'Engagement', 'Festival',
-    'Floral', 'Traditional', 'Modern', 'Lighting', 'Stage',
-    'Diwali', 'Mehendi', 'Haldi', 'Sangeet',
+    'Wedding',
+    'Birthday',
+    'Pooja',
+    'Engagement',
+    'Festival',
+    'Floral',
+    'Traditional',
+    'Modern',
+    'Lighting',
+    'Stage',
+    'Diwali',
+    'Mehendi',
+    'Haldi',
+    'Sangeet',
   ]);
-  const category = typeof data.category === 'string' && VALID_CATEGORIES.has(data.category)
-    ? data.category
-    : null;
+  const category =
+    typeof data.category === 'string' && VALID_CATEGORIES.has(data.category) ? data.category : null;
 
   // Validate style against known whitelist
   const VALID_STYLES = new Set([
-    'traditional', 'modern', 'luxury', 'minimalist', 'rustic', 'premium', 'simple',
+    'traditional',
+    'modern',
+    'luxury',
+    'minimalist',
+    'rustic',
+    'premium',
+    'simple',
   ]);
-  const style = typeof data.style === 'string' && VALID_STYLES.has(data.style)
-    ? data.style
-    : null;
+  const style = typeof data.style === 'string' && VALID_STYLES.has(data.style) ? data.style : null;
 
   // Validate arrays — must be arrays of short strings
   const sanitizeStringArray = (arr: any, maxLength = 10, maxItemLength = 50): string[] => {
@@ -242,12 +269,14 @@ export function validateAIResponse(data: any): {
   const expandedTerms = sanitizeStringArray(data.expandedTerms, 20, 80);
 
   // Validate numeric fields
-  const priceMin = typeof data.priceMin === 'number' && data.priceMin >= 0 && data.priceMin <= 10_000_000
-    ? data.priceMin
-    : null;
-  const priceMax = typeof data.priceMax === 'number' && data.priceMax >= 0 && data.priceMax <= 10_000_000
-    ? data.priceMax
-    : null;
+  const priceMin =
+    typeof data.priceMin === 'number' && data.priceMin >= 0 && data.priceMin <= 10_000_000
+      ? data.priceMin
+      : null;
+  const priceMax =
+    typeof data.priceMax === 'number' && data.priceMax >= 0 && data.priceMax <= 10_000_000
+      ? data.priceMax
+      : null;
 
   return {
     detectedLanguage,
@@ -286,18 +315,27 @@ export function sanitizeTrackingMetadata(metadata: any): Record<string, any> {
     category: stripHtmlTags(metadata.category)?.substring(0, 100),
     style: stripHtmlTags(metadata.style)?.substring(0, 50),
     tags: Array.isArray(metadata.tags)
-      ? metadata.tags.filter((t: any) => typeof t === 'string').slice(0, 20).map((t: string) => t.substring(0, 50))
+      ? metadata.tags
+          .filter((t: any) => typeof t === 'string')
+          .slice(0, 20)
+          .map((t: string) => t.substring(0, 50))
       : undefined,
     priceRange: ['budget', 'mid', 'premium', 'luxury'].includes(metadata.priceRange)
       ? metadata.priceRange
       : undefined,
     searchQuery: stripHtmlTags(metadata.searchQuery)?.substring(0, 200),
-    dwellTimeMs: typeof metadata.dwellTimeMs === 'number' && metadata.dwellTimeMs >= 0 && metadata.dwellTimeMs <= 3_600_000
-      ? metadata.dwellTimeMs
-      : undefined,
-    scrollDepth: typeof metadata.scrollDepth === 'number' && metadata.scrollDepth >= 0 && metadata.scrollDepth <= 100
-      ? metadata.scrollDepth
-      : undefined,
+    dwellTimeMs:
+      typeof metadata.dwellTimeMs === 'number' &&
+      metadata.dwellTimeMs >= 0 &&
+      metadata.dwellTimeMs <= 3_600_000
+        ? metadata.dwellTimeMs
+        : undefined,
+    scrollDepth:
+      typeof metadata.scrollDepth === 'number' &&
+      metadata.scrollDepth >= 0 &&
+      metadata.scrollDepth <= 100
+        ? metadata.scrollDepth
+        : undefined,
     source: stripHtmlTags(metadata.source)?.substring(0, 100),
   };
 }

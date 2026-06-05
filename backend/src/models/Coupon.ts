@@ -41,7 +41,7 @@ const CouponSchema: Schema = new Schema(
       {
         userId: { type: Schema.Types.ObjectId, ref: 'User' },
         orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
-      }
+      },
     ],
     isActive: { type: Boolean, default: true },
     // Enterprise Promotion Settings
@@ -57,12 +57,13 @@ const CouponSchema: Schema = new Schema(
     stackingRule: { type: String, enum: ['stackable', 'exclusive'], default: 'exclusive' },
     priority: { type: Number, default: 1 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 CouponSchema.index({ code: 1, isActive: 1 });
 CouponSchema.index({ isActive: 1 });
 CouponSchema.index({ expiryDate: 1 });
+CouponSchema.index({ isActive: 1, code: 1, expiryDate: 1 }); // CRITICAL: High-performance cart validation
 
 const Coupon = mongoose.model<ICoupon>('Coupon', CouponSchema);
 

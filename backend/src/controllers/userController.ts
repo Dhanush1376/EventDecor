@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import { STAFF_ROLES } from '../config/adminConfig';
+import { STAFF_ROLES, canActorAssignRole } from '../config/adminConfig';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -91,12 +91,35 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateUserRole = asyncHandler(async (req: Request, res: Response) => {
   const { role } = req.body;
-  if (!['user', 'admin', 'manager', 'coordinator'].includes(role)) {
-    throw new ApiError(400, 'Invalid role');
+
+  // Validate that the requested role is a recognized system role
+  if (role !== 'user' && role !== 'customer' && !STAFF_ROLES.includes(role)) {
+    throw new ApiError(400, 'Invalid role assignment requested');
   }
 
-  if (role === 'admin' && (req as any).user!.role !== 'super_admin') {
-    throw new ApiError(403, 'Only super admins can assign the admin role.');
+  const actorRole = (req as any).user!.role;
+
+  // Enforce enterprise RBAC hierarchy weight checks
+  if (!canActorAssignRole(actorRole, role)) {
+    throw new ApiError(
+      403,
+      `Access denied. Your current role (${actorRole}) does not have sufficient clearance to assign the '${role}' role.`,
+    );
+  }
+
+  // Ensure they aren't trying to modify an owner or someone above their paygrade
+  const targetUser = await User.findById(req.params.id);
+  if (!targetUser) throw new ApiError(404, 'User not found');
+
+  const targetRole = targetUser.role;
+  if (
+    targetRole === 'owner' ||
+    (!canActorAssignRole(actorRole, targetRole) && actorRole !== 'owner')
+  ) {
+    throw new ApiError(
+      403,
+      'Access denied. You cannot modify the role of a user with equal or higher privileges.',
+    );
   }
 
   const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true });
@@ -720,9 +743,9 @@ export const respondToInvite = asyncHandler(async (req: any, res: Response) => {
   if (status === 'accepted') {
     // Check if user exists with this email address
     const cleanEmail = canonicalizeEmail(invite.email);
-    let user = await User.findOne({ email: cleanEmail });
+    const user = await User.findOne({ email: cleanEmail });
     if (!user) {
-      user = await User.create({
+      await User.create({
         email: cleanEmail,
         name: cleanEmail.split('@')[0],
         role: invite.role,

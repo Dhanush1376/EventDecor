@@ -1,15 +1,14 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 export function PolicySidebar() {
   const { pathname } = useLocation();
 
   const policies = [
-    { title: "Shipping Policy", path: "/shipping" },
-    { title: "Returns & Exchanges", path: "/returns" },
-    { title: "Privacy Policy", path: "/privacy" },
-    { title: "Terms & Conditions", path: "/terms" },
+    { title: 'Shipping Policy', path: '/shipping' },
+    { title: 'Returns & Exchanges', path: '/returns' },
+    { title: 'Privacy Policy', path: '/privacy' },
+    { title: 'Terms & Conditions', path: '/terms' },
   ];
 
   return (
@@ -26,8 +25,8 @@ export function PolicySidebar() {
               to={policy.path}
               className={`relative py-1 font-body text-[14px] transition-all duration-300 ${
                 isActive
-                  ? "text-on-surface font-semibold"
-                  : "text-on-surface-variant hover:text-on-surface"
+                  ? 'text-on-surface font-semibold'
+                  : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               {isActive && (
@@ -48,10 +47,10 @@ export function PolicySidebar() {
 export function MobilePolicyNav() {
   const { pathname } = useLocation();
   const policies = [
-    { title: "Shipping", path: "/shipping" },
-    { title: "Returns", path: "/returns" },
-    { title: "Privacy", path: "/privacy" },
-    { title: "Terms", path: "/terms" },
+    { title: 'Shipping', path: '/shipping' },
+    { title: 'Returns', path: '/returns' },
+    { title: 'Privacy', path: '/privacy' },
+    { title: 'Terms', path: '/terms' },
   ];
 
   return (
@@ -65,8 +64,8 @@ export function MobilePolicyNav() {
               to={policy.path}
               className={`relative px-6 py-4 text-[12px] uppercase tracking-widest transition-all duration-300 font-label-sm ${
                 isActive
-                  ? "text-on-surface font-bold"
-                  : "text-on-surface-variant hover:text-on-surface"
+                  ? 'text-on-surface font-bold'
+                  : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               {policy.title}

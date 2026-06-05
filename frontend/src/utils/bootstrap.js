@@ -2,9 +2,8 @@
  * Post-paint bootstrap: prefetch public data and warm connections without blocking first render.
  */
 import { cmsService } from '../services/domainServices';
-import { getApiUrl, getApiOrigin } from '../config/apiConfig';
+import { getApiOrigin } from '../config/apiConfig';
 import logger from './logger';
-import { purgeLegacyClientStorage } from './purgeLegacyStorage';
 import { isPrerendering } from './prerender';
 
 let bootstrapStarted = false;
@@ -35,8 +34,6 @@ export const prefetchCriticalData = () => {
 export const runAppBootstrap = () => {
   if (bootstrapStarted) return;
   bootstrapStarted = true;
-
-  purgeLegacyClientStorage();
 
   const run = () => prefetchCriticalData();
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -6,7 +6,6 @@ import rentalService from '../../services/rentalService';
 import {
   PageHeader,
   FilterBar,
-  StatusBadge,
   formatCurrency,
   fadeUp,
   stagger,

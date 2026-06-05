@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import toast from "react-hot-toast";
-import L from "leaflet";
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
+import * as L from 'leaflet';
 import logger from '../../utils/logger';
-import "leaflet/dist/leaflet.css";
+import 'leaflet/dist/leaflet.css';
 
 // Helper to check for Google Maps key
 const getGoogleMapsApiKey = () => {
-  return import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+  return import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 };
 
 export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initialLocation }) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -46,7 +46,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
         try {
           mapInstanceRef.current.remove();
         } catch (e) {
-          logger.warn("Leaflet map cleanup error", e);
+          logger.warn('Leaflet map cleanup error', e);
         }
         mapInstanceRef.current = null;
         markerInstanceRef.current = null;
@@ -63,11 +63,11 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
     setIsMapLoading(true);
 
     // Inject Leaflet CSS CDN dynamically to ensure map layout styles apply immediately
-    if (!document.getElementById("leaflet-cdn-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-cdn-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    if (!document.getElementById('leaflet-cdn-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-cdn-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
       document.head.appendChild(link);
     }
 
@@ -85,7 +85,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
     }
 
     // Check if the DOM element exists
-    const container = document.getElementById("leaflet-map-canvas");
+    const container = document.getElementById('leaflet-map-canvas');
     if (!container) {
       setTimeout(initLeafletMap, 50);
       return;
@@ -96,7 +96,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
       try {
         container._leaflet_id = null;
       } catch (e) {
-        logger.warn("Leaflet container reset warning", e);
+        logger.warn('Leaflet container reset warning', e);
       }
     }
 
@@ -105,14 +105,20 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
       try {
         mapInstanceRef.current.remove();
       } catch (e) {
-        logger.warn("Leaflet map instance remove warning", e);
+        logger.warn('Leaflet map instance remove warning', e);
       }
       mapInstanceRef.current = null;
     }
 
     // Bulletproof coordinate parsing to prevent Leaflet view crashes from invalid numeric values
     const parseCoord = (val, defaultVal) => {
-      if (val === undefined || val === null || val === "" || String(val) === "null" || String(val) === "NaN") {
+      if (
+        val === undefined ||
+        val === null ||
+        val === '' ||
+        String(val) === 'null' ||
+        String(val) === 'NaN'
+      ) {
         return defaultVal;
       }
       const num = Number(val);
@@ -124,12 +130,12 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
 
     try {
       // Initialize map instance
-      const map = L.map("leaflet-map-canvas", {
-        zoomControl: false
+      const map = L.map('leaflet-map-canvas', {
+        zoomControl: false,
       }).setView([lat, lng], 13);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; OpenStreetMap contributors'
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
       }).addTo(map);
 
       // Add Zoom Control at bottom right
@@ -143,7 +149,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
                  <span class="material-symbols-outlined text-primary text-[32px] drop-shadow-lg z-10 animate-bounce">location_on</span>
                </div>`,
         iconSize: [32, 32],
-        iconAnchor: [16, 32]
+        iconAnchor: [16, 32],
       });
 
       // Place Marker
@@ -184,14 +190,14 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
       }, 600);
 
       // Handle map clicks to relocate pin
-      map.on("click", (e) => {
+      map.on('click', (e) => {
         const { lat: clickLat, lng: clickLng } = e.latlng;
         marker.setLatLng([clickLat, clickLng]);
         reverseGeocodeLeaflet(clickLat, clickLng);
       });
 
       // Handle drag ends to relocate pin
-      marker.on("dragend", () => {
+      marker.on('dragend', () => {
         const position = marker.getLatLng();
         reverseGeocodeLeaflet(position.lat, position.lng);
       });
@@ -199,16 +205,16 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
       // If initial location has values, use them, otherwise keep clean empty state without prefilling default coords text
       if (initialLocation?.latitude && initialLocation?.longitude) {
         setSelectedLocation(initialLocation);
-        setSearchQuery(initialLocation.name || initialLocation.address || "");
+        setSearchQuery(initialLocation.name || initialLocation.address || '');
       } else {
         setSelectedLocation(null);
-        setSearchQuery("");
+        setSearchQuery('');
       }
 
       setIsMapLoading(false);
     } catch (err) {
-      logger.error("Leaflet initialization failed", err);
-      toast.error("Failed to load map interface.");
+      logger.error('Leaflet initialization failed', err);
+      toast.error('Failed to load map interface.');
       setIsMapLoading(false);
     }
   };
@@ -217,24 +223,26 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
   const reverseGeocodeLeaflet = async (lat, lng) => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
       );
-      if (!response.ok) throw new Error("Network issue geocoding coordinates");
+      if (!response.ok) throw new Error('Network issue geocoding coordinates');
       const data = await response.json();
 
       const addr = data.address || {};
-      const street = addr.road || addr.suburb || addr.neighbourhood || "";
-      const city = addr.city || addr.town || addr.village || addr.county || "";
-      const state = addr.state || "";
-      const country = addr.country || "";
-      const pincode = addr.postcode || "";
-      const venueName = data.name || addr.amenity || addr.building || addr.shop || "";
+      const street = addr.road || addr.suburb || addr.neighbourhood || '';
+      const city = addr.city || addr.town || addr.village || addr.county || '';
+      const state = addr.state || '';
+      const country = addr.country || '';
+      const pincode = addr.postcode || '';
+      const venueName = data.name || addr.amenity || addr.building || addr.shop || '';
 
       // Derive formatted address
-      const formattedAddress = data.display_name || `${venueName ? venueName + ", " : ""}${street}, ${city}, ${state}, ${pincode}`;
+      const formattedAddress =
+        data.display_name ||
+        `${venueName ? venueName + ', ' : ''}${street}, ${city}, ${state}, ${pincode}`;
 
       const locDetails = {
-        name: venueName || street || "Selected Landmark",
+        name: venueName || street || 'Selected Landmark',
         address: formattedAddress,
         city: city,
         state: state,
@@ -249,7 +257,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
       // Auto fill search bar
       setSearchQuery(venueName || street || formattedAddress);
     } catch (err) {
-      logger.error("Reverse geocoding error", err);
+      logger.error('Reverse geocoding error', err);
     }
   };
 
@@ -273,19 +281,21 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
     setIsLoadingSuggestions(true);
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=in&limit=5`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=in&limit=5`,
       );
       if (response.ok) {
         const data = await response.json();
-        setSuggestions(data.map(item => ({
-          displayName: item.display_name,
-          lat: Number(item.lat),
-          lon: Number(item.lon),
-          raw: item
-        })));
+        setSuggestions(
+          data.map((item) => ({
+            displayName: item.display_name,
+            lat: Number(item.lat),
+            lon: Number(item.lon),
+            raw: item,
+          })),
+        );
       }
     } catch (err) {
-      logger.error("Autocomplete fetching error", err);
+      logger.error('Autocomplete fetching error', err);
     } finally {
       setIsLoadingSuggestions(false);
     }
@@ -305,15 +315,15 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
     }
 
     const addr = item.raw.address || {};
-    const street = addr.road || addr.suburb || addr.neighbourhood || "";
-    const city = addr.city || addr.town || addr.village || addr.county || "";
-    const state = addr.state || "";
-    const country = addr.country || "";
-    const pincode = addr.postcode || "";
-    const venueName = item.raw.name || addr.amenity || addr.building || addr.shop || "";
+    const street = addr.road || addr.suburb || addr.neighbourhood || '';
+    const city = addr.city || addr.town || addr.village || addr.county || '';
+    const state = addr.state || '';
+    const country = addr.country || '';
+    const pincode = addr.postcode || '';
+    const venueName = item.raw.name || addr.amenity || addr.building || addr.shop || '';
 
     const locDetails = {
-      name: venueName || street || "Selected Location",
+      name: venueName || street || 'Selected Location',
       address: item.displayName,
       city: city,
       state: state,
@@ -331,12 +341,12 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
   // Fetch Device Current Location
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      toast.error("GPS tracking is not supported by your browser.");
+      toast.error('GPS tracking is not supported by your browser.');
       return;
     }
 
     setIsDetectingGPS(true);
-    const gpsId = toast.loading("Acquiring GPS coordinates...");
+    const gpsId = toast.loading('Acquiring GPS coordinates...');
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -345,7 +355,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
 
         toast.dismiss(gpsId);
         setIsDetectingGPS(false);
-        toast.success("Current location geocoded successfully!");
+        toast.success('Current location geocoded successfully!');
 
         if (mapInstanceRef.current && markerInstanceRef.current) {
           mapInstanceRef.current.setView([lat, lng], 16);
@@ -356,29 +366,29 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
       (error) => {
         toast.dismiss(gpsId);
         setIsDetectingGPS(false);
-        logger.error("GPS permission error", error);
-        
+        logger.error('GPS permission error', error);
+
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            toast.error("GPS Access Denied! Please enable browser location permissions.");
+            toast.error('GPS Access Denied! Please enable browser location permissions.');
             break;
           case error.POSITION_UNAVAILABLE:
-            toast.error("Location details unavailable. Please drop a manual map pin.");
+            toast.error('Location details unavailable. Please drop a manual map pin.');
             break;
           case error.TIMEOUT:
-            toast.error("Location tracking request timed out.");
+            toast.error('Location tracking request timed out.');
             break;
           default:
-            toast.error("Failed to acquire device coordinates.");
+            toast.error('Failed to acquire device coordinates.');
         }
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 8000 },
     );
   };
 
   const handleConfirmLocation = () => {
     if (!selectedLocation) {
-      toast.error("Please drop a map pin or search for a location first.");
+      toast.error('Please drop a map pin or search for a location first.');
       return;
     }
     onLocationSelect(selectedLocation);
@@ -403,7 +413,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 30 }}
-            transition={{ type: "spring", damping: 25, stiffness: 220 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
             className="relative bg-[#FCFAF6] border border-[#C4A87C]/30 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl z-10 flex flex-col max-h-[90vh] font-body"
           >
             {/* Elegant Header Banner */}
@@ -411,8 +421,12 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-[24px]">map</span>
                 <div>
-                  <h3 className="font-display text-lg text-black font-semibold">Select Celebration Venue</h3>
-                  <p className="text-[10px] text-black/50 uppercase tracking-widest font-bold font-label">Search or drop a pin on the map</p>
+                  <h3 className="font-display text-lg text-black font-semibold">
+                    Select Celebration Venue
+                  </h3>
+                  <p className="text-[10px] text-black/50 uppercase tracking-widest font-bold font-label">
+                    Search or drop a pin on the map
+                  </p>
                 </div>
               </div>
               <button
@@ -426,10 +440,11 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-4 flex-1 flex flex-col min-h-[400px]">
-              
               {/* Autocomplete Search Bar */}
               <div className="relative z-30 w-full">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-black/40 text-[18px]">search</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-black/40 text-[18px]">
+                  search
+                </span>
                 <input
                   type="text"
                   placeholder="Search traditional venues, halls, temples..."
@@ -440,7 +455,10 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => { setSearchQuery(""); setSuggestions([]); }}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSuggestions([]);
+                    }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-700"
                   >
                     <span className="material-symbols-outlined text-[14px]">close</span>
@@ -469,7 +487,9 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
                           onClick={() => handleSelectSuggestion(item)}
                           className="w-full text-left px-5 py-3 hover:bg-stone-50 text-xs text-stone-700 leading-relaxed font-medium transition-colors flex items-start gap-2.5"
                         >
-                          <span className="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">location_on</span>
+                          <span className="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">
+                            location_on
+                          </span>
                           <span>{item.displayName}</span>
                         </button>
                       ))}
@@ -483,10 +503,12 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
                 {isMapLoading && (
                   <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-3">
                     <div className="skeleton-box inline-block w-10 h-10 rounded-md" />
-                    <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">Rendering Live Canvas...</span>
+                    <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">
+                      Rendering Live Canvas...
+                    </span>
                   </div>
                 )}
-                
+
                 {/* Fallback Leaflet Element */}
                 <div id="leaflet-map-canvas" className="absolute inset-0 w-full h-full z-10" />
               </div>
@@ -499,16 +521,25 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
                   className="bg-[#FAF6F0] p-4.5 rounded-[1.5rem] border border-[#C4A87C]/20 flex flex-col sm:flex-row gap-3 items-start justify-between relative overflow-hidden"
                 >
                   <div className="space-y-1 z-10 flex-1">
-                    <span className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-1">Selected Destination Blueprint</span>
+                    <span className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-1">
+                      Selected Destination Blueprint
+                    </span>
                     <h4 className="text-sm font-semibold text-black leading-tight flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-primary text-[18px]">storefront</span>
+                      <span className="material-symbols-outlined text-primary text-[18px]">
+                        storefront
+                      </span>
                       {selectedLocation.name}
                     </h4>
-                    <p className="text-xs text-stone-600 font-light leading-relaxed max-w-md">{selectedLocation.address}</p>
+                    <p className="text-xs text-stone-600 font-light leading-relaxed max-w-md">
+                      {selectedLocation.address}
+                    </p>
                     <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-1.5 text-[10px] text-stone-500 font-semibold font-mono">
                       {selectedLocation.city && <span>City: {selectedLocation.city}</span>}
                       {selectedLocation.pincode && <span>Pincode: {selectedLocation.pincode}</span>}
-                      <span>GPS: {selectedLocation.latitude?.toFixed(5)}, {selectedLocation.longitude?.toFixed(5)}</span>
+                      <span>
+                        GPS: {selectedLocation.latitude?.toFixed(5)},{' '}
+                        {selectedLocation.longitude?.toFixed(5)}
+                      </span>
                     </div>
                   </div>
                 </motion.div>
@@ -518,7 +549,8 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
             {/* Modal Footer Controls */}
             <div className="bg-[#FAF6F0] px-6 py-5 border-t border-black/5 flex flex-col sm:flex-row gap-3 items-center justify-between">
               <span className="text-[10px] text-stone-500 font-light leading-relaxed max-w-xs text-center sm:text-left">
-                Ensure coordinates map accurately. You can drag the gold heritage map marker pin to tweak setup logistics!
+                Ensure coordinates map accurately. You can drag the gold heritage map marker pin to
+                tweak setup logistics!
               </span>
               <div className="flex gap-2 w-full sm:w-auto shrink-0 justify-end">
                 <button

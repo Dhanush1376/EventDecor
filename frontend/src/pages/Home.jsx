@@ -1,13 +1,10 @@
-import React from "react";
-import { StackedSectionWrapper } from "../components/layout/StackedSectionWrapper";
-import { DynamicSectionRenderer } from "../components/layout/DynamicSectionRenderer";
-import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
+import { DynamicSectionRenderer } from '../components/layout/DynamicSectionRenderer';
+import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 
-import { SEO } from "../components/seo/SEO";
-import { FAQAccordion } from "../components/seo/FAQAccordion";
-import { useWebsiteContent } from "../hooks/useWebsiteContent";
-import { SITE_URL, OG_IMAGE_URL, buildSameAsLinks } from "../constants/brandEnv";
-import { PageLoader } from "../components/ui/PageLoader";
+import { SEO } from '../components/seo/SEO';
+import { FAQAccordion } from '../components/seo/FAQAccordion';
+import { useWebsiteContent } from '../hooks/useWebsiteContent';
+import { SITE_URL, OG_IMAGE_URL, buildSameAsLinks } from '../constants/brandEnv';
 import {
   HeroSkeleton,
   NavigationHubSkeleton,
@@ -15,35 +12,34 @@ import {
   StorySkeleton,
   GallerySkeleton,
   FAQSkeleton,
-} from "../components/ui";
-
-
+} from '../components/ui';
 
 export function Home() {
   // Track page view
   useRecommendationTracker({ targetType: 'page', targetId: 'home', source: 'homepage' });
 
   const { homepageSections, seo, contact, footer, faqs, loading } = useWebsiteContent();
-  const siteUrl = SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+  const siteUrl = SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
   const sameAs = buildSameAsLinks(footer?.socialLinks);
 
   const homeSchema = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: seo?.siteName || import.meta.env.VITE_SITE_NAME || "Siri Arts & Crafts",
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: seo?.siteName || import.meta.env.VITE_SITE_NAME || 'Siri Arts & Crafts',
     image: OG_IMAGE_URL || (siteUrl ? `${siteUrl}/og-brand-card.jpg` : undefined),
-    description:
-      "Premium handcrafted event decor, wedding trays, and heritage pooja essentials.",
-    "@id": siteUrl,
+    description: 'Premium handcrafted event decor, wedding trays, and heritage pooja essentials.',
+    '@id': siteUrl,
     url: siteUrl,
-    telephone: contact?.phone ? `+91-${String(contact.phone).replace(/^\+91-?/, "")}` : import.meta.env.VITE_CONTACT_PHONE,
+    telephone: contact?.phone
+      ? `+91-${String(contact.phone).replace(/^\+91-?/, '')}`
+      : import.meta.env.VITE_CONTACT_PHONE,
     address: {
-      "@type": "PostalAddress",
-      streetAddress: contact?.address || "",
-      addressLocality: "Ongole",
-      addressRegion: "AP",
-      postalCode: "523001",
-      addressCountry: "IN",
+      '@type': 'PostalAddress',
+      streetAddress: contact?.address || '',
+      addressLocality: 'Ongole',
+      addressRegion: 'AP',
+      postalCode: '523001',
+      addressCountry: 'IN',
     },
     ...(sameAs.length > 0 && { sameAs }),
   };
@@ -52,12 +48,10 @@ export function Home() {
     return (
       <>
         <SEO
-          title={
-            seo?.pages?.home?.title || "Home of Artisanal Heritage & Luxury Decor"
-          }
+          title={seo?.pages?.home?.title || 'Home of Artisanal Heritage & Luxury Decor'}
           description={
             seo?.pages?.home?.description ||
-            "Handcrafted luxury event decor blending tradition with contemporary design."
+            'Handcrafted luxury event decor blending tradition with contemporary design.'
           }
           schema={homeSchema}
           faq={faqs?.homepage || []}
@@ -79,12 +73,10 @@ export function Home() {
   return (
     <>
       <SEO
-        title={
-          seo?.pages?.home?.title || "Home of Artisanal Heritage & Luxury Decor"
-        }
+        title={seo?.pages?.home?.title || 'Home of Artisanal Heritage & Luxury Decor'}
         description={
           seo?.pages?.home?.description ||
-          "Handcrafted luxury event decor blending tradition with contemporary design."
+          'Handcrafted luxury event decor blending tradition with contemporary design.'
         }
         schema={homeSchema}
         faq={faqs?.homepage || []}

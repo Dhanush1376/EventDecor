@@ -1,6 +1,5 @@
-import api, { refreshAccessToken } from '../api';
+import api from '../api';
 import { hasSessionMarker } from '../../utils/authStorage';
-import logger from '../../utils/logger';
 
 const checkAuthLocal = () => hasSessionMarker();
 
@@ -31,6 +30,10 @@ export const productService = {
   },
   aiAutofill: async (title, imageSrc, categoryList) => {
     const response = await api.post('/products/ai-autofill', { title, imageSrc, categoryList });
+    return response.data;
+  },
+  refineAiProduct: async (previousResult, prompt) => {
+    const response = await api.post('/products/ai-refine', { previousResult, prompt });
     return response.data;
   },
   getCategories: async () => {

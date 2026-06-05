@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { CartStateContext, CartDispatchContext } from './CartContext';
 import { useCartQuery, useCartMutations } from '../hooks/useCartQueries';
@@ -222,7 +222,7 @@ export function CartProvider({ children }) {
         setTargetCart((prev) => {
           const prevItems = prev.items || [];
           const existingIndex = prevItems.findIndex((item) => item.id === itemKey);
-          let newItems = [];
+          let newItems;
           if (existingIndex >= 0) {
             newItems = [...prevItems];
             newItems[existingIndex] = {

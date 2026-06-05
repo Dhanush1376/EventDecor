@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { eventService } from '../../services/domainServices';
 import { ImageUpload } from '../components/ImageUpload';
 import toast from 'react-hot-toast';
-import { PageHeader, fadeUp, stagger, SkeletonForm } from '../components/AdminUIKit';
+import { fadeUp, stagger, SkeletonForm } from '../components/AdminUIKit';
+import { useDraft } from '../hooks/useDraft';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 const DECOR_STYLES = ['Traditional', 'Floral', 'Modern', 'Royal', 'Minimalist', 'Rustic'];
 
@@ -18,26 +22,42 @@ export function AdminAddEvent() {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    subtitle: '',
-    category: '',
-    style: '',
-    image: '',
-    decorCount: '',
-    venueType: 'Indoor/Outdoor',
-    pricing: '',
-    description: '',
-    colorPalette: '',
-    features: '',
-    materialStyle: '',
-    venueSize: '',
-    galleryImages: ['', ''],
-    beforeImage: '',
-    afterImage: '',
-    seoTitle: '',
-    seoDescription: '',
-    isActive: true,
+  const {
+    formData,
+    setFormData,
+    draftStatus,
+    showRestoreModal,
+    restoreDraft,
+    discardDraft,
+    deleteDraft,
+    lastSavedAt,
+    blocker,
+  } = useDraft({
+    draftKey: isEditMode ? `admin:events:edit:${id}` : 'admin:events:add',
+    module: 'Events',
+    pageTitle: isEditMode ? `Edit Event ${id}` : 'New Event',
+    initialData: {
+      title: '',
+      subtitle: '',
+      category: '',
+      style: '',
+      image: '',
+      decorCount: '',
+      venueType: 'Indoor/Outdoor',
+      pricing: '',
+      description: '',
+      colorPalette: '',
+      features: '',
+      materialStyle: '',
+      venueSize: '',
+      galleryImages: ['', ''],
+      beforeImage: '',
+      afterImage: '',
+      seoTitle: '',
+      seoDescription: '',
+      isActive: true,
+    },
+    enabled: true,
   });
 
   useEffect(() => {
@@ -139,6 +159,7 @@ export function AdminAddEvent() {
         : await eventService.create(payload);
 
       if (res.success) {
+        await deleteDraft(); // Clear draft on success
         toast.success(isEditMode ? 'Portfolio updated' : 'Theme published');
         if (refreshEvents) refreshEvents();
         navigate('/admin/events');
@@ -176,6 +197,7 @@ export function AdminAddEvent() {
           <div>
             <h2 className="text-[20px] font-bold text-[var(--admin-text-primary)] leading-none mb-1.5 flex items-center gap-2">
               {isEditMode ? 'Edit Portfolio Event' : 'Create Portfolio Event'}
+              <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
             </h2>
             <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
               Configure event details, images, and pricing.
@@ -343,6 +365,16 @@ export function AdminAddEvent() {
           </div>
         </form>
       </motion.div>
+
+      <DraftRestoreModal
+        isOpen={showRestoreModal}
+        onRestore={restoreDraft}
+        onDiscard={discardDraft}
+        moduleName="Events"
+        lastSavedAt={lastSavedAt}
+      />
+
+      <UnsavedChangesGuard blocker={blocker} />
     </motion.div>
   );
 }

@@ -8,7 +8,14 @@ import {
   adminForgotPassword,
   adminResetPassword,
 } from '../controllers/adminAuthController';
-import { getAdmins, addAdmin, updateAdminRole, removeAdmin } from '../controllers/adminManagementController';
+import {
+  getAdmins,
+  addAdmin,
+  updateAdminRole,
+  removeAdmin,
+  getDeadLetterWebhooks,
+  retryDeadLetterWebhook,
+} from '../controllers/adminManagementController';
 import { requireSuperAdmin } from '../middleware/authMiddleware';
 import { authLimiter } from '../middleware/rateLimiter';
 
@@ -29,5 +36,9 @@ router.get('/system/users', requireSuperAdmin, getAdmins);
 router.post('/system/users', requireSuperAdmin, addAdmin);
 router.put('/system/users/:id/role', requireSuperAdmin, updateAdminRole);
 router.delete('/system/users/:id', requireSuperAdmin, removeAdmin);
+
+// --- Webhook DLQ Management (Protected) ---
+router.get('/system/webhooks/dlq', requireSuperAdmin, getDeadLetterWebhooks);
+router.post('/system/webhooks/dlq/:id/retry', requireSuperAdmin, retryDeadLetterWebhook);
 
 export default router;

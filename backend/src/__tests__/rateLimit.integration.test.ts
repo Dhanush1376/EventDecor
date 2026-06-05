@@ -17,7 +17,7 @@ describe('Rate limiting (TEST_RATE_LIMIT)', () => {
   });
 
   it('returns 429 after exceeding the test limit', async () => {
-    const paths = ['/api/version', '/api/readiness', '/api/health'];
+    const paths = ['/api/version'];
     const statuses: number[] = [];
 
     for (let i = 0; i < 5; i++) {

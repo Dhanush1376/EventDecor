@@ -2,10 +2,16 @@ import '../config/loadEnv';
 import { Worker, Job } from 'bullmq';
 import { connection } from './queues';
 import logger from '../config/logger';
-import { sendDirectEmail } from '../services/notificationService';
-import { rebuildUserProfile, rebuildStaleProfiles } from '../services/recommendation/userProfileBuilder';
+import { sendDirectEmailProcessor } from '../services/notificationService';
+import {
+  rebuildUserProfile,
+  rebuildStaleProfiles,
+} from '../services/recommendation/userProfileBuilder';
 import { calculateTrending, saveTrendingSnapshot } from '../services/recommendation/trendingEngine';
-import { getCachedSeasonalContext, getPrimarySeasonalLabel } from '../services/recommendation/seasonalEngine';
+import {
+  getCachedSeasonalContext,
+  getPrimarySeasonalLabel,
+} from '../services/recommendation/seasonalEngine';
 import { requestContextStorage } from '../middleware/requestTracker';
 
 // Declare workers as let (live bindings)
@@ -13,6 +19,9 @@ export let emailWorker: Worker | null = null;
 export let notificationWorker: Worker | null = null;
 export let loyaltyWorker: Worker | null = null;
 export let recommendationWorker: Worker | null = null;
+export let webhookWorker: Worker | null = null;
+export let refundWorker: Worker | null = null;
+export let systemWorker: Worker | null = null;
 
 let workersInitialized = false;
 
@@ -34,24 +43,50 @@ export const initWorkers = async () => {
       'emailQueue',
       async (job: Job) => {
         const trace = job.data._trace || {};
-        return requestContextStorage.run({ requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId }, async () => {
-          logger.info(`[WORKER] Processing email job ${job.id} for ${job.data.to}`);
-          await sendDirectEmail({
-            email: job.data.to,
-            subject: job.data.subject,
-            customHtml: job.data.html,
-            type: 'system',
-            action: 'background_email'
-          });
-        });
+        return requestContextStorage.run(
+          { requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId },
+          async () => {
+            logger.info(`[WORKER] Processing email job`, {
+              jobId: job.id,
+              email: job.data.email || job.data.to,
+            });
+
+            // Support both legacy {to, subject, html} and new full EmailOptions formats
+            const emailOptions = job.data.email
+              ? job.data
+              : {
+                  email: job.data.to,
+                  subject: job.data.subject,
+                  customHtml: job.data.html,
+                  type: job.data.type || 'system',
+                  action: job.data.action || 'background_email',
+                };
+
+            await sendDirectEmailProcessor(emailOptions);
+          },
+        );
       },
-      { connection }
+      { connection, concurrency: 5 },
     );
 
-    emailWorker.on('completed', (job) => logger.info(`[WORKER] Email job ${job.id} completed.`));
-    emailWorker.on('failed', (job, err) => logger.error(`[WORKER] Email job ${job?.id} failed:`, err));
+    emailWorker.on('completed', (job) =>
+      logger.info(`[WORKER] Email job completed`, { jobId: job.id }),
+    );
+    emailWorker.on('failed', (job, err) =>
+      logger.error(`[WORKER] Email job failed`, {
+        jobId: job?.id,
+        error: err.message,
+        stack: err.stack,
+      }),
+    );
     emailWorker.on('error', (err: any) => {
-      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND' || err.name === 'ConnectionClosedError' || err.message?.includes('max requests limit exceeded')) return;
+      if (
+        err.code === 'ECONNRESET' ||
+        err.code === 'ENOTFOUND' ||
+        err.name === 'ConnectionClosedError' ||
+        err.message?.includes('max requests limit exceeded')
+      )
+        return;
       logger.error(`[WORKER email] Error:`, err);
     });
 
@@ -60,16 +95,26 @@ export const initWorkers = async () => {
       'notificationQueue',
       async (job: Job) => {
         const trace = job.data._trace || {};
-        return requestContextStorage.run({ requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId }, async () => {
-          logger.info(`[WORKER] Processing notification job ${job.id}`);
-          // Future integration
-        });
+        return requestContextStorage.run(
+          { requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId },
+          async () => {
+            logger.info(`[WORKER] Processing notification job ${job.id}`);
+            const { createAdminNotification } = require('../services/notificationService');
+            await createAdminNotification(job.data);
+          },
+        );
       },
-      { connection }
+      { connection, concurrency: 5 },
     );
 
     notificationWorker.on('error', (err: any) => {
-      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND' || err.name === 'ConnectionClosedError' || err.message?.includes('max requests limit exceeded')) return;
+      if (
+        err.code === 'ECONNRESET' ||
+        err.code === 'ENOTFOUND' ||
+        err.name === 'ConnectionClosedError' ||
+        err.message?.includes('max requests limit exceeded')
+      )
+        return;
       logger.error(`[WORKER notification] Error:`, err);
     });
 
@@ -78,16 +123,25 @@ export const initWorkers = async () => {
       'loyaltyQueue',
       async (job: Job) => {
         const trace = job.data._trace || {};
-        return requestContextStorage.run({ requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId }, async () => {
-          logger.info(`[WORKER] Processing loyalty job ${job.id} for user ${job.data.userId}`);
-          // Future integration
-        });
+        return requestContextStorage.run(
+          { requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId },
+          async () => {
+            logger.info(`[WORKER] Processing loyalty job ${job.id} for user ${job.data.userId}`);
+            // Future integration
+          },
+        );
       },
-      { connection }
+      { connection, concurrency: 2 },
     );
 
     loyaltyWorker.on('error', (err: any) => {
-      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND' || err.name === 'ConnectionClosedError' || err.message?.includes('max requests limit exceeded')) return;
+      if (
+        err.code === 'ECONNRESET' ||
+        err.code === 'ENOTFOUND' ||
+        err.name === 'ConnectionClosedError' ||
+        err.message?.includes('max requests limit exceeded')
+      )
+        return;
       logger.error(`[WORKER loyalty] Error:`, err);
     });
 
@@ -96,136 +150,327 @@ export const initWorkers = async () => {
       'recommendationQueue',
       async (job: Job) => {
         const trace = job.data._trace || {};
-        return requestContextStorage.run({ requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId }, async () => {
-          const { type } = job.data;
-          logger.info(`[WORKER] Processing recommendation job ${job.id} (type: ${type})`);
+        return requestContextStorage.run(
+          { requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId },
+          async () => {
+            const { type } = job.data;
+            logger.info(`[WORKER] Processing recommendation job ${job.id} (type: ${type})`);
 
-          switch (type) {
-            case 'rebuild-user-profile': {
-              const { userId } = job.data;
-              await rebuildUserProfile(userId);
-              break;
-            }
-            case 'rebuild-stale-profiles': {
-              const count = await rebuildStaleProfiles();
-              logger.info(`[WORKER] Rebuilt ${count} stale user profiles`);
-              break;
-            }
-            case 'rebuild-user-feed': {
-              const { userId, page } = job.data;
-              const { getPersonalizedRecommendations } = require('../services/recommendation/recommendationEngine');
-              const { RecommendationCache } = require('../services/recommendation/recommendationCache');
-              
-              if (userId) {
-                const result = await getPersonalizedRecommendations({ userId, page, limit: 12, offset: 0 });
-                await RecommendationCache.setPersonalFeed(userId, page, result);
-                logger.info(`[WORKER] Rebuilt personalized feed for user ${userId} page ${page}`);
+            switch (type) {
+              case 'rebuild-user-profile': {
+                const { userId } = job.data;
+                await rebuildUserProfile(userId);
+                break;
               }
-              break;
-            }
-            case 'precompute-similar': {
-              const { targetType, targetId } = job.data;
-              const { RecommendationCache } = require('../services/recommendation/recommendationCache');
-              const Product = require('../models/Product').default;
-              
-              if (targetType === 'product') {
-                await require('../services/recommendation/similarityEngine').findSimilarProducts(targetId, { limit: 12 });
-                
-                const product = await Product.findById(targetId).select('category').lean();
-                if (product) {
-                  const compItems = await require('../services/recommendation/similarityEngine').getComplementaryItems(product.category || '', [targetId], { limit: 8 });
-                  const productIds = compItems.map((i: any) => i.targetId);
-                  const fullProducts = await Product.find({ _id: { $in: productIds }, isActive: true })
-                    .select('_id title imageSrc category price rating reviews slug')
-                    .lean();
+              case 'rebuild-stale-profiles': {
+                const count = await rebuildStaleProfiles();
+                logger.info(`[WORKER] Rebuilt ${count} stale user profiles`);
+                break;
+              }
+              case 'rebuild-user-feed': {
+                const { userId, page } = job.data;
+                const {
+                  getPersonalizedRecommendations,
+                } = require('../services/recommendation/recommendationEngine');
+                const {
+                  RecommendationCache,
+                } = require('../services/recommendation/recommendationCache');
 
-                  const enrichedComp = compItems.map((item: any) => {
-                    const full = fullProducts.find((prod: any) => (prod._id as any).toString() === item.targetId);
-                    return full ? {
-                      _id: item.targetId,
-                      targetType: 'product',
-                      score: item.similarityScore,
-                      source: 'complete-setup',
-                      title: full.title,
-                      imageSrc: full.imageSrc,
-                      category: full.category,
-                      price: full.price,
-                      rating: full.rating,
-                      reviews: full.reviews,
-                      slug: full.slug,
-                    } : null;
-                  }).filter(Boolean);
-                  await RecommendationCache.setCompleteSetup(targetId, enrichedComp);
+                if (userId) {
+                  const result = await getPersonalizedRecommendations({
+                    userId,
+                    page,
+                    limit: 12,
+                    offset: 0,
+                  });
+                  await RecommendationCache.setPersonalFeed(userId, page, result);
+                  logger.info(`[WORKER] Rebuilt personalized feed for user ${userId} page ${page}`);
                 }
+                break;
+              }
+              case 'precompute-similar': {
+                const { targetType, targetId } = job.data;
+                const {
+                  RecommendationCache,
+                } = require('../services/recommendation/recommendationCache');
+                const Product = require('../models/Product').default;
 
-                const alsoViewed = await require('../services/recommendation/similarityEngine').getUsersAlsoViewed(targetId, 'product', { limit: 12 });
-                const { enrichScoredItems: enrichHelper } = require('../services/recommendation/recommendationEngine');
-                const enrichedAlsoViewed = await enrichHelper(
-                  alsoViewed.map((i: any) => ({ targetId: i.targetId, targetType: i.targetType, score: i.similarityScore }))
-                );
-                await RecommendationCache.setAlsoViewed(targetId, enrichedAlsoViewed);
+                if (targetType === 'product') {
+                  await require('../services/recommendation/similarityEngine').findSimilarProducts(
+                    targetId,
+                    { limit: 12 },
+                  );
 
-              } else if (targetType === 'event') {
-                await require('../services/recommendation/similarityEngine').findSimilarEvents(targetId, { limit: 8 });
-                
-                const alsoViewed = await require('../services/recommendation/similarityEngine').getUsersAlsoViewed(targetId, 'event', { limit: 8 });
-                const { enrichScoredItems: enrichHelper } = require('../services/recommendation/recommendationEngine');
-                const enrichedAlsoViewed = await enrichHelper(
-                  alsoViewed.map((i: any) => ({ targetId: i.targetId, targetType: i.targetType, score: i.similarityScore }))
+                  const product = await Product.findById(targetId).select('category').lean();
+                  if (product) {
+                    const compItems =
+                      await require('../services/recommendation/similarityEngine').getComplementaryItems(
+                        product.category || '',
+                        [targetId],
+                        { limit: 8 },
+                      );
+                    const productIds = compItems.map((i: any) => i.targetId);
+                    const fullProducts = await Product.find({
+                      _id: { $in: productIds },
+                      isActive: true,
+                    })
+                      .select('_id title imageSrc category price rating reviews slug')
+                      .lean();
+
+                    const enrichedComp = compItems
+                      .map((item: any) => {
+                        const full = fullProducts.find(
+                          (prod: any) => (prod._id as any).toString() === item.targetId,
+                        );
+                        return full
+                          ? {
+                              _id: item.targetId,
+                              targetType: 'product',
+                              score: item.similarityScore,
+                              source: 'complete-setup',
+                              title: full.title,
+                              imageSrc: full.imageSrc,
+                              category: full.category,
+                              price: full.price,
+                              rating: full.rating,
+                              reviews: full.reviews,
+                              slug: full.slug,
+                            }
+                          : null;
+                      })
+                      .filter(Boolean);
+                    await RecommendationCache.setCompleteSetup(targetId, enrichedComp);
+                  }
+
+                  const alsoViewed =
+                    await require('../services/recommendation/similarityEngine').getUsersAlsoViewed(
+                      targetId,
+                      'product',
+                      { limit: 12 },
+                    );
+                  const {
+                    enrichScoredItems: enrichHelper,
+                  } = require('../services/recommendation/recommendationEngine');
+                  const enrichedAlsoViewed = await enrichHelper(
+                    alsoViewed.map((i: any) => ({
+                      targetId: i.targetId,
+                      targetType: i.targetType,
+                      score: i.similarityScore,
+                    })),
+                  );
+                  await RecommendationCache.setAlsoViewed(targetId, enrichedAlsoViewed);
+                } else if (targetType === 'event') {
+                  await require('../services/recommendation/similarityEngine').findSimilarEvents(
+                    targetId,
+                    { limit: 8 },
+                  );
+
+                  const alsoViewed =
+                    await require('../services/recommendation/similarityEngine').getUsersAlsoViewed(
+                      targetId,
+                      'event',
+                      { limit: 8 },
+                    );
+                  const {
+                    enrichScoredItems: enrichHelper,
+                  } = require('../services/recommendation/recommendationEngine');
+                  const enrichedAlsoViewed = await enrichHelper(
+                    alsoViewed.map((i: any) => ({
+                      targetId: i.targetId,
+                      targetType: i.targetType,
+                      score: i.similarityScore,
+                    })),
+                  );
+                  await RecommendationCache.setAlsoViewed(targetId, enrichedAlsoViewed);
+                }
+                logger.info(
+                  `[WORKER] Precomputed similarities and fallbacks for ${targetType} ${targetId}`,
                 );
-                await RecommendationCache.setAlsoViewed(targetId, enrichedAlsoViewed);
+                break;
               }
-              logger.info(`[WORKER] Precomputed similarities and fallbacks for ${targetType} ${targetId}`);
-              break;
-            }
-            case 'precompute-catalog-recommendations': {
-              const { precomputeCatalogRecommendations } = require('../services/recommendation/recommendationEngine');
-              await precomputeCatalogRecommendations();
-              break;
-            }
-            case 'precompute-active-users-feeds': {
-              const { precomputeActiveUsersFeeds } = require('../services/recommendation/recommendationEngine');
-              await precomputeActiveUsersFeeds();
-              break;
-            }
-            case 'update-trending': {
-              for (const targetType of ['product', 'event', 'gallery']) {
-                await calculateTrending(targetType, { limit: 20 });
+              case 'precompute-catalog-recommendations': {
+                const {
+                  precomputeCatalogRecommendations,
+                } = require('../services/recommendation/recommendationEngine');
+                await precomputeCatalogRecommendations();
+                break;
               }
-              logger.info('[WORKER] Trending rankings updated');
-              break;
-            }
-            case 'update-seasonal-context': {
-              await getCachedSeasonalContext();
-              logger.info('[WORKER] Seasonal context refreshed');
-              break;
-            }
-            case 'snapshot-trending': {
-              const seasonalCtx = await getCachedSeasonalContext();
-              const label = getPrimarySeasonalLabel(seasonalCtx);
-              for (const targetType of ['product', 'event', 'gallery']) {
-                await saveTrendingSnapshot('hourly', targetType, label);
+              case 'precompute-active-users-feeds': {
+                const {
+                  precomputeActiveUsersFeeds,
+                } = require('../services/recommendation/recommendationEngine');
+                await precomputeActiveUsersFeeds();
+                break;
               }
-              logger.info('[WORKER] Trending snapshots saved');
-              break;
+              case 'update-trending': {
+                for (const targetType of ['product', 'event', 'gallery']) {
+                  await calculateTrending(targetType, { limit: 20 });
+                }
+                logger.info('[WORKER] Trending rankings updated');
+                break;
+              }
+              case 'update-seasonal-context': {
+                await getCachedSeasonalContext();
+                logger.info('[WORKER] Seasonal context refreshed');
+                break;
+              }
+              case 'snapshot-trending': {
+                const seasonalCtx = await getCachedSeasonalContext();
+                const label = getPrimarySeasonalLabel(seasonalCtx);
+                for (const targetType of ['product', 'event', 'gallery']) {
+                  await saveTrendingSnapshot('hourly', targetType, label);
+                }
+                logger.info('[WORKER] Trending snapshots saved');
+                break;
+              }
+              default:
+                logger.warn(`[WORKER] Unknown recommendation job type: ${type}`);
             }
-            default:
-              logger.warn(`[WORKER] Unknown recommendation job type: ${type}`);
-          }
-        });
+          },
+        );
       },
-      { connection }
+      { connection, concurrency: 2 },
     );
 
     recommendationWorker.on('completed', (job) =>
-      logger.info(`[WORKER] Recommendation job ${job.id} completed.`)
+      logger.info(`[WORKER] Recommendation job ${job.id} completed.`),
     );
     recommendationWorker.on('failed', (job, err) =>
-      logger.error(`[WORKER] Recommendation job ${job?.id} failed:`, err)
+      logger.error(`[WORKER] Recommendation job ${job?.id} failed:`, err),
     );
     recommendationWorker.on('error', (err: any) => {
-      if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND' || err.name === 'ConnectionClosedError' || err.message?.includes('max requests limit exceeded')) return;
+      if (
+        err.code === 'ECONNRESET' ||
+        err.code === 'ENOTFOUND' ||
+        err.name === 'ConnectionClosedError' ||
+        err.message?.includes('max requests limit exceeded')
+      )
+        return;
       logger.error(`[WORKER recommendation] Error:`, err);
+    });
+
+    // Webhook Worker
+    webhookWorker = new Worker(
+      'webhookQueue',
+      async (job: Job) => {
+        const trace = job.data._trace || {};
+        return requestContextStorage.run(
+          { requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId },
+          async () => {
+            logger.info(`[WORKER] Processing webhook job`, {
+              jobId: job.id,
+              event: job.data.event,
+              razorpayEventId: job.data.eventId,
+            });
+            const { UnifiedWebhookRouter } = require('../services/payments/UnifiedWebhookRouter');
+            await UnifiedWebhookRouter.routeWebhookEvent(
+              job.data.event,
+              job.data.body,
+              job.data.signature,
+              job.data.eventId,
+            );
+          },
+        );
+      },
+      { connection, concurrency: 5 },
+    );
+
+    webhookWorker.on('completed', (job) =>
+      logger.info(`[WORKER] Webhook job completed`, { jobId: job.id }),
+    );
+    webhookWorker.on('failed', async (job, err) => {
+      logger.error(`[WORKER] Webhook job failed`, {
+        jobId: job?.id,
+        razorpayEventId: job?.data?.eventId,
+        error: err.message,
+        stack: err.stack,
+      });
+      if (job?.data?.eventId) {
+        try {
+          const PaymentWebhookEvent = require('../models/PaymentWebhookEvent').default;
+          await PaymentWebhookEvent.updateOne(
+            { razorpayEventId: job.data.eventId },
+            { $set: { status: 'failed', errorLog: err.message, updatedAt: new Date() } },
+          );
+        } catch (dbErr) {
+          logger.error(
+            `[WORKER] Failed to mark webhook ${job.data.eventId} as dead_letter:`,
+            dbErr,
+          );
+        }
+      }
+    });
+    webhookWorker.on('error', (err: any) => {
+      if (
+        err.code === 'ECONNRESET' ||
+        err.code === 'ENOTFOUND' ||
+        err.name === 'ConnectionClosedError' ||
+        err.message?.includes('max requests limit exceeded')
+      )
+        return;
+      logger.error(`[WORKER webhook] Error:`, err);
+    });
+
+    // Refund Worker
+    refundWorker = new Worker(
+      'refundQueue',
+      async (job: Job) => {
+        const trace = job.data._trace || {};
+        return requestContextStorage.run(
+          { requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId },
+          async () => {
+            logger.info(
+              `[WORKER] Processing refund job ${job.id} for RefundRecord ${job.data.refundRecordId}`,
+            );
+            const { PaymentRefundService } = require('../services/PaymentRefundService');
+            await PaymentRefundService.processRefundAsyncCore(job.data.refundRecordId);
+          },
+        );
+      },
+      { connection, concurrency: 2 },
+    );
+
+    refundWorker.on('completed', (job) => logger.info(`[WORKER] Refund job ${job.id} completed.`));
+    refundWorker.on('failed', async (job, err) => {
+      logger.error(`[WORKER] Refund job ${job?.id} failed:`, err);
+    });
+    refundWorker.on('error', (err: any) => {
+      if (
+        err.code === 'ECONNRESET' ||
+        err.code === 'ENOTFOUND' ||
+        err.name === 'ConnectionClosedError' ||
+        err.message?.includes('max requests limit exceeded')
+      )
+        return;
+      logger.error(`[WORKER refund] Error:`, err);
+    });
+
+    // System Worker (for distributed cron replacements like outbox processor)
+    systemWorker = new Worker(
+      'systemQueue',
+      async (job: Job) => {
+        const trace = job.data._trace || {};
+        return requestContextStorage.run(
+          { requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId },
+          async () => {
+            if (job.name === 'process-outbox') {
+              const { processOutboxEvents } = require('./outboxProcessor');
+              await processOutboxEvents();
+            }
+          },
+        );
+      },
+      { connection, concurrency: 1 },
+    );
+    systemWorker.on('error', (err: any) => {
+      if (
+        err.code === 'ECONNRESET' ||
+        err.code === 'ENOTFOUND' ||
+        err.name === 'ConnectionClosedError' ||
+        err.message?.includes('max requests limit exceeded')
+      )
+        return;
+      logger.error(`[WORKER system] Error:`, err);
     });
 
     workersInitialized = true;
@@ -241,9 +486,18 @@ export const initWorkers = async () => {
 
 export const closeWorkers = async () => {
   if (workersInitialized) {
-    if (emailWorker) await emailWorker.close();
-    if (notificationWorker) await notificationWorker.close();
-    if (loyaltyWorker) await loyaltyWorker.close();
-    if (recommendationWorker) await recommendationWorker.close();
+    logger.info('🛑 [WORKER] Shutting down workers gracefully...');
+    const closePromises = [
+      emailWorker?.close(),
+      notificationWorker?.close(),
+      loyaltyWorker?.close(),
+      recommendationWorker?.close(),
+      webhookWorker?.close(),
+      refundWorker?.close(),
+      systemWorker?.close(),
+    ].filter(Boolean);
+
+    await Promise.allSettled(closePromises);
+    logger.info('✅ [WORKER] All workers closed.');
   }
 };

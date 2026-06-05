@@ -1,22 +1,26 @@
-import React, { useState, useEffect, lazy, Suspense } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { handleImageError } from "../../utils/imageUtils";
-import toast from "react-hot-toast";
-import { reviewService } from "../../services/domainServices";
-import { useWebsiteContent } from "../../hooks/useWebsiteContent";
-import { ReviewsSkeleton } from "../ui/Skeleton";
-import { OptimizedImage } from "../ui/OptimizedImage";
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+import { reviewService } from '../../services/domainServices';
+import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import { ReviewsSkeleton } from '../ui/Skeleton';
+
+import { OptimizedImage } from '../ui/OptimizedImage';
 
 import logger from '../../utils/logger';
 // Lazy load heavy interaction overlays to trim the main package bundle size
-const PostReviewModal = lazy(() => import("../reviews/PostReviewModal").then((m) => ({ default: m.PostReviewModal })));
-const ReviewLightbox = lazy(() => import("../reviews/ReviewLightbox").then((m) => ({ default: m.ReviewLightbox })));
+const PostReviewModal = lazy(() =>
+  import('../reviews/PostReviewModal').then((m) => ({ default: m.PostReviewModal })),
+);
+const ReviewLightbox = lazy(() =>
+  import('../reviews/ReviewLightbox').then((m) => ({ default: m.ReviewLightbox })),
+);
 
 export const VerifiedReviews = () => {
   const { reels, testimonials } = useWebsiteContent();
   const [reviewsList, setReviewsList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState('all');
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [lightboxData, setLightboxData] = useState({ isOpen: false, media: [], activeIndex: 0 });
   const [helpfulLiked, setHelpfulLiked] = useState({});
@@ -31,8 +35,8 @@ export const VerifiedReviews = () => {
 
   const filteredReviews = React.useMemo(() => {
     return reviewsList.filter((rev) => {
-      if (activeFilter === "all") return true;
-      if (activeFilter === "media") return (rev.images && rev.images.length > 0) || rev.video;
+      if (activeFilter === 'all') return true;
+      if (activeFilter === 'media') return (rev.images && rev.images.length > 0) || rev.video;
       return rev.category === activeFilter;
     });
   }, [reviewsList, activeFilter]);
@@ -116,11 +120,11 @@ export const VerifiedReviews = () => {
     const maxScroll = slider.scrollWidth / 3;
     if (slider.scrollLeft >= maxScroll * 2) {
       slider.scrollLeft -= maxScroll;
-      setScrollLeftState(prev => prev - maxScroll);
+      setScrollLeftState((prev) => prev - maxScroll);
       setStartX(e.pageX - slider.offsetLeft);
     } else if (slider.scrollLeft <= 0) {
       slider.scrollLeft += maxScroll;
-      setScrollLeftState(prev => prev + maxScroll);
+      setScrollLeftState((prev) => prev + maxScroll);
       setStartX(e.pageX - slider.offsetLeft);
     }
   };
@@ -132,22 +136,32 @@ export const VerifiedReviews = () => {
         if (response.success && response.data) {
           const liveData = response.data.data || response.data;
           const liveReviews = (Array.isArray(liveData) ? liveData : [])
-            .filter(r => r.isMock !== true)
-            .map(r => ({
+            .filter((r) => r.isMock !== true)
+            .map((r) => ({
               id: r._id || r.id,
-              user: r.customerName || "Patron Customer",
-              location: r.location || "Ongole",
-              eventType: r.eventType || "Traditional Event",
-              favoriteElement: r.favoriteElement || "Artisanal Curation",
+              user: r.customerName || 'Patron Customer',
+              location: r.location || 'Ongole',
+              eventType: r.eventType || 'Traditional Event',
+              favoriteElement: r.favoriteElement || 'Artisanal Curation',
               rating: r.rating || 5,
-              subRatings: { quality: r.rating, design: r.rating, delivery: 5, setup: 5, communication: 5 },
-              date: new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+              subRatings: {
+                quality: r.rating,
+                design: r.rating,
+                delivery: 5,
+                setup: 5,
+                communication: 5,
+              },
+              date: new Date(r.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              }),
               comment: r.comment,
               images: r.images || [],
               video: null,
               verified: r.verified !== undefined ? r.verified : true,
               helpfulCount: r.helpfulCount || 0,
-              category: r.category || "product",
+              category: r.category || 'product',
               aiPolished: false,
             }));
 
@@ -156,7 +170,7 @@ export const VerifiedReviews = () => {
           setReviewsList([]);
         }
       } catch (err) {
-        logger.error("Failed to fetch live reviews:", err);
+        logger.error('Failed to fetch live reviews:', err);
         setReviewsList([]);
       } finally {
         setLoading(false);
@@ -170,16 +184,16 @@ export const VerifiedReviews = () => {
     if (helpfulLiked[id]) return;
     setHelpfulLiked((prev) => ({ ...prev, [id]: true }));
     setReviewsList((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, helpfulCount: (r.helpfulCount || 0) + 1 } : r))
+      prev.map((r) => (r.id === id ? { ...r, helpfulCount: (r.helpfulCount || 0) + 1 } : r)),
     );
-    toast.success("Thank you for endorsing this celebration story!", { icon: "👍" });
+    toast.success('Thank you for endorsing this celebration story!', { icon: '👍' });
 
     // If it's a dynamic review with a MongoDB ObjectID, trigger the backend API
-    if (typeof id === "string" && id.length === 24) {
+    if (typeof id === 'string' && id.length === 24) {
       try {
         await reviewService.incrementHelpful(id);
       } catch (err) {
-        logger.error("Failed to increment helpful count in database:", err);
+        logger.error('Failed to increment helpful count in database:', err);
       }
     }
   };
@@ -194,7 +208,7 @@ export const VerifiedReviews = () => {
         location: newRevData.location,
         eventType: newRevData.eventType,
         favoriteElement: newRevData.favoriteElement,
-        category: newRevData.experienceType || "product",
+        category: newRevData.experienceType || 'product',
       };
 
       const response = await reviewService.create(reviewPayload);
@@ -202,28 +216,34 @@ export const VerifiedReviews = () => {
         const savedRev = response.data;
         const mappedRev = {
           id: savedRev._id || savedRev.id,
-          user: savedRev.customerName || "Patron Customer",
-          location: savedRev.location || "Ongole",
-          eventType: savedRev.eventType || "Traditional Event",
-          favoriteElement: savedRev.favoriteElement || "Artisanal Curation",
+          user: savedRev.customerName || 'Patron Customer',
+          location: savedRev.location || 'Ongole',
+          eventType: savedRev.eventType || 'Traditional Event',
+          favoriteElement: savedRev.favoriteElement || 'Artisanal Curation',
           rating: savedRev.rating || 5,
-          subRatings: { quality: savedRev.rating, design: savedRev.rating, delivery: 5, setup: 5, communication: 5 },
-          date: "Today",
+          subRatings: {
+            quality: savedRev.rating,
+            design: savedRev.rating,
+            delivery: 5,
+            setup: 5,
+            communication: 5,
+          },
+          date: 'Today',
           comment: savedRev.comment,
           images: savedRev.images || [],
           video: null,
           verified: true,
           helpfulCount: 0,
-          category: savedRev.category || "product",
+          category: savedRev.category || 'product',
           aiPolished: false,
         };
         setReviewsList((prev) => [mappedRev, ...prev]);
-        toast.success("Your luxury event testimonial was saved in our database!");
+        toast.success('Your luxury event testimonial was saved in our database!');
       } else {
         setReviewsList((prev) => [newRevData, ...prev]);
       }
     } catch (err) {
-      logger.error("Failed to save review to database:", err);
+      logger.error('Failed to save review to database:', err);
       setReviewsList((prev) => [newRevData, ...prev]);
     }
   };
@@ -232,25 +252,38 @@ export const VerifiedReviews = () => {
     setLightboxData({ isOpen: true, media: items, activeIndex: index });
   };
 
-
-
   // Extract all media for the Pinterest Gallery rack
-  const allGalleryMedia = (reels?.items && reels.items.length > 0)
-    ? reels.items.filter(itm => itm.isVisible).map(itm => ({
-      url: itm.url,
-      type: itm.type || "image",
-      caption: itm.caption,
-      author: itm.author || "Patron"
-    }))
-    : reviewsList.reduce((acc, rev) => {
-      if (rev.images) {
-        rev.images.forEach((img) => acc.push({ url: img, type: "image", caption: `${rev.eventType} · ${rev.user}`, author: rev.user }));
-      }
-      if (rev.video) {
-        acc.push({ url: rev.video, type: "video", caption: `${rev.eventType} Highlights`, author: rev.user });
-      }
-      return acc;
-    }, []);
+  const allGalleryMedia =
+    reels?.items && reels.items.length > 0
+      ? reels.items
+          .filter((itm) => itm.isVisible)
+          .map((itm) => ({
+            url: itm.url,
+            type: itm.type || 'image',
+            caption: itm.caption,
+            author: itm.author || 'Patron',
+          }))
+      : reviewsList.reduce((acc, rev) => {
+          if (rev.images) {
+            rev.images.forEach((img) =>
+              acc.push({
+                url: img,
+                type: 'image',
+                caption: `${rev.eventType} · ${rev.user}`,
+                author: rev.user,
+              }),
+            );
+          }
+          if (rev.video) {
+            acc.push({
+              url: rev.video,
+              type: 'video',
+              caption: `${rev.eventType} Highlights`,
+              author: rev.user,
+            });
+          }
+          return acc;
+        }, []);
 
   if (loading) {
     return <ReviewsSkeleton />;
@@ -266,20 +299,19 @@ export const VerifiedReviews = () => {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-[#D4AF37]/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop space-y-12 relative z-10">
-
         {/* Elegant Section Title */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ type: "spring", stiffness: 70, damping: 15 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ type: 'spring', stiffness: 70, damping: 15 }}
           className="text-center max-w-xl mx-auto mb-6"
         >
           <span className="font-label text-[10px] md:text-xs text-[#8C7000] uppercase tracking-[0.4em] font-bold block mb-2">
             MEMORIES
           </span>
           <h2 className="text-2xl md:text-3xl font-display text-[#2D2B29] font-light tracking-tight">
-            {testimonials?.sectionTitle || "Client Testimonial"}
+            {testimonials?.sectionTitle || 'Client Testimonial'}
           </h2>
           <div className="w-8 h-[1px] bg-[#D4AF37]/40 mx-auto mt-3" />
         </motion.div>
@@ -292,10 +324,15 @@ export const VerifiedReviews = () => {
               animate={{ opacity: 1 }}
               className="py-24 text-center bg-white rounded-[2.5rem] border border-[#E8E2D5] shadow-xs p-8 max-w-lg mx-auto"
             >
-              <span className="material-symbols-outlined text-5xl text-[var(--color-gold-dark)]/40 mb-4 block">auto_stories</span>
-              <h4 className="text-lg font-display font-medium text-[#2D2B29]">No Stories in this Section Yet</h4>
+              <span className="material-symbols-outlined text-5xl text-[var(--color-gold-dark)]/40 mb-4 block">
+                auto_stories
+              </span>
+              <h4 className="text-lg font-display font-medium text-[#2D2B29]">
+                No Stories in this Section Yet
+              </h4>
               <p className="text-xs text-[#7F7663] max-w-sm mx-auto mt-2 mb-6 leading-relaxed font-body">
-                Be the first to share your milestone memory for this category and register your journey in our patron showcase.
+                Be the first to share your milestone memory for this category and register your
+                journey in our patron showcase.
               </p>
               <button
                 onClick={() => setIsPostModalOpen(true)}
@@ -329,7 +366,9 @@ export const VerifiedReviews = () => {
                     {/* Stars */}
                     <div className="flex gap-1 text-[#D4AF37] text-sm">
                       {[...Array(rev.rating || 5)].map((_, i) => (
-                        <span key={i} className="tracking-widest">★</span>
+                        <span key={i} className="tracking-widest">
+                          ★
+                        </span>
                       ))}
                     </div>
 
@@ -346,15 +385,43 @@ export const VerifiedReviews = () => {
                         {rev.images?.slice(0, 3).map((img, i) => (
                           <div
                             key={i}
-                            onClick={() => !isDragging && openMediaLightbox(rev.images.map(url => ({ url, type: "image", caption: rev.eventType, author: rev.user })), i)}
+                            onClick={() =>
+                              !isDragging &&
+                              openMediaLightbox(
+                                rev.images.map((url) => ({
+                                  url,
+                                  type: 'image',
+                                  caption: rev.eventType,
+                                  author: rev.user,
+                                })),
+                                i,
+                              )
+                            }
                             className="w-10 h-10 rounded-xl overflow-hidden border border-[#E2DACB] hover:scale-105 transition-transform duration-300 cursor-pointer shadow-2xs shrink-0"
                           >
-                            <OptimizedImage src={img} className="w-full h-full object-cover" alt="Customer Memory" />
+                            <OptimizedImage
+                              src={img}
+                              className="w-full h-full object-cover"
+                              alt="Customer Memory"
+                            />
                           </div>
                         ))}
                         {rev.video && (
                           <div
-                            onClick={() => !isDragging && openMediaLightbox([{ url: rev.video, type: "video", caption: rev.eventType, author: rev.user }], 0)}
+                            onClick={() =>
+                              !isDragging &&
+                              openMediaLightbox(
+                                [
+                                  {
+                                    url: rev.video,
+                                    type: 'video',
+                                    caption: rev.eventType,
+                                    author: rev.user,
+                                  },
+                                ],
+                                0,
+                              )
+                            }
                             className="w-10 h-10 rounded-xl bg-[var(--color-gold-dark)] text-white flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300 shadow-2xs shrink-0"
                             title="Watch Reel"
                           >
@@ -369,7 +436,7 @@ export const VerifiedReviews = () => {
                       <div className="flex items-center gap-3.5">
                         <div className="w-11 h-11 rounded-full overflow-hidden border border-[#E2DACB] bg-[#FAF9F6] flex items-center justify-center shrink-0 shadow-2xs">
                           <span className="font-serif text-[var(--color-gold-dark)] text-sm font-bold">
-                            {(rev.user || rev.name || "C")[0].toUpperCase()}
+                            {(rev.user || rev.name || 'C')[0].toUpperCase()}
                           </span>
                         </div>
                         <div>
@@ -378,11 +445,16 @@ export const VerifiedReviews = () => {
                               {rev.user || rev.name}
                             </h4>
                             {rev.verified && (
-                              <span className="material-symbols-outlined text-xs text-emerald-600 font-bold" title="Verified Event">verified</span>
+                              <span
+                                className="material-symbols-outlined text-xs text-emerald-600 font-bold"
+                                title="Verified Event"
+                              >
+                                verified
+                              </span>
                             )}
                           </div>
                           <p className="font-label text-[#8C7000] uppercase tracking-[0.2em] text-[8px] font-bold mt-0.5">
-                            {rev.eventType || "Event"} · {rev.location || "Client"}
+                            {rev.eventType || 'Event'} · {rev.location || 'Client'}
                           </p>
                         </div>
                       </div>
@@ -391,12 +463,15 @@ export const VerifiedReviews = () => {
                       {rev.helpfulCount != null && (
                         <button
                           onClick={() => !isDragging && handleHelpfulClick(rev.id)}
-                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all cursor-pointer font-bold text-[8px] uppercase tracking-wider shrink-0 ${helpfulLiked[rev.id]
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-[#FAF9F6] text-[#685C57] border-[#E2DACB] hover:border-[var(--color-gold-dark)] hover:text-[#2D2B29]"
-                            }`}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all cursor-pointer font-bold text-[8px] uppercase tracking-wider shrink-0 ${
+                            helpfulLiked[rev.id]
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-[#FAF9F6] text-[#685C57] border-[#E2DACB] hover:border-[var(--color-gold-dark)] hover:text-[#2D2B29]'
+                          }`}
                         >
-                          <span className="material-symbols-outlined text-[10px]">{helpfulLiked[rev.id] ? "thumb_up" : "thumb_up_off"}</span>
+                          <span className="material-symbols-outlined text-[10px]">
+                            {helpfulLiked[rev.id] ? 'thumb_up' : 'thumb_up_off'}
+                          </span>
                           {rev.helpfulCount + (helpfulLiked[rev.id] ? 1 : 0)}
                         </button>
                       )}
@@ -410,10 +485,15 @@ export const VerifiedReviews = () => {
 
         {/* Bottom Invite Curation Block */}
         <div className="pt-10 pb-10 text-center bg-gradient-to-r from-[#FCFBF9] via-[#FAF6EE] to-[#FCFBF9] rounded-[2.5rem] border border-[#E8E2D5] p-8 shadow-inner max-w-4xl mx-auto space-y-6">
-          <span className="material-symbols-outlined text-3xl text-[var(--color-gold-dark)] animate-pulse">workspace_premium</span>
-          <h4 className="text-xl font-display font-medium text-[#2D2B29] tracking-tight">Have You Celebrated with Siri Arts & Crafts?</h4>
+          <span className="material-symbols-outlined text-3xl text-[var(--color-gold-dark)] animate-pulse">
+            workspace_premium
+          </span>
+          <h4 className="text-xl font-display font-medium text-[#2D2B29] tracking-tight">
+            Have You Celebrated with Siri Arts & Crafts?
+          </h4>
           <p className="text-xs md:text-sm text-[#685C57] font-light leading-relaxed max-w-xl mx-auto font-body">
-            Share your authentic setup photos, traditional styling memories, and artisan feedback. Join our registry of discerning families and inspire milestone events across the nation.
+            Share your authentic setup photos, traditional styling memories, and artisan feedback.
+            Join our registry of discerning families and inspire milestone events across the nation.
           </p>
           <button
             onClick={() => setIsPostModalOpen(true)}
@@ -422,7 +502,6 @@ export const VerifiedReviews = () => {
             Share Your Experience
           </button>
         </div>
-
       </div>
 
       {/* Review Submission Modal */}
@@ -450,4 +529,3 @@ export const VerifiedReviews = () => {
     </section>
   );
 };
-

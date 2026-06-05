@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { notificationService } from "../../services/domainServices";
-import toast from "react-hot-toast";
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { notificationService } from '../../services/domainServices';
+import toast from 'react-hot-toast';
 
-import { safeLocalStorage } from "../../utils/storage";
-import { initAnalytics } from "../../utils/analytics";
-import { initObservability } from "../../utils/observability";
+import { safeLocalStorage } from '../../utils/storage';
+import { initAnalytics } from '../../utils/analytics';
+import { initObservability } from '../../utils/observability';
 
 import logger from '../../utils/logger';
 export function ConsentPopup() {
   const [isVisible, setIsVisible] = useState(false);
-  const [view, setView] = useState("banner"); // 'banner' | 'details'
-  
+  const [view, setView] = useState('banner'); // 'banner' | 'details'
+
   // Consent State Variables
   const [preferences, setPreferences] = useState({
     cookies: true,
@@ -22,7 +22,7 @@ export function ConsentPopup() {
 
   useEffect(() => {
     // Check if user has already made a preference selection
-    const consentLogged = safeLocalStorage.getItem("siri_arts_consent_logged");
+    const consentLogged = safeLocalStorage.getItem('siri_arts_consent_logged');
     if (!consentLogged) {
       // Small delay before showing banner for ultra-smooth presentation
       const timer = setTimeout(() => setIsVisible(true), 2500);
@@ -33,15 +33,18 @@ export function ConsentPopup() {
         const saved = JSON.parse(consentLogged);
         setTimeout(() => setPreferences(saved), 0);
       } catch (err) {
-        logger.error("Failed to parse local consent logs", err);
+        logger.error('Failed to parse local consent logs', err);
       }
     }
   }, []);
 
   const handleSaveConsent = async (finalPrefs, actionType) => {
+    // Instant optimistic UI update
+    setIsVisible(false);
+
     try {
-      const consentToken = safeLocalStorage.getItem("siri_arts_consent_token") || "";
-      
+      const consentToken = safeLocalStorage.getItem('siri_arts_consent_token') || '';
+
       const payload = {
         consentToken,
         cookies: finalPrefs.cookies,
@@ -50,51 +53,45 @@ export function ConsentPopup() {
         personalizedRecommendations: finalPrefs.personalizedRecommendations,
       };
 
-      const response = await notificationService.saveConsent(payload);
-      if (response && response.success) {
-        const savedPrefs = {
-          cookies: response.data.cookies,
-          marketingEmails: response.data.marketingEmails,
-          updateNotifications: response.data.updateNotifications,
-          personalizedRecommendations: response.data.personalizedRecommendations,
-        };
-        
-        // Persist token & selections locally
-        safeLocalStorage.setItem("siri_arts_consent_token", response.data.consentToken);
-        safeLocalStorage.setItem("siri_arts_consent_logged", JSON.stringify(savedPrefs));
-        setPreferences(savedPrefs);
-        
-        // Dynamically boostrap scripts after explicit consent
-        if (savedPrefs.personalizedRecommendations || savedPrefs.marketingEmails) {
-          initAnalytics();
-          initObservability();
-        }
+      // Optimistically save to local storage immediately
+      safeLocalStorage.setItem('siri_arts_consent_logged', JSON.stringify(finalPrefs));
+      setPreferences(finalPrefs);
 
-        if (actionType === "accept") {
-          toast.success("Thank you for accepting Siri Arts cookies & alerts!", {
-            icon: "✦",
-            style: {
-              background: "#faf9f6",
-              color: "var(--color-gold-dark)",
-              border: "1px solid #d0c5af",
-              fontFamily: "'Playfair Display', serif",
-            },
-          });
-        } else {
-          toast.success("Preferences updated successfully");
-        }
-      }
-    } catch (err) {
-      logger.error("Failed to persist GDPR consent selection:", err);
-      // Fallback local-only save on offline or network failure
-      safeLocalStorage.setItem("siri_arts_consent_logged", JSON.stringify(finalPrefs));
-      
+      // Dynamically boostrap scripts after explicit consent
       if (finalPrefs.personalizedRecommendations || finalPrefs.marketingEmails) {
         initAnalytics();
         initObservability();
       }
-    } finally {
-      setIsVisible(false);
+
+      if (actionType === 'accept') {
+        toast.success('Thank you for accepting Siri Arts cookies & alerts!', {
+          icon: '✦',
+          style: {
+            background: '#faf9f6',
+            color: 'var(--color-gold-dark)',
+            border: '1px solid #d0c5af',
+            fontFamily: "'Playfair Display', serif",
+          },
+        });
+      } else if (actionType === 'decline') {
+        toast.success('Preferences saved. Only essential cookies are active.');
+      } else {
+        toast.success('Preferences updated successfully');
+      }
+
+      // Async save to backend without blocking UI
+      notificationService
+        .saveConsent(payload)
+        .then((response) => {
+          if (response && response.success) {
+            safeLocalStorage.setItem('siri_arts_consent_token', response.data.consentToken);
+          }
+        })
+        .catch((err) => {
+          logger.error('Failed to persist GDPR consent selection to server:', err);
+        });
+    } catch (err) {
+      logger.error('Unexpected error in handleSaveConsent:', err);
     }
   };
 
@@ -105,7 +102,7 @@ export function ConsentPopup() {
       updateNotifications: true,
       personalizedRecommendations: true,
     };
-    handleSaveConsent(allAccepted, "accept");
+    handleSaveConsent(allAccepted, 'accept');
   };
 
   const handleDeclineAll = () => {
@@ -115,11 +112,11 @@ export function ConsentPopup() {
       updateNotifications: false,
       personalizedRecommendations: false,
     };
-    handleSaveConsent(allDeclined, "decline");
+    handleSaveConsent(allDeclined, 'decline');
   };
 
   const handleCustomSave = () => {
-    handleSaveConsent(preferences, "custom");
+    handleSaveConsent(preferences, 'custom');
   };
 
   if (!isVisible) return null;
@@ -131,12 +128,12 @@ export function ConsentPopup() {
           initial={{ opacity: 0, y: 100, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 80, scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 260, damping: 26 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 26 }}
           className="pointer-events-auto w-full max-w-xl md:max-w-2xl bg-white/80 backdrop-blur-xl border border-[var(--color-gold-dark)]/15 shadow-[0_20px_50px_rgba(115,92,0,0.1)] rounded-2xl p-5 sm:p-6 text-on-surface"
         >
-          {view === "banner" ? (
+          {view === 'banner' ? (
             <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-5">
-               <div className="flex-1 text-center md:text-left">
+              <div className="flex-1 text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-2.5 mb-2.5">
                   <span className="material-symbols-outlined text-[var(--color-gold-dark)] text-xl animate-pulse">
                     verified_user
@@ -145,15 +142,15 @@ export function ConsentPopup() {
                     Artistry & Privacy Choices
                   </h3>
                 </div>
-                
+
                 <h2 className="text-sm font-bold font-serif text-zinc-900 leading-snug mb-2">
                   Enhance your Siri Arts Curation & Updates
                 </h2>
-                
+
                 <p className="text-[11px] text-zinc-600 font-light leading-relaxed">
-                  We use cookies and notification channels to elevate your design journey. 
-                  Accepting lets us recommend hand-carved urlis, notify you of festive flash offers, 
-                  and dispatch real-time order status updates to your screen.
+                  We use cookies and notification channels to elevate your design journey. Accepting
+                  lets us recommend hand-carved urlis, notify you of festive flash offers, and
+                  dispatch real-time order status updates to your screen.
                 </p>
               </div>
 
@@ -166,16 +163,16 @@ export function ConsentPopup() {
                 >
                   Accept All
                 </motion.button>
-                
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setView("details")}
+                  onClick={() => setView('details')}
                   className="border border-[var(--color-gold-dark)]/30 hover:border-[var(--color-gold-dark)] text-[var(--color-gold-dark)] rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest transition-colors cursor-pointer text-center"
                 >
                   Configure
                 </motion.button>
-                
+
                 <button
                   onClick={handleDeclineAll}
                   className="text-[10px] text-zinc-400 hover:text-zinc-900 transition-colors font-medium cursor-pointer text-center py-1 font-sans"
@@ -188,8 +185,8 @@ export function ConsentPopup() {
             <div className="space-y-5">
               <div className="flex items-center justify-between border-b border-[var(--color-gold-dark)]/10 pb-3">
                 <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setView("banner")} 
+                  <button
+                    onClick={() => setView('banner')}
                     className="material-symbols-outlined text-zinc-400 hover:text-[var(--color-gold-dark)] text-lg cursor-pointer"
                   >
                     arrow_back
@@ -198,12 +195,13 @@ export function ConsentPopup() {
                     Detailed Consent Settings
                   </h3>
                 </div>
-                <span className="text-[10px] text-zinc-400 font-sans">GDPR & ePrivacy Compliant</span>
+                <span className="text-[10px] text-zinc-400 font-sans">
+                  GDPR & ePrivacy Compliant
+                </span>
               </div>
 
               {/* Preferences Grid */}
               <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
-                
                 {/* Preference 1: Essential Cookies */}
                 <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl">
                   <div className="mt-1">
@@ -217,11 +215,16 @@ export function ConsentPopup() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <strong className="text-[11px] font-bold text-zinc-950 font-sans">Core Platform Operations (Always Active)</strong>
-                      <span className="text-[8px] bg-zinc-200 text-zinc-700 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded font-sans">Required</span>
+                      <strong className="text-[11px] font-bold text-zinc-950 font-sans">
+                        Core Platform Operations (Always Active)
+                      </strong>
+                      <span className="text-[8px] bg-zinc-200 text-zinc-700 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded font-sans">
+                        Required
+                      </span>
                     </div>
                     <p className="text-[9.5px] text-zinc-500 font-light leading-relaxed mt-0.5">
-                      Enables checkout bag sessions, security keys, and fundamental order processing databases. Without these, the atelier portal cannot function.
+                      Enables checkout bag sessions, security keys, and fundamental order processing
+                      databases. Without these, the atelier portal cannot function.
                     </p>
                   </div>
                 </div>
@@ -233,14 +236,22 @@ export function ConsentPopup() {
                       type="checkbox"
                       id="consent-recs"
                       checked={preferences.personalizedRecommendations}
-                      onChange={(e) => setPreferences({ ...preferences, personalizedRecommendations: e.target.checked })}
+                      onChange={(e) =>
+                        setPreferences({
+                          ...preferences,
+                          personalizedRecommendations: e.target.checked,
+                        })
+                      }
                       className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-pointer accent-[var(--color-gold-dark)]"
                     />
                   </div>
                   <label htmlFor="consent-recs" className="flex-1 cursor-pointer">
-                    <strong className="text-[11px] font-bold text-zinc-950 font-sans">Personalized Design Recommendations</strong>
+                    <strong className="text-[11px] font-bold text-zinc-950 font-sans">
+                      Personalized Design Recommendations
+                    </strong>
                     <p className="text-[9.5px] text-zinc-500 font-light leading-relaxed mt-0.5">
-                      Allows us to analyze your decor views (like brass backdrops vs diyas) to recommend harmonious design elements.
+                      Allows us to analyze your decor views (like brass backdrops vs diyas) to
+                      recommend harmonious design elements.
                     </p>
                   </label>
                 </div>
@@ -252,14 +263,19 @@ export function ConsentPopup() {
                       type="checkbox"
                       id="consent-marketing"
                       checked={preferences.marketingEmails}
-                      onChange={(e) => setPreferences({ ...preferences, marketingEmails: e.target.checked })}
+                      onChange={(e) =>
+                        setPreferences({ ...preferences, marketingEmails: e.target.checked })
+                      }
                       className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-pointer accent-[var(--color-gold-dark)]"
                     />
                   </div>
                   <label htmlFor="consent-marketing" className="flex-1 cursor-pointer">
-                    <strong className="text-[11px] font-bold text-zinc-950 font-sans">Festive Offers & Catalog Email Updates</strong>
+                    <strong className="text-[11px] font-bold text-zinc-950 font-sans">
+                      Festive Offers & Catalog Email Updates
+                    </strong>
                     <p className="text-[9.5px] text-zinc-500 font-light leading-relaxed mt-0.5">
-                      Receive visually stunning, gold-branded marketing catalogs, limited collection releases, and flash holiday promo codes (e.g. 50% Off).
+                      Receive visually stunning, gold-branded marketing catalogs, limited collection
+                      releases, and flash holiday promo codes (e.g. 50% Off).
                     </p>
                   </label>
                 </div>
@@ -271,18 +287,22 @@ export function ConsentPopup() {
                       type="checkbox"
                       id="consent-updates"
                       checked={preferences.updateNotifications}
-                      onChange={(e) => setPreferences({ ...preferences, updateNotifications: e.target.checked })}
+                      onChange={(e) =>
+                        setPreferences({ ...preferences, updateNotifications: e.target.checked })
+                      }
                       className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-pointer accent-[var(--color-gold-dark)]"
                     />
                   </div>
                   <label htmlFor="consent-updates" className="flex-1 cursor-pointer">
-                    <strong className="text-[11px] font-bold text-zinc-950 font-sans">Order Logs & Dispatch Tracking Alerts</strong>
+                    <strong className="text-[11px] font-bold text-zinc-950 font-sans">
+                      Order Logs & Dispatch Tracking Alerts
+                    </strong>
                     <p className="text-[9.5px] text-zinc-500 font-light leading-relaxed mt-0.5">
-                      Receive real-time transactional dispatches on order placement, invoice pdf generation, courier dispatch, and delivery milestones.
+                      Receive real-time transactional dispatches on order placement, invoice pdf
+                      generation, courier dispatch, and delivery milestones.
                     </p>
                   </label>
                 </div>
-
               </div>
 
               {/* Preferences Footer Actions */}
@@ -303,7 +323,7 @@ export function ConsentPopup() {
                   >
                     Commit My Preferences
                   </motion.button>
-                  
+
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

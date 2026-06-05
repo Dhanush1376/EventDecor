@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../ui/ProductCard';
 import { RecommendationSkeleton } from '../ui/Skeleton';
@@ -33,7 +33,7 @@ export function RecommendationSystem({
   const similarQuery = useSimilarRecommendations(targetType, currentProductId, 8, {
     enabled: shouldFetch,
   });
-  const completeQuery = useCompleteSetup(currentProductId, 8, { enabled: shouldFetch });
+  const completeQuery = useCompleteSetup(currentProductId, targetType, 8, { enabled: shouldFetch });
   const alsoViewedQuery = useAlsoViewed(currentProductId, targetType, 8, { enabled: shouldFetch });
   const recentlyViewedQuery = useRecentlyViewed();
 

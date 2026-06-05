@@ -1,5 +1,4 @@
-import React from "react";
-import { Skeleton } from "./Skeleton";
+import { Skeleton } from './Skeleton';
 
 /**
  * A centralized, robust rendering utility for data-fetching states.
@@ -23,7 +22,9 @@ export function StateRenderer({
     if (ErrorComponent) return <ErrorComponent />;
     return (
       <div className="py-12 flex flex-col items-center justify-center text-center px-4">
-        <span className="material-symbols-outlined text-[48px] text-error mb-4 font-light">error</span>
+        <span className="material-symbols-outlined text-[48px] text-error mb-4 font-light">
+          error
+        </span>
         <h3 className="font-headline text-xl text-on-surface mb-2">Something went wrong</h3>
         <p className="font-body text-on-surface-variant max-w-sm">
           We encountered an issue while retrieving this information. Please try again.

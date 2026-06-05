@@ -7,6 +7,7 @@ import { MemoryCache } from '../utils/MemoryCache';
 import logger from '../config/logger';
 import redisClient from '../utils/redis';
 import { sanitizePromptInput, validateAIResponse } from '../utils/aiSanitizer';
+import { MongoQueryBuilder } from '../utils/MongoQueryBuilder';
 
 // ── In-memory caches ──
 const autocompleteCache = new MemoryCache({ defaultTtlMs: 5 * 60 * 1000, maxKeys: 500 });
@@ -584,44 +585,35 @@ export async function getAutocomplete(
     // Predict intent categories
     const predictedCategories = predictCategories(normalizedQuery);
 
+    const productQuery = MongoQueryBuilder.create<any>()
+      .withTextSearch(searchTerms)
+      .withRegexFallback(searchTerms, ['title', 'teluguTitle', 'category', 'tags'])
+      .build();
+
+    const eventQuery = MongoQueryBuilder.create<any>()
+      .withTextSearch(searchTerms)
+      .withRegexFallback(searchTerms, ['title', 'category', 'style', 'features'])
+      .build();
+
+    const galleryQuery = MongoQueryBuilder.create<any>()
+      .withTextSearch(searchTerms)
+      .withRegexFallback(searchTerms, ['title', 'teluguTitle', 'category', 'tags'])
+      .build();
+
     const [products, events, galleries] = await Promise.all([
-      Product.find({
-        isActive: true,
-        $or: [
-          { title: { $in: regexPatterns } },
-          { teluguTitle: { $in: regexPatterns } },
-          { category: { $in: regexPatterns } },
-          { tags: { $in: regexPatterns } },
-        ],
-      })
+      Product.find(productQuery)
         .select('_id title teluguTitle imageSrc category price rating slug')
         .sort({ rating: -1, reviews: -1 })
         .limit(5)
         .lean(),
 
-      Event.find({
-        isActive: true,
-        $or: [
-          { title: { $in: regexPatterns } },
-          { category: { $in: regexPatterns } },
-          { style: { $in: regexPatterns } },
-          { features: { $in: regexPatterns } },
-        ],
-      })
+      Event.find(eventQuery)
         .select('_id title category style basePrice slug')
         .sort({ basePrice: -1 })
         .limit(3)
         .lean(),
 
-      Gallery.find({
-        isActive: true,
-        $or: [
-          { title: { $in: regexPatterns } },
-          { teluguTitle: { $in: regexPatterns } },
-          { category: { $in: regexPatterns } },
-          { tags: { $in: regexPatterns } },
-        ],
-      })
+      Gallery.find(galleryQuery)
         .select('_id title teluguTitle image category style')
         .sort({ views: -1 })
         .limit(2)
@@ -767,23 +759,11 @@ export async function searchAll(
 
     const seasonal = await getCachedSeasonalContext();
 
-    // Stage 3: Build base filter
-    const baseFilter: any = {
-      isActive: true,
-    };
-    if (uniqueTerms.length > 0) {
-      baseFilter.$text = { $search: uniqueTerms.join(' ') };
-    }
-
     // Apply manual Category filter or predicted intent category
     const activeCategory =
       options.category && options.category !== 'All'
         ? options.category
         : aiAnalysis.category || undefined;
-
-    if (activeCategory) {
-      baseFilter.category = new RegExp(escapeRegex(activeCategory), 'i');
-    }
 
     const items: SearchResult[] = [];
     const searchProducts = !options.type || options.type === 'all' || options.type === 'product';
@@ -799,22 +779,15 @@ export async function searchAll(
       options.priceMax !== undefined ? options.priceMax : aiAnalysis.priceMax || undefined;
 
     if (searchProducts) {
-      const productFilter = { ...baseFilter };
-      if (minPrice !== undefined || maxPrice !== undefined) {
-        productFilter.price = {};
-        if (minPrice !== undefined) productFilter.price.$gte = minPrice;
-        if (maxPrice !== undefined) productFilter.price.$lte = maxPrice;
-      }
-
-      // Add color filters from intent
-      if (aiAnalysis.colors.length > 0) {
-        productFilter.$or.push({
-          tags: { $in: aiAnalysis.colors.map((c) => new RegExp(escapeRegex(c), 'i')) },
-        });
-      }
+      const productQuery = MongoQueryBuilder.create<any>()
+        .withTextSearch(uniqueTerms)
+        .withCategory(activeCategory)
+        .withPriceRange(minPrice, maxPrice, 'price')
+        .withTags(aiAnalysis.colors)
+        .build();
 
       promises.push(
-        Product.find(productFilter)
+        Product.find(productQuery)
           .select(
             '_id title teluguTitle imageSrc category price rating reviews tags slug material description',
           )
@@ -867,15 +840,14 @@ export async function searchAll(
     }
 
     if (searchEvents) {
-      const eventFilter = { ...baseFilter };
-      if (minPrice !== undefined || maxPrice !== undefined) {
-        eventFilter.basePrice = {};
-        if (minPrice !== undefined) eventFilter.basePrice.$gte = minPrice;
-        if (maxPrice !== undefined) eventFilter.basePrice.$lte = maxPrice;
-      }
+      const eventQuery = MongoQueryBuilder.create<any>()
+        .withTextSearch(uniqueTerms)
+        .withCategory(activeCategory)
+        .withPriceRange(minPrice, maxPrice, 'basePrice')
+        .build();
 
       promises.push(
-        Event.find(eventFilter)
+        Event.find(eventQuery)
           .select('_id title category style basePrice features image description')
           .limit(100)
           .maxTimeMS(5000)
@@ -916,10 +888,13 @@ export async function searchAll(
     }
 
     if (searchGalleries) {
-      const galleryFilter = { ...baseFilter };
+      const galleryQuery = MongoQueryBuilder.create<any>()
+        .withTextSearch(uniqueTerms)
+        .withCategory(activeCategory)
+        .build();
 
       promises.push(
-        Gallery.find(galleryFilter)
+        Gallery.find(galleryQuery)
           .select('_id title teluguTitle image category style tags views likes')
           .limit(100)
           .maxTimeMS(5000)

@@ -5,9 +5,13 @@ import {
   createAuditLog,
   clearAuditLogs,
 } from '../controllers/analyticsController';
-import { getPaymentReconciliationReport } from '../controllers/paymentReconciliationController';
+import {
+  getPaymentReconciliationReport,
+  triggerDeepReconciliation,
+} from '../controllers/paymentReconciliationController';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
-import { adminResponseCache } from '../middleware/adminResponseCache';
+import { dynamicResponseCache } from '../middleware/dynamicCacheMiddleware';
+import { requestTimeout } from '../middleware/queryTimeout';
 
 const router = Router();
 // Heavy dashboard aggregates — default 5 min; override with ADMIN_ANALYTICS_CACHE_TTL (seconds)
@@ -17,7 +21,8 @@ router.get(
   '/dashboard',
   requireAuth,
   requireRole(['super_admin', 'main_admin', 'admin']),
-  adminResponseCache(ADMIN_ANALYTICS_TTL),
+  requestTimeout(25000), // 25s explicit timeout for heavy dashboard aggregates
+  dynamicResponseCache(ADMIN_ANALYTICS_TTL, 'admin'),
   getDashboardStats,
 );
 router.get(
@@ -42,7 +47,14 @@ router.get(
   '/payments/reconciliation',
   requireAuth,
   requireRole(['super_admin', 'main_admin', 'admin']),
+  requestTimeout(25000), // 25s timeout for reconciliation queries
   getPaymentReconciliationReport,
+);
+router.post(
+  '/payments/reconciliation/trigger',
+  requireAuth,
+  requireRole(['super_admin', 'main_admin', 'admin']),
+  triggerDeepReconciliation,
 );
 
 export default router;

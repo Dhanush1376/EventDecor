@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../../utils/errorHelpers';
 import {
   PageHeader,
-  AdminInput,
   AdminToggle,
   SkeletonTable,
   EmptyState,
@@ -59,12 +59,7 @@ export function AdminCategories() {
   };
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={stagger}
-      className="space-y-6"
-    >
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
         title="Manage Categories"
         subtitle={`${categories.length} categories cataloged · Group products, blueprints, and highlights`}
@@ -86,14 +81,20 @@ export function AdminCategories() {
           title="No Categories"
           description="Create your first category to organize products and content across the storefront."
           action={
-            <button onClick={() => navigate('/admin/categories/add')} className="admin-btn admin-btn-primary admin-btn-sm">
+            <button
+              onClick={() => navigate('/admin/categories/add')}
+              className="admin-btn admin-btn-primary admin-btn-sm"
+            >
               <span className="material-symbols-outlined text-[14px]">add</span>
               Add Category
             </button>
           }
         />
       ) : (
-        <motion.div variants={fadeUp} className="admin-card divide-y divide-[var(--admin-border-subtle)] p-0">
+        <motion.div
+          variants={fadeUp}
+          className="admin-card divide-y divide-[var(--admin-border-subtle)] p-0"
+        >
           <div className="overflow-x-auto">
             <table className="admin-table w-full min-w-[700px]">
               <thead>
@@ -107,12 +108,19 @@ export function AdminCategories() {
               </thead>
               <tbody>
                 {categories.map((cat) => (
-                  <tr key={cat._id} className="hover:bg-[var(--admin-surface-muted)] transition-colors">
+                  <tr
+                    key={cat._id}
+                    className="hover:bg-[var(--admin-surface-muted)] transition-colors"
+                  >
                     <td className="pl-6">
-                      <span className="font-bold text-[var(--admin-text-primary)] text-[13px]">{cat.name}</span>
+                      <span className="font-bold text-[var(--admin-text-primary)] text-[13px]">
+                        {cat.name}
+                      </span>
                     </td>
                     <td>
-                      <span className="font-mono text-[11px] text-[var(--admin-text-secondary)]">{cat.slug}</span>
+                      <span className="font-mono text-[11px] text-[var(--admin-text-secondary)]">
+                        {cat.slug}
+                      </span>
                     </td>
                     <td>
                       <span className="admin-badge admin-badge-neutral text-[9px] font-bold tracking-wider uppercase">
@@ -159,4 +167,3 @@ export function AdminCategories() {
 }
 
 export default AdminCategories;
-

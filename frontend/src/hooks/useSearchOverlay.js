@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAutocomplete, useTrendingSearches } from './useSearchQueries';
 
@@ -43,9 +43,9 @@ export function useSearchOverlay() {
   }, [trendingQuery.data]);
 
   // Fetch autocomplete suggestions via React Query
-  const autocompleteQuery = useAutocomplete(debouncedQuery, { 
-    limit: 8, 
-    enabled: isOpen && debouncedQuery.trim().length >= 2 
+  const autocompleteQuery = useAutocomplete(debouncedQuery, {
+    limit: 8,
+    enabled: isOpen && debouncedQuery.trim().length >= 2,
   });
 
   const suggestions = useMemo(() => {
@@ -140,63 +140,72 @@ export function useSearchOverlay() {
   }, []);
 
   // Navigate to a suggestion
-  const selectSuggestion = useCallback((suggestion) => {
-    saveRecentSearch(suggestion.title || query);
+  const selectSuggestion = useCallback(
+    (suggestion) => {
+      saveRecentSearch(suggestion.title || query);
 
-    if (suggestion.type === 'category') {
-      navigate(`/collections?category=${encodeURIComponent(suggestion.title)}`);
-    } else if (suggestion.type === 'product') {
-      navigate(`/product/${suggestion.slug || suggestion.id}`);
-    } else if (suggestion.type === 'event') {
-      navigate(`/events/${suggestion.slug || suggestion.id}`);
-    } else if (suggestion.type === 'gallery') {
-      navigate(`/gallery/${suggestion.id}`);
-    } else {
-      navigate(`/collections?search=${encodeURIComponent(suggestion.title)}`);
-    }
+      if (suggestion.type === 'category') {
+        navigate(`/collections?category=${encodeURIComponent(suggestion.title)}`);
+      } else if (suggestion.type === 'product') {
+        navigate(`/product/${suggestion.slug || suggestion.id}`);
+      } else if (suggestion.type === 'event') {
+        navigate(`/events/${suggestion.slug || suggestion.id}`);
+      } else if (suggestion.type === 'gallery') {
+        navigate(`/gallery/${suggestion.id}`);
+      } else {
+        navigate(`/collections?search=${encodeURIComponent(suggestion.title)}`);
+      }
 
-    handleClose();
-  }, [navigate, query, saveRecentSearch, handleClose]);
+      handleClose();
+    },
+    [navigate, query, saveRecentSearch, handleClose],
+  );
 
   // Execute a full search
-  const executeSearch = useCallback((searchQuery) => {
-    const q = (searchQuery || query).trim();
-    if (q.length < 1) return;
+  const executeSearch = useCallback(
+    (searchQuery) => {
+      const q = (searchQuery || query).trim();
+      if (q.length < 1) return;
 
-    saveRecentSearch(q);
-    navigate(`/collections?search=${encodeURIComponent(q)}`);
-    handleClose();
-  }, [navigate, query, saveRecentSearch, handleClose]);
+      saveRecentSearch(q);
+      navigate(`/collections?search=${encodeURIComponent(q)}`);
+      handleClose();
+    },
+    [navigate, query, saveRecentSearch, handleClose],
+  );
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback((e) => {
-    const itemCount = suggestions.length;
+  const handleKeyDown = useCallback(
+    (e) => {
+      const itemCount = suggestions.length;
 
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setActiveIndex((prev) => (prev < itemCount - 1 ? prev + 1 : 0));
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setActiveIndex((prev) => (prev > 0 ? prev - 1 : itemCount - 1));
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (activeIndex >= 0 && suggestions[activeIndex]) {
-          selectSuggestion(suggestions[activeIndex]);
-        } else {
-          executeSearch(query);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        handleClose();
-        break;
-      default:
-        break;
-    }
-  }, [suggestions, activeIndex, selectSuggestion, executeSearch, query, handleClose]);
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setActiveIndex((prev) => (prev < itemCount - 1 ? prev + 1 : 0));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setActiveIndex((prev) => (prev > 0 ? prev - 1 : itemCount - 1));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (activeIndex >= 0 && suggestions[activeIndex]) {
+            selectSuggestion(suggestions[activeIndex]);
+          } else {
+            executeSearch(query);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          handleClose();
+          break;
+        default:
+          break;
+      }
+    },
+    [suggestions, activeIndex, selectSuggestion, executeSearch, query, handleClose],
+  );
 
   const handleOpen = useCallback(() => {
     setIsOpen(true);

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { initialWebsiteContent } from '../data/websiteContentData';
 import {
   productService,
@@ -7,7 +7,6 @@ import {
   analyticsService,
   reviewService,
   userService,
-  galleryService,
   eventService,
   notificationService,
 } from '../../services/domainServices';

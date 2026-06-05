@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ProductCard } from './ProductCard';
@@ -61,7 +61,7 @@ export function RecommendationCarousel({
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 md:mb-16">
           <div className="flex flex-col items-start max-w-2xl">
             {badge && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -75,7 +75,7 @@ export function RecommendationCarousel({
               </motion.div>
             )}
             {title && (
-              <motion.h2 
+              <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -86,7 +86,7 @@ export function RecommendationCarousel({
               </motion.h2>
             )}
             {subtitle && (
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -98,7 +98,7 @@ export function RecommendationCarousel({
             )}
           </div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -155,7 +155,6 @@ export function RecommendationCarousel({
 
       {/* Carousel Track Container */}
       <div className="relative">
-
         {/* Cinematic Full-Bleed Track */}
         <div
           ref={scrollRef}
@@ -163,7 +162,7 @@ export function RecommendationCarousel({
           onKeyDown={handleKeyDown}
           tabIndex={0}
           role="region"
-          aria-label={title || "Recommendations carousel"}
+          aria-label={title || 'Recommendations carousel'}
           aria-roledescription="carousel"
           className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory pb-12 pt-4 -mx-4 px-4 md:-mx-12 md:px-12 scroll-smooth focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
           style={{ gap }}
@@ -177,12 +176,14 @@ export function RecommendationCarousel({
               className="snap-start flex-shrink-0"
               style={{ width: itemMinWidth }}
             >
-              {renderItem ? renderItem(item, idx) : (
-                <ProductCard 
-                  {...item} 
-                  id={item.id || item._id} 
-                  imageSrc={item.imageSrc || item.image} 
-                  price={item.price || item.basePrice} 
+              {renderItem ? (
+                renderItem(item, idx)
+              ) : (
+                <ProductCard
+                  {...item}
+                  id={item.id || item._id}
+                  imageSrc={item.imageSrc || item.image}
+                  price={item.price || item.basePrice}
                 />
               )}
             </div>

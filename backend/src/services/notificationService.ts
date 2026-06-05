@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import mongoose from 'mongoose';
+import handlebars from 'handlebars';
 import EmailTemplate from '../models/EmailTemplate';
 import EmailCampaign from '../models/EmailCampaign';
 import NotificationLog from '../models/NotificationLog';
@@ -7,9 +8,21 @@ import ConsentPreference from '../models/ConsentPreference';
 import User from '../models/User';
 import logger from '../config/logger';
 import { sendEmail as smartSendEmail } from './emailProvider';
-import { escapeHtml } from '../utils/htmlEscape';
 import AdminNotification from '../models/AdminNotification';
 import { emitAdminNotification } from '../socket';
+
+// Initialize handlebars helpers
+handlebars.registerHelper('formatCurrency', function (value) {
+  return `₹${Number(value).toLocaleString('en-IN')}`;
+});
+handlebars.registerHelper('formatDate', function (dateString) {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+});
 
 // Rewrite links in HTML to include click tracking
 const rewriteLinks = (html: string, token: string): string => {
@@ -56,31 +69,15 @@ const formatShippingAddress = (addr: any): string => {
   return parts.join(', ');
 };
 
-/** Pre-built safe URLs only — never pass raw user input through this set. */
-const TRUSTED_RAW_PLACEHOLDER_KEYS = new Set(['unsubscribe_link', 'dashboardUrl', 'trackingUrl']);
-
-const formatPlaceholderValue = (key: string, raw: unknown): string => {
-  if (raw == null) return '';
-  if (key === 'shippingAddress' && typeof raw === 'object') {
-    return escapeHtml(formatShippingAddress(raw));
-  }
-  if (typeof raw === 'object') {
-    return escapeHtml(JSON.stringify(raw));
-  }
-  const text = String(raw);
-  return TRUSTED_RAW_PLACEHOLDER_KEYS.has(key) ? text : escapeHtml(text);
-};
-
-// Replace template placeholders (e.g. {{name}}, {{otp}}) — always HTML-escape user-supplied values
+// Replace template placeholders using Handlebars
 const replacePlaceholders = (templateHtml: string, data: Record<string, any>): string => {
-  let result = templateHtml;
-  for (const key in data) {
-    const regex = new RegExp(`{{\s*${key}\s*}}`, 'g');
-    result = result.replace(regex, formatPlaceholderValue(key, data[key]));
+  try {
+    const template = handlebars.compile(templateHtml);
+    return template(data);
+  } catch (err) {
+    logger.error('Error compiling template with Handlebars:', err);
+    return templateHtml;
   }
-
-  result = result.replace(/{{\s*[\w.-]+\s*}}/g, '');
-  return result;
 };
 
 export interface EmailOptions {
@@ -90,9 +87,11 @@ export interface EmailOptions {
   customHtml?: string;
   templateData?: Record<string, any>;
   type: 'marketing' | 'order' | 'account' | 'engagement' | 'system' | 'security';
+  channel?: 'email' | 'sms' | 'push' | 'websocket';
   action: string;
   userId?: string;
   campaignId?: string;
+  scheduledAt?: Date;
   attachments?: {
     filename: string;
     content: Buffer | string;
@@ -102,10 +101,23 @@ export interface EmailOptions {
 
 /**
  * Pushes email to background queue for instant API response.
+ * Standardized to use BullMQ for distributed persistence and retries.
  */
 export const sendDirectEmail = (options: EmailOptions) => {
-  const { emailQueue } = require('./emailQueueService');
-  emailQueue.enqueue(options);
+  const { emailQueue, isQueuesReady } = require('../jobs/queues');
+
+  if (isQueuesReady()) {
+    const delay = options.scheduledAt
+      ? Math.max(0, new Date(options.scheduledAt).getTime() - Date.now())
+      : 0;
+    emailQueue.add('sendEmail', options, { delay }).catch((err: any) => {
+      logger.error('Failed to enqueue email to BullMQ:', err);
+    });
+  } else {
+    // Fallback to local memory queue if Redis/BullMQ is down
+    const { emailQueue: fallbackQueue } = require('./emailQueueService');
+    fallbackQueue.enqueue(options);
+  }
 };
 
 /**
@@ -119,9 +131,11 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     customHtml,
     templateData = {},
     type,
+    channel = 'email',
     action,
     userId,
     campaignId,
+    scheduledAt,
     attachments,
   } = options;
 
@@ -202,9 +216,13 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
       recipientEmail: email,
       campaignId: campaignId ? new mongoose.Types.ObjectId(campaignId) : undefined,
       type,
+      channel,
       action,
       trackingToken,
       status: 'pending',
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+      queuedAt: new Date(),
+      retryCount: 0,
     });
     await log.save();
 
@@ -230,6 +248,9 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
           headers,
           attachments: attachments,
         });
+
+        log.status = 'sent'; // Marked as sent after handing off to provider
+        await log.save();
         break;
       } catch (err: any) {
         if (attempt === maxRetries) {
@@ -238,6 +259,11 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
           await log.save();
           throw err;
         }
+        log.retryCount = attempt;
+        log.status = 'retried';
+        log.errorDetails = `Attempt ${attempt} failed: ${err.message}`;
+        await log.save();
+
         const backoffMs = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
         logger.warn(
           `[EMAIL RETRY] Attempt ${attempt}/${maxRetries} failed for ${email}: ${err.message}. Retrying in ${backoffMs}ms...`,
@@ -247,7 +273,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     }
 
     // 6. Update log on success
-    log.status = 'delivered';
+    log.status = 'delivered'; // We assume delivery handoff success
     await log.save();
 
     logger.info(

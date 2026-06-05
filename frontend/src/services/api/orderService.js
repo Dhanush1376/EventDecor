@@ -1,6 +1,5 @@
-import api, { refreshAccessToken } from '../api';
+import api from '../api';
 import { hasSessionMarker } from '../../utils/authStorage';
-import logger from '../../utils/logger';
 
 const checkAuthLocal = () => hasSessionMarker();
 
@@ -48,7 +47,11 @@ export const orderService = {
     return response.data;
   },
   updatePublicStatus: async (id, status, note, logisticsToken) => {
-    const response = await api.patch(`/orders/${id}/public-status`, { status, note, logisticsToken });
+    const response = await api.patch(`/orders/${id}/public-status`, {
+      status,
+      note,
+      logisticsToken,
+    });
     return response.data;
   },
   sendCodOtp: async (email) => {

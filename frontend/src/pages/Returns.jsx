@@ -1,26 +1,26 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  PolicySidebar,
-  MobilePolicyNav,
-} from "../components/layout/PolicySidebar";
-import { SEO } from "../components/seo/SEO";
-import { useQuery } from "@tanstack/react-query";
-import { policyService } from "../services/domainServices";
-import { createSafeHtml } from "../utils/sanitize";
-import { Skeleton } from "../components/ui";
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { PolicySidebar, MobilePolicyNav } from '../components/layout/PolicySidebar';
+import { SEO } from '../components/seo/SEO';
+import { useQuery } from '@tanstack/react-query';
+import { policyService } from '../services/domainServices';
+import { createSafeHtml } from '../utils/sanitize';
+import { Skeleton } from '../components/ui';
 
 export function Returns() {
-  const { data: response, isLoading, isError } = useQuery({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['policy', 'return-policy'],
     queryFn: () => policyService.getBySlug('return-policy'),
   });
 
   const returns = response?.data || {
-    title: "Returns & Refunds",
-    content: "<p>Policy content is not available.</p>",
-    updatedAt: new Date().toISOString()
+    title: 'Returns & Refunds',
+    content: '<p>Policy content is not available.</p>',
+    updatedAt: new Date().toISOString(),
   };
   return (
     <motion.div
@@ -33,7 +33,7 @@ export function Returns() {
         title="Returns & Refunds"
         description="Understand our returns, exchanges, and refund policies at Siri Arts & Crafts."
       />
-      
+
       <div className="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12">
         {/* Help Center Header - Huge Typography */}
         <div className="mb-12 md:mb-20 text-center md:text-left">
@@ -50,7 +50,11 @@ export function Returns() {
             {isLoading ? <Skeleton className="h-10 w-64" /> : returns.title}
           </h2>
           <p className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">
-            {isLoading ? <Skeleton className="h-4 w-40" /> : `Last updated: ${new Date(returns.updatedAt).toLocaleDateString()}`}
+            {isLoading ? (
+              <Skeleton className="h-4 w-40" />
+            ) : (
+              `Last updated: ${new Date(returns.updatedAt).toLocaleDateString()}`
+            )}
           </p>
         </div>
 
@@ -71,7 +75,7 @@ export function Returns() {
               ) : isError ? (
                 <div className="text-red-500">Failed to load policy. Please try again later.</div>
               ) : (
-                <div 
+                <div
                   className="text-[13px] text-on-surface/80 leading-relaxed font-normal space-y-3"
                   dangerouslySetInnerHTML={createSafeHtml(returns.content)}
                 />

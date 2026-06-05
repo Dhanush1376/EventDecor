@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import AuthService from '../services/authService';
+import OtpAuthService from '../services/OtpAuthService';
+import SessionAuthService from '../services/SessionAuthService';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -23,6 +24,8 @@ import {
   setAdminRefreshCookie,
 } from '../utils/authCookies';
 import { regenerateCsrfToken, clearCsrfCookie } from '../middleware/csrfMiddleware';
+import { blacklistToken } from '../utils/jwtBlacklist';
+import jwt from 'jsonwebtoken';
 
 export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
@@ -40,7 +43,7 @@ export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
 
   logger.info(`[AUTH] OTP send requested for ${cleanEmail} from ${clientIp}`);
 
-  await AuthService.generateOTP(cleanEmail, clientIp);
+  await OtpAuthService.generateOTP(cleanEmail, clientIp);
 
   logger.info(`[AUTH] OTP email dispatched for ${cleanEmail}`);
 
@@ -62,7 +65,7 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 
   logger.info(`[AUTH] OTP verify requested for ${cleanEmail}`);
   const userAgent = req.headers['user-agent'] || '';
-  const result = await AuthService.verifyOTP(cleanEmail, otp, clientIp, userAgent);
+  const result = await OtpAuthService.verifyOTP(cleanEmail, otp, clientIp, userAgent);
 
   if ((result as { requires2FA?: boolean }).requires2FA) {
     logger.info(`[AUTH] OTP verified — awaiting 2FA for user: ${result.user._id}`);
@@ -99,10 +102,10 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(
-    req.body?.refreshToken ||
-      req.headers['x-refresh-token'] ||
-      req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
+    req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
       req.cookies?.[ADMIN_REFRESH_COOKIE] ||
+      req.body?.refreshToken ||
+      req.headers['x-refresh-token'] ||
       '',
   ).trim();
 
@@ -112,7 +115,7 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
   }
 
   const userAgent = req.headers['user-agent'] || '';
-  const result = await AuthService.refreshSession(refreshToken, userAgent);
+  const result = await SessionAuthService.refreshSession(refreshToken, userAgent);
 
   if ((STAFF_ROLES as readonly string[]).includes(result.user.role)) {
     setAdminRefreshCookie(res, result.refreshToken);
@@ -131,17 +134,33 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(
-    req.body?.refreshToken ||
-      req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
+    req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
       req.cookies?.[ADMIN_REFRESH_COOKIE] ||
+      req.body?.refreshToken ||
       req.headers['x-refresh-token'] ||
       '',
   ).trim();
   const userId = (req as any).user?.id;
 
+  let accessToken;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    accessToken = req.headers.authorization.split(' ')[1];
+  }
+
   logger.info('[AUTH] Logout requested');
+  if (accessToken) {
+    let expiresIn = 900;
+    try {
+      const decoded: any = jwt.decode(accessToken);
+      if (decoded && decoded.exp) {
+        expiresIn = Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
+      }
+    } catch (err) {}
+    await blacklistToken(accessToken, expiresIn);
+  }
+
   if (refreshToken) {
-    await AuthService.revokeSession(refreshToken);
+    await SessionAuthService.revokeSession(refreshToken);
   }
   if (userId) {
     await invalidateUserSessionCaches(String(userId));
@@ -157,9 +176,25 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 export const logoutAllDevices = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
 
+  let accessToken;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    accessToken = req.headers.authorization.split(' ')[1];
+  }
+
   logger.info(`[AUTH] Global logout requested for user ${userId}`);
+  if (accessToken) {
+    let expiresIn = 900;
+    try {
+      const decoded: any = jwt.decode(accessToken);
+      if (decoded && decoded.exp) {
+        expiresIn = Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
+      }
+    } catch (err) {}
+    await blacklistToken(accessToken, expiresIn);
+  }
+
   if (userId) {
-    await AuthService.revokeAllSessions(String(userId));
+    await SessionAuthService.revokeAllSessions(String(userId));
     await invalidateUserSessionCaches(String(userId));
   }
   clearCustomerRefreshCookie(res);

@@ -1,24 +1,48 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { SEO } from "../components/seo/SEO";
-import { bookingService } from "../services/domainServices";
-import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
-import { DashboardSkeleton } from "../components/ui/Skeleton";
-import toast from "react-hot-toast";
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SEO } from '../components/seo/SEO';
+import { bookingService } from '../services/domainServices';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { DashboardSkeleton } from '../components/ui/Skeleton';
+import toast from 'react-hot-toast';
 
 import logger from '../utils/logger';
 const STATUS_STEPS = [
-  { id: "inquiry", label: "Inquiry Received", desc: "Our design team is checking setup details" },
-  { id: "review", label: "Under Review", desc: "Design architects are mapping prop blueprint dimensions" },
-  { id: "discussion", label: "Design Workspace", desc: "Live color palette and layout adjustments" },
-  { id: "quotation_sent", label: "Quotation Compiled", desc: "Quotation is active. Awaiting your approval" },
-  { id: "confirmed", label: "Booking Confirmed", desc: "Logistics, vehicles, and inventories are locked" },
-  { id: "team_assigned", label: "Artisans Assigned", desc: "Setup crews and site leads allocated" },
-  { id: "setup_in_progress", label: "Setup In Progress", desc: "Crews are assembling structures onsite" },
-  { id: "active", label: "Event Active", desc: "The cinematic setup is complete & live" },
-  { id: "pickup_scheduled", label: "Pickup Scheduled", desc: "Crews returning to venue for catalog disassembly" },
-  { id: "completed", label: "Completed", desc: "Logistics completed & inventory returned" },
+  { id: 'inquiry', label: 'Inquiry Received', desc: 'Our design team is checking setup details' },
+  {
+    id: 'review',
+    label: 'Under Review',
+    desc: 'Design architects are mapping prop blueprint dimensions',
+  },
+  {
+    id: 'discussion',
+    label: 'Design Workspace',
+    desc: 'Live color palette and layout adjustments',
+  },
+  {
+    id: 'quotation_sent',
+    label: 'Quotation Compiled',
+    desc: 'Quotation is active. Awaiting your approval',
+  },
+  {
+    id: 'confirmed',
+    label: 'Booking Confirmed',
+    desc: 'Logistics, vehicles, and inventories are locked',
+  },
+  { id: 'team_assigned', label: 'Artisans Assigned', desc: 'Setup crews and site leads allocated' },
+  {
+    id: 'setup_in_progress',
+    label: 'Setup In Progress',
+    desc: 'Crews are assembling structures onsite',
+  },
+  { id: 'active', label: 'Event Active', desc: 'The cinematic setup is complete & live' },
+  {
+    id: 'pickup_scheduled',
+    label: 'Pickup Scheduled',
+    desc: 'Crews returning to venue for catalog disassembly',
+  },
+  { id: 'completed', label: 'Completed', desc: 'Logistics completed & inventory returned' },
 ];
 
 export function EventCustomerDashboard({ isEmbedded = false }) {
@@ -27,13 +51,13 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
   const [loading, setLoading] = useState(true);
 
   // Chat State
-  const [chatMessage, setChatMessage] = useState("");
+  const [chatMessage, setChatMessage] = useState('');
   const chatEndRef = useRef(null);
 
   // Payment Modal State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentNote, setPaymentNote] = useState("Milestone Deposit");
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentNote, setPaymentNote] = useState('Milestone Deposit');
 
   // Expandable timeline state
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
@@ -55,7 +79,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
       }
     } catch (err) {
       logger.error(err);
-      toast.error("Failed to sync event bookings catalog.");
+      toast.error('Failed to sync event bookings catalog.');
     } finally {
       setLoading(false);
     }
@@ -70,29 +94,32 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
 
   useEffect(() => {
     // Scroll chat to bottom when workspace changes or chat updates
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedBooking?.chatHistory]);
 
   const handleApproveQuote = async (approved) => {
     if (!selectedBooking) return;
-    const loadId = toast.loading("Recording your quotation response...");
+    const loadId = toast.loading('Recording your quotation response...');
     try {
-      const res = await bookingService.respondQuote(selectedBooking._id || selectedBooking.id, approved);
+      const res = await bookingService.respondQuote(
+        selectedBooking._id || selectedBooking.id,
+        approved,
+      );
       toast.dismiss(loadId);
       if (res.success) {
-        toast.success(approved ? "Estimate approved successfully!" : "Quote marked for revision.");
+        toast.success(approved ? 'Estimate approved successfully!' : 'Quote marked for revision.');
         // Reload details
         const updated = await bookingService.getById(selectedBooking._id || selectedBooking.id);
         if (updated.success) {
           setSelectedBooking(updated.data);
           // Sync with main list
-          setBookings(prev => prev.map(b => (b._id === updated.data._id ? updated.data : b)));
+          setBookings((prev) => prev.map((b) => (b._id === updated.data._id ? updated.data : b)));
         }
       }
     } catch (err) {
       toast.dismiss(loadId);
       logger.error(err);
-      toast.error("Error submitting response.");
+      toast.error('Error submitting response.');
     }
   };
 
@@ -101,18 +128,21 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
     if (!chatMessage.trim() || !selectedBooking) return;
 
     try {
-      const res = await bookingService.postChat(selectedBooking._id || selectedBooking.id, chatMessage);
+      const res = await bookingService.postChat(
+        selectedBooking._id || selectedBooking.id,
+        chatMessage,
+      );
       if (res.success) {
-        setChatMessage("");
+        setChatMessage('');
         const updated = await bookingService.getById(selectedBooking._id || selectedBooking.id);
         if (updated.success) {
           setSelectedBooking(updated.data);
-          setBookings(prev => prev.map(b => (b._id === updated.data._id ? updated.data : b)));
+          setBookings((prev) => prev.map((b) => (b._id === updated.data._id ? updated.data : b)));
         }
       }
     } catch (err) {
       logger.error(err);
-      toast.error("Failed to post message.");
+      toast.error('Failed to post message.');
     }
   };
 
@@ -120,11 +150,11 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
     e.preventDefault();
     const amt = parseFloat(paymentAmount);
     if (isNaN(amt) || amt <= 0 || !selectedBooking) {
-      toast.error("Please specify a valid transaction amount.");
+      toast.error('Please specify a valid transaction amount.');
       return;
     }
 
-    const loadId = toast.loading("Processing milestone transaction...");
+    const loadId = toast.loading('Processing milestone transaction...');
     try {
       const res = await bookingService.submitPayment(selectedBooking._id || selectedBooking.id, {
         amount: amt,
@@ -133,20 +163,20 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
       });
       toast.dismiss(loadId);
       if (res.success) {
-        toast.success(`Milestone payment of ₹${amt.toLocaleString("en-IN")} lodged successfully!`);
+        toast.success(`Milestone payment of ₹${amt.toLocaleString('en-IN')} lodged successfully!`);
         setIsPaymentModalOpen(false);
-        setPaymentAmount("");
+        setPaymentAmount('');
         // Reload
         const updated = await bookingService.getById(selectedBooking._id || selectedBooking.id);
         if (updated.success) {
           setSelectedBooking(updated.data);
-          setBookings(prev => prev.map(b => (b._id === updated.data._id ? updated.data : b)));
+          setBookings((prev) => prev.map((b) => (b._id === updated.data._id ? updated.data : b)));
         }
       }
     } catch (err) {
       toast.dismiss(loadId);
       logger.error(err);
-      toast.error("Transaction error. Please try again.");
+      toast.error('Transaction error. Please try again.');
     }
   };
 
@@ -170,15 +200,29 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
     : 0;
 
   return (
-    <div className={isEmbedded ? "text-on-surface font-body" : "bg-[#fbf9f6] min-h-screen text-on-surface pt-20 md:pt-32 pb-24 relative overflow-hidden font-body"}>
+    <div
+      className={
+        isEmbedded
+          ? 'text-on-surface font-body'
+          : 'bg-[#fbf9f6] min-h-screen text-on-surface pt-20 md:pt-32 pb-24 relative overflow-hidden font-body'
+      }
+    >
       {!isEmbedded && (
         <>
-          <SEO title="My Events Workspace | Siri Arts & Crafts" description="Track your live event timelines, coordinate theme palette adjustments, and manage payments." />
-          <MandalaArtDecor variant={2} size={450} className="-top-24 -right-24 absolute opacity-[0.06] z-0" spinDuration={240} />
+          <SEO
+            title="My Events Workspace | Siri Arts & Crafts"
+            description="Track your live event timelines, coordinate theme palette adjustments, and manage payments."
+          />
+          <MandalaArtDecor
+            variant={2}
+            size={450}
+            className="-top-24 -right-24 absolute opacity-[0.06] z-0"
+            spinDuration={240}
+          />
         </>
       )}
 
-      <div className={isEmbedded ? "" : "max-w-[1300px] mx-auto px-4 relative z-10"}>
+      <div className={isEmbedded ? '' : 'max-w-[1300px] mx-auto px-4 relative z-10'}>
         {/* Editorial Heading */}
         {!isEmbedded && (
           <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-black/5 pb-6">
@@ -204,7 +248,10 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
           isEmbedded ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
               {[...Array(2)].map((_, i) => (
-                <div key={i} className="p-5 rounded-2xl bg-white border border-outline-variant/10 space-y-4">
+                <div
+                  key={i}
+                  className="p-5 rounded-2xl bg-white border border-outline-variant/10 space-y-4"
+                >
                   <div className="flex justify-between items-center">
                     <div className="h-4 w-24 bg-stone-100 rounded" />
                     <div className="h-6 w-20 bg-stone-100 rounded-full" />
@@ -243,7 +290,9 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
             {/* Horizontal list of bookings at the top (only shown if there are multiple bookings) */}
             {bookings.length > 1 && (
               <div className="space-y-2">
-                <h3 className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold">Your Celebrations</h3>
+                <h3 className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold">
+                  Your Celebrations
+                </h3>
                 <div className="flex flex-row gap-4 overflow-x-auto pb-3 pt-1 no-scrollbar">
                   {bookings.map((b) => {
                     const isSelected = selectedBooking?._id === b._id;
@@ -253,8 +302,8 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                         onClick={() => handleSelectBooking(b)}
                         className={`flex-shrink-0 min-w-[240px] md:min-w-[280px] p-4 rounded-2xl border text-left cursor-pointer transition-all ${
                           isSelected
-                            ? "bg-white border-primary shadow-md ring-1 ring-primary/20 scale-[1.01]"
-                            : "border-black/5 hover:border-black/10 bg-white/70"
+                            ? 'bg-white border-primary shadow-md ring-1 ring-primary/20 scale-[1.01]'
+                            : 'border-black/5 hover:border-black/10 bg-white/70'
                         }`}
                       >
                         <div className="space-y-2">
@@ -263,13 +312,20 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                               {b.eventType}
                             </span>
                             <span className="font-mono text-[9px] text-black/35 shrink-0">
-                              {new Date(b.date).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
+                              {new Date(b.date).toLocaleDateString('en-IN', {
+                                month: 'short',
+                                day: 'numeric',
+                              })}
                             </span>
                           </div>
-                          <h4 className="font-display text-[13px] text-black font-bold truncate leading-tight">{b.title}</h4>
+                          <h4 className="font-display text-[13px] text-black font-bold truncate leading-tight">
+                            {b.title}
+                          </h4>
                           <div className="flex justify-between items-center text-[10px] pt-1 border-t border-black/5">
                             <span className="text-black/40">Status:</span>
-                            <span className="font-semibold text-primary capitalize">{b.status.replace("_", " ")}</span>
+                            <span className="font-semibold text-primary capitalize">
+                              {b.status.replace('_', ' ')}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -291,7 +347,9 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                         <span className="font-label text-[9px] text-primary uppercase tracking-[0.2em] font-bold block mb-1">
                           Booking Details
                         </span>
-                        <h2 className="font-display text-[22px] text-black font-light tracking-tight">{selectedBooking.title}</h2>
+                        <h2 className="font-display text-[22px] text-black font-light tracking-tight">
+                          {selectedBooking.title}
+                        </h2>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 md:gap-3">
                         {/* Mobile: Open chat bottom-sheet trigger */}
@@ -311,31 +369,48 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
                       <div className="space-y-0.5">
-                        <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">Event Style</span>
-                        <span className="font-body text-xs text-black font-bold capitalize">{selectedBooking.eventType}</span>
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">Event Date</span>
-                        <span className="font-body text-xs text-black font-bold">
-                          {new Date(selectedBooking.date).toLocaleDateString("en-IN", { weekday: "short", year: "numeric", month: "long", day: "numeric" })}
+                        <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
+                          Event Style
+                        </span>
+                        <span className="font-body text-xs text-black font-bold capitalize">
+                          {selectedBooking.eventType}
                         </span>
                       </div>
                       <div className="space-y-0.5">
-                        <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">Timing Window</span>
+                        <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
+                          Event Date
+                        </span>
+                        <span className="font-body text-xs text-black font-bold">
+                          {new Date(selectedBooking.date).toLocaleDateString('en-IN', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
+                          Timing Window
+                        </span>
                         <span className="font-body text-xs text-black font-semibold">
                           {selectedBooking.timing?.start} - {selectedBooking.timing?.end}
                         </span>
                       </div>
                       <div className="space-y-1.5 col-span-2 sm:col-span-3 lg:col-span-2 bg-[#FAF6F0] p-4 md:p-5 rounded-2xl border border-[#C4A87C]/15 relative overflow-hidden">
-                        <span className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-1">Setup Destination Address</span>
+                        <span className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-1">
+                          Setup Destination Address
+                        </span>
                         {selectedBooking.venue?.name && (
                           <span className="font-display text-xs text-black font-bold flex items-center gap-1.5 leading-none">
-                            <span className="material-symbols-outlined text-primary text-[16px]">storefront</span>
+                            <span className="material-symbols-outlined text-primary text-[16px]">
+                              storefront
+                            </span>
                             {selectedBooking.venue.name}
                           </span>
                         )}
                         <span className="font-body text-[11px] text-stone-700 font-light block leading-relaxed">
-                          {selectedBooking.venue?.address || "Address pending finalization"}
+                          {selectedBooking.venue?.address || 'Address pending finalization'}
                         </span>
                         <div className="flex flex-wrap items-center gap-3 pt-1">
                           {selectedBooking.venue?.city && (
@@ -355,65 +430,102 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                               rel="noopener noreferrer"
                               className="font-label text-[8px] uppercase tracking-wider text-primary font-bold hover:underline flex items-center gap-0.5"
                             >
-                              <span className="material-symbols-outlined text-[12px]">directions</span> Open Navigation
+                              <span className="material-symbols-outlined text-[12px]">
+                                directions
+                              </span>{' '}
+                              Open Navigation
                             </a>
                           )}
                         </div>
                       </div>
                       <div className="space-y-0.5">
-                        <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">Setup Type</span>
+                        <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
+                          Setup Type
+                        </span>
                         <span className="font-body text-xs text-black font-bold">
-                          {selectedBooking.venue?.isOutdoor ? "🍀 Outdoor Lawn" : "🏛️ Indoor Banquet"}
+                          {selectedBooking.venue?.isOutdoor
+                            ? '🍀 Outdoor Lawn'
+                            : '🏛️ Indoor Banquet'}
                         </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Operational Setup/Pickup Timing & Teams */}
-                  {(selectedBooking.setupTiming || selectedBooking.pickupTiming || selectedBooking.assignedTeam?.length > 0) && (
+                  {(selectedBooking.setupTiming ||
+                    selectedBooking.pickupTiming ||
+                    selectedBooking.assignedTeam?.length > 0) && (
                     <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-6 shadow-xl">
-                      <h3 className="font-display text-lg text-black font-bold border-b border-black/5 pb-2">Logistics & Crew Roster</h3>
+                      <h3 className="font-display text-lg text-black font-bold border-b border-black/5 pb-2">
+                        Logistics & Crew Roster
+                      </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {/* Setup schedule */}
                         <div className="space-y-2">
                           <div className="flex items-center gap-1.5 text-primary">
                             <span className="material-symbols-outlined text-[18px]">build</span>
-                            <span className="font-label text-[9px] uppercase tracking-wider font-bold">Decoration Setup Schedule</span>
+                            <span className="font-label text-[9px] uppercase tracking-wider font-bold">
+                              Decoration Setup Schedule
+                            </span>
                           </div>
                           <span className="font-body text-xs text-stone-700 font-bold block">
                             {selectedBooking.setupTiming
-                              ? new Date(selectedBooking.setupTiming).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
-                              : "Pending Logistics Finalization"}
+                              ? new Date(selectedBooking.setupTiming).toLocaleString('en-IN', {
+                                  dateStyle: 'medium',
+                                  timeStyle: 'short',
+                                })
+                              : 'Pending Logistics Finalization'}
                           </span>
                         </div>
 
                         {/* Pickup schedule */}
                         <div className="space-y-2">
                           <div className="flex items-center gap-1.5 text-primary">
-                            <span className="material-symbols-outlined text-[18px]">local_shipping</span>
-                            <span className="font-label text-[9px] uppercase tracking-wider font-bold">Prop Pickup & Disassembly</span>
+                            <span className="material-symbols-outlined text-[18px]">
+                              local_shipping
+                            </span>
+                            <span className="font-label text-[9px] uppercase tracking-wider font-bold">
+                              Prop Pickup & Disassembly
+                            </span>
                           </div>
                           <span className="font-body text-xs text-stone-700 font-bold block">
                             {selectedBooking.pickupTiming
-                              ? new Date(selectedBooking.pickupTiming).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
-                              : "Pending Logistics Finalization"}
+                              ? new Date(selectedBooking.pickupTiming).toLocaleString('en-IN', {
+                                  dateStyle: 'medium',
+                                  timeStyle: 'short',
+                                })
+                              : 'Pending Logistics Finalization'}
                           </span>
                         </div>
 
                         {/* Assigned team */}
                         {selectedBooking.assignedTeam?.length > 0 && (
                           <div className="sm:col-span-2 space-y-3 pt-2">
-                            <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">Assigned Setup Team</span>
+                            <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
+                              Assigned Setup Team
+                            </span>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {selectedBooking.assignedTeam.map((team, idx) => (
-                                <div key={idx} className="p-3 bg-stone-50 border border-black/5 rounded-xl flex items-center justify-between">
+                                <div
+                                  key={idx}
+                                  className="p-3 bg-stone-50 border border-black/5 rounded-xl flex items-center justify-between"
+                                >
                                   <div>
-                                    <span className="font-body text-xs text-black font-bold block">{team.name}</span>
-                                    <span className="font-body text-[10px] text-black/40 block capitalize">{team.role}</span>
+                                    <span className="font-body text-xs text-black font-bold block">
+                                      {team.name}
+                                    </span>
+                                    <span className="font-body text-[10px] text-black/40 block capitalize">
+                                      {team.role}
+                                    </span>
                                   </div>
                                   {team.contact && (
-                                    <a href={`tel:${team.contact}`} className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                                      <span className="material-symbols-outlined text-[16px]">call</span>
+                                    <a
+                                      href={`tel:${team.contact}`}
+                                      className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px]">
+                                        call
+                                      </span>
                                     </a>
                                   )}
                                 </div>
@@ -429,8 +541,12 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                   <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-5 shadow-xl">
                     <div className="flex justify-between items-center border-b border-black/5 pb-3">
                       <div>
-                        <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block mb-0.5">TIMELINE STATUS</span>
-                        <h3 className="font-display text-base text-black font-bold">Setup Progress Tracker</h3>
+                        <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block mb-0.5">
+                          TIMELINE STATUS
+                        </span>
+                        <h3 className="font-display text-base text-black font-bold">
+                          Setup Progress Tracker
+                        </h3>
                       </div>
                       <span className="text-[10px] text-black/50 font-mono">
                         Phase {currentStatusIndex + 1} of {STATUS_STEPS.length}
@@ -440,9 +556,11 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                     {/* Progress Bar */}
                     <div className="space-y-2">
                       <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary rounded-full transition-all duration-500 ease-out" 
-                          style={{ width: `${((currentStatusIndex + 1) / STATUS_STEPS.length) * 100}%` }}
+                        <div
+                          className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+                          style={{
+                            width: `${((currentStatusIndex + 1) / STATUS_STEPS.length) * 100}%`,
+                          }}
                         />
                       </div>
                       <div className="flex justify-between text-[9px] text-black/35 uppercase tracking-wider font-semibold">
@@ -455,7 +573,9 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                     {/* Highlighted Current Step */}
                     <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 flex items-start gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 mt-0.5 animate-pulse">
-                        <span className="material-symbols-outlined text-[16px]">hourglass_empty</span>
+                        <span className="material-symbols-outlined text-[16px]">
+                          hourglass_empty
+                        </span>
                       </div>
                       <div className="space-y-1">
                         <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded-full font-label text-[8px] uppercase tracking-wider font-bold">
@@ -474,8 +594,14 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                         onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
                         className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl border border-black/5 text-stone-850 hover:bg-stone-50 transition-colors font-label text-[10px] uppercase tracking-wider font-bold"
                       >
-                        <span>{isTimelineExpanded ? "Hide Full Timeline Roster" : "View Full Timeline Roster"}</span>
-                        <span className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${isTimelineExpanded ? "rotate-180" : ""}`}>
+                        <span>
+                          {isTimelineExpanded
+                            ? 'Hide Full Timeline Roster'
+                            : 'View Full Timeline Roster'}
+                        </span>
+                        <span
+                          className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${isTimelineExpanded ? 'rotate-180' : ''}`}
+                        >
                           expand_more
                         </span>
                       </button>
@@ -484,7 +610,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                         {isTimelineExpanded && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
+                            animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.3 }}
                             className="overflow-hidden mt-4 pl-4 border-l border-black/5 space-y-4 ml-2"
@@ -494,16 +620,30 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                               const isCurrent = currentStatusIndex === idx;
                               return (
                                 <div key={step.id} className="relative pl-6">
-                                  <div className={`absolute -left-[23px] top-0 w-3.5 h-3.5 rounded-full border-2 transition-colors flex items-center justify-center ${
-                                    isCurrent ? "bg-primary border-primary scale-110 shadow-md" : isPast ? "bg-primary/20 border-primary" : "bg-white border-black/10"
-                                  }`}>
-                                    {isPast && <span className="material-symbols-outlined text-[8px] text-primary font-bold">check</span>}
+                                  <div
+                                    className={`absolute -left-[23px] top-0 w-3.5 h-3.5 rounded-full border-2 transition-colors flex items-center justify-center ${
+                                      isCurrent
+                                        ? 'bg-primary border-primary scale-110 shadow-md'
+                                        : isPast
+                                          ? 'bg-primary/20 border-primary'
+                                          : 'bg-white border-black/10'
+                                    }`}
+                                  >
+                                    {isPast && (
+                                      <span className="material-symbols-outlined text-[8px] text-primary font-bold">
+                                        check
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="space-y-0.5">
-                                    <h4 className={`font-display text-[12px] font-bold ${isCurrent ? "text-primary font-bold" : isPast ? "text-black/60 font-semibold" : "text-black/35 font-normal"}`}>
+                                    <h4
+                                      className={`font-display text-[12px] font-bold ${isCurrent ? 'text-primary font-bold' : isPast ? 'text-black/60 font-semibold' : 'text-black/35 font-normal'}`}
+                                    >
                                       {step.label}
                                     </h4>
-                                    <p className="font-body text-[10px] text-black/40 leading-relaxed font-light">{step.desc}</p>
+                                    <p className="font-body text-[10px] text-black/40 leading-relaxed font-light">
+                                      {step.desc}
+                                    </p>
                                   </div>
                                 </div>
                               );
@@ -517,73 +657,128 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                   {/* Financial Quotation Summary details */}
                   <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-6 shadow-xl">
                     <div className="flex flex-col md:flex-row justify-between md:items-center border-b border-black/5 pb-3 gap-2">
-                      <h3 className="font-display text-lg text-black font-bold">Quotation Estimate Details</h3>
-                      <span className={`px-2.5 py-0.5 rounded-full font-label text-[8px] uppercase tracking-widest font-bold self-start md:self-auto ${
-                        selectedBooking.clientApproved ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
-                      }`}>
-                        {selectedBooking.clientApproved ? "Approved by Client" : "Awaiting Client Approval"}
+                      <h3 className="font-display text-lg text-black font-bold">
+                        Quotation Estimate Details
+                      </h3>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full font-label text-[8px] uppercase tracking-widest font-bold self-start md:self-auto ${
+                          selectedBooking.clientApproved
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-orange-100 text-orange-700'
+                        }`}
+                      >
+                        {selectedBooking.clientApproved
+                          ? 'Approved by Client'
+                          : 'Awaiting Client Approval'}
                       </span>
                     </div>
 
                     <div className="space-y-3 text-xs">
-                      <div className="flex justify-between gap-3"><span className="text-black/50 leading-snug">Event Decor & Rental:</span><span className="text-black font-semibold shrink-0">₹{selectedBooking.pricing?.rentalFee?.toLocaleString("en-IN")}</span></div>
-                      <div className="flex justify-between gap-3"><span className="text-black/50 leading-snug">Bespoke Setup Logistics Crew Labor:</span><span className="text-black font-semibold shrink-0">₹{selectedBooking.pricing?.setupCharges?.toLocaleString("en-IN")}</span></div>
-                      <div className="flex justify-between gap-3"><span className="text-black/50 leading-snug">Logistics Transportation Fleet Cost:</span><span className="text-black font-semibold shrink-0">₹{selectedBooking.pricing?.transportationCost?.toLocaleString("en-IN")}</span></div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-black/50 leading-snug">Event Decor & Rental:</span>
+                        <span className="text-black font-semibold shrink-0">
+                          ₹{selectedBooking.pricing?.rentalFee?.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-black/50 leading-snug">
+                          Bespoke Setup Logistics Crew Labor:
+                        </span>
+                        <span className="text-black font-semibold shrink-0">
+                          ₹{selectedBooking.pricing?.setupCharges?.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-black/50 leading-snug">
+                          Logistics Transportation Fleet Cost:
+                        </span>
+                        <span className="text-black font-semibold shrink-0">
+                          ₹{selectedBooking.pricing?.transportationCost?.toLocaleString('en-IN')}
+                        </span>
+                      </div>
                       {selectedBooking.selectedAddons?.map((addon, idx) => (
-                        <div key={idx} className="flex justify-between gap-3"><span className="text-black/50 leading-snug">+ {addon.name}:</span><span className="text-black font-semibold shrink-0">₹{addon.price?.toLocaleString("en-IN")}</span></div>
+                        <div key={idx} className="flex justify-between gap-3">
+                          <span className="text-black/50 leading-snug">+ {addon.name}:</span>
+                          <span className="text-black font-semibold shrink-0">
+                            ₹{addon.price?.toLocaleString('en-IN')}
+                          </span>
+                        </div>
                       ))}
 
                       <div className="border-t border-black/5 pt-4 flex justify-between items-end gap-3">
-                        <span className="font-display text-sm text-black font-bold leading-snug">Total Estimate Contract Price:</span>
-                        <span className="font-display text-lg text-black font-bold italic shrink-0">₹{selectedBooking.pricing?.totalPrice?.toLocaleString("en-IN")}</span>
+                        <span className="font-display text-sm text-black font-bold leading-snug">
+                          Total Estimate Contract Price:
+                        </span>
+                        <span className="font-display text-lg text-black font-bold italic shrink-0">
+                          ₹{selectedBooking.pricing?.totalPrice?.toLocaleString('en-IN')}
+                        </span>
                       </div>
 
                       <div className="border-t border-black/5 pt-4 flex justify-between items-end gap-3">
                         <div className="space-y-0.5">
-                          <span className="font-display text-[11px] text-stone-900 font-bold block leading-snug">Milestone Deposit Required:</span>
-                          <span className="font-body text-[10px] text-black/40 block">25% to confirm schedules</span>
+                          <span className="font-display text-[11px] text-stone-900 font-bold block leading-snug">
+                            Milestone Deposit Required:
+                          </span>
+                          <span className="font-body text-[10px] text-black/40 block">
+                            25% to confirm schedules
+                          </span>
                         </div>
-                        <span className="font-display text-sm text-primary font-bold shrink-0">₹{selectedBooking.pricing?.depositAmount?.toLocaleString("en-IN")}</span>
+                        <span className="font-display text-sm text-primary font-bold shrink-0">
+                          ₹{selectedBooking.pricing?.depositAmount?.toLocaleString('en-IN')}
+                        </span>
                       </div>
 
                       <div className="border-t border-black/5 pt-4 flex justify-between items-end gap-3">
                         <div className="space-y-0.5">
-                          <span className="font-display text-[11px] text-stone-900 font-bold block leading-snug">Pending Balance Remaining:</span>
-                          <span className="font-body text-[10px] text-black/40 block capitalize">Payment Status: {selectedBooking.pricing?.paymentStatus}</span>
+                          <span className="font-display text-[11px] text-stone-900 font-bold block leading-snug">
+                            Pending Balance Remaining:
+                          </span>
+                          <span className="font-body text-[10px] text-black/40 block capitalize">
+                            Payment Status: {selectedBooking.pricing?.paymentStatus}
+                          </span>
                         </div>
-                        <span className="font-display text-lg text-black font-bold italic shrink-0">₹{selectedBooking.pricing?.pendingBalance?.toLocaleString("en-IN")}</span>
+                        <span className="font-display text-lg text-black font-bold italic shrink-0">
+                          ₹{selectedBooking.pricing?.pendingBalance?.toLocaleString('en-IN')}
+                        </span>
                       </div>
 
                       {/* Action buttons on Quote status */}
-                      {selectedBooking.status === "quotation_sent" && !selectedBooking.clientApproved && (
-                        <div className="grid grid-cols-2 gap-4 pt-6 border-t border-black/5 mt-4">
-                          <button
-                            onClick={() => handleApproveQuote(false)}
-                            className="py-3 rounded-full border border-stone-950/20 text-stone-800 font-label text-[10px] uppercase tracking-widest font-bold hover:bg-stone-50 transition-colors"
-                          >
-                            Request Revisions
-                          </button>
-                          <button
-                            onClick={() => handleApproveQuote(true)}
-                            className="bg-black text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-lg"
-                          >
-                            Approve Quotation
-                          </button>
-                        </div>
-                      )}
+                      {selectedBooking.status === 'quotation_sent' &&
+                        !selectedBooking.clientApproved && (
+                          <div className="grid grid-cols-2 gap-4 pt-6 border-t border-black/5 mt-4">
+                            <button
+                              onClick={() => handleApproveQuote(false)}
+                              className="py-3 rounded-full border border-stone-950/20 text-stone-800 font-label text-[10px] uppercase tracking-widest font-bold hover:bg-stone-50 transition-colors"
+                            >
+                              Request Revisions
+                            </button>
+                            <button
+                              onClick={() => handleApproveQuote(true)}
+                              className="bg-black text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-lg"
+                            >
+                              Approve Quotation
+                            </button>
+                          </div>
+                        )}
 
                       {/* Payment simulation button */}
                       {selectedBooking.pricing?.pendingBalance > 0 && (
                         <button
                           type="button"
                           onClick={() => {
-                            setPaymentAmount(selectedBooking.pricing.paymentStatus === "unpaid" ? selectedBooking.pricing.depositAmount : selectedBooking.pricing.pendingBalance);
+                            setPaymentAmount(
+                              selectedBooking.pricing.paymentStatus === 'unpaid'
+                                ? selectedBooking.pricing.depositAmount
+                                : selectedBooking.pricing.pendingBalance,
+                            );
                             setIsPaymentModalOpen(true);
                           }}
                           className="w-full mt-4 bg-primary text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg hover:shadow-primary/10 transition-all flex items-center justify-center gap-1.5"
                         >
                           Lodge Milestone Payment
-                          <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+                          <span className="material-symbols-outlined text-[16px]">
+                            account_balance_wallet
+                          </span>
                         </button>
                       )}
                     </div>
@@ -594,28 +789,44 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                 <div className="hidden lg:flex lg:col-span-4 bg-white rounded-3xl border border-black/5 p-4 md:p-6 shadow-xl flex-col h-[600px] lg:sticky lg:top-24">
                   <div className="border-b border-black/5 pb-3 shrink-0 flex items-center justify-between">
                     <div>
-                      <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">LIVE WORKSPACE</span>
-                      <h4 className="font-display text-sm text-black font-bold">Creative Design Studio Chat</h4>
+                      <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">
+                        LIVE WORKSPACE
+                      </span>
+                      <h4 className="font-display text-sm text-black font-bold">
+                        Creative Design Studio Chat
+                      </h4>
                     </div>
-                    <span className="material-symbols-outlined text-[18px] text-primary animate-pulse">forum</span>
+                    <span className="material-symbols-outlined text-[18px] text-primary animate-pulse">
+                      forum
+                    </span>
                   </div>
 
                   {/* Messages list */}
                   <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 no-scrollbar flex flex-col">
                     {selectedBooking.chatHistory?.map((chat, idx) => {
-                      const isAdmin = chat.sender === "admin";
+                      const isAdmin = chat.sender === 'admin';
                       return (
-                        <div key={idx} className={`flex flex-col max-w-[85%] ${isAdmin ? "self-start text-left" : "self-end text-right ml-auto"}`}>
+                        <div
+                          key={idx}
+                          className={`flex flex-col max-w-[85%] ${isAdmin ? 'self-start text-left' : 'self-end text-right ml-auto'}`}
+                        >
                           <span className="font-label text-[8px] text-black/35 font-bold uppercase tracking-widest mb-1 block">
-                            {isAdmin ? "Siri Arts Designer" : "You"}
+                            {isAdmin ? 'Siri Arts Designer' : 'You'}
                           </span>
-                          <div className={`p-3 rounded-[18px] text-xs leading-relaxed font-light ${
-                            isAdmin ? "bg-[#F5F3EF] text-stone-900 rounded-tl-none" : "bg-black text-white rounded-tr-none"
-                          }`}>
+                          <div
+                            className={`p-3 rounded-[18px] text-xs leading-relaxed font-light ${
+                              isAdmin
+                                ? 'bg-[#F5F3EF] text-stone-900 rounded-tl-none'
+                                : 'bg-black text-white rounded-tr-none'
+                            }`}
+                          >
                             {chat.message}
                           </div>
                           <span className="font-mono text-[8px] text-black/25 mt-1 block">
-                            {new Date(chat.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            {new Date(chat.timestamp).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </span>
                         </div>
                       );
@@ -624,7 +835,10 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                   </div>
 
                   {/* Message Input box */}
-                  <form onSubmit={handleSendChat} className="border-t border-black/5 pt-3 shrink-0 flex items-center gap-2 mt-auto">
+                  <form
+                    onSubmit={handleSendChat}
+                    className="border-t border-black/5 pt-3 shrink-0 flex items-center gap-2 mt-auto"
+                  >
                     <input
                       type="text"
                       placeholder="Discuss color swatches, venue details..."
@@ -663,12 +877,12 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
 
             {/* Sheet */}
             <motion.div
-              initial={{ y: "100%" }}
+              initial={{ y: '100%' }}
               animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
               className="relative z-10 bg-white rounded-t-[28px] flex flex-col"
-              style={{ height: "82vh" }}
+              style={{ height: '82vh' }}
             >
               {/* Drag handle pill */}
               <div className="flex justify-center pt-3 pb-1 shrink-0">
@@ -678,16 +892,24 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
               {/* Sheet header */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-black/5 shrink-0">
                 <div>
-                  <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">LIVE WORKSPACE</span>
-                  <h4 className="font-display text-sm text-black font-bold">Creative Design Studio</h4>
+                  <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">
+                    LIVE WORKSPACE
+                  </span>
+                  <h4 className="font-display text-sm text-black font-bold">
+                    Creative Design Studio
+                  </h4>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px] text-primary animate-pulse">forum</span>
+                  <span className="material-symbols-outlined text-[18px] text-primary animate-pulse">
+                    forum
+                  </span>
                   <button
                     onClick={() => setIsMobileChatOpen(false)}
                     className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center active:scale-90 transition-transform"
                   >
-                    <span className="material-symbols-outlined text-[18px] text-black/60">close</span>
+                    <span className="material-symbols-outlined text-[18px] text-black/60">
+                      close
+                    </span>
                   </button>
                 </div>
               </div>
@@ -697,27 +919,40 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                 {selectedBooking.chatHistory?.length === 0 || !selectedBooking.chatHistory ? (
                   <div className="flex flex-col items-center justify-center flex-1 gap-3 py-12">
                     <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[28px]">chat_bubble_outline</span>
+                      <span className="material-symbols-outlined text-[28px]">
+                        chat_bubble_outline
+                      </span>
                     </div>
                     <p className="font-body text-xs text-black/45 text-center max-w-[200px] leading-relaxed">
-                      Send a message to discuss color palettes, venue dimensions, or prop customizations.
+                      Send a message to discuss color palettes, venue dimensions, or prop
+                      customizations.
                     </p>
                   </div>
                 ) : (
                   selectedBooking.chatHistory.map((chat, idx) => {
-                    const isAdmin = chat.sender === "admin";
+                    const isAdmin = chat.sender === 'admin';
                     return (
-                      <div key={idx} className={`flex flex-col max-w-[82%] ${isAdmin ? "self-start text-left" : "self-end text-right ml-auto"}`}>
+                      <div
+                        key={idx}
+                        className={`flex flex-col max-w-[82%] ${isAdmin ? 'self-start text-left' : 'self-end text-right ml-auto'}`}
+                      >
                         <span className="font-label text-[8px] text-black/35 font-bold uppercase tracking-widest mb-1 block">
-                          {isAdmin ? "Siri Arts Designer" : "You"}
+                          {isAdmin ? 'Siri Arts Designer' : 'You'}
                         </span>
-                        <div className={`p-3.5 rounded-[18px] text-xs leading-relaxed ${
-                          isAdmin ? "bg-[#F5F3EF] text-stone-900 rounded-tl-none" : "bg-black text-white rounded-tr-none"
-                        }`}>
+                        <div
+                          className={`p-3.5 rounded-[18px] text-xs leading-relaxed ${
+                            isAdmin
+                              ? 'bg-[#F5F3EF] text-stone-900 rounded-tl-none'
+                              : 'bg-black text-white rounded-tr-none'
+                          }`}
+                        >
                           {chat.message}
                         </div>
                         <span className="font-mono text-[8px] text-black/25 mt-1 block">
-                          {new Date(chat.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(chat.timestamp).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </span>
                       </div>
                     );
@@ -730,7 +965,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
               <form
                 onSubmit={handleSendChat}
                 className="border-t border-black/5 px-4 py-3 shrink-0 flex items-center gap-2 bg-white"
-                style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
+                style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
               >
                 <input
                   type="text"
@@ -756,7 +991,13 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
       <AnimatePresence>
         {isPaymentModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsPaymentModalOpen(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsPaymentModalOpen(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -765,17 +1006,26 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
             >
               <div className="flex justify-between items-start border-b border-black/5 pb-3">
                 <div className="space-y-0.5">
-                  <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold">MILESTONE TRANSACTION</span>
-                  <h3 className="font-display text-lg text-black font-bold">Lodge UPI/Credit Milestone Payment</h3>
+                  <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold">
+                    MILESTONE TRANSACTION
+                  </span>
+                  <h3 className="font-display text-lg text-black font-bold">
+                    Lodge UPI/Credit Milestone Payment
+                  </h3>
                 </div>
-                <button onClick={() => setIsPaymentModalOpen(false)} className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center active:scale-90">
+                <button
+                  onClick={() => setIsPaymentModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center active:scale-90"
+                >
                   <span className="material-symbols-outlined text-[18px]">close</span>
                 </button>
               </div>
 
               <form onSubmit={handleProcessPayment} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Payment Amount (₹)</label>
+                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                    Payment Amount (₹)
+                  </label>
                   <input
                     type="number"
                     placeholder="Enter amount"
@@ -787,7 +1037,9 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">Payment Stage Description</label>
+                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                    Payment Stage Description
+                  </label>
                   <input
                     type="text"
                     value={paymentNote}
@@ -798,8 +1050,13 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                 </div>
 
                 <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 space-y-1 text-[11px] leading-relaxed">
-                  <span className="font-display font-bold text-primary block">💳 Gilded UPI gateway simulation:</span>
-                  <p className="text-stone-600">Clicking below will simulate a secure UPI transaction callback and log credit milestones directly into your Siri Arts & Crafts workspace ledger.</p>
+                  <span className="font-display font-bold text-primary block">
+                    💳 Gilded UPI gateway simulation:
+                  </span>
+                  <p className="text-stone-600">
+                    Clicking below will simulate a secure UPI transaction callback and log credit
+                    milestones directly into your Siri Arts & Crafts workspace ledger.
+                  </p>
                 </div>
 
                 <button

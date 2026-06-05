@@ -1,7 +1,6 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { MandalaElement } from "../components/ui/MandalaElement";
-import { SEO } from "../components/seo/SEO";
+import { Link } from 'react-router-dom';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { SEO } from '../components/seo/SEO';
 
 export function NotFound() {
   return (
@@ -21,12 +20,10 @@ export function NotFound() {
           404
         </h2>
         <div className="mt-[-40px] md:mt-[-60px]">
-          <h2 className="font-display text-3xl md:text-5xl mb-4 text-on-surface">
-            Page Not Found
-          </h2>
+          <h2 className="font-display text-3xl md:text-5xl mb-4 text-on-surface">Page Not Found</h2>
           <p className="text-on-surface-variant max-w-md mx-auto mb-10 font-body-md">
-            The masterpiece you are looking for doesn't exist or has been moved
-            to a different collection.
+            The masterpiece you are looking for doesn't exist or has been moved to a different
+            collection.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

@@ -7,7 +7,7 @@ import logger from '../config/logger';
 // Standard rate limit bypass for local development or health checks
 export const skipRateLimit = (req: Request) => {
   if (process.env.TEST_RATE_LIMIT === 'true') return false;
-  
+
   if (process.env.NODE_ENV === 'development') {
     const ip = req.ip || req.socket.remoteAddress || '';
     if (ip.includes('127.0.0.1') || ip.includes('::1') || ip === 'localhost') {
@@ -26,18 +26,17 @@ export const skipRateLimit = (req: Request) => {
 };
 
 // Custom key generator for account-based throttling
-export const accountKeyGenerator = (req: Request, res: Response): string => {
-  // @ts-ignore (Assuming req.user is populated by authMiddleware)
-  if (req.user && req.user.id) {
-    // @ts-ignore
-    return `user_${req.user.id}`;
+export const accountKeyGenerator = (req: Request, _res: Response): string => {
+  const user = (req as Request & { user?: { id?: string } }).user;
+  if (user?.id) {
+    return `user_${user.id}`;
   }
-  
+
   const ip = req.ip || req.socket.remoteAddress;
   if (!ip) {
     return 'unknown_ip';
   }
-  
+
   return ipKeyGenerator(ip);
 };
 
@@ -78,10 +77,18 @@ export const createRateLimiter = (name: string, options: Partial<Options>) => {
 
   const memoryLimiter = rateLimit(limiterOptions);
   let redisLimiter: any = null;
+  let redisDownLogged = false;
 
   return (req: Request, res: Response, next: NextFunction) => {
     // Use redis if available
     if (redisClient && redisClient.isReady) {
+      if (redisDownLogged) {
+        logger.info(
+          `[REDIS RECOVERY] Redis reconnected, rate limiter '${name}' restored to Redis backend.`,
+        );
+        redisDownLogged = false;
+      }
+
       if (!redisLimiter) {
         redisLimiter = rateLimit({
           ...limiterOptions,
@@ -94,10 +101,22 @@ export const createRateLimiter = (name: string, options: Partial<Options>) => {
       return redisLimiter(req, res, next);
     }
 
-    // STRICT PRODUCTION ENFORCEMENT: Avoid cluster mode memory leak footgun
-    if (process.env.NODE_ENV === 'production' && process.env.REQUIRE_REDIS === 'true') {
-      logger.error(`CRITICAL: Redis is disconnected but required for production rate-limiting! Failing request to prevent isolated memory store leaks in PM2 cluster mode (Limiter: ${name}).`);
-      return res.status(503).json({ success: false, message: 'Service temporarily unavailable due to caching backend failure.' });
+    if (process.env.NODE_ENV === 'production') {
+      if (process.env.REQUIRE_REDIS === 'true') {
+        if (!redisDownLogged) {
+          logger.warn(
+            `[REDIS DOWN] Redis is required (REQUIRE_REDIS=true) but disconnected. Falling back to memory rate limiting for limiter '${name}' to preserve uptime. This may cause isolated per-process limits.`,
+          );
+          redisDownLogged = true;
+        }
+      } else {
+        if (!redisDownLogged) {
+          logger.warn(
+            `[REDIS DOWN] Rate limiter '${name}' falling back to memory. This may cause isolated per-process rate limits.`,
+          );
+          redisDownLogged = true;
+        }
+      }
     }
 
     // Fallback to memory limiter (useful for tests or non-production environments)

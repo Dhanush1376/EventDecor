@@ -1,6 +1,4 @@
-import React, { Suspense, lazy } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Suspense, lazy } from 'react';
 import { SEO } from '../components/seo/SEO';
 import { CheckoutProvider, useCheckout } from '../checkout/CheckoutProvider';
 import toast from 'react-hot-toast';

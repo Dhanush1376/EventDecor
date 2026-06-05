@@ -1,14 +1,13 @@
-import React, { useRef, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { SectionWrapper } from "../layout";
-import { ProductCard } from "../ui/ProductCard";
-import { fadeUp } from "../../animations/variants";
-import { MandalaElement } from "../ui/MandalaElement";
-import { MandalaArtDecor } from "../ui/MandalaArtDecor";
-import { productService } from "../../services/domainServices";
-import { useWebsiteContent } from "../../hooks/useWebsiteContent";
-import { BestsellerSkeleton } from "../ui/Skeleton";
+import React, { useRef, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { SectionWrapper } from '../layout';
+import { ProductCard } from '../ui/ProductCard';
+import { MandalaElement } from '../ui/MandalaElement';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
+import { productService } from '../../services/domainServices';
+import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import { BestsellerSkeleton } from '../ui/Skeleton';
 
 import logger from '../../utils/logger';
 export function BestsellerSection() {
@@ -28,7 +27,7 @@ export function BestsellerSection() {
           setRawBestsellers(res.data.data || res.data.products || []);
         }
       } catch (err) {
-        logger.error("Failed to fetch bestsellers", err);
+        logger.error('Failed to fetch bestsellers', err);
       } finally {
         setFetchLoading(false);
       }
@@ -38,12 +37,12 @@ export function BestsellerSection() {
 
   useEffect(() => {
     if (rawBestsellers.length > 0) {
-      let products = [];
+      let products;
       if (featuredProducts?.productIds && featuredProducts.productIds.length > 0) {
-        products = rawBestsellers.filter(p => featuredProducts.productIds.includes(p._id));
+        products = rawBestsellers.filter((p) => featuredProducts.productIds.includes(p._id));
         if (products.length < (featuredProducts.maxDisplay || 4)) {
-           const others = rawBestsellers.filter(p => !featuredProducts.productIds.includes(p._id));
-           products = [...products, ...others].slice(0, featuredProducts.maxDisplay || 4);
+          const others = rawBestsellers.filter((p) => !featuredProducts.productIds.includes(p._id));
+          products = [...products, ...others].slice(0, featuredProducts.maxDisplay || 4);
         }
       } else {
         products = rawBestsellers.slice(0, featuredProducts?.maxDisplay || 4);
@@ -55,7 +54,7 @@ export function BestsellerSection() {
   if (!cmsLoading && featuredProducts && !featuredProducts.isVisible) return null;
   if (cmsLoading || fetchLoading) return <BestsellerSkeleton />;
 
-  const allItems = [...bestsellers, { id: "view-all", isViewAll: true }];
+  const allItems = [...bestsellers, { id: 'view-all', isViewAll: true }];
 
   const handleDragEnd = (e, { offset }) => {
     const swipe = offset.x;
@@ -79,7 +78,7 @@ export function BestsellerSection() {
       const { clientWidth } = scrollRef.current;
       scrollRef.current.scrollBy({
         left: clientWidth * 0.8,
-        behavior: "smooth",
+        behavior: 'smooth',
       });
     }
   };
@@ -89,7 +88,7 @@ export function BestsellerSection() {
       const { clientWidth } = scrollRef.current;
       scrollRef.current.scrollBy({
         left: -(clientWidth * 0.8),
-        behavior: "smooth",
+        behavior: 'smooth',
       });
     }
   };
@@ -134,8 +133,8 @@ export function BestsellerSection() {
         <motion.div
           initial={{ opacity: 0, y: 35 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ type: "spring", stiffness: 70, damping: 15 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ type: 'spring', stiffness: 70, damping: 15 }}
           className="max-w-2xl flex flex-col items-center md:items-start text-center md:text-left w-full"
         >
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-primary/20 bg-surface/50 mb-5">
@@ -143,15 +142,15 @@ export function BestsellerSection() {
               Curated Selection
             </span>
           </div>
-          <h2
-            className="font-headline text-[32px] sm:text-[42px] md:text-[65px] text-on-surface leading-[1.1] tracking-tight"
-          >
-            {(featuredProducts.sectionTitle || "The Signature Collection.").split(/\n/).map((line, i, arr) => (
-              <React.Fragment key={i}>
-                {line}
-                {i < arr.length - 1 && <br />}
-              </React.Fragment>
-            ))}
+          <h2 className="font-headline text-[32px] sm:text-[42px] md:text-[65px] text-on-surface leading-[1.1] tracking-tight">
+            {(featuredProducts.sectionTitle || 'The Signature Collection.')
+              .split(/\n/)
+              .map((line, i, arr) => (
+                <React.Fragment key={i}>
+                  {line}
+                  {i < arr.length - 1 && <br />}
+                </React.Fragment>
+              ))}
           </h2>
         </motion.div>
 
@@ -178,7 +177,7 @@ export function BestsellerSection() {
       {/* Mobile Stacked Carousel (Rummy cards swipe style) */}
       <div className="md:hidden relative h-[520px] w-full flex items-center justify-center overflow-visible touch-pan-y z-20 mt-4 mb-10">
         {allItems.map((item, idx) => {
-          let x = "0%";
+          let x = '0%';
           let scale = 1;
           let zIndex = 30;
           let opacity = 1;
@@ -212,21 +211,17 @@ export function BestsellerSection() {
                   className="flex flex-col items-center justify-center bg-surface border border-outline-variant/30 rounded-[24px] md:rounded-[36px] p-11 group shadow-[0_20px_40px_rgba(0,0,0,0.1)] aspect-[4/5] cursor-pointer"
                 >
                   <div className="w-18 h-18 rounded-full border border-black/10 flex items-center justify-center mb-5.5 transition-all duration-500 shadow-lg bg-surface group-hover:bg-primary group-hover:text-white group-hover:border-primary">
-                    <span className="material-symbols-outlined text-[29px]">
-                      grid_view
-                    </span>
+                    <span className="material-symbols-outlined text-[29px]">grid_view</span>
                   </div>
                   <div
-                    className={`flex flex-col items-center transition-opacity duration-500 ${idx !== activeIndex ? "opacity-0" : "opacity-100"}`}
+                    className={`flex flex-col items-center transition-opacity duration-500 ${idx !== activeIndex ? 'opacity-0' : 'opacity-100'}`}
                   >
                     <h3 className="font-display text-[25px] md:text-[32px] text-on-surface mb-3.5 text-center">
                       Discover the <br /> Full Studio
                     </h3>
                     <span className="font-label-sm text-[9px] text-primary uppercase tracking-[0.3em] font-bold flex items-center gap-2 group-hover:gap-4 transition-all">
-                      Explore All{" "}
-                      <span className="material-symbols-outlined text-[14px]">
-                        arrow_forward
-                      </span>
+                      Explore All{' '}
+                      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                     </span>
                   </div>
                 </Link>
@@ -251,9 +246,9 @@ export function BestsellerSection() {
             key={product._id}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: true, margin: '-50px' }}
             transition={{
-              type: "spring",
+              type: 'spring',
               stiffness: 70,
               damping: 15,
               delay: idx * 0.05,
@@ -268,9 +263,9 @@ export function BestsellerSection() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, margin: '-50px' }}
           transition={{
-            type: "spring",
+            type: 'spring',
             stiffness: 70,
             damping: 15,
             delay: bestsellers.length * 0.05,
@@ -282,18 +277,14 @@ export function BestsellerSection() {
             className="flex flex-col items-center text-center w-full h-full justify-center"
           >
             <div className="w-18 h-18 rounded-full border border-black/10 flex items-center justify-center mb-5.5 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-500 shadow-lg">
-              <span className="material-symbols-outlined text-[29px]">
-                grid_view
-              </span>
+              <span className="material-symbols-outlined text-[29px]">grid_view</span>
             </div>
             <h3 className="font-display text-[25px] md:text-[32px] text-on-surface mb-3.5">
               Discover the <br /> Full Studio
             </h3>
             <span className="font-label-sm text-[9px] text-primary uppercase tracking-[0.3em] font-bold flex items-center gap-2 group-hover:gap-4 transition-all">
-              Explore All{" "}
-              <span className="material-symbols-outlined text-[14px]">
-                arrow_forward
-              </span>
+              Explore All{' '}
+              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
             </span>
           </Link>
         </motion.div>
@@ -306,7 +297,7 @@ export function BestsellerSection() {
             <div
               key={idx}
               className={`h-1 rounded-full transition-all duration-500 ${
-                activeIndex === idx ? "w-6 bg-primary" : "w-1.5 bg-primary/20"
+                activeIndex === idx ? 'w-6 bg-primary' : 'w-1.5 bg-primary/20'
               }`}
             />
           ))}
@@ -317,9 +308,7 @@ export function BestsellerSection() {
           className="w-full sm:w-auto px-8 py-4 bg-transparent border border-black/10 text-on-surface rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold hover:bg-black/5 flex items-center justify-center gap-3"
         >
           Explore All Decor
-          <span className="material-symbols-outlined text-[16px]">
-            trending_flat
-          </span>
+          <span className="material-symbols-outlined text-[16px]">trending_flat</span>
         </Link>
       </div>
     </SectionWrapper>

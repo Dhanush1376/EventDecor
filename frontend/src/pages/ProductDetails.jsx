@@ -1,25 +1,25 @@
-import React, { useEffect, useMemo, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { SectionWrapper } from "../components/layout/SectionWrapper";
-import { ProductGallery } from "../components/ui/ProductGallery";
-import { ProductInfo } from "../components/ui/ProductInfo";
-import { Skeleton, ProductDetailSkeleton } from "../components/ui/Skeleton";
+import React, { useEffect, useMemo, useRef } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { ProductGallery } from '../components/ui/ProductGallery';
+import { ProductInfo } from '../components/ui/ProductInfo';
+import { Skeleton, ProductDetailSkeleton } from '../components/ui/Skeleton';
 
-import { ProductReviews } from "../components/sections/ProductReviews";
-import { SEO } from "../components/seo/SEO";
-import { MandalaElement } from "../components/ui/MandalaElement";
-import { productService, userService } from "../services/domainServices";
-import { useProduct } from "../hooks/useProductQueries";
-import { useAuth } from "../context/AuthContext";
-import { useRecommendationTracker } from "../hooks/useRecommendationTracker";
-import { useQueryClient } from "@tanstack/react-query";
-import recommendationService from "../services/recommendationService";
+import { ProductReviews } from '../components/sections/ProductReviews';
+import { SEO } from '../components/seo/SEO';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { userService } from '../services/domainServices';
+import { useProduct } from '../hooks/useProductQueries';
+import { useAuth } from '../context/AuthContext';
+import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
+import { useQueryClient } from '@tanstack/react-query';
+import recommendationService from '../services/recommendationService';
 
 import logger from '../utils/logger';
 
 const RecommendationSystem = React.lazy(() =>
-  import("../components/sections/RecommendationSystem").then((m) => ({ default: m.RecommendationSystem }))
+  import('../components/sections/RecommendationSystem').then((m) => ({
+    default: m.RecommendationSystem,
+  })),
 );
 export function ProductDetails() {
   const { id } = useParams();
@@ -43,66 +43,74 @@ export function ProductDetails() {
     if (product) {
       const productId = product._id || product.id || id;
       // Similar
-      queryClient.prefetchQuery({
-        queryKey: ['recommendations', 'similar', 'product', productId, 8],
-        queryFn: async () => {
-          const res = await recommendationService.getSimilar('product', productId, 8);
-          return res.success ? res.data : res;
-        }
-      }).catch(() => {});
+      queryClient
+        .prefetchQuery({
+          queryKey: ['recommendations', 'similar', 'product', productId, 8],
+          queryFn: async () => {
+            const res = await recommendationService.getSimilar('product', productId, 8);
+            return res.success ? res.data : res;
+          },
+        })
+        .catch(() => {});
       // Also viewed
-      queryClient.prefetchQuery({
-        queryKey: ['recommendations', 'alsoViewed', productId, 'product', 8],
-        queryFn: async () => {
-          const res = await recommendationService.getAlsoViewed(productId, 'product', 8);
-          return res.success ? res.data : res;
-        }
-      }).catch(() => {});
+      queryClient
+        .prefetchQuery({
+          queryKey: ['recommendations', 'alsoViewed', productId, 'product', 8],
+          queryFn: async () => {
+            const res = await recommendationService.getAlsoViewed(productId, 'product', 8);
+            return res.success ? res.data : res;
+          },
+        })
+        .catch(() => {});
     }
   }, [product, queryClient]);
 
   useEffect(() => {
     if (product && user) {
       userService.trackRecentlyViewed(product._id || product.id || id).catch((err) => {
-        logger.error("Failed to track recently viewed masterpiece:", err);
+        logger.error('Failed to track recently viewed masterpiece:', err);
       });
     }
   }, [product, user]);
 
   useEffect(() => {
     // Immediate scroll to top on mount and ID change
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }
   }, [id]);
 
+  const galleryImages = useMemo(() => {
+    if (!product) return [];
+    return Array.from(new Set([product.imageSrc, ...(product.images || [])].filter(Boolean)));
+  }, [product]);
+
   const productSchema = useMemo(
     () => ({
-      "@context": "https://schema.org/",
-      "@type": "Product",
-      name: product?.title || "Artisanal Piece",
-      image: [product?.imageSrc || ""],
-      description: product?.description || "",
+      '@context': 'https://schema.org/',
+      '@type': 'Product',
+      name: product?.title || 'Artisanal Piece',
+      image: galleryImages,
+      description: product?.description || '',
       sku: `SIRI-${product?.id || product?._id}`,
       brand: {
-        "@type": "Brand",
-        name: "Siri Arts & Crafts",
+        '@type': 'Brand',
+        name: 'Siri Arts & Crafts',
       },
       offers: {
-        "@type": "Offer",
-        url: typeof window !== "undefined" ? window.location.href : "",
-        priceCurrency: "INR",
+        '@type': 'Offer',
+        url: typeof window !== 'undefined' ? window.location.href : '',
+        priceCurrency: 'INR',
         price: product?.price || 0,
-        availability: "https://schema.org/InStock",
+        availability: 'https://schema.org/InStock',
       },
     }),
-    [product],
+    [product, galleryImages],
   );
 
   if (loading) {
     return <ProductDetailSkeleton />;
   }
-
 
   if (error || !product) {
     return (
@@ -112,7 +120,10 @@ export function ProductDetails() {
           <p className="text-on-surface-variant mb-8">
             The product you are looking for may have been moved or is currently unavailable.
           </p>
-          <Link to="/collections" className="bg-primary text-white px-8 py-3 rounded-full font-bold uppercase tracking-wider shadow-xl hover:bg-primary-dark transition-all">
+          <Link
+            to="/collections"
+            className="bg-primary text-white px-8 py-3 rounded-full font-bold uppercase tracking-wider shadow-xl hover:bg-primary-dark transition-all"
+          >
             Return to Collections
           </Link>
         </div>
@@ -122,11 +133,7 @@ export function ProductDetails() {
 
   return (
     <div className="bg-surface relative min-h-screen">
-      <SEO
-        title={product.title}
-        description={product.description}
-        schema={productSchema}
-      />
+      <SEO title={product.title} description={product.description} schema={productSchema} />
 
       {/* Decorative Mandalas */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
@@ -150,34 +157,23 @@ export function ProductDetails() {
             Studio
           </Link>
           <span className="opacity-30">/</span>
-          <Link
-            to="/collections"
-            className="hover:text-primary transition-colors"
-          >
+          <Link to="/collections" className="hover:text-primary transition-colors">
             Heritage Collections
           </Link>
           <span className="opacity-30">/</span>
-          <span className="text-on-surface font-bold truncate">
-            {product.title}
-          </span>
+          <span className="text-on-surface font-bold truncate">{product.title}</span>
         </nav>
       </div>
 
       <section className="pt-[68px] md:pt-0 pb-12 md:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
-          <ProductGallery
-            images={product.images || [product.imageSrc].filter(Boolean)}
-            product={product}
-          />
+          <ProductGallery images={galleryImages} product={product} />
           <ProductInfo product={product} atcRef={atcRef} />
         </div>
       </section>
 
       {/* Verified Purchaser Reviews */}
-      <ProductReviews
-        productId={product._id || product.id || id}
-        productTitle={product.title}
-      />
+      <ProductReviews productId={product._id || product.id || id} productTitle={product.title} />
 
       <React.Suspense
         fallback={
@@ -186,7 +182,10 @@ export function ProductDetails() {
           </div>
         }
       >
-        <RecommendationSystem category={product.category} currentProductId={product._id || product.id || id} />
+        <RecommendationSystem
+          category={product.category}
+          currentProductId={product._id || product.id || id}
+        />
       </React.Suspense>
     </div>
   );

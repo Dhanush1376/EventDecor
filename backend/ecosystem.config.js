@@ -20,7 +20,7 @@ module.exports = {
       // Graceful shutdown settings
       kill_timeout: 10000,
       wait_ready: true,
-      listen_timeout: 50000,
-    }
-  ]
+      listen_timeout: 10000,
+    },
+  ],
 };

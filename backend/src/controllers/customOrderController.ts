@@ -6,6 +6,8 @@ import ApiResponse from '../utils/ApiResponse';
 import { CustomOrderMailService } from '../services/customOrderMailService';
 import logger from '../config/logger';
 import { ADMIN_ROLES } from '../config/adminConfig';
+import mongoose from 'mongoose';
+import OutboxEvent from '../models/OutboxEvent';
 
 // DEFAULT CONFIG OPTIONS
 const DEFAULT_CONFIG = {
@@ -62,7 +64,7 @@ export const submitCustomOrder = asyncHandler(async (req: any, res: Response) =>
     customerPhone,
   } = req.body;
 
-  const order = await CustomOrder.create({
+  const orderData = {
     customerEmail: req.user?.email || req.body.customerEmail,
     customerName: req.user?.name || req.body.customerName,
     customerPhone: customerPhone || req.user?.phone,
@@ -77,18 +79,40 @@ export const submitCustomOrder = asyncHandler(async (req: any, res: Response) =>
     bookingType: bookingType || 'Video Meet',
     messages: [
       {
-        sender: 'admin',
+        sender: 'admin' as const,
         senderName: 'Siri Arts & Crafts',
         text: 'Welcome to your custom design workspace! Our design team is currently reviewing your blueprint and inspiration images.',
         createdAt: new Date(),
       },
     ],
-  });
+  };
 
-  // Trigger luxury emails asynchronously
-  CustomOrderMailService.sendSubmissionEmails(order).catch((err) =>
-    logger.error('Custom order submission email error:', err),
-  );
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  let order: any;
+  try {
+    const orders = await CustomOrder.create([orderData as any], { session });
+    order = orders[0];
+
+    await OutboxEvent.create(
+      [
+        {
+          aggregateId: order._id.toString(),
+          aggregateType: 'CustomOrder',
+          eventType: 'CustomOrderSubmitted',
+          payload: { orderId: order._id.toString() },
+        },
+      ],
+      { session },
+    );
+
+    await session.commitTransaction();
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
 
   // Admin real-time notification
   try {

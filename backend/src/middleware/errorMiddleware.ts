@@ -51,10 +51,19 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
     message = 'Request payload is too large. Please reduce the size of your upload.';
   }
 
+  // Handle Multer upload errors
+  else if (err.name === 'MulterError') {
+    statusCode = 400;
+    message = `File upload error: ${err.message}`;
+  }
+
   // Mongoose bad ObjectId
   else if (err.name === 'CastError') {
     statusCode = 404;
-    message = `Resource not found with id of ${err.value}`;
+    // Redact CastError.value to prevent PII leakage (SEC-09)
+    const isObviousId = typeof err.value === 'string' && err.value.length <= 24;
+    const safeValue = isObviousId ? err.value : '[REDACTED]';
+    message = `Resource not found with id of ${safeValue}`;
   }
 
   // Mongoose validation error
@@ -80,6 +89,16 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
     message = 'Session expired. Please log in again.';
   }
 
+  // Handle Fetch/Axios Timeouts (AbortError)
+  else if (
+    err.name === 'AbortError' ||
+    err.code === 'ECONNABORTED' ||
+    err.message === 'fetch failed'
+  ) {
+    statusCode = 504;
+    message = 'The upstream service took too long to respond. Please try again.';
+  }
+
   // Handle custom ApiError instances
   if (err instanceof ApiError) {
     statusCode = err.statusCode;
@@ -94,16 +113,21 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
 
   // Log error with request correlation context
   if (statusCode < 500) {
-    logger.warn(`[API Client Error] ${req.method} ${req.originalUrl} - Status ${statusCode} - ${message}`);
+    logger.warn(
+      `[API Client Error] ${req.method} ${req.originalUrl} - Status ${statusCode} - ${message}`,
+    );
   } else {
-    logger.error(`[API Exception] ${req.method} ${req.originalUrl} - Status ${statusCode} - ${message}`, {
-      error: {
-        name: err.name || 'Error',
-        message: err.message || message,
-        stack: err.stack,
-        errors,
-      }
-    });
+    logger.error(
+      `[API Exception] ${req.method} ${req.originalUrl} - Status ${statusCode} - ${message}`,
+      {
+        error: {
+          name: err.name || 'Error',
+          message: err.message || message,
+          stack: err.stack,
+          errors,
+        },
+      },
+    );
   }
 
   // Report unhandled 500 errors to Sentry if integration is configured
@@ -119,13 +143,19 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
   const store = requestContextStorage.getStore();
   const requestId = store?.requestId;
 
-  res.status(statusCode).json({
+  const responsePayload: any = {
     success: false,
     message,
     errors,
     requestId,
-    stack: !isProduction ? err.stack : undefined,
-  });
+  };
+
+  // Explicit stack trace suppression for production
+  if (!isProduction) {
+    responsePayload.stack = err.stack;
+  }
+
+  res.status(statusCode).json(responsePayload);
 };
 
 export default errorMiddleware;

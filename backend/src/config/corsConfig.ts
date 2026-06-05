@@ -49,22 +49,19 @@ export const isOriginAllowed = (origin: string): boolean => {
     const parsedOrigin = parsedUrl.origin;
     const hostname = parsedUrl.hostname;
 
-    // Allow local network IPs for mobile testing (safe since they are local)
-    if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('10.')
-    ) {
-      return true;
+    // Allow local network IPs for mobile testing (only in development)
+    if (process.env.NODE_ENV !== 'production') {
+      if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.')
+      ) {
+        return true;
+      }
     }
 
     if (allowedOrigins.has(parsedOrigin)) {
-      return true;
-    }
-
-    // Support wildcard for Vercel and Render deployments to prevent CORS blocking on new deployments
-    if (hostname.endsWith('.vercel.app') || hostname.endsWith('.onrender.com')) {
       return true;
     }
 

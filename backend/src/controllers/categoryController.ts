@@ -48,7 +48,18 @@ export const updateCategory = async (req: Request, res: Response) => {
     }
 
     const oldName = existing.name;
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    const dto = {
+      name: req.body.name,
+      description: req.body.description,
+      displayOrder: req.body.displayOrder,
+      isActive: req.body.isActive,
+      type: req.body.type,
+      image: req.body.image,
+    };
+    Object.keys(dto).forEach((k) => (dto as any)[k] === undefined && delete (dto as any)[k]);
+
+    const category = await Category.findByIdAndUpdate(req.params.id, { $set: dto }, { new: true });
     if (!category) {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
@@ -65,7 +76,9 @@ export const updateCategory = async (req: Request, res: Response) => {
         .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
         .reduce((sum, r) => sum + (r.value?.modifiedCount || 0), 0);
       if (cascadedCount > 0) {
-        logger.info(`[CATEGORY] Cascaded rename "${oldName}" → "${req.body.name}" across ${cascadedCount} document(s)`);
+        logger.info(
+          `[CATEGORY] Cascaded rename "${oldName}" → "${req.body.name}" across ${cascadedCount} document(s)`,
+        );
       }
     }
 

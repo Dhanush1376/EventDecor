@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import crypto from 'crypto';
 
 export interface IRentalOrder extends Document {
   rentalOrderId: string;
@@ -28,7 +29,14 @@ export interface IRentalOrder extends Document {
     | 'completed'
     | 'cancelled';
   paymentMethod: string;
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'Pending COD' | 'COD Collected';
+  paymentStatus:
+    | 'pending'
+    | 'processing'
+    | 'paid'
+    | 'failed'
+    | 'refunded'
+    | 'Pending COD'
+    | 'COD Collected';
   shippingAddress: {
     name: string;
     phone: string;
@@ -75,8 +83,10 @@ export interface IRentalOrder extends Document {
     reason: string;
     processedBy: string;
   };
+  depositStatus: 'held' | 'refunded' | 'forfeited';
   lateFee: number;
   lateFeeAppliedDays: number;
+  idempotencyKey?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -105,9 +115,13 @@ const RentalOrderSchema: Schema = new Schema(
       enum: [
         'pending',
         'confirmed',
+        'packed',
+        'out_for_delivery',
+        'delivered',
         'active_rental',
         'late_return',
         'return_requested',
+        'inspecting',
         'returned',
         'completed',
         'cancelled',
@@ -118,7 +132,7 @@ const RentalOrderSchema: Schema = new Schema(
     paymentMethod: { type: String, default: 'Razorpay' },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'paid', 'failed', 'refunded', 'Pending COD', 'COD Collected'],
+      enum: ['pending', 'processing', 'paid', 'failed', 'refunded', 'Pending COD', 'COD Collected'],
       default: 'pending',
       index: true,
     },
@@ -172,18 +186,24 @@ const RentalOrderSchema: Schema = new Schema(
       reason: { type: String },
       processedBy: { type: String },
     },
+    depositStatus: {
+      type: String,
+      enum: ['held', 'refunded', 'forfeited'],
+      default: 'held',
+    },
     lateFee: { type: Number, default: 0 },
     lateFeeAppliedDays: { type: Number, default: 0 },
+    idempotencyKey: { type: String, unique: true, sparse: true },
   },
   { timestamps: true },
 );
 
-// Pre-save hook to generate rentalOrderId
+// Pre-save hook to generate rentalOrderId with cryptographic randomness
 RentalOrderSchema.pre('save', function () {
   const doc = this as any;
   if (!doc.rentalOrderId) {
-    const randomChars = Math.random().toString(36).substring(2, 8).toUpperCase();
-    doc.rentalOrderId = `RNT-${Date.now().toString().slice(-4)}-${randomChars}`;
+    const randomChars = crypto.randomBytes(4).toString('hex').toUpperCase();
+    doc.rentalOrderId = `RNT-${Date.now().toString(36).toUpperCase()}-${randomChars}`;
   }
 });
 

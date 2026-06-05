@@ -1,14 +1,12 @@
-import React, { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { Link } from "react-router-dom";
-import { SectionWrapper } from "../layout/SectionWrapper";
-import { fadeUp } from "../../animations/variants";
-import { MandalaElement } from "../ui/MandalaElement";
-import { MandalaArtDecor } from "../ui/MandalaArtDecor";
-import { useWebsiteContent } from "../../hooks/useWebsiteContent";
-import { CloudinaryImage } from "../ui/CloudinaryImage";
-import { StorySkeleton } from "../ui/Skeleton";
-import { createSafeHtml } from "../../utils/sanitize";
+import { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { MandalaElement } from '../ui/MandalaElement';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
+import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
+import { StorySkeleton } from '../ui/Skeleton';
+import { createSafeHtml } from '../../utils/sanitize';
 
 export function StorySection() {
   const containerRef = useRef(null);
@@ -16,11 +14,11 @@ export function StorySection() {
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start end", "end start"],
+    offset: ['start end', 'end start'],
   });
 
   // Subtle parallax only on larger screens (width >= 1024px)
-  const isLargeScreen = typeof window !== "undefined" && window.innerWidth >= 1024;
+  const isLargeScreen = typeof window !== 'undefined' && window.innerWidth >= 1024;
   const imageY = useTransform(scrollYProgress, [0, 1], isLargeScreen ? [-40, 40] : [0, 0]);
   const contentY = useTransform(scrollYProgress, [0, 1], isLargeScreen ? [40, -40] : [0, 0]);
 
@@ -32,8 +30,6 @@ export function StorySection() {
       ref={containerRef}
       className="relative pt-16 pb-28 lg:py-28 overflow-hidden bg-surface"
     >
-
-
       {/* Background Depth Glimmer */}
       <div className="absolute top-1/4 left-0 w-[400px] md:w-[700px] h-[400px] md:h-[700px] bg-primary-container/15 rounded-full blur-[100px] md:blur-[150px] -translate-x-1/2 pointer-events-none" />
 
@@ -70,7 +66,7 @@ export function StorySection() {
               style={{ y: imageY }}
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true, margin: '-100px' }}
               transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
               className="relative z-10 w-full aspect-[4/5] rounded-[28px] md:rounded-[43px] overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.1)] border border-black/5"
             >
@@ -91,8 +87,8 @@ export function StorySection() {
             <motion.div
               initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
               whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ type: "spring", stiffness: 60, damping: 12, delay: 0.6 }}
+              viewport={{ once: true, margin: '-100px' }}
+              transition={{ type: 'spring', stiffness: 60, damping: 12, delay: 0.6 }}
               className="absolute top-6 lg:top-auto lg:-bottom-11 right-1 lg:right-auto lg:-left-11 z-20 pointer-events-none"
             >
               <motion.div
@@ -102,12 +98,12 @@ export function StorySection() {
                 transition={{
                   duration: 6,
                   repeat: Infinity,
-                  ease: "easeInOut",
+                  ease: 'easeInOut',
                 }}
                 className="bg-surface/90 backdrop-blur-md lg:bg-surface p-4 lg:p-9 rounded-[20px] lg:rounded-[36px] flex flex-col items-center min-w-[100px] lg:min-w-[162px] shadow-2xl border border-black/5"
               >
                 <span className="font-label-sm text-[7px] lg:text-[9px] uppercase tracking-[0.3em] text-primary mb-1.5 lg:mb-2.5 font-bold">
-                  {storyTeaser.badgeLabel || "Heritage"}
+                  {storyTeaser.badgeLabel || 'Heritage'}
                 </span>
                 <span className="font-display text-on-surface text-[20px] lg:text-[36px] leading-none italic">
                   {storyTeaser.establishedYear}
@@ -122,7 +118,7 @@ export function StorySection() {
               style={{ y: contentY }}
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true, margin: '-100px' }}
               transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
               className="max-w-2xl mx-auto lg:mx-0 bg-surface/95 backdrop-blur-2xl lg:bg-transparent px-4.5 py-8 pb-12 sm:px-8 lg:p-0 rounded-[28px] lg:rounded-none shadow-2xl lg:shadow-none border border-outline-variant/20 lg:border-none"
             >
@@ -135,14 +131,14 @@ export function StorySection() {
 
               <h2
                 className="font-headline text-[26px] sm:text-[38px] md:text-[65px] text-on-surface mb-5 md:mb-7 leading-[1.1] md:leading-[1.05] tracking-tight"
-                dangerouslySetInnerHTML={createSafeHtml(storyTeaser.title.replace(/\n/g, "<br/>"))}
+                dangerouslySetInnerHTML={createSafeHtml(storyTeaser.title.replace(/\n/g, '<br/>'))}
               ></h2>
 
               <div className="space-y-6">
-                {storyTeaser.description.split("\n\n").map((paragraph, idx) => (
+                {storyTeaser.description.split('\n\n').map((paragraph, idx) => (
                   <p
                     key={idx}
-                    className={`font-body leading-relaxed font-light ${idx === 0 ? "text-on-surface-variant/80 text-[14px] sm:text-[16px] md:text-xl" : "text-on-surface-variant/60 text-[13px] sm:text-[14px] md:text-lg"}`}
+                    className={`font-body leading-relaxed font-light ${idx === 0 ? 'text-on-surface-variant/80 text-[14px] sm:text-[16px] md:text-xl' : 'text-on-surface-variant/60 text-[13px] sm:text-[14px] md:text-lg'}`}
                   >
                     {paragraph}
                   </p>

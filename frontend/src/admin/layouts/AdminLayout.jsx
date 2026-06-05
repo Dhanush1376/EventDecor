@@ -1,17 +1,18 @@
-import React, { useEffect, useState, Suspense } from "react";
-import api from "../../services/api";
-import { Outlet, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { AdminProvider, useAdmin } from "../context/AdminContext";
-import { AdminSidebar } from "../components/AdminSidebar";
-import { AdminTopBar } from "../components/AdminTopBar";
-import { PublishToast } from "../components/AdminUIKit";
-import { AdminErrorBoundary } from "../components/AdminErrorBoundary";
-import { GlobalSearchPalette } from "../components/GlobalSearchPalette";
-import { AdminLoader } from "../../components/ui/PageLoader";
-import toast from "react-hot-toast";
+import { useEffect, useState, Suspense } from 'react';
+import api from '../../services/api';
+import { Outlet, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AdminProvider, useAdmin } from '../context/AdminContext';
+import { DraftProvider } from '../context/DraftProvider';
+import { AdminSidebar } from '../components/AdminSidebar';
+import { AdminTopBar } from '../components/AdminTopBar';
+import { PublishToast } from '../components/AdminUIKit';
+import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
+import { GlobalSearchPalette } from '../components/GlobalSearchPalette';
+import { AdminLoader } from '../../components/ui/PageLoader';
+import toast from 'react-hot-toast';
 
-import "../../styles/admin.css";
+import '../../styles/admin.css';
 
 function AdminLayoutInner() {
   const {
@@ -24,18 +25,18 @@ function AdminLayoutInner() {
     maintenanceMode,
     showIdleWarning,
     setShowIdleWarning,
-    idleSecondsLeft
+    idleSecondsLeft,
   } = useAdmin();
   const { pathname } = useLocation();
   const [socketDegraded, setSocketDegraded] = useState(false);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname]);
 
   useEffect(() => {
     api
-      .get("/health")
+      .get('/health')
       .then((res) => {
         if (res.data?.realtime?.degraded) {
           setSocketDegraded(true);
@@ -47,24 +48,27 @@ function AdminLayoutInner() {
   // Global search trigger (Ctrl+K / Cmd+K)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setSearchPaletteOpen((prev) => !prev);
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setSearchPaletteOpen]);
 
   return (
-    <div className="min-h-screen relative overflow-x-clip selection:bg-black selection:text-white admin-section-root" style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div
+      className="min-h-screen relative overflow-x-clip selection:bg-black selection:text-white admin-section-root"
+      style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+    >
       {/* Status Banners */}
       <div className="relative z-[400] flex flex-col text-[10px] font-bold tracking-wider uppercase select-none">
         <AnimatePresence>
           {safetyLock && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
+              animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="bg-[var(--admin-error)] text-white px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center overflow-hidden"
             >
@@ -77,7 +81,7 @@ function AdminLayoutInner() {
           {maintenanceMode && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
+              animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="bg-[var(--admin-warning)] text-white px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center overflow-hidden"
             >
@@ -90,7 +94,7 @@ function AdminLayoutInner() {
           {socketDegraded && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
+              animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="bg-orange-600 text-white px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center overflow-hidden"
             >
@@ -106,7 +110,7 @@ function AdminLayoutInner() {
         <AdminSidebar />
         <div
           className={`flex flex-col min-h-screen flex-1 transition-all duration-300 ease-[var(--admin-ease)] ${
-            sidebarOpen ? "lg:pl-[260px]" : "lg:pl-[72px]"
+            sidebarOpen ? 'lg:pl-[260px]' : 'lg:pl-[72px]'
           } pl-0`}
         >
           <AdminTopBar />
@@ -114,7 +118,7 @@ function AdminLayoutInner() {
             id="admin-main-content"
             tabIndex={-1}
             className="flex-1 p-4 sm:p-5 md:p-6 lg:p-8 pb-24 lg:pb-12 relative w-full min-w-0"
-            style={{ maxWidth: "var(--admin-max-content-width)", margin: "0 auto" }}
+            style={{ maxWidth: 'var(--admin-max-content-width)', margin: '0 auto' }}
           >
             <AdminErrorBoundary>
               <Suspense fallback={<AdminLoader />}>
@@ -129,10 +133,7 @@ function AdminLayoutInner() {
       <PublishToast message={publishToast} />
 
       {/* Global Command & Search Palette */}
-      <GlobalSearchPalette
-        isOpen={searchPaletteOpen}
-        onClose={() => setSearchPaletteOpen(false)}
-      />
+      <GlobalSearchPalette isOpen={searchPaletteOpen} onClose={() => setSearchPaletteOpen(false)} />
 
       {/* Inactivity Idle Alert Modal */}
       <AnimatePresence>
@@ -152,7 +153,8 @@ function AdminLayoutInner() {
                   Inactivity Timeout Warning
                 </h3>
                 <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-1.5 leading-normal">
-                  Your portal session has been idle. You will be automatically logged out for security in:
+                  Your portal session has been idle. You will be automatically logged out for
+                  security in:
                 </p>
                 <div className="text-[28px] font-black text-[var(--admin-text-primary)] mt-2.5 font-mono tracking-tight animate-pulse">
                   {idleSecondsLeft}s
@@ -161,8 +163,8 @@ function AdminLayoutInner() {
               <button
                 onClick={() => {
                   setShowIdleWarning(false);
-                  window.dispatchEvent(new Event("mousemove"));
-                  toast.success("Session heartbeat renewed!");
+                  window.dispatchEvent(new Event('mousemove'));
+                  toast.success('Session heartbeat renewed!');
                 }}
                 className="admin-btn admin-btn-primary w-full text-[12px] min-h-[42px]"
               >
@@ -179,7 +181,9 @@ function AdminLayoutInner() {
 export function AdminLayout() {
   return (
     <AdminProvider>
-      <AdminLayoutInner />
+      <DraftProvider>
+        <AdminLayoutInner />
+      </DraftProvider>
     </AdminProvider>
   );
 }

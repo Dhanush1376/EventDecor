@@ -1,7 +1,6 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { EASE } from "../../constants/design-tokens";
-import { Skeleton } from "./Skeleton";
+import { motion } from 'framer-motion';
+import { EASE } from '../../constants/design-tokens';
+import { Skeleton } from './Skeleton';
 
 /**
  * Premium button component — unified across the entire design system.
@@ -12,34 +11,33 @@ import { Skeleton } from "./Skeleton";
  */
 export function Button({
   children,
-  variant = "primary",
-  className = "",
+  variant = 'primary',
+  className = '',
   icon,
   fullWidth = false,
-  size = "md",
+  size = 'md',
   loading = false,
   as: Component,
   ...props
 }) {
-  const baseClasses =
-    "btn-base relative overflow-hidden group";
+  const baseClasses = 'btn-base relative overflow-hidden group';
 
   const variants = {
-    primary: "btn-primary",
-    outline: "btn-outline",
-    gold: "btn-gold",
-    ghost: "bg-transparent text-secondary uppercase tracking-[0.2em] hover:text-primary",
-    minimal: "btn-minimal",
+    primary: 'btn-primary',
+    outline: 'btn-outline',
+    gold: 'btn-gold',
+    ghost: 'bg-transparent text-secondary uppercase tracking-[0.2em] hover:text-primary',
+    minimal: 'btn-minimal',
   };
 
   const sizes = {
-    sm: "!px-5 !py-2.5 !text-[10px]",
-    md: "",
-    lg: "!px-14 !py-5 !text-[13px]",
+    sm: '!px-5 !py-2.5 !text-[10px]',
+    md: '',
+    lg: '!px-14 !py-5 !text-[13px]',
   };
 
-  const widthClass = fullWidth ? "w-full" : "";
-  const disabledClass = loading ? "opacity-90 pointer-events-none" : "";
+  const widthClass = fullWidth ? 'w-full' : '';
+  const disabledClass = loading ? 'opacity-90 pointer-events-none' : '';
 
   const buttonContent = (
     <>

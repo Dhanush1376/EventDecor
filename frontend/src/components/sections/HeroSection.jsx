@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { MandalaElement } from "../ui/MandalaElement";
-import { MandalaArtDecor } from "../ui/MandalaArtDecor";
-import { useWindowHeight } from "../../hooks/useWindowHeight";
-import { useWebsiteContent } from "../../hooks/useWebsiteContent";
-import { CloudinaryImage } from "../ui/CloudinaryImage";
-import { HeroSkeleton } from "../ui/Skeleton";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { MandalaElement } from '../ui/MandalaElement';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
+import { useWindowHeight } from '../../hooks/useWindowHeight';
+import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
+import { HeroSkeleton } from '../ui/Skeleton';
 
 export function HeroSection({
   badgeText,
@@ -21,7 +21,7 @@ export function HeroSection({
   floatingCardCtaText,
   floatingCardCtaLink,
   scrollText,
-  isVisible = true
+  isVisible = true,
 }) {
   const windowHeight = useWindowHeight();
   const [isMobile, setIsMobile] = useState(false);
@@ -29,10 +29,10 @@ export function HeroSection({
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 1024);
     check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
   }, []);
-  
+
   const { hero: cmsHero, loading } = useWebsiteContent();
 
   // Merge dynamic PageLayout props with CMS fallback
@@ -49,26 +49,26 @@ export function HeroSection({
     floatingCardCtaText: floatingCardCtaText || cmsHero?.floatingCardCtaText,
     floatingCardCtaLink: floatingCardCtaLink || cmsHero?.floatingCardCtaLink,
     scrollText: scrollText || cmsHero?.scrollText,
-    isVisible: isVisible !== undefined ? isVisible : cmsHero?.isVisible
+    isVisible: isVisible !== undefined ? isVisible : cmsHero?.isVisible,
   };
 
   const getBadgeParts = () => {
-    if (!hero?.badgeText) return { top: "ARTISAN EXCELLENCE", bottom: "SINCE 2015" };
+    if (!hero?.badgeText) return { top: 'ARTISAN EXCELLENCE', bottom: 'SINCE 2015' };
     const parts = hero.badgeText.split(/\s+[Ss][Ii][Nn][Cc][Ee]\s+/);
     if (parts.length > 1) {
       return { top: parts[0], bottom: `SINCE ${parts[1]}` };
     }
-    return { top: hero.badgeText, bottom: "" };
+    return { top: hero.badgeText, bottom: '' };
   };
   const { top: badgeTop, bottom: badgeBottom } = getBadgeParts();
 
   const getFormattedTitle = () => {
     if (!hero?.title) return null;
-    const words = hero.title.split(" ");
+    const words = hero.title.split(' ');
     if (words.length <= 2) {
       return <span className="text-[#d4af37]">{hero.title}</span>;
     }
-    const normalPart = words.slice(0, words.length - 2).join(" ");
+    const normalPart = words.slice(0, words.length - 2).join(' ');
     const goldPart1 = words[words.length - 2];
     const goldPart2 = words[words.length - 1];
     return (
@@ -97,7 +97,11 @@ export function HeroSection({
           {/* Background image & gradient overlay */}
           <div className="absolute inset-0 z-0">
             <CloudinaryImage
-              src={hero.mobileBackgroundImage || hero.backgroundImage || "https://res.cloudinary.com/drxgnnzeb/image/upload/v1779181764/event_decor_ecommerce/assets/event_decor_mobile%20hero%20background.png"}
+              src={
+                hero.mobileBackgroundImage ||
+                hero.backgroundImage ||
+                'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779181764/event_decor_ecommerce/assets/event_decor_mobile%20hero%20background.png'
+              }
               alt="Luxury Royal Wedding Background"
               className="w-full h-full object-cover"
               containerClassName="absolute inset-0 w-full h-full"
@@ -109,7 +113,7 @@ export function HeroSection({
             {/* Soft dark radial & linear gradients to ensure premium contrast, fading on the right */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#0F0E0C]/95 via-[#0F0E0C]/60 to-transparent mix-blend-multiply" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0F0E0C] via-[#0F0E0C]/60 to-transparent" />
-            
+
             {/* Subtle grain/texture overlay */}
             <div
               className="absolute inset-0 opacity-[0.02] pointer-events-none"
@@ -154,32 +158,38 @@ export function HeroSection({
             <div className="flex flex-col gap-3 items-start w-full mt-2">
               {hero.ctaPrimary && (
                 <Link
-                  to={hero.ctaPrimary.link || "/collections"}
+                  to={hero.ctaPrimary.link || '/collections'}
                   className="w-fit justify-start bg-[#d4af37] text-[#0f0e0c] font-bold text-[10.5px] uppercase tracking-[0.18em] px-6 py-2.5 rounded-full inline-flex items-center gap-2 active:scale-95 transition-all shadow-md hover:bg-[#c4a030]"
                 >
-                  {hero.ctaPrimary.text?.toUpperCase() || "EXPLORE COLLECTIONS"}
-                  <span className="material-symbols-outlined text-[13px] font-bold">arrow_forward</span>
+                  {hero.ctaPrimary.text?.toUpperCase() || 'EXPLORE COLLECTIONS'}
+                  <span className="material-symbols-outlined text-[13px] font-bold">
+                    arrow_forward
+                  </span>
                 </Link>
               )}
 
               {hero.ctaSecondary && (
                 <Link
-                  to={hero.ctaSecondary.link || "/about"}
+                  to={hero.ctaSecondary.link || '/about'}
                   className="inline-flex items-center justify-start gap-2.5 text-white/90 font-bold text-[10px] uppercase tracking-[0.18em] active:scale-95 transition-all py-2"
                 >
                   <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-md">
                     <span className="material-symbols-outlined text-[13px] text-white fill-current">
-                      {(hero.ctaSecondary.link?.includes("about") || hero.ctaSecondary.link?.includes("story") || hero.ctaSecondary.text?.toLowerCase().includes("story") || hero.ctaSecondary.text?.toLowerCase().includes("watch")) ? "play_arrow" : "arrow_forward"}
+                      {hero.ctaSecondary.link?.includes('about') ||
+                      hero.ctaSecondary.link?.includes('story') ||
+                      hero.ctaSecondary.text?.toLowerCase().includes('story') ||
+                      hero.ctaSecondary.text?.toLowerCase().includes('watch')
+                        ? 'play_arrow'
+                        : 'arrow_forward'}
                     </span>
                   </div>
                   <span className="underline decoration-[#d4af37] underline-offset-4 font-bold">
-                    {hero.ctaSecondary.text?.toUpperCase() || "WATCH OUR STORY"}
+                    {hero.ctaSecondary.text?.toUpperCase() || 'WATCH OUR STORY'}
                   </span>
                 </Link>
               )}
             </div>
           </div>
-
 
           {/* Gold-Stroked Wavy Bottom Mask SVG */}
           <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-10 translate-y-[1px]">
@@ -283,14 +293,14 @@ export function HeroSection({
             className="flex flex-row space-x-3 pt-4"
           >
             <Link
-              to={hero.ctaPrimary?.link || "/collections"}
+              to={hero.ctaPrimary?.link || '/collections'}
               className="btn-primary text-center px-5 py-3.5 text-[12px]"
             >
               {hero.ctaPrimary?.text}
             </Link>
 
             <Link
-              to={hero.ctaSecondary?.link || "/about"}
+              to={hero.ctaSecondary?.link || '/about'}
               className="btn-outline text-center px-5 py-3.5 text-[12px]"
             >
               {hero.ctaSecondary?.text}
@@ -312,7 +322,6 @@ export function HeroSection({
           />
           <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent rounded-[43px] pointer-events-none"></div>
 
-
           {/* Floating Glass Card */}
           <motion.div
             initial={{ opacity: 0, y: 36 }}
@@ -321,16 +330,16 @@ export function HeroSection({
             className="absolute -left-10 bottom-10 w-[230px] bg-white/90 backdrop-blur-2xl border border-black/5 p-7 rounded-[28px] shadow-2xl"
           >
             <h3 className="font-display text-lg text-black mb-1.5 italic">
-              {hero.floatingCardTitle || "Heritage Craft."}
+              {hero.floatingCardTitle || 'Heritage Craft.'}
             </h3>
             <p className="font-body text-black/50 text-[11px] mb-5 font-light leading-relaxed">
-              {hero.floatingCardDesc || "Meticulously detailed by master artisans over 120 hours."}
+              {hero.floatingCardDesc || 'Meticulously detailed by master artisans over 120 hours.'}
             </p>
             <Link
-              to={hero.floatingCardCtaLink || "/about"}
+              to={hero.floatingCardCtaLink || '/about'}
               className="font-label-sm text-[11px] text-primary uppercase tracking-widest font-bold inline-flex items-center group"
             >
-              {hero.floatingCardCtaText || "Explore Technique"}
+              {hero.floatingCardCtaText || 'Explore Technique'}
               <span className="material-symbols-outlined text-[12px] ml-2 transition-transform group-hover:translate-x-1">
                 arrow_forward
               </span>
@@ -354,7 +363,7 @@ export function HeroSection({
           className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center z-20 pointer-events-none"
         >
           <span className="font-label-sm text-[12px] uppercase tracking-[0.3em] mb-2">
-            {hero.scrollText || "Scroll"}
+            {hero.scrollText || 'Scroll'}
           </span>
           <div className="w-[1px] h-12 bg-gradient-to-b from-primary to-transparent"></div>
         </motion.div>

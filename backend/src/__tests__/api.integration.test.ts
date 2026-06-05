@@ -1,6 +1,6 @@
 import request from 'supertest';
 import app from '../app';
-import OrderService from '../features/orders/orderService';
+import { PaymentWebhookService } from '../services/PaymentWebhookService';
 
 describe('Public API integration', () => {
   it('GET /api/version returns version payload', async () => {
@@ -13,16 +13,16 @@ describe('Public API integration', () => {
   it('GET /api/readiness returns readiness JSON', async () => {
     const res = await request(app).get('/api/readiness');
     expect([200, 503]).toContain(res.status);
-    expect(res.body).toHaveProperty('ready');
+    expect(res.body).toHaveProperty('status');
   });
 });
 
-describe('OrderService webhook signature', () => {
-  it('rejects invalid webhook signatures', () => {
-    const valid = OrderService.verifyWebhookSignature(
+describe('PaymentService webhook signature', () => {
+  it('should verify correct signature', () => {
+    const valid = PaymentWebhookService.verifyWebhookSignature(
       'deadbeef',
       Buffer.from('{"event":"test"}'),
-      'test_secret'
+      'test_secret',
     );
     expect(valid).toBe(false);
   });

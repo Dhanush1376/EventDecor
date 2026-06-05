@@ -2,14 +2,15 @@ import cron from 'node-cron';
 import logger from '../config/logger';
 import ContentSection from '../models/ContentSection';
 import { FailedEmailRetryService } from '../services/failedEmailRetryService';
-import { AdminRoleReconciliationService } from '../services/adminRoleReconciliationService';
 import { withCronLock } from '../utils/cronLock';
 import { releaseStalePendingOrders } from './staleOrderCleanup';
 import { releaseStalePendingRentals } from './rentalCronJobs';
 import { PaymentReconciliationService } from '../services/paymentReconciliationService';
 import { checkCloudinaryCdn } from '../utils/cdnHealth';
 import { getAdminEmails } from '../config/adminConfig';
-import { recommendationQueue, isQueuesReady } from './queues';
+import { recommendationQueue } from './queues';
+import { InventoryService } from '../services/InventoryService';
+import { WebhookDeadLetterService } from '../services/WebhookDeadLetterService';
 
 export const initJobs = () => {
   if (process.env.ENABLE_CRON === 'false') {
@@ -32,17 +33,83 @@ export const initJobs = () => {
 
   // 2. Release stock for stale pending orders and rentals (every 15 minutes)
   cron.schedule('*/15 * * * *', async () => {
-    await withCronLock('stale-order-stock-release', 14 * 60, async () => {
-      const count = await releaseStalePendingOrders();
-      if (count > 0) {
-        logger.info(`[CRON] Released stock for ${count} stale pending order(s)`);
-      }
+    await withCronLock(
+      'stale-order-stock-release',
+      14 * 60,
+      async () => {
+        const count = await releaseStalePendingOrders();
+        if (count > 0) {
+          logger.info(`[CRON] Released stock for ${count} stale pending order(s)`);
+        }
 
-      const rentalResult = await releaseStalePendingRentals();
-      if (rentalResult.processed > 0) {
-        logger.info(`[CRON] Released stock for ${rentalResult.processed} stale pending rental(s)`);
-      }
-    });
+        const rentalResult = await releaseStalePendingRentals();
+        if (rentalResult.processed > 0) {
+          logger.info(
+            `[CRON] Released stock for ${rentalResult.processed} stale pending rental(s)`,
+          );
+        }
+      },
+      15 * 60,
+    );
+  });
+
+  // 2.b Sweep expired TTL inventory reservations (every 5 minutes)
+  cron.schedule('*/5 * * * *', async () => {
+    await withCronLock(
+      'inventory-sweep-expired',
+      4 * 60,
+      async () => {
+        const sweptCount = await InventoryService.sweepExpiredReservations();
+        if (sweptCount > 0) {
+          logger.info(`[CRON] Swept ${sweptCount} expired inventory reservation(s)`);
+        }
+      },
+      5 * 60,
+    );
+  });
+
+  // 2.c Inventory Reconciliation (every 30 minutes)
+  cron.schedule('*/30 * * * *', async () => {
+    await withCronLock(
+      'inventory-reconciliation',
+      25 * 60,
+      async () => {
+        const {
+          InventoryReconciliationService,
+        } = require('../services/InventoryReconciliationService');
+        await InventoryReconciliationService.reconcileStockCounts();
+      },
+      30 * 60,
+    );
+  });
+
+  // Outbox Processor is now handled via BullMQ Repeatable Jobs (Distributed)
+  const { systemQueue, isQueuesReady } = require('./queues');
+  if (isQueuesReady()) {
+    systemQueue
+      .add(
+        'process-outbox',
+        {},
+        {
+          repeat: { every: 10000 }, // Every 10 seconds
+          jobId: 'repeatable-outbox-processor',
+        },
+      )
+      .catch((err: any) =>
+        logger.error(`[CRON] Failed to register outbox repeatable job: ${err.message}`),
+      );
+  }
+
+  // Webhook Dead-Letter Processor (every 5 minutes)
+  cron.schedule('*/5 * * * *', async () => {
+    await withCronLock(
+      'webhook-dead-letter',
+      4 * 60,
+      async () => {
+        await WebhookDeadLetterService.processDeadLetters();
+      },
+      5 * 60,
+    );
   });
 
   // 3. Retry failed transactional emails (dead-letter queue)
@@ -74,18 +141,65 @@ export const initJobs = () => {
     logger.info('☀️ Daily server heartbeat: System is healthy.');
   });
 
-  // 6. Payment reconciliation (daily 04:00 UTC)
-  cron.schedule('0 4 * * *', async () => {
-    await withCronLock('payment-reconciliation', 3600, async () => {
-      const report = await PaymentReconciliationService.runReport();
-      if (report.discrepancyCount > 0) {
-        logger.warn(
-          `[PAYMENT RECONCILE] ${report.discrepancyCount} discrepancy(ies) — see /api/analytics/payments/reconciliation`,
-        );
-      } else {
-        logger.info('[PAYMENT RECONCILE] No discrepancies detected.');
-      }
-    });
+  // 6. Payment & Refund reconciliation (Hourly)
+  cron.schedule('0 * * * *', async () => {
+    await withCronLock(
+      'payment-reconciliation',
+      55 * 60,
+      async () => {
+        const report = await PaymentReconciliationService.runReport();
+        if (report.discrepancyCount > 0) {
+          logger.error(
+            `[PAYMENT RECONCILE] ${report.discrepancyCount} discrepancy(ies) — see /api/analytics/payments/reconciliation`,
+          );
+          const { sendDirectEmail } = require('../services/notificationService');
+          const recipients = getAdminEmails();
+          for (const email of recipients) {
+            await sendDirectEmail({
+              email,
+              subject: `[ALERT] Payment Discrepancies Detected (${report.discrepancyCount})`,
+              customHtml: `<p>Payment Reconciliation detected <strong>${report.discrepancyCount}</strong> discrepancy(ies).</p><p>Please check the admin dashboard for details.</p>`,
+              type: 'system',
+              action: 'admin_reconciliation_alert',
+            });
+          }
+        } else {
+          logger.info('[PAYMENT RECONCILE] No discrepancies detected.');
+        }
+
+        const recoveredCount = await PaymentReconciliationService.autoRecoverOrphanedOrders();
+        if (recoveredCount > 0) {
+          logger.info(
+            `[PAYMENT RECONCILE] Auto-recovered ${recoveredCount} orphaned Razorpay orders`,
+          );
+        }
+
+        const cancelledCount = await PaymentReconciliationService.autoCancelAbandonedOrders();
+        if (cancelledCount > 0) {
+          logger.info(`[PAYMENT RECONCILE] Auto-cancelled ${cancelledCount} abandoned orders`);
+        }
+
+        // Run deep reconciliation from Razorpay to Database
+        try {
+          const { runPaymentReconciliation } = require('./PaymentReconciliationJob');
+          await runPaymentReconciliation();
+        } catch (err) {
+          logger.error('[PAYMENT RECONCILE] Failed to run Razorpay deep reconciliation:', err);
+        }
+
+        // Process stuck refunds
+        try {
+          const { PaymentRefundService } = require('../services/PaymentRefundService');
+          const stuckRefunds = await PaymentRefundService.processPendingRefunds();
+          if (stuckRefunds > 0) {
+            logger.info(`[PAYMENT RECONCILE] Auto-processed ${stuckRefunds} stuck pending refunds`);
+          }
+        } catch (err) {
+          logger.error('[PAYMENT RECONCILE] Failed to process pending refunds:', err);
+        }
+      },
+      60 * 60,
+    );
   });
 
   // 7. CDN delivery probe (every 30 minutes; logs only on state change via cdnHealth util)
@@ -224,6 +338,80 @@ export const initJobs = () => {
       }
     });
   });
+
+  // 14. Database Backup (daily at 3:00 AM)
+  cron.schedule('0 3 * * *', async () => {
+    await withCronLock('db-backup', 3600, async () => {
+      logger.info('[BACKUP CRON] Triggering scheduled database backup...');
+      const { exec } = require('child_process');
+      exec(
+        'npm run backup:db',
+        { cwd: process.cwd() },
+        async (error: any, stdout: string, stderr: string) => {
+          if (error || (stderr && stderr.toLowerCase().includes('error'))) {
+            const errMessage = error?.message || stderr;
+            logger.error(`[BACKUP CRON] Error executing backup: ${errMessage}`);
+
+            const recipients = getAdminEmails();
+            if (recipients.length > 0) {
+              const { sendDirectEmail } = require('../services/notificationService');
+              for (const email of recipients) {
+                await sendDirectEmail({
+                  email,
+                  subject: `[CRITICAL ALERT] Database Backup Failed`,
+                  customHtml: `<p>The automated database backup failed at ${new Date().toISOString()}.</p><p>Error details: ${errMessage}</p>`,
+                  type: 'system',
+                  action: 'backup_failure_alert',
+                }).catch(() => {});
+              }
+            }
+            return;
+          }
+          logger.info(`[BACKUP CRON] Backup completed successfully.`);
+        },
+      );
+    });
+  });
+
+  // 15. Business Metrics Reporting (Hourly)
+  cron.schedule('0 * * * *', async () => {
+    await withCronLock('metrics-hourly-report', 55 * 60, async () => {
+      const { MetricsService } = require('../services/MetricsService');
+      await MetricsService.reportHourlyMetrics();
+    });
+  });
+
+  // 16. Orphan Asset Detection (Weekly, Sunday at 4:00 AM)
+  cron.schedule('0 4 * * 0', async () => {
+    await withCronLock('orphan-asset-detection', 3600, async () => {
+      const { detectOrphanedAssets } = require('./orphanAssetCleanup');
+      await detectOrphanedAssets();
+    });
+  });
+
+  // 17. Fallback Queue Cleanup (daily at 5:00 AM — remove completed jobs older than 24h)
+  cron.schedule('0 5 * * *', async () => {
+    await withCronLock('fallback-queue-cleanup', 3600, async () => {
+      const { QueueFallbackService } = require('../services/QueueFallbackService');
+      const cleaned = await QueueFallbackService.cleanupCompletedJobs();
+      if (cleaned > 0) {
+        logger.info(`[CRON] Cleaned up ${cleaned} completed fallback queue jobs`);
+      }
+    });
+  });
+
+  // 18. Recover pending fallback queue jobs on startup (one-shot, immediate)
+  (async () => {
+    try {
+      const { QueueFallbackService } = require('../services/QueueFallbackService');
+      const recovered = await QueueFallbackService.recoverPendingJobs();
+      if (recovered > 0) {
+        logger.info(`[STARTUP] Recovered ${recovered} pending fallback queue jobs from MongoDB`);
+      }
+    } catch (err: any) {
+      logger.error(`[STARTUP] Failed to recover fallback queue jobs: ${err.message}`);
+    }
+  })();
 
   logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');
 };

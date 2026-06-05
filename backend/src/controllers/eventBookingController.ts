@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
 import EventBooking from '../models/EventBooking';
 import Event from '../models/Event';
-import User from '../models/User';
 import { EventBookingMailService } from '../services/eventBookingMailService';
 import { createAdminNotification } from '../services/notificationService';
 import BookingMessage from '../models/BookingMessage';
@@ -12,11 +10,11 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
-import { generateUniqueBookingId } from '../utils/bookingId';
 import { ADMIN_ROLES } from '../config/adminConfig';
-import getRazorpay from '../config/razorpay';
-import crypto from 'crypto';
 import { EventBookingService } from '../services/eventBookingService';
+import { EventBookingStateMachine } from '../services/eventBooking/EventBookingStateMachine';
+import { EventBookingCheckoutService } from '../services/eventBooking/EventBookingCheckoutService';
+import { DistributedLock } from '../utils/DistributedLock';
 
 // 1. Submit Event Booking Inquiry (Customer)
 export const submitEventBooking = asyncHandler(async (req: any, res: Response) => {
@@ -29,339 +27,21 @@ export const submitEventBooking = asyncHandler(async (req: any, res: Response) =
 
 // 1.B Initialize Booking Checkout (Secure eCommerce Flow)
 export const initializeBookingCheckout = asyncHandler(async (req: any, res: Response) => {
-  const {
-    eventPackageId,
-    eventType,
-    title,
-    date,
-    rentalDurationDays,
-    timing,
-    guestCount,
-    venue,
-    customization,
-    selectedAddons,
-    inspirationImages,
-  } = req.body;
   const userId = req.user?.id;
   if (!userId) throw new ApiError(401, 'Authentication credentials missing.');
 
-  const user = await User.findById(userId);
-  if (!user) throw new ApiError(404, 'User not found.');
-
-  const razorpay = getRazorpay();
-  if (!razorpay) {
-    throw new ApiError(503, 'Payment gateway configuration is missing.');
-  }
-
-  // Calculate strict backend price
-  let basePrice = 25000;
-  if (eventPackageId) {
-    const pkgObj = await Event.findById(eventPackageId);
-    if (pkgObj) basePrice = pkgObj.basePrice || 35000;
-  }
-
-  const durationDays = Number(rentalDurationDays) || 1;
-  const durationMultiplier =
-    durationDays === 1 ? 1 : durationDays === 2 ? 1.5 : 1.5 + (durationDays - 2) * 0.4;
-  basePrice = Math.round(basePrice * durationMultiplier);
-
-  const CANONICAL_ADDONS: Record<string, number> = {
-    'Artisanal Wooden Swings / Ooyala': 7500,
-    'Gilded Grand Arch Entry Archway': 12000,
-    'Live Nadaswaram Instrumental Stage': 15000,
-    'Grand Brass Diyas Canopy Set (8 Props)': 9500,
-    'Fresh Rose petals pathways carpet (50ft)': 5000,
-    'Traditional Handpainted Kolam/Rangoli': 3500,
-  };
-
-  const addOnCharges = (selectedAddons || []).reduce((acc: number, item: any) => {
-    const canonicalPrice = CANONICAL_ADDONS[item.name] || 0;
-    item.price = canonicalPrice; // Ensure DB saves the canonical price
-    return acc + canonicalPrice;
-  }, 0);
-  const totalPrice = basePrice + addOnCharges;
-  const depositAmount = Math.round(totalPrice * 0.5); // 50% strict advance deposit
-
-  // Create Razorpay Order for deposit
-  const options = {
-    amount: depositAmount * 100, // in paise
-    currency: 'INR',
-    receipt: `receipt_${Date.now()}`,
-    payment_capture: 1,
-  };
-
-  const order = await razorpay.orders.create(options);
-  const bookingId = await generateUniqueBookingId();
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  let booking;
-
-  try {
-    const bDate = new Date(date);
-    const startOfDay = new Date(bDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(bDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    // Unconditional Date Overlap Check
-    const slotsUsed = await EventBooking.countDocuments({
-      date: { $gte: startOfDay, $lte: endOfDay },
-      status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] },
-    }).session(session);
-
-    const MAX_EVENTS_PER_DAY = 3;
-    if (slotsUsed >= MAX_EVENTS_PER_DAY) {
-      await session.abortTransaction();
-      throw new ApiError(409, 'This date is fully booked. Please choose another date.');
-    }
-
-    // Double Booking Check (Same venue)
-    if (venue?.address && venue.address.trim() && venue.address.toUpperCase() !== 'TBD') {
-      const duplicate = await EventBooking.findOne({
-        date: { $gte: startOfDay, $lte: endOfDay },
-        'venue.address': {
-          $regex: new RegExp(
-            `^${venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
-            'i',
-          ),
-        },
-        status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] },
-      }).session(session);
-
-      if (duplicate) {
-        await session.abortTransaction();
-        throw new ApiError(
-          409,
-          'This venue is already locked for the selected date. Please choose another date or contact support.',
-        );
-      }
-    }
-
-    const bookings = await EventBooking.create(
-      [
-        {
-          bookingId,
-          user: userId,
-          eventPackage: eventPackageId || null,
-          title: title || `${eventType || 'Special'} Celebration`,
-          eventType: eventType || 'Wedding',
-          date: new Date(date),
-          rentalDurationDays: durationDays,
-          timing: timing || { start: '10:00 AM', end: '10:00 PM' },
-          guestCount: parseInt(guestCount) || 100,
-          venue: venue || { address: 'TBD', isOutdoor: false },
-          customization: customization || {},
-          selectedAddons: selectedAddons || [],
-          inspirationImages: inspirationImages || [],
-          pricing: {
-            rentalFee: basePrice,
-            setupCharges: 0,
-            transportationCost: 0,
-            addOnCharges,
-            depositAmount,
-            totalPrice,
-            pendingBalance: totalPrice,
-            paymentStatus: 'unpaid',
-          },
-          payments: [],
-          status: 'pending_payment',
-          razorpayOrderId: order.id,
-          assignedTeam: [],
-          rentedInventory: [],
-          clientApproved: false,
-        },
-      ],
-      { session },
-    );
-
-    booking = bookings[0];
-    await session.commitTransaction();
-  } catch (err: any) {
-    await session.abortTransaction();
-    if (err.code === 11000)
-      throw new ApiError(
-        409,
-        'This venue is already locked for the selected date. Please choose another date or contact support.',
-      );
-    throw err;
-  } finally {
-    session.endSession();
-  }
-
-  res.status(200).json(
-    new ApiResponse(true, 'Booking checkout initialized', {
-      bookingId: booking._id,
-      razorpayOrderId: order.id,
-      amount: depositAmount,
-      currency: 'INR',
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID,
-    }),
-  );
+  const result = await EventBookingCheckoutService.initializeBookingCheckout(userId, req.body);
+  res.status(200).json(new ApiResponse(true, 'Booking checkout initialized', result));
 });
 
 // 1.C Verify Booking Checkout Payment
 export const verifyBookingCheckout = asyncHandler(async (req: any, res: Response) => {
-  const { razorpayOrderId, razorpayPaymentId, razorpaySignature, bookingId } = req.body;
+  const userId = req.user?.id;
+  if (!userId) throw new ApiError(401, 'Authentication credentials missing.');
 
-  if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature || !bookingId) {
-    throw new ApiError(400, 'Missing payment verification parameters');
-  }
+  const booking = await EventBookingCheckoutService.verifyBookingCheckout(userId, req.body);
 
-  const booking = await EventBooking.findById(bookingId).populate('user');
-  if (!booking) {
-    throw new ApiError(404, 'Booking not found');
-  }
-
-  if (String(booking.user._id || booking.user) !== String(req.user?.id)) {
-    throw new ApiError(403, 'Unauthorized access to this booking');
-  }
-
-  const body = razorpayOrderId + '|' + razorpayPaymentId;
-  const expectedSignature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET as string)
-    .update(body.toString())
-    .digest('hex');
-
-  const isAuthentic = expectedSignature === razorpaySignature;
-
-  if (!isAuthentic) {
-    booking.status = 'failed';
-    booking.payments?.push({
-      amount: booking.pricing.depositAmount,
-      date: new Date(),
-      transactionId: razorpayPaymentId,
-      status: 'failed',
-      note: 'Signature mismatch',
-    });
-    await booking.save();
-    throw new ApiError(400, 'Payment signature verification failed. Booking marked as failed.');
-  }
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const bDate = new Date(booking.date);
-    const startOfDay = new Date(bDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(bDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    // Unconditional Date Overlap Check
-    const slotsUsed = await EventBooking.countDocuments({
-      _id: { $ne: booking._id },
-      date: { $gte: startOfDay, $lte: endOfDay },
-      status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] },
-    }).session(session);
-
-    const MAX_EVENTS_PER_DAY = 3;
-    if (slotsUsed >= MAX_EVENTS_PER_DAY) {
-      await EventBooking.findByIdAndUpdate(
-        booking._id,
-        {
-          status: 'failed',
-          $push: {
-            payments: {
-              amount: booking.pricing.depositAmount,
-              date: new Date(),
-              transactionId: razorpayPaymentId,
-              status: 'failed',
-              note: 'Payment successful but date became fully booked concurrently. Refund required.',
-            },
-          },
-        },
-        { session },
-      );
-      await session.commitTransaction();
-      throw new ApiError(
-        409,
-        'Payment was successful, but the date was just fully booked by others. A full refund will be processed within 5-7 business days.',
-      );
-    }
-
-    if (
-      booking.venue?.address &&
-      booking.venue.address.trim() &&
-      booking.venue.address.toUpperCase() !== 'TBD'
-    ) {
-      const duplicate = await EventBooking.findOne({
-        _id: { $ne: booking._id },
-        date: { $gte: startOfDay, $lte: endOfDay },
-        'venue.address': {
-          $regex: new RegExp(
-            `^${booking.venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
-            'i',
-          ),
-        },
-        status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] },
-      }).session(session);
-
-      if (duplicate) {
-        await EventBooking.findByIdAndUpdate(
-          booking._id,
-          {
-            status: 'failed',
-            $push: {
-              payments: {
-                amount: booking.pricing.depositAmount,
-                date: new Date(),
-                transactionId: razorpayPaymentId,
-                status: 'failed',
-                note: 'Payment successful but venue was already booked concurrently. Refund required.',
-              },
-            },
-          },
-          { session },
-        );
-        await session.commitTransaction();
-        throw new ApiError(
-          409,
-          'Payment was successful, but the venue was just booked by someone else. A full refund will be processed within 5-7 business days.',
-        );
-      }
-    }
-
-    // Update booking as confirmed
-    booking.status = 'confirmed';
-    booking.razorpayPaymentId = razorpayPaymentId;
-    booking.razorpaySignature = razorpaySignature;
-    booking.clientApproved = true;
-    booking.pricing.paymentStatus = 'partial';
-    booking.pricing.pendingBalance = booking.pricing.totalPrice - booking.pricing.depositAmount;
-
-    booking.payments?.push({
-      amount: booking.pricing.depositAmount,
-      date: new Date(),
-      transactionId: razorpayPaymentId,
-      status: 'success',
-      note: 'Initial 50% deposit via Razorpay',
-    });
-
-    await BookingMessage.create(
-      [
-        {
-          bookingId: booking._id,
-          sender: 'admin',
-          message:
-            'Payment verified! Your luxury event design is now CONFIRMED. Our artisans will review your floorplans.',
-          timestamp: new Date(),
-        },
-      ],
-      { session },
-    );
-
-    await booking.save({ session });
-    await session.commitTransaction();
-  } catch (err: any) {
-    await session.abortTransaction();
-    if (err instanceof ApiError) throw err;
-    throw new ApiError(500, 'An error occurred during booking confirmation');
-  } finally {
-    session.endSession();
-  }
-
-  // Send Notifications
+  // Send Notifications asynchronously outside transaction
   const eventDateStr = new Date(booking.date).toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'long',
@@ -375,10 +55,6 @@ export const verifyBookingCheckout = asyncHandler(async (req: any, res: Response
     actionLink: `/admin/bookings`,
     metadata: { bookingId: booking._id.toString() },
   }).catch((err: any) => logger.error('Failed admin notification', err));
-
-  EventBookingMailService.sendSubmissionEmails(booking, booking.user as any).catch((err: any) =>
-    logger.error('Failed to dispatch booking emails', err),
-  );
 
   res.status(200).json(new ApiResponse(true, 'Payment successful. Booking confirmed!', booking));
 });
@@ -401,7 +77,7 @@ export const getMyEventBookings = asyncHandler(async (req: any, res: Response) =
 export const getSingleEventBooking = asyncHandler(async (req: any, res: Response) => {
   const booking = await EventBooking.findById(req.params.id)
     .populate('user', 'name email phone')
-    .populate('eventPackage')
+    .populate('eventPackage', 'title basePrice image')
     .lean();
 
   if (!booking) {
@@ -464,7 +140,7 @@ export const customerApproveQuote = asyncHandler(async (req: any, res: Response)
   res.status(200).json(new ApiResponse(true, 'Quotation response saved', booking));
 });
 
-// 5. Customer Submits Payment Milestone Simulation
+// 5. Customer Submits Payment Milestone
 export const customerSubmitPayment = asyncHandler(async (req: any, res: Response) => {
   const { amount, transactionId, note } = req.body;
   const booking = await EventBooking.findById(req.params.id);
@@ -482,11 +158,48 @@ export const customerSubmitPayment = asyncHandler(async (req: any, res: Response
     throw new ApiError(400, 'Invalid payment amount specified.');
   }
 
+  if (!transactionId) {
+    throw new ApiError(400, 'Transaction ID is required for verification.');
+  }
+
+  // Check if transactionId already exists to prevent replay
+  const txExists = booking.payments?.some(
+    (p) => p.transactionId === transactionId && p.status === 'success',
+  );
+  if (txExists) {
+    throw new ApiError(400, 'This transaction ID has already been recorded.');
+  }
+
+  // Fetch Razorpay payment details to verify authentic transaction
+  try {
+    const { RazorpayGateway } = require('../utils/RazorpayGateway');
+    const paymentDetails = await RazorpayGateway.getPayment(transactionId);
+
+    if (paymentDetails.status !== 'captured' && paymentDetails.status !== 'authorized') {
+      throw new ApiError(400, `Payment is in ${paymentDetails.status} state, not captured.`);
+    }
+
+    const rzpAmount = Number(paymentDetails.amount) / 100;
+    if (rzpAmount !== paymentAmt) {
+      throw new ApiError(
+        400,
+        `Payment amount mismatch. Expected ₹${paymentAmt}, found ₹${rzpAmount}`,
+      );
+    }
+
+    if (paymentDetails.currency !== 'INR') {
+      throw new ApiError(400, 'Invalid currency. Expected INR.');
+    }
+  } catch (err: any) {
+    if (err instanceof ApiError) throw err;
+    throw new ApiError(400, 'Failed to verify transaction ID with payment gateway.');
+  }
+
   // Log milestone transaction
   booking.payments?.push({
     amount: paymentAmt,
     date: new Date(),
-    transactionId: transactionId || `TXN-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+    transactionId: transactionId,
     status: 'success',
     note: note || 'Milestone Deposit Paid',
   });
@@ -578,7 +291,7 @@ export const adminGetAllBookings = asyncHandler(async (req: Request, res: Respon
   const [bookings, totalCount] = await Promise.all([
     EventBooking.find(filterQuery)
       .populate('user', 'name email phone')
-      .populate('eventPackage')
+      .populate('eventPackage', 'title basePrice image')
       .sort({ date: 1 })
       .skip(skip)
       .limit(limit)
@@ -608,20 +321,113 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
 
   const oldStatus = booking.status;
 
-  // State Machine Validation
-  const validTransitions: Record<string, string[]> = {
-    draft: ['pending_payment', 'cancelled'],
-    pending_payment: ['confirmed', 'cancelled'],
-    confirmed: ['completed', 'cancelled'],
-    completed: [],
-    cancelled: [],
-  };
+  // State Machine Validation via EventBookingStateMachine
+  EventBookingStateMachine.transition(
+    booking,
+    status as any,
+    'Status manually updated by admin',
+    req.user.id,
+  );
 
-  if (!validTransitions[oldStatus]?.includes(status)) {
-    throw new ApiError(400, `Invalid state transition from ${oldStatus} to ${status}`);
+  if (status === 'confirmed') {
+    // Prevent double booking at the exact moment of admin approval using Distributed Lock
+    const bDate = new Date(booking.date);
+    const startOfDay = new Date(bDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(bDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    let lockKey = `event_admin_confirm_${booking._id}`;
+    if (
+      booking.venue?.address &&
+      booking.venue.address.trim() &&
+      booking.venue.address.toUpperCase() !== 'TBD'
+    ) {
+      const normalizedVenue = booking.venue.address.trim().toLowerCase().replace(/\s+/g, '_');
+      const dateStr = bDate.toISOString().split('T')[0];
+      lockKey = `event_booking_${normalizedVenue}_${dateStr}`;
+    }
+
+    await DistributedLock.withLock(
+      lockKey,
+      async () => {
+        // Re-check overlap inside the lock
+        if (
+          booking.venue?.address &&
+          booking.venue.address.trim() &&
+          booking.venue.address.toUpperCase() !== 'TBD'
+        ) {
+          const duplicate = await EventBooking.findOne({
+            _id: { $ne: booking._id },
+            date: { $gte: startOfDay, $lte: endOfDay },
+            'venue.address': {
+              $regex: new RegExp(
+                `^${booking.venue.address.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+                'i',
+              ),
+            },
+            status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] },
+          });
+
+          if (duplicate) {
+            throw new ApiError(
+              409,
+              'Venue is already booked for this date by another confirmed event.',
+            );
+          }
+        }
+
+        const slotsUsed = await EventBooking.countDocuments({
+          _id: { $ne: booking._id },
+          date: { $gte: startOfDay, $lte: endOfDay },
+          status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] },
+        });
+
+        const MAX_EVENTS_PER_DAY = 3;
+        if (slotsUsed >= MAX_EVENTS_PER_DAY) {
+          throw new ApiError(409, 'This date has reached the maximum number of concurrent events.');
+        }
+
+        await booking.save();
+      },
+      15,
+    );
+  } else {
+    // For non-confirm transitions, just save
+    await booking.save();
   }
 
-  booking.status = status;
+  // Handle Refunds on Cancellation
+  if (status === 'cancelled') {
+    const totalPaid = (booking.payments || []).reduce(
+      (acc: number, p: any) => acc + (p.status === 'success' ? p.amount : 0),
+      0,
+    );
+
+    if (totalPaid > 0) {
+      // Find the most recent successful payment's transactionId
+      const successfulPayments = (booking.payments || []).filter(
+        (p: any) => p.status === 'success',
+      );
+      const latestPayment = successfulPayments[successfulPayments.length - 1];
+
+      if (latestPayment && latestPayment.transactionId) {
+        const { PaymentRefundService } = require('../services/PaymentRefundService');
+        await PaymentRefundService.initiateAsyncRefund({
+          amount: totalPaid,
+          currency: 'INR',
+          originalTransactionId: latestPayment.transactionId,
+          entityType: 'EventBooking',
+          entityId: booking._id,
+        }).catch((err: any) => {
+          logger.error(
+            `[CRITICAL] Failed to enqueue refund for event booking cancellation: ${booking._id}`,
+            err,
+          );
+        });
+      }
+    }
+  }
 
   await BookingMessage.create({
     bookingId: booking._id,

@@ -56,9 +56,9 @@ export const recommendationService = {
   /**
    * Get complementary items for "Complete the Setup".
    */
-  getCompleteSetup: async (targetId, limit = 6, options = {}) => {
+  getCompleteSetup: async (targetId, targetType = 'product', limit = 6, options = {}) => {
     const response = await api.get(`/recommendations/complete-setup/${targetId}`, {
-      params: { limit },
+      params: { targetType, limit },
       signal: options.signal,
     });
     return response.data;
@@ -81,9 +81,11 @@ export const recommendationService = {
   trackEvent: async (eventType, targetType, targetId, metadata = {}) => {
     try {
       const normalizedEventType =
-        eventType === 'click' ? `${targetType}_click` :
-        eventType === 'view' ? `${targetType}_view` :
-        eventType;
+        eventType === 'click'
+          ? `${targetType}_click`
+          : eventType === 'view'
+            ? `${targetType}_view`
+            : eventType;
       const response = await api.post('/tracking/event', {
         eventType: normalizedEventType,
         targetType,

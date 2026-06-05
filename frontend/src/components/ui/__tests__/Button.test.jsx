@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Button } from '../Button';
@@ -42,7 +41,7 @@ describe('Button Component', () => {
     const handleClick = vi.fn();
     render(<Button onClick={handleClick}>Interactive</Button>);
     const buttonEl = screen.getByRole('button', { name: /interactive/i });
-    
+
     fireEvent.click(buttonEl);
     expect(handleClick).toHaveBeenCalledTimes(1);
   });

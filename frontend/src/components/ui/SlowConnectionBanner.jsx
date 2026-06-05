@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNetwork } from '../../context/NetworkContext';
 
 /**
@@ -11,7 +11,7 @@ export function SlowConnectionBanner() {
   useEffect(() => {
     // Show banner on state changes
     setVisible(true);
-    
+
     // Auto-hide the banner after 5 seconds
     const timer = setTimeout(() => {
       setVisible(false);

@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { 
-  Users, 
-  ShieldAlert, 
-  ShieldCheck,
-  UserPlus,
-  Trash2,
-  Edit2
-} from 'lucide-react';
-import api from '../../services/api';
+import { getErrorMessage } from '../../utils/errorHelpers';
+import { ShieldAlert, ShieldCheck, UserPlus, Trash2, Edit2 } from 'lucide-react';
 import { SkeletonTable, PageHeader } from '../components/AdminUIKit';
+import { useDraft } from '../hooks/useDraft';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 export const AdminSystemUsers = () => {
   const { user } = useAuth();
@@ -23,13 +20,29 @@ export const AdminSystemUsers = () => {
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    role: 'manager',
-    password: ''
-  });
   const [editingId, setEditingId] = useState(null);
+
+  const {
+    formData: systemUserDraft,
+    setFormData: setSystemUserDraft,
+    deleteDraft,
+    hasDraft,
+    restoreDraft,
+    discardDraft,
+    resetData,
+    draftStatus,
+    lastSavedAt,
+    showRestoreModal,
+    setShowRestoreModal,
+    blocker,
+  } = useDraft({
+    draftKey: `admin:user:${modalMode === 'add' ? 'add' : editingId}`,
+    module: 'System Users',
+    pageTitle: modalMode === 'add' ? 'Add User' : 'Edit User',
+    initialData: { name: '', email: '', role: 'manager', password: '' },
+    enabled: true,
+    onRestored: () => setShowModal(true),
+  });
 
   useEffect(() => {
     if (user?.role === 'super_admin' || user?.role === 'owner') {
@@ -57,15 +70,15 @@ export const AdminSystemUsers = () => {
   const handleOpenModal = (mode, admin = null) => {
     setModalMode(mode);
     if (mode === 'edit' && admin) {
-      setFormData({
+      resetData({
         name: admin.name,
         email: admin.email,
         role: admin.role,
-        password: '' // Don't pre-fill password for edit
+        password: '', // Don't pre-fill password for edit
       });
       setEditingId(admin._id);
     } else {
-      setFormData({ name: '', email: '', role: 'manager', password: '' });
+      resetData({ name: '', email: '', role: 'manager', password: '' });
       setEditingId(null);
     }
     setShowModal(true);
@@ -75,12 +88,13 @@ export const AdminSystemUsers = () => {
     e.preventDefault();
     try {
       if (modalMode === 'add') {
-        await api.post('/admin/system/users', formData);
-        toast.success("Admin added");
+        await api.post('/admin/system/users', systemUserDraft);
+        toast.success('Admin added');
       } else {
-        await api.put(`/admin/system/users/${editingId}/role`, { role: formData.role });
+        await api.put(`/admin/system/users/${editingId}/role`, { role: systemUserDraft.role });
         toast.success('Admin role updated');
       }
+      await deleteDraft();
       setShowModal(false);
       fetchAdmins();
     } catch (err) {
@@ -89,7 +103,11 @@ export const AdminSystemUsers = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to revoke admin access for this user? They will be downgraded to a regular customer.')) {
+    if (
+      window.confirm(
+        'Are you sure you want to revoke admin access for this user? They will be downgraded to a regular customer.',
+      )
+    ) {
       try {
         await api.delete(`/admin/system/users/${id}`);
         toast.success('Admin access revoked');
@@ -108,7 +126,9 @@ export const AdminSystemUsers = () => {
             <ShieldAlert className="w-6 h-6 text-[var(--admin-error)]" />
           </div>
           <div>
-            <h2 className="text-[16px] sm:text-[18px] font-bold text-[var(--admin-text-primary)] tracking-tight font-display">Access Denied</h2>
+            <h2 className="text-[16px] sm:text-[18px] font-bold text-[var(--admin-text-primary)] tracking-tight font-display">
+              Access Denied
+            </h2>
             <p className="text-[12px] sm:text-[13px] text-[var(--admin-text-tertiary)] mt-1.5 leading-normal max-w-[260px] mx-auto font-medium">
               Only Super Admins can manage system users and adjust security access controls.
             </p>
@@ -121,14 +141,8 @@ export const AdminSystemUsers = () => {
   return (
     <div className="max-w-[1300px] mx-auto space-y-6 pb-20 text-[var(--admin-text-primary)]">
       {/* Page Header */}
-      <PageHeader
-        title="System Access"
-        subtitle="Manage administrators, staff, and access control"
-      >
-        <button
-          onClick={() => handleOpenModal('add')}
-          className="admin-btn admin-btn-primary"
-        >
+      <PageHeader title="System Access" subtitle="Manage administrators, staff, and access control">
+        <button onClick={() => handleOpenModal('add')} className="admin-btn admin-btn-primary">
           <UserPlus size={15} />
           <span>Add Admin</span>
         </button>
@@ -152,15 +166,22 @@ export const AdminSystemUsers = () => {
                 </thead>
                 <tbody className="divide-y divide-black/5">
                   {admins.map((admin) => (
-                    <tr key={admin._id} className="hover:bg-[var(--admin-bg-subtle)]/50 transition-colors">
+                    <tr
+                      key={admin._id}
+                      className="hover:bg-[var(--admin-bg-subtle)]/50 transition-colors"
+                    >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
                             {admin.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-bold text-[var(--admin-text-primary)] text-sm">{admin.name}</div>
-                            <div className="text-[11px] text-[var(--admin-text-secondary)] font-mono">{admin.email}</div>
+                            <div className="font-bold text-[var(--admin-text-primary)] text-sm">
+                              {admin.name}
+                            </div>
+                            <div className="text-[11px] text-[var(--admin-text-secondary)] font-mono">
+                              {admin.email}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -212,29 +233,40 @@ export const AdminSystemUsers = () => {
           {/* Mobile Cards deck list */}
           <div className="block md:hidden space-y-3">
             {admins.map((admin) => (
-              <div key={admin._id} className="admin-card p-4 hover:border-[var(--admin-border-strong)] transition-all duration-300 space-y-3">
+              <div
+                key={admin._id}
+                className="admin-card p-4 hover:border-[var(--admin-border-strong)] transition-all duration-300 space-y-3"
+              >
                 {/* Row 1: Initials & details */}
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-full bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] flex items-center justify-center font-bold text-[13px] shrink-0 shadow-sm">
                     {admin.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-bold text-[var(--admin-text-primary)] text-[13px] truncate">{admin.name}</div>
-                    <div className="text-[10px] text-[var(--admin-text-tertiary)] truncate mt-0.5">{admin.email}</div>
+                    <div className="font-bold text-[var(--admin-text-primary)] text-[13px] truncate">
+                      {admin.name}
+                    </div>
+                    <div className="text-[10px] text-[var(--admin-text-tertiary)] truncate mt-0.5">
+                      {admin.email}
+                    </div>
                   </div>
                 </div>
 
                 {/* Row 2: Role & status */}
                 <div className="flex items-center justify-between border-t border-b border-[var(--admin-border-subtle)] py-2">
                   <div>
-                    <span className="text-[8px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block mb-0.5">Permissions</span>
+                    <span className="text-[8px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block mb-0.5">
+                      Permissions
+                    </span>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] uppercase tracking-wider">
                       {admin.role.replace('_', ' ')}
                     </span>
                   </div>
-                  
+
                   <div>
-                    <span className="text-[8px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block mb-0.5 text-right">Access Status</span>
+                    <span className="text-[8px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block mb-0.5 text-right">
+                      Access Status
+                    </span>
                     {admin.isLocked ? (
                       <div className="flex items-center gap-1 text-[var(--admin-error)] text-[10px] font-bold">
                         <ShieldAlert size={12} />
@@ -277,126 +309,152 @@ export const AdminSystemUsers = () => {
       )}
 
       {/* Dynamic Slide-Up Bottom-Sheet Curation Drawer */}
-      {typeof document !== "undefined" && createPortal(
-        <AnimatePresence>
-          {showModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
-            >
-              <div
-                onClick={() => setShowModal(false)}
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
-              />
-
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {showModal && (
               <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 26, stiffness: 220 }}
-                className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[990] flex items-end justify-center admin-section-root"
               >
-                {/* Grab Handle */}
-                <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
+                <div
+                  onClick={() => setShowModal(false)}
+                  className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+                />
 
-                <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
-                  <div>
-                    <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">shield</span>
-                      {modalMode === 'add' ? 'Add New System User' : 'Edit User Role'}
-                    </h3>
-                    <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5 leading-normal">
-                      Adjust system privileges and admin permissions
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
-                </div>
+                <motion.div
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+                  className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))]"
+                >
+                  {/* Grab Handle */}
+                  <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0" />
 
-                <form onSubmit={handleSubmit} className="space-y-4 flex-1">
-                  {modalMode === 'add' && (
-                    <>
-                      <div className="space-y-1">
-                        <label className="admin-label">Full Name</label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="admin-input"
-                          placeholder="e.g. John Doe"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="admin-label">Email Address</label>
-                        <input
-                          type="email"
-                          required
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="admin-input"
-                          placeholder="e.g. admin@siriarts.com"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="admin-label">Temporary Password</label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.password}
-                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                          className="admin-input font-mono"
-                          placeholder="Generate secure temp password"
-                        />
-                        <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-1.5 leading-normal font-light">User must use this password to login initially.</p>
-                      </div>
-                    </>
-                  )}
-                  
-                  <div className="space-y-1">
-                    <label className="admin-label">Role & Permissions</label>
-                    <select
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      className="admin-select text-[12px] font-semibold"
-                    >
-                      <option value="manager">Manager (General Store Ops)</option>
-                      <option value="main_admin">Main Admin (Store Setup & Settings)</option>
-                      <option value="order_manager">Order Manager (Fulfillment)</option>
-                      <option value="content_manager">Content Manager (CMS & Blogs)</option>
-                      <option value="support_admin">Support Admin (Inquiries & Chat)</option>
-                      <option value="moderator">Moderator (Reviews)</option>
-                    </select>
+                  <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
+                    <div>
+                      <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
+                          shield
+                        </span>
+                        {modalMode === 'add' ? 'Add New System User' : 'Edit User Role'}
+                      </h3>
+                      <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5 leading-normal">
+                        Adjust system privileges and admin permissions
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
+                      <button
+                        type="button"
+                        onClick={() => setShowModal(false)}
+                        className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">close</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-[var(--admin-border-subtle)] mt-6">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="admin-btn admin-btn-outline w-full sm:flex-1 py-3 text-[11px] font-bold uppercase tracking-wider"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="admin-btn admin-btn-primary w-full sm:flex-[2] py-3 text-[11px] font-bold uppercase tracking-wider"
-                    >
-                      {modalMode === 'add' ? 'Create Admin' : 'Save Changes'}
-                    </button>
-                  </div>
-                </form>
+                  <form onSubmit={handleSubmit} className="space-y-4 flex-1">
+                    {modalMode === 'add' && (
+                      <>
+                        <div className="space-y-1">
+                          <label className="admin-label">Full Name</label>
+                          <input
+                            type="text"
+                            required
+                            value={systemUserDraft.name}
+                            onChange={(e) =>
+                              setSystemUserDraft((prev) => ({ ...prev, name: e.target.value }))
+                            }
+                            className="admin-input"
+                            placeholder="e.g. John Doe"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="admin-label">Email Address</label>
+                          <input
+                            type="email"
+                            required
+                            value={systemUserDraft.email}
+                            onChange={(e) =>
+                              setSystemUserDraft((prev) => ({ ...prev, email: e.target.value }))
+                            }
+                            className="admin-input"
+                            placeholder="e.g. admin@siriarts.com"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="admin-label">Temporary Password</label>
+                          <input
+                            type="text"
+                            required
+                            value={systemUserDraft.password}
+                            onChange={(e) =>
+                              setSystemUserDraft((prev) => ({ ...prev, password: e.target.value }))
+                            }
+                            className="admin-input font-mono"
+                            placeholder="Generate secure temp password"
+                          />
+                          <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-1.5 leading-normal font-light">
+                            User must use this password to login initially.
+                          </p>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="space-y-1">
+                      <label className="admin-label">Role & Permissions</label>
+                      <select
+                        value={systemUserDraft.role}
+                        onChange={(e) =>
+                          setSystemUserDraft((prev) => ({ ...prev, role: e.target.value }))
+                        }
+                        className="admin-select text-[12px] font-semibold"
+                      >
+                        <option value="manager">Manager (General Store Ops)</option>
+                        <option value="main_admin">Main Admin (Store Setup & Settings)</option>
+                        <option value="order_manager">Order Manager (Fulfillment)</option>
+                        <option value="content_manager">Content Manager (CMS & Blogs)</option>
+                        <option value="support_admin">Support Admin (Inquiries & Chat)</option>
+                        <option value="moderator">Moderator (Reviews)</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-[var(--admin-border-subtle)] mt-6">
+                      <button
+                        type="button"
+                        onClick={() => setShowModal(false)}
+                        className="admin-btn admin-btn-outline w-full sm:flex-1 py-3 text-[11px] font-bold uppercase tracking-wider"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="admin-btn admin-btn-primary w-full sm:flex-[2] py-3 text-[11px] font-bold uppercase tracking-wider"
+                      >
+                        {modalMode === 'add' ? 'Create Admin' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+
+      {/* ─── DRAFT RESTORE & UNSAVED GUARDS ─── */}
+      <DraftRestoreModal
+        isOpen={showRestoreModal}
+        onClose={() => setShowRestoreModal(false)}
+        onRestore={restoreDraft}
+        onDiscard={discardDraft}
+      />
+      <UnsavedChangesGuard blocker={blocker} />
     </div>
   );
 };

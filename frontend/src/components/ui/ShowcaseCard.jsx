@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { handleImageError } from '../../utils/imageUtils';
 import { CloudinaryImage } from './CloudinaryImage';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';

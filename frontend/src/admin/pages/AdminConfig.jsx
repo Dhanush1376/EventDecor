@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../../utils/errorHelpers';
 import {
   PageHeader,
   AdminInput,
@@ -60,20 +61,12 @@ export function AdminConfig() {
   };
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={stagger}
-      className="space-y-6"
-    >
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
         title="Global System Config"
         subtitle="Manage application variables, feature flags, and frontend bootstrapping rules."
       >
-        <button
-          onClick={handleCreate}
-          className="admin-btn admin-btn-primary"
-        >
+        <button onClick={handleCreate} className="admin-btn admin-btn-primary">
           <span className="material-symbols-outlined text-[16px]">add</span>
           Add Variable
         </button>
@@ -94,9 +87,15 @@ export function AdminConfig() {
           }
         />
       ) : (
-        <motion.div variants={fadeUp} className="admin-card divide-y divide-[var(--admin-border-subtle)]">
+        <motion.div
+          variants={fadeUp}
+          className="admin-card divide-y divide-[var(--admin-border-subtle)]"
+        >
           {configs.map((conf) => (
-            <div key={conf._id} className="p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <div
+              key={conf._id}
+              className="p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4"
+            >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1 w-full">
                 <div className="space-y-1.5">
                   <label className="admin-label">Key</label>

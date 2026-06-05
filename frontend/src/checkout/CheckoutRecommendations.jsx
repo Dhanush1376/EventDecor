@@ -1,31 +1,32 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext";
-import { productService } from "../services/domainServices";
-import toast from "react-hot-toast";
-import logger from "../utils/logger";
-import { RecommendationGridSkeleton } from "../components/ui/Skeleton";
-import { CloudinaryImage } from "../components/ui/CloudinaryImage";
-
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { productService } from '../services/domainServices';
+import toast from 'react-hot-toast';
+import logger from '../utils/logger';
+import { RecommendationGridSkeleton } from '../components/ui/Skeleton';
+import { CloudinaryImage } from '../components/ui/CloudinaryImage';
 
 // Helper utilities matching ProductCard.jsx
 const parseNumericPrice = (val) => {
-  if (typeof val === "number") return val;
+  if (typeof val === 'number') return val;
   if (!val) return 0;
-  const clean = String(val).replace(/[₹\s,]/g, "").replace(/[Rr][Ss].?/g, "");
+  const clean = String(val)
+    .replace(/[₹\s,]/g, '')
+    .replace(/[Rr][Ss].?/g, '');
   const num = parseFloat(clean);
   return isNaN(num) ? 0 : num;
 };
 
 const formatPrice = (val) => {
-  if (val === undefined || val === null) return "0";
-  if (typeof val === "number") return val.toLocaleString("en-IN");
+  if (val === undefined || val === null) return '0';
+  if (typeof val === 'number') return val.toLocaleString('en-IN');
   const str = String(val).trim();
-  const cleanStr = str.replace(/[₹\s,]/g, "").replace(/[Rr][Ss].?/g, "");
+  const cleanStr = str.replace(/[₹\s,]/g, '').replace(/[Rr][Ss].?/g, '');
   const num = parseFloat(cleanStr);
-  return isNaN(num) ? str : num.toLocaleString("en-IN");
+  return isNaN(num) ? str : num.toLocaleString('en-IN');
 };
 
 function CheckoutRecommendationCard({ product }) {
@@ -38,20 +39,21 @@ function CheckoutRecommendationCard({ product }) {
   const productId = product.id || product._id;
   const numericPrice = parseNumericPrice(product.price);
   const numericOldPrice = parseNumericPrice(product.oldPrice);
-  const discount = numericOldPrice > numericPrice
-    ? Math.round(((numericOldPrice - numericPrice) / numericOldPrice) * 100)
-    : null;
+  const discount =
+    numericOldPrice > numericPrice
+      ? Math.round(((numericOldPrice - numericPrice) / numericOldPrice) * 100)
+      : null;
 
   const handleCardClick = (e) => {
-    if (e.target.closest("button")) return;
+    if (e.target.closest('button')) return;
     navigate(`/product/${productId}`);
   };
 
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsAdding(true);
     runProtectedAction(() => {
+      setIsAdding(true);
       addItem({
         id: productId,
         _id: productId,
@@ -61,18 +63,18 @@ function CheckoutRecommendationCard({ product }) {
         imageSrc: product.imageSrc,
         category: product.category,
         quantity: 1,
-        variant: "Default"
+        variant: 'Default',
       });
       setAdded(true);
       toast.success(`"${product.title}" added to Shopping bag!`, {
-        icon: "✨",
+        icon: '✨',
         style: {
-          borderRadius: "12px",
-          background: "#1a1c1a",
-          color: "#fff",
-          fontSize: "12px",
-          fontFamily: "var(--font-body)",
-          fontWeight: "600",
+          borderRadius: '12px',
+          background: '#1a1c1a',
+          color: '#fff',
+          fontSize: '12px',
+          fontFamily: 'var(--font-body)',
+          fontWeight: '600',
         },
       });
       setTimeout(() => {
@@ -115,13 +117,13 @@ function CheckoutRecommendationCard({ product }) {
           disabled={added || isAdding}
           className={`absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center shadow-md border transition-all duration-300 z-10 ${
             added
-              ? "bg-green-600 border-transparent text-white scale-105"
-              : "bg-white hover:bg-black border-black/5 text-[#1a1c1a] hover:text-white hover:scale-110 active:scale-95"
+              ? 'bg-green-600 border-transparent text-white scale-105'
+              : 'bg-white hover:bg-black border-black/5 text-[#1a1c1a] hover:text-white hover:scale-110 active:scale-95'
           }`}
           title="Add to Shopping Bag"
         >
           <span className="material-symbols-outlined text-[13px] font-bold">
-            {added ? "check" : "add"}
+            {added ? 'check' : 'add'}
           </span>
         </button>
       </div>
@@ -129,12 +131,12 @@ function CheckoutRecommendationCard({ product }) {
       {/* Product Info Metadata */}
       <div className="pt-2 flex flex-col flex-1">
         <span className="text-[9px] uppercase tracking-wider text-[#685c57]/80 font-bold truncate">
-          {product.category || "Masterpiece"}
+          {product.category || 'Masterpiece'}
         </span>
         <h4 className="text-[11px] font-bold text-[#1a1c1a] truncate leading-tight mt-0.5 group-hover:text-[#f26a10] transition-colors">
           {product.title}
         </h4>
-        
+
         <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
           <span className="text-[12px] font-extrabold text-[#f26a10]">
             ₹{formatPrice(product.price)}
@@ -150,7 +152,7 @@ function CheckoutRecommendationCard({ product }) {
   );
 }
 
-export default function CheckoutRecommendations({ containerClassName = "mb-4" }) {
+export default function CheckoutRecommendations({ containerClassName = 'mb-4' }) {
   const { items = [] } = useCart();
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -166,7 +168,7 @@ export default function CheckoutRecommendations({ containerClassName = "mb-4" })
           setProducts(list);
         }
       } catch (err) {
-        logger.error("Failed to load checkout recommendations:", err);
+        logger.error('Failed to load checkout recommendations:', err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -181,17 +183,19 @@ export default function CheckoutRecommendations({ containerClassName = "mb-4" })
 
   if (isLoading) {
     return (
-      <div className={`bg-surface-bright border border-outline-variant/40 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-4 sm:p-5 ${containerClassName}`}>
+      <div
+        className={`bg-surface-bright border border-outline-variant/40 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-4 sm:p-5 ${containerClassName}`}
+      >
         <RecommendationGridSkeleton cards={4} />
       </div>
     );
   }
 
   // Filter out any products already in the shopping bag
-  const bagItemIds = new Set((items || []).map(item => String(item?.id || item?._id)));
+  const bagItemIds = new Set((items || []).map((item) => String(item?.id || item?._id)));
   const filteredRecommendations = Array.isArray(products)
     ? products
-        .filter(product => product && !bagItemIds.has(String(product.id || product._id)))
+        .filter((product) => product && !bagItemIds.has(String(product.id || product._id)))
         .slice(0, 6)
     : [];
 
@@ -200,7 +204,9 @@ export default function CheckoutRecommendations({ containerClassName = "mb-4" })
   }
 
   return (
-    <div className={`bg-surface-bright border border-outline-variant/40 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-4 sm:p-5 ${containerClassName}`}>
+    <div
+      className={`bg-surface-bright border border-outline-variant/40 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-4 sm:p-5 ${containerClassName}`}
+    >
       {/* 2-column grid layout (no horizontal scroll) */}
       <div className="grid grid-cols-2 gap-3.5 pb-2 pt-1">
         {filteredRecommendations.map((product) => (

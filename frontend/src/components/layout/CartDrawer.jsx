@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
-import { handleImageError } from '../../utils/imageUtils';
 import { prefetchManager } from '../../utils/prefetchManager';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 

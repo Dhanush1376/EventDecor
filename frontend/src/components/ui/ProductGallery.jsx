@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { OptimizedImage } from './OptimizedImage';
-import { handleImageError } from '../../utils/imageUtils';
 import { useWishlist } from '../../context/WishlistContext';
 import { ShareButton } from './ShareButton';
 import { motion, AnimatePresence } from 'framer-motion';

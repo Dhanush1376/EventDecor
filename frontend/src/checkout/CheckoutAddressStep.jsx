@@ -1,42 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
 import { useCheckout } from './CheckoutProvider';
 
-let DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
-
 function LocationMarker({ position, setPosition, fetchAddressFromCoords }) {
-  const map = useMapEvents({
-    click(e) {
-      setPosition(e.latlng);
-      fetchAddressFromCoords(e.latlng.lat, e.latlng.lng);
-    },
-  });
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
 
-  return position === null ? null : (
-    <Marker
-      position={position}
-      draggable={true}
-      eventHandlers={{
-        dragend: (e) => {
-          const marker = e.target;
-          const pos = marker.getLatLng();
-          setPosition(pos);
-          fetchAddressFromCoords(pos.lat, pos.lng);
-        },
-      }}
-    />
-  );
+  useEffect(() => {
+    const initMap = () => {
+      if (!window.L || mapRef.current) return;
+
+      const L = window.L;
+      // Default Icon Fix for CDN
+      const DefaultIcon = L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+      });
+      L.Marker.prototype.options.icon = DefaultIcon;
+
+      const map = L.map('checkout-leaflet-map').setView([position.lat, position.lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(map);
+
+      const marker = L.marker([position.lat, position.lng], { draggable: true }).addTo(map);
+
+      marker.on('dragend', (e) => {
+        const pos = e.target.getLatLng();
+        setPosition({ lat: pos.lat, lng: pos.lng });
+        fetchAddressFromCoords(pos.lat, pos.lng);
+      });
+
+      map.on('click', (e) => {
+        marker.setLatLng(e.latlng);
+        setPosition({ lat: e.latlng.lat, lng: e.latlng.lng });
+        fetchAddressFromCoords(e.latlng.lat, e.latlng.lng);
+      });
+
+      mapRef.current = map;
+      markerRef.current = marker;
+    };
+
+    if (!document.getElementById('leaflet-css-cdn')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css-cdn';
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+
+    if (!document.getElementById('leaflet-js-cdn')) {
+      const script = document.createElement('script');
+      script.id = 'leaflet-js-cdn';
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => initMap();
+      document.head.appendChild(script);
+    } else if (window.L) {
+      initMap();
+    }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mapRef.current && markerRef.current) {
+      mapRef.current.setView([position.lat, position.lng]);
+      markerRef.current.setLatLng([position.lat, position.lng]);
+    }
+  }, [position.lat, position.lng]);
+
+  return <div id="checkout-leaflet-map" style={{ width: '100%', height: '100%', zIndex: 1 }} />;
 }
 
 export default function CheckoutAddressStep() {
@@ -284,22 +326,11 @@ export default function CheckoutAddressStep() {
                     </h2>
 
                     <div className="w-full h-48 bg-surface-container-low rounded-lg mb-4 relative overflow-hidden border border-outline-variant/30 z-0">
-                      <MapContainer
-                        center={mapPosition}
-                        zoom={4}
-                        scrollWheelZoom={true}
-                        style={{ height: '100%', width: '100%' }}
-                      >
-                        <TileLayer
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        />
-                        <LocationMarker
-                          position={mapPosition}
-                          setPosition={setMapPosition}
-                          fetchAddressFromCoords={fetchAddressFromCoords}
-                        />
-                      </MapContainer>
+                      <LocationMarker
+                        position={mapPosition}
+                        setPosition={setMapPosition}
+                        fetchAddressFromCoords={fetchAddressFromCoords}
+                      />
                       <div className="absolute top-2 right-2 z-[1000]">
                         <button
                           type="button"
@@ -499,9 +530,7 @@ export default function CheckoutAddressStep() {
                     </div>
 
                     <label className="flex items-center gap-2 cursor-pointer mt-2">
-                      <div
-                        className={`w-4 h-4 rounded flex items-center justify-center ${true ? 'bg-primary' : 'border border-outline-variant'}`}
-                      >
+                      <div className="w-4 h-4 rounded flex items-center justify-center bg-primary">
                         <span className="material-symbols-outlined text-[12px] text-surface font-bold">
                           check
                         </span>

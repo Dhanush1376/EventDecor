@@ -1,10 +1,8 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { handleImageError } from "../utils/imageUtils";
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   ProductCard,
-  Skeleton,
   QuickViewModal,
   Pagination,
   CustomDropdown,
@@ -12,93 +10,99 @@ import {
   CategoryTabs,
   PromoBanner,
   CloudinaryImage,
-} from "../components/ui";
-import { useCart } from "../context/CartContext";
+} from '../components/ui';
+import { useCart } from '../context/CartContext';
 
-import { productService, userService, couponService } from "../services/domainServices";
-import toast from "react-hot-toast";
-import { useProducts, useCategories } from "../hooks/useProductQueries";
-import { useWebsiteContent } from "../hooks/useWebsiteContent";
-import { useScrollDirection } from "../hooks/useScrollDirection";
-import { FilterPanel } from "../components/ui/FilterPanel";
-import { MandalaElement } from "../components/ui/MandalaElement";
-import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
-import { SEO } from "../components/seo/SEO";
+import { couponService } from '../services/domainServices';
+import toast from 'react-hot-toast';
+import { useProducts, useCategories } from '../hooks/useProductQueries';
+import { useWebsiteContent } from '../hooks/useWebsiteContent';
+import { useScrollDirection } from '../hooks/useScrollDirection';
+import { FilterPanel } from '../components/ui/FilterPanel';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { SEO } from '../components/seo/SEO';
 
 import logger from '../utils/logger';
-import { persistentStorage } from "../utils/persistentStorage";
+import { persistentStorage } from '../utils/persistentStorage';
 
 export function ProductListing() {
   const { setClaimedCoupon } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryParam = searchParams.get("category") || "All";
-  const searchParam = searchParams.get("search") || "";
-  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+  const categoryParam = searchParams.get('category') || 'All';
+  const searchParam = searchParams.get('search') || '';
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
 
   const [searchQuery, setSearchQuery] = useState(searchParam);
   const [activeCategory, setActiveCategory] = useState(categoryParam);
   const [sortBy, setSortBy] = useState(() => {
-    return persistentStorage.getItem("siri_product_sort", { fallback: "Popularity" });
+    return persistentStorage.getItem('siri_product_sort', { fallback: 'Popularity' });
   });
 
   useEffect(() => {
-    persistentStorage.setItem("siri_product_sort", sortBy);
+    persistentStorage.setItem('siri_product_sort', sortBy);
   }, [sortBy]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
   const [isStuck, setIsStuck] = useState(false);
   const navRef = React.useRef(null);
   const [activeProduct, setActiveProduct] = useState(null);
-  
+
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === "down";
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(pageParam);
 
   useEffect(() => {
-    setActiveCategory(searchParams.get("category") || "All");
-    setSearchQuery(searchParams.get("search") || "");
-    setCurrentPage(parseInt(searchParams.get("page") || "1", 10));
+    setActiveCategory(searchParams.get('category') || 'All');
+    setSearchQuery(searchParams.get('search') || '');
+    setCurrentPage(parseInt(searchParams.get('page') || '1', 10));
   }, [searchParams]);
 
   const [promoCoupon, setPromoCoupon] = useState(null);
-  const [countdown, setCountdown] = useState({ D: "02", H: "14", M: "42", S: "00" });
+  const [countdown, setCountdown] = useState({ D: '02', H: '14', M: '42', S: '00' });
 
   useEffect(() => {
-    couponService.getAll().then((res) => {
-      if (res.success && res.data) {
-        const list = res.data.data || res.data.items || (Array.isArray(res.data) ? res.data : []);
-        const activeList = list.filter(c => 
-          c.isActive && 
-          new Date() <= new Date(c.expiryDate) &&
-          c.displayLocations && 
-          c.displayLocations.includes("banner")
-        );
-        if (activeList.length > 0) {
-          activeList.sort((a, b) => b.discountValue - a.discountValue);
-          setPromoCoupon(activeList[0]);
-        } else {
-          setPromoCoupon(null);
+    couponService
+      .getAll()
+      .then((res) => {
+        if (res.success && res.data) {
+          const list = res.data.data || res.data.items || (Array.isArray(res.data) ? res.data : []);
+          const activeList = list.filter(
+            (c) =>
+              c.isActive &&
+              new Date() <= new Date(c.expiryDate) &&
+              c.displayLocations &&
+              c.displayLocations.includes('banner'),
+          );
+          if (activeList.length > 0) {
+            activeList.sort((a, b) => b.discountValue - a.discountValue);
+            setPromoCoupon(activeList[0]);
+          } else {
+            setPromoCoupon(null);
+          }
         }
-      }
-    }).catch(err => {
-      logger.warn("Failed to fetch coupons for promo banner", err);
-    });
+      })
+      .catch((err) => {
+        logger.warn('Failed to fetch coupons for promo banner', err);
+      });
   }, []);
 
   useEffect(() => {
-    const targetDate = promoCoupon ? new Date(promoCoupon.expiryDate) : (() => {
-      const tomorrow = new Date();
-      tomorrow.setHours(23, 59, 59, 999);
-      return tomorrow;
-    })();
+    const targetDate = promoCoupon
+      ? new Date(promoCoupon.expiryDate)
+      : (() => {
+          const tomorrow = new Date();
+          tomorrow.setHours(23, 59, 59, 999);
+          return tomorrow;
+        })();
 
     const interval = setInterval(() => {
       const now = new Date();
       const diff = targetDate - now;
 
       if (diff <= 0) {
-        setCountdown({ D: "00", H: "00", M: "00", S: "00" });
+        setCountdown({ D: '00', H: '00', M: '00', S: '00' });
         clearInterval(interval);
       } else {
         const d = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -107,10 +111,10 @@ export function ProductListing() {
         const s = Math.floor((diff % (1000 * 60)) / 1000);
 
         setCountdown({
-          D: String(d).padStart(2, "0"),
-          H: String(h).padStart(2, "0"),
-          M: String(m).padStart(2, "0"),
-          S: String(s).padStart(2, "0")
+          D: String(d).padStart(2, '0'),
+          H: String(h).padStart(2, '0'),
+          M: String(m).padStart(2, '0'),
+          S: String(s).padStart(2, '0'),
         });
       }
     }, 1000);
@@ -119,44 +123,55 @@ export function ProductListing() {
   }, [promoCoupon]);
 
   const handleClaimOffer = () => {
-    const code = promoCoupon ? promoCoupon.code : "SIRI40";
+    const code = promoCoupon ? promoCoupon.code : 'SIRI40';
     navigator.clipboard.writeText(code);
     setClaimedCoupon(code);
-    toast.success((t) => (
-      <div className="flex flex-col gap-1 p-1">
-        <span className="font-bold text-xs text-on-surface flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[16px] text-green-700">local_activity</span>
-          Coupon claimed successfully!
-        </span>
-        <span className="text-[10px] text-on-surface-variant font-mono">Code "<strong className="text-primary font-bold">{code}</strong>" copied to clipboard.</span>
-        <span className="text-[10px] text-green-800 font-semibold mt-1">🎟️ We will automatically apply this coupon at checkout!</span>
-      </div>
-    ), { duration: 5000, position: "bottom-right" });
+    toast.success(
+      (t) => (
+        <div className="flex flex-col gap-1 p-1">
+          <span className="font-bold text-xs text-on-surface flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-green-700">
+              local_activity
+            </span>
+            Coupon claimed successfully!
+          </span>
+          <span className="text-[10px] text-on-surface-variant font-mono">
+            Code "<strong className="text-primary font-bold">{code}</strong>" copied to clipboard.
+          </span>
+          <span className="text-[10px] text-green-800 font-semibold mt-1">
+            🎟️ We will automatically apply this coupon at checkout!
+          </span>
+        </div>
+      ),
+      { duration: 5000, position: 'bottom-right' },
+    );
   };
 
   const websiteContent = useWebsiteContent();
   const shopContent = websiteContent?.shopPage || {
     hero: {
-      title: "Heritage Collection",
-      subtitle: "Handcrafted Decor",
-      description: "Handcrafted luxury event decor blending tradition with contemporary design.",
-      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204",
+      title: 'Heritage Collection',
+      subtitle: 'Handcrafted Decor',
+      description: 'Handcrafted luxury event decor blending tradition with contemporary design.',
+      backgroundImage:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204',
     },
     promo: {
-      title: "",
-      highlightText: "Up to 40% Off",
-      description: "Exclusive handcrafted seasonal collections. Limited stock available.",
-      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w",
-      badgeText: "Limited Time Offer",
-      statusText: "Ends Soon",
-      ctaText: "Claim Offer",
-      ctaLink: "Festive Decor",
-    }
+      title: '',
+      highlightText: 'Up to 40% Off',
+      description: 'Exclusive handcrafted seasonal collections. Limited stock available.',
+      backgroundImage:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w',
+      badgeText: 'Limited Time Offer',
+      statusText: 'Ends Soon',
+      ctaText: 'Claim Offer',
+      ctaLink: 'Festive Decor',
+    },
   };
 
   const [filters, setFilters] = useState(() => {
-    const saved = persistentStorage.getItem("siri_product_filters");
-    if (saved && typeof saved === "object") {
+    const saved = persistentStorage.getItem('siri_product_filters');
+    if (saved && typeof saved === 'object') {
       return {
         price: Array.isArray(saved.price) ? saved.price : [],
         material: Array.isArray(saved.material) ? saved.material : [],
@@ -171,14 +186,14 @@ export function ProductListing() {
   });
 
   useEffect(() => {
-    persistentStorage.setItem("siri_product_filters", filters);
+    persistentStorage.setItem('siri_product_filters', filters);
   }, [filters]);
 
   const sortMap = {
-    Popularity: "rating",
-    "Price: Low to High": "price_asc",
-    "Price: High to Low": "price_desc",
-    "New Arrivals": "newest",
+    Popularity: 'rating',
+    'Price: Low to High': 'price_asc',
+    'Price: High to Low': 'price_desc',
+    'New Arrivals': 'newest',
   };
 
   // Debounced search to prevent API calls on every keystroke
@@ -191,18 +206,21 @@ export function ProductListing() {
   }, [searchQuery]);
 
   useEffect(() => {
-    const currentSearchInUrl = searchParams.get("search") || "";
+    const currentSearchInUrl = searchParams.get('search') || '';
     if (debouncedSearch !== currentSearchInUrl) {
-      setSearchParams(prev => {
-        const params = new URLSearchParams(prev);
-        if (debouncedSearch) {
-          params.set("search", debouncedSearch);
-        } else {
-          params.delete("search");
-        }
-        params.delete("page");
-        return params;
-      }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (debouncedSearch) {
+            params.set('search', debouncedSearch);
+          } else {
+            params.delete('search');
+          }
+          params.delete('page');
+          return params;
+        },
+        { replace: true },
+      );
     }
   }, [debouncedSearch, setSearchParams, searchParams]);
 
@@ -210,15 +228,15 @@ export function ProductListing() {
     page: currentPage,
     limit: 12,
     search: debouncedSearch,
-    category: activeCategory !== "All" ? activeCategory : undefined,
-    sort: sortMap[sortBy] || "newest",
+    category: activeCategory !== 'All' ? activeCategory : undefined,
+    sort: sortMap[sortBy] || 'newest',
   };
 
   const { data: productsData, isLoading: loading, isError } = useProducts(queryParams);
 
   useEffect(() => {
     if (isError) {
-      toast.error("Failed to load products.");
+      toast.error('Failed to load products.');
     }
   }, [isError]);
 
@@ -228,7 +246,7 @@ export function ProductListing() {
   // Fetch categories dynamically from API via TanStack Query
   const { data: categoriesData = [] } = useCategories();
   const categories = useMemo(() => {
-    return ["All", ...categoriesData];
+    return ['All', ...categoriesData];
   }, [categoriesData]);
 
   useEffect(() => {
@@ -239,31 +257,29 @@ export function ProductListing() {
         currentNavHeight = topNav.getBoundingClientRect().height;
         setNavbarHeight(currentNavHeight);
       }
-      
+
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
         setIsStuck(rect.top <= currentNavHeight + 1);
       }
     };
-    window.addEventListener("scroll", measure, { passive: true });
-    window.addEventListener("resize", measure, { passive: true });
+    window.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure, { passive: true });
     measure();
     return () => {
-      window.removeEventListener("scroll", measure);
-      window.removeEventListener("resize", measure);
+      window.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
     };
   }, [navbarHeight]);
 
   useEffect(() => {
     if (isFilterOpen) {
-      document.body.classList.add("filters-open");
+      document.body.classList.add('filters-open');
     } else {
-      document.body.classList.remove("filters-open");
+      document.body.classList.remove('filters-open');
     }
-    return () => document.body.classList.remove("filters-open");
+    return () => document.body.classList.remove('filters-open');
   }, [isFilterOpen]);
-
-
 
   // Data is now fetched using React Query automatically when dependencies change.
 
@@ -276,28 +292,31 @@ export function ProductListing() {
     setIsQuickViewOpen(true);
   }, []);
 
-  const handleCategorySelect = React.useCallback((cat) => {
-    setSearchParams(prev => {
-      const params = new URLSearchParams(prev);
-      if (cat === "All") {
-        params.delete("category");
-      } else {
-        params.set("category", cat);
-      }
-      params.delete("page");
-      return params;
-    });
-    setActiveCategory(cat);
-    setCurrentPage(1);
-    setTimeout(() => {
-      const element = document.getElementById("artisan-collection");
-      if (element) {
-        const yOffset = -80;
-        const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
-        window.scrollTo({ top: y, behavior: "smooth" });
-      }
-    }, 50);
-  }, [setSearchParams]);
+  const handleCategorySelect = React.useCallback(
+    (cat) => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        if (cat === 'All') {
+          params.delete('category');
+        } else {
+          params.set('category', cat);
+        }
+        params.delete('page');
+        return params;
+      });
+      setActiveCategory(cat);
+      setCurrentPage(1);
+      setTimeout(() => {
+        const element = document.getElementById('artisan-collection');
+        if (element) {
+          const yOffset = -80;
+          const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 50);
+    },
+    [setSearchParams],
+  );
 
   const toggleFilter = React.useCallback((type, value) => {
     setFilters((prev) => {
@@ -311,8 +330,8 @@ export function ProductListing() {
 
   const clearAllFilters = React.useCallback(() => {
     setFilters({ price: [], material: [], collection: [] });
-    setActiveCategory("All");
-    setSearchQuery("");
+    setActiveCategory('All');
+    setSearchQuery('');
     setSearchParams({});
   }, [setSearchParams]);
 
@@ -396,72 +415,70 @@ export function ProductListing() {
         className={`sticky -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${isStuck ? 'px-0' : 'px-margin-mobile md:px-margin-desktop'}`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px`, zIndex: 49 }}
       >
-          <div
-            className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
-              isStuck 
-                ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 px-margin-mobile md:px-margin-desktop w-full max-w-none' 
-                : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 w-full max-w-max-width'
-            }`}
-          >
-            {/* Search Bar & Mobile Filter Toggle */}
-            <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
-              <div className="flex-1 h-11">
-                <SearchBar
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search masterworks..."
-                  className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
-                />
-              </div>
-              {/* Mobile/Tablet Filter Toggle */}
-              <button
-                onClick={() => setIsFilterOpen(true)}
-                aria-label="Open filters"
-                className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-[0.98] active:opacity-90 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
-              >
-                <span className="material-symbols-outlined text-[20px]">
-                  tune
-                </span>
-              </button>
+        <div
+          className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
+            isStuck
+              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 px-margin-mobile md:px-margin-desktop w-full max-w-none'
+              : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 w-full max-w-max-width'
+          }`}
+        >
+          {/* Search Bar & Mobile Filter Toggle */}
+          <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
+            <div className="flex-1 h-11">
+              <SearchBar
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search masterworks..."
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+              />
+            </div>
+            {/* Mobile/Tablet Filter Toggle */}
+            <button
+              onClick={() => setIsFilterOpen(true)}
+              aria-label="Open filters"
+              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-[0.98] active:opacity-90 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
+            >
+              <span className="material-symbols-outlined text-[20px]">tune</span>
+            </button>
+          </div>
+
+          {/* Desktop-Only Layout Integration (Tabs + Sort) */}
+          <div className="hidden lg:flex items-center justify-between gap-6 flex-1 min-w-0">
+            {/* Category Tabs Area - Fluid scrollable area */}
+            <div className="flex-1 overflow-hidden flex justify-start lg:justify-center">
+              <CategoryTabs
+                categories={categories}
+                activeCategory={activeCategory}
+                onCategoryChange={handleCategorySelect}
+              />
             </div>
 
-            {/* Desktop-Only Layout Integration (Tabs + Sort) */}
-            <div className="hidden lg:flex items-center justify-between gap-6 flex-1 min-w-0">
-              {/* Category Tabs Area - Fluid scrollable area */}
-              <div className="flex-1 overflow-hidden flex justify-start lg:justify-center">
-                <CategoryTabs
-                  categories={categories}
-                  activeCategory={activeCategory}
-                  onCategoryChange={handleCategorySelect}
+            {/* Actions Group: Sort (Right-aligned) */}
+            <div className="flex items-center shrink-0">
+              <div className="w-48 xl:w-52 h-11">
+                <CustomDropdown
+                  options={[
+                    { value: 'Popularity', label: 'Popularity' },
+                    {
+                      value: 'Price: Low to High',
+                      label: 'Price: Low to High',
+                    },
+                    {
+                      value: 'Price: High to Low',
+                      label: 'Price: High to Low',
+                    },
+                    { value: 'New Arrivals', label: 'New Arrivals' },
+                  ]}
+                  value={sortBy}
+                  onChange={setSortBy}
+                  className="w-full h-full"
+                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
                 />
-              </div>
-
-              {/* Actions Group: Sort (Right-aligned) */}
-              <div className="flex items-center shrink-0">
-                <div className="w-48 xl:w-52 h-11">
-                  <CustomDropdown
-                    options={[
-                      { value: "Popularity", label: "Popularity" },
-                      {
-                        value: "Price: Low to High",
-                        label: "Price: Low to High",
-                      },
-                      {
-                        value: "Price: High to Low",
-                        label: "Price: High to Low",
-                      },
-                      { value: "New Arrivals", label: "New Arrivals" },
-                    ]}
-                    value={sortBy}
-                    onChange={setSortBy}
-                    className="w-full h-full"
-                    buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
-                  />
-                </div>
               </div>
             </div>
           </div>
-        </nav>
+        </div>
+      </nav>
 
       {/* Flash Sale Banner - Cinematic Luxury Redesign */}
       {promoCoupon && (
@@ -470,15 +487,19 @@ export function ProductListing() {
           badgeText={`Active Promo: ${promoCoupon.code}`}
           statusText={shopContent.promo.statusText}
           title="Limited Time Offer — "
-          highlightText={promoCoupon.discountType === "percentage" ? `${promoCoupon.discountValue}% Off` : `₹${promoCoupon.discountValue} Off`}
+          highlightText={
+            promoCoupon.discountType === 'percentage'
+              ? `${promoCoupon.discountValue}% Off`
+              : `₹${promoCoupon.discountValue} Off`
+          }
           description={`Use code ${promoCoupon.code} at checkout to save.`}
           ctaText="Claim Offer"
           onCtaClick={handleClaimOffer}
           timer={[
-            { l: "D", v: countdown.D },
-            { l: "H", v: countdown.H },
-            { l: "M", v: countdown.M },
-            { l: "S", v: countdown.S }
+            { l: 'D', v: countdown.D },
+            { l: 'H', v: countdown.H },
+            { l: 'M', v: countdown.M },
+            { l: 'S', v: countdown.S },
           ]}
         />
       )}
@@ -492,8 +513,8 @@ export function ProductListing() {
           highlightText={shopContent.promo.highlightText}
           ctaText={shopContent.promo.ctaText}
           onCtaClick={() => {
-            const el = document.getElementById("artisan-collection");
-            if (el) el.scrollIntoView({ behavior: "smooth" });
+            const el = document.getElementById('artisan-collection');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
           }}
         />
       )}
@@ -545,16 +566,18 @@ export function ProductListing() {
 
             {productsData?.correctedQuery && (
               <div className="mb-8 px-6 py-4 bg-primary/5 text-primary rounded-[20px] border border-primary/10 text-[14px] font-medium flex items-center gap-2.5 shadow-sm">
-                <span className="material-symbols-outlined text-[20px] text-primary">lightbulb</span>
+                <span className="material-symbols-outlined text-[20px] text-primary">
+                  lightbulb
+                </span>
                 <span>
-                  Showing results for{" "}
+                  Showing results for{' '}
                   <Link
                     to={`/collections?search=${encodeURIComponent(productsData.correctedQuery)}`}
                     className="font-bold underline hover:text-primary-dark"
                   >
                     {productsData.correctedQuery}
                   </Link>
-                  . Search instead for{" "}
+                  . Search instead for{' '}
                   <Link
                     to={`/collections?search=${encodeURIComponent(searchQuery)}`}
                     className="underline text-on-surface-variant/80 hover:text-on-surface"
@@ -595,24 +618,20 @@ export function ProductListing() {
                       totalPages={totalPages}
                       onPageChange={(page) => {
                         setCurrentPage(page);
-                        setSearchParams(prev => {
+                        setSearchParams((prev) => {
                           const params = new URLSearchParams(prev);
                           if (page === 1) {
-                            params.delete("page");
+                            params.delete('page');
                           } else {
-                            params.set("page", String(page));
+                            params.set('page', String(page));
                           }
                           return params;
                         });
                         setTimeout(() => {
-                          const el =
-                            document.getElementById("artisan-collection");
+                          const el = document.getElementById('artisan-collection');
                           if (el) {
-                            const y =
-                              el.getBoundingClientRect().top +
-                              window.scrollY -
-                              80;
-                            window.scrollTo({ top: y, behavior: "smooth" });
+                            const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                            window.scrollTo({ top: y, behavior: 'smooth' });
                           }
                         }, 50);
                       }}
@@ -627,9 +646,7 @@ export function ProductListing() {
                     filter_list_off
                   </span>
                 </div>
-                <h3 className="font-headline-sm text-on-surface mb-3">
-                  No products found
-                </h3>
+                <h3 className="font-headline-sm text-on-surface mb-3">No products found</h3>
                 <p className="font-body-md text-on-surface-variant/50 font-light mb-10 max-w-md mx-auto">
                   Try adjusting your filters or search terms to find what you're looking for.
                 </p>

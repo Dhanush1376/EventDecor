@@ -617,9 +617,18 @@ const galleryInspirations = [
 ];
 
 const seed = async () => {
-  if (process.env.SEED_CONFIRM !== 'true') {
+  // 1. Seed Protection & Read-Only Production Mode
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
     logger.error(
-      '❌ SAFETY GATE: Set SEED_CONFIRM=true to confirm seeding operation. Run: SEED_CONFIRM=true npm run seed',
+      '❌ SAFETY GATE: Seed script execution is blocked in production. Set ALLOW_PRODUCTION_SEED=true to override.',
+    );
+    process.exit(1);
+  }
+
+  // 2. Confirmation Gate
+  if (process.env.DELETE_PRODUCTION_DATA !== 'CONFIRMED') {
+    logger.error(
+      '❌ SAFETY GATE: You must set DELETE_PRODUCTION_DATA=CONFIRMED to authorize destructive operations. Run: DELETE_PRODUCTION_DATA=CONFIRMED npm run seed',
     );
     process.exit(1);
   }

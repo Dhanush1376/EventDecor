@@ -1,8 +1,8 @@
 import axios from 'axios';
 import logger from '../utils/logger';
-import { getApiUrl, getApiRootUrl } from '../config/apiConfig';
+import { getApiUrl } from '../config/apiConfig';
 import { normalizeApiError } from '../utils/apiErrors';
-import { getCachedGet, setCachedGet } from '../utils/apiCache';
+import { getCachedGet, setCachedGet, clearApiCache } from '../utils/apiCache';
 import {
   hasSessionMarker,
   setSessionMarker,
@@ -143,7 +143,7 @@ export const refreshAccessToken = async () => {
   }
   if (!refreshPromise) {
     refreshPromise = api
-      .post('/auth/refresh', buildRefreshBody(), { _skipAuthRetry: true })
+      .post('/auth/refresh', buildRefreshBody(), { _skipAuthRetry: true, _disableRetry: true })
       .then((res) => {
         const payload = res.data?.data || res.data;
         return applyRefreshPayload(payload);
@@ -478,6 +478,7 @@ const pendingGetRequests = new Map();
 
 const clearPendingGets = () => {
   pendingGetRequests.clear();
+  clearApiCache();
 };
 
 api.get = function (url, config) {

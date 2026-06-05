@@ -24,7 +24,7 @@ let server: Server;
 
 const handleFatalError = async (error: Error, source: string) => {
   logger.error(`🚨 CRITICAL PROCESS ERROR [${source}]: ${error.message}`, { stack: error.stack });
-  
+
   if (process.env.SENTRY_DSN) {
     try {
       Sentry.captureException(error);
@@ -66,7 +66,6 @@ process.on('unhandledRejection', (reason: any) => {
   const error = reason instanceof Error ? reason : new Error(String(reason));
   handleFatalError(error, 'unhandledRejection');
 });
-
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
@@ -140,13 +139,14 @@ const initializeServicesProgressively = async (httpServer: Server) => {
     }
 
     // 8. Auto-generate sitemap
-    generateSitemap().catch((err: any) => 
-      logger.error(`[BOOT SITEMAP] Initial sitemap generation failed: ${err.message}`)
+    generateSitemap().catch((err: any) =>
+      logger.error(`[BOOT SITEMAP] Initial sitemap generation failed: ${err.message}`),
     );
 
     const bootEndTime = performance.now();
-    logger.info(`⚡ [STARTUP] Progressive boot sequence completed in ${((bootEndTime - bootStartTime) / 1000).toFixed(2)}s`);
-
+    logger.info(
+      `⚡ [STARTUP] Progressive boot sequence completed in ${((bootEndTime - bootStartTime) / 1000).toFixed(2)}s`,
+    );
   } catch (error: any) {
     logger.error('🚨 CRITICAL SERVICE INITIALIZATION ERROR:', error);
     // Trigger fatal error shutdown handling
@@ -165,7 +165,7 @@ const startServer = async () => {
     // 1. Start Express Server Immediately
     server = app.listen(PORT, '0.0.0.0', () => {
       logger.info(
-        `🚀 [STARTUP] Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`
+        `🚀 [STARTUP] Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`,
       );
       if (typeof process.send === 'function') {
         process.send('ready');
@@ -179,10 +179,7 @@ const startServer = async () => {
     // Ensure timeout is slightly higher than the load balancer's timeout (Render has 100s default, but 65s is safe for internal)
     server.keepAliveTimeout = 65000; // 65 seconds
     server.headersTimeout = 66000; // 66 seconds
-
-
-
-
+    server.maxConnections = parseInt(process.env.MAX_CONNECTIONS || '10000', 10); // Prevent FD exhaustion
     // 5. Graceful Shutdown Handling
     const shutdown = async (signal: string) => {
       logger.info(`Received ${signal}. Starting graceful shutdown...`);
@@ -231,7 +228,6 @@ const startServer = async () => {
 
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('SIGINT', () => shutdown('SIGINT'));
-
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);

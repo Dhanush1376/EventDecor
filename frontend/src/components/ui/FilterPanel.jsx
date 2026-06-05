@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
   <div className="mb-5 border-b border-outline-variant/10 pb-4 last:border-0 last:pb-0">
@@ -10,7 +10,7 @@ const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
     >
       <span className="uppercase tracking-[0.2em] font-bold">{title}</span>
       <span
-        className={`material-symbols-outlined text-secondary transition-transform duration-500 ${activeSections[id] ? "rotate-180" : ""}`}
+        className={`material-symbols-outlined text-secondary transition-transform duration-500 ${activeSections[id] ? 'rotate-180' : ''}`}
       >
         expand_more
       </span>
@@ -19,7 +19,7 @@ const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
       {activeSections[id] && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
+          animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.2, 1, 0.2, 1] }}
           className="overflow-hidden"
@@ -48,16 +48,12 @@ const Checkbox = ({ label, count, type, currentFilters, onToggleFilter }) => {
           </span>
         </div>
         <span
-          className={`font-body text-[14px] md:text-[15px] transition-colors ${isChecked ? "text-primary font-semibold" : "text-on-surface/60 group-hover:text-on-surface"}`}
+          className={`font-body text-[14px] md:text-[15px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/60 group-hover:text-on-surface'}`}
         >
           {label}
         </span>
       </div>
-      {count && (
-        <span className="font-label text-[10px] text-secondary/40 font-bold">
-          {count}
-        </span>
-      )}
+      {count && <span className="font-label text-[10px] text-secondary/40 font-bold">{count}</span>}
     </label>
   );
 };
@@ -66,12 +62,12 @@ export function FilterPanel({
   currentFilters,
   onToggleFilter,
   onClearAll,
-  className = "",
+  className = '',
   isOpen,
   onClose,
   sortBy,
   onSortChange,
-  mobileSubtitle = "Refine Collection",
+  mobileSubtitle = 'Refine Collection',
 }) {
   const [activeSections, setActiveSections] = useState({
     sort: true,
@@ -105,9 +101,7 @@ export function FilterPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6 pb-3 border-b border-outline-variant/30">
         <div className="flex flex-col">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
-            Filters
-          </h2>
+          <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">Filters</h2>
           {isOpen && (
             <span className="font-label text-[10px] text-primary uppercase tracking-[0.3em] mt-1">
               {mobileSubtitle}
@@ -130,25 +124,23 @@ export function FilterPanel({
           onToggle={toggleSection}
         >
           {[
-            { value: "Popularity", label: "Popularity" },
-            { value: "Price: Low to High", label: "Price: Low to High" },
-            { value: "Price: High to Low", label: "Price: High to Low" },
-            { value: "New Arrivals", label: "New Arrivals" },
+            { value: 'Popularity', label: 'Popularity' },
+            { value: 'Price: Low to High', label: 'Price: Low to High' },
+            { value: 'Price: High to Low', label: 'Price: High to Low' },
+            { value: 'New Arrivals', label: 'New Arrivals' },
           ].map((opt) => (
             <button
               key={opt.value}
               onClick={() => onSortChange(opt.value)}
-              className={`w-full flex items-center justify-between py-0.5 min-h-0 group ${sortBy === opt.value ? "text-primary" : "text-on-surface/60"}`}
+              className={`w-full flex items-center justify-between py-0.5 min-h-0 group ${sortBy === opt.value ? 'text-primary' : 'text-on-surface/60'}`}
             >
               <span
-                className={`font-body text-[14px] md:text-[15px] transition-colors ${sortBy === opt.value ? "font-semibold" : "group-hover:text-on-surface"}`}
+                className={`font-body text-[14px] md:text-[15px] transition-colors ${sortBy === opt.value ? 'font-semibold' : 'group-hover:text-on-surface'}`}
               >
                 {opt.label}
               </span>
               {sortBy === opt.value && (
-                <span className="material-symbols-outlined text-[18px]">
-                  check_circle
-                </span>
+                <span className="material-symbols-outlined text-[18px]">check_circle</span>
               )}
             </button>
           ))}
@@ -160,10 +152,10 @@ export function FilterPanel({
           activeSections={activeSections}
           onToggle={toggleSection}
         >
-          {renderCheckbox("price", "Under ₹2,000")}
-          {renderCheckbox("price", "₹2,000 - ₹5,000")}
-          {renderCheckbox("price", "₹5,000 - ₹10,000")}
-          {renderCheckbox("price", "Over ₹10,000")}
+          {renderCheckbox('price', 'Under ₹2,000')}
+          {renderCheckbox('price', '₹2,000 - ₹5,000')}
+          {renderCheckbox('price', '₹5,000 - ₹10,000')}
+          {renderCheckbox('price', 'Over ₹10,000')}
         </FilterSection>
 
         <FilterSection
@@ -172,10 +164,10 @@ export function FilterPanel({
           activeSections={activeSections}
           onToggle={toggleSection}
         >
-          {renderCheckbox("material", "Pure Silk", "12")}
-          {renderCheckbox("material", "Brass", "8")}
-          {renderCheckbox("material", "Organic Cotton", "15")}
-          {renderCheckbox("material", "Handmade Paper", "24")}
+          {renderCheckbox('material', 'Pure Silk', '12')}
+          {renderCheckbox('material', 'Brass', '8')}
+          {renderCheckbox('material', 'Organic Cotton', '15')}
+          {renderCheckbox('material', 'Handmade Paper', '24')}
         </FilterSection>
 
         <FilterSection
@@ -184,11 +176,11 @@ export function FilterPanel({
           activeSections={activeSections}
           onToggle={toggleSection}
         >
-          {renderCheckbox("collection", "Traditional Wedding Decor")}
-          {renderCheckbox("collection", "Festival Decorations")}
-          {renderCheckbox("collection", "Engagement Ring Trays")}
-          {renderCheckbox("collection", "Pooja Decoration Sets")}
-          {renderCheckbox("collection", "Floral Decoration Sets")}
+          {renderCheckbox('collection', 'Traditional Wedding Decor')}
+          {renderCheckbox('collection', 'Festival Decorations')}
+          {renderCheckbox('collection', 'Engagement Ring Trays')}
+          {renderCheckbox('collection', 'Pooja Decoration Sets')}
+          {renderCheckbox('collection', 'Floral Decoration Sets')}
         </FilterSection>
       </div>
     </div>
@@ -197,68 +189,63 @@ export function FilterPanel({
   return (
     <>
       {/* Mobile Bottom Sheet Implementation */}
-      {mounted && createPortal(
-        <AnimatePresence>
-          {isOpen && (
-            <div className="fixed inset-0 z-[1000] lg:hidden flex flex-col justify-end">
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={onClose}
-                className="absolute inset-0 bg-black/60 backdrop-blur-md"
-              />
-
-              {/* Bottom Sheet Content */}
-              <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{
-                  type: "spring",
-                  damping: 32,
-                  stiffness: 300,
-                  mass: 0.8,
-                }}
-                className="relative w-full bg-surface rounded-t-[40px] p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10"
-              >
-                {/* Handlebar for bottom sheet feel */}
-                <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
-
-                <button
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {isOpen && (
+              <div className="fixed inset-0 z-[1000] lg:hidden flex flex-col justify-end">
+                {/* Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   onClick={onClose}
-                  className="absolute top-6 right-6 w-10 h-10 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
+                  className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                />
+
+                {/* Bottom Sheet Content */}
+                <motion.div
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{
+                    type: 'spring',
+                    damping: 32,
+                    stiffness: 300,
+                    mass: 0.8,
+                  }}
+                  className="relative w-full bg-surface rounded-t-[40px] p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10"
                 >
-                  <span className="material-symbols-outlined text-[20px]">
-                    close
-                  </span>
-                </button>
+                  {/* Handlebar for bottom sheet feel */}
+                  <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
 
-                <div className="flex-1 overflow-y-auto no-scrollbar pt-2">
-                  {panelContent}
-                </div>
-
-                {/* Bottom Action Bar */}
-                <div className="mt-6 pt-6 border-t border-outline-variant/20">
                   <button
                     onClick={onClose}
-                    className="w-full bg-on-surface-variant text-surface py-4 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
+                    className="absolute top-6 right-6 w-10 h-10 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
                   >
-                    Apply Filters
+                    <span className="material-symbols-outlined text-[20px]">close</span>
                   </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+
+                  <div className="flex-1 overflow-y-auto no-scrollbar pt-2">{panelContent}</div>
+
+                  {/* Bottom Action Bar */}
+                  <div className="mt-6 pt-6 border-t border-outline-variant/20">
+                    <button
+                      onClick={onClose}
+                      className="w-full bg-on-surface-variant text-surface py-4 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
+                    >
+                      Apply Filters
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
 
       {/* Desktop Sidebar */}
-      <div className={`hidden lg:flex flex-col relative w-full ${className}`}>
-        {panelContent}
-      </div>
+      <div className={`hidden lg:flex flex-col relative w-full ${className}`}>{panelContent}</div>
     </>
   );
 }

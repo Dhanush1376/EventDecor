@@ -126,9 +126,47 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Trigger Render Deploy Hook
+        id: deploy
         run: |
           if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
             echo "RENDER_DEPLOY_HOOK_URL secret is not set, skipping automatic deployment."
             exit 0
           fi
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          # We trigger the deploy and capture the output if possible, but standard webhooks just return a 200.
+          curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      - name: Wait for Zero-Downtime Deployment
+        if: env.VITE_API_URL != ''
+        run: |
+          echo "Waiting 60s for the deployment to start swapping..."
+          sleep 60
+          
+          echo "Polling health endpoint for stability..."
+          for i in {1..12}; do
+            # Using the production endpoint for validation
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.siriartsandcrafts.com/api/v1/health?full=1 || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Deployment is healthy and stable (HTTP 200)."
+              exit 0
+            fi
+            echo "Health check failed (HTTP $HTTP_STATUS). Retrying in 10 seconds..."
+            sleep 10
+          done
+          
+          echo "Deployment failed to stabilize after 2 minutes."
+          exit 1
+
+      - name: Automated Rollback on Failure
+        if: failure()
+        run: |
+          echo "Health check failed! Triggering automated rollback..."
+          if [ -n "${{ secrets.RENDER_ROLLBACK_HOOK_URL }}" ]; then
+             curl -s -X POST "${{ secrets.RENDER_ROLLBACK_HOOK_URL }}"
+             echo "Rollback webhook triggered."
+          elif [ -n "${{ secrets.RENDER_API_KEY }}" ]; then
+             echo "Executing explicit Render API rollback (Requires Service ID)"
+             # curl -X POST https://api.render.com/v1/services/srv-XXXX/deploys ...
+          else
+             echo "No rollback webhook or API key provided. Manual rollback required."
+          fi
+          exit 1

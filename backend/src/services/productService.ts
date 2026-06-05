@@ -7,6 +7,7 @@ import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 import { categoryCache } from '../utils/MemoryCache';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import { analyzeQueryWithAI, escapeRegex } from './searchService';
+import ApiError from '../utils/ApiError';
 
 function enforceSmartPricing(data: Partial<IProduct>, existingProduct?: IProduct) {
   const isManual =
@@ -23,8 +24,8 @@ function enforceSmartPricing(data: Partial<IProduct>, existingProduct?: IProduct
   ).toLowerCase();
 
   if (price > 0 && category) {
-    let dailyRate = 0.05;
-    let depositRate = 0;
+    let dailyRate: number;
+    let depositRate: number;
 
     if (category.includes('furniture')) {
       dailyRate = 0.04;
@@ -58,6 +59,41 @@ function enforceSmartPricing(data: Partial<IProduct>, existingProduct?: IProduct
       monthly,
     };
     data.securityDeposit = deposit;
+  }
+}
+
+function normalizeProductImages(data: Partial<IProduct>, existingProduct?: IProduct) {
+  const rawImages = Array.isArray(data.images) ? data.images : undefined;
+  const imageSrc = typeof data.imageSrc === 'string' ? data.imageSrc.trim() : undefined;
+  const existingImageSrc =
+    typeof existingProduct?.imageSrc === 'string' ? existingProduct.imageSrc.trim() : undefined;
+
+  const orderedImages = [...(imageSrc ? [imageSrc] : []), ...(rawImages || [])]
+    .map((img) => (typeof img === 'string' ? img.trim() : ''))
+    .filter(Boolean);
+  const uniqueImages = Array.from(new Set(orderedImages));
+
+  if (uniqueImages.length > 4) {
+    throw new ApiError(400, 'A product can have a maximum of 4 images');
+  }
+
+  if (uniqueImages.length > 0) {
+    data.imageSrc = uniqueImages[0];
+    data.images = uniqueImages.slice(1, 4);
+    return;
+  }
+
+  if (!existingProduct) {
+    return;
+  }
+
+  if (rawImages && rawImages.length === 0 && !imageSrc) {
+    data.images = [];
+    return;
+  }
+
+  if (!imageSrc && rawImages === undefined && existingImageSrc) {
+    data.imageSrc = existingImageSrc;
   }
 }
 
@@ -198,6 +234,7 @@ class ProductService {
   }
 
   static async createProduct(data: Partial<IProduct>) {
+    normalizeProductImages(data);
     enforceSmartPricing(data);
     const product = new Product(data);
     const saved = await product.save();
@@ -213,6 +250,7 @@ class ProductService {
   static async updateProduct(id: string, data: Partial<IProduct>) {
     const oldProduct = await Product.findById(id);
     if (oldProduct) {
+      normalizeProductImages(data, oldProduct as IProduct);
       enforceSmartPricing(data, oldProduct as IProduct);
     }
 
