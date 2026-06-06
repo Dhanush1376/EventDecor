@@ -28,7 +28,7 @@ export function BottomNav() {
     <motion.nav
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bottom-nav lg:hidden fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-overlay)] bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full h-[72px] md:h-[80px] w-[calc(100%-2rem)] max-w-[400px] flex items-center justify-around px-4 md:px-6 select-none"
+      className="bottom-nav lg:hidden fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-[var(--z-overlay)] bg-white/70 md:bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_20px_60px_rgba(0,0,0,0.12)] md:shadow-[0_24px_80px_rgba(0,0,0,0.15)] rounded-full h-[72px] md:h-[84px] w-[calc(100%-2rem)] max-w-[400px] md:max-w-[540px] flex items-center justify-around px-4 md:px-8 select-none"
     >
       {navItems.map((item) => {
         const active = item.isCart
@@ -42,7 +42,7 @@ export function BottomNav() {
                 onMouseEnter={() => prefetchManager.prefetchRoute('/cart', { kind: 'hover' })}
                 onClick={() => setIsCartOpen(true)}
                 aria-label="Open shopping bag"
-                className="relative flex flex-col items-center justify-center w-12 h-12 group cursor-pointer active:scale-[0.96] transition-transform"
+                className="relative flex flex-col items-center justify-center w-12 h-12 md:w-16 md:h-16 group cursor-pointer active:scale-[0.96] transition-transform"
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
                 {cartCount > 0 && <CartBadge count={cartCount} />}
@@ -51,7 +51,7 @@ export function BottomNav() {
               <button
                 onClick={openAuthModal}
                 aria-label="Sign in to your account"
-                className="flex flex-col items-center justify-center w-12 h-12 group cursor-pointer active:scale-[0.96] transition-transform"
+                className="flex flex-col items-center justify-center w-12 h-12 md:w-16 md:h-16 group cursor-pointer active:scale-[0.96] transition-transform"
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
               </button>
@@ -60,7 +60,7 @@ export function BottomNav() {
                 to={item.path}
                 onMouseEnter={() => prefetchManager.prefetchRoute(item.path, { kind: 'hover' })}
                 aria-label={`Navigate to ${item.label}`}
-                className="flex flex-col items-center justify-center w-12 h-12 group active:scale-[0.96] transition-transform cursor-pointer"
+                className="flex flex-col items-center justify-center w-12 h-12 md:w-16 md:h-16 group active:scale-[0.96] transition-transform cursor-pointer"
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
               </Link>
@@ -78,11 +78,13 @@ function NavIcon({ active, icon, label }) {
     <div
       className={`flex flex-col items-center justify-center transition-all duration-500 ${active ? `${activeColorClass} scale-110 drop-shadow-md` : 'text-black/50 group-hover:text-black'}`}
     >
-      <span className={`material-symbols-outlined text-[24px] ${active ? 'font-fill' : ''}`}>
+      <span
+        className={`material-symbols-outlined text-[24px] md:text-[28px] ${active ? 'font-fill' : ''}`}
+      >
         {icon}
       </span>
       <span
-        className={`text-[9px] uppercase font-bold tracking-wider mt-0.5 ${active ? activeColorClass : 'text-black/50 group-hover:text-black'}`}
+        className={`text-[9px] md:text-[10px] uppercase font-bold tracking-wider mt-0.5 md:mt-1 ${active ? activeColorClass : 'text-black/50 group-hover:text-black'}`}
       >
         {label}
       </span>

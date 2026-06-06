@@ -309,7 +309,7 @@ export function HeroSection({
         </div>
 
         {/* Hero Imagery */}
-        <div className="col-span-5 relative w-full h-[580px]">
+        <div className="col-span-5 relative w-full h-[580px] rounded-[43px]">
           <CloudinaryImage
             src={hero.backgroundImage}
             alt="Hero background"

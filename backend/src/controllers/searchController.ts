@@ -101,6 +101,8 @@ export const searchResults = async (req: Request, res: Response) => {
       limit,
       priceMin,
       priceMax,
+      spellcheck: req.query.spellcheck as string,
+      bypassCorrection: req.query.bypassCorrection as string,
     });
     const latencyMs = Math.round(performance.now() - start);
 

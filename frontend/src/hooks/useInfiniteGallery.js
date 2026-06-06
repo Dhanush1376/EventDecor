@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { galleryService } from '../services/domainServices';
 
 /**
@@ -50,7 +50,7 @@ export function useInfiniteGallery(filters = {}) {
       return undefined;
     },
     staleTime: 5 * 60 * 1000,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const formattedItems = useMemo(() => {

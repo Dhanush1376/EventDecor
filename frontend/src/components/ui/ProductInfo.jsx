@@ -422,13 +422,17 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
             </div>
             <div className="flex flex-col gap-2 w-full md:w-auto">
               <button
-                onClick={() => navigate(`/custom-orders?product=${product._id || product.id}`)}
+                onClick={() =>
+                  runProtectedAction(() =>
+                    navigate(`/custom-orders?product=${product._id || product.id}`),
+                  )
+                }
                 className="bg-surface text-on-surface w-full md:w-auto px-6 py-2.5 rounded-full font-label-sm text-[12px] uppercase tracking-[0.2em] hover:bg-primary-container transition-all whitespace-nowrap font-bold shadow-sm"
               >
                 Customize This Product
               </button>
               <button
-                onClick={handleWhatsAppChat}
+                onClick={() => runProtectedAction(handleWhatsAppChat)}
                 className="bg-transparent border border-surface/30 w-full md:w-auto text-surface px-6 py-2.5 rounded-full font-label-sm text-[12px] uppercase tracking-[0.2em] hover:bg-surface/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-[16px]">chat</span>

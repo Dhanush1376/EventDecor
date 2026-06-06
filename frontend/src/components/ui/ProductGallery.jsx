@@ -132,19 +132,19 @@ export function ProductGallery({ images = [], product }) {
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="w-full h-full flex overflow-x-auto snap-x snap-mandatory relative rounded-[inherit]"
+          className="w-full h-full flex overflow-x-auto snap-x snap-mandatory relative"
           style={{ scrollbarWidth: 'none' }}
         >
           {images.map((img, idx) => (
             <div
               key={idx}
               onClick={() => openLightbox(idx)}
-              className="w-full h-full shrink-0 snap-center relative overflow-hidden bg-white flex items-center justify-center cursor-zoom-in rounded-[inherit]"
+              className="w-full h-full shrink-0 snap-center relative overflow-hidden bg-white flex items-center justify-center cursor-zoom-in"
             >
               <OptimizedImage
                 src={img}
                 alt={`Product Primary View ${idx + 1}`}
-                className="w-full h-full object-cover origin-center select-none transition-transform duration-500 rounded-[inherit]"
+                className="w-full h-full object-cover origin-center select-none transition-transform duration-500"
                 width={800}
                 height={800}
               />
@@ -272,17 +272,17 @@ export function ProductGallery({ images = [], product }) {
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className="w-full h-full shrink-0 snap-center flex items-center justify-center p-6 sm:p-10 md:p-16 lg:p-20"
+                      className="w-full h-full shrink-0 snap-center flex items-center justify-center p-2 sm:p-4 md:p-6"
                     >
-                      <div className="relative max-w-full max-h-full flex items-center justify-center">
-                        <OptimizedImage
-                          src={img}
-                          alt={`Lightbox view ${idx + 1}`}
-                          className="max-w-full max-h-full object-contain rounded-none shadow-2xl"
-                          width={1200}
-                          height={1200}
-                        />
-                      </div>
+                      <OptimizedImage
+                        src={img}
+                        alt={`Lightbox view ${idx + 1}`}
+                        className="max-w-full max-h-full object-contain rounded-none shadow-2xl"
+                        containerClassName="w-full h-full flex items-center justify-center"
+                        aspectRatio="auto"
+                        width={1600}
+                        height={1600}
+                      />
                     </div>
                   ))}
                 </div>

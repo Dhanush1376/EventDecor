@@ -363,18 +363,23 @@ export function IntelligentSearchOverlay({
                         </span>
                       </button>
                     ))}
-
-                    {/* View all results */}
-                    {query.trim().length >= 2 && (
-                      <button
-                        onClick={() => onExecuteSearch(query)}
-                        className="w-full flex items-center justify-center gap-2 px-6 md:px-8 py-4 text-primary font-bold text-[12px] uppercase tracking-widest hover:bg-primary/5 transition-colors border-t border-stone-200/50 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">search</span>
-                        View all results for "{query}"
-                      </button>
-                    )}
                   </div>
+                )}
+
+                {/* View all results */}
+                {query.trim().length >= 2 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onExecuteSearch(query);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-6 md:px-8 py-4 text-primary font-bold text-[12px] uppercase tracking-widest hover:bg-primary/5 transition-colors border-t border-stone-200/50 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">search</span>
+                    View all results for "{query}"
+                  </button>
                 )}
 
                 {/* ── No Results ── */}

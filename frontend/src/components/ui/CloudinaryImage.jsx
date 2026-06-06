@@ -94,6 +94,14 @@ function BaseOptimizedImage({
   const isImageAutoHeight =
     className && (className.includes('h-auto') || className.includes('h-fit'));
 
+  const hasObjectFit =
+    className &&
+    (className.includes('object-contain') ||
+      className.includes('object-cover') ||
+      className.includes('object-fill') ||
+      className.includes('object-none') ||
+      className.includes('object-scale-down'));
+
   const aspectStyle = aspectRatio
     ? { aspectRatio }
     : width && height
@@ -153,7 +161,7 @@ function BaseOptimizedImage({
             setHasError(true);
             setIsLoaded(true);
           }}
-          className={`w-full ${isImageAutoHeight ? 'h-auto block' : 'h-full object-cover'} rounded-[inherit] transition-all duration-500 ease-out transform-gpu ${className} ${
+          className={`w-full ${isImageAutoHeight ? 'h-auto block' : `h-full ${hasObjectFit ? '' : 'object-cover'}`} rounded-[inherit] transition-all duration-500 ease-out transform-gpu ${className} ${
             isLoaded ? 'opacity-100' : 'opacity-0 will-change-opacity'
           }`}
           {...props}

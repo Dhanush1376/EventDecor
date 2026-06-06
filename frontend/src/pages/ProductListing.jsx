@@ -59,9 +59,15 @@ export function ProductListing() {
   useEffect(() => {
     const s = searchParams.get('search') || '';
     setActiveCategory(searchParams.get('category') || 'All');
-    setSearchQuery(s);
-    setDebouncedSearch(s);
     setCurrentPage(parseInt(searchParams.get('page') || '1', 10));
+
+    // Only update internal search state if the URL changed from outside
+    // (e.g. from the Intelligent Search Overlay)
+    if (s !== searchQuery && s !== debouncedSearch) {
+      setSearchQuery(s);
+      setDebouncedSearch(s);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   // Auto-scroll on mobile/tablet to the top of the page when search query changes (banners are hidden)
@@ -240,6 +246,7 @@ export function ProductListing() {
             params.delete('search');
           }
           params.delete('page');
+          params.delete('spellcheck');
           return params;
         },
         { replace: true },
@@ -253,9 +260,10 @@ export function ProductListing() {
     search: debouncedSearch,
     category: activeCategory !== 'All' ? activeCategory : undefined,
     sort: sortMap[sortBy] || 'newest',
+    spellcheck: searchParams.get('spellcheck') || undefined,
   };
 
-  const { data: productsData, isLoading: loading, isError } = useProducts(queryParams);
+  const { data: productsData, isLoading: loading, isFetching, isError } = useProducts(queryParams);
 
   useEffect(() => {
     if (isError) {
@@ -609,7 +617,7 @@ export function ProductListing() {
                   </Link>
                   . Search instead for{' '}
                   <Link
-                    to={`/collections?search=${encodeURIComponent(searchQuery)}`}
+                    to={`/collections?search=${encodeURIComponent(searchQuery)}&spellcheck=false`}
                     className="underline text-on-surface-variant/80 hover:text-on-surface"
                   >
                     {searchQuery}
@@ -627,7 +635,9 @@ export function ProductListing() {
                 </div>
               ) : products.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
+                  <div
+                    className={`grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12 transition-opacity duration-300 ${isFetching ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}
+                  >
                     {products.map((product, index) => (
                       <ProductCard
                         key={product.id || product._id}

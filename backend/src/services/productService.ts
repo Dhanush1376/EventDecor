@@ -112,6 +112,8 @@ class ProductService {
       availableForRent,
       availableForPurchase,
       availabilityMode,
+      spellcheck,
+      bypassCorrection,
     } = queryParams;
     const { page, limit, skip } = getPaginationOptions(queryParams);
 
@@ -158,11 +160,13 @@ class ProductService {
     }
 
     let correctedQuery: string | undefined;
+    const shouldSpellcheck = spellcheck !== 'false' && bypassCorrection !== 'true';
 
     if (search) {
       const aiAnalysis = await analyzeQueryWithAI(search);
 
       if (
+        shouldSpellcheck &&
         aiAnalysis.correctedQuery &&
         aiAnalysis.correctedQuery.toLowerCase() !== search.toLowerCase()
       ) {
@@ -188,7 +192,11 @@ class ProductService {
         }
       }
 
-      const allSearchTerms = [search, aiAnalysis.correctedQuery, ...aiAnalysis.expandedTerms];
+      const allSearchTerms = [
+        search,
+        ...(shouldSpellcheck && aiAnalysis.correctedQuery ? [aiAnalysis.correctedQuery] : []),
+        ...aiAnalysis.expandedTerms,
+      ];
       const uniqueSearchTerms = [...new Set(allSearchTerms.filter(Boolean))];
       const regexPatterns = uniqueSearchTerms.map((t) => new RegExp(escapeRegex(t), 'i'));
 

@@ -699,6 +699,8 @@ export async function searchAll(
     limit?: number;
     priceMin?: number;
     priceMax?: number;
+    spellcheck?: string;
+    bypassCorrection?: string;
   } = {},
 ): Promise<SearchResponse> {
   const page = options.page || 1;
@@ -711,18 +713,19 @@ export async function searchAll(
   }
 
   // Check Cache
-  const cacheKey = `${normalizedQuery}:${options.category || ''}:${options.type || ''}:${options.sort || ''}:${page}:${options.priceMin || ''}:${options.priceMax || ''}`;
+  const cacheKey = `${normalizedQuery}:${options.category || ''}:${options.type || ''}:${options.sort || ''}:${page}:${options.priceMin || ''}:${options.priceMax || ''}:${options.spellcheck || ''}:${options.bypassCorrection || ''}`;
   const cached = await getSearchCache<SearchResponse>('full', cacheKey);
   if (cached) return cached;
 
   try {
     // Stage 1: Analyze query semantic intent using AI / Local Fallback
     const aiAnalysis = await analyzeQueryWithAI(normalizedQuery);
+    const shouldSpellcheck = options.spellcheck !== 'false' && options.bypassCorrection !== 'true';
 
     // Stage 2: Merge terms and build regex patterns (capped at 15 to prevent regex explosion / ReDoS)
     const terms = [
       normalizedQuery,
-      aiAnalysis.correctedQuery,
+      ...(shouldSpellcheck && aiAnalysis.correctedQuery ? [aiAnalysis.correctedQuery] : []),
       ...aiAnalysis.expandedTerms,
       ...getTransliterationsAndSynonyms(normalizedQuery),
       ...generateFuzzyVariants(normalizedQuery),
@@ -963,7 +966,7 @@ export async function searchAll(
 
     // Determine if we should present a spelling/translation suggestion
     let correctedQuery: string | undefined;
-    if (aiAnalysis.correctedQuery.toLowerCase() !== normalizedQuery) {
+    if (shouldSpellcheck && aiAnalysis.correctedQuery.toLowerCase() !== normalizedQuery) {
       correctedQuery = aiAnalysis.correctedQuery;
     }
 
