@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { SearchSuggestionsSkeleton } from '../ui/Skeleton';
@@ -42,6 +42,46 @@ export function IntelligentSearchOverlay({
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+
+  // Combine trending searches (what most users search) and default suggestions
+  const combinedSuggestions = useMemo(() => {
+    const list = [];
+    const seen = new Set();
+
+    // 1. Prioritize trending searches (most of the users search)
+    if (Array.isArray(trendingSearches)) {
+      for (const item of trendingSearches) {
+        if (item && item.query) {
+          const queryVal = item.query.trim();
+          const lower = queryVal.toLowerCase();
+          if (queryVal && !seen.has(lower)) {
+            seen.add(lower);
+            list.push(queryVal);
+          }
+        }
+      }
+    }
+
+    // 2. Append default/static suggested queries
+    const defaultSuggestions = [
+      'Wedding Stage Decor',
+      'Simple Birthday Backdrop',
+      'Traditional Pooja Altar Setup',
+      'Fresh Floral Garland Swags',
+      'Premium Amber Up-lighting',
+      'Luxury Welcome Sign Boards',
+    ];
+
+    for (const term of defaultSuggestions) {
+      const lower = term.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        list.push(term);
+      }
+    }
+
+    return list.slice(0, 8);
+  }, [trendingSearches]);
 
   // Scroll active item into view
   useEffect(() => {
@@ -162,7 +202,7 @@ export function IntelligentSearchOverlay({
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onKeyDown}
                   placeholder="Search decor, events, styles..."
-                  className="flex-1 bg-transparent border-none outline-none appearance-none ring-0 focus:ring-0 focus:outline-none focus:border-transparent text-[18px] md:text-[20px] text-stone-900 placeholder:text-stone-400/70 font-body font-normal search-portal-input"
+                  className="flex-1 bg-transparent border-none outline-none appearance-none ring-0 focus:ring-0 focus:outline-none focus:border-transparent text-[18px] md:text-[20px] text-stone-900 placeholder:text-stone-400/70 placeholder:text-[14px] md:placeholder:text-[16px] font-body font-normal search-portal-input"
                   style={{
                     outline: 'none',
                     border: 'none',
@@ -228,7 +268,7 @@ export function IntelligentSearchOverlay({
                 ref={listRef}
                 id="search-suggestions-list"
                 role="listbox"
-                className="max-h-[50vh] overflow-y-auto overscroll-contain"
+                className="max-h-[50vh] overflow-y-auto overflow-x-hidden overscroll-contain"
               >
                 {correctedQuery && query.trim().toLowerCase() !== correctedQuery.toLowerCase() && (
                   <div className="px-6 md:px-8.5 py-3.5 bg-primary/5 text-primary text-[13px] font-medium flex items-center gap-2 border-b border-[#d0c5af]/15">
@@ -264,7 +304,7 @@ export function IntelligentSearchOverlay({
                         aria-selected={activeIndex === idx}
                         onClick={() => onSelectSuggestion(item)}
                         onMouseEnter={() => setActiveIndex(idx)}
-                        className={`w-full flex items-center gap-4.5 px-6 md:px-8.5 py-4 text-left transition-all duration-200 group border-b border-stone-100/30 last:border-b-0 ${
+                        className={`w-full flex items-center gap-4.5 px-6 md:px-8.5 py-2.5 text-left transition-all duration-200 group border-b border-stone-100/30 last:border-b-0 ${
                           activeIndex === idx
                             ? 'bg-primary/8 translate-x-1'
                             : 'hover:bg-stone-50/50 hover:translate-x-0.5'
@@ -354,11 +394,11 @@ export function IntelligentSearchOverlay({
 
                 {/* ── Empty State: Trending + Recent ── */}
                 {showEmptyState && (
-                  <div className="py-4">
+                  <div className="py-2">
                     {/* Recent Searches */}
                     {recentSearches.length > 0 && (
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between px-6 md:px-8.5 py-2">
+                      <div className="mb-2">
+                        <div className="flex items-center justify-between px-6 md:px-8.5 py-1">
                           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">
                             Recent Searches
                           </span>
@@ -374,14 +414,14 @@ export function IntelligentSearchOverlay({
                             key={search}
                             onClick={() => {
                               setQuery(search);
-                              setTimeout(() => inputRef.current?.focus(), 50);
+                              onExecuteSearch(search);
                             }}
-                            className="flex items-center gap-3 px-6 md:px-8.5 py-3 hover:bg-stone-50/60 transition-all border-b border-stone-100/30 last:border-b-0 group cursor-pointer"
+                            className="flex items-center gap-3 px-6 md:px-8.5 py-1.5 hover:bg-stone-50/60 transition-all border-b border-stone-100/30 last:border-b-0 group cursor-pointer"
                           >
-                            <span className="material-symbols-outlined text-[18px] text-stone-300 group-hover:text-primary transition-colors">
+                            <span className="material-symbols-outlined text-[16px] text-stone-300 group-hover:text-primary transition-colors">
                               history
                             </span>
-                            <span className="flex-1 text-[14px] text-stone-600 group-hover:text-stone-900 font-medium transition-colors">
+                            <span className="flex-1 text-[13px] text-stone-600 group-hover:text-stone-900 font-medium transition-colors">
                               {search}
                             </span>
                             <button
@@ -401,61 +441,28 @@ export function IntelligentSearchOverlay({
                       </div>
                     )}
 
-                    {/* Trending Searches */}
-                    {trendingSearches.length > 0 && (
-                      <div className="mb-4">
-                        <div className="px-6 md:px-8.5 py-2">
-                          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[14px] text-primary">
-                              trending_up
-                            </span>
-                            Trending Now
-                          </span>
-                        </div>
-                        <div className="px-6 md:px-8.5 pb-4 flex flex-wrap gap-2">
-                          {trendingSearches.map((item) => (
-                            <button
-                              key={item.query}
-                              onClick={() => {
-                                setQuery(item.query);
-                                setTimeout(() => inputRef.current?.focus(), 50);
-                              }}
-                              className="px-4 py-2 bg-stone-50 hover:bg-primary/8 rounded-full text-[13px] text-stone-600 hover:text-primary font-medium transition-all border border-stone-200/50 hover:border-primary/20 cursor-pointer shadow-xs active:scale-95 animate-fade-in"
-                            >
-                              {item.query}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {/* Suggested Searches List */}
-                    <div className="border-t border-stone-200/40 pt-5 pb-2">
-                      <div className="px-6 md:px-8.5 py-2">
+                    <div
+                      className={`pt-2 pb-1.5 ${recentSearches.length > 0 ? 'border-t border-stone-200/30 mt-2' : ''}`}
+                    >
+                      <div className="px-6 md:px-8.5 py-1">
                         <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">
                           Suggested Searches
                         </span>
                       </div>
-                      {[
-                        'Wedding Stage Decor',
-                        'Simple Birthday Backdrop',
-                        'Traditional Pooja Altar Setup',
-                        'Fresh Floral Garland Swags',
-                        'Premium Amber Up-lighting',
-                        'Luxury Welcome Sign Boards',
-                      ].map((term) => (
+                      {combinedSuggestions.map((term) => (
                         <div
                           key={term}
                           onClick={() => {
                             setQuery(term);
-                            setTimeout(() => inputRef.current?.focus(), 50);
+                            onExecuteSearch(term);
                           }}
-                          className="flex items-center gap-3 px-6 md:px-8.5 py-3 hover:bg-stone-50/60 transition-all border-b border-stone-100/30 last:border-b-0 group cursor-pointer"
+                          className="flex items-center gap-3 px-6 md:px-8.5 py-1.5 hover:bg-stone-50/60 transition-all border-b border-stone-100/30 last:border-b-0 group cursor-pointer"
                         >
-                          <span className="material-symbols-outlined text-[18px] text-primary/55 group-hover:text-primary transition-colors">
+                          <span className="material-symbols-outlined text-[16px] text-primary/55 group-hover:text-primary transition-colors">
                             search
                           </span>
-                          <span className="flex-1 text-[14px] text-stone-600 group-hover:text-stone-900 font-medium transition-colors">
+                          <span className="flex-1 text-[13px] text-stone-600 group-hover:text-stone-900 font-medium transition-colors">
                             {term}
                           </span>
                           <span className="material-symbols-outlined text-[15px] text-stone-300 opacity-0 group-hover:opacity-100 transition-all duration-300">

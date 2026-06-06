@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { useQuery } from '@tanstack/react-query';
 import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { SHOWCASE_CATEGORIES } from '../config/constants';
 
 const CATEGORY_MAP = {
@@ -64,8 +65,9 @@ export function EventShowcases() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
 
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down' && !isMobile;
 
   const [filters, setFilters] = useState({
     price: [],

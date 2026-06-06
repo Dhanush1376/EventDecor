@@ -3,7 +3,7 @@ import { lazyWithRetry as lazy } from './utils/lazyWithRetry';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { logRouteDiagnostic } from './utils/diagnostics';
 import { HelmetProvider } from 'react-helmet-async';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, ToastBar } from 'react-hot-toast';
 import { ensureCsrfToken } from './services/api';
 import { perfMonitor } from './utils/performanceMonitor';
 
@@ -335,7 +335,7 @@ function App() {
                       <Toaster
                         position="bottom-right"
                         toastOptions={{
-                          duration: 4000,
+                          duration: 2500,
                           style: {
                             background: 'rgba(255, 255, 255, 0.92)',
                             backdropFilter: 'blur(20px)',
@@ -350,7 +350,16 @@ function App() {
                             boxShadow: 'var(--shadow-xl)',
                           },
                         }}
-                      />
+                      >
+                        {(t) => (
+                          <div
+                            onClick={() => toast.dismiss(t.id)}
+                            className="cursor-pointer active:scale-95 transition-transform"
+                          >
+                            <ToastBar toast={t} />
+                          </div>
+                        )}
+                      </Toaster>
                     )}
 
                     {isMounted && (

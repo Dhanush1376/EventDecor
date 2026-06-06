@@ -1727,9 +1727,9 @@ export function Dashboard() {
                             {wishlistItems.map((item, idx) => (
                               <ProductCard
                                 key={item._id || idx}
-                                product={item}
-                                isWishlistRoute={true}
-                                onRemove={() => removeFromWishlist(item._id)}
+                                {...item}
+                                id={item.id || item._id}
+                                imageSrc={item.imageSrc || item.image || item.images?.[0]}
                               />
                             ))}
                           </React.Suspense>

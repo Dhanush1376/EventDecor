@@ -12,6 +12,7 @@ import { GallerySkeleton } from '../components/ui/Skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { useInfiniteGallery } from '../hooks/useInfiniteGallery';
 import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import toast from 'react-hot-toast';
 
 export function GalleryInner() {
@@ -31,8 +32,9 @@ export function GalleryInner() {
   const [navbarHeight, setNavbarHeight] = useState(0);
   const navRef = React.useRef(null);
 
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down' && !isMobile;
 
   // Debounce search input to match product and events pages behavior
   useEffect(() => {

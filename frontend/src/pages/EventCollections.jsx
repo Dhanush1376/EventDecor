@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 import logger from '../utils/logger';
 export function EventCollections() {
@@ -40,8 +41,9 @@ export function EventCollections() {
   const navRef = React.useRef(null);
   const [currentPage, setCurrentPage] = useState(pageParam);
 
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down' && !isMobile;
 
   // Advanced Filter State
   const [filters, setFilters] = useState({

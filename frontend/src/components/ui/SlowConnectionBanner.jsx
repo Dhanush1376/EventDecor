@@ -1,43 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNetwork } from '../../context/NetworkContext';
+import toast from 'react-hot-toast';
 
 /**
- * Non-blocking banner when the API is slow or offline — keeps the UI usable.
+ * Non-blocking banner when the API is slow or offline — integrated with global toaster.
  */
 export function SlowConnectionBanner() {
   const { networkState, connectionQuality } = useNetwork();
-  const [visible, setVisible] = useState(true);
+  const lastState = useRef({ networkState: 'online', connectionQuality: 'good' });
 
   useEffect(() => {
-    // Show banner on state changes
-    setVisible(true);
+    const stateChanged =
+      lastState.current.networkState !== networkState ||
+      lastState.current.connectionQuality !== connectionQuality;
 
-    // Auto-hide the banner after 5 seconds
-    const timer = setTimeout(() => {
-      setVisible(false);
-    }, 5000);
+    if (!stateChanged) return;
+    lastState.current = { networkState, connectionQuality };
 
-    return () => clearTimeout(timer);
+    if (networkState === 'offline') {
+      toast.error('You appear to be offline. Actions will sync on reconnect.', {
+        id: 'network-toast',
+        duration: 2500,
+      });
+    } else if (networkState === 'reconnecting') {
+      toast.loading('Reconnecting to the studio…', {
+        id: 'network-toast',
+        duration: 2000,
+      });
+    } else if (networkState === 'online' && connectionQuality === 'poor') {
+      toast.error('Connection is slow. Content may take a moment to load.', {
+        id: 'network-toast',
+        duration: 2500,
+      });
+    } else if (networkState === 'online' && lastState.current.networkState !== 'online') {
+      toast.success('We are back online!', {
+        id: 'network-toast',
+        duration: 2000,
+      });
+    }
   }, [networkState, connectionQuality]);
 
-  if (!visible || (networkState === 'online' && connectionQuality !== 'poor')) {
-    return null;
-  }
-
-  const message =
-    networkState === 'offline'
-      ? 'You appear to be offline. Some actions will sync when you reconnect.'
-      : networkState === 'reconnecting'
-        ? 'Reconnecting to the studio…'
-        : 'Connection is slow. Content may take a moment to load.';
-
-  return (
-    <div
-      role="status"
-      className="fixed bottom-24 left-1/2 -translate-x-1/2 w-max max-w-[90vw] z-[9998] px-6 py-3 bg-black/90 backdrop-blur-md border border-white/10 text-white rounded-full text-center text-[10px] tracking-widest uppercase font-bold shadow-2xl flex items-center gap-3"
-    >
-      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-      {message}
-    </div>
-  );
+  return null;
 }

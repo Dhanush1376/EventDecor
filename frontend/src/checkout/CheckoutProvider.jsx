@@ -59,9 +59,11 @@ export function CheckoutProvider({ children }) {
   const orderCompleteRef = React.useRef(false);
   const totalsRequestRef = React.useRef(0);
 
-  const activeItems = (
-    checkoutMode === 'rental' ? rentalCart?.items || [] : purchaseCart?.items || []
-  ).filter((item) => (checkoutMode === 'rental' ? item.type === 'rental' : item.type !== 'rental'));
+  const activeItems = React.useMemo(() => {
+    return (checkoutMode === 'rental' ? rentalCart?.items || [] : purchaseCart?.items || []).filter(
+      (item) => (checkoutMode === 'rental' ? item.type === 'rental' : item.type !== 'rental'),
+    );
+  }, [checkoutMode, rentalCart?.items, purchaseCart?.items]);
   const items = activeItems;
   const subtotal =
     checkoutMode === 'rental'
@@ -129,7 +131,7 @@ export function CheckoutProvider({ children }) {
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(() => {
     return persistentStorage.getItem('siri_checkout_is_adding_address', {
       session: true,
-      fallback: true,
+      fallback: false,
     });
   });
 
@@ -269,6 +271,8 @@ export function CheckoutProvider({ children }) {
     platformFee: 0,
     total: 0,
   });
+  const [isTotalsLoading, setIsTotalsLoading] = useState(false);
+  const [totalsError, setTotalsError] = useState(null);
   const [useWallet, setUseWallet] = useState(() => {
     return persistentStorage.getItem('siri_checkout_use_wallet', {
       session: true,
@@ -307,7 +311,7 @@ export function CheckoutProvider({ children }) {
                 setSelectedAddressId(defaultAddr._id || defaultAddr.id);
                 setIsAddingNewAddress(false);
               } else {
-                setIsAddingNewAddress(true);
+                setIsAddingNewAddress(false);
               }
             }
           }
@@ -365,6 +369,8 @@ export function CheckoutProvider({ children }) {
     const requestId = totalsRequestRef.current + 1;
     totalsRequestRef.current = requestId;
 
+    setIsTotalsLoading(true);
+    setTotalsError(null);
     try {
       const itemsPayload = activeItems.map((item) => ({
         productId: item.id || item._id,
@@ -381,6 +387,7 @@ export function CheckoutProvider({ children }) {
       if (res.success && res.data) {
         if (requestId !== totalsRequestRef.current) return;
         setBackendTotals(res.data);
+        setTotalsError(null);
         if (couponToApply) {
           setCouponValid(res.data.couponValid);
           setCouponMessage(res.data.couponMessage);
@@ -393,7 +400,15 @@ export function CheckoutProvider({ children }) {
       }
     } catch (err) {
       logger.error('Failed to validate checkout totals:', err);
-      toast.error(err.response?.data?.message || 'Failed to validate order pricing details');
+      const errMsg =
+        err.response?.data?.message ||
+        'Failed to connect to backend server. Please verify your connection.';
+      setTotalsError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      if (requestId === totalsRequestRef.current) {
+        setIsTotalsLoading(false);
+      }
     }
   }
 
@@ -977,7 +992,6 @@ export function CheckoutProvider({ children }) {
         quantity: item.quantity,
         variant: item.variant || 'Default',
       })),
-      orderType: 'purchase',
       shippingAddress: buildShippingAddress(),
       couponCode: appliedCoupon || undefined,
       paymentMethod: paymentOption === 'razorpay' ? 'razorpay' : 'cod',
@@ -1098,6 +1112,8 @@ export function CheckoutProvider({ children }) {
     availableCoupons,
     loadingCoupons,
     backendTotals,
+    isTotalsLoading,
+    totalsError,
     useWallet,
     setUseWallet,
     fetchBackendTotals,

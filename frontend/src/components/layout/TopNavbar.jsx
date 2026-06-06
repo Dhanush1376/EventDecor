@@ -29,10 +29,12 @@ export function TopNavbar() {
   const { user, isAuthenticated, logout, openAuthModal } = useAuth();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMobileOrTablet = useMediaQuery('(max-width: 1023px)');
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [hasPendingInvite, setHasPendingInvite] = useState(false);
 
   const { scrollDirection, isAtTop } = useScrollDirection();
+  const hideNavbar = !isAtTop && scrollDirection === 'down' && !isMobileOrTablet;
 
   const adminRoles = [
     'owner',
@@ -138,7 +140,7 @@ export function TopNavbar() {
           !isAtTop
             ? 'bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-1.5'
             : 'bg-surface/90 backdrop-blur-md py-2 border-b border-outline-variant/10'
-        } ${!isAtTop && scrollDirection === 'down' ? '-translate-y-full' : 'translate-y-0'}`}
+        } ${hideNavbar ? '-translate-y-full' : 'translate-y-0'}`}
         style={{
           zIndex: 'var(--z-sticky)',
           boxShadow: !isAtTop ? 'var(--shadow-md)' : 'var(--shadow-xs)',

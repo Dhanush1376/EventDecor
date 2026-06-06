@@ -7,6 +7,8 @@ import ApiError from './ApiError';
  * For a single Redis instance, this provides safe distributed locking.
  */
 export class DistributedLock {
+  private static inMemoryLocks = new Set<string>();
+
   /**
    * Attempts to acquire a lock for a given resource.
    * @param resourceKey The unique key representing the resource to lock.
@@ -15,8 +17,24 @@ export class DistributedLock {
    */
   static async acquireLock(resourceKey: string, ttlSeconds: number = 30): Promise<string | null> {
     if (!redisClient || !redisClient.isReady) {
-      logger.warn(`[DistributedLock] Redis is down. Cannot acquire lock for ${resourceKey}`);
-      return null;
+      const isProduction = process.env.NODE_ENV === 'production';
+      const requireRedis = process.env.REQUIRE_REDIS === 'true';
+
+      if (requireRedis || isProduction) {
+        logger.warn(`[DistributedLock] Redis is down. Cannot acquire lock for ${resourceKey}`);
+        return null;
+      }
+
+      const lockKey = `dlock:${resourceKey}`;
+      if (this.inMemoryLocks.has(lockKey)) {
+        return null;
+      }
+      const lockId = Math.random().toString(36).substring(2, 15);
+      this.inMemoryLocks.add(lockKey);
+      setTimeout(() => {
+        this.inMemoryLocks.delete(lockKey);
+      }, ttlSeconds * 1000);
+      return lockId;
     }
 
     const lockKey = `dlock:${resourceKey}`;
@@ -45,7 +63,16 @@ export class DistributedLock {
    */
   static async releaseLock(resourceKey: string, lockId: string): Promise<boolean> {
     if (!redisClient || !redisClient.isReady) {
-      return false;
+      const isProduction = process.env.NODE_ENV === 'production';
+      const requireRedis = process.env.REQUIRE_REDIS === 'true';
+
+      if (requireRedis || isProduction) {
+        return false;
+      }
+
+      const lockKey = `dlock:${resourceKey}`;
+      this.inMemoryLocks.delete(lockKey);
+      return true;
     }
 
     const lockKey = `dlock:${resourceKey}`;
@@ -93,7 +120,10 @@ export class DistributedLock {
     const redisAvailable = redisClient && redisClient.isReady;
 
     if (!redisAvailable) {
-      if (failClosed) {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const requireRedis = process.env.REQUIRE_REDIS === 'true';
+
+      if (failClosed && (requireRedis || isProduction)) {
         logger.error(
           `[DistributedLock] Redis is down. FAIL-CLOSED for critical resource: ${resourceKey}`,
         );
@@ -103,9 +133,8 @@ export class DistributedLock {
         );
       } else {
         logger.warn(
-          `[DistributedLock] Redis is down. Bypassing lock for non-critical resource: ${resourceKey}`,
+          `[DistributedLock] Redis is down. Falling back to in-memory lock for resource: ${resourceKey}`,
         );
-        return await operation();
       }
     }
 

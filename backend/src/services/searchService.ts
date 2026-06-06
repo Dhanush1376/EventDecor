@@ -586,21 +586,18 @@ export async function getAutocomplete(
     const predictedCategories = predictCategories(normalizedQuery);
 
     const productQuery = MongoQueryBuilder.create<any>()
-      .withTextSearch(searchTerms)
       .withRegexFallback(searchTerms, ['title', 'teluguTitle', 'category', 'tags'])
       .build();
 
     const eventQuery = MongoQueryBuilder.create<any>()
-      .withTextSearch(searchTerms)
       .withRegexFallback(searchTerms, ['title', 'category', 'style', 'features'])
       .build();
 
     const galleryQuery = MongoQueryBuilder.create<any>()
-      .withTextSearch(searchTerms)
       .withRegexFallback(searchTerms, ['title', 'teluguTitle', 'category', 'tags'])
       .build();
 
-    const [products, events, galleries] = await Promise.all([
+    const [products, events] = await Promise.all([
       Product.find(productQuery)
         .select('_id title teluguTitle imageSrc category price rating slug')
         .sort({ rating: -1, reviews: -1 })
@@ -611,12 +608,6 @@ export async function getAutocomplete(
         .select('_id title category style basePrice slug')
         .sort({ basePrice: -1 })
         .limit(3)
-        .lean(),
-
-      Gallery.find(galleryQuery)
-        .select('_id title teluguTitle image category style')
-        .sort({ views: -1 })
-        .limit(2)
         .lean(),
     ]);
 
@@ -663,24 +654,6 @@ export async function getAutocomplete(
         price: e.basePrice,
         slug: (e as any).slug,
         score: computeSearchScore(e.title, e.category, e.features || [], normalizedQuery),
-      });
-    }
-
-    // Score galleries
-    for (const g of galleries) {
-      suggestions.push({
-        id: (g._id as any).toString(),
-        title: g.title,
-        type: 'gallery',
-        category: g.category,
-        image: g.image,
-        score: computeSearchScore(
-          g.title,
-          g.category,
-          g.tags || [],
-          normalizedQuery,
-          g.teluguTitle,
-        ),
       });
     }
 
@@ -759,16 +732,35 @@ export async function searchAll(
 
     const seasonal = await getCachedSeasonalContext();
 
-    // Apply manual Category filter or predicted intent category
-    const activeCategory =
-      options.category && options.category !== 'All'
-        ? options.category
-        : aiAnalysis.category || undefined;
+    // Fetch distinct active categories for all three collections to match against predicted category
+    const [dbProductCategories, dbEventCategories, dbGalleryCategories] = await Promise.all([
+      Product.distinct('category', { isActive: true }).catch(() => []),
+      Event.distinct('category', { isActive: true }).catch(() => []),
+      Gallery.distinct('category', { isActive: true }).catch(() => []),
+    ]);
+
+    // Apply manual Category filter or predicted intent categories mapped to actual taxonomies
+    const hasManualCategory = options.category && options.category !== 'All';
+    const activeProductCategory = hasManualCategory
+      ? options.category
+      : aiAnalysis.category
+        ? getMatchingProductCategory(aiAnalysis.category, dbProductCategories)
+        : undefined;
+    const activeEventCategory = hasManualCategory
+      ? options.category
+      : aiAnalysis.category
+        ? getMatchingEventCategory(aiAnalysis.category, dbEventCategories)
+        : undefined;
+    const activeGalleryCategory = hasManualCategory
+      ? options.category
+      : aiAnalysis.category
+        ? getMatchingGalleryCategory(aiAnalysis.category, dbGalleryCategories)
+        : undefined;
 
     const items: SearchResult[] = [];
     const searchProducts = !options.type || options.type === 'all' || options.type === 'product';
     const searchEvents = !options.type || options.type === 'all' || options.type === 'event';
-    const searchGalleries = !options.type || options.type === 'all' || options.type === 'gallery';
+    const searchGalleries = options.type === 'gallery';
 
     const promises: Promise<void>[] = [];
 
@@ -780,8 +772,15 @@ export async function searchAll(
 
     if (searchProducts) {
       const productQuery = MongoQueryBuilder.create<any>()
-        .withTextSearch(uniqueTerms)
-        .withCategory(activeCategory)
+        .withRegexFallback(uniqueTerms, [
+          'title',
+          'teluguTitle',
+          'category',
+          'tags',
+          'material',
+          'description',
+        ])
+        .withCategory(activeProductCategory)
         .withPriceRange(minPrice, maxPrice, 'price')
         .withTags(aiAnalysis.colors)
         .build();
@@ -841,8 +840,8 @@ export async function searchAll(
 
     if (searchEvents) {
       const eventQuery = MongoQueryBuilder.create<any>()
-        .withTextSearch(uniqueTerms)
-        .withCategory(activeCategory)
+        .withRegexFallback(uniqueTerms, ['title', 'category', 'style', 'features', 'description'])
+        .withCategory(activeEventCategory)
         .withPriceRange(minPrice, maxPrice, 'basePrice')
         .build();
 
@@ -889,8 +888,8 @@ export async function searchAll(
 
     if (searchGalleries) {
       const galleryQuery = MongoQueryBuilder.create<any>()
-        .withTextSearch(uniqueTerms)
-        .withCategory(activeCategory)
+        .withRegexFallback(uniqueTerms, ['title', 'teluguTitle', 'category', 'tags', 'description'])
+        .withCategory(activeGalleryCategory)
         .build();
 
       promises.push(
@@ -1335,4 +1334,110 @@ function levenshteinDistance(a: string, b: string): number {
  */
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Maps a predicted search category to a valid product category.
+ */
+export function getMatchingProductCategory(
+  predicted: string,
+  dbCategories?: string[],
+): string | null {
+  const categories = dbCategories || [
+    'Coconut Decorations',
+    'Bangle Trays',
+    'Decorative Baskets',
+    'Chocolate Trays',
+    'Dry Fruit Trays',
+    'Engagement Ring Trays',
+    'Harathi Plates',
+    'Jewellery Trays',
+    'Photo Bouquets',
+    'Traditional Wedding Decor',
+    'Pooja Decoration Sets',
+    'Floral Decoration Sets',
+    'Return Gift Hampers',
+  ];
+  const p = predicted.toLowerCase();
+
+  let mapped: string | null = null;
+  if (p === 'wedding' || p === 'traditional') {
+    mapped = 'Traditional Wedding Decor';
+  } else if (p === 'pooja') {
+    mapped = 'Pooja Decoration Sets';
+  } else if (p === 'engagement') {
+    mapped = 'Engagement Ring Trays';
+  } else if (p === 'floral') {
+    mapped = 'Floral Decoration Sets';
+  }
+
+  if (mapped && categories.some((c) => c.toLowerCase() === mapped!.toLowerCase())) {
+    return categories.find((c) => c.toLowerCase() === mapped!.toLowerCase())!;
+  }
+
+  const match = categories.find((c) => c.toLowerCase().includes(p) || p.includes(c.toLowerCase()));
+  return match || null;
+}
+
+/**
+ * Maps a predicted search category to a valid event category.
+ */
+export function getMatchingEventCategory(
+  predicted: string,
+  dbCategories?: string[],
+): string | null {
+  const categories = dbCategories || [
+    'Wedding Ceremony',
+    'Engagement Ceremony',
+    'Reception Decoration',
+    'Traditional Pooja Setup',
+  ];
+  const p = predicted.toLowerCase();
+
+  let mapped: string | null = null;
+  if (p === 'wedding') {
+    mapped = 'Wedding Ceremony';
+  } else if (p === 'engagement') {
+    mapped = 'Engagement Ceremony';
+  } else if (p === 'pooja' || p === 'traditional') {
+    mapped = 'Traditional Pooja Setup';
+  }
+
+  if (mapped && categories.some((c) => c.toLowerCase() === mapped!.toLowerCase())) {
+    return categories.find((c) => c.toLowerCase() === mapped!.toLowerCase())!;
+  }
+
+  const match = categories.find((c) => c.toLowerCase().includes(p) || p.includes(c.toLowerCase()));
+  return match || null;
+}
+
+/**
+ * Maps a predicted search category to a valid gallery category.
+ */
+export function getMatchingGalleryCategory(
+  predicted: string,
+  dbCategories?: string[],
+): string | null {
+  const categories = dbCategories || [
+    'Traditional Wedding Decor',
+    'Floral Decoration Sets',
+    'Plate Decoration & Packing',
+  ];
+  const p = predicted.toLowerCase();
+
+  let mapped: string | null = null;
+  if (p === 'wedding' || p === 'traditional') {
+    mapped = 'Traditional Wedding Decor';
+  } else if (p === 'floral') {
+    mapped = 'Floral Decoration Sets';
+  } else if (p === 'engagement' || p === 'plate') {
+    mapped = 'Plate Decoration & Packing';
+  }
+
+  if (mapped && categories.some((c) => c.toLowerCase() === mapped!.toLowerCase())) {
+    return categories.find((c) => c.toLowerCase() === mapped!.toLowerCase())!;
+  }
+
+  const match = categories.find((c) => c.toLowerCase().includes(p) || p.includes(c.toLowerCase()));
+  return match || null;
 }

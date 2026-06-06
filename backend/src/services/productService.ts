@@ -6,7 +6,7 @@ import logger from '../config/logger';
 import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 import { categoryCache } from '../utils/MemoryCache';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
-import { analyzeQueryWithAI, escapeRegex } from './searchService';
+import { analyzeQueryWithAI, escapeRegex, getMatchingProductCategory } from './searchService';
 import ApiError from '../utils/ApiError';
 import { ChangeTracker } from '../utils/ChangeTracker';
 
@@ -179,9 +179,13 @@ class ProductService {
         filter.price.$gte = aiAnalysis.priceMin;
       }
 
-      // Apply category from AI if not manually set
+      // Apply category from AI if not manually set and it matches database taxonomy
       if (aiAnalysis.category && !category) {
-        filter.category = new RegExp(`^${escapeRegex(aiAnalysis.category)}$`, 'i');
+        const dbCategories = await Product.distinct('category', { isActive: true }).catch(() => []);
+        const matchedCategory = getMatchingProductCategory(aiAnalysis.category, dbCategories);
+        if (matchedCategory) {
+          filter.category = new RegExp(`^${escapeRegex(matchedCategory)}$`, 'i');
+        }
       }
 
       const allSearchTerms = [search, aiAnalysis.correctedQuery, ...aiAnalysis.expandedTerms];

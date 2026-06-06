@@ -6,6 +6,8 @@ export default function CheckoutSidebar() {
   const {
     user,
     backendTotals,
+    isTotalsLoading,
+    totalsError,
     useWallet,
     setUseWallet,
     appliedCoupon,
@@ -291,11 +293,48 @@ export default function CheckoutSidebar() {
 
                 <div className="flex justify-between items-baseline font-bold text-sm">
                   <span>Total to Pay Now</span>
-                  <span className="text-base text-primary">
+                  <span className="text-base text-on-surface font-extrabold">
                     ₹{rentalCostBreakdown?.totalAmount?.toLocaleString() || 0}
                   </span>
                 </div>
               </>
+            ) : totalsError ? (
+              <div className="p-3.5 bg-red-50 text-red-700 rounded-lg text-xs font-semibold border border-red-200 flex flex-col gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px] text-red-700">error</span>
+                  <span>Pricing details couldn't be loaded</span>
+                </div>
+                <p className="text-[10px] font-normal leading-normal text-secondary/80">
+                  {totalsError}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => fetchBackendTotals(appliedCoupon)}
+                  className="btn-primary py-1 px-3 rounded-full text-[9px] uppercase tracking-wider w-fit self-end font-bold shadow-xs cursor-pointer"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : isTotalsLoading ? (
+              <div className="space-y-3.5 animate-pulse py-1">
+                <div className="flex justify-between">
+                  <div className="h-3 bg-outline-variant/20 rounded w-1/3"></div>
+                  <div className="h-3 bg-outline-variant/20 rounded w-1/6"></div>
+                </div>
+                <div className="flex justify-between">
+                  <div className="h-3 bg-outline-variant/20 rounded w-1/4"></div>
+                  <div className="h-3 bg-outline-variant/20 rounded w-1/6"></div>
+                </div>
+                <div className="flex justify-between">
+                  <div className="h-3 bg-outline-variant/20 rounded w-1/3"></div>
+                  <div className="h-3 bg-outline-variant/20 rounded w-1/12"></div>
+                </div>
+                <div className="h-[1px] bg-outline-variant/30 my-3" />
+                <div className="flex justify-between items-center">
+                  <div className="h-4 bg-outline-variant/20 rounded w-1/5"></div>
+                  <div className="h-5 bg-outline-variant/20 rounded w-1/4"></div>
+                </div>
+              </div>
             ) : (
               <>
                 <div className="flex justify-between">
@@ -354,7 +393,7 @@ export default function CheckoutSidebar() {
 
                 <div className="flex justify-between items-baseline font-bold text-sm">
                   <span>Total</span>
-                  <span className="text-base text-primary">
+                  <span className="text-base text-on-surface font-extrabold">
                     ₹{backendTotals?.total?.toLocaleString() || 0}
                   </span>
                 </div>
@@ -462,8 +501,14 @@ export default function CheckoutSidebar() {
               <span className="text-[11px] text-secondary font-bold uppercase tracking-widest">
                 Total Amount
               </span>
-              <span className="text-[15px] font-extrabold text-primary">
-                ₹{backendTotals?.total?.toLocaleString() || 0}
+              <span className="text-[15px] font-extrabold text-on-surface">
+                {totalsError ? (
+                  <span className="text-red-600 text-xs font-semibold">Load Error</span>
+                ) : isTotalsLoading ? (
+                  <span className="inline-block w-12 h-4 bg-outline-variant/20 animate-pulse rounded"></span>
+                ) : (
+                  `₹${backendTotals?.total?.toLocaleString() || 0}`
+                )}
               </span>
             </div>
           </div>

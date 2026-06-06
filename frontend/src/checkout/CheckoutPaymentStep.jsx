@@ -26,6 +26,10 @@ export default function CheckoutPaymentStep() {
     handleConfirmOrder,
     isProcessing,
     backendTotals,
+    isTotalsLoading,
+    totalsError,
+    appliedCoupon,
+    fetchBackendTotals,
     settings,
     user,
     hasRentalItems,
@@ -97,6 +101,8 @@ export default function CheckoutPaymentStep() {
 
   const getSubmitButtonLabel = () => {
     if (isProcessing) return 'Processing...';
+    if (isTotalsLoading) return 'Calculating...';
+    if (totalsError) return 'Pricing Load Error';
 
     if (paymentOption === 'razorpay') {
       return `Pay ₹${backendTotals.total.toLocaleString('en-IN')}`;
@@ -144,6 +150,8 @@ export default function CheckoutPaymentStep() {
 
   const isButtonDisabled = () => {
     if (isProcessing) return true;
+    if (isTotalsLoading) return true;
+    if (totalsError) return true;
     if (paymentOption === 'cod' && backendTotals.total < 500) return true;
     if (paymentOption === 'cod' && !codVerified && codOtpInput.length < 4) return true;
     return false;
@@ -403,6 +411,22 @@ export default function CheckoutPaymentStep() {
       {paymentError && (
         <div className="mx-4 mt-4 p-3 bg-red-50 text-red-600 rounded text-xs font-semibold border border-red-200">
           ⚠️ {paymentError}
+        </div>
+      )}
+
+      {totalsError && (
+        <div className="mx-4 mt-4 p-3.5 bg-red-50 text-red-700 rounded-lg text-xs font-semibold border border-red-200 flex flex-col gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[15px] text-red-700">error</span>
+            <span>{totalsError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => fetchBackendTotals(appliedCoupon)}
+            className="btn-primary py-1 px-3 rounded-full text-[9px] uppercase tracking-wider w-fit self-end font-bold shadow-xs cursor-pointer"
+          >
+            Retry Validation
+          </button>
         </div>
       )}
 

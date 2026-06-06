@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import { useProducts, useCategories } from '../hooks/useProductQueries';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { FilterPanel } from '../components/ui/FilterPanel';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
@@ -34,6 +35,7 @@ export function ProductListing() {
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
 
   const [searchQuery, setSearchQuery] = useState(searchParam);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
   const [activeCategory, setActiveCategory] = useState(categoryParam);
   const [sortBy, setSortBy] = useState(() => {
     return persistentStorage.getItem('siri_product_sort', { fallback: 'Popularity' });
@@ -48,16 +50,38 @@ export function ProductListing() {
   const navRef = React.useRef(null);
   const [activeProduct, setActiveProduct] = useState(null);
 
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down' && !isMobile;
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(pageParam);
 
   useEffect(() => {
+    const s = searchParams.get('search') || '';
     setActiveCategory(searchParams.get('category') || 'All');
-    setSearchQuery(searchParams.get('search') || '');
+    setSearchQuery(s);
+    setDebouncedSearch(s);
     setCurrentPage(parseInt(searchParams.get('page') || '1', 10));
   }, [searchParams]);
+
+  // Auto-scroll on mobile/tablet to the top of the page when search query changes (banners are hidden)
+  useEffect(() => {
+    const hasSearch = searchParams.get('search');
+
+    // Do not scroll if the user is actively typing in the listing page's search input box (prevents flickering)
+    const isTypingInPageSearch =
+      document.activeElement?.getAttribute('placeholder') === 'Search masterworks...';
+
+    if (isMobile && hasSearch && !isTypingInPageSearch) {
+      const timer = setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, isMobile]);
 
   const [promoCoupon, setPromoCoupon] = useState(null);
   const [countdown, setCountdown] = useState({ D: '02', H: '14', M: '42', S: '00' });
@@ -197,7 +221,6 @@ export function ProductListing() {
   };
 
   // Debounced search to prevent API calls on every keystroke
-  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -344,75 +367,77 @@ export function ProductListing() {
         description="Explore Siri Arts & Crafts' exclusive e-commerce boutique of traditional Telugu wedding presentation trays, custom pooja accessories, and handcrafted decors."
       />
       {/* Editorial Hero */}
-      <section className="relative min-h-[320px] md:h-[70vh] flex items-center overflow-hidden bg-on-surface-variant">
-        <motion.div
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.6 }}
-          transition={{ duration: 1.5 }}
-          className="absolute inset-0"
-        >
-          <CloudinaryImage
-            src={shopContent.hero.backgroundImage}
-            alt="Hero Background"
-            className="w-full h-full object-cover"
-            containerClassName="w-full h-full"
-            loading="eager"
-            eager={true}
-            fetchPriority="high"
-            width={1600}
-            height={800}
-            sizes="100vw"
+      {!(isMobile && searchParam) && (
+        <section className="relative min-h-[320px] md:h-[70vh] flex items-center overflow-hidden bg-on-surface-variant">
+          <motion.div
+            initial={{ scale: 1.1, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.6 }}
+            transition={{ duration: 1.5 }}
+            className="absolute inset-0"
+          >
+            <CloudinaryImage
+              src={shopContent.hero.backgroundImage}
+              alt="Hero Background"
+              className="w-full h-full object-cover"
+              containerClassName="w-full h-full"
+              loading="eager"
+              eager={true}
+              fetchPriority="high"
+              width={1600}
+              height={800}
+              sizes="100vw"
+            />
+          </motion.div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-surface" />
+
+          {/* Top-right decorative art anchor */}
+          <MandalaArtDecor
+            variant={2}
+            size={500}
+            className="-top-20 -right-20 hidden lg:block"
+            opacity={0.12}
+            spinDuration={240}
           />
-        </motion.div>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-surface" />
+          <MandalaArtDecor
+            variant={2}
+            size={250}
+            className="-top-10 -right-10 lg:hidden"
+            opacity={0.15}
+            spinDuration={240}
+          />
 
-        {/* Top-right decorative art anchor */}
-        <MandalaArtDecor
-          variant={2}
-          size={500}
-          className="-top-20 -right-20 hidden lg:block"
-          opacity={0.12}
-          spinDuration={240}
-        />
-        <MandalaArtDecor
-          variant={2}
-          size={250}
-          className="-top-10 -right-10 lg:hidden"
-          opacity={0.15}
-          spinDuration={240}
-        />
-
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop w-full relative z-10 text-center">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-label-sm text-surface tracking-[0.4em] uppercase mb-6 block"
-          >
-            {shopContent.hero.subtitle}
-          </motion.span>
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="font-headline-xl text-[32px] sm:text-[42px] md:text-[56px] lg:text-[72px] text-surface mb-4 md:mb-8 text-gold leading-tight"
-          >
-            {shopContent.hero.title}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="font-body-lg text-[13px] md:text-[16px] lg:text-[18px] text-surface/80 max-w-xl mx-auto font-light leading-relaxed px-4"
-          >
-            {shopContent.hero.description}
-          </motion.p>
-        </div>
-      </section>
+          <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop w-full relative z-10 text-center">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="font-label-sm text-surface tracking-[0.4em] uppercase mb-6 block"
+            >
+              {shopContent.hero.subtitle}
+            </motion.span>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="font-headline-xl text-[32px] sm:text-[42px] md:text-[56px] lg:text-[72px] text-surface mb-4 md:mb-8 text-gold leading-tight"
+            >
+              {shopContent.hero.title}
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="font-body-lg text-[13px] md:text-[16px] lg:text-[18px] text-surface/80 max-w-xl mx-auto font-light leading-relaxed px-4"
+            >
+              {shopContent.hero.description}
+            </motion.p>
+          </div>
+        </section>
+      )}
 
       {/* Sticky Search / Filter / Category Navigation Bar */}
       <nav
         ref={navRef}
-        className={`sticky -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${isStuck ? 'px-0' : 'px-margin-mobile md:px-margin-desktop'}`}
+        className={`sticky ${isMobile && searchParam ? 'mt-6' : '-mt-6 md:-mt-8'} mb-8 md:mb-12 transition-all duration-300 ${isStuck ? 'px-0' : 'px-margin-mobile md:px-margin-desktop'}`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px`, zIndex: 49 }}
       >
         <div
@@ -480,43 +505,48 @@ export function ProductListing() {
         </div>
       </nav>
 
-      {/* Flash Sale Banner - Cinematic Luxury Redesign */}
-      {promoCoupon && (
-        <PromoBanner
-          backgroundImage={shopContent.promo.backgroundImage}
-          badgeText={`Active Promo: ${promoCoupon.code}`}
-          statusText={shopContent.promo.statusText}
-          title="Limited Time Offer — "
-          highlightText={
-            promoCoupon.discountType === 'percentage'
-              ? `${promoCoupon.discountValue}% Off`
-              : `₹${promoCoupon.discountValue} Off`
-          }
-          description={`Use code ${promoCoupon.code} at checkout to save.`}
-          ctaText="Claim Offer"
-          onCtaClick={handleClaimOffer}
-          timer={[
-            { l: 'D', v: countdown.D },
-            { l: 'H', v: countdown.H },
-            { l: 'M', v: countdown.M },
-            { l: 'S', v: countdown.S },
-          ]}
-        />
-      )}
+      {/* Promo Banner - Hide when searching on mobile */}
+      {!(isMobile && searchParam) && (
+        <>
+          {/* Flash Sale Banner - Cinematic Luxury Redesign */}
+          {promoCoupon && (
+            <PromoBanner
+              backgroundImage={shopContent.promo.backgroundImage}
+              badgeText={`Active Promo: ${promoCoupon.code}`}
+              statusText={shopContent.promo.statusText}
+              title="Limited Time Offer — "
+              highlightText={
+                promoCoupon.discountType === 'percentage'
+                  ? `${promoCoupon.discountValue}% Off`
+                  : `₹${promoCoupon.discountValue} Off`
+              }
+              description={`Use code ${promoCoupon.code} at checkout to save.`}
+              ctaText="Claim Offer"
+              onCtaClick={handleClaimOffer}
+              timer={[
+                { l: 'D', v: countdown.D },
+                { l: 'H', v: countdown.H },
+                { l: 'M', v: countdown.M },
+                { l: 'S', v: countdown.S },
+              ]}
+            />
+          )}
 
-      {/* Default Promo Banner */}
-      {!promoCoupon && (
-        <PromoBanner
-          backgroundImage={shopContent.promo.backgroundImage}
-          badgeText={shopContent.promo.badgeText}
-          title={shopContent.promo.title}
-          highlightText={shopContent.promo.highlightText}
-          ctaText={shopContent.promo.ctaText}
-          onCtaClick={() => {
-            const el = document.getElementById('artisan-collection');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }}
-        />
+          {/* Default Promo Banner */}
+          {!promoCoupon && (
+            <PromoBanner
+              backgroundImage={shopContent.promo.backgroundImage}
+              badgeText={shopContent.promo.badgeText}
+              title={shopContent.promo.title}
+              highlightText={shopContent.promo.highlightText}
+              ctaText={shopContent.promo.ctaText}
+              onCtaClick={() => {
+                const el = document.getElementById('artisan-collection');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+            />
+          )}
+        </>
       )}
 
       {/* Main Grid Section */}
@@ -588,73 +618,75 @@ export function ProductListing() {
               </div>
             )}
 
-            {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
-                {[...Array(6)].map((_, i) => (
-                  <ProductCard key={i} loading={true} />
-                ))}
-              </div>
-            ) : products.length > 0 ? (
-              <>
+            <div id="product-results-wrapper">
+              {loading ? (
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
-                  {products.map((product, index) => (
-                    <ProductCard
-                      key={product.id || product._id}
-                      {...product}
-                      eager={index < 4}
-                      onQuickView={openQuickView}
-                    />
+                  {[...Array(6)].map((_, i) => (
+                    <ProductCard key={i} loading={true} />
                   ))}
                 </div>
-
-                {/* Interactive Numbered Pagination */}
-                {totalPages > 1 && (
-                  <div className="mt-16 text-center">
-                    <span className="font-label-sm text-[11px] text-on-surface uppercase tracking-[0.3em] font-bold block mb-4">
-                      Showing Page {currentPage} of {totalPages}
-                    </span>
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={(page) => {
-                        setCurrentPage(page);
-                        setSearchParams((prev) => {
-                          const params = new URLSearchParams(prev);
-                          if (page === 1) {
-                            params.delete('page');
-                          } else {
-                            params.set('page', String(page));
-                          }
-                          return params;
-                        });
-                        setTimeout(() => {
-                          const el = document.getElementById('artisan-collection');
-                          if (el) {
-                            const y = el.getBoundingClientRect().top + window.scrollY - 80;
-                            window.scrollTo({ top: y, behavior: 'smooth' });
-                          }
-                        }, 50);
-                      }}
-                    />
+              ) : products.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
+                    {products.map((product, index) => (
+                      <ProductCard
+                        key={product.id || product._id}
+                        {...product}
+                        eager={index < 4}
+                        onQuickView={openQuickView}
+                      />
+                    ))}
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-32 md:py-48 bg-surface-container-low/30 rounded-[40px] border border-dashed border-outline-variant/30 px-6">
-                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-luxury/5 border border-black/5">
-                  <span className="material-symbols-outlined text-[40px] text-on-surface-variant/20">
-                    filter_list_off
-                  </span>
+
+                  {/* Interactive Numbered Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-16 text-center">
+                      <span className="font-label-sm text-[11px] text-on-surface uppercase tracking-[0.3em] font-bold block mb-4">
+                        Showing Page {currentPage} of {totalPages}
+                      </span>
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={(page) => {
+                          setCurrentPage(page);
+                          setSearchParams((prev) => {
+                            const params = new URLSearchParams(prev);
+                            if (page === 1) {
+                              params.delete('page');
+                            } else {
+                              params.set('page', String(page));
+                            }
+                            return params;
+                          });
+                          setTimeout(() => {
+                            const el = document.getElementById('artisan-collection');
+                            if (el) {
+                              const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                              window.scrollTo({ top: y, behavior: 'smooth' });
+                            }
+                          }, 50);
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-32 md:py-48 bg-surface-container-low/30 rounded-[40px] border border-dashed border-outline-variant/30 px-6">
+                  <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-luxury/5 border border-black/5">
+                    <span className="material-symbols-outlined text-[40px] text-on-surface-variant/20">
+                      filter_list_off
+                    </span>
+                  </div>
+                  <h3 className="font-headline-sm text-on-surface mb-3">No products found</h3>
+                  <p className="font-body-md text-on-surface-variant/50 font-light mb-10 max-w-md mx-auto">
+                    Try adjusting your filters or search terms to find what you're looking for.
+                  </p>
+                  <button onClick={clearAllFilters} className="btn-primary">
+                    Clear All Filters
+                  </button>
                 </div>
-                <h3 className="font-headline-sm text-on-surface mb-3">No products found</h3>
-                <p className="font-body-md text-on-surface-variant/50 font-light mb-10 max-w-md mx-auto">
-                  Try adjusting your filters or search terms to find what you're looking for.
-                </p>
-                <button onClick={clearAllFilters} className="btn-primary">
-                  Clear All Filters
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 

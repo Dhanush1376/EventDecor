@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { MandalaElement } from '../ui/MandalaElement';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
@@ -11,6 +11,7 @@ import { NavigationHubSkeleton } from '../ui/Skeleton';
 export function NavigationHub() {
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -158,6 +159,11 @@ export function NavigationHub() {
                           }
                         }
                       }}
+                      onTap={() => {
+                        if (position === 0) {
+                          navigate(card.link);
+                        }
+                      }}
                       animate={{
                         scale: position === 0 ? 1 : position === 1 ? 0.93 : 0.86,
                         y: position === 0 ? 0 : position === 1 ? 14 : 28,
@@ -165,15 +171,15 @@ export function NavigationHub() {
                         zIndex: deck.length - position,
                         opacity: position === 0 ? 1 : position === 1 ? 0.9 : 0.6,
                       }}
-                      transition={{ type: 'spring', stiffness: 350, damping: 26 }}
+                      transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
                     >
-                      {/* Link wrapping contents of top card so it can be clicked */}
-                      <Link to={card.link} className="w-full h-full block relative select-none">
+                      <div className="w-full h-full block relative select-none">
                         <CloudinaryImage
                           src={card.image}
                           alt={card.title}
                           className="w-full h-full object-cover select-none pointer-events-none"
                           containerClassName="absolute inset-0"
+                          aspectRatio="auto"
                           width={400}
                           height={500}
                         />
@@ -223,7 +229,7 @@ export function NavigationHub() {
                             </span>
                           </div>
                         )}
-                      </Link>
+                      </div>
                     </motion.div>
                   );
                 })}

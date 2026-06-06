@@ -92,32 +92,32 @@ const CardContent = React.memo(function CardContent({
       </div>
 
       {/* Luxury Immersive Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 flex flex-col justify-end p-5 @[400px]:p-10">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 flex flex-col justify-end p-2.5 sm:p-5 md:p-6 lg:p-8">
         <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-700 ease-out">
           {/* Bilingual Title Stack */}
-          <div className="mb-3">
+          <div className="mb-0 md:mb-2">
             {item.teluguTitle && (
-              <span className="block font-label text-[11px] text-white/60 mb-0.5 tracking-wider uppercase font-bold animate-fade-in-up">
+              <span className="hidden md:block font-label text-[8px] sm:text-[10px] md:text-[11px] text-white/60 mb-0.5 tracking-wider uppercase font-bold animate-fade-in-up">
                 {item.teluguTitle}
               </span>
             )}
-            <h3 className="font-display text-[20px] @[400px]:text-[32px] text-white leading-tight font-bold">
+            <h3 className="font-display text-[10px] xs:text-[12px] md:text-[20px] lg:text-[28px] text-white leading-tight font-bold">
               {item.title}
             </h3>
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-white/80 font-label text-[10px] uppercase tracking-[0.2em] font-bold">
+          <div className="hidden md:flex items-center gap-2 mb-2 md:mb-4">
+            <span className="text-white/80 font-label text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-bold">
               {item.style}
             </span>
-            <div className="w-1 h-1 rounded-full bg-primary" />
-            <span className="text-white/40 font-label text-[9px] uppercase tracking-widest font-bold">
+            <div className="w-0.5 h-0.5 rounded-full bg-primary" />
+            <span className="text-white/40 font-label text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-widest font-bold">
               {item.event}
             </span>
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-white/70 font-body text-[11px] font-light leading-relaxed line-clamp-2 max-w-[240px]">
+          <div className="flex items-center justify-between gap-2.5">
+            <p className="hidden md:block text-white/70 font-body text-[9px] sm:text-[10px] md:text-[11px] font-light leading-relaxed line-clamp-1 xs:line-clamp-2 max-w-[140px] sm:max-w-[200px] md:max-w-[240px]">
               {item.description}
             </p>
             <span
@@ -135,14 +135,16 @@ const CardContent = React.memo(function CardContent({
                   if (itemId && navigate) navigate(linkTo);
                 }
               }}
-              className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:bg-primary hover:text-white focus:outline-none focus:ring-0 transition-all duration-300 flex-shrink-0"
+              className="hidden md:flex w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full bg-white text-black items-center justify-center shadow-2xl hover:bg-primary hover:text-white focus:outline-none focus:ring-0 transition-all duration-300 flex-shrink-0"
               aria-label={`View ${item.title}`}
             >
-              <span className="material-symbols-outlined text-[18px] font-bold">arrow_outward</span>
+              <span className="material-symbols-outlined text-[12px] sm:text-[14px] md:text-[18px] font-bold">
+                arrow_outward
+              </span>
             </span>
           </div>
 
-          <div className="h-[1px] w-0 bg-primary/40 mt-6 transition-all duration-1000 group-hover:w-full" />
+          <div className="hidden md:block h-[1px] w-0 bg-primary/40 mt-4 md:mt-6 transition-all duration-1000 group-hover:w-full" />
         </div>
       </div>
 

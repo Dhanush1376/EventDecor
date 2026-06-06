@@ -151,14 +151,6 @@ export default function CheckoutAddressStep() {
     }
   };
 
-  // If we have no saved addresses, force them to add one
-  React.useEffect(() => {
-    if (savedAddresses.length === 0) {
-      setIsAddingNewAddress(true);
-      setIsSelectingList(false);
-    }
-  }, [savedAddresses, setIsAddingNewAddress]);
-
   // Handle Edit Mode
   const handleEdit = (addr) => {
     setNewAddress({
@@ -225,10 +217,7 @@ export default function CheckoutAddressStep() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => {
-              if (savedAddresses.length > 0) setIsAddingNewAddress(false);
-              else toast.error('Please add at least one address to continue.');
-            }}
+            onClick={() => setIsAddingNewAddress(false)}
             className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-sm cursor-pointer"
           />
           <motion.div
@@ -244,10 +233,7 @@ export default function CheckoutAddressStep() {
               </h2>
               <button
                 type="button"
-                onClick={() => {
-                  if (savedAddresses.length > 0) setIsAddingNewAddress(false);
-                  else toast.error('Please add at least one address to continue.');
-                }}
+                onClick={() => setIsAddingNewAddress(false)}
                 className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center border border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
@@ -554,10 +540,7 @@ export default function CheckoutAddressStep() {
               <div className="w-full flex gap-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (savedAddresses.length > 0) setIsAddingNewAddress(false);
-                    else toast.error('Please add at least one address to continue.');
-                  }}
+                  onClick={() => setIsAddingNewAddress(false)}
                   className="flex-1 bg-transparent text-on-surface font-bold uppercase tracking-widest text-[10px] py-3 rounded-full border border-outline-variant/40 hover:bg-surface-container-low transition-colors cursor-pointer"
                 >
                   Cancel
@@ -677,7 +660,7 @@ export default function CheckoutAddressStep() {
       <div className="bg-surface-container-low -mt-2">
         {/* Selected Address Block */}
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs mb-4">
-          {activeSelectedAddress && (
+          {activeSelectedAddress ? (
             <div className="relative">
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-2">
@@ -725,6 +708,25 @@ export default function CheckoutAddressStep() {
                 </div>
               )}
             </div>
+          ) : (
+            <div className="flex flex-col items-center text-center py-6">
+              <span className="material-symbols-outlined text-[44px] text-outline-variant mb-2 select-none">
+                location_off
+              </span>
+              <p className="text-[14px] font-bold text-on-surface mb-1">
+                No Delivery Address Found
+              </p>
+              <p className="text-[12px] text-secondary mb-4 max-w-xs leading-normal">
+                Please add at least one delivery address to continue.
+              </p>
+              <button
+                type="button"
+                onClick={handleAddNew}
+                className="btn-primary py-2.5 px-6 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                Add Address
+              </button>
+            </div>
           )}
         </div>
 
@@ -749,8 +751,19 @@ export default function CheckoutAddressStep() {
         <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-4 shadow-lg z-40 flex justify-center">
           <div className="max-w-[1240px] w-full mx-auto">
             <button
-              onClick={() => setActiveStep(hasRentalItems ? 3 : 2)}
-              className="w-full btn-primary py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm transition-colors text-center"
+              onClick={() => {
+                if (!activeSelectedAddress) {
+                  toast.error('Please add and select a delivery address first.');
+                  return;
+                }
+                setActiveStep(hasRentalItems ? 3 : 2);
+              }}
+              disabled={!activeSelectedAddress}
+              className={`w-full py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm transition-colors text-center cursor-pointer ${
+                !activeSelectedAddress
+                  ? 'bg-outline-variant text-on-surface/40 opacity-50 cursor-not-allowed'
+                  : 'btn-primary text-on-primary'
+              }`}
             >
               Continue to {hasRentalItems ? 'Verification' : 'Payment'}
             </button>

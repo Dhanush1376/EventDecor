@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { loyaltyService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
@@ -9,6 +10,7 @@ export function LoyaltyPanel() {
   const [data, setData] = useState(null);
   const [referralInput, setReferralInput] = useState('');
   const [submittingReferral, setSubmittingReferral] = useState(false);
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
 
   const fetchLoyaltyData = async () => {
     setLoading(true);
@@ -148,7 +150,7 @@ export function LoyaltyPanel() {
               >
                 Bespoke Membership Pass
               </span>
-              <h3 className="font-display text-[18px] sm:text-2xl font-light text-white tracking-widest uppercase mt-1">
+              <h3 className="font-body text-[18px] sm:text-2xl font-bold text-white tracking-widest uppercase mt-1">
                 {data.loyaltyTier} MEMBER
               </h3>
             </div>
@@ -204,7 +206,7 @@ export function LoyaltyPanel() {
         {/* Loyalty Progression metrics panel */}
         <div className="lg:col-span-5 flex flex-col justify-between pt-4 lg:pt-0 lg:pl-6 lg:border-l border-outline-variant/30">
           <div>
-            <h4 className="font-bold text-xs uppercase tracking-widest text-on-surface mb-1">
+            <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface mb-1">
               VIP Tier Progression
             </h4>
             <span className="text-[10px] text-secondary font-light">
@@ -267,7 +269,7 @@ export function LoyaltyPanel() {
               <span className="material-symbols-outlined text-sm">share</span>
             </div>
             <div>
-              <h4 className="font-bold text-xs uppercase tracking-widest text-on-surface">
+              <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface">
                 Refer & Earn Siri Cash
               </h4>
               <span className="text-[10px] text-secondary font-light block">
@@ -309,7 +311,7 @@ export function LoyaltyPanel() {
               <span className="material-symbols-outlined text-sm">redeem</span>
             </div>
             <div>
-              <h4 className="font-bold text-xs uppercase tracking-widest text-on-surface">
+              <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface">
                 Have a Referral Code?
               </h4>
               <span className="text-[10px] text-secondary font-light block">
@@ -347,7 +349,7 @@ export function LoyaltyPanel() {
       <div className="space-y-4 pt-2">
         <div className="flex justify-between items-center pb-2 border-b border-outline-variant/30">
           <div>
-            <h4 className="font-bold text-xs uppercase tracking-widest text-on-surface">
+            <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface">
               Promotional Coupons & Voucher Center
             </h4>
             <span className="text-[10px] text-secondary font-light">
@@ -357,54 +359,163 @@ export function LoyaltyPanel() {
           <span className="material-symbols-outlined text-secondary text-sm">local_activity</span>
         </div>
 
-        {data.coupons && data.coupons.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-            {data.coupons.map((coupon) => (
-              <motion.div
-                key={coupon._id || coupon.code}
-                whileHover={{ y: -2 }}
-                onClick={() =>
-                  copyToClipboard(coupon.code, `Coupon "${coupon.code}" copied! Paste at checkout.`)
-                }
-                className="bg-surface-container-low border border-outline-variant/30 rounded-lg p-4 flex flex-col justify-between cursor-pointer group shadow-xs hover:border-primary/40 hover:shadow-sm transition-all"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="font-mono text-[13px] font-bold text-on-surface tracking-widest uppercase group-hover:text-primary transition-colors">
-                      {coupon.code}
-                    </span>
-                    <div className="text-[10px] font-medium text-secondary mt-1">
-                      {coupon.discountType === 'percentage'
-                        ? `${coupon.discountValue}% discount up to ₹${coupon.maxDiscount || '200'}`
-                        : `Flat ₹${coupon.discountValue} Off`}
+        <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs hover:border-primary/30 transition-all duration-300">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <span className="material-symbols-outlined text-[24px]">local_activity</span>
+            </div>
+            <div className="space-y-0.5">
+              <h5 className="font-body text-[13px] font-bold text-on-surface uppercase tracking-wider">
+                {data.coupons?.length || 0} Exclusive Vouchers Available
+              </h5>
+              <p className="text-[10px] text-secondary font-light leading-relaxed">
+                Unlock bespoke member discounts and special savings on your next luxury craft
+                selection.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsCouponModalOpen(true)}
+            className="w-full sm:w-auto text-[10px] text-primary border border-primary/20 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 font-bold px-5 py-2.5 rounded-full cursor-pointer uppercase tracking-widest shrink-0 text-center"
+          >
+            View Available Coupons
+          </button>
+        </div>
+      </div>
+
+      {/* Premium Coupon Selector Modal bottom sheet */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {isCouponModalOpen && (
+              <div className="fixed inset-0 z-[1000] flex items-end justify-center sm:items-center sm:p-4">
+                {/* Backdrop blur */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsCouponModalOpen(false)}
+                  className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                />
+
+                {/* Bottom Sheet Card */}
+                <motion.div
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="relative bg-surface-bright w-full max-w-[500px] rounded-t-[24px] sm:rounded-[24px] p-6 sm:p-8 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col z-[1001]"
+                >
+                  {/* Pull Indicator for Mobile */}
+                  <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto mb-6 sm:hidden" />
+
+                  {/* Close Button */}
+                  <button
+                    onClick={() => setIsCouponModalOpen(false)}
+                    className="absolute top-6 right-6 w-8 h-8 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+
+                  {/* Content Container */}
+                  <div className="relative z-10 flex flex-col h-full max-h-[75vh]">
+                    {/* Header */}
+                    <div className="mb-6">
+                      <h2 className="text-[20px] font-bold text-on-surface leading-tight mb-1 font-body">
+                        Promotional Coupons
+                      </h2>
+                      <p className="text-secondary text-[12px]">
+                        Tap any luxury coupon code to copy and apply at checkout
+                      </p>
+                    </div>
+
+                    {/* Scrollable Coupons List */}
+                    <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin">
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-secondary block">
+                        Available Offers
+                      </span>
+
+                      {!data.coupons || data.coupons.length === 0 ? (
+                        <div className="text-center py-10 space-y-2">
+                          <span className="material-symbols-outlined text-secondary/40 text-4xl">
+                            local_activity
+                          </span>
+                          <p className="text-xs font-semibold text-secondary/70">
+                            No coupons available right now.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {data.coupons.map((coupon) => (
+                            <div
+                              key={coupon._id || coupon.code}
+                              onClick={() => {
+                                copyToClipboard(
+                                  coupon.code,
+                                  `Coupon "${coupon.code}" copied! Paste at checkout.`,
+                                );
+                              }}
+                              className="bg-surface-container-lowest border border-outline-variant/60 hover:border-primary/45 rounded-2xl p-4 transition-all duration-300 flex flex-col gap-3 cursor-pointer group hover:shadow-xs"
+                            >
+                              <div className="flex justify-between items-start gap-4">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono font-bold text-on-surface text-[13px] uppercase tracking-wider group-hover:text-primary transition-colors">
+                                      {coupon.code}
+                                    </span>
+                                  </div>
+                                  <p className="text-[13px] font-bold text-on-surface leading-snug">
+                                    {coupon.discountType === 'percentage'
+                                      ? `${coupon.discountValue}% off`
+                                      : `₹${coupon.discountValue} off`}
+                                    {coupon.maxDiscount ? ` up to ₹${coupon.maxDiscount}` : ''}
+                                  </p>
+                                  <p className="text-[11px] text-secondary">
+                                    On minimum purchase of ₹{coupon.minOrderAmount}
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="text-[11px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg transition-all text-primary bg-primary/10 group-hover:bg-primary/20 flex items-center gap-1.5"
+                                >
+                                  Copy
+                                  <span className="material-symbols-outlined text-[13px]">
+                                    content_copy
+                                  </span>
+                                </button>
+                              </div>
+
+                              {/* Expiry Footer */}
+                              <div className="flex items-center justify-between border-t border-outline-variant/30 pt-3 mt-1 text-[10px] text-secondary">
+                                <span className="font-semibold text-primary group-hover:underline">
+                                  TAP TO COPY
+                                </span>
+                                <span>
+                                  Valid till{' '}
+                                  {new Date(coupon.expiryDate).toLocaleDateString('en-IN', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <span className="text-[8px] bg-primary/10 text-primary font-bold uppercase tracking-wider px-2 py-0.5 rounded flex-shrink-0">
-                    {coupon.discountType}
-                  </span>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-outline-variant/20 flex justify-between items-center text-[9px] text-secondary">
-                  <span>Min order: ₹{coupon.minOrderAmount}</span>
-                  <span className="font-semibold text-primary group-hover:underline flex items-center gap-1">
-                    TAP TO COPY{' '}
-                    <span className="material-symbols-outlined text-[12px]">content_copy</span>
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-6 text-[10px] text-secondary italic">
-            No discount coupon vouchers available at this time. Check back during upcoming events!
-          </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </div>
 
       {/* 4. WALLET AUDIT TRANSACTION HISTORY TIMELINE */}
       <div className="space-y-4 pt-4 border-t border-outline-variant/30">
         <div className="pb-2">
-          <h4 className="font-bold text-xs uppercase tracking-widest text-on-surface">
+          <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface">
             Wallet Transaction Ledger
           </h4>
           <span className="text-[10px] text-secondary font-light">

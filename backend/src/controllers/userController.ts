@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import User from '../models/User';
 import { STAFF_ROLES, canActorAssignRole } from '../config/adminConfig';
 import asyncHandler from '../utils/asyncHandler';
@@ -242,7 +242,7 @@ export const getWishlist = asyncHandler(async (req: any, res: Response) => {
   const [products, showcases] = await Promise.all([
     Product.find({ _id: { $in: wishlistArray } })
       .select(
-        'name title price rentalPrice image images category isAvailable quantity availableQuantity slug',
+        'name title price rentalPrice imageSrc images category isAvailable quantity availableQuantity slug',
       )
       .lean(),
     require('../models/ShowcaseCollection')
