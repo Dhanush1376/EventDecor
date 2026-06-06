@@ -38,3 +38,11 @@ backend_architecture.md
 scripts/extract_arch.js
 git_products_history.txt
 backend/test-mongoose.js
+
+# Recovery & Diagnostics
+backend/recovery/
+backend/cache/
+backend/recovered_products_preview.json
+backend/old_seed_data_temp.txt
+backend/test-*.ts
+*.avif

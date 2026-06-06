@@ -8,6 +8,10 @@ export const productService = {
     const response = await api.get('/products', { params });
     return response.data;
   },
+  getAdminAll: async (params) => {
+    const response = await api.get('/products/admin/all', { params });
+    return response.data;
+  },
   getById: async (id) => {
     const response = await api.get(`/products/${id}`);
     return response.data;

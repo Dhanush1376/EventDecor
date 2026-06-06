@@ -1,6 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 
 const CardContent = React.memo(function CardContent({
@@ -12,15 +11,8 @@ const CardContent = React.memo(function CardContent({
   minH,
   eager,
 }) {
-  const [isHovered, setIsHovered] = React.useState(false);
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <div
       style={{
         minHeight: minH,
         isolation: 'isolate',
@@ -29,29 +21,31 @@ const CardContent = React.memo(function CardContent({
       }}
       className="break-inside-avoid mb-2 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
     >
-      {/* Background Image/Video — natural height, no forced aspect ratio */}
-      {isHovered && item.video ? (
+      {/* Background Video — plays on hover via CSS opacity */}
+      {item.video && (
         <video
           src={item.video}
           muted
           loop
           autoPlay
           playsInline
-          className="w-full h-auto block transition-all duration-700"
-        />
-      ) : (
-        <CloudinaryImage
-          src={displayImage}
-          alt={item.altText || item.title}
-          className="w-full h-auto block transition-transform duration-[1.5s] group-hover:scale-105 ease-out"
-          containerClassName="w-full"
-          loading={eager ? 'eager' : 'lazy'}
-          fetchPriority={eager ? 'high' : 'auto'}
-          width={600}
-          height={800}
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10 pointer-events-none"
         />
       )}
+
+      {/* Background Image — natural height, no forced aspect ratio */}
+      <CloudinaryImage
+        src={displayImage}
+        alt={item.altText || item.title}
+        className={`w-full h-auto block transition-transform duration-[1.5s] ease-out group-hover:scale-105 ${item.video ? 'group-hover:opacity-0 transition-opacity duration-700' : ''}`}
+        containerClassName="w-full"
+        loading={eager ? 'eager' : 'lazy'}
+        fetchPriority={eager ? 'high' : 'auto'}
+        width={item.imageWidth || 600}
+        height={item.imageHeight || 800}
+        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        skipObserver={true}
+      />
 
       {/* Heritage Floating Circle Badges - Hidden on Mobile to declutter */}
       <div className="absolute top-3 left-3 right-3 hidden md:flex justify-between items-start z-10">
@@ -126,13 +120,13 @@ const CardContent = React.memo(function CardContent({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (itemId) navigate(linkTo);
+                if (itemId && navigate) navigate(linkTo);
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (itemId) navigate(linkTo);
+                  if (itemId && navigate) navigate(linkTo);
                 }
               }}
               className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:bg-primary hover:text-white focus:outline-none focus:ring-0 transition-all duration-300 flex-shrink-0"
@@ -148,13 +142,12 @@ const CardContent = React.memo(function CardContent({
 
       {/* Subtle Marble Texture Overlay on Hover */}
       <div className="absolute inset-0 bg-marble opacity-0 group-hover:opacity-[0.05] transition-opacity pointer-events-none mix-blend-overlay" />
-    </motion.div>
+    </div>
   );
 });
 
 export const GalleryCard = React.memo(
-  function GalleryCard({ item, onImageClick, minH, eager }) {
-    const navigate = useNavigate();
+  function GalleryCard({ item, onImageClick, minH, eager, navigate }) {
     const itemId = item._id || item.id;
     const linkTo = `/gallery/${itemId}`;
     const displayImage = item.image || item.imageSrc;

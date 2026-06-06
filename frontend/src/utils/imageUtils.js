@@ -39,18 +39,24 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
       if (quality && quality !== 'auto') transforms.push(`q_${quality}`);
       else transforms.push('q_auto');
 
-      if (width) transforms.push(`w_${width}`);
+      if (width) transforms.push(`c_limit,w_${width}`);
       if (height) transforms.push(`h_${height}`);
 
       const transformStr = transforms.join(',');
 
       let path = parts[1];
-      if (path.includes('/') && !path.startsWith('v')) {
-        const firstSegment = path.split('/')[0];
-        if (firstSegment.includes('_') || firstSegment.includes(',')) {
-          path = path.substring(path.indexOf('/') + 1);
-        }
+      let segments = path.split('/');
+
+      // Strip any existing transform segments. A transform segment typically contains an underscore
+      // and does NOT start with a 'v' followed by only digits (which is a version tag).
+      while (
+        segments.length > 1 &&
+        (segments[0].includes('_') || segments[0].includes(',')) &&
+        !/^v\d+$/.test(segments[0])
+      ) {
+        segments = segments.slice(1);
       }
+      path = segments.join('/');
 
       resultUrl = `${parts[0]}/upload/${transformStr}/${path}`;
     }
@@ -83,76 +89,114 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
   return resultUrl;
 };
 
+const blurCache = new Map();
+
 /**
- * Generate a tiny, blurred placeholder for lazy loading
+ * Generates an ultra-lightweight inline SVG for image placeholders
+ * Eliminates the need for an initial Cloudinary network request
  */
-export const getBlurredPlaceholder = (url) => {
-  if (!url) return '';
-
-  const isCloudinary = url.includes('cloudinary.com');
-  if (isCloudinary) {
-    const parts = url.split('/upload/');
-    if (parts.length !== 2) return null;
-
-    let path = parts[1];
-    if (path.includes('/') && !path.startsWith('v')) {
-      const firstSegment = path.split('/')[0];
-      if (firstSegment.includes('_') || firstSegment.includes(',')) {
-        path = path.substring(path.indexOf('/') + 1);
-      }
-    }
-
-    return `${parts[0]}/upload/e_blur:1000,q_1,f_webp/${path}`;
-  } else {
-    if (url.startsWith('data:') || url.startsWith('blob:')) return url;
-    let backendUrl = window.location.origin;
-    if (!import.meta.env.DEV) {
-      backendUrl = getApiRootUrl().replace(/\/api$/, '');
-    }
-    return `${backendUrl}/api/v1/media/optimize?url=${encodeURIComponent(url)}&w=20&q=20&fmt=webp`;
+export const getBlurDataUri = (width = 400, height = 300) => {
+  const cacheKey = `${width}x${height}`;
+  if (blurCache.has(cacheKey)) {
+    return blurCache.get(cacheKey);
   }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
+    <defs>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f3f4f6" />
+        <stop offset="50%" stop-color="#e5e7eb" />
+        <stop offset="100%" stop-color="#f3f4f6" />
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g)" />
+  </svg>`;
+
+  const uri = `data:image/svg+xml;base64,${btoa(svg)}`;
+
+  if (blurCache.size < 50) {
+    blurCache.set(cacheKey, uri);
+  }
+
+  return uri;
 };
 
 /**
- * Generate a srcset for responsive images
+ * Returns the closest responsive width from standard breakpoints
  */
-export const getSrcSet = (url, widths = [320, 640, 1024, 1536], format = 'auto') => {
+export const getResponsiveWidth = (targetWidth) => {
+  const breakpoints = [240, 400, 640, 800, 1024, 1280, 1536];
+  if (!targetWidth) return null;
+
+  // Find the smallest breakpoint that is >= targetWidth
+  const width = breakpoints.find((bp) => bp >= targetWidth);
+  return width || breakpoints[breakpoints.length - 1]; // Fallback to max if larger
+};
+
+/**
+ * Generate a srcset for responsive images, capping at max requested width to save bandwidth
+ */
+export const getSrcSet = (url, maxWidth = null, format = 'auto') => {
   if (!url) return null;
   if (url.startsWith('data:') || url.startsWith('blob:')) return null;
 
-  return widths.map((w) => `${getOptimizedUrl(url, w, null, 'auto', format)} ${w}w`).join(', ');
+  let validWidths = [];
+
+  if (maxWidth && maxWidth <= 200) {
+    // For thumbnails, only generate 1x and 2x
+    validWidths = [maxWidth, maxWidth * 2];
+  } else if (maxWidth && maxWidth <= 600) {
+    validWidths = [320, 640, maxWidth * 2].filter((w) => w <= maxWidth * 2);
+  } else {
+    const breakpoints = [320, 640, 1024, 1536];
+    validWidths = maxWidth ? breakpoints.filter((w) => w <= maxWidth * 1.5) : breakpoints;
+  }
+
+  // Deduplicate and sort
+  validWidths = [...new Set(validWidths)].sort((a, b) => a - b);
+
+  // Always ensure at least one fallback width
+  if (validWidths.length === 0 && maxWidth) {
+    validWidths.push(getResponsiveWidth(maxWidth));
+  }
+
+  return validWidths
+    .map((w) => `${getOptimizedUrl(url, w, null, 'auto', format)} ${w}w`)
+    .join(', ');
 };
 
-const SVG_FALLBACK =
-  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="%23f3f4f6"><rect width="100%25" height="100%25" fill="%23f3f4f6" /><path d="M150 150 L200 100 L250 150 Z" fill="%23d1d5db" /><circle cx="200" cy="180" r="20" fill="%23d1d5db" /></svg>';
+/**
+ * Single function to return all responsive image props (src, srcSet, sizes)
+ */
+export const getResponsiveImageProps = (
+  url,
+  width,
+  height,
+  sizes = '100vw',
+  format = 'auto',
+  quality = 'auto',
+) => {
+  if (!url) return { src: '', srcSet: undefined, sizes: undefined };
+
+  const optimizedSrc = getOptimizedUrl(url, width, height, quality, format);
+  const srcSet = getSrcSet(url, width, format);
+
+  return {
+    src: optimizedSrc,
+    srcSet: srcSet || undefined,
+    sizes: srcSet ? sizes : undefined,
+  };
+};
+
+const SVG_FALLBACK = getBlurDataUri(400, 300);
 
 export const handleImageError = (e) => {
   if (e.target.dataset.errorHandled === 'true') {
-    // Second failure (fallback also failed), hide it completely
     e.target.onerror = null;
-    e.target.src = SVG_FALLBACK;
-    e.target.classList.add('image-fallback-active');
     return;
   }
 
   e.target.dataset.errorHandled = 'true';
-
-  const src = e.target.src || '';
-  if (src.includes('cloudinary.com') && src.includes('/upload/')) {
-    const parts = src.split('/upload/');
-    const afterUpload = parts[1];
-    if (afterUpload) {
-      const segments = afterUpload.split('/');
-      if (segments.length > 1 && (segments[0].includes(',') || segments[0].includes('_'))) {
-        if (!/^v\d+$/.test(segments[0])) {
-          const originalPath = segments.slice(1).join('/');
-          e.target.src = `${parts[0]}/upload/${originalPath}`;
-          return;
-        }
-      }
-    }
-  }
-
   e.target.onerror = null;
   e.target.src = SVG_FALLBACK;
   e.target.classList.add('image-fallback-active');

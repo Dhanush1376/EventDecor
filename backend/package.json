@@ -14,7 +14,9 @@
     "backup:db": "ts-node --transpile-only src/scripts/backupDb.ts",
     "backup:media": "ts-node --transpile-only src/scripts/backupMedia.ts",
     "test": "npm run build && ts-node --transpile-only src/scripts/smokeTest.ts && jest --coverage --runInBand --forceExit",
-    "test:integration": "jest --coverage --runInBand --forceExit"
+    "test:integration": "jest --coverage --runInBand --forceExit",
+    "backup:products": "node recovery/scripts/daily_product_backup.js",
+    "export:products": "node recovery/scripts/daily_product_backup.js"
   },
   "keywords": [],
   "author": "",

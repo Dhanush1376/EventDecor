@@ -2,7 +2,7 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { OptimizedImage } from '../ui/OptimizedImage';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { SearchBar } from '../ui/SearchBar';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
@@ -116,7 +116,10 @@ export function GallerySlideshow({
       let minDistance = Infinity;
 
       // Find the thumbnail that is closest to the center
-      Array.from(container.children).forEach((child, index) => {
+      Array.from(container.children).forEach((child) => {
+        const index = parseInt(child.dataset.index, 10);
+        if (isNaN(index)) return;
+
         const containerRect = container.getBoundingClientRect();
         const childRect = child.getBoundingClientRect();
 
@@ -143,6 +146,11 @@ export function GallerySlideshow({
   if (!currentItem && items.length > 0) return null;
 
   const displayImage = currentItem ? currentItem.image || currentItem.imageSrc : '';
+  const nextItem = items[currentIndex < items.length - 1 ? currentIndex + 1 : 0];
+  const prevItem = items[currentIndex > 0 ? currentIndex - 1 : items.length - 1];
+
+  const preloadNext = nextItem && !nextItem.video ? nextItem.image || nextItem.imageSrc : null;
+  const preloadPrev = prevItem && !prevItem.video ? prevItem.image || prevItem.imageSrc : null;
 
   return typeof document !== 'undefined'
     ? createPortal(
@@ -157,6 +165,27 @@ export function GallerySlideshow({
             className="w-full h-full flex flex-col items-center justify-between p-4 md:p-6 cursor-default relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Preload adjacent images */}
+            <div className="hidden">
+              {preloadNext && (
+                <CloudinaryImage
+                  src={preloadNext}
+                  width={1200}
+                  height={1200}
+                  sizes="100vw"
+                  skipObserver={true}
+                />
+              )}
+              {preloadPrev && (
+                <CloudinaryImage
+                  src={preloadPrev}
+                  width={1200}
+                  height={1200}
+                  sizes="100vw"
+                  skipObserver={true}
+                />
+              )}
+            </div>
             {/* Header Controls */}
             <div className="w-full flex justify-between items-center px-4 pt-2 shrink-0 z-10 gap-4">
               <span className="text-black/40 font-label-sm text-[10px] md:text-[12px] uppercase tracking-[0.4em] font-bold whitespace-nowrap">
@@ -235,13 +264,14 @@ export function GallerySlideshow({
                         className="max-w-full max-h-full object-contain rounded-none shadow-md"
                       />
                     ) : (
-                      <OptimizedImage
+                      <CloudinaryImage
                         src={displayImage}
                         alt={currentItem?.title || ''}
                         className="max-w-full max-h-full object-contain rounded-none shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
-                        width={1200}
-                        height={1200}
-                        priority={true}
+                        width={currentItem?.imageWidth || 1200}
+                        height={currentItem?.imageHeight || 1200}
+                        fetchPriority="high"
+                        sizes="100vw"
                       />
                     )}
                   </motion.div>
@@ -337,10 +367,13 @@ export function GallerySlideshow({
                 >
                   {items.map((item, idx) => {
                     const isSelected = idx === currentIndex;
+                    // Virtualization: only render actual images for nearby items (reduced range for performance)
+                    const isNearby = Math.abs(idx - currentIndex) <= 5;
                     const thumbImage = item.image || item.imageSrc;
                     return (
                       <button
                         key={idx}
+                        data-index={idx}
                         onClick={() => {
                           setDirection(idx > currentIndex ? 1 : -1);
                           if (onSelect) onSelect(idx);
@@ -351,18 +384,22 @@ export function GallerySlideshow({
                             : 'border-transparent opacity-50 hover:opacity-100'
                         }`}
                       >
-                        {item.video ? (
-                          <video src={item.video} className="w-full h-full object-cover" />
-                        ) : (
-                          <OptimizedImage
-                            src={thumbImage}
-                            alt={item.title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            width={100}
-                            height={100}
-                          />
-                        )}
+                        {isNearby ? (
+                          item.video ? (
+                            <video src={item.video} className="w-full h-full object-cover" />
+                          ) : (
+                            <CloudinaryImage
+                              src={thumbImage}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              width={100}
+                              height={100}
+                              sizes="44px"
+                              skipObserver={true}
+                            />
+                          )
+                        ) : null}
                         {isSelected && <div className="absolute inset-0 bg-black/5" />}
                       </button>
                     );

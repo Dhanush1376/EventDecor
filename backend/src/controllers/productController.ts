@@ -14,6 +14,15 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(new ApiResponse(true, 'Products fetched successfully', result));
 });
 
+export const getAdminProducts = asyncHandler(async (req: Request, res: Response) => {
+  const result = await ProductService.getAllProducts(req.query, true); // true = isAdmin
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.status(200).json(new ApiResponse(true, 'Admin products fetched successfully', result));
+});
+
 export const getProductById = asyncHandler(async (req: Request, res: Response) => {
   const product = await ProductService.getProductById(req.params.id as string);
   if (!product) {

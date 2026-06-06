@@ -555,6 +555,23 @@
   }
 }
 
+/* Masonry item entrance — GPU-accelerated, no JS needed */
+@keyframes masonry-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility masonry-item-enter {
+  animation: masonry-fade-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation-delay: var(--stagger, 0ms);
+}
+
 @utility px-margin-mobile {
   padding-left: var(--spacing-margin-mobile);
   padding-right: var(--spacing-margin-mobile);

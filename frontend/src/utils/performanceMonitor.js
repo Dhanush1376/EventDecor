@@ -12,6 +12,8 @@ class PerformanceMonitor {
       cls: 0,
       lcp: 0,
       fcp: 0,
+      fid: 0,
+      inp: 0,
     };
     this.renderCounts = new Map();
   }
@@ -22,6 +24,12 @@ class PerformanceMonitor {
     this.observeCLS();
     this.observeLCP();
     this.observeFCP();
+    this.observeFID();
+    this.observeINP();
+
+    if (this.isDev) {
+      setInterval(() => this.printDashboard(), 10000);
+    }
   }
 
   // Track individual image load performance
@@ -85,7 +93,12 @@ class PerformanceMonitor {
               this.metrics.cls = clsValue;
 
               if (this.isDev && clsValue > 0.1) {
-                console.warn(`[PerfMonitor] High CLS detected: ${clsValue}`, clsEntries);
+                const attribution = clsEntries[clsEntries.length - 1]?.sources?.[0]?.node;
+                console.warn(
+                  `[PerfMonitor] High CLS detected: ${clsValue.toFixed(3)}`,
+                  'Attribution:',
+                  attribution,
+                );
               }
             }
           }
@@ -131,14 +144,88 @@ class PerformanceMonitor {
     }
   }
 
+  observeFID() {
+    try {
+      const observer = new PerformanceObserver((entryList) => {
+        for (const entry of entryList.getEntries()) {
+          this.metrics.fid = entry.processingStart - entry.startTime;
+          if (this.isDev) {
+            console.log(`[PerfMonitor] FID: ${Math.round(this.metrics.fid)}ms`);
+          }
+        }
+      });
+      observer.observe({ type: 'first-input', buffered: true });
+    } catch (e) {
+      // Not supported
+    }
+  }
+
+  observeINP() {
+    try {
+      const observer = new PerformanceObserver((entryList) => {
+        for (const entry of entryList.getEntries()) {
+          const inp = entry.duration;
+          if (inp > this.metrics.inp) {
+            this.metrics.inp = inp;
+            if (this.isDev && inp > 200) {
+              console.warn(`[PerfMonitor] High INP detected: ${Math.round(inp)}ms`);
+            }
+          }
+        }
+      });
+      observer.observe({ type: 'event', durationThreshold: 40, buffered: true });
+    } catch (e) {
+      // Not supported
+    }
+  }
+
+  getImageLoadReport() {
+    const loads = this.metrics.imageLoads.map((i) => i.loadTimeMs).sort((a, b) => a - b);
+    if (loads.length === 0) return null;
+
+    const p50 = loads[Math.floor(loads.length * 0.5)];
+    const p95 = loads[Math.floor(loads.length * 0.95)];
+    const p99 = loads[Math.floor(loads.length * 0.99)];
+
+    return {
+      count: loads.length,
+      average: Math.round(loads.reduce((a, b) => a + b, 0) / loads.length),
+      p50: Math.round(p50),
+      p95: Math.round(p95),
+      p99: Math.round(p99),
+      slowCount: this.metrics.slowImages.length,
+    };
+  }
+
   getMetricsSummary() {
     return {
       ...this.metrics,
-      averageImageLoadTime: this.metrics.imageLoads.length
-        ? this.metrics.imageLoads.reduce((sum, img) => sum + img.loadTimeMs, 0) /
-          this.metrics.imageLoads.length
-        : 0,
+      imageReport: this.getImageLoadReport(),
     };
+  }
+
+  printDashboard() {
+    if (!this.isDev) return;
+    const report = this.getImageLoadReport();
+    console.groupCollapsed(
+      '%c 🚀 Performance Dashboard',
+      'background: #222; color: #bada55; padding: 4px; border-radius: 4px;',
+    );
+    console.log(`LCP: ${Math.round(this.metrics.lcp)}ms`);
+    console.log(`CLS: ${this.metrics.cls.toFixed(3)}`);
+    console.log(`FID: ${Math.round(this.metrics.fid)}ms`);
+    console.log(`INP: ${Math.round(this.metrics.inp)}ms`);
+    if (report) {
+      console.log('--- Image Performance ---');
+      console.table({
+        Count: report.count,
+        Average: report.average + 'ms',
+        P50: report.p50 + 'ms',
+        P95: report.p95 + 'ms',
+        SlowCount: report.slowCount,
+      });
+    }
+    console.groupEnd();
   }
 }
 

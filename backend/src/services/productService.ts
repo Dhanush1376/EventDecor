@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import Product, { IProduct } from '../models/Product';
 import Gallery from '../models/Gallery';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
@@ -98,7 +98,7 @@ function normalizeProductImages(data: Partial<IProduct>, existingProduct?: IProd
 }
 
 class ProductService {
-  static async getAllProducts(queryParams: any) {
+  static async getAllProducts(queryParams: any, isAdmin: boolean = false) {
     const {
       category,
       search,
@@ -114,9 +114,9 @@ class ProductService {
     } = queryParams;
     const { page, limit, skip } = getPaginationOptions(queryParams);
 
-    const filter: any = { isActive: true };
+    const filter: any = isAdmin ? {} : { isActive: true };
 
-    if (category) filter.category = category;
+    if (category && String(category).toLowerCase() !== 'all') filter.category = category;
     if (featured === 'true') filter.featured = true;
 
     // Rental filters
@@ -149,7 +149,7 @@ class ProductService {
       const collections = String(collection)
         .split(',')
         .map((item) => item.trim())
-        .filter(Boolean);
+        .filter((item) => Boolean(item) && item.toLowerCase() !== 'all');
       if (collections.length > 0)
         filter.category = {
           $in: collections.map((item) => new RegExp(`^${escapeRegex(item)}$`, 'i')),

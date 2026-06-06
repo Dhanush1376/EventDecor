@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { GalleryCard } from '../components/gallery/GalleryCard';
 import { VirtualizedMasonry } from '../components/gallery/VirtualizedMasonry';
 import { galleryService, productService } from '../services/domainServices';
@@ -15,6 +15,7 @@ import { useScrollDirection } from '../hooks/useScrollDirection';
 import toast from 'react-hot-toast';
 
 export function Gallery() {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeEvent, setActiveEvent] = useState('All');
   const [activeStyle, setActiveStyle] = useState('All');
@@ -159,6 +160,11 @@ export function Gallery() {
     }
     return () => document.body.classList.remove('filters-open');
   }, [isFilterDrawerOpen]);
+
+  const isGalleryModeRef = React.useRef(isGalleryMode);
+  useEffect(() => {
+    isGalleryModeRef.current = isGalleryMode;
+  }, [isGalleryMode]);
 
   // filteredItems is now directly sourced from useInfiniteGallery which handles both remote querying and local mapping
 
@@ -341,10 +347,13 @@ export function Gallery() {
                   <GalleryCard
                     item={item}
                     eager={index < 4}
-                    onImageClick={isGalleryMode ? () => setSlideshowIndex(index) : undefined}
+                    onImageClick={
+                      isGalleryModeRef.current ? () => setSlideshowIndex(index) : undefined
+                    }
+                    navigate={navigate}
                   />
                 ),
-                [isGalleryMode],
+                [navigate],
               )}
               columns={{ sm: 2, md: 2, lg: 4, xl: 5 }}
               gap="gap-2 sm:gap-3"

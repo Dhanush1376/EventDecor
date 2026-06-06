@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import Gallery from '../models/Gallery';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -16,25 +16,23 @@ export const getGalleryItems = asyncHandler(async (req: Request, res: Response) 
   if (category) filter.category = category;
   if (event) filter.event = event;
   if (type) filter.type = type;
+  let sortQuery: any = { createdAt: -1 };
+
   if (search) {
     const cleanSearch = (search as string).trim();
     if (cleanSearch) {
-      const escapedSearch = cleanSearch.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&');
-      const searchRegex = new RegExp(escapedSearch, 'i');
-      filter.$or = [
-        { title: searchRegex },
-        { teluguTitle: searchRegex },
-        { category: searchRegex },
-        { event: searchRegex },
-        { style: searchRegex },
-        { tags: searchRegex },
-        { description: searchRegex },
-      ];
+      filter.$text = { $search: cleanSearch };
+      sortQuery = { score: { $meta: 'textScore' } };
     }
   }
 
   const [items, totalCount] = await Promise.all([
-    Gallery.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Gallery.find(filter)
+      .select('-colorPalette -story -similarInspirations -likedBy -tags')
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Gallery.countDocuments(filter),
   ]);
 

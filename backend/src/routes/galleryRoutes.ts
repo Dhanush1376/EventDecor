@@ -21,11 +21,11 @@ import {
 const router = Router();
 
 // Public Routes (list endpoints only — :id increments view counts)
-router.get('/', dynamicResponseCache(120, 'public'), cacheResponse(120), getGalleryItems);
+router.get('/', dynamicResponseCache(300, 'public'), cacheResponse(300), getGalleryItems);
 router.get(
   '/categories',
-  dynamicResponseCache(300, 'public'),
-  cacheResponse(300),
+  dynamicResponseCache(600, 'public'),
+  cacheResponse(600),
   getGalleryCategories,
 );
 router.get('/:id', cacheResponse(60), getGalleryById);

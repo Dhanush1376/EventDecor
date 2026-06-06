@@ -19,7 +19,10 @@ export const cacheResponse = (durationSeconds: number) => {
         const { applyNoCacheHeaders } = require('./noCacheMiddleware');
         applyNoCacheHeaders(res);
       } else {
-        res.setHeader('Cache-Control', `public, max-age=${durationSeconds}, stale-while-revalidate=300`);
+        res.setHeader(
+          'Cache-Control',
+          `public, max-age=${durationSeconds}, stale-while-revalidate=${durationSeconds * 2}`,
+        );
       }
     } catch {
       res.setHeader('Cache-Control', 'no-store');

@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import {
   getOptimizedUrl,
-  getBlurredPlaceholder,
   getSrcSet,
   handleImageError,
+  getBlurDataUri,
 } from '../../utils/imageUtils';
+import { perfMonitor } from '../../utils/performanceMonitor';
 
 function BaseOptimizedImage({
   src,
@@ -18,19 +19,23 @@ function BaseOptimizedImage({
   sizes = '(max-width: 768px) 100vw, 50vw',
   aspectRatio,
   eager = false,
+  skipObserver = false,
   ...props
 }) {
   const [isLoaded, setIsLoaded] = useState(eager || loading === 'eager');
   const [hasError, setHasError] = useState(false);
-  const [isInView, setIsInView] = useState(eager || loading === 'eager');
+  // If skipObserver is true, we immediately treat it as in view
+  // (the parent component is responsible for visibility gating)
+  const [isInView, setIsInView] = useState(eager || loading === 'eager' || skipObserver);
 
   const containerRef = useRef(null);
   const imgRef = useRef(null);
   const prevSrcRef = useRef(src);
+  const loadStartTime = useRef(Date.now());
 
   // Handle visibility tracking
   useEffect(() => {
-    if (eager || loading === 'eager' || !containerRef.current) {
+    if (eager || loading === 'eager' || skipObserver || !containerRef.current) {
       setIsInView(true);
       return;
     }
@@ -47,7 +52,7 @@ function BaseOptimizedImage({
 
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, [eager, loading]);
+  }, [eager, loading, skipObserver]);
 
   // Handle actual src changes (reference check bypassed, actual value check)
   useEffect(() => {
@@ -55,10 +60,16 @@ function BaseOptimizedImage({
       setIsLoaded(eager || loading === 'eager');
       setHasError(false);
       prevSrcRef.current = src;
+      loadStartTime.current = Date.now();
     }
 
     const checkComplete = () => {
-      if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      if (
+        imgRef.current &&
+        imgRef.current.complete &&
+        imgRef.current.naturalWidth > 0 &&
+        !isLoaded
+      ) {
         setIsLoaded(true);
       }
     };
@@ -69,13 +80,10 @@ function BaseOptimizedImage({
     return () => clearTimeout(timer);
   }, [src, eager, loading]);
 
-  if (!src) return null;
-
-  const isDataUrl = src.startsWith('data:') || src.startsWith('blob:');
-  const optimizedUrl = isDataUrl ? src : getOptimizedUrl(src, width, height);
-  // Using only f_auto srcSet to leverage Cloudinary's content negotiation, reducing total URLs generated
-  const autoSrcSet = isDataUrl ? null : getSrcSet(src, [320, 640, 1024, 1536]);
-  const placeholderUrl = isDataUrl ? null : getBlurredPlaceholder(src);
+  const isDataUrl = src && (src.startsWith('data:') || src.startsWith('blob:'));
+  const optimizedUrl = isDataUrl ? src : src ? getOptimizedUrl(src, width, height) : '';
+  // Cap srcset width at container width if provided
+  const autoSrcSet = isDataUrl || !src ? null : getSrcSet(src, width);
 
   const hasPositioning =
     containerClassName.includes('absolute') ||
@@ -86,7 +94,17 @@ function BaseOptimizedImage({
   const isImageAutoHeight =
     className && (className.includes('h-auto') || className.includes('h-fit'));
 
-  const aspectStyle = aspectRatio ? { aspectRatio } : undefined;
+  const aspectStyle = aspectRatio
+    ? { aspectRatio }
+    : width && height
+      ? { aspectRatio: `${width}/${height}` }
+      : undefined;
+  const blurPlaceholder = useMemo(
+    () => getBlurDataUri(width || 400, height || 300),
+    [width, height],
+  );
+
+  if (!src) return null;
 
   return (
     <div
@@ -95,46 +113,46 @@ function BaseOptimizedImage({
       style={aspectStyle}
     >
       {/* Blurred Progressive Placeholder */}
-      {!isLoaded && !hasError && placeholderUrl && (
+      {!isLoaded && !hasError && (
         <div
-          className="absolute inset-0 bg-cover bg-center blur-2xl scale-110 rounded-[inherit] transition-opacity duration-700 pointer-events-none"
-          style={{ backgroundImage: `url(${placeholderUrl})` }}
+          className="absolute inset-0 bg-cover bg-center rounded-[inherit] transition-opacity duration-700 pointer-events-none"
+          style={{ backgroundImage: `url(${blurPlaceholder})` }}
         />
       )}
 
-      {/* Skeleton fallback if there is no placeholder url OR if the image errored */}
-      {((!isLoaded && !placeholderUrl) || hasError) && (
-        <div className="absolute inset-0 skeleton-box rounded-[inherit]" />
-      )}
+      {/* Skeleton fallback if the image errored */}
+      {hasError && <div className="absolute inset-0 skeleton-box rounded-[inherit]" />}
 
-      {/* Picture tag utilizing Cloudinary's auto-format logic via getSrcSet */}
+      {/* Native img tag with srcset to prevent duplicate downloads */}
       {isInView && !hasError && (
-        <picture>
-          {autoSrcSet && <source srcSet={autoSrcSet} sizes={sizes} />}
-
-          {optimizedUrl && (
-            <img
-              ref={imgRef}
-              src={optimizedUrl}
-              alt={alt}
-              width={width}
-              height={height}
-              loading={eager || loading === 'eager' ? 'eager' : 'lazy'}
-              decoding="async"
-              fetchPriority={fetchPriority}
-              onLoad={() => setIsLoaded(true)}
-              onError={(e) => {
-                handleImageError(e);
-                setHasError(true);
-                setIsLoaded(true);
-              }}
-              className={`w-full ${isImageAutoHeight ? 'h-auto block' : 'h-full object-cover'} rounded-[inherit] transition-opacity duration-500 ease-out will-change-opacity transform-gpu ${className} ${
-                isLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-              {...props}
-            />
-          )}
-        </picture>
+        <img
+          ref={imgRef}
+          src={optimizedUrl}
+          srcSet={autoSrcSet || undefined}
+          sizes={autoSrcSet ? sizes : undefined}
+          alt={alt}
+          width={width}
+          height={height}
+          loading={eager || loading === 'eager' ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchPriority={fetchPriority || (eager ? 'high' : 'auto')}
+          onLoad={() => {
+            setIsLoaded(true);
+            if (perfMonitor && perfMonitor.trackImageLoad) {
+              const loadTime = Date.now() - loadStartTime.current;
+              perfMonitor.trackImageLoad(src, loadTime);
+            }
+          }}
+          onError={(e) => {
+            handleImageError(e);
+            setHasError(true);
+            setIsLoaded(true);
+          }}
+          className={`w-full ${isImageAutoHeight ? 'h-auto block' : 'h-full object-cover'} rounded-[inherit] transition-opacity duration-500 ease-out transform-gpu ${className} ${
+            isLoaded ? 'opacity-100' : 'opacity-0 will-change-opacity'
+          }`}
+          {...props}
+        />
       )}
     </div>
   );

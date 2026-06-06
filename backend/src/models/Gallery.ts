@@ -10,6 +10,9 @@ export interface IGallery extends Document {
   image: string;
   video?: string;
   height?: string; // aspect ratio class for Pinterest grid
+  aspectRatio?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   colorPalette: string[];
   tags: string[];
   description?: string;
@@ -33,7 +36,10 @@ const GallerySchema: Schema = new Schema(
     image: { type: String, required: true },
     video: { type: String },
     type: { type: String, enum: ['inspiration', 'real-event'], default: 'inspiration' },
-    height: { type: String, default: 'aspect-square' },
+    height: { type: String, default: 'aspect-[3/4]' },
+    aspectRatio: { type: String },
+    imageWidth: { type: Number },
+    imageHeight: { type: Number },
     colorPalette: [{ type: String }],
     tags: [{ type: String }],
     description: { type: String },

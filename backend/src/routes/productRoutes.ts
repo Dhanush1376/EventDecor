@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getProducts,
+  getAdminProducts,
   getProductById,
   createProduct,
   updateProduct,
@@ -20,9 +21,12 @@ const router = Router();
 
 router.get('/', dynamicResponseCache(120, 'public'), cacheResponse(120), getProducts);
 router.get('/categories', dynamicResponseCache(300, 'public'), cacheResponse(300), getCategories);
-router.get('/:id', dynamicResponseCache(120, 'public'), cacheResponse(120), getProductById);
 
 // Protected Admin Routes
+router.get('/admin/all', requireAuth, requireAdmin, getAdminProducts);
+
+router.get('/:id', dynamicResponseCache(120, 'public'), cacheResponse(120), getProductById);
+
 router.post('/', requireAuth, requireAdmin, validate(createProductSchema), createProduct);
 router.put('/:id', requireAuth, requireAdmin, validate(updateProductSchema), updateProduct);
 router.delete('/:id', requireAuth, requireAdmin, deleteProduct);

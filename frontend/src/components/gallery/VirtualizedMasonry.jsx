@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { motion } from 'framer-motion';
 
 /**
  * VirtualizedMasonry — high-performance masonry grid with viewport-based rendering.
@@ -120,20 +119,17 @@ export function VirtualizedMasonry({
       {/* Masonry Grid */}
       <div className={`${columnClass} ${gap}`}>
         {visibleItems.map((item, index) => (
-          <motion.div
+          <div
             key={item._id || item.id || index}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '50px' }}
-            transition={{
-              duration: 0.4,
-              delay: Math.min((index % batchSize) * 0.03, 0.3), // Stagger relative to batch
-              ease: [0.25, 0.46, 0.45, 0.94],
+            className="masonry-item-enter break-inside-avoid mb-2 sm:mb-3"
+            style={{
+              '--stagger': `${Math.min((index % batchSize) * 30, 300)}ms`,
+              contentVisibility: 'auto',
+              containIntrinsicSize: '0 400px',
             }}
-            className="break-inside-avoid mb-2 sm:mb-3"
           >
             {renderItem(item, index)}
-          </motion.div>
+          </div>
         ))}
       </div>
 

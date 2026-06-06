@@ -1,6 +1,7 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { SectionWrapper } from '../layout/SectionWrapper';
 import { MandalaElement } from '../ui/MandalaElement';
 import { MandalaArtDecor } from '../ui/MandalaArtDecor';
@@ -9,44 +10,31 @@ import { galleryService } from '../../services/domainServices';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { GallerySkeleton } from '../ui/Skeleton';
 
-import logger from '../../utils/logger';
 export function GallerySection() {
   const containerRef = useRef(null);
   const { galleryPreview, loading: cmsLoading } = useWebsiteContent();
 
-  const [galleryItems, setGalleryItems] = useState([]);
-  const [rawGalleryItems, setRawGalleryItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawGalleryItems = [], isLoading: galleryLoading } = useQuery({
+    queryKey: ['homepageGalleryPreview'],
+    queryFn: async () => {
+      const res = await galleryService.getAll({ limit: 12 });
+      if (!res.success) throw new Error('Failed to load gallery');
+      return res.data.data || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+  });
 
-  useEffect(() => {
-    const fetchGallery = async () => {
-      try {
-        const res = await galleryService.getAll({ limit: 12 });
-        if (res.success) {
-          setRawGalleryItems(res.data.data || []);
-        }
-      } catch (err) {
-        logger.error('Failed to fetch gallery preview', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGallery();
-  }, []);
-
-  useEffect(() => {
-    if (rawGalleryItems.length > 0) {
-      if (galleryPreview?.galleryIds && galleryPreview.galleryIds.length > 0) {
-        const filtered = rawGalleryItems.filter((item) =>
-          galleryPreview.galleryIds.includes(item._id),
-        );
-        setGalleryItems(
-          filtered.length > 0 ? filtered : rawGalleryItems.slice(0, galleryPreview.maxDisplay || 6),
-        );
-      } else {
-        setGalleryItems(rawGalleryItems.slice(0, galleryPreview?.maxDisplay || 6));
-      }
+  const galleryItems = useMemo(() => {
+    if (!rawGalleryItems.length) return [];
+    if (galleryPreview?.galleryIds && galleryPreview.galleryIds.length > 0) {
+      const filtered = rawGalleryItems.filter((item) =>
+        galleryPreview.galleryIds.includes(item._id),
+      );
+      return filtered.length > 0
+        ? filtered
+        : rawGalleryItems.slice(0, galleryPreview.maxDisplay || 6);
     }
+    return rawGalleryItems.slice(0, galleryPreview?.maxDisplay || 6);
   }, [rawGalleryItems, galleryPreview]);
 
   const { scrollYProgress } = useScroll({
@@ -57,7 +45,7 @@ export function GallerySection() {
   const headerY = useTransform(scrollYProgress, [0, 0.5], [50, 0]);
 
   if (!galleryPreview?.isVisible) return null;
-  if (cmsLoading || loading) return <GallerySkeleton />;
+  if (cmsLoading || galleryLoading) return <GallerySkeleton />;
 
   return (
     <SectionWrapper
@@ -135,8 +123,9 @@ export function GallerySection() {
                 className="transition-transform duration-[2s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.1]"
                 containerClassName="w-full h-full"
                 loading="lazy"
-                width={400}
-                height={600}
+                width={item.imageWidth || 600}
+                height={item.imageHeight || null}
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               />
 
               {/* Elegant Hover Overlay */}

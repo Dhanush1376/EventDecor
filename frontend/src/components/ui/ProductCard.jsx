@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useCartDispatch } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { OptimizedImage } from './OptimizedImage';
+import { CloudinaryImage } from './CloudinaryImage';
 import { prefetchManager } from '../../utils/prefetchManager';
 
 export const ProductCard = React.memo(function ProductCard({
@@ -158,12 +158,12 @@ export const ProductCard = React.memo(function ProductCard({
           to={itemType === 'event' ? `/events/${productId}` : `/product/${productId}`}
           className="block h-full"
         >
-          <OptimizedImage
+          <CloudinaryImage
             src={imageSrc}
             alt={title}
             className="transition-all duration-[1.5s] cubic-bezier(0.2, 1, 0.2, 1) group-hover:scale-110"
             loading={eager ? 'eager' : 'lazy'}
-            priority={eager}
+            fetchPriority={eager ? 'high' : 'auto'}
             width={400}
             height={500}
             sizes={sizes}

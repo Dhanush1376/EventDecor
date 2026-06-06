@@ -218,12 +218,33 @@ class PrefetchManager {
       link.rel = 'preload';
       link.as = 'image';
       link.href = url;
+
+      // Cleanup after load or error to prevent DOM bloat
+      link.onload = () => link.remove();
+      link.onerror = () => link.remove();
+
       document.head.appendChild(link);
     } else {
       // Fallback
       const img = new Image();
       img.src = url;
     }
+  }
+
+  /**
+   * Preload critical gallery images to prevent visual jumps
+   */
+  preloadGalleryImages(images = []) {
+    // Only preload up to 4 images to avoid bandwidth explosion
+    const toPreload = images.slice(0, 4);
+    toPreload.forEach((img) => {
+      if (img && typeof img === 'object') {
+        const url = img.image || img.imageSrc;
+        if (url) this.preloadImage(url);
+      } else if (typeof img === 'string') {
+        this.preloadImage(img);
+      }
+    });
   }
 }
 

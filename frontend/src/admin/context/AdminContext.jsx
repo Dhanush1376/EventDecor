@@ -514,7 +514,7 @@ export function AdminProvider({ children }) {
           auditLogsRes,
           alertsRes,
         ] = await Promise.allSettled([
-          productService.getAll({ limit: 100 }),
+          productService.getAdminAll({ limit: 100 }),
           orderService.getAll({ limit: 50 }),
           userService.getAll({ limit: 50, role: 'user' }),
           reviewService.getAll({ limit: 50 }),
@@ -1146,7 +1146,7 @@ export function AdminProvider({ children }) {
   // ─── Refresh functions for re-fetching data ───
   const refreshProducts = useCallback(async () => {
     try {
-      const res = await productService.getAll({ limit: 100 });
+      const res = await productService.getAdminAll({ limit: 100 });
       if (res.success) {
         const list = res.data?.data || [];
         setProducts(list.map(mapDbProductToFrontend));
