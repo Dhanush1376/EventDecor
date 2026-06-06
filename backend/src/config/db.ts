@@ -309,7 +309,7 @@ class DatabaseManager {
       const admin = mongoose.connection.db.admin();
       const result = await Promise.race([
         admin.ping(),
-        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Ping timeout')), 3000)),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Ping timeout')), 10000)),
       ]);
       const isOk = result && result.ok === 1;
 
