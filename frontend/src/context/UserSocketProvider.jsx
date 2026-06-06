@@ -1,9 +1,15 @@
-import { useEffect, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { io as socketIO } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { getApiRootUrl } from '../config/apiConfig';
 import logger from '../utils/logger';
+
+const UserSocketContext = createContext(null);
+
+export function useUserSocket() {
+  return useContext(UserSocketContext);
+}
 
 export function UserSocketProvider({ children }) {
   const { user, isAuthenticated } = useAuth();
@@ -60,5 +66,7 @@ export function UserSocketProvider({ children }) {
     };
   }, [isAuthenticated, user, queryClient]);
 
-  return <>{children}</>;
+  return (
+    <UserSocketContext.Provider value={socketRef.current}>{children}</UserSocketContext.Provider>
+  );
 }

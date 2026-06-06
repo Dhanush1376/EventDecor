@@ -225,3 +225,19 @@ export const signedUrlLimiter = createRateLimiter('signedUrlLimiter', {
   message: 'Too many upload requests. Please try again after 15 minutes.',
   keyGenerator: accountKeyGenerator,
 });
+
+// Custom Order Submission Limiter: 5 requests per hour per IP/User
+export const customOrderSubmissionLimiter = createRateLimiter('customOrderSubmissionLimiter', {
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  message: 'You have submitted too many custom order requests. Please try again in an hour.',
+  keyGenerator: accountKeyGenerator,
+});
+
+// Chat Message Limiter: 20 messages per 5 minutes per IP/User
+export const chatMessageLimiter = createRateLimiter('chatMessageLimiter', {
+  windowMs: 5 * 60 * 1000,
+  limit: 20,
+  message: 'You are sending messages too quickly. Please slow down and try again in a few minutes.',
+  keyGenerator: accountKeyGenerator,
+});

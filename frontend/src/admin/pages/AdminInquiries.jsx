@@ -10,6 +10,7 @@ import { useDraft } from '../hooks/useDraft';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
+import { AdminCustomOrderConfig } from '../components/AdminCustomOrderConfig';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
@@ -24,10 +25,13 @@ export function AdminInquiries() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // ─── ADMIN CHAT & MESSAGE NOTES ───
   const [adminMessageText, setAdminMessageText] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const chatEndRef = useRef(null);
+
+  // ─── INTERNAL ADMIN NOTES ───
+  const [internalNoteText, setInternalNoteText] = useState('');
+  const [isAddingNote, setIsAddingNote] = useState(false);
 
   // ─── DYNAMIC FORM OPTIONS ───
   const [cmsConfig, setCmsConfig] = useState(null);
@@ -178,6 +182,29 @@ export function AdminInquiries() {
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to save internal notes'));
+    }
+  };
+
+  const handleAddInternalNote = async (e) => {
+    if (e) e.preventDefault();
+    if (!internalNoteText.trim() || !selectedOrder) return;
+
+    setIsAddingNote(true);
+    try {
+      const res = await customOrderService.adminAddInternalNote(
+        selectedOrder._id,
+        internalNoteText.trim(),
+      );
+      if (res.success) {
+        toast.success('Internal note added');
+        setInternalNoteText('');
+        setOrders((prev) => prev.map((o) => (o._id === selectedOrder._id ? res.data : o)));
+        setSelectedOrder(res.data);
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to add note'));
+    } finally {
+      setIsAddingNote(false);
     }
   };
 
@@ -452,8 +479,8 @@ export function AdminInquiries() {
                     <thead>
                       <tr className="">
                         <th className="p-4.5 pl-6">Customer Name</th>
-                        <th className="p-4.5">Occasion</th>
-                        <th className="p-4.5">Product Type</th>
+                        <th className="p-4.5">Type</th>
+                        <th className="p-4.5">Request Details</th>
                         <th className="p-4.5">Event Date</th>
                         <th className="p-4.5">Priority</th>
                         <th className="p-4.5">Status</th>
@@ -510,11 +537,29 @@ export function AdminInquiries() {
                                   </span>
                                 </div>
                               </td>
-                              <td className="p-4.5 font-bold uppercase tracking-wider text-[var(--admin-text-primary)]/80">
-                                {order.occasion}
+
+                              <td className="p-4.5 font-bold uppercase tracking-wider">
+                                <span
+                                  className={`px-2 py-1 rounded-[6px] text-[10px] ${
+                                    order.customOrderType === 'product'
+                                      ? 'bg-[#e3f2fd] text-[#1565c0]'
+                                      : order.customOrderType === 'event'
+                                        ? 'bg-[#f3e5f5] text-[#7b1fa2]'
+                                        : order.customOrderType === 'general'
+                                          ? 'bg-[#fff8e1] text-[#f57f17]'
+                                          : 'bg-[var(--admin-bg-subtle)] text-[var(--admin-text-secondary)]'
+                                  }`}
+                                >
+                                  {order.customOrderType || 'Legacy'}
+                                </span>
                               </td>
-                              <td className="p-4.5 text-[var(--admin-text-secondary)]">
-                                {order.productType}
+                              <td className="p-4.5 text-[12px] text-[var(--admin-text-secondary)]">
+                                <div>
+                                  <span className="font-bold text-[var(--admin-text-primary)] uppercase text-[10px]">
+                                    {order.occasion || 'Custom'}
+                                  </span>
+                                </div>
+                                <div>{order.productType || 'N/A'}</div>
                               </td>
                               <td className="p-4.5 font-mono text-[var(--admin-text-primary)] font-light">
                                 {dateStr}
@@ -624,9 +669,19 @@ export function AdminInquiries() {
                             <span className="text-[9px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block">
                               Occasion
                             </span>
-                            <span className="font-bold text-[var(--admin-text-primary)]/80 truncate block">
-                              {order.occasion}
-                            </span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="font-bold text-[var(--admin-text-primary)]/80 truncate block">
+                                {order.occasion}
+                              </span>
+                              {order.productSnapshot && (
+                                <span
+                                  className="bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border border-[var(--admin-accent)]/20 px-1.5 py-0.5 rounded-[4px] text-[8px] font-bold uppercase tracking-wider shrink-0"
+                                  title="Based on a Catalog Product"
+                                >
+                                  Catalog
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="min-w-0">
                             <span className="text-[9px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block">
@@ -787,17 +842,183 @@ export function AdminInquiries() {
                           </div>
                         </div>
 
-                        {/* Customer directives */}
-                        {selectedOrder.customRequirements && (
-                          <div className="space-y-1.5 bg-[var(--admin-bg-subtle)] p-4 rounded-[var(--admin-radius-lg)] border-2 border-dashed border-[var(--admin-accent)]/20">
-                            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)]">
-                              Customer's Special Requirements
-                            </span>
-                            <p className="text-[12px] text-[var(--admin-text-primary)]/90 leading-relaxed italic">
-                              "{selectedOrder.customRequirements}"
-                            </p>
-                          </div>
-                        )}
+                        {/* Customization Details & Requirements */}
+                        <div className="space-y-3">
+                          {selectedOrder.productSnapshot && (
+                            <div className="flex items-center gap-3 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-3 rounded-[var(--admin-radius-lg)]">
+                              {selectedOrder.productSnapshot.imageSrc && (
+                                <img
+                                  src={selectedOrder.productSnapshot.imageSrc}
+                                  alt=""
+                                  className="w-12 h-12 rounded-lg object-cover"
+                                />
+                              )}
+                              <div>
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] block">
+                                  Target Product
+                                </span>
+                                <p className="text-[13px] font-bold text-[var(--admin-text-primary)]">
+                                  {selectedOrder.productSnapshot.title}
+                                </p>
+                                <a
+                                  href={`/product/${selectedOrder.productSnapshot.productId}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[10px] text-[var(--admin-accent)] hover:underline"
+                                >
+                                  View Product
+                                </a>
+                              </div>
+                            </div>
+                          )}
+
+                          {selectedOrder.customRequirements && (
+                            <div className="space-y-1.5 bg-[var(--admin-bg-subtle)] p-4 rounded-[var(--admin-radius-lg)] border-2 border-dashed border-[var(--admin-accent)]/20">
+                              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)]">
+                                Customer's Special Requirements
+                              </span>
+                              <p className="text-[12px] text-[var(--admin-text-primary)]/90 leading-relaxed italic">
+                                "{selectedOrder.customRequirements}"
+                              </p>
+                            </div>
+                          )}
+
+                          {selectedOrder.customizationData?.length > 0 && (
+                            <div className="space-y-2">
+                              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                                Customization Fields:
+                              </span>
+                              <div className="grid grid-cols-2 gap-3 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-4 rounded-[var(--admin-radius-lg)]">
+                                {selectedOrder.customizationData.map((field, i) => (
+                                  <div key={i} className="min-w-0">
+                                    <span className="text-[9px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block truncate">
+                                      {field.fieldName}
+                                    </span>
+                                    {field.fieldType === 'color' ? (
+                                      <div className="flex gap-1 mt-1">
+                                        {(field.value || []).map((c, ci) => (
+                                          <div
+                                            key={ci}
+                                            className="w-4 h-4 rounded-full border border-[var(--admin-border)] shadow-sm"
+                                            style={{ background: c }}
+                                          />
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="font-bold text-[var(--admin-text-primary)]/80 text-[12px] block truncate">
+                                        {Array.isArray(field.value)
+                                          ? field.value.join(', ')
+                                          : field.value}
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* DYNAMIC FORM DATA RENDERER (V2) */}
+                          {selectedOrder.dynamicData &&
+                            Object.keys(selectedOrder.dynamicData).length > 0 && (
+                              <div className="space-y-2">
+                                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)] flex items-center gap-2">
+                                  <span className="material-symbols-outlined text-[16px]">
+                                    list_alt
+                                  </span>
+                                  Dynamic Form Responses
+                                </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] p-4 rounded-[var(--admin-radius-lg)]">
+                                  {Object.entries(selectedOrder.dynamicData).map(
+                                    ([key, value], i) => {
+                                      // Format keys (e.g. "product_image" -> "Product Image")
+                                      const formatKey = (k) =>
+                                        k
+                                          .replace(/_/g, ' ')
+                                          .replace(/\b\w/g, (l) => l.toUpperCase());
+
+                                      // Check if it's an array of simulated image names
+                                      const isFileArray =
+                                        Array.isArray(value) &&
+                                        value.length > 0 &&
+                                        typeof value[0] === 'string' &&
+                                        value[0].match(/\.(jpeg|jpg|gif|png|webp|heic|pdf|doc)/i);
+
+                                      return (
+                                        <div
+                                          key={i}
+                                          className="min-w-0 border-b sm:border-b-0 sm:border-l border-[var(--admin-border-subtle)] sm:pl-3 pb-2 sm:pb-0 last:border-b-0"
+                                        >
+                                          <span className="text-[9px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block mb-1">
+                                            {formatKey(key)}
+                                          </span>
+
+                                          {isFileArray ? (
+                                            <div className="flex flex-wrap gap-2 mt-1.5">
+                                              {value.map((file, idx) => {
+                                                const isImg = file.match(
+                                                  /\.(jpeg|jpg|gif|png|webp|heic)/i,
+                                                );
+                                                return (
+                                                  <div
+                                                    key={idx}
+                                                    className="relative w-12 h-12 rounded-lg overflow-hidden border border-[var(--admin-border-subtle)] shadow-sm bg-[var(--admin-bg-subtle)] group"
+                                                  >
+                                                    {isImg ? (
+                                                      <>
+                                                        <img
+                                                          src={
+                                                            file.startsWith('http')
+                                                              ? file
+                                                              : `https://placehold.co/100x100?text=${encodeURIComponent(file)}`
+                                                          }
+                                                          alt={file}
+                                                          className="w-full h-full object-cover"
+                                                          onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.nextSibling.style.display =
+                                                              'flex';
+                                                          }}
+                                                        />
+                                                        <div className="hidden absolute inset-0 bg-[var(--admin-bg-subtle)] flex-col items-center justify-center p-1">
+                                                          <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-secondary)]">
+                                                            image
+                                                          </span>
+                                                        </div>
+                                                      </>
+                                                    ) : (
+                                                      <div className="absolute inset-0 flex items-center justify-center">
+                                                        <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">
+                                                          description
+                                                        </span>
+                                                      </div>
+                                                    )}
+                                                    {/* Tooltip on hover */}
+                                                    <div className="opacity-0 group-hover:opacity-100 absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[7px] p-1 text-center leading-tight transition-opacity break-words pointer-events-none">
+                                                      {file}
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          ) : (
+                                            <span className="font-bold text-[var(--admin-text-primary)] text-[12px] block break-words">
+                                              {Array.isArray(value)
+                                                ? value.join(', ')
+                                                : typeof value === 'boolean'
+                                                  ? value
+                                                    ? 'Yes'
+                                                    : 'No'
+                                                  : String(value || 'N/A')}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    },
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                        </div>
 
                         {/* Inspiration visual decks & external links */}
                         {selectedOrder.inspirationImages?.length > 0 &&
@@ -882,6 +1103,58 @@ export function AdminInquiries() {
                               </div>
                             );
                           })()}
+
+                        {/* Internal Admin Notes */}
+                        <div className="space-y-3 pt-4 border-t border-[var(--admin-border-subtle)]">
+                          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)] block flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[16px]">lock</span>
+                            Internal Team Notes
+                          </span>
+                          <div className="bg-[var(--admin-warning-light)]/20 p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-warning)]/30 space-y-4">
+                            {selectedOrder.internalNotes?.length > 0 ? (
+                              <div className="space-y-3 max-h-[150px] overflow-y-auto pr-2">
+                                {selectedOrder.internalNotes.map((note, i) => (
+                                  <div
+                                    key={i}
+                                    className="bg-white p-3 rounded-lg border border-[var(--admin-warning)]/20 shadow-sm"
+                                  >
+                                    <div className="flex justify-between items-end mb-1">
+                                      <span className="text-[10px] font-bold text-[var(--admin-warning)]">
+                                        {note.authorName}
+                                      </span>
+                                      <span className="text-[8px] text-[var(--admin-text-tertiary)]">
+                                        {new Date(note.createdAt).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-[var(--admin-text-primary)]">
+                                      {note.text}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-[var(--admin-text-tertiary)] italic">
+                                No internal notes yet. Customers cannot see these.
+                              </p>
+                            )}
+                            <form onSubmit={handleAddInternalNote} className="flex gap-2">
+                              <input
+                                type="text"
+                                value={internalNoteText}
+                                onChange={(e) => setInternalNoteText(e.target.value)}
+                                placeholder="Add a private note..."
+                                className="flex-1 bg-white border border-[var(--admin-warning)]/30 rounded-full px-3 py-1.5 text-[11px] outline-none focus:border-[var(--admin-warning)]"
+                              />
+                              <button
+                                type="submit"
+                                disabled={isAddingNote || !internalNoteText.trim()}
+                                className="px-3 rounded-full bg-[var(--admin-warning)] hover:bg-[var(--admin-warning)]/90 text-white text-[10px] font-bold uppercase tracking-wider disabled:opacity-50"
+                              >
+                                Add
+                              </button>
+                            </form>
+                          </div>
+                        </div>
 
                         {/* Curator Correspondence Logs */}
                         <div className="space-y-3 pt-4 border-t border-[var(--admin-border-subtle)]">
@@ -1195,178 +1468,7 @@ export function AdminInquiries() {
           )}
 
           {/* ─── WORKSPACE: STOREFRONT CMS CONFIG CMS ─── */}
-          {currentWorkspace === 'config' && (
-            <div className="admin-card border border-[var(--admin-border-subtle)] p-6 md:p-8 space-y-6 shadow-sm max-w-4xl mx-auto">
-              <div>
-                <h2 className="text-[18px] font-bold text-[var(--admin-text-primary)]">
-                  Manage Form Options (Storefront)
-                </h2>
-                <p className="text-[12px] text-[var(--admin-text-secondary)] font-light mt-0.5">
-                  Add, edit, or disable the occasion and product category options that customers see
-                  on the custom order form.
-                </p>
-              </div>
-
-              {!cmsConfig ? (
-                <div className="flex flex-col items-center py-20 gap-3">
-                  <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
-                  <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]">
-                    Syncing dynamic configs...
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-6 pt-4 border-t border-[var(--admin-border-subtle)]">
-                  {/* Occasions List Config */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b border-[var(--admin-border-subtle)] pb-2">
-                      <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)]">
-                        Occasions List (e.g. Wedding, Birthday)
-                      </h4>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = [...(cmsConfig.occasions || [])];
-                          next.push({
-                            id: `custom_${Date.now()}`,
-                            label: 'New Occasion Option',
-                            enabled: true,
-                          });
-                          setCmsConfig({ ...cmsConfig, occasions: next });
-                        }}
-                        className="text-[11px] sm:text-[11px] text-[var(--admin-text-primary)] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline cursor-pointer"
-                      >
-                        + Add New Occasion
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {cmsConfig.occasions?.map((oc, index) => (
-                        <div
-                          key={oc.id}
-                          className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]"
-                        >
-                          <input
-                            type="text"
-                            value={oc.label}
-                            onChange={(e) => {
-                              const next = [...cmsConfig.occasions];
-                              next[index].label = e.target.value;
-                              setCmsConfig({ ...cmsConfig, occasions: next });
-                            }}
-                            className="flex-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl px-3 py-1.5 text-[11px] sm:text-[11px] outline-none focus:border-[var(--admin-accent)] transition-all"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const next = [...cmsConfig.occasions];
-                              next[index].enabled = !next[index].enabled;
-                              setCmsConfig({ ...cmsConfig, occasions: next });
-                            }}
-                            className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider border cursor-pointer transition-all duration-300 ${
-                              oc.enabled
-                                ? 'bg-[var(--admin-success-light)] text-[var(--admin-success)] border-[var(--admin-success-border)]'
-                                : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)]'
-                            }`}
-                          >
-                            {oc.enabled ? 'Active' : 'Disabled'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const next = cmsConfig.occasions.filter((_, idx) => idx !== index);
-                              setCmsConfig({ ...cmsConfig, occasions: next });
-                            }}
-                            className="text-[var(--admin-error)] hover:text-[var(--admin-error)] font-bold px-2 text-[12px] cursor-pointer"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Decor Categories Config */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b border-[var(--admin-border-subtle)] pb-2">
-                      <h4 className="text-[11px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--admin-accent)]">
-                        Product Categories (e.g. Table Centerpieces)
-                      </h4>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = [...(cmsConfig.productTypes || [])];
-                          next.push({
-                            id: `custom_${Date.now()}`,
-                            label: 'New Product Category',
-                            enabled: true,
-                          });
-                          setCmsConfig({ ...cmsConfig, productTypes: next });
-                        }}
-                        className="text-[11px] sm:text-[11px] text-[var(--admin-text-primary)] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline cursor-pointer"
-                      >
-                        + Add New Category
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {cmsConfig.productTypes?.map((pt, index) => (
-                        <div
-                          key={pt.id}
-                          className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]"
-                        >
-                          <input
-                            type="text"
-                            value={pt.label}
-                            onChange={(e) => {
-                              const next = [...cmsConfig.productTypes];
-                              next[index].label = e.target.value;
-                              setCmsConfig({ ...cmsConfig, productTypes: next });
-                            }}
-                            className="flex-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl px-3 py-1.5 text-[11px] sm:text-[11px] outline-none focus:border-[var(--admin-accent)] transition-all"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const next = [...cmsConfig.productTypes];
-                              next[index].enabled = !next[index].enabled;
-                              setCmsConfig({ ...cmsConfig, productTypes: next });
-                            }}
-                            className={`px-3 py-1.5 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider border cursor-pointer transition-all duration-300 ${
-                              pt.enabled
-                                ? 'bg-[var(--admin-success-light)] text-[var(--admin-success)] border-[var(--admin-success-border)]'
-                                : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)]'
-                            }`}
-                          >
-                            {pt.enabled ? 'Active' : 'Disabled'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const next = cmsConfig.productTypes.filter((_, idx) => idx !== index);
-                              setCmsConfig({ ...cmsConfig, productTypes: next });
-                            }}
-                            className="text-[var(--admin-error)] hover:text-[var(--admin-error)] font-bold px-2 text-[12px] cursor-pointer"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="pt-6 border-t border-[var(--admin-border-subtle)] flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleSaveCMSConfig}
-                      disabled={isSavingCMS}
-                      className="bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white px-6 py-3 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider cursor-pointer shadow-md transition-all active:scale-95 disabled:opacity-50"
-                    >
-                      {isSavingCMS ? 'Saving Options...' : 'Save Form Options'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {currentWorkspace === 'config' && <AdminCustomOrderConfig />}
         </>
       )}
       {/* ─── DRAFT RESTORE & UNSAVED GUARDS ─── */}

@@ -94,10 +94,10 @@ const navSections = [
         domain: 'orders',
       },
       {
-        label: 'Special Requests',
+        label: 'Custom Orders',
         icon: 'architecture',
         path: '/admin/custom-orders',
-        keywords: 'customization, consultation, event decor',
+        keywords: 'customization, consultation, bespoke, custom orders',
         domain: 'orders',
       },
       {

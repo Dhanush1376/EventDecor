@@ -1,9 +1,20 @@
 import { sendDirectEmail } from './notificationService';
 import logger from '../config/logger';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'dhanujanu1315@gmail.com';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@siriarts.com'; // SEC-07: Remove hardcoded personal email
 const getFrontendUrl = () => {
   return process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+};
+
+// BUG-08/SEC-05: HTML escape utility to prevent XSS in email templates
+const escapeHtml = (unsafe: string) => {
+  if (!unsafe) return '';
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 };
 
 export class CustomOrderMailService {
@@ -45,11 +56,15 @@ export class CustomOrderMailService {
                   <td style="padding: 6px 0; color: #7f7663;">Category:</td>
                   <td style="padding: 6px 0; font-weight: bold;">${order.productType}</td>
                 </tr>
-                ${order.eventDate ? `
+                ${
+                  order.eventDate
+                    ? `
                 <tr>
                   <td style="padding: 6px 0; color: #7f7663;">Event Date:</td>
                   <td style="padding: 6px 0; font-weight: bold;">${new Date(order.eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
-                </tr>` : ''}
+                </tr>`
+                    : ''
+                }
                 <tr>
                   <td style="padding: 6px 0; color: #7f7663;">Venue City:</td>
                   <td style="padding: 6px 0; font-weight: bold;">${order.city}</td>
@@ -106,11 +121,15 @@ export class CustomOrderMailService {
               <p style="margin: 0;"><strong>Consultation Mode:</strong> ${order.bookingType}</p>
             </div>
 
-            ${order.customRequirements ? `
+            ${
+              order.customRequirements
+                ? `
             <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 13px; background-color: #ffffff;">
               <h4 style="margin: 0 0 8px 0; color: #4a5568;">Special Client Requirements:</h4>
-              <p style="margin: 0; color: #4a5568; line-height: 1.6; font-style: italic;">"${order.customRequirements}"</p>
-            </div>` : ''}
+              <p style="margin: 0; color: #4a5568; line-height: 1.6; font-style: italic;">"${escapeHtml(order.customRequirements)}"</p>
+            </div>`
+                : ''
+            }
 
             <div style="text-align: center; margin-bottom: 20px;">
               <a href="${frontendUrl}/admin/inquiries" style="display: inline-block; background-color: #d4af37; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 6px rgba(212,175,55,0.2);">
@@ -138,7 +157,9 @@ export class CustomOrderMailService {
     if (!quote || quote.status !== 'sent') return;
 
     try {
-      const itemsHtml = quote.items.map((item: any, idx: number) => `
+      const itemsHtml = quote.items
+        .map(
+          (item: any, idx: number) => `
         <tr style="border-bottom: 1px solid #efeeeb;">
           <td style="padding: 10px 0; font-size: 13px; color: #2d2b29;">
             <span style="font-family: monospace; color: #7f7663; margin-right: 5px;">${String(idx + 1).padStart(2, '0')}</span>
@@ -148,7 +169,9 @@ export class CustomOrderMailService {
             ₹${Number(item.amount).toLocaleString('en-IN')}
           </td>
         </tr>
-      `).join('');
+      `,
+        )
+        .join('');
 
       await sendDirectEmail({
         email: order.customerEmail,
@@ -179,16 +202,24 @@ export class CustomOrderMailService {
                 </thead>
                 <tbody>
                   ${itemsHtml}
-                  ${quote.tax ? `
+                  ${
+                    quote.tax
+                      ? `
                   <tr style="border-bottom: 1px solid #efeeeb;">
                     <td style="padding: 10px 0; font-size: 12px; color: #7f7663;">GST / Surcharges</td>
                     <td style="padding: 10px 0; font-size: 12px; text-align: right; font-family: monospace; color: #2d2b29;">₹${Number(quote.tax).toLocaleString('en-IN')}</td>
-                  </tr>` : ''}
-                  ${quote.shipping ? `
+                  </tr>`
+                      : ''
+                  }
+                  ${
+                    quote.shipping
+                      ? `
                   <tr style="border-bottom: 1px solid #efeeeb;">
                     <td style="padding: 10px 0; font-size: 12px; color: #7f7663;">Shipping, Setup & Labor</td>
                     <td style="padding: 10px 0; font-size: 12px; text-align: right; font-family: monospace; color: #2d2b29;">₹${Number(quote.shipping).toLocaleString('en-IN')}</td>
-                  </tr>` : ''}
+                  </tr>`
+                      : ''
+                  }
                   <tr>
                     <td style="padding: 15px 0 0 0; font-size: 14px; font-weight: bold; color: #2d2b29;">Grand Total</td>
                     <td style="padding: 15px 0 0 0; font-size: 15.5px; font-weight: bold; text-align: right; color: #735c00; font-family: monospace;">₹${Number(quote.total).toLocaleString('en-IN')}</td>
@@ -196,11 +227,15 @@ export class CustomOrderMailService {
                 </tbody>
               </table>
 
-              ${quote.notes ? `
+              ${
+                quote.notes
+                  ? `
               <div style="margin-top: 20px; padding: 12px 15px; background-color: #faf9f6; border-radius: 8px; font-size: 11.5px; line-height: 1.6; color: #685c57; border-left: 2px solid #735c00;">
                 <strong>Payment Notes / Special Terms:</strong><br/>
                 ${quote.notes}
-              </div>` : ''}
+              </div>`
+                  : ''
+              }
             </div>
 
             <div style="text-align: center; margin-bottom: 35px;">
@@ -255,9 +290,11 @@ export class CustomOrderMailService {
             <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 13px; background-color: #ffffff;">
               <h4 style="margin: 0 0 8px 0; color: #4a5568;">Customer Workspace Update:</h4>
               <p style="margin: 0; color: #4a5568; line-height: 1.6; font-style: italic;">
-                ${response === 'approved' 
-                  ? '"I have APPROVED the provided estimate. Ready to proceed with scheduling and deposit transactions!"' 
-                  : '"I have requested modifications on the quotation. Let\'s adjust the scope items."'}
+                ${
+                  response === 'approved'
+                    ? '"I have APPROVED the provided estimate. Ready to proceed with scheduling and deposit transactions!"'
+                    : '"I have requested modifications on the quotation. Let\'s adjust the scope items."'
+                }
               </p>
             </div>
 
@@ -279,12 +316,18 @@ export class CustomOrderMailService {
   /**
    * 4. Notification for live chat messages posted by customer or admin
    */
-  static async sendChatMessageEmail(order: any, senderName: string, senderRole: 'admin' | 'customer', text: string) {
+  static async sendChatMessageEmail(
+    order: any,
+    senderName: string,
+    senderRole: 'admin' | 'customer',
+    text: string,
+  ) {
     const frontendUrl = getFrontendUrl();
-    
+
     // Determine recipient
     const recipientEmail = senderRole === 'admin' ? order.customerEmail : ADMIN_EMAIL;
-    const trackingLink = senderRole === 'admin' ? `${frontendUrl}/custom-orders` : `${frontendUrl}/admin/inquiries`;
+    const trackingLink =
+      senderRole === 'admin' ? `${frontendUrl}/custom-orders` : `${frontendUrl}/admin/inquiries`;
 
     try {
       await sendDirectEmail({
@@ -301,9 +344,17 @@ export class CustomOrderMailService {
             <h3 style="font-size: 16px; font-weight: 400; color: #2d2b29; margin-bottom: 20px; text-align: center; font-family: 'Didot', 'Georgia', serif;">New Message Received</h3>
             
             <div style="background-color: #ffffff; border: 1px solid #efeeeb; border-radius: 12px; padding: 20px; margin-bottom: 25px; font-family: 'Inter', sans-serif;">
-              <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #735c00; display: block; margin-bottom: 8px;">From ${senderName} (${senderRole === 'admin' ? 'Curator Team' : 'Customer'})</span>
+              <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #735c00; display: block; margin-bottom: 8px;">From ${escapeHtml(senderName)} (${senderRole === 'admin' ? 'Curator Team' : 'Customer'})</span>
               <p style="color: #2d2b29; font-size: 13.5px; line-height: 1.6; margin: 0; font-style: italic;">
-                "${text}"
+                "${escapeHtml(text)}"
+              </p>
+            </div>
+
+            <div style="background-color: #faf9f6; border: 1px dashed #d0c5af; border-radius: 12px; padding: 15px; margin-bottom: 25px; font-family: 'Inter', sans-serif;">
+              <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #735c00; display: block; margin-bottom: 5px;">Workspace Context</span>
+              <p style="color: #7f7663; font-size: 12px; margin: 0;">
+                <strong>Order ID:</strong> ${order.orderId || order._id}<br/>
+                <strong>Related Product:</strong> ${escapeHtml(order.productSnapshot?.title || order.productType || 'Custom Request')}
               </p>
             </div>
 
@@ -319,6 +370,41 @@ export class CustomOrderMailService {
       });
     } catch (err) {
       logger.error('Failed to dispatch chat message notification email:', err);
+    }
+  }
+
+  /**
+   * 5. WF-06: Send status change email
+   */
+  static async sendStatusChangeEmail(order: any, previousStatus: string) {
+    const frontendUrl = getFrontendUrl();
+    const trackingLink = `${frontendUrl}/custom-orders`;
+
+    try {
+      await sendDirectEmail({
+        email: order.customerEmail,
+        subject: `Order Status Update: ${order.status} ✦ Siri Arts & Crafts`,
+        customHtml: `
+          <div style="background-color: #faf9f6; font-family: 'Playfair Display', 'Didot', 'Georgia', serif; max-width: 600px; margin: 20px auto; padding: 40px 25px; border: 1px solid #efeeeb; border-radius: 16px; color: #2d2b29;">
+            <div style="margin-bottom: 25px; text-align: center;">
+              <h1 style="color: #735c00; font-size: 22px; margin: 0; text-transform: uppercase;">Status Update</h1>
+            </div>
+            <p style="font-family: 'Inter', sans-serif; font-size: 14px;">
+              Dear ${escapeHtml(order.customerName)},<br/><br/>
+              The status of your custom order <strong>${escapeHtml(order.orderId)}</strong> has been updated from <em>${escapeHtml(previousStatus)}</em> to <strong>${escapeHtml(order.status)}</strong>.
+            </p>
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${trackingLink}" style="display: inline-block; background-color: #2d2b29; color: #ffffff; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: bold; text-transform: uppercase;">
+                View Details
+              </a>
+            </div>
+          </div>
+        `,
+        type: 'order',
+        action: 'custom_order_status_update',
+      });
+    } catch (err) {
+      logger.error('Failed to dispatch status change email:', err);
     }
   }
 }

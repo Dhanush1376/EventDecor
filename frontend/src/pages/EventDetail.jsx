@@ -616,16 +616,16 @@ export function EventDetail() {
               {/* Mobile-Only Overlay Back Button */}
               <button
                 onClick={() => navigate(-1)}
-                className="md:hidden absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-black/5 active:scale-90"
+                className="flex md:hidden absolute top-4 left-4 z-20 items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8]/90 backdrop-blur-xs shadow-lg border border-black/5 active:scale-90 transition-all text-black outline-none focus:outline-none"
               >
-                <span className="material-symbols-outlined text-[20px] text-black">arrow_back</span>
+                <span className="material-symbols-outlined text-[16px] text-black">arrow_back</span>
               </button>
 
               {/* Overlay Action Buttons (Visible on Mobile & Desktop) */}
-              <div className="absolute top-4 right-4 z-20 flex flex-row gap-3">
+              <div className="absolute top-4 right-4 z-20 flex flex-row gap-2 pointer-events-auto">
                 <button
                   onClick={() => toggleItem({ ...event, image: event.image })}
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-[#fbfbf8] shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white"
+                  className="flex items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8] shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white"
                 >
                   <motion.span
                     animate={{
@@ -633,7 +633,7 @@ export function EventDetail() {
                       color: isWishlisted(event.id) ? '#ff2d55' : '#1a1817',
                       fontVariationSettings: isWishlisted(event.id) ? "'FILL' 1" : "'FILL' 0",
                     }}
-                    className="material-symbols-outlined text-[20px]"
+                    className="material-symbols-outlined text-[16px]"
                   >
                     favorite
                   </motion.span>
@@ -643,7 +643,7 @@ export function EventDetail() {
                   title={`Siri Arts & Crafts: ${event.title}`}
                   variant="custom"
                   size="custom"
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-[#fbfbf8] shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white"
+                  className="flex items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8] shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white text-[16px]"
                   iconOnly={true}
                 />
               </div>
@@ -803,6 +803,30 @@ export function EventDetail() {
 
           {/* Right Column: Artisan Customizer Form */}
           <div ref={customizerCardRef} className="lg:col-span-5 flex flex-col gap-6">
+            {/* Custom Design Consultation Card */}
+            <div className="p-6 rounded-[2rem] bg-[#FAF6F0] border border-[#C4A87C]/30 text-black relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
+              <div className="relative z-10 flex flex-col items-start gap-4">
+                <div>
+                  <h4 className="font-display mb-1 text-primary text-[22px] font-normal tracking-wide">
+                    Need a Custom Theme?
+                  </h4>
+                  <p className="text-[12px] text-black/70 font-medium font-body leading-relaxed max-w-[90%]">
+                    Personalize this setup to perfectly match your vision. Our design team will work
+                    with you to create a bespoke quotation.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate(`/custom-orders?event=${event._id || event.id}`)}
+                  className="bg-primary text-white px-6 py-2.5 rounded-full font-label-sm text-[11px] uppercase tracking-[0.2em] hover:bg-black transition-all font-bold shadow-sm active:scale-95"
+                >
+                  Customize This Setup
+                </button>
+              </div>
+              <div className="absolute -bottom-6 -right-6 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity duration-700 pointer-events-none text-primary">
+                <span className="material-symbols-outlined text-[140px]">architecture</span>
+              </div>
+            </div>
+
             {/* 2. Customizer Crate Form */}
             <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-[#C4A87C]/20 p-6 md:p-8 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)]">
               <div className="flex items-center justify-between pb-3 border-b border-black/5">

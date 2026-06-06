@@ -1,6 +1,6 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { lazyWithRetry as lazy } from './utils/lazyWithRetry';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { logRouteDiagnostic } from './utils/diagnostics';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster, ToastBar } from 'react-hot-toast';
@@ -32,6 +32,12 @@ function AppRouteFallback() {
   return <RouteSkeleton variant={variant} />;
 }
 
+import { useParams } from 'react-router-dom';
+function RedirectToCustomOrder() {
+  const { productId } = useParams();
+  return <Navigate to={`/custom-orders?product=${productId}`} replace />;
+}
+
 // Lazy load heavy auth modal to remove it from initial load bundle
 const AuthModal = lazy(() =>
   import('./components/auth/AuthModal').then((m) => ({ default: m.AuthModal })),
@@ -53,6 +59,10 @@ const OrderSuccess = lazy(() =>
 const About = lazy(() => import('./pages/About').then((m) => ({ default: m.About })));
 const CustomOrders = lazy(() =>
   import('./pages/CustomOrders').then((m) => ({ default: m.CustomOrders })),
+);
+
+const MyCustomOrders = lazy(() =>
+  import('./pages/MyCustomOrders').then((m) => ({ default: m.MyCustomOrders })),
 );
 const Gallery = lazy(() => import('./pages/Gallery').then((m) => ({ default: m.Gallery })));
 const GalleryDetail = lazy(() =>
@@ -391,6 +401,18 @@ function App() {
                               <Route path="/order-success" element={<OrderSuccess />} />
                               <Route path="/about" element={<About />} />
                               <Route path="/custom-orders" element={<CustomOrders />} />
+                              <Route
+                                path="/customize/:productId"
+                                element={<RedirectToCustomOrder />}
+                              />
+                              <Route
+                                path="/my-custom-orders"
+                                element={
+                                  <ProtectedRoute>
+                                    <MyCustomOrders />
+                                  </ProtectedRoute>
+                                }
+                              />
                               <Route path="/gallery" element={<Gallery />} />
                               <Route path="/gallery/:id" element={<GalleryDetail />} />
                               <Route path="/contact" element={<Contact />} />

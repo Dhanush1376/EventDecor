@@ -1,9 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { SEO } from '../components/seo/SEO';
 import { customOrderService, uploadService } from '../services/domainServices';
+import { useProduct } from '../hooks/useProductQueries';
+import {
+  ProductSummaryCard,
+  ProductCustomizationSection,
+  FileUploadZone,
+} from '../components/ui/CustomizationFields';
+import { DynamicCustomOrderWizard } from '../components/ui/DynamicCustomOrderWizard';
 import { useAuth } from '../context/AuthContext';
+import { useUserSocket } from '../context/UserSocketProvider';
 import toast from 'react-hot-toast';
 
 import logger from '../utils/logger';
@@ -24,6 +33,27 @@ const isDirectImageUrl = (url) => {
 
 export function CustomOrders() {
   const { user, login, isAuthenticated, runProtectedAction } = useAuth();
+  const [searchParams] = useSearchParams();
+  const productIdQuery = searchParams.get('product');
+  const eventIdQuery = searchParams.get('event');
+
+  // ─── PRODUCT LINK STATE ───
+  const [linkedProduct, setLinkedProduct] = useState(null);
+  const [customizationFields, setCustomizationFields] = useState({});
+
+  const { data: productData } = useProduct(productIdQuery, {
+    enabled: !!productIdQuery,
+  });
+
+  useEffect(() => {
+    if (productData) {
+      setLinkedProduct(productData);
+      setWizardDraft((prev) => ({
+        ...prev,
+        productType: productData.category || prev.productType,
+      }));
+    }
+  }, [productData]);
 
   // Custom states to prevent "Other" text fields from disappearing
   const [showCustomOccasion, setShowCustomOccasion] = useState(false);
@@ -41,6 +71,10 @@ export function CustomOrders() {
   const [chatMessage, setChatMessage] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const chatEndRef = useRef(null);
+
+  const isSubmittingRef = useRef(false);
+  const isSendingMessageRef = useRef(false);
+  const socket = useUserSocket();
 
   // ─── WIZARD FORM STATES ───
   const [currentStep, setCurrentStep] = useState(1);
@@ -74,6 +108,7 @@ export function CustomOrders() {
 
   const handleWhatsAppConsult = () => {
     const phone = '919866006648';
+    const baseUrl = window.location.origin;
     let msg = `Namaste Siri Arts & Crafts! I am interested in consulting with your master artisans for a custom event decor.\n\n`;
     if (activeTab === 'wizard') {
       msg += `*Occasion:* ${wizardDraft.occasion || 'TBD'}\n`;
@@ -81,6 +116,9 @@ export function CustomOrders() {
       msg += `*Setups:* ${wizardDraft.quantity}\n`;
       msg += `*Event Date:* ${wizardDraft.eventDate || 'TBD'}\n`;
       msg += `*Location:* ${wizardDraft.city || 'TBD'}\n`;
+      if (linkedProduct) {
+        msg += `*Target Product:* ${baseUrl}/product/${linkedProduct.slug || linkedProduct._id}\n`;
+      }
       if (wizardDraft.customRequirements) {
         msg += `*My Requirements:* ${wizardDraft.customRequirements}\n`;
       }
@@ -89,6 +127,12 @@ export function CustomOrders() {
       }
     } else if (selectedOrder) {
       msg += `*Order Reference:* ${selectedOrder._id}\n`;
+      msg += `*Order Link:* ${baseUrl}/custom-order?orderId=${selectedOrder._id}\n`;
+      if (selectedOrder.productSnapshot?.productId) {
+        msg += `*Product Link:* ${baseUrl}/product/${selectedOrder.productSnapshot.productId}\n`;
+      } else if (selectedOrder.productId) {
+        msg += `*Product Link:* ${baseUrl}/product/${selectedOrder.productId}\n`;
+      }
       msg += `*Occasion:* ${selectedOrder.occasion}\n`;
       msg += `*Status:* ${selectedOrder.status}\n`;
       msg += `*Total Estimated Price:* ${selectedOrder.quotation?.total ? '₹' + selectedOrder.quotation.total.toLocaleString('en-IN') : 'Price Estimate Pending'}\n`;
@@ -311,11 +355,35 @@ export function CustomOrders() {
     setWizardDraft(nextDraft);
   };
 
+  // BUG-14: Graceful handling of missing config data
+  const DEFAULT_FALLBACK_CONFIG = {
+    occasions: [
+      { id: 'wedding', label: 'Wedding / Vivaham', enabled: true },
+      { id: 'haldi', label: 'Haldi & Mehndi Ceremony', enabled: true },
+      { id: 'reception', label: 'Reception Style Gala', enabled: true },
+    ],
+    productTypes: [
+      { id: 'mandapam', label: 'Full Mandapam Setup', enabled: true },
+      { id: 'backdrop', label: 'Floral Backdrop Curations', enabled: true },
+    ],
+    budgetRanges: [
+      { id: 'low', label: '₹10,000 - ₹50,000', enabled: true },
+      { id: 'medium', label: '₹50,000 - ₹1,500,000', enabled: true },
+      { id: 'high', label: '₹1,500,000+', enabled: true },
+    ],
+    bookingTypes: [
+      { id: 'video', label: 'Premium Video Consultation', enabled: true },
+      { id: 'call', label: 'Direct Audio Conference', enabled: true },
+    ],
+  };
+
+  const activeConfig = config || DEFAULT_FALLBACK_CONFIG;
+
   // Preset options configurations
-  const occasionList = config?.occasions?.filter((o) => o.enabled) || [];
-  const productTypeList = config?.productTypes?.filter((p) => p.enabled) || [];
-  const budgetList = config?.budgetRanges?.filter((b) => b.enabled) || [];
-  const bookingList = config?.bookingTypes?.filter((b) => b.enabled) || [];
+  const occasionList = activeConfig.occasions?.filter((o) => o.enabled) || [];
+  const productTypeList = activeConfig.productTypes?.filter((p) => p.enabled) || [];
+  const budgetList = activeConfig.budgetRanges?.filter((b) => b.enabled) || [];
+  const bookingList = activeConfig.bookingTypes?.filter((b) => b.enabled) || [];
 
   // Sync custom inputs from draft once loaded
   useEffect(() => {
@@ -358,6 +426,66 @@ export function CustomOrders() {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [selectedOrder?.messages]);
+
+  // ─── Socket Events for Tracker ───
+  useEffect(() => {
+    if (!socket || activeTab !== 'tracker') return;
+
+    const handleStatusChange = (payload) => {
+      try {
+        toast.success(`Order ${payload.orderId} status updated to ${payload.status}`);
+        loadWorkspaceData();
+        if (selectedOrder && selectedOrder.orderId === payload.orderId) {
+          customOrderService.getById(selectedOrder._id).then((res) => {
+            if (res.success) setSelectedOrder(res.data);
+          });
+        }
+      } catch (err) {
+        console.error('Socket handleStatusChange error:', err);
+      }
+    };
+
+    const handleNewMessage = (payload) => {
+      try {
+        loadWorkspaceData();
+        if (selectedOrder && selectedOrder.orderId === payload.orderId) {
+          customOrderService.getById(selectedOrder._id).then((res) => {
+            if (res.success) setSelectedOrder(res.data);
+          });
+        } else {
+          toast.success(`New message from ${payload.senderName} regarding ${payload.orderId}`);
+        }
+      } catch (err) {
+        console.error('Socket handleNewMessage error:', err);
+      }
+    };
+
+    const handleQuoteCreated = (payload) => {
+      try {
+        loadWorkspaceData();
+        toast.success(
+          `New quotation received for ${payload.orderId} (₹${payload.total.toLocaleString()})`,
+        );
+        if (selectedOrder && selectedOrder.orderId === payload.orderId) {
+          customOrderService.getById(selectedOrder._id).then((res) => {
+            if (res.success) setSelectedOrder(res.data);
+          });
+        }
+      } catch (err) {
+        console.error('Socket handleQuoteCreated error:', err);
+      }
+    };
+
+    socket.on('customOrder:statusChange', handleStatusChange);
+    socket.on('customOrder:newMessage', handleNewMessage);
+    socket.on('customOrder:quoteCreated', handleQuoteCreated);
+
+    return () => {
+      socket.off('customOrder:statusChange', handleStatusChange);
+      socket.off('customOrder:newMessage', handleNewMessage);
+      socket.off('customOrder:quoteCreated', handleQuoteCreated);
+    };
+  }, [socket, selectedOrder, activeTab]);
 
   // ─── IMAGE UPLOAD HANDLING ───
   const handleMoodUpload = async (e) => {
@@ -404,6 +532,7 @@ export function CustomOrders() {
 
   // ─── SUBMISSION FLOW ───
   const handleWizardSubmit = async () => {
+    if (isSubmittingRef.current) return;
     runProtectedAction(async () => {
       // Validation checks
       if (!wizardDraft.occasion || wizardDraft.occasion === 'Other')
@@ -414,6 +543,7 @@ export function CustomOrders() {
       if (!wizardDraft.customerPhone)
         return toast.error('Please fill in your contact phone number');
 
+      isSubmittingRef.current = true;
       setLoading(true);
       try {
         const payload = {
@@ -425,6 +555,33 @@ export function CustomOrders() {
         // resolves the email from token claims, but let's pass it if available.
         if (user?.email) {
           payload.customerEmail = user.email;
+        }
+
+        if (linkedProduct) {
+          payload.productId = linkedProduct._id || linkedProduct.id;
+          payload.productSnapshot = {
+            productId: linkedProduct._id || linkedProduct.id,
+            title: linkedProduct.title,
+            imageSrc: linkedProduct.imageSrc,
+            category: linkedProduct.category,
+            price: linkedProduct.price,
+            description: linkedProduct.description,
+          };
+          payload.customizationData = Object.entries(customizationFields).map(([key, value]) => {
+            let fieldType = 'text';
+            if (key.toLowerCase().includes('color')) {
+              fieldType = 'color';
+            } else if (Array.isArray(value)) {
+              fieldType = 'multiselect';
+            } else if (typeof value === 'number') {
+              fieldType = 'number';
+            }
+            return {
+              fieldName: key,
+              fieldType,
+              value: value,
+            };
+          });
         }
 
         const res = await customOrderService.create(payload);
@@ -447,6 +604,7 @@ export function CustomOrders() {
           setCustomOccasionText('');
           setCustomProductTypeText('');
           setPastedLink('');
+          setCustomizationFields({});
           setCurrentStep(1);
           loadWorkspaceData();
           setActiveTab('tracker');
@@ -456,6 +614,7 @@ export function CustomOrders() {
       } catch (err) {
         toast.error('Failed to submit custom order request');
       } finally {
+        isSubmittingRef.current = false;
         setLoading(false);
       }
     });
@@ -464,8 +623,9 @@ export function CustomOrders() {
   // ─── CLIENT CHAT DISPATCH ───
   const handleSendChatMessage = async (e) => {
     if (e) e.preventDefault();
-    if (!chatMessage.trim() || !selectedOrder) return;
+    if (!chatMessage.trim() || !selectedOrder || isSendingMessageRef.current) return;
 
+    isSendingMessageRef.current = true;
     setIsSendingMessage(true);
     try {
       const res = await customOrderService.postMessage(selectedOrder._id, chatMessage.trim());
@@ -479,6 +639,7 @@ export function CustomOrders() {
     } catch (err) {
       toast.error('Failed to send message');
     } finally {
+      isSendingMessageRef.current = false;
       setIsSendingMessage(false);
     }
   };
@@ -512,7 +673,8 @@ export function CustomOrders() {
       toast.error('Please select or specify your product category to proceed');
       return;
     }
-    if (currentStep === 7) {
+    const contactStepIndex = linkedProduct ? 8 : 7;
+    if (currentStep === contactStepIndex) {
       if (!wizardDraft.customerName) {
         toast.error('Please enter your contact name');
         return;
@@ -525,7 +687,7 @@ export function CustomOrders() {
     setCurrentStep((prev) => prev + 1);
   };
 
-  const stepsList = [
+  const baseStepsList = [
     'Select Occasion',
     'Select Product Category',
     'Upload Inspiration Photos',
@@ -535,6 +697,10 @@ export function CustomOrders() {
     'Contact Information',
     'Review & Submit',
   ];
+
+  const stepsList = linkedProduct
+    ? [baseStepsList[0], baseStepsList[1], 'Product Customization', ...baseStepsList.slice(2)]
+    : baseStepsList;
 
   return (
     <div className="relative selection:bg-primary/20 bg-[var(--color-surface-ivory)] min-h-screen text-[var(--color-on-surface)] font-body pt-20 md:pt-32">
@@ -629,1059 +795,40 @@ export function CustomOrders() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-              {/* Left Box: Step progress navigator (Desktop Only) */}
-              <div className="hidden lg:block lg:col-span-4 bg-white/70 backdrop-blur-md rounded-[2.5rem] border border-black/5 p-8 shadow-sm space-y-6">
-                <span className="font-label-sm text-[10px] text-[var(--color-gold)] uppercase tracking-[0.25em] block font-bold">
-                  custom form
-                </span>
-                <h3 className="font-display text-[22px] text-[var(--color-on-surface)] font-normal leading-snug">
-                  Decor Design Form
-                </h3>
-
-                <div className="space-y-4 pt-4 border-t border-black/5">
-                  {stepsList.map((label, index) => {
-                    const stepNum = index + 1;
-                    return (
-                      <div
-                        key={stepNum}
-                        onClick={() => {
-                          if (stepNum < currentStep) setCurrentStep(stepNum);
-                        }}
-                        className={`flex items-center gap-3 transition-all duration-300 cursor-pointer ${
-                          currentStep === stepNum
-                            ? 'text-[var(--color-gold)]'
-                            : stepNum < currentStep
-                              ? 'text-[var(--color-on-surface)] hover:text-[var(--color-gold)]'
-                              : 'text-[var(--color-on-surface)]/30 pointer-events-none'
-                        }`}
-                      >
-                        <div
-                          className={`w-6 h-6 rounded-full text-[10px] font-bold font-mono flex items-center justify-center border transition-all ${
-                            currentStep === stepNum
-                              ? 'bg-[var(--color-gold)] text-white border-[var(--color-gold)]'
-                              : stepNum < currentStep
-                                ? 'bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)]'
-                                : 'border-black/10'
-                          }`}
-                        >
-                          {stepNum}
-                        </div>
-                        <span className="text-[12px] font-bold uppercase tracking-wider">
-                          {label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+            {linkedProduct && (
+              <div className="mb-6">
+                <ProductSummaryCard
+                  product={linkedProduct}
+                  onClear={() => setLinkedProduct(null)}
+                />
               </div>
+            )}
 
-              {/* Right Box: Dynamic forms active panel */}
-              <div className="lg:col-span-8 bg-white rounded-3xl lg:rounded-[2.5rem] border border-black/5 p-5 md:p-10 shadow-sm relative overflow-hidden min-h-[460px]">
-                {/* Dynamic progress bar (highly integrated at the top of the card) */}
-                <div className="lg:hidden mb-6 space-y-2 border-b border-black/5 pb-4">
-                  <div className="flex justify-between items-center text-[9px] md:text-[10px] font-bold text-[#685C57] uppercase tracking-wider">
-                    <span>Decor Design Form</span>
-                    <span className="font-mono text-[var(--color-gold)]">
-                      Step {currentStep} of 8
-                    </span>
-                  </div>
-                  <div className="w-full bg-black/5 h-1 rounded-full overflow-hidden">
-                    <div
-                      className="bg-[var(--color-gold)] h-full shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-all duration-300"
-                      style={{ width: `${(currentStep / 8) * 100}%` }}
-                    />
-                  </div>
-                  <span className="block text-[11px] font-bold uppercase tracking-wider text-[var(--color-on-surface)]">
-                    {stepsList[currentStep - 1]}
-                  </span>
-                </div>
-
-                <>
-                  <motion.div
-                    key={currentStep}
-                    initial="hidden"
-                    animate="show"
-                    exit="hidden"
-                    variants={slideIn}
-                    className="space-y-5 md:space-y-6"
-                  >
-                    {/* Step 1: Select Occasion */}
-                    {currentStep === 1 && (
-                      <div className="space-y-5">
-                        <div>
-                          <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">
-                            step 01
-                          </span>
-                          <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
-                            Select the Occasion
-                          </h2>
-                          <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">
-                            What event or celebration are we designing decor for?
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2.5 pt-2">
-                          {occasionList.length === 0 ? (
-                            <div className="col-span-full text-center text-[12px] text-outline italic">
-                              No occasions found. Please wait or proceed.
-                            </div>
-                          ) : (
-                            occasionList.map((o) => {
-                              const isSelected = wizardDraft.occasion === o.label;
-                              return (
-                                <button
-                                  key={o.id}
-                                  type="button"
-                                  onClick={() => {
-                                    updateDraft({ occasion: o.label });
-                                    setCustomOccasionText('');
-                                    setShowCustomOccasion(false);
-                                  }}
-                                  className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
-                                    isSelected
-                                      ? 'bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-md'
-                                      : 'bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/15'
-                                  }`}
-                                >
-                                  <div className="flex justify-between items-start w-full">
-                                    <span
-                                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-[var(--color-gold)] bg-[var(--color-gold)]' : 'border-black/15'}`}
-                                    >
-                                      {isSelected && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                                      )}
-                                    </span>
-                                  </div>
-                                  <span className="mt-2 text-[10px] md:text-[11px] leading-tight line-clamp-2">
-                                    {o.label}
-                                  </span>
-                                </button>
-                              );
-                            })
-                          )}
-
-                          {/* Custom 'Other' Option card */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateDraft({ occasion: 'Other' });
-                              setCustomOccasionText('');
-                              setShowCustomOccasion(true);
-                            }}
-                            className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
-                              showCustomOccasion
-                                ? 'bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-md'
-                                : 'bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/15'
-                            }`}
-                          >
-                            <div className="flex justify-between items-start w-full">
-                              <span
-                                className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${showCustomOccasion ? 'border-[var(--color-gold)] bg-[var(--color-gold)]' : 'border-black/15'}`}
-                              >
-                                {showCustomOccasion && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                                )}
-                              </span>
-                            </div>
-                            <span className="mt-2 text-[10px] md:text-[11px] leading-tight line-clamp-2">
-                              Other (Specify)
-                            </span>
-                          </button>
-                        </div>
-
-                        {/* Custom Occasion Text Input */}
-                        {showCustomOccasion && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="space-y-1.5 pt-1"
-                          >
-                            <label className="text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-wider block">
-                              Specify Your Occasion
-                            </label>
-                            <input
-                              type="text"
-                              value={customOccasionText}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setCustomOccasionText(val);
-                                updateDraft({ occasion: val || 'Other' });
-                              }}
-                              placeholder="E.g., Corporate Anniversary, Graduation Curation"
-                              className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 md:py-3 text-[13px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
-                            />
-                          </motion.div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Step 2: Choose Product Type */}
-                    {currentStep === 2 && (
-                      <div className="space-y-5">
-                        <div>
-                          <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">
-                            step 02
-                          </span>
-                          <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
-                            Choose Product Type
-                          </h2>
-                          <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">
-                            Which items or setups do you want to custom order?
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2.5 pt-2">
-                          {productTypeList.length === 0 ? (
-                            <div className="col-span-full text-center text-[12px] text-outline italic">
-                              No categories found. Please wait or proceed.
-                            </div>
-                          ) : (
-                            productTypeList.map((p) => {
-                              const isSelected = wizardDraft.productType === p.label;
-                              return (
-                                <button
-                                  key={p.id}
-                                  type="button"
-                                  onClick={() => {
-                                    updateDraft({ productType: p.label });
-                                    setCustomProductTypeText('');
-                                    setShowCustomProductType(false);
-                                  }}
-                                  className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
-                                    isSelected
-                                      ? 'bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-md'
-                                      : 'bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/15'
-                                  }`}
-                                >
-                                  <div className="flex justify-between items-start w-full">
-                                    <span
-                                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-[var(--color-gold)] bg-[var(--color-gold)]' : 'border-black/15'}`}
-                                    >
-                                      {isSelected && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                                      )}
-                                    </span>
-                                  </div>
-                                  <span className="mt-2 text-[10px] md:text-[11px] leading-tight line-clamp-2">
-                                    {p.label}
-                                  </span>
-                                </button>
-                              );
-                            })
-                          )}
-
-                          {/* Custom 'Other' Option card */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateDraft({ productType: 'Other' });
-                              setCustomProductTypeText('');
-                              setShowCustomProductType(true);
-                            }}
-                            className={`p-3 md:p-4 rounded-xl md:rounded-2xl border text-left font-bold uppercase tracking-wider transition-all duration-300 flex flex-col justify-between items-start min-h-[82px] cursor-pointer ${
-                              showCustomProductType
-                                ? 'bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-md'
-                                : 'bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/15'
-                            }`}
-                          >
-                            <div className="flex justify-between items-start w-full">
-                              <span
-                                className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${showCustomProductType ? 'border-[var(--color-gold)] bg-[var(--color-gold)]' : 'border-black/15'}`}
-                              >
-                                {showCustomProductType && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                                )}
-                              </span>
-                            </div>
-                            <span className="mt-2 text-[10px] md:text-[11px] leading-tight line-clamp-2">
-                              Other (Specify)
-                            </span>
-                          </button>
-                        </div>
-
-                        {/* Custom Category Text Input */}
-                        {showCustomProductType && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="space-y-1.5 pt-1"
-                          >
-                            <label className="text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-wider block">
-                              Specify Your Product Category
-                            </label>
-                            <input
-                              type="text"
-                              value={customProductTypeText}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setCustomProductTypeText(val);
-                                updateDraft({ productType: val || 'Other' });
-                              }}
-                              placeholder="E.g., Floral Backdrop, Entrance Archway"
-                              className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 md:py-3 text-[13px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
-                            />
-                          </motion.div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Step 3: Upload Inspiration Images & Links */}
-                    {currentStep === 3 && (
-                      <div className="space-y-6">
-                        <div>
-                          <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">
-                            step 03
-                          </span>
-                          <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
-                            Upload Inspiration Photos
-                          </h2>
-                          <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">
-                            Upload reference photos, venue drawings, or choose from our beautiful
-                            signature curation presets.
-                          </p>
-                        </div>
-
-                        {/* FILE UPLOAD DRAG & DROP AREA */}
-                        <div className="border-t border-black/5 pt-5 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[18px] text-[var(--color-gold)]">
-                              cloud_upload
-                            </span>
-                            <h3 className="text-[13.5px] font-bold text-[var(--color-on-surface)]">
-                              Or, Upload Custom References
-                            </h3>
-                          </div>
-
-                          <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className="border-2 border-dashed border-black/10 hover:border-[var(--color-gold)] rounded-2xl p-6 md:p-8 text-center bg-[var(--color-surface-ivory)]/50 cursor-pointer transition-all duration-300 group flex flex-col items-center justify-center min-h-[120px]"
-                          >
-                            <input
-                              ref={fileInputRef}
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              className="hidden"
-                              onChange={handleMoodUpload}
-                            />
-                            <div className="w-10 h-10 rounded-full bg-[var(--color-gold)]/10 text-[var(--color-gold)] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                              <span className="material-symbols-outlined text-[20px]">
-                                cloud_upload
-                              </span>
-                            </div>
-                            <p className="text-[12px] font-bold uppercase tracking-wider text-[var(--color-on-surface)] mb-0.5">
-                              Drag & Drop your photos here
-                            </p>
-                            <p className="text-[9.5px] text-[#685C57]/60">
-                              You can upload multiple files (JPG, PNG, HEIC).
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Upload loader */}
-                        {isUploading && (
-                          <div className="space-y-2 bg-[var(--color-surface-ivory)] p-3 rounded-xl border border-black/5 animate-pulse">
-                            <div className="flex justify-between items-center text-[9px] font-bold text-[var(--color-gold)] uppercase tracking-wider">
-                              <span>Uploading your photos...</span>
-                              <span>{uploadProgress}%</span>
-                            </div>
-                            <div className="w-full bg-[#f2efe9] h-1.5 rounded-full overflow-hidden">
-                              <div
-                                className="bg-[var(--color-gold)] h-full transition-all duration-300"
-                                style={{ width: `${uploadProgress}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Direct image previews grid */}
-                        {directImages.length > 0 && (
-                          <div className="space-y-3 pt-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#685C57] block font-medium">
-                              Uploaded Photos ({directImages.length}):
-                            </span>
-                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-                              {directImages.map((img) => (
-                                <div
-                                  key={img}
-                                  className="relative aspect-square rounded-xl overflow-hidden border border-black/5 bg-[var(--color-surface-ivory)] group"
-                                >
-                                  <OptimizedImage
-                                    src={img}
-                                    alt="Inspiration preview"
-                                    className="w-full h-full object-cover"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      updateDraft({
-                                        inspirationImages: wizardDraft.inspirationImages.filter(
-                                          (url) => url !== img,
-                                        ),
-                                      })
-                                    }
-                                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] shadow-md transition-all active:scale-90 cursor-pointer"
-                                  >
-                                    ✕
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* ─── INTERACTIVE SIRI AI DESIGN INTELLIGENCE ANALYZER ─── */}
-                            <div className="mt-4 bg-[var(--color-surface-ivory)] border border-[var(--color-gold)]/30 rounded-2xl p-4 md:p-5 space-y-4 shadow-sm relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--color-gold)]/5 rounded-full -mr-6 -mt-6 pointer-events-none" />
-                              <div className="flex items-start gap-3">
-                                <span className="material-symbols-outlined text-[var(--color-gold)] text-[24px] shrink-0">
-                                  insights
-                                </span>
-                                <div className="space-y-1">
-                                  <h4 className="text-[13px] font-bold text-[var(--color-on-surface)] flex items-center gap-1.5">
-                                    Siri AI Design Intelligence
-                                    <span className="bg-[var(--color-gold)]/10 text-[var(--color-gold)] text-[7.5px] uppercase tracking-widest font-extrabold px-1.5 py-0.5 rounded">
-                                      Expert Vision
-                                    </span>
-                                  </h4>
-                                  <p className="text-[10.5px] text-[#685C57] font-light leading-normal">
-                                    Let our neural design system scan your inspiration image,
-                                    extract the Telugu/traditional color palettes, recommend
-                                    heritage materials, and estimate the budget range!
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Scanning Animation Progress */}
-                              {isAnalyzing && (
-                                <div className="bg-white/80 backdrop-blur-sm border border-black/5 rounded-xl p-4 space-y-3">
-                                  <div className="flex justify-between items-center text-[9.5px] font-bold uppercase tracking-wider text-[var(--color-gold)]">
-                                    <span className="flex items-center gap-1.5">
-                                      <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
-                                      Siri AI scanning design motifs...
-                                    </span>
-                                    <span>{aiStep * 20}%</span>
-                                  </div>
-                                  <div className="w-full bg-black/5 h-1.5 rounded-full overflow-hidden">
-                                    <div
-                                      className="bg-[var(--color-gold)] h-full transition-all duration-300"
-                                      style={{ width: `${aiStep * 20}%` }}
-                                    />
-                                  </div>
-                                  <p className="text-[9.5px] text-[#685C57] italic">
-                                    {aiStep === 1 && 'Decomposing image color spectrum...'}
-                                    {aiStep === 2 &&
-                                      'Analyzing traditional Telugu & South Indian motif shapes...'}
-                                    {aiStep === 3 &&
-                                      'Classifying floral swags and background wood carving styles...'}
-                                    {aiStep === 4 &&
-                                      'Estimating silver/brass elements & structural framework count...'}
-                                    {aiStep === 5 &&
-                                      'Matching with Siri artisan catalogs and material cost curves...'}
-                                  </p>
-                                </div>
-                              )}
-
-                              {/* Siri AI Analysis results cards */}
-                              {aiAnalysisResult && !isAnalyzing && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className="bg-white border border-[var(--color-gold)]/35 rounded-xl p-4 space-y-3.5 shadow-inner"
-                                >
-                                  <div className="border-b border-black/5 pb-2.5 flex items-center justify-between">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-gold)]">
-                                      AI Analysis Summary
-                                    </span>
-                                    <span className="text-[9.5px] font-light text-[#685C57]">
-                                      Reference: Image 01
-                                    </span>
-                                  </div>
-
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
-                                    <div className="space-y-0.5">
-                                      <span className="text-[8.5px] uppercase tracking-wider text-[#685C57] font-bold">
-                                        Style Classification
-                                      </span>
-                                      <p className="font-bold text-[var(--color-on-surface)]">
-                                        {aiAnalysisResult.style}
-                                      </p>
-                                    </div>
-                                    <div className="space-y-1">
-                                      <span className="text-[8.5px] uppercase tracking-wider text-[#685C57] font-bold">
-                                        Extracted Palette
-                                      </span>
-                                      <div className="flex items-center gap-1.5">
-                                        {aiAnalysisResult.palette.map((hex, index) => (
-                                          <div
-                                            key={index}
-                                            className="flex items-center gap-1 bg-[var(--color-surface-ivory)] border border-black/5 px-1.5 py-0.5 rounded-md"
-                                          >
-                                            <span
-                                              className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0"
-                                              style={{ backgroundColor: hex }}
-                                            />
-                                            <span className="font-mono text-[8px] text-[var(--color-on-surface)]">
-                                              {hex}
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-0.5 text-[11px]">
-                                    <span className="text-[8.5px] uppercase tracking-wider text-[#685C57] font-bold">
-                                      Extracted Color Nuance
-                                    </span>
-                                    <p className="text-[var(--color-on-surface)] font-medium">
-                                      {aiAnalysisResult.colorDesc}
-                                    </p>
-                                  </div>
-
-                                  <div className="space-y-0.5 text-[11px]">
-                                    <span className="text-[8.5px] uppercase tracking-wider text-[#685C57] font-bold">
-                                      Artisanal Recommendations
-                                    </span>
-                                    <p className="text-[#685C57] font-light leading-relaxed">
-                                      {aiAnalysisResult.materials}
-                                    </p>
-                                  </div>
-
-                                  <div className="border-t border-black/5 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div className="text-[11px]">
-                                      <span className="text-[8.5px] uppercase tracking-wider text-[#685C57] font-bold block">
-                                        Estimated Budget Range
-                                      </span>
-                                      <span className="font-mono text-[var(--color-gold)] font-bold text-[12px]">
-                                        {aiAnalysisResult.suggestedBudget}
-                                      </span>
-                                    </div>
-
-                                    <button
-                                      type="button"
-                                      onClick={handleApplyAiSuggestions}
-                                      className="px-4 py-2 bg-[var(--color-on-surface)] text-white hover:bg-[var(--color-gold)] rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                                    >
-                                      Inject Suggestions Into Request Form
-                                      <span className="material-symbols-outlined text-[13px]">
-                                        add_circle
-                                      </span>
-                                    </button>
-                                  </div>
-                                </motion.div>
-                              )}
-
-                              {!isAnalyzing && (
-                                <button
-                                  type="button"
-                                  onClick={handleAIAnalysis}
-                                  className="w-full py-2.5 border-2 border-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-white text-[var(--color-gold)] rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm bg-white"
-                                >
-                                  <span className="material-symbols-outlined text-[16px]">
-                                    insights
-                                  </span>
-                                  {aiAnalysisResult
-                                    ? 'Scan Again with Siri AI'
-                                    : 'Analyze Inspiration Photo with Siri AI'}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Paste custom links tool */}
-                        <div className="border-t border-black/5 pt-5 space-y-2.5">
-                          <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[18px] text-[var(--color-gold)]">
-                              link
-                            </span>
-                            <h3 className="text-[13.5px] font-bold text-[var(--color-on-surface)]">
-                              Or, Add Inspiration Links
-                            </h3>
-                          </div>
-                          <p className="text-[11px] text-[#685C57] font-light">
-                            Share your Pinterest board, Instagram post, or Google Drive folder with
-                            us:
-                          </p>
-
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <input
-                              type="text"
-                              value={pastedLink}
-                              onChange={(e) => setPastedLink(e.target.value)}
-                              placeholder="Paste Pinterest, Instagram or Drive link here..."
-                              className="flex-1 bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (!pastedLink.trim()) return;
-                                if (
-                                  !pastedLink.startsWith('http://') &&
-                                  !pastedLink.startsWith('https://')
-                                ) {
-                                  toast.error(
-                                    'Please enter a valid link starting with http:// or https://',
-                                  );
-                                  return;
-                                }
-                                const nextUrls = [
-                                  ...wizardDraft.inspirationImages,
-                                  pastedLink.trim(),
-                                ];
-                                updateDraft({ inspirationImages: nextUrls });
-                                setPastedLink('');
-                                toast.success('Link added successfully!');
-                              }}
-                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[var(--color-on-surface)] text-white hover:bg-[var(--color-gold)] transition-all text-[10px] md:text-[11px] font-bold uppercase tracking-wider shrink-0 cursor-pointer text-center"
-                            >
-                              Add Link
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Paste external links list previews */}
-                        {externalLinks.length > 0 && (
-                          <div className="space-y-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#685C57]">
-                              Added Inspiration Links ({externalLinks.length}):
-                            </span>
-                            <div className="flex flex-col gap-2">
-                              {externalLinks.map((link) => (
-                                <div
-                                  key={link}
-                                  className="flex items-center justify-between bg-[var(--color-surface-ivory)] border border-black/5 rounded-xl px-3 py-2 shadow-sm min-w-0"
-                                >
-                                  <div className="flex items-center gap-2 text-[11.5px] min-w-0 pr-2">
-                                    <span className="material-symbols-outlined text-[15px] text-[var(--color-gold)] shrink-0">
-                                      link
-                                    </span>
-                                    <a
-                                      href={link}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-[var(--color-on-surface)] font-bold hover:underline truncate"
-                                    >
-                                      {link}
-                                    </a>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const nextImages = wizardDraft.inspirationImages.filter(
-                                        (url) => url !== link,
-                                      );
-                                      updateDraft({ inspirationImages: nextImages });
-                                    }}
-                                    className="text-red-500 hover:text-red-600 font-mono font-bold text-[11px] px-1 cursor-pointer"
-                                  >
-                                    ✕
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Step 4: Add Custom Requirements */}
-                    {currentStep === 4 && (
-                      <div className="space-y-5">
-                        <div>
-                          <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">
-                            step 04
-                          </span>
-                          <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
-                            Describe Your Requirements
-                          </h2>
-                          <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">
-                            Describe what you want (e.g. colors, flowers, backdrop styles, or fabric
-                            preferences).
-                          </p>
-                        </div>
-
-                        <div className="pt-1">
-                          <textarea
-                            value={wizardDraft.customRequirements}
-                            onChange={(e) => updateDraft({ customRequirements: e.target.value })}
-                            placeholder="Example: We want a traditional gold and red stage background with fresh orange marigold flowers. Please include hanging brass lamps and dynamic lighting..."
-                            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-2xl p-4 font-body text-[13px] outline-none focus:border-[var(--color-gold)] min-h-[140px] text-[var(--color-on-surface)] transition-all resize-none shadow-inner"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 5: Budget & Quantity */}
-                    {currentStep === 5 && (
-                      <div className="space-y-5">
-                        <div>
-                          <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">
-                            step 05
-                          </span>
-                          <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
-                            Quantity & Budget
-                          </h2>
-                          <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">
-                            Select the number of setups and your approximate budget range.
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase text-[#685C57] tracking-wider block">
-                              Number of Setups
-                            </label>
-                            <div className="flex items-center bg-[var(--color-surface-ivory)] rounded-xl border border-black/10 p-1.5 max-w-[150px]">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateDraft({ quantity: Math.max(1, wizardDraft.quantity - 1) })
-                                }
-                                className="w-9 h-9 rounded-lg bg-white hover:bg-black/5 text-[var(--color-on-surface)] font-bold flex items-center justify-center text-[15px] cursor-pointer shadow-sm"
-                              >
-                                -
-                              </button>
-                              <span className="flex-1 text-center font-mono font-bold text-[13px]">
-                                {wizardDraft.quantity}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => updateDraft({ quantity: wizardDraft.quantity + 1 })}
-                                className="w-9 h-9 rounded-lg bg-white hover:bg-black/5 text-[var(--color-on-surface)] font-bold flex items-center justify-center text-[15px] cursor-pointer shadow-sm"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase text-[#685C57] tracking-wider block">
-                              Your Budget
-                            </label>
-                            <select
-                              value={wizardDraft.budget}
-                              onChange={(e) => updateDraft({ budget: e.target.value })}
-                              className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] cursor-pointer transition-all"
-                            >
-                              <option value="">Select Budget Range...</option>
-                              {budgetList.map((b) => (
-                                <option key={b.id} value={b.label}>
-                                  {b.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 6: Delivery/Event Details */}
-                    {currentStep === 6 && (
-                      <div className="space-y-5">
-                        <div>
-                          <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">
-                            step 06
-                          </span>
-                          <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
-                            Delivery & Event Details
-                          </h2>
-                          <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">
-                            Where and when is the main event taking place?
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase text-[#685C57] tracking-wider block">
-                              Event Date *
-                            </label>
-                            <input
-                              type="date"
-                              value={wizardDraft.eventDate}
-                              onChange={(e) => updateDraft({ eventDate: e.target.value })}
-                              className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] cursor-pointer transition-all"
-                            />
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase text-[#685C57] tracking-wider block">
-                              Event City / Location
-                            </label>
-                            <input
-                              type="text"
-                              value={wizardDraft.city}
-                              onChange={(e) => updateDraft({ city: e.target.value })}
-                              placeholder="E.g., Bangalore, Ongole"
-                              className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 pt-1">
-                          <label className="text-[10px] font-bold uppercase text-[#685C57] tracking-wider block">
-                            Preferred Consultation Type
-                          </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            {bookingList.map((b) => (
-                              <button
-                                key={b.id}
-                                type="button"
-                                onClick={() => updateDraft({ bookingType: b.label })}
-                                className={`p-2.5 rounded-xl border text-[10px] font-bold text-center transition-all cursor-pointer uppercase tracking-wider ${
-                                  wizardDraft.bookingType === b.label
-                                    ? 'bg-[var(--color-on-surface)] text-white border-[var(--color-on-surface)] shadow-sm'
-                                    : 'bg-[var(--color-surface-ivory)] text-[var(--color-on-surface)] border-black/5 hover:border-black/20'
-                                }`}
-                              >
-                                {b.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 7: Contact Information */}
-                    {currentStep === 7 && (
-                      <div className="space-y-5">
-                        <div>
-                          <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">
-                            step 07
-                          </span>
-                          <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
-                            Contact Information
-                          </h2>
-                          <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">
-                            Fill in your contact details so our team can reach you easily.
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase text-[#685C57] tracking-wider block">
-                              Your Full Name *
-                            </label>
-                            <input
-                              type="text"
-                              value={wizardDraft.customerName}
-                              onChange={(e) => updateDraft({ customerName: e.target.value })}
-                              placeholder="E.g., Ananya Sharma"
-                              className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
-                            />
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase text-[#685C57] tracking-wider block">
-                              WhatsApp Number *
-                            </label>
-                            <input
-                              type="tel"
-                              value={wizardDraft.customerPhone}
-                              onChange={(e) => updateDraft({ customerPhone: e.target.value })}
-                              placeholder="E.g., +91 98765 43210"
-                              className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[12.5px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 8: Review & Submit */}
-                    {currentStep === 8 && (
-                      <div className="space-y-5">
-                        <div>
-                          <span className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-gold)] tracking-widest block mb-0.5">
-                            step 08
-                          </span>
-                          <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
-                            Review Your Selections
-                          </h2>
-                          <p className="text-[11.5px] md:text-[12px] text-[#685C57] font-light">
-                            Please review all the details of your request before submitting.
-                          </p>
-                        </div>
-
-                        <div className="bg-[var(--color-surface-ivory)] rounded-2xl border border-black/5 p-4 md:p-5 space-y-3.5">
-                          <div className="grid grid-cols-2 gap-3 text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
-                            <div>
-                              <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                                Occasion
-                              </span>
-                              <p className="font-bold text-[var(--color-on-surface)] mt-0.5">
-                                {wizardDraft.occasion || 'Not Selected'}
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                                Product Category
-                              </span>
-                              <p className="font-bold text-[var(--color-on-surface)] mt-0.5">
-                                {wizardDraft.productType || 'Not Selected'}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3 text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
-                            <div>
-                              <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                                Number of Setups
-                              </span>
-                              <p className="font-bold text-[var(--color-on-surface)] mt-0.5">
-                                {wizardDraft.quantity} active
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                                Budget
-                              </span>
-                              <p className="font-bold text-[var(--color-on-surface)] mt-0.5">
-                                {wizardDraft.budget || 'Get Quote'}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3 text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
-                            <div>
-                              <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                                Event Date & Location
-                              </span>
-                              <p className="font-bold text-[var(--color-on-surface)] mt-0.5">
-                                {wizardDraft.eventDate || 'TBD'} ({wizardDraft.city || 'Any City'})
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                                Consultation Type
-                              </span>
-                              <p className="font-bold text-[var(--color-on-surface)] mt-0.5">
-                                {wizardDraft.bookingType}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
-                            <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                              Contact Details
-                            </span>
-                            <p className="font-bold text-[var(--color-on-surface)] mt-0.5">
-                              {wizardDraft.customerName} ({wizardDraft.customerPhone})
-                            </p>
-                          </div>
-
-                          {wizardDraft.customRequirements && (
-                            <div className="text-[11.5px] md:text-[12px] border-b border-black/5 pb-3">
-                              <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                                Your Special Requirements
-                              </span>
-                              <p className="text-[var(--color-on-surface)] italic leading-relaxed mt-0.5">
-                                "{wizardDraft.customRequirements}"
-                              </p>
-                            </div>
-                          )}
-
-                          {directImages.length > 0 && (
-                            <div className="space-y-1.5 border-b border-black/5 pb-3">
-                              <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                                Uploaded Inspiration Photos ({directImages.length})
-                              </span>
-                              <div className="flex gap-2 overflow-x-auto pb-1">
-                                {directImages.map((img) => (
-                                  <OptimizedImage
-                                    key={img}
-                                    src={img}
-                                    alt="Thumb"
-                                    className="w-12 h-12 object-cover rounded-lg border border-black/10 shrink-0"
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {externalLinks.length > 0 && (
-                            <div className="space-y-1.5">
-                              <span className="text-[9px] uppercase tracking-wider text-[#685C57] font-bold">
-                                Inspiration Links ({externalLinks.length})
-                              </span>
-                              <div className="flex flex-col gap-1.5">
-                                {externalLinks.map((link) => (
-                                  <a
-                                    key={link}
-                                    href={link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-[11px] font-bold text-[var(--color-gold)] hover:underline flex items-center gap-1.5 min-w-0"
-                                  >
-                                    <span className="material-symbols-outlined text-[14px] shrink-0">
-                                      link
-                                    </span>
-                                    <span className="truncate">{link}</span>
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Wizard Step Navigation controls */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-5 border-t border-black/5 mt-4">
-                      <button
-                        type="button"
-                        disabled={currentStep === 1}
-                        onClick={() => setCurrentStep((prev) => prev - 1)}
-                        className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full border border-black/10 text-[11px] font-bold uppercase tracking-wider text-[var(--color-on-surface)] hover:bg-[var(--color-on-surface)] hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-                      >
-                        Back
-                      </button>
-
-                      {currentStep < 8 ? (
-                        <button
-                          type="button"
-                          onClick={handleNextStep}
-                          className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full bg-[var(--color-on-surface)] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[var(--color-gold)] transition-all cursor-pointer"
-                        >
-                          Next Step
-                        </button>
-                      ) : (
-                        <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
-                          <button
-                            type="button"
-                            onClick={handleWhatsAppConsult}
-                            className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-white"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">chat</span>
-                            WhatsApp Consultation
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={loading}
-                            onClick={handleWizardSubmit}
-                            className="w-full sm:w-auto text-center px-6 py-2.5 rounded-full bg-[var(--color-gold)] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[var(--color-on-surface)] transition-all flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {loading ? (
-                              <>
-                                Processing...
-                                <span className="material-symbols-outlined text-[16px] animate-spin">
-                                  sync
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                Submit Custom Order Request
-                                <span className="material-symbols-outlined text-[16px]">done</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                </>
-              </div>
-            </div>
+            <DynamicCustomOrderWizard
+              onComplete={(order) => {
+                setActiveTab('tracker');
+                loadWorkspaceData();
+              }}
+              initialProductPayload={
+                linkedProduct
+                  ? {
+                      productId: linkedProduct._id,
+                      productType: linkedProduct.category,
+                      productTitle: linkedProduct.title,
+                      productSnapshot: {
+                        productId: linkedProduct._id,
+                        title: linkedProduct.title,
+                        imageSrc:
+                          linkedProduct.images && linkedProduct.images.length > 0
+                            ? linkedProduct.images[0].url || linkedProduct.images[0]
+                            : '',
+                        price: linkedProduct.price,
+                      },
+                    }
+                  : null
+              }
+              initialEventType={eventIdQuery ? { eventId: eventIdQuery } : null}
+            />
           </div>
         )}
 

@@ -25,7 +25,7 @@ const hasKeyStartingWith = (obj: any, char: string): boolean => {
     return false;
   }
   if (Array.isArray(obj)) {
-    return obj.some(item => hasKeyStartingWith(item, char));
+    return obj.some((item) => hasKeyStartingWith(item, char));
   }
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -42,23 +42,27 @@ const hasKeyStartingWith = (obj: any, char: string): boolean => {
 
 /**
  * Middleware to guard against complex NoSQL injection vectors.
- * 
+ *
  * 1. Checks request query and body for maximum nesting depth (mitigates nested $where / $expr attacks).
  * 2. Checks request query for raw '$' operators. URL params shouldn't contain MongoDB operators directly.
  *    (express-mongo-sanitize handles the body/params well, but URL queries are sometimes bypassed or parsed weirdly).
  */
 export const queryGuard = (req: Request, res: Response, next: NextFunction): void => {
-  const MAX_DEPTH = 5;
+  const MAX_DEPTH = 12;
 
   // 1. Guard against deeply nested objects in body or query
   if (req.body && getObjectDepth(req.body) > MAX_DEPTH) {
-    logger.warn(`[SECURITY] Blocked request due to excessive body nesting depth from IP: ${req.ip}`);
+    logger.warn(
+      `[SECURITY] Blocked request due to excessive body nesting depth from IP: ${req.ip}`,
+    );
     res.status(400).json({ success: false, message: 'Invalid payload structure (too deep)' });
     return;
   }
 
   if (req.query && getObjectDepth(req.query) > MAX_DEPTH) {
-    logger.warn(`[SECURITY] Blocked request due to excessive query nesting depth from IP: ${req.ip}`);
+    logger.warn(
+      `[SECURITY] Blocked request due to excessive query nesting depth from IP: ${req.ip}`,
+    );
     res.status(400).json({ success: false, message: 'Invalid query structure (too deep)' });
     return;
   }
@@ -66,7 +70,9 @@ export const queryGuard = (req: Request, res: Response, next: NextFunction): voi
   // 2. Reject explicit $ operators in the URL query string
   // express-mongo-sanitize strips these, but it's safer to explicitly reject them at the network edge
   if (req.query && hasKeyStartingWith(req.query, '$')) {
-    logger.warn(`[SECURITY] Blocked request containing '$' operators in URL query from IP: ${req.ip}, URL: ${req.originalUrl}`);
+    logger.warn(
+      `[SECURITY] Blocked request containing '$' operators in URL query from IP: ${req.ip}, URL: ${req.originalUrl}`,
+    );
     res.status(400).json({ success: false, message: 'Invalid query parameters' });
     return;
   }

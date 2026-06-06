@@ -12,6 +12,16 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
   const { runProtectedAction } = useAuth();
   const [quantity, setQuantity] = React.useState(1);
   const [added, setAdded] = React.useState(false);
+  const [startingChat, setStartingChat] = React.useState(false);
+
+  const handleWhatsAppChat = () => {
+    if (!product) return;
+    const num = '919866006648';
+    const productLink = `${window.location.origin}/product/${product._id || product.id}`;
+    const baseMsg = `Hello, I'm interested in this product and would like to chat about it.\n\nProduct Link: ${productLink}`;
+    const msg = encodeURIComponent(baseMsg);
+    window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+  };
 
   const canPurchase = !product?.availabilityMode || product.availabilityMode !== 'rent_only';
   const canRent =
@@ -374,9 +384,10 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
               <span className="text-[11px] uppercase tracking-widest">Rent</span>
             </button>
           )}
+
           <button
             onClick={handleWishlist}
-            className={`${canPurchase && canRent ? 'col-span-2' : ''} bg-white text-black border border-black/10 !py-3 rounded-full flex items-center justify-center gap-2 group cursor-pointer font-bold px-4 hover:border-black/30 transition-all shadow-sm`}
+            className="bg-white text-black border border-black/10 !py-3 rounded-full flex items-center justify-center gap-2 group cursor-pointer font-bold px-4 hover:border-black/30 transition-all shadow-sm"
           >
             <motion.span
               animate={{
@@ -409,12 +420,21 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
                 Personalize this design to perfectly match your wedding theme.
               </p>
             </div>
-            <a
-              href="/custom-orders"
-              className="bg-surface text-on-surface px-6 py-2.5 rounded-full font-label-sm text-[12px] uppercase tracking-[0.2em] hover:bg-primary-container transition-all whitespace-nowrap font-bold shadow-sm"
-            >
-              Talk to a Designer
-            </a>
+            <div className="flex flex-col gap-2 w-full md:w-auto">
+              <button
+                onClick={() => navigate(`/custom-orders?product=${product._id || product.id}`)}
+                className="bg-surface text-on-surface w-full md:w-auto px-6 py-2.5 rounded-full font-label-sm text-[12px] uppercase tracking-[0.2em] hover:bg-primary-container transition-all whitespace-nowrap font-bold shadow-sm"
+              >
+                Customize This Product
+              </button>
+              <button
+                onClick={handleWhatsAppChat}
+                className="bg-transparent border border-surface/30 w-full md:w-auto text-surface px-6 py-2.5 rounded-full font-label-sm text-[12px] uppercase tracking-[0.2em] hover:bg-surface/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[16px]">chat</span>
+                WhatsApp Inquiry
+              </button>
+            </div>
           </div>
           <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:opacity-10 transition-opacity">
             <span className="material-symbols-outlined text-[120px]">architecture</span>

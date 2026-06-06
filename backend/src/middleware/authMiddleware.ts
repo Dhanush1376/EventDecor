@@ -21,6 +21,7 @@ interface JwtPayload {
   id: string;
   role: string;
   email?: string;
+  name?: string;
   iat?: number;
 }
 
@@ -157,7 +158,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
       user = await coalesceRequest(`mongo:profile:${decoded.id}`, async () => {
         // Promise.race to enforce a strict timeout (10 seconds) if MongoDB is hanging
         const mongoQuery = User.findById(decoded.id)
-          .select('role email isVerified passwordChangedAt isLocked')
+          .select('role email name isVerified passwordChangedAt isLocked')
           .lean()
           .exec();
         const timeout = new Promise((_, reject) =>
@@ -203,6 +204,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
 
     decoded.role = user.role;
     decoded.email = user.email;
+    decoded.name = user.name;
     req.user = decoded;
 
     // Seed authenticated user ID to request correlation context
@@ -256,7 +258,7 @@ export const optionalAuth = asyncHandler(
         // Coalesce concurrent requests for the same user profile (Cache Stampede mitigation)
         user = await coalesceRequest(`mongo:profile:${decoded.id}`, async () => {
           const mongoQuery = User.findById(decoded.id)
-            .select('role email isVerified passwordChangedAt isLocked')
+            .select('role email name isVerified passwordChangedAt isLocked')
             .lean()
             .exec();
           const timeout = new Promise((_, reject) =>
@@ -287,6 +289,7 @@ export const optionalAuth = asyncHandler(
         ) {
           decoded.role = user.role;
           decoded.email = user.email;
+          decoded.name = user.name;
           req.user = decoded;
           updateRequestContext({ userId: decoded.id });
         }

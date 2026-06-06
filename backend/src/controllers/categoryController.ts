@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import Category from '../models/Category';
 import Product from '../models/Product';
 import Gallery from '../models/Gallery';
@@ -89,6 +89,22 @@ export const updateCategory = async (req: Request, res: Response) => {
     res.status(200).json({ success: true, data: category });
   } catch (error: any) {
     logger.error('Error updating category', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+export const deleteCategory = async (req: Request, res: Response) => {
+  try {
+    const existing = await Category.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+
+    await existing.deleteOne();
+
+    res.status(200).json({ success: true, message: 'Category deleted successfully' });
+  } catch (error: any) {
+    logger.error('Error deleting category', error);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };

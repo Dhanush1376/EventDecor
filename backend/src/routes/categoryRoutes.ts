@@ -1,5 +1,11 @@
 import express from 'express';
-import { getActiveCategories, getAllCategories, createCategory, updateCategory } from '../controllers/categoryController';
+import {
+  getActiveCategories,
+  getAllCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from '../controllers/categoryController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -14,5 +20,6 @@ router.use(requireAdmin);
 router.get('/', getAllCategories);
 router.post('/', createCategory);
 router.put('/:id', updateCategory);
+router.delete('/:id', deleteCategory);
 
 export default router;
