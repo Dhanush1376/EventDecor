@@ -64,6 +64,17 @@ process.on('uncaughtException', (err) => {
 
 process.on('unhandledRejection', (reason: any) => {
   const error = reason instanceof Error ? reason : new Error(String(reason));
+
+  // Ignore harmless Redis connection closed errors that occur when gracefully disconnecting from a rate-limited or unavailable provider
+  if (
+    error.message.includes('Connection is closed') ||
+    error.message.includes('Socket already setup') ||
+    error.message.includes('Max retries reached')
+  ) {
+    logger.warn(`⚠️ Ignored unhandledRejection (Redis/Socket issue): ${error.message}`);
+    return;
+  }
+
   handleFatalError(error, 'unhandledRejection');
 });
 
