@@ -1366,10 +1366,33 @@ export function GalleryDetailSkeleton() {
       </div>
 
       <main className="max-w-[1340px] mx-auto md:px-6 lg:px-10">
-        <div className="gallery-detail-grid">
+        {/* MOBILE Layout Skeleton */}
+        <div className="md:hidden flex flex-col bg-white overflow-hidden border-b border-black/5 pb-8 mb-8">
+          <Skeleton className="w-full h-[60vh] !rounded-none" />
+          <div className="w-full p-6 bg-white">
+            <div className="flex items-center justify-between gap-4 mb-8">
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3.5 w-16" />
+                  <Skeleton className="h-3.5 w-20" />
+                </div>
+                <Skeleton className="h-6 w-3/4" />
+              </div>
+              <Skeleton className="h-11 w-24 rounded-full" />
+            </div>
+
+            <div className="space-y-6 pt-8 mt-6 border-t border-black/5">
+              <Skeleton className="h-[120px] w-full rounded-[28px]" />
+              <Skeleton className="h-[80px] w-full rounded-[24px]" />
+            </div>
+          </div>
+        </div>
+
+        {/* DESKTOP Layout Skeleton */}
+        <div className="hidden md:grid gallery-detail-grid">
           {/* Left: Image Card */}
           <div className="gallery-detail-image z-0">
-            <Skeleton className="w-full h-[60vh] md:h-[75vh] md:rounded-[28px] !rounded-none" />
+            <Skeleton className="w-full h-[75vh] md:rounded-[28px] !rounded-none" />
           </div>
 
           {/* Right: Info Panel */}
