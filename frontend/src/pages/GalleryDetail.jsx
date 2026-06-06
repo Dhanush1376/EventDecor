@@ -226,8 +226,9 @@ export function GalleryDetail() {
               <CloudinaryImage
                 src={item.image}
                 alt={item.title}
-                className="w-full h-auto object-cover max-h-[85vh] mx-auto block"
+                className="w-full h-auto object-contain max-h-[85vh] mx-auto block"
                 containerClassName="w-full h-auto max-h-[85vh] mx-auto block"
+                aspectRatio="auto"
                 loading="eager"
                 eager={true}
                 width={1200}
@@ -359,10 +360,11 @@ export function GalleryDetail() {
                 <CloudinaryImage
                   src={item.image}
                   alt={item.title}
-                  className={`w-full h-auto object-cover block transition-transform duration-[1.5s] ease-out ${
+                  className={`w-full h-auto object-contain block transition-transform duration-[1.5s] ease-out ${
                     imageHovered ? 'scale-[1.03]' : 'scale-100'
                   }`}
                   containerClassName="w-full h-auto block"
+                  aspectRatio="auto"
                   loading="eager"
                   eager={true}
                   width={1200}
