@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import logger from '../config/logger';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface IGallery extends Document {
+export interface IGallery extends ISoftDeleted {
   title: string;
   teluguTitle?: string;
   category: string;
@@ -78,39 +79,13 @@ GallerySchema.index({ isActive: 1, type: 1, createdAt: -1 });
 GallerySchema.index({ isActive: 1, category: 1, views: -1 }); // Recommendation candidate fetch (views sort)
 GallerySchema.index({ isActive: 1, views: -1 }); // Global popularity sort (cold-start feed)
 
-// Sitemap and Cloudinary Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
-import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 
 GallerySchema.post('save', () => {
   triggerSitemapUpdate();
 });
 
-const cleanupCloudinaryImages = async (doc: any) => {
-  if (!doc) return;
-  const urlsToClean: string[] = [];
-  if (doc.image) urlsToClean.push(doc.image);
-  if (doc.video) urlsToClean.push(doc.video);
+GallerySchema.plugin(SoftDeletePlugin);
 
-  for (const url of urlsToClean) {
-    const publicId = extractPublicId(url);
-    if (publicId) {
-      deleteFromCloudinary(publicId).catch((err) =>
-        logger.error(`[Cloudinary GC] Failed to delete orphaned gallery media: ${url}`, err),
-      );
-    }
-  }
-};
-
-GallerySchema.post('deleteOne', { document: true, query: false }, async function () {
-  triggerSitemapUpdate();
-  await cleanupCloudinaryImages(this);
-});
-
-GallerySchema.post('findOneAndDelete', async function (doc) {
-  triggerSitemapUpdate();
-  await cleanupCloudinaryImages(doc);
-});
-
-const Gallery = mongoose.model<IGallery>('Gallery', GallerySchema);
+const Gallery = mongoose.model<IGallery, SoftDeleteModel<IGallery>>('Gallery', GallerySchema);
 export default Gallery;

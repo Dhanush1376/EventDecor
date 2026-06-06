@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
 export interface IShowcaseItem {
   name: string;
@@ -6,7 +7,7 @@ export interface IShowcaseItem {
   condition: 'excellent' | 'good' | 'worn' | 'maintenance';
 }
 
-export interface IShowcaseCollection extends Document {
+export interface IShowcaseCollection extends ISoftDeleted {
   title: string;
   subtitle: string;
   category: string; // e.g. 'engagement_gift', 'tambulam_showcase', 'coconut_decor', 'telugu_heritage'
@@ -29,7 +30,11 @@ export interface IShowcaseCollection extends Document {
 const ShowcaseItemSchema = new Schema({
   name: { type: String, required: true },
   defaultQty: { type: Number, default: 1 },
-  condition: { type: String, enum: ['excellent', 'good', 'worn', 'maintenance'], default: 'excellent' }
+  condition: {
+    type: String,
+    enum: ['excellent', 'good', 'worn', 'maintenance'],
+    default: 'excellent',
+  },
 });
 
 const ShowcaseCollectionSchema: Schema = new Schema(
@@ -48,13 +53,18 @@ const ShowcaseCollectionSchema: Schema = new Schema(
     popularityScore: { type: Number, default: 0 },
     seoTitle: { type: String },
     seoDescription: { type: String },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ShowcaseCollectionSchema.index({ title: 'text', description: 'text' });
 ShowcaseCollectionSchema.index({ category: 1 });
 
-const ShowcaseCollection = mongoose.model<IShowcaseCollection>('ShowcaseCollection', ShowcaseCollectionSchema);
+ShowcaseCollectionSchema.plugin(SoftDeletePlugin);
+
+const ShowcaseCollection = mongoose.model<
+  IShowcaseCollection,
+  SoftDeleteModel<IShowcaseCollection>
+>('ShowcaseCollection', ShowcaseCollectionSchema);
 export default ShowcaseCollection;

@@ -32,25 +32,25 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
   res.status(200).json(new ApiResponse(true, 'Product fetched successfully', product));
 });
 
-export const createProduct = asyncHandler(async (req: Request, res: Response) => {
-  const product = await ProductService.createProduct(req.body);
+export const createProduct = asyncHandler(async (req: Request | any, res: Response) => {
+  const product = await ProductService.createProduct(req.body, req.user);
   res.status(201).json(new ApiResponse(true, 'Product created successfully', product));
 });
 
-export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
-  const product = await ProductService.updateProduct(req.params.id as string, req.body);
+export const updateProduct = asyncHandler(async (req: Request | any, res: Response) => {
+  const product = await ProductService.updateProduct(req.params.id as string, req.body, req.user);
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
   res.status(200).json(new ApiResponse(true, 'Product updated successfully', product));
 });
 
-export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
-  const product = await ProductService.deleteProduct(req.params.id as string);
+export const deleteProduct = asyncHandler(async (req: Request | any, res: Response) => {
+  const product = await ProductService.deleteProduct(req.params.id as string, req.user);
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
-  res.status(200).json(new ApiResponse(true, 'Product completely deleted successfully', product));
+  res.status(200).json(new ApiResponse(true, 'Product moved to recycle bin successfully', product));
 });
 
 export const toggleFeatured = asyncHandler(async (req: Request, res: Response) => {

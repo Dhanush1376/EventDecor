@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import logger from '../config/logger';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+
 export interface IRentalPricing {
   daily: number;
   weekly: number;
@@ -8,7 +10,7 @@ export interface IRentalPricing {
   customPricePerDay: number;
 }
 
-export interface IProduct extends Document {
+export interface IProduct extends ISoftDeleted {
   title: string;
   teluguTitle?: string;
   slug: string;
@@ -145,39 +147,13 @@ ProductSchema.index({ isActive: 1, rentalEnabled: 1, category: 1 });
 ProductSchema.index({ isActive: 1, availabilityMode: 1, category: 1 });
 
 // Sitemap Auto-Update Trigger
-// Sitemap and Cloudinary Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
-import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 
 ProductSchema.post('save', () => {
   triggerSitemapUpdate();
 });
 
-const cleanupCloudinaryImages = async (doc: any) => {
-  if (!doc) return;
-  const urlsToClean: string[] = [];
-  if (doc.imageSrc) urlsToClean.push(doc.imageSrc);
-  if (doc.images && Array.isArray(doc.images)) urlsToClean.push(...doc.images);
+ProductSchema.plugin(SoftDeletePlugin);
 
-  for (const url of urlsToClean) {
-    const publicId = extractPublicId(url);
-    if (publicId) {
-      deleteFromCloudinary(publicId).catch((err) =>
-        logger.error(`[Cloudinary GC] Failed to delete orphaned product image: ${url}`, err),
-      );
-    }
-  }
-};
-
-ProductSchema.post('deleteOne', { document: true, query: false }, async function () {
-  triggerSitemapUpdate();
-  await cleanupCloudinaryImages(this);
-});
-
-ProductSchema.post('findOneAndDelete', async function (doc) {
-  triggerSitemapUpdate();
-  await cleanupCloudinaryImages(doc);
-});
-
-const Product = mongoose.model<IProduct>('Product', ProductSchema);
+const Product = mongoose.model<IProduct, SoftDeleteModel<IProduct>>('Product', ProductSchema);
 export default Product;

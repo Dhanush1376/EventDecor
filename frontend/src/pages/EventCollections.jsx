@@ -594,7 +594,7 @@ export function EventCollections() {
               </div>
             </div>
 
-            <div className="mb-10 overflow-x-auto no-scrollbar">
+            <div className="mb-10 overflow-x-auto no-scrollbar lg:hidden">
               <CategoryTabs
                 categories={categories}
                 activeCategory={activeCategory}

@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface ICategory extends Document {
+export interface ICategory extends ISoftDeleted {
   name: string;
   slug: string;
   type: 'product' | 'event' | 'gallery' | 'global';
@@ -31,11 +32,13 @@ const CategorySchema: Schema = new Schema(
     isActive: { type: Boolean, default: true, index: true },
     metadata: { type: Schema.Types.Mixed }, // Additional dynamic tags/configs
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Indexes for common frontend queries
 CategorySchema.index({ type: 1, isActive: 1, displayOrder: 1 });
 
-const Category = mongoose.model<ICategory>('Category', CategorySchema);
+CategorySchema.plugin(SoftDeletePlugin);
+
+const Category = mongoose.model<ICategory, SoftDeleteModel<ICategory>>('Category', CategorySchema);
 export default Category;

@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { decryptField, encryptField } from '../utils/fieldEncryption';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface IUser extends Document {
+export interface IUser extends ISoftDeleted {
   id: string;
   name: string;
   email: string;
@@ -195,14 +196,14 @@ async function purgeUserSessions(userId: mongoose.Types.ObjectId) {
   }
 }
 
-UserSchema.post('findOneAndDelete', async function (doc) {
-  if (doc) await purgeUserSessions(doc._id);
+UserSchema.pre('save', async function () {
+  if (this.isModified('isDeleted') && (this as any).isDeleted) {
+    await purgeUserSessions(this._id as mongoose.Types.ObjectId);
+  }
 });
 
-UserSchema.post('deleteOne', { document: true, query: false }, async function (doc: any) {
-  if (doc) await purgeUserSessions(doc._id);
-});
+UserSchema.plugin(SoftDeletePlugin);
 
-const User = mongoose.model<IUser>('User', UserSchema);
+const User = mongoose.model<IUser, SoftDeleteModel<IUser>>('User', UserSchema);
 
 export default User;

@@ -113,6 +113,11 @@ export default function CheckoutAddressStep() {
       toast.loading('Locating address...', { id: 'geocoding' });
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'SiriArtsAndCrafts/1.0 (checkout address autofill)',
+          },
+        },
       );
       const data = await response.json();
       if (data && data.address) {
@@ -348,6 +353,7 @@ export default function CheckoutAddressStep() {
                                 (err) => {
                                   toast.error('Could not access GPS', { id: 'gps' });
                                 },
+                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
                               );
                             } else {
                               toast.error('Geolocation not supported by this browser', {

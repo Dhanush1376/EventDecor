@@ -7,6 +7,7 @@ import { getPaginationOptions, formatPaginationResponse } from '../utils/paginat
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import logger from '../config/logger';
 import { bumpPublicCacheVersion } from '../utils/cacheVersion';
+import { ChangeTracker } from '../utils/ChangeTracker';
 
 export const getGalleryItems = asyncHandler(async (req: Request, res: Response) => {
   const { category, event, search, type } = req.query;
@@ -59,14 +60,15 @@ export const getGalleryById = asyncHandler(async (req: Request, res: Response) =
   res.status(200).json(new ApiResponse(true, 'Gallery item fetched', item));
 });
 
-export const createGalleryItem = asyncHandler(async (req: Request, res: Response) => {
+export const createGalleryItem = asyncHandler(async (req: Request | any, res: Response) => {
   const item = new Gallery(req.body);
   await item.save();
+  await ChangeTracker.trackChange('Gallery', item._id, null, item.toObject(), req.user, 'create');
   await bumpPublicCacheVersion();
   res.status(201).json(new ApiResponse(true, 'Gallery item created', item));
 });
 
-export const updateGalleryItem = asyncHandler(async (req: Request, res: Response) => {
+export const updateGalleryItem = asyncHandler(async (req: Request | any, res: Response) => {
   const oldItem = await Gallery.findById(req.params.id);
 
   const item = await Gallery.findByIdAndUpdate(req.params.id, req.body, {
@@ -74,6 +76,17 @@ export const updateGalleryItem = asyncHandler(async (req: Request, res: Response
     runValidators: true,
   });
   if (!item) throw new ApiError(404, 'Gallery item not found');
+
+  if (oldItem && item) {
+    await ChangeTracker.trackChange(
+      'Gallery',
+      item._id,
+      oldItem.toObject(),
+      item.toObject(),
+      req.user,
+      'update',
+    );
+  }
 
   if (oldItem && req.body.image && oldItem.image !== req.body.image) {
     const publicId = extractPublicId(oldItem.image);
@@ -97,32 +110,16 @@ export const updateGalleryItem = asyncHandler(async (req: Request, res: Response
   res.status(200).json(new ApiResponse(true, 'Gallery item updated', item));
 });
 
-export const deleteGalleryItem = asyncHandler(async (req: Request, res: Response) => {
+export const deleteGalleryItem = asyncHandler(async (req: Request | any, res: Response) => {
   const item = await Gallery.findById(req.params.id);
   if (!item) throw new ApiError(404, 'Gallery item not found');
 
-  await Gallery.findByIdAndDelete(req.params.id);
-
-  if (item.image) {
-    const publicId = extractPublicId(item.image);
-    if (publicId) {
-      deleteFromCloudinary(publicId).catch((err) =>
-        logger.error(`Failed to clean up gallery image: ${err}`),
-      );
-    }
-  }
-
-  if (item.video) {
-    const publicId = extractPublicId(item.video);
-    if (publicId) {
-      deleteFromCloudinary(publicId).catch((err) =>
-        logger.error(`Failed to clean up gallery video: ${err}`),
-      );
-    }
-  }
+  await item.softDelete(req.user, 'Deleted via galleryController');
 
   await bumpPublicCacheVersion();
-  res.status(200).json(new ApiResponse(true, 'Gallery item completely deleted successfully', item));
+  res
+    .status(200)
+    .json(new ApiResponse(true, 'Gallery item moved to recycle bin successfully', item));
 });
 
 export const likeGalleryItem = asyncHandler(async (req: any, res: Response) => {

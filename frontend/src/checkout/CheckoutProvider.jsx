@@ -622,7 +622,12 @@ export function CheckoutProvider({ children }) {
     };
     try {
       setIsProcessing(true);
-      const res = await userService.addAddress(payload);
+      let res;
+      if (newAddress.id) {
+        res = await userService.updateAddress(newAddress.id, payload);
+      } else {
+        res = await userService.addAddress(payload);
+      }
       if (res.success && res.data) {
         setSavedAddresses(res.data);
         const newlyCreated = res.data[res.data.length - 1];

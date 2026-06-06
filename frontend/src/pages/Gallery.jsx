@@ -345,6 +345,15 @@ export function GalleryInner() {
         id="gallery-collection"
         className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-4 md:py-6 relative z-10"
       >
+        {/* Mobile/Tablet inline category tabs (hidden on desktop where they appear in sticky nav) */}
+        <div className="mb-6 md:mb-8 overflow-x-auto no-scrollbar lg:hidden">
+          <CategoryTabs
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={handleCategorySelect}
+          />
+        </div>
+
         {isLoading ? (
           <GallerySkeleton />
         ) : (

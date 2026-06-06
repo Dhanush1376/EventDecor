@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import logger from '../config/logger';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface IEvent extends Document {
+export interface IEvent extends ISoftDeleted {
   title: string;
   subtitle?: string;
   category: string;
@@ -71,43 +72,13 @@ EventSchema.index({ isActive: 1, category: 1, createdAt: -1 }); // Recommendatio
 EventSchema.index({ isActive: 1, category: 1, basePrice: -1 }); // Search price sort
 EventSchema.index({ isActive: 1, createdAt: -1 }); // Global listing sort
 
-// Sitemap and Cloudinary Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
-import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 
 EventSchema.post('save', () => {
   triggerSitemapUpdate();
 });
 
-const cleanupCloudinaryImages = async (doc: any) => {
-  if (!doc) return;
-  const urlsToClean: string[] = [];
-  if (doc.image) urlsToClean.push(doc.image);
-  if (doc.gallery && Array.isArray(doc.gallery)) urlsToClean.push(...doc.gallery);
-  if (doc.beforeAfterImages) {
-    if (doc.beforeAfterImages.before) urlsToClean.push(doc.beforeAfterImages.before);
-    if (doc.beforeAfterImages.after) urlsToClean.push(doc.beforeAfterImages.after);
-  }
+EventSchema.plugin(SoftDeletePlugin);
 
-  for (const url of urlsToClean) {
-    const publicId = extractPublicId(url);
-    if (publicId) {
-      deleteFromCloudinary(publicId).catch((err) =>
-        logger.error(`[Cloudinary GC] Failed to delete orphaned event image: ${url}`, err),
-      );
-    }
-  }
-};
-
-EventSchema.post('deleteOne', { document: true, query: false }, async function () {
-  triggerSitemapUpdate();
-  await cleanupCloudinaryImages(this);
-});
-
-EventSchema.post('findOneAndDelete', async function (doc) {
-  triggerSitemapUpdate();
-  await cleanupCloudinaryImages(doc);
-});
-
-const Event = mongoose.model<IEvent>('Event', EventSchema);
+const Event = mongoose.model<IEvent, SoftDeleteModel<IEvent>>('Event', EventSchema);
 export default Event;

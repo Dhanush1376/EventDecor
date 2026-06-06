@@ -44,8 +44,7 @@ AdminAuditLogSchema.index({ actorId: 1, createdAt: -1 });
 AdminAuditLogSchema.index({ path: 1, createdAt: -1 });
 AdminAuditLogSchema.index({ entityType: 1, entityId: 1, createdAt: -1 });
 
-// TTL: Auto-cleanup audit logs after 365 days (extended from 90 for compliance)
-AdminAuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 365 * 24 * 60 * 60 });
+// Immutable permanent audit logging (No TTL index)
 
 const AdminAuditLog = mongoose.model<IAdminAuditLog>('AdminAuditLog', AdminAuditLogSchema);
 export default AdminAuditLog;

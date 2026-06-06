@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface IReview extends Document {
+export interface IReview extends ISoftDeleted {
   product?: mongoose.Types.ObjectId;
   customer: mongoose.Types.ObjectId;
   customerName: string;
@@ -45,7 +46,7 @@ const ReviewSchema: Schema = new Schema(
     verified: { type: Boolean, default: false },
     isMock: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ReviewSchema.index({ product: 1, status: 1 });
@@ -56,5 +57,7 @@ ReviewSchema.index({ category: 1, status: 1, createdAt: -1 });
 // Product review page compound index (prevents full scan + in-memory sort)
 ReviewSchema.index({ product: 1, status: 1, rating: -1, createdAt: -1 });
 
-const Review = mongoose.model<IReview>('Review', ReviewSchema);
+ReviewSchema.plugin(SoftDeletePlugin);
+
+const Review = mongoose.model<IReview, SoftDeleteModel<IReview>>('Review', ReviewSchema);
 export default Review;
