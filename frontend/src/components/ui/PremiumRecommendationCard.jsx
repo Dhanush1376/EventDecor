@@ -96,7 +96,7 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
 
   return (
     <motion.div
-      className="group relative flex flex-col cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 rounded-2xl"
+      className="group relative flex flex-col cursor-pointer w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 rounded-2xl z-10"
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={handleCardClick}

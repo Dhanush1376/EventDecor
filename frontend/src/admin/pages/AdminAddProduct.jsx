@@ -226,7 +226,9 @@ export function AdminAddProduct({ editId }) {
       { key: 'category', value: aiAnalysisResult.category },
       { key: 'material', value: (aiAnalysisResult.materials || []).join(',') },
       { key: 'tags', value: (aiAnalysisResult.tags || []).join(',') },
+      { key: 'badges', value: (aiAnalysisResult.badges || []).join(', ') },
       { key: 'description', value: aiAnalysisResult.description },
+      { key: 'price', value: aiAnalysisResult.price ? String(aiAnalysisResult.price) : '' },
       { key: 'seoTitle', value: aiAnalysisResult.english_title + ' | Siri Arts & Crafts' },
       {
         key: 'seoDescription',
@@ -257,6 +259,8 @@ export function AdminAddProduct({ editId }) {
         setCurrentStep(2); // Attributes step (new index 2)
       } else if (field.key === 'seoTitle') {
         setCurrentStep(3); // SEO step (new index 3)
+      } else if (field.key === 'price') {
+        setCurrentStep(4); // Pricing & Stock step
       }
 
       setFocusedField(field.key);

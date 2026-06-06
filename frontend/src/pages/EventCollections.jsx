@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ProductCard,
   QuickViewModal,
@@ -11,29 +11,29 @@ import {
   EventFilterPanel,
   PromoBanner,
   Skeleton,
-} from "../components/ui";
-import { eventService, productService, couponService } from "../services/domainServices";
-import { SEO } from "../components/seo/SEO";
-import { MandalaElement } from "../components/ui/MandalaElement";
-import { MandalaArtDecor } from "../components/ui/MandalaArtDecor";
-import { handleImageError } from "../utils/imageUtils";
-import toast from "react-hot-toast";
-import { useCart } from "../context/CartContext";
-import { useWebsiteContent } from "../hooks/useWebsiteContent";
-import { useScrollDirection } from "../hooks/useScrollDirection";
+} from '../components/ui';
+import { eventService, productService, couponService } from '../services/domainServices';
+import { SEO } from '../components/seo/SEO';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { handleImageError } from '../utils/imageUtils';
+import toast from 'react-hot-toast';
+import { useCart } from '../context/CartContext';
+import { useWebsiteContent } from '../hooks/useWebsiteContent';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 
 import logger from '../utils/logger';
 export function EventCollections() {
   const { setClaimedCoupon } = useCart();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryParam = searchParams.get("category") || "All Occasions";
-  const searchParam = searchParams.get("search") || "";
-  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+  const categoryParam = searchParams.get('category') || 'All Occasions';
+  const searchParam = searchParams.get('search') || '';
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
 
   const [searchQuery, setSearchQuery] = useState(searchParam);
   const [activeCategory, setActiveCategory] = useState(categoryParam);
-  const [sortBy, setSortBy] = useState("Popularity");
+  const [sortBy, setSortBy] = useState('Popularity');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
@@ -41,8 +41,7 @@ export function EventCollections() {
   const [currentPage, setCurrentPage] = useState(pageParam);
 
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === "down";
-
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
 
   // Advanced Filter State
   const [filters, setFilters] = useState({
@@ -57,14 +56,14 @@ export function EventCollections() {
 
   const [masterEvents, setMasterEvents] = useState([]);
   const [matchingProducts, setMatchingProducts] = useState([]);
-  const [categories, setCategories] = useState(["All Occasions"]);
-  const [styles, setStyles] = useState(["All Styles"]);
+  const [categories, setCategories] = useState(['All Occasions']);
+  const [styles, setStyles] = useState(['All Styles']);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setActiveCategory(searchParams.get("category") || "All Occasions");
-    setSearchQuery(searchParams.get("search") || "");
-    setCurrentPage(parseInt(searchParams.get("page") || "1", 10));
+    setActiveCategory(searchParams.get('category') || 'All Occasions');
+    setSearchQuery(searchParams.get('search') || '');
+    setCurrentPage(parseInt(searchParams.get('page') || '1', 10));
   }, [searchParams]);
 
   // Debounced search to prevent url param clutter on typing
@@ -77,72 +76,84 @@ export function EventCollections() {
   }, [searchQuery]);
 
   useEffect(() => {
-    const currentSearchInUrl = searchParams.get("search") || "";
+    const currentSearchInUrl = searchParams.get('search') || '';
     if (debouncedSearch !== currentSearchInUrl) {
-      setSearchParams(prev => {
-        const params = new URLSearchParams(prev);
-        if (debouncedSearch) {
-          params.set("search", debouncedSearch);
-        } else {
-          params.delete("search");
-        }
-        params.delete("page");
-        return params;
-      }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (debouncedSearch) {
+            params.set('search', debouncedSearch);
+          } else {
+            params.delete('search');
+          }
+          params.delete('page');
+          return params;
+        },
+        { replace: true },
+      );
     }
   }, [debouncedSearch, setSearchParams, searchParams]);
 
   const websiteContent = useWebsiteContent();
   const eventsPageContent = websiteContent?.eventsPage || {
     hero: {
-      title: "Luxury Event Scapes",
-      subtitle: "Cinematic Environments",
-      description: "Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.",
-      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g",
+      title: 'Luxury Event Scapes',
+      subtitle: 'Cinematic Environments',
+      description:
+        'Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.',
+      backgroundImage:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g',
     },
     promo: {
-      backgroundImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w",
-    }
+      backgroundImage:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w',
+    },
   };
 
   const [promoCoupon, setPromoCoupon] = useState(null);
-  const [countdown, setCountdown] = useState({ D: "02", H: "14", M: "42", S: "00" });
+  const [countdown, setCountdown] = useState({ D: '02', H: '14', M: '42', S: '00' });
 
   useEffect(() => {
-    couponService.getAll().then((res) => {
-      if (res.success && res.data) {
-        const list = res.data.data || res.data.items || (Array.isArray(res.data) ? res.data : []);
-        const activeList = list.filter(c => 
-          c.isActive && 
-          new Date() <= new Date(c.expiryDate) &&
-          c.displayLocations && 
-          c.displayLocations.includes("banner")
-        );
-        if (activeList.length > 0) {
-          activeList.sort((a, b) => b.discountValue - a.discountValue);
-          setPromoCoupon(activeList[0]);
-        } else {
-          setPromoCoupon(null);
+    couponService
+      .getAll()
+      .then((res) => {
+        if (res.success && res.data) {
+          const list = res.data.data || res.data.items || (Array.isArray(res.data) ? res.data : []);
+          const activeList = list.filter(
+            (c) =>
+              c.isActive &&
+              new Date() <= new Date(c.expiryDate) &&
+              c.displayLocations &&
+              c.displayLocations.includes('banner'),
+          );
+          if (activeList.length > 0) {
+            activeList.sort((a, b) => b.discountValue - a.discountValue);
+            setPromoCoupon(activeList[0]);
+          } else {
+            setPromoCoupon(null);
+          }
         }
-      }
-    }).catch(err => {
-      logger.warn("Failed to fetch coupons for promo banner in EventCollections", err);
-    });
+      })
+      .catch((err) => {
+        logger.warn('Failed to fetch coupons for promo banner in EventCollections', err);
+      });
   }, []);
 
   useEffect(() => {
-    const targetDate = promoCoupon ? new Date(promoCoupon.expiryDate) : (() => {
-      const tomorrow = new Date();
-      tomorrow.setHours(23, 59, 59, 999);
-      return tomorrow;
-    })();
+    const targetDate = promoCoupon
+      ? new Date(promoCoupon.expiryDate)
+      : (() => {
+          const tomorrow = new Date();
+          tomorrow.setHours(23, 59, 59, 999);
+          return tomorrow;
+        })();
 
     const interval = setInterval(() => {
       const now = new Date();
       const diff = targetDate - now;
 
       if (diff <= 0) {
-        setCountdown({ D: "00", H: "00", M: "00", S: "00" });
+        setCountdown({ D: '00', H: '00', M: '00', S: '00' });
         clearInterval(interval);
       } else {
         const d = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -151,10 +162,10 @@ export function EventCollections() {
         const s = Math.floor((diff % (1000 * 60)) / 1000);
 
         setCountdown({
-          D: String(d).padStart(2, "0"),
-          H: String(h).padStart(2, "0"),
-          M: String(m).padStart(2, "0"),
-          S: String(s).padStart(2, "0")
+          D: String(d).padStart(2, '0'),
+          H: String(h).padStart(2, '0'),
+          M: String(m).padStart(2, '0'),
+          S: String(s).padStart(2, '0'),
         });
       }
     }, 1000);
@@ -163,19 +174,28 @@ export function EventCollections() {
   }, [promoCoupon]);
 
   const handleClaimOffer = () => {
-    const code = promoCoupon ? promoCoupon.code : "SIRI40";
+    const code = promoCoupon ? promoCoupon.code : 'SIRI40';
     navigator.clipboard.writeText(code);
     setClaimedCoupon(code);
-    toast.success((t) => (
-      <div className="flex flex-col gap-1 p-1">
-        <span className="font-bold text-xs text-on-surface flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[16px] text-green-700">local_activity</span>
-          Coupon claimed successfully!
-        </span>
-        <span className="text-[10px] text-on-surface-variant font-mono">Code "<strong className="text-primary font-bold">{code}</strong>" copied to clipboard.</span>
-        <span className="text-[10px] text-green-800 font-semibold mt-1">🎟️ We will automatically apply this coupon at checkout!</span>
-      </div>
-    ), { duration: 5000, position: "bottom-right" });
+    toast.success(
+      (t) => (
+        <div className="flex flex-col gap-1 p-1">
+          <span className="font-bold text-xs text-on-surface flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-green-700">
+              local_activity
+            </span>
+            Coupon claimed successfully!
+          </span>
+          <span className="text-[10px] text-on-surface-variant font-mono">
+            Code "<strong className="text-primary font-bold">{code}</strong>" copied to clipboard.
+          </span>
+          <span className="text-[10px] text-green-800 font-semibold mt-1">
+            🎟️ We will automatically apply this coupon at checkout!
+          </span>
+        </div>
+      ),
+      { duration: 5000, position: 'bottom-right' },
+    );
   };
 
   // Fetch data
@@ -185,27 +205,33 @@ export function EventCollections() {
       try {
         const [eventsRes, productsRes] = await Promise.all([
           eventService.getAll(),
-          productService.getAll({ featured: true, limit: 4 })
+          productService.getAll({ featured: true, limit: 4 }),
         ]);
 
         if (eventsRes.success) {
-          const events = eventsRes.data.items || eventsRes.data.data || (Array.isArray(eventsRes.data) ? eventsRes.data : []);
+          const events =
+            eventsRes.data.items ||
+            eventsRes.data.data ||
+            (Array.isArray(eventsRes.data) ? eventsRes.data : []);
           setMasterEvents(events);
-          
+
           // Extract unique categories and styles
-          const uniqueCats = ["All Occasions", ...new Set(events.map(e => e.category))];
-          const uniqueStyles = ["All Styles", ...new Set(events.map(e => e.style))];
+          const uniqueCats = ['All Occasions', ...new Set(events.map((e) => e.category))];
+          const uniqueStyles = ['All Styles', ...new Set(events.map((e) => e.style))];
           setCategories(uniqueCats);
           setStyles(uniqueStyles);
         }
-        
+
         if (productsRes.success) {
-          const products = productsRes.data.data || productsRes.data.items || (Array.isArray(productsRes.data) ? productsRes.data : []);
+          const products =
+            productsRes.data.data ||
+            productsRes.data.items ||
+            (Array.isArray(productsRes.data) ? productsRes.data : []);
           setMatchingProducts(products);
         }
       } catch (err) {
-        logger.error("Event fetch failed:", err);
-        toast.error("Failed to load events");
+        logger.error('Event fetch failed:', err);
+        toast.error('Failed to load events');
       } finally {
         setIsLoading(false);
       }
@@ -227,22 +253,22 @@ export function EventCollections() {
         setIsSticky(rect.top <= currentNavHeight + 1);
       }
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
     handleScroll();
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
     };
   }, [navbarHeight]);
 
   useEffect(() => {
     if (isFilterOpen) {
-      document.body.classList.add("filters-open");
+      document.body.classList.add('filters-open');
     } else {
-      document.body.classList.remove("filters-open");
+      document.body.classList.remove('filters-open');
     }
-    return () => document.body.classList.remove("filters-open");
+    return () => document.body.classList.remove('filters-open');
   }, [isFilterOpen]);
 
   const toggleFilter = React.useCallback((type, value) => {
@@ -258,8 +284,8 @@ export function EventCollections() {
 
   const clearAllFilters = React.useCallback(() => {
     setFilters({ price: [], occasion: [], style: [] });
-    setActiveCategory("All Occasions");
-    setSearchQuery("");
+    setActiveCategory('All Occasions');
+    setSearchQuery('');
     setSearchParams({});
     setCurrentPage(1);
   }, [setSearchParams]);
@@ -268,7 +294,7 @@ export function EventCollections() {
     let result = [...masterEvents];
 
     // Top-level Category Filter (Tabs)
-    if (activeCategory !== "All Occasions") {
+    if (activeCategory !== 'All Occasions') {
       result = result.filter((e) => e.category.startsWith(activeCategory));
     }
 
@@ -287,14 +313,12 @@ export function EventCollections() {
     if (filters.price.length > 0) {
       result = result.filter((e) => {
         // Extract number from "Starting at Rs. 3,50,000"
-        const priceNum = e.pricing ? parseInt(e.pricing.replace(/[^0-9]/g, "")) : 0;
+        const priceNum = e.pricing ? parseInt(e.pricing.replace(/[^0-9]/g, '')) : 0;
         return filters.price.some((range) => {
-          if (range === "Under ₹1,00,000") return priceNum < 100000;
-          if (range === "₹1,00,000 - ₹3,00,000")
-            return priceNum >= 100000 && priceNum <= 300000;
-          if (range === "₹3,00,000 - ₹5,00,000")
-            return priceNum >= 300000 && priceNum <= 500000;
-          if (range === "Over ₹5,00,000") return priceNum > 500000;
+          if (range === 'Under ₹1,00,000') return priceNum < 100000;
+          if (range === '₹1,00,000 - ₹3,00,000') return priceNum >= 100000 && priceNum <= 300000;
+          if (range === '₹3,00,000 - ₹5,00,000') return priceNum >= 300000 && priceNum <= 500000;
+          if (range === 'Over ₹5,00,000') return priceNum > 500000;
           return false;
         });
       });
@@ -311,16 +335,16 @@ export function EventCollections() {
     }
 
     // Sorting
-    if (sortBy === "Price: Low to High") {
+    if (sortBy === 'Price: Low to High') {
       result.sort((a, b) => {
-        const pa = a.pricing ? parseInt(a.pricing.replace(/[^0-9]/g, "")) : 0;
-        const pb = b.pricing ? parseInt(b.pricing.replace(/[^0-9]/g, "")) : 0;
+        const pa = a.pricing ? parseInt(a.pricing.replace(/[^0-9]/g, '')) : 0;
+        const pb = b.pricing ? parseInt(b.pricing.replace(/[^0-9]/g, '')) : 0;
         return pa - pb;
       });
-    } else if (sortBy === "Price: High to Low") {
+    } else if (sortBy === 'Price: High to Low') {
       result.sort((a, b) => {
-        const pa = a.pricing ? parseInt(a.pricing.replace(/[^0-9]/g, "")) : 0;
-        const pb = b.pricing ? parseInt(b.pricing.replace(/[^0-9]/g, "")) : 0;
+        const pa = a.pricing ? parseInt(a.pricing.replace(/[^0-9]/g, '')) : 0;
+        const pb = b.pricing ? parseInt(b.pricing.replace(/[^0-9]/g, '')) : 0;
         return pb - pa;
       });
     }
@@ -329,10 +353,7 @@ export function EventCollections() {
   }, [activeCategory, searchQuery, sortBy, filters, masterEvents]);
 
   const ITEMS_PER_PAGE = 12;
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredEvents.length / ITEMS_PER_PAGE),
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / ITEMS_PER_PAGE));
   const paginatedEvents = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredEvents.slice(start, start + ITEMS_PER_PAGE);
@@ -348,33 +369,29 @@ export function EventCollections() {
   }, []);
 
   const handleCategorySelect = (cat) => {
-    setSearchParams(prev => {
+    setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
-      if (cat === "All Occasions") {
-        params.delete("category");
+      if (cat === 'All Occasions') {
+        params.delete('category');
       } else {
-        params.set("category", cat);
+        params.set('category', cat);
       }
-      params.delete("page");
+      params.delete('page');
       return params;
     });
     setActiveCategory(cat);
     setCurrentPage(1);
     setTimeout(() => {
-      const element = document.getElementById("event-collection");
+      const element = document.getElementById('event-collection');
       if (element) {
         const yOffset = -80;
-        const y =
-          element.getBoundingClientRect().top + window.scrollY + yOffset;
-        window.scrollTo({ top: y, behavior: "smooth" });
+        const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
       }
     }, 50);
   };
 
-  const styleOptions = useMemo(
-    () => styles.map((s) => ({ value: s, label: s })),
-    [styles],
-  );
+  const styleOptions = useMemo(() => styles.map((s) => ({ value: s, label: s })), [styles]);
 
   return (
     <div className="bg-surface min-h-screen text-on-surface">
@@ -447,77 +464,73 @@ export function EventCollections() {
       <nav
         ref={navRef}
         className={`sticky z-[49] -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${
-          isSticky 
-            ? "px-0" 
-            : "px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto"
+          isSticky ? 'px-0' : 'px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
-          <div
-            className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
-              isSticky 
-                ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 px-margin-mobile md:px-margin-desktop w-full max-w-none' 
-                : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 w-full max-w-max-width'
-            }`}
-          >
-            {/* Search Bar & Mobile Filter Toggle */}
-            <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
-              <div className="flex-1 h-11">
-                <SearchBar
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  placeholder="Search masteries..."
-                  className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
-                />
-              </div>
-              {/* Mobile/Tablet Filter Toggle */}
-              <button
-                onClick={() => setIsFilterOpen(true)}
-                className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
-              >
-                <span className="material-symbols-outlined text-[20px]">
-                  tune
-                </span>
-              </button>
+        <div
+          className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
+            isSticky
+              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-margin-mobile md:px-margin-desktop w-full max-w-none'
+              : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 lg:p-2 w-full max-w-max-width'
+          }`}
+        >
+          {/* Search Bar & Mobile Filter Toggle */}
+          <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
+            <div className="flex-1 h-11 lg:h-9">
+              <SearchBar
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Search masteries..."
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+              />
+            </div>
+            {/* Mobile/Tablet Filter Toggle */}
+            <button
+              onClick={() => setIsFilterOpen(true)}
+              className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-95 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
+            >
+              <span className="material-symbols-outlined text-[20px]">tune</span>
+            </button>
+          </div>
+
+          {/* Desktop-Only Layout Integration (Tabs + Sort) */}
+          <div className="hidden lg:flex items-center justify-between gap-6 flex-1 min-w-0">
+            <div className="flex-1 overflow-hidden flex justify-start lg:justify-center">
+              <CategoryTabs
+                categories={categories}
+                activeCategory={activeCategory}
+                onCategoryChange={handleCategorySelect}
+              />
             </div>
 
-            {/* Desktop-Only Layout Integration (Tabs + Sort) */}
-            <div className="hidden lg:flex items-center justify-between gap-6 flex-1 min-w-0">
-              <div className="flex-1 overflow-hidden flex justify-start lg:justify-center">
-                <CategoryTabs
-                  categories={categories}
-                  activeCategory={activeCategory}
-                  onCategoryChange={handleCategorySelect}
+            <div className="flex items-center shrink-0 lg:-mt-[6px]">
+              <div className="w-48 xl:w-52 h-11 lg:h-9">
+                <CustomDropdown
+                  options={[
+                    { value: 'Popularity', label: 'Popularity' },
+                    {
+                      value: 'Price: Low to High',
+                      label: 'Price: Low to High',
+                    },
+                    {
+                      value: 'Price: High to Low',
+                      label: 'Price: High to Low',
+                    },
+                  ]}
+                  value={sortBy}
+                  onChange={setSortBy}
+                  className="w-full h-full"
+                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 lg:!px-4 text-[12px] lg:text-[11px]"
                 />
-              </div>
-
-              <div className="flex items-center shrink-0">
-                <div className="w-48 xl:w-52 h-11">
-                  <CustomDropdown
-                    options={[
-                      { value: "Popularity", label: "Popularity" },
-                      {
-                        value: "Price: Low to High",
-                        label: "Price: Low to High",
-                      },
-                      {
-                        value: "Price: High to Low",
-                        label: "Price: High to Low",
-                      },
-                    ]}
-                    value={sortBy}
-                    onChange={setSortBy}
-                    className="w-full h-full"
-                    buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
-                  />
-                </div>
               </div>
             </div>
           </div>
-        </nav>
+        </div>
+      </nav>
 
       {/* Early Booking Banner - Cinematic Luxury Redesign */}
       {promoCoupon && (
@@ -526,15 +539,19 @@ export function EventCollections() {
           badgeText={`Active Promo: ${promoCoupon.code}`}
           statusText="Ends Soon"
           title="Limited Offer — "
-          highlightText={promoCoupon.discountType === "percentage" ? `${promoCoupon.discountValue}% Off` : `₹${promoCoupon.discountValue} Off`}
+          highlightText={
+            promoCoupon.discountType === 'percentage'
+              ? `${promoCoupon.discountValue}% Off`
+              : `₹${promoCoupon.discountValue} Off`
+          }
           description={`Claim coupon code ${promoCoupon.code} for immediate savings on your checkout selections.`}
           ctaText="Claim Offer"
           onCtaClick={handleClaimOffer}
           timer={[
-            { l: "D", v: countdown.D },
-            { l: "H", v: countdown.H },
-            { l: "M", v: countdown.M },
-            { l: "S", v: countdown.S }
+            { l: 'D', v: countdown.D },
+            { l: 'H', v: countdown.H },
+            { l: 'M', v: countdown.M },
+            { l: 'S', v: countdown.S },
           ]}
         />
       )}
@@ -655,7 +672,7 @@ export function EventCollections() {
                                   palette
                                 </span>
                                 <span className="truncate max-w-[60px] md:max-w-none">
-                                  {evItem.style || "Traditional"}
+                                  {evItem.style || 'Traditional'}
                                 </span>
                               </div>
                             </div>
@@ -682,25 +699,21 @@ export function EventCollections() {
                         currentPage={currentPage}
                         totalPages={totalPages}
                         onPageChange={(page) => {
-                          setSearchParams(prev => {
+                          setSearchParams((prev) => {
                             const params = new URLSearchParams(prev);
                             if (page === 1) {
-                              params.delete("page");
+                              params.delete('page');
                             } else {
-                              params.set("page", String(page));
+                              params.set('page', String(page));
                             }
                             return params;
                           });
                           setCurrentPage(page);
                           setTimeout(() => {
-                            const el =
-                              document.getElementById("event-collection");
+                            const el = document.getElementById('event-collection');
                             if (el) {
-                              const y =
-                                el.getBoundingClientRect().top +
-                                window.scrollY -
-                                80;
-                              window.scrollTo({ top: y, behavior: "smooth" });
+                              const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                              window.scrollTo({ top: y, behavior: 'smooth' });
                             }
                           }, 50);
                         }}
@@ -715,9 +728,7 @@ export function EventCollections() {
                       search_off
                     </span>
                   </div>
-                  <h3 className="font-headline-sm text-on-surface mb-3">
-                    No curations match.
-                  </h3>
+                  <h3 className="font-headline-sm text-on-surface mb-3">No curations match.</h3>
                   <button onClick={clearAllFilters} className="btn-primary">
                     Clear All Filters
                   </button>

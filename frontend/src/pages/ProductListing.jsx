@@ -226,7 +226,7 @@ export function ProductListing() {
 
   const queryParams = {
     page: currentPage,
-    limit: 12,
+    limit: 100,
     search: debouncedSearch,
     category: activeCategory !== 'All' ? activeCategory : undefined,
     sort: sortMap[sortBy] || 'newest',
@@ -418,18 +418,18 @@ export function ProductListing() {
         <div
           className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
             isStuck
-              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 px-margin-mobile md:px-margin-desktop w-full max-w-none'
-              : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 w-full max-w-max-width'
+              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-margin-mobile md:px-margin-desktop w-full max-w-none'
+              : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 lg:p-2 w-full max-w-max-width'
           }`}
         >
           {/* Search Bar & Mobile Filter Toggle */}
           <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
-            <div className="flex-1 h-11">
+            <div className="flex-1 h-11 lg:h-9">
               <SearchBar
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search masterworks..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
               />
             </div>
             {/* Mobile/Tablet Filter Toggle */}
@@ -454,8 +454,8 @@ export function ProductListing() {
             </div>
 
             {/* Actions Group: Sort (Right-aligned) */}
-            <div className="flex items-center shrink-0">
-              <div className="w-48 xl:w-52 h-11">
+            <div className="flex items-center shrink-0 lg:-mt-[6px]">
+              <div className="w-48 xl:w-52 h-11 lg:h-9">
                 <CustomDropdown
                   options={[
                     { value: 'Popularity', label: 'Popularity' },
@@ -472,7 +472,7 @@ export function ProductListing() {
                   value={sortBy}
                   onChange={setSortBy}
                   className="w-full h-full"
-                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
+                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 lg:!px-4 text-[12px] lg:text-[11px]"
                 />
               </div>
             </div>

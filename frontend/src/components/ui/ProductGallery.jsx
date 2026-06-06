@@ -132,14 +132,14 @@ export function ProductGallery({ images = [], product }) {
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="w-full h-full flex overflow-x-auto snap-x snap-mandatory relative"
+          className="w-full h-full flex overflow-x-auto snap-x snap-mandatory relative rounded-[inherit]"
           style={{ scrollbarWidth: 'none' }}
         >
           {images.map((img, idx) => (
             <div
               key={idx}
               onClick={() => openLightbox(idx)}
-              className="w-full h-full shrink-0 snap-center relative overflow-hidden bg-white flex items-center justify-center cursor-zoom-in"
+              className="w-full h-full shrink-0 snap-center relative overflow-hidden bg-white flex items-center justify-center cursor-zoom-in rounded-[inherit]"
             >
               <OptimizedImage
                 src={img}

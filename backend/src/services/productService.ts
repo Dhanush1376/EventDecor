@@ -225,9 +225,17 @@ class ProductService {
   static async getProductById(idOrSlug: string) {
     let product;
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
-      product = await Product.findById(idOrSlug).lean();
+      product = await Product.findByIdAndUpdate(
+        idOrSlug,
+        { $inc: { views: 1 } },
+        { new: true },
+      ).lean();
     } else {
-      product = await Product.findOne({ slug: idOrSlug.toLowerCase() }).lean();
+      product = await Product.findOneAndUpdate(
+        { slug: idOrSlug.toLowerCase() },
+        { $inc: { views: 1 } },
+        { new: true },
+      ).lean();
     }
     if (!product || !product.isActive) return null;
     return product;

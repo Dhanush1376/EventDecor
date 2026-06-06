@@ -14,7 +14,7 @@ import { useInfiniteGallery } from '../hooks/useInfiniteGallery';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import toast from 'react-hot-toast';
 
-export function Gallery() {
+export function GalleryInner() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeEvent, setActiveEvent] = useState('All');
@@ -168,6 +168,18 @@ export function Gallery() {
 
   // filteredItems is now directly sourced from useInfiniteGallery which handles both remote querying and local mapping
 
+  const renderGalleryItem = React.useCallback(
+    (item, index) => (
+      <GalleryCard
+        item={item}
+        eager={index < 4}
+        onImageClick={isGalleryModeRef.current ? () => setSlideshowIndex(index) : undefined}
+        navigate={navigate}
+      />
+    ),
+    [navigate],
+  );
+
   return (
     <div className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-20 md:pt-28 pb-32 md:pb-20 transition-all duration-300">
       <SEO
@@ -230,20 +242,20 @@ export function Gallery() {
         <div
           className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
             isSticky
-              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 px-margin-mobile md:px-margin-desktop w-full max-w-none'
-              : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 w-full max-w-max-width'
+              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-margin-mobile md:px-margin-desktop w-full max-w-none'
+              : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 lg:p-2 w-full max-w-max-width'
           }`}
         >
           {/* Search Bar & Mobile / Tablet Actions */}
           <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
-            <div className="flex-1 h-11">
+            <div className="flex-1 h-11 lg:h-9">
               <SearchBar
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                 }}
                 placeholder="Search themes, colors..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 text-[13px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
               />
             </div>
 
@@ -288,9 +300,9 @@ export function Gallery() {
               />
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 shrink-0 lg:-mt-[6px]">
               {/* Type Switcher Dropdown */}
-              <div className="w-48 xl:w-52 h-11">
+              <div className="w-48 xl:w-52 h-11 lg:h-9">
                 <CustomDropdown
                   options={[
                     { value: 'all', label: 'All Formats' },
@@ -300,7 +312,7 @@ export function Gallery() {
                   value={filterType}
                   onChange={setFilterType}
                   className="w-full h-full"
-                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 text-[12px]"
+                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 lg:!px-4 text-[12px] lg:text-[11px]"
                 />
               </div>
 
@@ -313,7 +325,7 @@ export function Gallery() {
                     setSlideshowIndex(0);
                   }
                 }}
-                className={`flex shrink-0 items-center gap-2 h-11 px-5 rounded-full border transition-all duration-300 font-bold text-[10px] uppercase tracking-widest outline-none focus:outline-none focus-visible:outline-none ${
+                className={`flex shrink-0 items-center gap-2 h-11 lg:h-9 px-5 rounded-full border transition-all duration-300 font-bold text-[10px] uppercase tracking-widest outline-none focus:outline-none focus-visible:outline-none ${
                   isGalleryMode
                     ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
                     : 'bg-white text-black/60 border-black/10 hover:border-black/30 shadow-sm'
@@ -342,19 +354,7 @@ export function Gallery() {
               loadMore={fetchNextPage}
               hasMore={hasNextPage}
               isLoading={isFetchingNextPage}
-              renderItem={React.useCallback(
-                (item, index) => (
-                  <GalleryCard
-                    item={item}
-                    eager={index < 4}
-                    onImageClick={
-                      isGalleryModeRef.current ? () => setSlideshowIndex(index) : undefined
-                    }
-                    navigate={navigate}
-                  />
-                ),
-                [navigate],
-              )}
+              renderItem={renderGalleryItem}
               columns={{ sm: 2, md: 2, lg: 4, xl: 5 }}
               gap="gap-2 sm:gap-3"
               batchSize={20}
@@ -464,4 +464,8 @@ export function Gallery() {
       </AnimatePresence>
     </div>
   );
+}
+
+export function Gallery() {
+  return <GalleryInner />;
 }

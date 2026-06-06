@@ -185,7 +185,9 @@ export const getSimilar = async (req: Request, res: Response) => {
       recommendationQueue
         .add('precompute-similar', { targetType, targetId }, { priority: 4 })
         .catch((err: any) => {
-          logger.error(`[RECO API] Failed to enqueue precompute-similar job: ${err.message}`);
+          if (!err.message?.includes('max requests limit exceeded')) {
+            logger.error(`[RECO API] Failed to enqueue precompute-similar job: ${err.message}`);
+          }
         });
     }
 
@@ -478,9 +480,11 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
       recommendationQueue
         .add('precompute-similar', { targetType, targetId }, { priority: 4 })
         .catch((err: any) => {
-          logger.error(
-            `[RECO API] Failed to enqueue precompute-similar job for setup: ${err.message}`,
-          );
+          if (!err.message?.includes('max requests limit exceeded')) {
+            logger.error(
+              `[RECO API] Failed to enqueue precompute-similar job for setup: ${err.message}`,
+            );
+          }
         });
     }
 
@@ -564,9 +568,11 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
       recommendationQueue
         .add('precompute-similar', { targetType, targetId }, { priority: 4 })
         .catch((err: any) => {
-          logger.error(
-            `[RECO API] Failed to enqueue precompute-similar job for also-viewed: ${err.message}`,
-          );
+          if (!err.message?.includes('max requests limit exceeded')) {
+            logger.error(
+              `[RECO API] Failed to enqueue precompute-similar job for also-viewed: ${err.message}`,
+            );
+          }
         });
     }
 

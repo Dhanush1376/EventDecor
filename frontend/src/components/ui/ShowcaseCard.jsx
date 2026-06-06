@@ -54,7 +54,7 @@ export function ShowcaseCard({
       onClick={() => onOpenShowcase?.()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="group relative flex flex-col transition-all duration-700 cursor-pointer"
+      className="group relative flex flex-col transition-all duration-700 cursor-pointer z-10 rounded-2xl md:rounded-[32px]"
     >
       {/* 1. VISUAL CANVAS */}
       <div className="relative h-44 sm:h-56 md:h-72 w-full overflow-hidden bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5 shadow-2xs">

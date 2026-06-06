@@ -1,4 +1,4 @@
-﻿import crypto from 'crypto';
+import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { RazorpayGateway } from '../../utils/RazorpayGateway';
 import Order from '../../models/Order';
@@ -281,6 +281,18 @@ export class OrderCheckoutService {
         });
 
         await order.save({ session });
+
+        // Increment sold count
+        const ProductModel = require('../../models/Product').default;
+        for (const item of orderItems) {
+          if (item.productId) {
+            await ProductModel.findByIdAndUpdate(
+              item.productId,
+              { $inc: { sold: item.quantity || 1 } },
+              { session },
+            );
+          }
+        }
 
         const orderedProductIds = order.items.map((item: any) => item.productId);
         await User.findByIdAndUpdate(

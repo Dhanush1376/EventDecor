@@ -639,8 +639,13 @@ export function About() {
                     key={item._id || item.id}
                     className="break-inside-avoid mb-4 md:mb-6 rounded-[24px] md:rounded-[40px] overflow-hidden group relative bg-white shadow-sm border border-black/[0.03] cursor-pointer"
                   >
-                    <Link to={`/gallery?id=${item._id || item.id}`}>
-                      <div className={`relative ${dynamicHeight} w-full overflow-hidden`}>
+                    <Link
+                      to={`/gallery?id=${item._id || item.id}`}
+                      className="block w-full h-full rounded-[inherit]"
+                    >
+                      <div
+                        className={`relative ${dynamicHeight} w-full overflow-hidden rounded-[inherit]`}
+                      >
                         <CloudinaryImage
                           src={item.image}
                           alt={item.title}

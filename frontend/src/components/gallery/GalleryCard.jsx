@@ -18,6 +18,11 @@ const CardContent = React.memo(function CardContent({
         isolation: 'isolate',
         transform: 'translateZ(0)',
         backfaceVisibility: 'hidden',
+        aspectRatio: item.aspectRatio
+          ? typeof item.aspectRatio === 'number'
+            ? item.aspectRatio
+            : item.aspectRatio.replace(':', '/')
+          : 'auto',
       }}
       className="break-inside-avoid mb-2 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
     >
@@ -29,7 +34,7 @@ const CardContent = React.memo(function CardContent({
           loop
           autoPlay
           playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10 pointer-events-none"
+          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10 pointer-events-none rounded-[inherit]"
         />
       )}
 
@@ -43,6 +48,7 @@ const CardContent = React.memo(function CardContent({
         fetchPriority={eager ? 'high' : 'auto'}
         width={item.imageWidth || 600}
         height={item.imageHeight || 800}
+        aspectRatio="auto"
         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
         skipObserver={true}
       />

@@ -19,6 +19,8 @@ export interface IProduct extends Document {
   oldPrice?: number;
   rating: number;
   reviews: number;
+  views: number;
+  sold: number;
   imageSrc: string;
   images: string[];
   description: string;
@@ -67,6 +69,8 @@ const ProductSchema: Schema = new Schema(
     oldPrice: { type: Number, min: 0 },
     rating: { type: Number, default: 0, min: 0, max: 5 },
     reviews: { type: Number, default: 0 },
+    views: { type: Number, default: 0 },
+    sold: { type: Number, default: 0 },
     imageSrc: { type: String, required: true },
     images: [{ type: String }],
     description: { type: String, required: true },

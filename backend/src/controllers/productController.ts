@@ -206,6 +206,8 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
     6. Choose the most accurate, clean category from the list.
     7. Generate a clean Telugu translation in Telugu script (e.g., "తాంబూలం ప్లేట్", "కొబ్బరి డెకర్").
     8. Generate a clean, simple, short SEO-friendly slug.
+    9. Suggest an estimated, realistic price in INR (e.g., 999, 1500, 2500) based on the intricacy and materials.
+    10. Suggest 1 or 2 catchy storefront badges (e.g. "Bestseller", "Trending", "Limited Edition").
 
     Please output a clean JSON object matching the following structure strictly (do not include any markdown block ticks, just raw JSON):
     {
@@ -221,6 +223,8 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
       "style": "Decoration style",
       "occasion": ["Occasion 1", "Occasion 2"],
       "tags": ["tag1", "tag2"],
+      "badges": ["Bestseller", "Trending"],
+      "price": 1500,
       "description": "Premium, clean 2-sentence description",
       "seo_keywords": ["keyword1", "keyword2"]
     }

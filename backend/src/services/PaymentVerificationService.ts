@@ -1,4 +1,4 @@
-﻿import crypto from 'crypto';
+import crypto from 'crypto';
 import mongoose from 'mongoose';
 import Order from '../models/Order';
 import ApiError from '../utils/ApiError';
@@ -192,6 +192,17 @@ export class PaymentVerificationService {
               { session },
             );
           }
+        }
+      }
+
+      const ProductModel = require('../models/Product').default;
+      for (const item of order.items) {
+        if (item.productId) {
+          await ProductModel.findByIdAndUpdate(
+            item.productId,
+            { $inc: { sold: item.quantity || 1 } },
+            { session },
+          );
         }
       }
 

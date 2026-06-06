@@ -104,7 +104,7 @@ export function CustomDropdown({
         type="button"
         className={`w-full flex items-center justify-between bg-gray-50/80 hover:bg-white px-4 py-2.5 rounded-full border border-black/5 hover:border-primary/20 transition-all cursor-pointer group shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${buttonClassName}`}
       >
-        <span className="font-label text-[11px] sm:text-[12px] uppercase tracking-widest font-bold text-black truncate pr-2">
+        <span className="font-label text-[11px] sm:text-[12px] lg:text-[10px] uppercase tracking-widest font-bold text-black truncate pr-2">
           {selectedOption.label}
         </span>
         <span

@@ -30,39 +30,15 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
   let resultUrl = url;
 
   if (isCloudinary) {
-    const parts = url.split('/upload/');
-    if (parts.length === 2) {
-      let transforms = [];
-      if (format && format !== 'auto') transforms.push(`f_${format}`);
-      else transforms.push('f_auto');
-
-      if (quality && quality !== 'auto') transforms.push(`q_${quality}`);
-      else transforms.push('q_auto');
-
-      if (width) transforms.push(`c_limit,w_${width}`);
-      if (height) transforms.push(`h_${height}`);
-
-      const transformStr = transforms.join(',');
-
-      let path = parts[1];
-      let segments = path.split('/');
-
-      // Strip any existing transform segments. A transform segment typically contains an underscore
-      // and does NOT start with a 'v' followed by only digits (which is a version tag).
-      while (
-        segments.length > 1 &&
-        (segments[0].includes('_') || segments[0].includes(',')) &&
-        !/^v\d+$/.test(segments[0])
-      ) {
-        segments = segments.slice(1);
-      }
-      path = segments.join('/');
-
-      resultUrl = `${parts[0]}/upload/${transformStr}/${path}`;
-    }
+    // Cloudinary Free Tier often throws 401/400 for dynamic transformations
+    // if Strict Transformations is enabled or signatures are required.
+    // Serving the raw URL ensures it loads successfully.
+    resultUrl = url;
   } else {
     // Local/static images route through backend dynamic media optimization pipeline
-    if (!url.startsWith('data:') && !url.startsWith('blob:')) {
+    const isAbsoluteExternal = url.startsWith('http://') || url.startsWith('https://');
+
+    if (!url.startsWith('data:') && !url.startsWith('blob:') && !isAbsoluteExternal) {
       let targetUrl = `${window.location.origin}/api/v1/media/optimize?url=${encodeURIComponent(url)}`;
 
       if (!import.meta.env.DEV) {
@@ -76,6 +52,9 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
       if (format && format !== 'auto') targetUrl += `&fmt=${format}`;
 
       resultUrl = targetUrl;
+    } else if (isAbsoluteExternal) {
+      // Just return the external URL as-is to avoid proxying
+      resultUrl = url;
     }
   }
 
@@ -139,6 +118,9 @@ export const getResponsiveWidth = (targetWidth) => {
 export const getSrcSet = (url, maxWidth = null, format = 'auto') => {
   if (!url) return null;
   if (url.startsWith('data:') || url.startsWith('blob:')) return null;
+
+  const isAbsoluteExternal = url.startsWith('http://') || url.startsWith('https://');
+  if (isAbsoluteExternal) return null; // Can't dynamically resize external/Cloudinary without transforms
 
   let validWidths = [];
 
