@@ -3,6 +3,8 @@
  * Tracks Core Web Vitals and specific Image Loading metrics.
  */
 
+import logger from './logger';
+
 class PerformanceMonitor {
   constructor() {
     this.isDev = import.meta.env.DEV;
@@ -40,7 +42,7 @@ class PerformanceMonitor {
     if (loadTimeMs > 2000) {
       this.metrics.slowImages.push(entry);
       if (this.isDev) {
-        console.warn(`[PerfMonitor] Slow image load detected: ${loadTimeMs}ms for ${url}`);
+        logger.warn(`[PerfMonitor] Slow image load detected: ${loadTimeMs}ms for ${url}`);
       }
       // Future: Send to analytics endpoint
     }
@@ -54,7 +56,7 @@ class PerformanceMonitor {
     this.renderCounts.set(componentName, count);
 
     if (count > 50) {
-      console.warn(
+      logger.warn(
         `[PerfMonitor] High render count detected for ${componentName}: ${count} renders`,
       );
     }
@@ -94,7 +96,7 @@ class PerformanceMonitor {
 
               if (this.isDev && clsValue > 0.1) {
                 const attribution = clsEntries[clsEntries.length - 1]?.sources?.[0]?.node;
-                console.warn(
+                logger.warn(
                   `[PerfMonitor] High CLS detected: ${clsValue.toFixed(3)}`,
                   'Attribution:',
                   attribution,
@@ -119,7 +121,7 @@ class PerformanceMonitor {
         this.metrics.lcp = lastEntry.startTime;
 
         if (this.isDev) {
-          console.log(`[PerfMonitor] LCP: ${Math.round(lastEntry.startTime)}ms`, lastEntry.element);
+          logger.info(`[PerfMonitor] LCP: ${Math.round(lastEntry.startTime)}ms`, lastEntry.element);
         }
       });
       observer.observe({ type: 'largest-contentful-paint', buffered: true });
@@ -134,7 +136,7 @@ class PerformanceMonitor {
         for (const entry of entryList.getEntriesByName('first-contentful-paint')) {
           this.metrics.fcp = entry.startTime;
           if (this.isDev) {
-            console.log(`[PerfMonitor] FCP: ${Math.round(entry.startTime)}ms`);
+            logger.info(`[PerfMonitor] FCP: ${Math.round(entry.startTime)}ms`);
           }
         }
       });
@@ -150,7 +152,7 @@ class PerformanceMonitor {
         for (const entry of entryList.getEntries()) {
           this.metrics.fid = entry.processingStart - entry.startTime;
           if (this.isDev) {
-            console.log(`[PerfMonitor] FID: ${Math.round(this.metrics.fid)}ms`);
+            logger.info(`[PerfMonitor] FID: ${Math.round(this.metrics.fid)}ms`);
           }
         }
       });
@@ -168,7 +170,7 @@ class PerformanceMonitor {
           if (inp > this.metrics.inp) {
             this.metrics.inp = inp;
             if (this.isDev && inp > 200) {
-              console.warn(`[PerfMonitor] High INP detected: ${Math.round(inp)}ms`);
+              logger.warn(`[PerfMonitor] High INP detected: ${Math.round(inp)}ms`);
             }
           }
         }
@@ -211,12 +213,12 @@ class PerformanceMonitor {
       '%c 🚀 Performance Dashboard',
       'background: #222; color: #bada55; padding: 4px; border-radius: 4px;',
     );
-    console.log(`LCP: ${Math.round(this.metrics.lcp)}ms`);
-    console.log(`CLS: ${this.metrics.cls.toFixed(3)}`);
-    console.log(`FID: ${Math.round(this.metrics.fid)}ms`);
-    console.log(`INP: ${Math.round(this.metrics.inp)}ms`);
+    logger.info(`LCP: ${Math.round(this.metrics.lcp)}ms`);
+    logger.info(`CLS: ${this.metrics.cls.toFixed(3)}`);
+    logger.info(`FID: ${Math.round(this.metrics.fid)}ms`);
+    logger.info(`INP: ${Math.round(this.metrics.inp)}ms`);
     if (report) {
-      console.log('--- Image Performance ---');
+      logger.info('--- Image Performance ---');
       console.table({
         Count: report.count,
         Average: report.average + 'ms',
