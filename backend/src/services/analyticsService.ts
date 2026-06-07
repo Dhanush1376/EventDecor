@@ -79,12 +79,12 @@ class AnalyticsService {
         totalProducts,
         totalEvents
       },
-      monthlyRevenue: monthlyRevenue.map(item => ({
+      monthlyRevenue: monthlyRevenue.map((item: any) => ({
         month: `${item._id.year}-${item._id.month}`,
         revenue: item.revenue,
         orders: item.orders
       })),
-      categoryPerformance: categoryPerformance.map(item => ({
+      categoryPerformance: categoryPerformance.map((item: any) => ({
         name: item._id || 'Uncategorized',
         value: item.value
       }))

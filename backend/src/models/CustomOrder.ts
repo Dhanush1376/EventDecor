@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 
 // ─── Sub-Document Interfaces ───
 
@@ -94,7 +96,7 @@ export interface ICustomizationField {
 
 // ─── Main Document Interface ───
 
-export interface ICustomOrder extends Document {
+export interface ICustomOrder extends ISoftDeleted {
   orderId: string;
   customerEmail: string;
   customerName: string;
@@ -432,4 +434,7 @@ CustomOrderSchema.pre<ICustomOrder>('save', async function () {
   }
 });
 
-export default mongoose.model<ICustomOrder>('CustomOrder', CustomOrderSchema);
+CustomOrderSchema.plugin(SoftDeletePlugin);
+CustomOrderSchema.plugin(ForensicAuditPlugin);
+
+export default mongoose.model<ICustomOrder, SoftDeleteModel<ICustomOrder>>('CustomOrder', CustomOrderSchema);

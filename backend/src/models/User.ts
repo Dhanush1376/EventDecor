@@ -203,6 +203,8 @@ UserSchema.pre('save', async function () {
 });
 
 UserSchema.plugin(SoftDeletePlugin);
+import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
+UserSchema.plugin(ForensicAuditPlugin);
 
 const User = mongoose.model<IUser, SoftDeleteModel<IUser>>('User', UserSchema);
 

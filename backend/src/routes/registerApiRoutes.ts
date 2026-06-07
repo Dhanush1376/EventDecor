@@ -82,5 +82,8 @@ export const registerApiRoutes = (
   apiRouter.use('/rental-policies', lazyRouter('./rentalPolicyRoutes'));
   apiRouter.use('/service-areas', lazyRouter('./serviceAreaRoutes'));
 
+  // Social Preview Metadata
+  apiRouter.use('/social', lazyRouter('./socialRoutes'));
+
   app.use(prefix, apiRouter);
 };

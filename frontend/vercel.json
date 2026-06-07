@@ -5,6 +5,10 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/product/:id",
+      "destination": "/api/social-proxy?id=:id"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }

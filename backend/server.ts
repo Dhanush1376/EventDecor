@@ -14,6 +14,7 @@ import { initRedis, closeRedisConnections } from './src/utils/redis';
 import { initWorkers, closeWorkers } from './src/jobs/workers';
 import { initQueues, closeQueues } from './src/jobs/queues';
 import { initRecommendationSystem } from './src/services/recommendation/recommendationEngine';
+import { startDbAuditor } from './src/config/dbAuditor';
 
 import * as Sentry from '@sentry/node';
 import mongoose from 'mongoose';
@@ -87,6 +88,9 @@ const initializeServicesProgressively = async (httpServer: Server) => {
     logger.info('[STARTUP] Progressive Init: Connecting to MongoDB...');
     await connectDB();
     logger.info('🟢 [STARTUP] MongoDB connected successfully');
+
+    // 1.a Start Forensic Database Auditor
+    startDbAuditor();
 
     // 2. Build indexes in background
     if (process.env.SKIP_INDEX_BUILD !== 'true') {

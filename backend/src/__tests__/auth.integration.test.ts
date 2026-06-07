@@ -31,9 +31,9 @@ describe('Auth Services Integration Tests', () => {
 
   beforeAll(async () => {
     // Setup in-memory MongoDB or connect to local test DB
-    if (!process.env.MONGO_URI) {
-      process.env.MONGO_URI = 'mongodb://localhost:27017/eventdecor_test_auth';
-    }
+    // CRITICAL FIX: Always override MONGO_URI for tests to prevent wiping production data
+    // if dotenv loaded the production URI from the .env file.
+    process.env.MONGO_URI = 'mongodb://localhost:27017/eventdecor_test_auth';
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
     }
@@ -44,12 +44,12 @@ describe('Auth Services Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    await User.deleteMany({});
-    await OtpVerification.deleteMany({});
-    await OtpRequestLog.deleteMany({});
-    await RefreshToken.deleteMany({});
-    await UsedRefreshToken.deleteMany({});
-    await FailedLoginAttempt.deleteMany({});
+    await User.deleteMany({}, { bypassDestructionGuard: true });
+    await OtpVerification.deleteMany({}, { bypassDestructionGuard: true });
+    await OtpRequestLog.deleteMany({}, { bypassDestructionGuard: true });
+    await RefreshToken.deleteMany({}, { bypassDestructionGuard: true });
+    await UsedRefreshToken.deleteMany({}, { bypassDestructionGuard: true });
+    await FailedLoginAttempt.deleteMany({}, { bypassDestructionGuard: true });
 
     testUser = await User.create({
       name: 'Test Auth User',

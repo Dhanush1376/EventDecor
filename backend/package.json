@@ -13,8 +13,8 @@
     "lint": "eslint src && node ../scripts/check-no-console.mjs",
     "backup:db": "ts-node --transpile-only src/scripts/backupDb.ts",
     "backup:media": "ts-node --transpile-only src/scripts/backupMedia.ts",
-    "test": "npm run build && ts-node --transpile-only src/scripts/smokeTest.ts && jest --coverage --runInBand --forceExit",
-    "test:integration": "jest --coverage --runInBand --forceExit",
+    "test": "cross-env NODE_ENV=test npm run build && cross-env NODE_ENV=test ts-node --transpile-only src/scripts/smokeTest.ts && cross-env NODE_ENV=test jest --coverage --runInBand --forceExit",
+    "test:integration": "cross-env NODE_ENV=test jest --coverage --runInBand --forceExit",
     "backup:products": "node recovery/scripts/daily_product_backup.js",
     "export:products": "node recovery/scripts/daily_product_backup.js"
   },
@@ -75,6 +75,7 @@
     "@types/pdfkit": "^0.17.6",
     "@types/sharp": "^0.31.1",
     "@types/supertest": "^6.0.3",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.2",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^16.5.0",

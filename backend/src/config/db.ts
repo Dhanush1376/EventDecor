@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import os from 'os';
 import logger from './logger';
+import { DestructionGuard } from '../utils/DestructionGuard';
 
 // Enforce global maxTimeMS to prevent runaway database queries
 mongoose.plugin((schema) => {
@@ -25,6 +26,9 @@ mongoose.plugin((schema) => {
     if (!options.maxTimeMS) options.maxTimeMS = aggTimeout;
   });
 });
+
+// Apply global Destruction Guard to all schemas
+mongoose.plugin(DestructionGuard);
 
 export interface DbMetrics {
   readyState: number;
@@ -152,16 +156,28 @@ class DatabaseManager {
       }
     }
 
-    // Environment Protection: reject production Atlas URIs in local development
-    if (
-      !isProduction &&
-      MONGO_URI.includes('mongodb.net') &&
-      process.env.ALLOW_PROD_DB_LOCAL?.trim() !== 'true'
-    ) {
-      logger.error(
-        '[DATABASE] CRITICAL: Accessing Atlas Production cluster from local development is forbidden. Set ALLOW_PROD_DB_LOCAL=true to override.',
-      );
-      process.exit(1);
+    // Critical Production Data Safety Task: 
+    // Prevent test, scripts, CI/CD, etc. from ever connecting to the production database.
+    const isAtlas = MONGO_URI.includes('mongodb.net');
+    if (isAtlas) {
+        if (process.env.NODE_ENV === 'test' || process.env.CI === 'true') {
+           logger.error('[DATABASE] CRITICAL FATAL: Tests and CI are strictly prohibited from connecting to MongoDB Atlas production clusters.');
+           process.exit(1);
+        }
+        
+        if (!isProduction && process.env.ALLOW_PROD_DB_LOCAL?.trim() !== 'true') {
+          logger.error(
+            '[DATABASE] CRITICAL: Accessing Atlas Production cluster from local development is forbidden. Set ALLOW_PROD_DB_LOCAL=true to override.',
+          );
+          process.exit(1);
+        }
+    }
+
+    if (process.env.NODE_ENV === 'test') {
+      if (!MONGO_URI.toLowerCase().includes('test')) {
+        logger.error('[DATABASE] CRITICAL: In test mode, the MONGO_URI database name must contain "test".');
+        process.exit(1);
+      }
     }
 
     // Reuse existing connection if ready
@@ -205,6 +221,18 @@ class DatabaseManager {
         logger.info('🟢 [DATABASE] MongoDB connection established');
         this.reconnectAttempts = 0; // Reset reconnect count on successful connection
         this.startHealthCheck(); // Start monitoring health pings
+
+        // Layer 2: Monkey patch dangerous operations on the raw database connection
+        if (process.env.NODE_ENV === 'production' && mongoose.connection.db) {
+           mongoose.connection.db.dropDatabase = async function(...args) {
+              logger.error('[DATABASE] FATAL: Blocked database drop attempt in production!');
+              throw new Error('Database drop is strictly prohibited in production.');
+           };
+           mongoose.connection.db.dropCollection = async function(name: string, ...args) {
+              logger.error(`[DATABASE] FATAL: Blocked collection drop attempt in production for collection: ${name}!`);
+              throw new Error('Collection drop is strictly prohibited in production.');
+           };
+        }
       });
 
       mongoose.connection.on('error', (err) => {

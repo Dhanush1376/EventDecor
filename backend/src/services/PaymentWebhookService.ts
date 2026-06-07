@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import Order from '../models/Order';
 import logger from '../config/logger';
 import { RazorpayGateway } from '../utils/RazorpayGateway';
@@ -12,6 +12,9 @@ import { bumpAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
 import AnalyticsService from './analyticsService';
 import crypto from 'crypto';
 import { InventoryService } from './InventoryService';
+import { UnifiedWebhookRouter } from './payments/UnifiedWebhookRouter';
+import Product from '../models/Product';
+import User from '../models/User';
 
 export class PaymentWebhookService {
   /**
@@ -55,7 +58,6 @@ export class PaymentWebhookService {
           '[PAYMENT WEBHOOK] BullMQ webhookQueue is not available. Processing synchronously.',
         );
         // Use UnifiedWebhookRouter for synchronous fallback to handle all entity types
-        const { UnifiedWebhookRouter } = require('./payments/UnifiedWebhookRouter');
         return await UnifiedWebhookRouter.routeWebhookEvent(event, body, signature, eventId);
       }
     } catch (err: any) {
@@ -233,7 +235,6 @@ export class PaymentWebhookService {
           }
         } else {
           // Fallback for older orders
-          const Product = require('../models/Product').default;
           for (const item of order.items) {
             await Product.findByIdAndUpdate(
               item.productId,

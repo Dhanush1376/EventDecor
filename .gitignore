@@ -7,16 +7,27 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Directories
+node_modules/
+dist/
+dist-ssr/
+build/
+.cache/
+coverage/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
@@ -32,11 +43,11 @@ dist-ssr
 
 # Documents
 *.docx
+*.pdf
+*.pptx
 
 # Audit Artifacts & Temp Scripts
-backend_architecture.md
 scripts/extract_arch.js
-git_products_history.txt
 backend/test-mongoose.js
 
 # Recovery & Diagnostics
@@ -46,3 +57,4 @@ backend/recovered_products_preview.json
 backend/old_seed_data_temp.txt
 backend/test-*.ts
 *.avif
+tmp/

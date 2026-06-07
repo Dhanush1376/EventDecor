@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.92% </span>
+                <span class="strong">42.99% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>88/205</span>
+                <span class='fraction'>89/207</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">43.81% </span>
+                <span class="strong">43.87% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>85/194</span>
+                <span class='fraction'>86/196</span>
             </div>
         
             
@@ -497,7 +497,10 @@
 <a name='L432'></a><a href='#L432'>432</a>
 <a name='L433'></a><a href='#L433'>433</a>
 <a name='L434'></a><a href='#L434'>434</a>
-<a name='L435'></a><a href='#L435'>435</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L435'></a><a href='#L435'>435</a>
+<a name='L436'></a><a href='#L436'>436</a>
+<a name='L437'></a><a href='#L437'>437</a>
+<a name='L438'></a><a href='#L438'>438</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
@@ -515,6 +518,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -703,6 +707,7 @@
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
@@ -784,6 +789,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -954,6 +960,7 @@ interface JwtPayload {
   id: string;
   role: string;
   email?: string;
+  name?: string;
   iat?: number;
 }
 &nbsp;
@@ -1090,7 +1097,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
       user = await coalesceRequest(`mongo:profile:${decoded.id}`, async () =&gt; {
         // Promise.race to enforce a strict timeout (10 seconds) if MongoDB is hanging
         const mongoQuery = User.findById(decoded.id)
-          .select('role email isVerified passwordChangedAt isLocked')
+          .select('role email name isVerified passwordChangedAt isLocked')
           .lean()
           .exec();
         const timeout = new Promise((_, reject) =&gt;
@@ -1136,6 +1143,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
 &nbsp;
     decoded.role = user.role;
     decoded.email = user.email;
+    decoded.name = user.name;
     req.user = decoded;
 &nbsp;
     // Seed authenticated user ID to request correlation context
@@ -1189,7 +1197,7 @@ export const optionalAuth = asyncHandler(
         // Coalesce concurrent requests for the same user profile (Cache Stampede mitigation)
 <span class="cstat-no" title="statement not covered" >        user = await coalesceRequest(`mongo:profile:${decoded.id}`, <span class="fstat-no" title="function not covered" >async </span>() =&gt; {</span>
           const mongoQuery = <span class="cstat-no" title="statement not covered" >User.findById(decoded.id)</span>
-            .select('role email isVerified passwordChangedAt isLocked')
+            .select('role email name isVerified passwordChangedAt isLocked')
             .lean()
             .exec();
           const timeout = <span class="cstat-no" title="statement not covered" >new Promise(<span class="fstat-no" title="function not covered" >(_</span>, reject) =&gt;</span>
@@ -1220,6 +1228,7 @@ export const optionalAuth = asyncHandler(
         ) {
 <span class="cstat-no" title="statement not covered" >          decoded.role = user.role;</span>
 <span class="cstat-no" title="statement not covered" >          decoded.email = user.email;</span>
+<span class="cstat-no" title="statement not covered" >          decoded.name = user.name;</span>
 <span class="cstat-no" title="statement not covered" >          req.user = decoded;</span>
 <span class="cstat-no" title="statement not covered" >          updateRequestContext({ userId: decoded.id });</span>
         }
@@ -1372,7 +1381,7 @@ export const requireRole = (allowedRoles: string[]) =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-05T17:42:55.080Z
+                at 2026-06-07T09:06:38.503Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

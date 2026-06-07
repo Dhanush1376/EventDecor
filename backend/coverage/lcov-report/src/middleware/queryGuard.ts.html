@@ -138,7 +138,13 @@
 <a name='L73'></a><a href='#L73'>73</a>
 <a name='L74'></a><a href='#L74'>74</a>
 <a name='L75'></a><a href='#L75'>75</a>
-<a name='L76'></a><a href='#L76'>76</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -193,12 +199,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -207,6 +217,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -240,7 +252,7 @@ const hasKeyStartingWith = (obj: any, char: string): boolean =&gt; {
     return false;
   }
   <span class="missing-if-branch" title="if path not taken" >I</span>if (Array.isArray(obj)) {
-<span class="cstat-no" title="statement not covered" >    return obj.some(<span class="fstat-no" title="function not covered" >item </span>=&gt; <span class="cstat-no" title="statement not covered" >hasKeyStartingWith(item, char))</span>;</span>
+<span class="cstat-no" title="statement not covered" >    return obj.some(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; <span class="cstat-no" title="statement not covered" >hasKeyStartingWith(item, char))</span>;</span>
   }
   for (const key in obj) {
     <span class="missing-if-branch" title="else path not taken" >E</span>if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -257,23 +269,27 @@ const hasKeyStartingWith = (obj: any, char: string): boolean =&gt; {
 &nbsp;
 /**
  * Middleware to guard against complex NoSQL injection vectors.
- * 
+ *
  * 1. Checks request query and body for maximum nesting depth (mitigates nested $where / $expr attacks).
  * 2. Checks request query for raw '$' operators. URL params shouldn't contain MongoDB operators directly.
  *    (express-mongo-sanitize handles the body/params well, but URL queries are sometimes bypassed or parsed weirdly).
  */
 export const queryGuard = (req: Request, res: Response, next: NextFunction): void =&gt; {
-  const MAX_DEPTH = 5;
+  const MAX_DEPTH = 12;
 &nbsp;
   // 1. Guard against deeply nested objects in body or query
   <span class="missing-if-branch" title="if path not taken" >I</span>if (req.body &amp;&amp; getObjectDepth(req.body) &gt; MAX_DEPTH) {
-<span class="cstat-no" title="statement not covered" >    logger.warn(`[SECURITY] Blocked request due to excessive body nesting depth from IP: ${req.ip}`);</span>
+<span class="cstat-no" title="statement not covered" >    logger.warn(</span>
+      `[SECURITY] Blocked request due to excessive body nesting depth from IP: ${req.ip}`,
+    );
 <span class="cstat-no" title="statement not covered" >    res.status(400).json({ success: false, message: 'Invalid payload structure (too deep)' });</span>
 <span class="cstat-no" title="statement not covered" >    return;</span>
   }
 &nbsp;
   <span class="missing-if-branch" title="if path not taken" >I</span>if (req.query &amp;&amp; getObjectDepth(req.query) &gt; MAX_DEPTH) {
-<span class="cstat-no" title="statement not covered" >    logger.warn(`[SECURITY] Blocked request due to excessive query nesting depth from IP: ${req.ip}`);</span>
+<span class="cstat-no" title="statement not covered" >    logger.warn(</span>
+      `[SECURITY] Blocked request due to excessive query nesting depth from IP: ${req.ip}`,
+    );
 <span class="cstat-no" title="statement not covered" >    res.status(400).json({ success: false, message: 'Invalid query structure (too deep)' });</span>
 <span class="cstat-no" title="statement not covered" >    return;</span>
   }
@@ -281,7 +297,9 @@ export const queryGuard = (req: Request, res: Response, next: NextFunction): voi
   // 2. Reject explicit $ operators in the URL query string
   // express-mongo-sanitize strips these, but it's safer to explicitly reject them at the network edge
   <span class="missing-if-branch" title="if path not taken" >I</span>if (req.query &amp;&amp; hasKeyStartingWith(req.query, '$')) {
-<span class="cstat-no" title="statement not covered" >    logger.warn(`[SECURITY] Blocked request containing '$' operators in URL query from IP: ${req.ip}, URL: ${req.originalUrl}`);</span>
+<span class="cstat-no" title="statement not covered" >    logger.warn(</span>
+      `[SECURITY] Blocked request containing '$' operators in URL query from IP: ${req.ip}, URL: ${req.originalUrl}`,
+    );
 <span class="cstat-no" title="statement not covered" >    res.status(400).json({ success: false, message: 'Invalid query parameters' });</span>
 <span class="cstat-no" title="statement not covered" >    return;</span>
   }
@@ -295,7 +313,7 @@ export const queryGuard = (req: Request, res: Response, next: NextFunction): voi
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-05T17:42:55.080Z
+                at 2026-06-07T09:06:38.503Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

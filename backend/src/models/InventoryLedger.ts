@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 
 /**
  * InventoryLedger — Transactional double-entry ledger for inventory.
@@ -13,7 +15,7 @@ import mongoose, { Schema, Document } from 'mongoose';
  * - SHRINKAGE: Destination for lost/damaged stock
  */
 
-export interface IInventoryLedger extends Document {
+export interface IInventoryLedger extends ISoftDeleted {
   product: mongoose.Types.ObjectId;
   referenceId: string; // OrderId or ReservationId
   referenceType: 'Order' | 'RentalOrder' | 'EventBooking' | 'Manual';
@@ -47,5 +49,8 @@ const InventoryLedgerSchema: Schema = new Schema(
 InventoryLedgerSchema.index({ product: 1, toAccount: 1, status: 1 });
 InventoryLedgerSchema.index({ product: 1, fromAccount: 1, status: 1 });
 
-const InventoryLedger = mongoose.model<IInventoryLedger>('InventoryLedger', InventoryLedgerSchema);
+InventoryLedgerSchema.plugin(SoftDeletePlugin);
+InventoryLedgerSchema.plugin(ForensicAuditPlugin);
+
+const InventoryLedger = mongoose.model<IInventoryLedger, SoftDeleteModel<IInventoryLedger>>('InventoryLedger', InventoryLedgerSchema);
 export default InventoryLedger;

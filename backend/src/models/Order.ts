@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
 export interface IOrderStatusHistory {
   status: string;
@@ -34,7 +35,7 @@ export interface IShippingAddress {
   deliveryInstructions?: string;
 }
 
-export interface IOrder extends Document {
+export interface IOrder extends ISoftDeleted {
   user: mongoose.Types.ObjectId;
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
@@ -241,5 +242,10 @@ OrderSchema.index({ user: 1, createdAt: -1 });
 OrderSchema.index({ orderStatus: 1, createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, razorpayOrderId: 1, createdAt: -1 });
 
-const Order = mongoose.model<IOrder>('Order', OrderSchema);
+OrderSchema.plugin(SoftDeletePlugin);
+
+import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
+OrderSchema.plugin(ForensicAuditPlugin);
+
+const Order = mongoose.model<IOrder, SoftDeleteModel<IOrder>>('Order', OrderSchema);
 export default Order;

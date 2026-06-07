@@ -8,15 +8,14 @@ describe('Inventory Integration', () => {
 
   beforeAll(async () => {
     // Setup in-memory MongoDB or connect to local test DB
-    if (!process.env.MONGO_URI) {
-      process.env.MONGO_URI = 'mongodb://localhost:27017/eventdecor_test_inventory';
-    }
+    // CRITICAL FIX: Always override MONGO_URI for tests to prevent wiping production data
+    process.env.MONGO_URI = 'mongodb://localhost:27017/eventdecor_test_inventory';
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
     }
     // Make sure we have a clean state
-    await Product.deleteMany({});
-    await InventoryReservation.deleteMany({});
+    await Product.deleteMany({}, { bypassDestructionGuard: true });
+    await InventoryReservation.deleteMany({}, { bypassDestructionGuard: true });
 
     const product = await Product.create({
       title: 'Test Decor Item',
@@ -33,8 +32,8 @@ describe('Inventory Integration', () => {
   });
 
   afterAll(async () => {
-    await Product.deleteMany({});
-    await InventoryReservation.deleteMany({});
+    await Product.deleteMany({}, { bypassDestructionGuard: true });
+    await InventoryReservation.deleteMany({}, { bypassDestructionGuard: true });
     await mongoose.connection.close();
   });
 

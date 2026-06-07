@@ -1,4 +1,4 @@
-﻿import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import logger from '../config/logger';
 
@@ -604,8 +604,8 @@ const galleryInspirations = [
     description: 'Vibrant handcrafted heritage arrangements.',
   },
   {
-    title: 'Plate Decoration & Packing',
-    teluguTitle: 'à°ªà±à°²à±‡à°Ÿà± à°ªà±à°¯à°¾à°•à°¿à°‚à°—à± & à°…à°²à°‚à°•à°°à°£',
+      title: 'Plate Decoration & Packing',
+    teluguTitle: 'à°ªà± à°²à±‡à°Ÿà±  à°ªà± à°¯à°¾à°•à°¿à°‚à°—à±  & à°…à°²à°‚à°•à°°à°£',
     category: 'Plate Decoration & Packing',
     event: 'Engagement Ceremony',
     style: 'Minimal Modern',
@@ -619,17 +619,21 @@ const galleryInspirations = [
 
 const seed = async () => {
   // 1. Seed Protection & Read-Only Production Mode
-  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
-    logger.error(
-      'âŒ SAFETY GATE: Seed script execution is blocked in production. Set ALLOW_PRODUCTION_SEED=true to override.',
-    );
+  if (process.env.NODE_ENV === 'production') {
+    logger.error('❌ FATAL: seedData.ts cannot be run in production mode.');
+    process.exit(1);
+  }
+
+  const MONGO_URI = process.env.MONGO_URI || '';
+  if (MONGO_URI.includes('mongodb.net') || MONGO_URI.includes('mongodb+srv')) {
+    logger.error('❌ FATAL: seedData.ts cannot be run against an Atlas cluster.');
     process.exit(1);
   }
 
   // 2. Confirmation Gate
-  if (process.env.DELETE_PRODUCTION_DATA !== 'CONFIRMED') {
+  if (process.env.I_KNOW_THIS_WIPES_DATA !== 'true') {
     logger.error(
-      'âŒ SAFETY GATE: You must set DELETE_PRODUCTION_DATA=CONFIRMED to authorize destructive operations. Run: DELETE_PRODUCTION_DATA=CONFIRMED npm run seed',
+      '❌ SAFETY GATE: You must set I_KNOW_THIS_WIPES_DATA=true to authorize destructive seed operations. Run: I_KNOW_THIS_WIPES_DATA=true npm run seed'
     );
     process.exit(1);
   }

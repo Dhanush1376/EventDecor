@@ -1,6 +1,23 @@
 # Siri Arts & Crafts — Cinematic E-Commerce & Atelier Portal
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org)
+[![React Version](https://img.shields.io/badge/React-19.x-blue.svg)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://www.typescriptlang.org/)
+
 Siri Arts & Crafts is an enterprise-grade, high-performance digital sanctuary dedicated to premium architectural event curation and bespoke artisanal scapes. Combining modern luxury styling with strict technical hardening, the platform connects a fluid, gold-morphic React storefront with a secure Node.js/TypeScript Express backend.
+
+---
+
+## 📋 Table of Contents
+- [System Architecture](#system-architecture)
+- [Getting Started & Local Development](#getting-started--local-development)
+- [Production Security & Hardening Features](#production-security--hardening-features)
+- [Environment Configuration](#environment-configuration)
+- [Deployment Workflows](#deployment-workflows)
+- [Monorepo Orchestration Scripts](#monorepo-orchestration-scripts)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -233,6 +250,18 @@ Run these scripts from the monorepo root:
 *   `npm run install:all` - Recursively installs all root, frontend, and backend packages.
 *   `npm run dev` - Concurrently runs local React development and Express TypeScript servers.
 *   `npm run build:all` - Triggers optimized builds for both frontend assets and backend scripts.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on how to submit pull requests, report issues, and set up your development environment.
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 © 2026 Siri Arts & Crafts. All rights reserved. Premium Event Scapes & Bespoke Curators.

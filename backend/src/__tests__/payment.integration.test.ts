@@ -14,22 +14,21 @@ jest.mock('../jobs/queues', () => ({
 describe('Payment Integration & State Machine', () => {
   beforeAll(async () => {
     // Setup in-memory MongoDB or connect to local test DB
-    if (!process.env.MONGO_URI) {
-      process.env.MONGO_URI = 'mongodb://localhost:27017/eventdecor_test_payment';
-    }
+    // CRITICAL FIX: Always override MONGO_URI for tests to prevent wiping production data
+    process.env.MONGO_URI = 'mongodb://localhost:27017/eventdecor_test_payment';
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
     }
     // ensure clean state
-    await Order.deleteMany({});
-    await PaymentWebhookEvent.deleteMany({});
-    await RefundRecord.deleteMany({});
+    await Order.deleteMany({}, { bypassDestructionGuard: true });
+    await PaymentWebhookEvent.deleteMany({}, { bypassDestructionGuard: true });
+    await RefundRecord.deleteMany({}, { bypassDestructionGuard: true });
   });
 
   afterEach(async () => {
-    await Order.deleteMany({});
-    await PaymentWebhookEvent.deleteMany({});
-    await RefundRecord.deleteMany({});
+    await Order.deleteMany({}, { bypassDestructionGuard: true });
+    await PaymentWebhookEvent.deleteMany({}, { bypassDestructionGuard: true });
+    await RefundRecord.deleteMany({}, { bypassDestructionGuard: true });
   });
 
   afterAll(async () => {

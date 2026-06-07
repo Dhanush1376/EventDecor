@@ -41,6 +41,6 @@ export const createAuditLog = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const clearAuditLogs = asyncHandler(async (req: Request, res: Response) => {
-  await AdminAuditLog.deleteMany({});
-  res.status(200).json(new ApiResponse(true, 'Audit logs cleared successfully', {}));
+  // Production Safety: Audit logs must never be cleared.
+  res.status(403).json(new ApiResponse(false, 'Forbidden: Audit logs are permanent and cannot be cleared for compliance and data safety reasons.', {}));
 });

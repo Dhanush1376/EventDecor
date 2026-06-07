@@ -100,7 +100,8 @@ export const deleteCategory = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
 
-    await existing.deleteOne();
+    const user = (req as any).user;
+    await existing.softDelete(user, 'Deleted via categoryController');
 
     res.status(200).json({ success: true, message: 'Category deleted successfully' });
   } catch (error: any) {

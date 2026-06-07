@@ -9,6 +9,10 @@ import { PaymentStateMachine } from './payments/PaymentStateMachine';
 import OutboxEvent from '../models/OutboxEvent';
 import * as Sentry from '@sentry/node';
 import { InventoryService } from './InventoryService';
+import Product from '../models/Product';
+import InventoryLog from '../models/InventoryLog';
+import User from '../models/User';
+import AnalyticsService from './analyticsService';
 
 export class PaymentVerificationService {
   static async verifyPayment(paymentData: any, userId: string, role: string) {
@@ -166,9 +170,6 @@ export class PaymentVerificationService {
       } else {
         // Fallback if older order without reservations
         for (const item of order.items) {
-          const Product = require('../models/Product').default;
-          const InventoryLog = require('../models/InventoryLog').default;
-
           const product = await Product.findByIdAndUpdate(
             item.productId,
             { $inc: { stock: -item.quantity, reservedStock: -item.quantity } },
@@ -184,7 +185,7 @@ export class PaymentVerificationService {
                   newStock: product.stock,
                   delta: -item.quantity,
                   reason: 'order_placed',
-                  referenceId: order._id.toString(),
+                  orderId: order._id.toString(),
                   performedBy: 'system',
                   note: `Direct deduction for legacy order verification (no reservation found)`,
                 },
@@ -195,10 +196,9 @@ export class PaymentVerificationService {
         }
       }
 
-      const ProductModel = require('../models/Product').default;
       for (const item of order.items) {
         if (item.productId) {
-          await ProductModel.findByIdAndUpdate(
+          await Product.findByIdAndUpdate(
             item.productId,
             { $inc: { sold: item.quantity || 1 } },
             { session },
@@ -236,7 +236,6 @@ export class PaymentVerificationService {
       );
 
       // Assuming cart clearance should be an event too, but doing it directly for user is fine
-      const User = require('../models/User').default;
       await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
 
       await session.commitTransaction();
@@ -249,7 +248,6 @@ export class PaymentVerificationService {
       session.endSession();
     }
 
-    const AnalyticsService = require('./analyticsService').default;
     AnalyticsService.clearCache();
 
     logger.info(`Payment successful for order: ${order._id}`);

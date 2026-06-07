@@ -11,6 +11,9 @@ import { getAdminEmails } from '../config/adminConfig';
 import { recommendationQueue } from './queues';
 import { InventoryService } from '../services/InventoryService';
 import { WebhookDeadLetterService } from '../services/WebhookDeadLetterService';
+import { initHealthMonitorJob } from './healthMonitorJob';
+import { initBackupJobs } from './backupJob';
+import { initDataMonitorJob } from './DataMonitorJob';
 
 export const initJobs = () => {
   if (process.env.ENABLE_CRON === 'false') {
@@ -339,39 +342,8 @@ export const initJobs = () => {
     });
   });
 
-  // 14. Database Backup (daily at 3:00 AM)
-  cron.schedule('0 3 * * *', async () => {
-    await withCronLock('db-backup', 3600, async () => {
-      logger.info('[BACKUP CRON] Triggering scheduled database backup...');
-      const { exec } = require('child_process');
-      exec(
-        'npm run backup:db',
-        { cwd: process.cwd() },
-        async (error: any, stdout: string, stderr: string) => {
-          if (error || (stderr && stderr.toLowerCase().includes('error'))) {
-            const errMessage = error?.message || stderr;
-            logger.error(`[BACKUP CRON] Error executing backup: ${errMessage}`);
-
-            const recipients = getAdminEmails();
-            if (recipients.length > 0) {
-              const { sendDirectEmail } = require('../services/notificationService');
-              for (const email of recipients) {
-                await sendDirectEmail({
-                  email,
-                  subject: `[CRITICAL ALERT] Database Backup Failed`,
-                  customHtml: `<p>The automated database backup failed at ${new Date().toISOString()}.</p><p>Error details: ${errMessage}</p>`,
-                  type: 'system',
-                  action: 'backup_failure_alert',
-                }).catch(() => {});
-              }
-            }
-            return;
-          }
-          logger.info(`[BACKUP CRON] Backup completed successfully.`);
-        },
-      );
-    });
-  });
+  // 14. Database Backup (daily, weekly, monthly managed via backupJob)
+  initBackupJobs();
 
   // 15. Business Metrics Reporting (Hourly)
   cron.schedule('0 * * * *', async () => {
@@ -412,6 +384,12 @@ export const initJobs = () => {
       logger.error(`[STARTUP] Failed to recover fallback queue jobs: ${err.message}`);
     }
   })();
+
+  // 19. Initialize Health Monitor Job
+  initHealthMonitorJob();
+
+  // 20. Initialize Real-Time Data Drop Monitor
+  initDataMonitorJob();
 
   logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');
 };

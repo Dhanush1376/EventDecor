@@ -6,13 +6,29 @@ import path from 'path';
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 import CustomOrderConfig from '../models/CustomOrderConfig';
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/eventdecor';
+import { connectDB } from '../config/db';
 
 const seedConfig = async () => {
+  // 1. Critical Safeguards
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ FATAL: seedCustomOrderConfig.ts cannot be run in production mode.');
+    process.exit(1);
+  }
+
+  const MONGO_URI = process.env.MONGO_URI || '';
+  if (MONGO_URI.includes('mongodb.net') || MONGO_URI.includes('mongodb+srv')) {
+    console.error('❌ FATAL: seedCustomOrderConfig.ts cannot be run against an Atlas cluster.');
+    process.exit(1);
+  }
+
+  if (process.env.I_KNOW_THIS_WIPES_DATA !== 'true') {
+    console.error('❌ FATAL: Must set I_KNOW_THIS_WIPES_DATA=true to authorize mass data modification.');
+    process.exit(1);
+  }
+
   try {
-    console.log('Connecting to MongoDB...');
-    await mongoose.connect(MONGO_URI);
+    console.log('Connecting to MongoDB via safe connection manager...');
+    await connectDB();
     console.log('Connected to MongoDB.');
 
     const newVersion = (await CustomOrderConfig.countDocuments()) + 1;

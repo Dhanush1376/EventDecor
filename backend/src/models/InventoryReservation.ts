@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface IInventoryReservation extends Document {
+export interface IInventoryReservation extends ISoftDeleted {
   product: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   quantity: number;
@@ -41,7 +42,11 @@ InventoryReservationSchema.index({ product: 1, status: 1 });
 InventoryReservationSchema.index({ user: 1, status: 1 });
 InventoryReservationSchema.index({ status: 1, expiresAt: 1 }); // For sweep CRON queries
 
-const InventoryReservation = mongoose.model<IInventoryReservation>(
+import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
+InventoryReservationSchema.plugin(ForensicAuditPlugin);
+InventoryReservationSchema.plugin(SoftDeletePlugin);
+
+const InventoryReservation = mongoose.model<IInventoryReservation, SoftDeleteModel<IInventoryReservation>>(
   'InventoryReservation',
   InventoryReservationSchema,
 );

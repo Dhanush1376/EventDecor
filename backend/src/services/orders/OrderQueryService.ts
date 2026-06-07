@@ -76,7 +76,7 @@ export class OrderQueryService {
       Order.countDocuments(filter),
     ]);
 
-    const invoices = orders.map((order) => ({
+    const invoices = orders.map((order: any) => ({
       orderId: order._id,
       invoiceNumber: order.invoiceNumber || `INV-${order._id.toString().slice(-6).toUpperCase()}`,
       date: order.createdAt,

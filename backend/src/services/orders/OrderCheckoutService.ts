@@ -283,10 +283,9 @@ export class OrderCheckoutService {
         await order.save({ session });
 
         // Increment sold count
-        const ProductModel = require('../../models/Product').default;
         for (const item of orderItems) {
           if (item.productId) {
-            await ProductModel.findByIdAndUpdate(
+            await Product.findByIdAndUpdate(
               item.productId,
               { $inc: { sold: item.quantity || 1 } },
               { session },

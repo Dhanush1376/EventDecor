@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 
 export interface IAdminAuditLog extends Document {
   actorId?: mongoose.Types.ObjectId;
@@ -45,6 +46,8 @@ AdminAuditLogSchema.index({ path: 1, createdAt: -1 });
 AdminAuditLogSchema.index({ entityType: 1, entityId: 1, createdAt: -1 });
 
 // Immutable permanent audit logging (No TTL index)
+
+AdminAuditLogSchema.plugin(ForensicAuditPlugin);
 
 const AdminAuditLog = mongoose.model<IAdminAuditLog>('AdminAuditLog', AdminAuditLogSchema);
 export default AdminAuditLog;

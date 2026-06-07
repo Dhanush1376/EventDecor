@@ -148,12 +148,14 @@ ProductSchema.index({ isActive: 1, availabilityMode: 1, category: 1 });
 
 // Sitemap Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
+import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 
 ProductSchema.post('save', () => {
   triggerSitemapUpdate();
 });
 
 ProductSchema.plugin(SoftDeletePlugin);
+ProductSchema.plugin(ForensicAuditPlugin);
 
 const Product = mongoose.model<IProduct, SoftDeleteModel<IProduct>>('Product', ProductSchema);
 export default Product;
