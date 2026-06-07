@@ -74,7 +74,7 @@ function createOverlaySvg(title: string, price: number, siteName: string) {
 
 export const generateOgImage = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     let product;
 
     if (mongoose.Types.ObjectId.isValid(id)) {
@@ -138,7 +138,7 @@ export const generateOgImage = async (req: Request, res: Response) => {
 
 export const generateSocialPreviewHtml = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     let product;
 
     if (mongoose.Types.ObjectId.isValid(id)) {
