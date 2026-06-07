@@ -46,7 +46,17 @@ export class OrderRollbackService {
       // Stock was only reserved — release reservations
       if (order.reservationIds && order.reservationIds.length > 0) {
         for (const resId of order.reservationIds) {
-          await InventoryService.cancelReservation(resId.toString(), session);
+          try {
+            await InventoryService.cancelReservation(resId.toString(), session);
+          } catch (err: any) {
+            if (err.statusCode === 404 || err.message?.includes('not found')) {
+              logger.warn(
+                `[ROLLBACK] Reservation ${resId} not found during rollback of order ${order._id}. Skipping since it is already released.`,
+              );
+            } else {
+              throw err;
+            }
+          }
         }
       } else {
         // Fallback for older orders without reservation tracking
