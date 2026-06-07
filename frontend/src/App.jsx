@@ -307,11 +307,21 @@ hydrateQueryClientCache(queryClient);
 
 function App() {
   const [isMounted, setIsMounted] = useState(false);
+  const [toastPosition, setToastPosition] = useState('bottom-right');
 
   React.useEffect(() => {
     setIsMounted(true);
     // Pre-fetch CSRF token so it's ready before any user interaction
     ensureCsrfToken().catch(() => {});
+  }, []);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setToastPosition(window.innerWidth < 768 ? 'top-center' : 'bottom-right');
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   React.useEffect(() => {
@@ -343,21 +353,28 @@ function App() {
                   <UserSocketProvider>
                     {isMounted && (
                       <Toaster
-                        position="bottom-right"
+                        position={toastPosition}
                         toastOptions={{
                           duration: 2500,
                           style: {
-                            background: 'rgba(255, 255, 255, 0.92)',
+                            background: 'rgba(255, 255, 255, 0.4)',
                             backdropFilter: 'blur(20px)',
                             WebkitBackdropFilter: 'blur(20px)',
-                            border: '1px solid rgba(208, 197, 175, 0.15)',
-                            color: 'var(--color-on-surface)',
+                            border: '1px solid rgba(255, 255, 255, 0.6)',
+                            color: '#000000',
                             fontSize: '12px',
                             fontFamily: 'var(--font-body)',
-                            fontWeight: '600',
+                            fontWeight: '700',
                             borderRadius: 'var(--radius-full)',
-                            padding: '8px 16px',
-                            boxShadow: 'var(--shadow-xl)',
+                            padding: '12px 24px',
+                            boxShadow:
+                              '0 20px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.4)',
+                          },
+                          success: {
+                            iconTheme: {
+                              primary: '#16a34a',
+                              secondary: '#ffffff',
+                            },
                           },
                         }}
                       >

@@ -141,7 +141,7 @@ export function Cart() {
         setAppliedCoupon(res.data);
         setClaimedCoupon(code); // Carry over to checkout page automatically
         setCouponError('');
-        triggerNotification(`Coupon "${code}" applied successfully!`);
+        triggerNotification('Applied coupon successfully');
         setIsCouponModalOpen(false); // Close selector modal if open
       } else {
         setCouponError(res.message || 'Invalid coupon code.');
@@ -222,12 +222,9 @@ export function Cart() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed top-28 left-1/2 -translate-x-1/2 z-[100] bg-white/95 backdrop-blur-2xl border border-primary/15 text-on-surface px-5 py-2.5 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.1)] text-[12px] font-bold tracking-wide flex items-center gap-2 whitespace-nowrap"
+              className="fixed top-28 left-1/2 -translate-x-1/2 z-[100] bg-white/40 backdrop-blur-2xl border border-white/60 text-black px-6 py-3 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.08),_inset_0_1px_0_rgba(255,255,255,0.4)] text-[12px] font-bold tracking-wide flex items-center gap-2.5 whitespace-nowrap"
             >
-              <span
-                className="material-symbols-outlined text-[16px] text-primary"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
+              <span className="material-symbols-outlined text-[18px] text-green-600 font-fill">
                 check_circle
               </span>
               {notification}
@@ -293,10 +290,11 @@ export function Cart() {
               </p>
               <Link
                 to="/collections"
-                className="btn-primary py-3 px-8 rounded-full font-bold uppercase tracking-widest text-[10px] shadow-md inline-block"
+                className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
               >
-                <span>
-                  {activeCartMode === 'rental' ? 'Explore Rental Products' : 'Continue Shopping'}
+                <span>Explore Collections</span>
+                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
+                  arrow_forward
                 </span>
               </Link>
             </motion.div>
@@ -878,7 +876,7 @@ export function Cart() {
                             });
                           })
                         }
-                        className="w-full mt-6 btn-primary py-3.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-md transition-all text-center hidden lg:block cursor-pointer"
+                        className="w-full mt-6 bg-black text-white hover:bg-[#8c7335] hover:text-white py-3.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-md transition-all text-center hidden lg:block cursor-pointer active:scale-[0.98]"
                       >
                         {activeCartMode === 'rental' ? 'Continue Rental Booking' : 'Checkout'}
                       </button>
@@ -927,7 +925,7 @@ export function Cart() {
           <motion.div
             initial={{ y: 100 }}
             animate={{ y: 0 }}
-            className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/40 py-3 px-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-[90] lg:hidden"
+            className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/40 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] px-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-[90] lg:hidden"
           >
             <div className="max-w-[1240px] mx-auto flex items-center justify-between sm:px-6">
               <div className="flex flex-col justify-center">
@@ -947,7 +945,7 @@ export function Cart() {
                     });
                   })
                 }
-                className="btn-primary px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-md transition-all text-center block cursor-pointer"
+                className="bg-black text-white hover:bg-[#8c7335] hover:text-white px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-md transition-all text-center block cursor-pointer active:scale-[0.98]"
               >
                 {activeCartMode === 'rental' ? 'Rent Now' : 'Checkout'}
               </button>

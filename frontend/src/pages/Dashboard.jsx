@@ -1833,10 +1833,13 @@ export function Dashboard() {
                           to reserve your event pieces.
                         </p>
                         <Link
-                          to="/products"
-                          className="bg-primary text-surface px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] text-[9px] hover:bg-on-surface transition-colors shadow-md"
+                          to="/collections"
+                          className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
                         >
-                          Browse Boutique
+                          <span>Explore Collections</span>
+                          <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
+                            arrow_forward
+                          </span>
                         </Link>
                       </div>
                     )}

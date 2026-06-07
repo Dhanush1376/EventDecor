@@ -79,8 +79,14 @@ describe('SessionAuthService', () => {
         'Session expired. Please log in again.',
       );
 
-      expect(RefreshToken.deleteMany).toHaveBeenCalledWith({ userId: 'user_1' });
-      expect(UsedRefreshToken.deleteMany).toHaveBeenCalledWith({ userId: 'user_1' });
+      expect(RefreshToken.deleteMany).toHaveBeenCalledWith(
+        { userId: 'user_1' },
+        { bypassDestructionGuard: true },
+      );
+      expect(UsedRefreshToken.deleteMany).toHaveBeenCalledWith(
+        { userId: 'user_1' },
+        { bypassDestructionGuard: true },
+      );
     });
 
     it('successfully rotates session', async () => {
@@ -119,8 +125,14 @@ describe('SessionAuthService', () => {
   describe('revokeAllSessions', () => {
     it('revokes all sessions for a user', async () => {
       await SessionAuthService.revokeAllSessions('user_1');
-      expect(RefreshToken.deleteMany).toHaveBeenCalledWith({ userId: 'user_1' });
-      expect(UsedRefreshToken.deleteMany).toHaveBeenCalledWith({ userId: 'user_1' });
+      expect(RefreshToken.deleteMany).toHaveBeenCalledWith(
+        { userId: 'user_1' },
+        { bypassDestructionGuard: true },
+      );
+      expect(UsedRefreshToken.deleteMany).toHaveBeenCalledWith(
+        { userId: 'user_1' },
+        { bypassDestructionGuard: true },
+      );
     });
   });
 });

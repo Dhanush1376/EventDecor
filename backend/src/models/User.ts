@@ -188,8 +188,8 @@ async function purgeUserSessions(userId: mongoose.Types.ObjectId) {
     const RefreshToken = mongoose.model('RefreshToken');
     const UsedRefreshToken = mongoose.model('UsedRefreshToken');
     await Promise.all([
-      RefreshToken.deleteMany({ userId }),
-      UsedRefreshToken.deleteMany({ userId }),
+      RefreshToken.deleteMany({ userId }, { bypassDestructionGuard: true } as any),
+      UsedRefreshToken.deleteMany({ userId }, { bypassDestructionGuard: true } as any),
     ]);
   } catch {
     // Models may not be registered in script contexts

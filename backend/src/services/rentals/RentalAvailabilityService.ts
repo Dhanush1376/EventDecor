@@ -123,9 +123,9 @@ export class RentalAvailabilityService {
    * Release locked dates for a cancelled/failed order.
    */
   static async releaseDates(rentalOrderId: string, session?: mongoose.ClientSession) {
-    await RentalDayBlock.deleteMany(
-      { rentalOrder: rentalOrderId },
-      { session: session || undefined },
-    );
+    await RentalDayBlock.deleteMany({ rentalOrder: rentalOrderId }, {
+      session: session || undefined,
+      bypassDestructionGuard: true,
+    } as any);
   }
 }

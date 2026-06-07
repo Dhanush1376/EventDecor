@@ -98,7 +98,7 @@ export default function CheckoutVerificationStep() {
           <button
             onClick={handleContinue}
             disabled={!aadhaarNumber || aadhaarNumber.length !== 12 || !agreementAccepted}
-            className="w-full btn-primary py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm transition-colors text-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full btn-primary py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm transition-colors text-center disabled:opacity-50 disabled:cursor-not-allowed !text-white"
           >
             Continue to Payment
           </button>

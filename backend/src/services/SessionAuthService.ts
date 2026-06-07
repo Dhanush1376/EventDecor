@@ -73,8 +73,12 @@ class SessionAuthService {
       logger.error(
         `[SECURITY ALERT] Refresh token reuse detected for userId: ${isUsed.userId}! Revoking all sessions. Potential token theft.`,
       );
-      await RefreshToken.deleteMany({ userId: isUsed.userId });
-      await UsedRefreshToken.deleteMany({ userId: isUsed.userId });
+      await RefreshToken.deleteMany({ userId: isUsed.userId }, {
+        bypassDestructionGuard: true,
+      } as any);
+      await UsedRefreshToken.deleteMany({ userId: isUsed.userId }, {
+        bypassDestructionGuard: true,
+      } as any);
       throw new ApiError(401, 'Session expired. Please log in again.');
     }
 
@@ -125,8 +129,8 @@ class SessionAuthService {
   }
 
   static async revokeAllSessions(userId: string) {
-    await RefreshToken.deleteMany({ userId });
-    await UsedRefreshToken.deleteMany({ userId });
+    await RefreshToken.deleteMany({ userId }, { bypassDestructionGuard: true } as any);
+    await UsedRefreshToken.deleteMany({ userId }, { bypassDestructionGuard: true } as any);
   }
 }
 

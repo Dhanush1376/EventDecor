@@ -66,18 +66,24 @@ export class PrivacyService {
           'shippingAddress.address': '[erased]',
           'shippingAddress.locality': '[erased]',
         },
-      }
+      },
     );
 
     await Review.updateMany(
       { customer: userId },
-      { $set: { customerName: 'Deleted User', comment: '[content removed per erasure request]' } }
+      { $set: { customerName: 'Deleted User', comment: '[content removed per erasure request]' } },
     );
 
     await Promise.all([
-      RefreshToken.deleteMany({ userId: new mongoose.Types.ObjectId(userId) }),
-      UsedRefreshToken.deleteMany({ userId: new mongoose.Types.ObjectId(userId) }),
-      require('../models/Address').default.deleteMany({ user: userId }),
+      RefreshToken.deleteMany({ userId: new mongoose.Types.ObjectId(userId) }, {
+        bypassDestructionGuard: true,
+      } as any),
+      UsedRefreshToken.deleteMany({ userId: new mongoose.Types.ObjectId(userId) }, {
+        bypassDestructionGuard: true,
+      } as any),
+      require('../models/Address').default.deleteMany({ user: userId }, {
+        bypassDestructionGuard: true,
+      } as any),
     ]);
 
     user.name = 'Deleted User';

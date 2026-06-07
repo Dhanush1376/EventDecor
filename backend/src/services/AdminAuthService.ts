@@ -1,4 +1,4 @@
-﻿import crypto from 'crypto';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import PasswordResetToken from '../models/PasswordResetToken';
@@ -237,7 +237,9 @@ class AdminAuthService {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    await PasswordResetToken.deleteMany({ email: cleanEmail });
+    await PasswordResetToken.deleteMany({ email: cleanEmail }, {
+      bypassDestructionGuard: true,
+    } as any);
     await PasswordResetToken.create({
       email: cleanEmail,
       tokenHash,

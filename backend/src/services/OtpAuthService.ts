@@ -285,7 +285,10 @@ class OtpAuthService {
       throw new ApiError(400, 'Invalid or expired OTP');
     }
 
-    await OtpVerification.deleteMany({ email: cleanEmail, type: 'auth' });
+    await OtpVerification.deleteMany(
+      { email: cleanEmail, type: 'auth' },
+      { bypassDestructionGuard: true },
+    );
 
     logger.info(
       `[OTP VERIFY OK] Code consumed for ${cleanEmail} (attempts: ${consumed.attempts + 1})`,
@@ -525,7 +528,10 @@ class OtpAuthService {
     if (!isMatch) {
       latestRecord.attempts += 1;
       if (latestRecord.attempts >= 5) {
-        await OtpVerification.deleteMany({ email: cleanEmail, type: 'cod' });
+        await OtpVerification.deleteMany(
+          { email: cleanEmail, type: 'cod' },
+          { bypassDestructionGuard: true },
+        );
         throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
       } else {
         await latestRecord.save();
@@ -544,7 +550,10 @@ class OtpAuthService {
       throw new ApiError(400, 'Verification code already used. Please request a new one.');
     }
 
-    await OtpVerification.deleteMany({ email: cleanEmail, type: 'cod' });
+    await OtpVerification.deleteMany(
+      { email: cleanEmail, type: 'cod' },
+      { bypassDestructionGuard: true },
+    );
     return true;
   }
 }
