@@ -110,7 +110,7 @@ export function ProductGallery({ images = [], product }) {
           <button
             key={idx}
             onClick={() => handleThumbnailClick(idx)}
-            className={`shrink-0 w-14 sm:w-16 md:w-20 lg:w-full aspect-square rounded-xl overflow-hidden border-2 transition-all duration-500 relative group cursor-pointer ${
+            className={`shrink-0 w-14 sm:w-16 md:w-20 lg:w-full aspect-square rounded-[24px] overflow-hidden border-2 transition-all duration-500 relative group cursor-pointer ${
               selectedIdx === idx
                 ? 'border-primary shadow-md shadow-primary/10 scale-105'
                 : 'border-transparent opacity-60 hover:opacity-100'
@@ -119,7 +119,7 @@ export function ProductGallery({ images = [], product }) {
             <OptimizedImage
               src={img}
               alt={`Thumbnail ${idx + 1}`}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none rounded-[10px]"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none rounded-[22px]"
               width={100}
               height={100}
             />
@@ -289,7 +289,7 @@ export function ProductGallery({ images = [], product }) {
 
                 {/* Bottom Thumbnail Strip */}
                 <div
-                  className="w-full pb-6 pt-3 px-4 flex gap-3 overflow-x-auto no-scrollbar justify-center items-center shrink-0 z-10"
+                  className="w-full pb-[max(16px,env(safe-area-inset-bottom))] pt-3 px-4 flex gap-3 overflow-x-auto no-scrollbar justify-center items-center shrink-0 z-10"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {images.map((img, idx) => (
@@ -304,7 +304,7 @@ export function ProductGallery({ images = [], product }) {
                           });
                         }
                       }}
-                      className={`shrink-0 w-12 h-12 rounded-xl overflow-hidden border-2 transition-all duration-300 snap-center ${
+                      className={`shrink-0 w-12 h-12 rounded-[20px] overflow-hidden border-2 transition-all duration-300 snap-center ${
                         selectedIdx === idx
                           ? 'border-[#8b7e6a] scale-110 shadow-lg shadow-[#8b7e6a]/20'
                           : 'border-[#d4cbbf] opacity-50 hover:opacity-90'
@@ -313,7 +313,7 @@ export function ProductGallery({ images = [], product }) {
                       <OptimizedImage
                         src={img}
                         alt={`Thumbnail ${idx + 1}`}
-                        className="w-full h-full object-cover pointer-events-none rounded-[10px]"
+                        className="w-full h-full object-cover pointer-events-none rounded-[18px]"
                         width={100}
                         height={100}
                       />

@@ -212,7 +212,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                 </p>
               </div>
 
-              <div className="mt-auto space-y-4 pb-8 md:pb-0">
+              <div className="mt-auto space-y-4 pb-[max(16px,env(safe-area-inset-bottom))] md:pb-0">
                 <button
                   onClick={handleAddToCart}
                   className="w-full btn-primary !py-4 md:!py-5 flex items-center justify-center gap-3 font-bold cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"

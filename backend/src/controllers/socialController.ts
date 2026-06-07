@@ -31,7 +31,7 @@ async function fetchImageBuffer(url: string): Promise<Buffer> {
 function createOverlaySvg(title: string, price: number, siteName: string) {
   // Truncate title if it's too long
   const displayTitle = title.length > 50 ? title.substring(0, 47) + '...' : title;
-  
+
   return `
     <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -101,15 +101,15 @@ export const generateOgImage = async (req: Request, res: Response) => {
         width: 1200,
         height: 630,
         channels: 4,
-        background: { r: 245, g: 245, b: 245, alpha: 1 }
-      }
+        background: { r: 245, g: 245, b: 245, alpha: 1 },
+      },
     });
 
     // 3. Resize and crop the product image to fill the canvas as a cover
     const resizedImageBuffer = await sharp(imageBuffer)
       .resize(1200, 630, {
         fit: 'cover',
-        position: 'center'
+        position: 'center',
       })
       .png()
       .toBuffer();
@@ -122,7 +122,7 @@ export const generateOgImage = async (req: Request, res: Response) => {
     const finalImageBuffer = await baseCanvas
       .composite([
         { input: resizedImageBuffer, top: 0, left: 0 },
-        { input: svgOverlay, top: 0, left: 0 }
+        { input: svgOverlay, top: 0, left: 0 },
       ])
       .png()
       .toBuffer();
@@ -151,15 +151,33 @@ export const generateSocialPreviewHtml = async (req: Request, res: Response) => 
       return res.status(404).send('Product not found');
     }
 
-    const siteUrl = process.env.VITE_SITE_URL || `https://${req.get('host')}`;
+    // Ensure we use the frontend's domain for the canonical URL
+    const forwardedHost = req.get('x-forwarded-host') || req.get('host');
+    let siteUrl = process.env.VITE_SITE_URL;
+    if (!siteUrl) {
+      if (process.env.FRONTEND_URLS) {
+        siteUrl = process.env.FRONTEND_URLS.split(',')[0].trim();
+      } else {
+        siteUrl = `https://${forwardedHost}`;
+      }
+    }
+
     const siteName = process.env.VITE_SITE_NAME || 'Siri Arts & Crafts';
     const productUrl = `${siteUrl}/product/${product.slug || product._id}`;
-    
-    // OG Image Route
-    const ogImageUrl = `${process.env.BACKEND_URL || `https://${req.get('host')}/api/v1`}/social/product/${product._id}/image.png`;
-    
+
+    // OG Image Route (make sure to include /api/v1)
+    let baseUrl = process.env.BACKEND_URL || `https://${req.get('host')}`;
+    // Remove trailing slash if present
+    baseUrl = baseUrl.replace(/\/$/, '');
+    if (!baseUrl.endsWith('/api/v1')) {
+      baseUrl = `${baseUrl}/api/v1`;
+    }
+    const ogImageUrl = `${baseUrl}/social/product/${product._id}/image.png`;
+
     // Truncate description for SEO
-    const description = (product.seoDescription || product.description || '').replace(/<[^>]*>?/gm, '').substring(0, 160);
+    const description = (product.seoDescription || product.description || '')
+      .replace(/<[^>]*>?/gm, '')
+      .substring(0, 160);
     const title = `${product.seoTitle || product.title} | ${siteName}`;
 
     const html = `

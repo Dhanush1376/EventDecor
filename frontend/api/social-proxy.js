@@ -15,7 +15,7 @@ const BOT_USER_AGENTS = [
   'googlebot',
   'bingbot',
   'yandexbot',
-  'duckduckbot'
+  'duckduckbot',
 ];
 
 export default async function handler(req, res) {
@@ -26,14 +26,16 @@ export default async function handler(req, res) {
 
   if (isBot && productId) {
     try {
-      const backendUrl = process.env.VITE_API_URL || 'https://siri-arts-n-crafts.onrender.com/api/v1';
+      const backendUrl =
+        process.env.VITE_API_URL || 'https://siri-arts-n-crafts.onrender.com/api/v1';
       const url = new URL(`${backendUrl}/social/product/${productId}`);
-      
+
       const response = await fetch(url.toString(), {
         headers: {
           'User-Agent': req.headers['user-agent'],
           'X-Forwarded-For': req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-        }
+          'X-Forwarded-Host': req.headers['host'],
+        },
       });
 
       if (response.ok) {
@@ -56,7 +58,11 @@ export default async function handler(req, res) {
       return res.status(200).send(html);
     } else {
       res.setHeader('Content-Type', 'text/html');
-      return res.status(200).send(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/"></head><body>Loading...</body></html>`);
+      return res
+        .status(200)
+        .send(
+          `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/"></head><body>Loading...</body></html>`,
+        );
     }
   } catch (error) {
     console.error('Error serving index.html fallback:', error);

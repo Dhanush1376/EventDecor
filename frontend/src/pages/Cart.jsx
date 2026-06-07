@@ -218,13 +218,16 @@ export function Cart() {
         <AnimatePresence>
           {notification && (
             <motion.div
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="fixed top-28 left-1/2 -translate-x-1/2 z-50 bg-on-surface-variant text-surface px-6 py-3 rounded-lg shadow-xl text-xs font-semibold tracking-wide flex items-center gap-2"
+              exit={{ opacity: 0, y: -20, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed top-28 left-1/2 -translate-x-1/2 z-[100] bg-white/95 backdrop-blur-2xl border border-primary/15 text-on-surface px-5 py-2.5 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.1)] text-[12px] font-bold tracking-wide flex items-center gap-2 whitespace-nowrap"
             >
-              <span className="material-symbols-outlined text-sm text-primary-container">
+              <span
+                className="material-symbols-outlined text-[16px] text-primary"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
                 check_circle
               </span>
               {notification}

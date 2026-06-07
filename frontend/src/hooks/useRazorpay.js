@@ -42,6 +42,59 @@ const createIdempotencyKey = () => {
   return `order_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 };
 
+// Premium Toast Helpers
+const showPremiumToast = (message, type = 'error') => {
+  const isError = type === 'error';
+  toast.custom(
+    (t) => (
+      <div
+        className={`${
+          t.visible ? 'animate-spring-up' : 'animate-fade-out'
+        } flex items-center gap-3 px-5 py-3 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-black/5 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] pointer-events-auto`}
+      >
+        <div
+          className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full ${
+            isError
+              ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+              : 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400'
+          }`}
+        >
+          {isError ? (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          ) : (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          )}
+        </div>
+        <p className="text-sm font-medium text-gray-900 dark:text-white">{message}</p>
+      </div>
+    ),
+    { duration: 4000, position: 'bottom-center' },
+  );
+};
+
 export const useRazorpay = () => {
   const paymentInProgress = React.useRef(false);
 
@@ -61,7 +114,7 @@ export const useRazorpay = () => {
       const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
 
       if (!res) {
-        toast.error('Razorpay SDK failed to load. Are you online?');
+        showPremiumToast('Razorpay SDK failed to load. Are you online?', 'error');
         onError?.(new Error('Razorpay SDK failed to load'));
         return finalize();
       }
@@ -71,7 +124,7 @@ export const useRazorpay = () => {
       });
 
       if (!response.success) {
-        toast.error(response.message || 'Failed to create order');
+        showPremiumToast(response.message || 'Failed to create order', 'error');
         onError?.(response);
         return finalize();
       }
@@ -101,15 +154,17 @@ export const useRazorpay = () => {
             });
 
             if (verifyRes.success) {
-              toast.success('Payment successful!');
+              showPremiumToast('Payment successful!', 'success');
               onSuccess?.(verifyRes.data);
             } else {
-              toast.error('Payment verification failed');
+              showPremiumToast('Payment verification failed', 'error');
               onError?.(verifyRes);
             }
           } catch (err) {
             logger.error('Payment verification error:', err);
-            toast.error(err.response?.data?.message || 'Error verifying payment');
+            const errorMessage =
+              err.response?.data?.message || err.message || 'Error verifying payment';
+            showPremiumToast(errorMessage, 'error');
             onError?.(err);
           }
         },
@@ -138,7 +193,11 @@ export const useRazorpay = () => {
       paymentObject.open();
     } catch (err) {
       logger.error('Payment error:', err);
-      toast.error(err.response?.data?.message || 'Payment initiation failed');
+      // We check for err.response.data.message from backend validation errors,
+      // or err.message for frontend syntax/type errors like "Payment gateway returned an invalid order payload"
+      const errorMessage =
+        err.response?.data?.message || err.message || 'Payment initiation failed';
+      showPremiumToast(errorMessage, 'error');
       onError?.(err);
       finalize();
     }

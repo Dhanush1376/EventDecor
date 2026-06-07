@@ -157,7 +157,7 @@ export function RecommendationSystem({
               exit={{ opacity: 0, y: -15 }}
               className={
                 horizontalScroll
-                  ? `flex gap-4 md:gap-6 ${compact ? 'pb-2' : 'pb-4'} overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar`
+                  ? `flex gap-4 md:gap-6 ${compact ? 'pb-2' : 'pb-4'} overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar touch-pan-x`
                   : 'grid grid-cols-2 md:grid-cols-4 gap-6 pb-6'
               }
             >

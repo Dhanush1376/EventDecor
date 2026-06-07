@@ -748,7 +748,7 @@ export function GalleryDetail() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 150, opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[400px] h-[68px] z-[100] bg-white/95 backdrop-blur-3xl border border-black/5 p-1.5 flex items-center gap-2 shadow-[0_20px_60px_rgba(0,0,0,0.12)] rounded-full select-none"
+            className="md:hidden fixed bottom-0 left-0 w-full h-[calc(68px+env(safe-area-inset-bottom,0px))] z-[100] bg-white/95 backdrop-blur-3xl border-t border-black/5 p-1.5 pb-[calc(6px+env(safe-area-inset-bottom,0px))] flex items-center gap-2 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none"
           >
             <button
               onClick={handleWishlistLook}

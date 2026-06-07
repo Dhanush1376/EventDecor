@@ -435,7 +435,7 @@ export function CartDrawer({ isOpen, onClose }) {
               <div
                 className="p-6 border-t border-outline-variant/10 space-y-4 bg-white"
                 style={{
-                  paddingBottom: `calc(24px + env(safe-area-inset-bottom, 24px))`,
+                  paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`,
                 }}
               >
                 <div className="flex justify-between items-center">
