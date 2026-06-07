@@ -34,13 +34,13 @@ const createRedisConfig = () => {
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
       const isProduction = process.env.NODE_ENV === 'production';
       const multiInstance = resolveMultiInstance();
-      
+
       if (!requireRedis && !isProduction && !multiInstance && retries > 20) {
         logger.error('[REDIS] Max reconnect attempts reached in local dev. Stopping reconnection.');
         return new Error('Max reconnect attempts reached');
       }
       return delay;
-    }
+    },
   };
 
   if (isTlsRedis()) {
@@ -49,13 +49,15 @@ const createRedisConfig = () => {
 
   return {
     url: getRedisUrl(),
-    socket: socketOpts
+    socket: socketOpts,
   };
 };
 
 export const initRedis = async (): Promise<void> => {
   if (!getRedisUrl()) {
-    logger.warn('⚠️ REDIS_URL not provided. Running without Redis (Not recommended for multi-instance production).');
+    logger.warn(
+      '⚠️ REDIS_URL not provided. Running without Redis (Not recommended for multi-instance production).',
+    );
     return;
   }
 
@@ -74,13 +76,21 @@ export const initRedis = async (): Promise<void> => {
       client.on('error', (err: any) => {
         if (err.message && err.message.includes('max requests limit exceeded')) {
           if (!(global as any).upstashDisconnectLogged) {
-            logger.error(`[REDIS ${name}] Upstash Free Limit Exceeded. Gracefully disconnecting to prevent reconnect loops.`);
+            logger.error(
+              `[REDIS ${name}] Upstash Free Limit Exceeded. Gracefully disconnecting to prevent reconnect loops.`,
+            );
             (global as any).upstashDisconnectLogged = true;
           }
           // Disconnect immediately so node-redis stops the infinite auto-reconnect cycle
           client.disconnect().catch(() => {});
         } else if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
           logger.warn(`[REDIS ${name}] Transient network issue (${err.code}).`);
+        } else if (
+          err.message &&
+          (err.message.includes('Connection is closed') || err.message.includes('closed'))
+        ) {
+          // Suppress connection closed logs after limit disconnects
+          return;
         } else {
           logger.error(`[REDIS ${name}] Error: ${err.message}`);
           if (process.env.SENTRY_DSN) {
@@ -98,15 +108,10 @@ export const initRedis = async (): Promise<void> => {
     setupListeners(subClient, 'SubClient');
 
     logger.info('Connecting to Redis...');
-    
-    await Promise.all([
-      redisClient.connect(),
-      pubClient.connect(),
-      subClient.connect(),
-    ]);
+
+    await Promise.all([redisClient.connect(), pubClient.connect(), subClient.connect()]);
 
     logger.info(`✅ Redis Clients Connected successfully${isTlsRedis() ? ' (TLS)' : ''}`);
-
   } catch (err: any) {
     logger.error(`🚨 [REDIS CRITICAL] Failed to connect on startup: ${err.message}`);
     const isProduction = process.env.NODE_ENV === 'production';
@@ -144,7 +149,7 @@ export const closeRedisConnections = async (): Promise<void> => {
       } catch {
         client.disconnect();
       }
-    })
+    }),
   );
   logger.info('[REDIS] All connections closed');
 };

@@ -92,7 +92,8 @@ export const initWorkers = async () => {
         err.code === 'ECONNRESET' ||
         err.code === 'ENOTFOUND' ||
         err.name === 'ConnectionClosedError' ||
-        err.message?.includes('max requests limit exceeded')
+        err.message?.includes('max requests limit exceeded') ||
+        err.message?.includes('Connection is closed')
       )
         return;
       logger.error(`[WORKER email] Error:`, err);
@@ -120,7 +121,8 @@ export const initWorkers = async () => {
         err.code === 'ECONNRESET' ||
         err.code === 'ENOTFOUND' ||
         err.name === 'ConnectionClosedError' ||
-        err.message?.includes('max requests limit exceeded')
+        err.message?.includes('max requests limit exceeded') ||
+        err.message?.includes('Connection is closed')
       )
         return;
       logger.error(`[WORKER notification] Error:`, err);
@@ -147,7 +149,8 @@ export const initWorkers = async () => {
         err.code === 'ECONNRESET' ||
         err.code === 'ENOTFOUND' ||
         err.name === 'ConnectionClosedError' ||
-        err.message?.includes('max requests limit exceeded')
+        err.message?.includes('max requests limit exceeded') ||
+        err.message?.includes('Connection is closed')
       )
         return;
       logger.error(`[WORKER loyalty] Error:`, err);
@@ -351,7 +354,8 @@ export const initWorkers = async () => {
         err.code === 'ECONNRESET' ||
         err.code === 'ENOTFOUND' ||
         err.name === 'ConnectionClosedError' ||
-        err.message?.includes('max requests limit exceeded')
+        err.message?.includes('max requests limit exceeded') ||
+        err.message?.includes('Connection is closed')
       )
         return;
       logger.error(`[WORKER recommendation] Error:`, err);
@@ -413,7 +417,8 @@ export const initWorkers = async () => {
         err.code === 'ECONNRESET' ||
         err.code === 'ENOTFOUND' ||
         err.name === 'ConnectionClosedError' ||
-        err.message?.includes('max requests limit exceeded')
+        err.message?.includes('max requests limit exceeded') ||
+        err.message?.includes('Connection is closed')
       )
         return;
       logger.error(`[WORKER webhook] Error:`, err);
@@ -447,7 +452,8 @@ export const initWorkers = async () => {
         err.code === 'ECONNRESET' ||
         err.code === 'ENOTFOUND' ||
         err.name === 'ConnectionClosedError' ||
-        err.message?.includes('max requests limit exceeded')
+        err.message?.includes('max requests limit exceeded') ||
+        err.message?.includes('Connection is closed')
       )
         return;
       logger.error(`[WORKER refund] Error:`, err);
@@ -475,7 +481,8 @@ export const initWorkers = async () => {
         err.code === 'ECONNRESET' ||
         err.code === 'ENOTFOUND' ||
         err.name === 'ConnectionClosedError' ||
-        err.message?.includes('max requests limit exceeded')
+        err.message?.includes('max requests limit exceeded') ||
+        err.message?.includes('Connection is closed')
       )
         return;
       logger.error(`[WORKER system] Error:`, err);

@@ -35,6 +35,25 @@ export const connection = new IORedis(redisUrl, {
   },
 });
 
+export const switchToFallbackQueues = () => {
+  if (usingFallback) return;
+  logger.warn(
+    '⚠️ [BULLMQ] Dynamic fallback triggered! Re-routing all queues to MongoDB/in-memory fallback.',
+  );
+
+  const { QueueFallbackService } = require('../services/QueueFallbackService');
+  emailQueue = QueueFallbackService.getQueue('emailQueue');
+  notificationQueue = QueueFallbackService.getQueue('notificationQueue');
+  loyaltyQueue = QueueFallbackService.getQueue('loyaltyQueue');
+  recommendationQueue = QueueFallbackService.getQueue('recommendationQueue');
+  webhookQueue = QueueFallbackService.getQueue('webhookQueue');
+  refundQueue = QueueFallbackService.getQueue('refundQueue');
+  systemQueue = QueueFallbackService.getQueue('systemQueue');
+  deadLetterQueue = QueueFallbackService.getQueue('deadLetterQueue');
+
+  usingFallback = true;
+};
+
 connection.on('error', (err: any) => {
   if (err.message && err.message.includes('max requests limit exceeded')) {
     if (!(global as any).upstashBullMqDisconnectLogged) {
@@ -45,6 +64,15 @@ connection.on('error', (err: any) => {
     }
     // Disconnect immediately to stop the infinite auto-reconnect cycle
     connection.disconnect();
+
+    // Switch to fallback queues dynamically
+    switchToFallbackQueues();
+
+    // Gracefully shut down workers to prevent reconnection closed logs
+    try {
+      const { closeWorkers } = require('./workers');
+      closeWorkers().catch(() => {});
+    } catch {}
   } else if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
     logger.warn(`[BULLMQ IOREDIS] Transient connection issue (${err.code}). Will retry.`);
   } else if (
