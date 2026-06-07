@@ -156,57 +156,57 @@ export const generateSocialPreviewHtml = async (req: Request, res: Response) => 
     const productUrl = `${siteUrl}/product/${product.slug || product._id}`;
     
     // OG Image Route
-    const ogImageUrl = `${process.env.BACKEND_URL || \`https://\${req.get('host')}/api/v1\`}/social/product/\${product._id}/image.png`;
+    const ogImageUrl = `${process.env.BACKEND_URL || `https://${req.get('host')}/api/v1`}/social/product/${product._id}/image.png`;
     
     // Truncate description for SEO
     const description = (product.seoDescription || product.description || '').replace(/<[^>]*>?/gm, '').substring(0, 160);
-    const title = \`\${product.seoTitle || product.title} | \${siteName}\`;
+    const title = `${product.seoTitle || product.title} | ${siteName}`;
 
-    const html = \`
+    const html = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="utf-8">
-        <title>\${title}</title>
-        <meta name="description" content="\${description}">
+        <title>${title}</title>
+        <meta name="description" content="${description}">
         
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="product">
-        <meta property="og:url" content="\${productUrl}">
-        <meta property="og:title" content="\${title}">
-        <meta property="og:description" content="\${description}">
-        <meta property="og:image" content="\${ogImageUrl}">
+        <meta property="og:url" content="${productUrl}">
+        <meta property="og:title" content="${title}">
+        <meta property="og:description" content="${description}">
+        <meta property="og:image" content="${ogImageUrl}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
-        <meta property="og:site_name" content="\${siteName}">
-        <meta property="product:price:amount" content="\${product.price}">
+        <meta property="og:site_name" content="${siteName}">
+        <meta property="product:price:amount" content="${product.price}">
         <meta property="product:price:currency" content="INR">
 
         <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:url" content="\${productUrl}">
-        <meta name="twitter:title" content="\${title}">
-        <meta name="twitter:description" content="\${description}">
-        <meta name="twitter:image" content="\${ogImageUrl}">
+        <meta name="twitter:url" content="${productUrl}">
+        <meta name="twitter:title" content="${title}">
+        <meta name="twitter:description" content="${description}">
+        <meta name="twitter:image" content="${ogImageUrl}">
         
         <!-- Redirect real users who happen to hit this page to the frontend -->
-        <meta http-equiv="refresh" content="0;url=\${productUrl}">
-        <link rel="canonical" href="\${productUrl}">
+        <meta http-equiv="refresh" content="0;url=${productUrl}">
+        <link rel="canonical" href="${productUrl}">
       </head>
       <body>
-        <p>Redirecting to <a href="\${productUrl}">\${title}</a>...</p>
+        <p>Redirecting to <a href="${productUrl}">${title}</a>...</p>
         <script>
-          window.location.replace("\${productUrl}");
+          window.location.replace("${productUrl}");
         </script>
       </body>
       </html>
-    \`;
+    `;
 
     res.set('Content-Type', 'text/html');
     res.set('Cache-Control', 'public, max-age=3600, s-maxage=3600');
     res.send(html.trim());
   } catch (err) {
-    logger.error(\`[Social Preview] Error generating HTML for product \${req.params.id}:\`, err);
+    logger.error(`[Social Preview] Error generating HTML for product ${req.params.id}:`, err);
     res.status(500).send('Error generating HTML');
   }
 };
