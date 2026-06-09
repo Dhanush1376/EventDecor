@@ -501,7 +501,9 @@ export function EventDetail() {
 
       const paymentObject = new window.Razorpay(options);
       paymentObject.on('payment.failed', function (response) {
-        toast.error(`Payment Failed: ${response.error.description}`);
+        toast.error(
+          `Payment Failed: ${response.error.description}. If on iPhone/Safari, disable Tracking Protection/Adblockers.`,
+        );
       });
       paymentObject.open();
     } catch (err) {

@@ -977,7 +977,12 @@ export function CheckoutProvider({ children }) {
       paymentObject.open();
     } catch (err) {
       logger.error('Rental order creation failed:', err);
-      toast.error(err.response?.data?.message || err.message || 'Failed to create rental order');
+      let msg = err.response?.data?.message || err.message || 'Failed to create rental order';
+      if (err.message === 'Network Error') {
+        msg =
+          'Network Error: Please check your connection. If on iPhone/Safari, disable Tracking Protection/Adblockers.';
+      }
+      toast.error(msg);
       setIsProcessing(false);
     }
   };

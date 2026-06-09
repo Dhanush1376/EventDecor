@@ -146,7 +146,7 @@ export const getSimilar = async (req: Request, res: Response) => {
           .limit(limit)
           .lean();
         fallbackItems = products.map((p) => ({
-          targetId: p._id.toString(),
+          _id: p._id.toString(),
           targetType: 'product',
           title: p.title,
           imageSrc: p.imageSrc,
@@ -169,7 +169,7 @@ export const getSimilar = async (req: Request, res: Response) => {
           .limit(limit)
           .lean();
         fallbackItems = events.map((e) => ({
-          targetId: e._id.toString(),
+          _id: e._id.toString(),
           targetType: 'event',
           title: e.title,
           image: e.image,

@@ -1,4 +1,4 @@
-import { useProducts } from '../../../hooks/useProductQueries';
+import { useTrendingRecommendations } from '../../../hooks/useRecommendationQueries';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { CarouselWrapper } from '../../../components/shared/CarouselWrapper';
@@ -19,19 +19,21 @@ export function TrendingProducts() {
   const productIds = config.productIds || [];
 
   const {
-    data: allProductsData,
+    data: trendingData,
     isLoading: isPending,
     isError,
     refetch,
-  } = useProducts({ ids: productIds.join(','), limit: 10 }, { enabled: productIds.length > 0 });
+  } = useTrendingRecommendations(
+    {
+      feed: 'trendingNow',
+      limit: config.maxDisplay || 10,
+    },
+    { enabled: true },
+  );
 
-  const products =
-    allProductsData?.data ||
-    allProductsData?.items ||
-    allProductsData?.products ||
-    (Array.isArray(allProductsData) ? allProductsData : []);
+  const products = trendingData?.items || trendingData || [];
 
-  if ((isPending && productIds.length > 0) || loading) {
+  if (isPending || loading) {
     return (
       <section className="h1-section relative overflow-hidden isolate" id="h1-trending">
         {/* Background glow gradient behind mandala */}

@@ -103,23 +103,21 @@ export function ProductGallery({ images = [], product }) {
     <div className="flex flex-col-reverse lg:flex-row gap-4 md:gap-6 items-start w-full select-none">
       {/* Thumbnail Strip */}
       <div
-        className="w-full lg:w-20 flex lg:flex-col gap-2.5 sm:gap-3 overflow-x-auto lg:overflow-y-auto no-scrollbar py-1.5 px-0.5"
+        className="w-full lg:w-20 flex lg:flex-col gap-3 sm:gap-4 overflow-x-auto lg:overflow-y-auto no-scrollbar py-2 px-1"
         style={{ scrollbarWidth: 'none' }}
       >
         {images.map((img, idx) => (
           <button
             key={idx}
             onClick={() => handleThumbnailClick(idx)}
-            className={`shrink-0 w-14 sm:w-16 md:w-20 lg:w-full aspect-square rounded-[24px] overflow-hidden border-2 transition-all duration-500 relative group cursor-pointer ${
-              selectedIdx === idx
-                ? 'border-primary shadow-md shadow-primary/10 scale-105'
-                : 'border-transparent opacity-60 hover:opacity-100'
+            className={`shrink-0 w-14 sm:w-16 md:w-20 lg:w-full aspect-square rounded-full overflow-hidden transition-all duration-500 relative group cursor-pointer ${
+              selectedIdx === idx ? 'opacity-100' : 'opacity-40 hover:opacity-100'
             }`}
           >
             <OptimizedImage
               src={img}
               alt={`Thumbnail ${idx + 1}`}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none rounded-[22px]"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-full"
               width={100}
               height={100}
             />
@@ -128,7 +126,7 @@ export function ProductGallery({ images = [], product }) {
       </div>
 
       {/* Main Image Viewport - Native continuous horizontal scroll enabled */}
-      <div className="flex-1 w-full relative aspect-square max-h-[520px] rounded-3xl md:rounded-[40px] overflow-hidden bg-surface-container-low group shadow-xl border border-outline-variant/10">
+      <div className="flex-1 w-full relative aspect-square max-h-[580px] rounded-2xl md:rounded-3xl overflow-hidden bg-[#fafafa] group border border-black/[0.04]">
         <div
           ref={scrollRef}
           onScroll={handleScroll}

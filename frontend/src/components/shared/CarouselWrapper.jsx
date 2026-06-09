@@ -45,26 +45,6 @@ export function CarouselWrapper({ children, className = '', gap = '14px' }) {
         <div className="h1-scroll-container__fade h1-scroll-container__fade--right" />
       )}
 
-      {/* Arrow buttons (desktop only) */}
-      {canScrollLeft && (
-        <button
-          onClick={() => scroll('left')}
-          className="h1-scroll-container__arrow h1-scroll-container__arrow--left"
-          aria-label="Scroll left"
-        >
-          <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-        </button>
-      )}
-      {canScrollRight && (
-        <button
-          onClick={() => scroll('right')}
-          className="h1-scroll-container__arrow h1-scroll-container__arrow--right"
-          aria-label="Scroll right"
-        >
-          <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-        </button>
-      )}
-
       <div ref={scrollRef} className="h1-scroll-container__track" style={{ gap }}>
         {children}
       </div>

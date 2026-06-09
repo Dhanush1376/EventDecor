@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { productService } from '../services/domainServices';
 
-export function useProducts(params) {
+export function useProducts(params, options = {}) {
   return useQuery({
     queryKey: ['products', params],
     queryFn: async () => {
@@ -11,6 +11,7 @@ export function useProducts(params) {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     placeholderData: keepPreviousData,
+    ...options,
   });
 }
 

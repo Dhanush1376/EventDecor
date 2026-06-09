@@ -17,11 +17,14 @@ export function BestSellers() {
   const productIds = config.productIds || [];
 
   const { data, isPending, isError, refetch } = useProducts(
-    { ids: productIds.join(','), limit: 10 },
-    { enabled: productIds.length > 0 },
+    {
+      ...(productIds.length > 0 ? { ids: productIds.join(',') } : { sort: 'newest' }),
+      limit: config.maxDisplay || 10,
+    },
+    { enabled: true },
   );
 
-  if ((isPending && productIds.length > 0) || loading) {
+  if (isPending || loading) {
     return (
       <section className="h1-section relative overflow-hidden isolate" id="h1-new-arrivals">
         <div className="h1-container relative z-10 animate-pulse">

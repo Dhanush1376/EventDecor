@@ -195,8 +195,11 @@ export const useRazorpay = () => {
       logger.error('Payment error:', err);
       // We check for err.response.data.message from backend validation errors,
       // or err.message for frontend syntax/type errors like "Payment gateway returned an invalid order payload"
-      const errorMessage =
-        err.response?.data?.message || err.message || 'Payment initiation failed';
+      let errorMessage = err.response?.data?.message || err.message || 'Payment initiation failed';
+      if (err.message === 'Network Error') {
+        errorMessage =
+          'Network Error: Please check your connection. If on iPhone/Safari, disable Tracking Protection/Adblockers.';
+      }
       showPremiumToast(errorMessage, 'error');
       onError?.(err);
       finalize();

@@ -31,6 +31,8 @@ The JSON must have the following keys:
 
 Do NOT include any extra text before or after the JSON.`;
 
+  let timeout: NodeJS.Timeout | undefined;
+
   try {
     let base64Image = '';
     let mimeType = 'image/jpeg';
@@ -49,7 +51,7 @@ Do NOT include any extra text before or after the JSON.`;
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout for vision model
+    timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout for vision model
 
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -137,7 +139,7 @@ Do NOT include any extra text before or after the JSON.`;
       }),
     );
   } catch (err: any) {
-    clearTimeout(timeout);
+    if (timeout) clearTimeout(timeout);
     if (err instanceof ApiError) throw err;
     console.error('AI Vision Error:', err);
     throw new ApiError(500, 'AI Vision content generation failed');
