@@ -19,11 +19,14 @@ export function RecommendedGrid() {
   const productIds = config.productIds || [];
 
   const { data, isPending, isError, refetch } = useProducts(
-    { ids: productIds.join(','), limit: 10 },
-    { enabled: productIds.length > 0 },
+    {
+      ...(productIds.length > 0 ? { ids: productIds.join(',') } : { featured: true }),
+      limit: config.maxDisplay || 10,
+    },
+    { enabled: true },
   );
 
-  if ((isPending && productIds.length > 0) || loading) {
+  if (isPending || loading) {
     return (
       <section
         className="h1-section bg-surface-container-lowest relative overflow-hidden isolate"

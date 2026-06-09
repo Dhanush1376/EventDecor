@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { useProducts } from '../../../hooks/useProductQueries';
@@ -27,6 +27,8 @@ export function HeroCarousel() {
     (Array.isArray(productData) ? productData : []);
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const pauseTimeoutRef = useRef(null);
 
   // Map products to hero slides
   const slides = fetchedProducts.map((p) => ({
@@ -39,14 +41,73 @@ export function HeroCarousel() {
     mobileBackgroundImage: p.image || p.imageSrc,
   }));
 
+  // Swipe tracking
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const minSwipeDistance = 50;
+
+  const handleInteraction = () => {
+    setIsPaused(true);
+    if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+    pauseTimeoutRef.current = setTimeout(() => setIsPaused(false), 4000);
+  };
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    handleInteraction();
+  };
+
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+
+  const onTouchEndHandler = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > minSwipeDistance) {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    } else if (distance < -minSwipeDistance) {
+      setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    }
+  };
+
+  const onMouseDown = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.clientX);
+    handleInteraction();
+  };
+
+  const onMouseMove = (e) => {
+    if (touchStart !== null) setTouchEnd(e.clientX);
+  };
+
+  const onMouseUpHandler = () => {
+    if (touchStart === null || touchEnd === null) {
+      setTouchStart(null);
+      setTouchEnd(null);
+      return;
+    }
+    const distance = touchStart - touchEnd;
+    if (distance > minSwipeDistance) {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    } else if (distance < -minSwipeDistance) {
+      setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  const onMouseLeave = () => {
+    if (touchStart !== null) onMouseUpHandler();
+  };
+
   // Auto-slide effect
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (slides.length <= 1 || isPaused) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [slides.length, isPaused]);
 
   if ((productsLoading && selectedProductIds.length > 0) || cmsLoading) {
     return (
@@ -75,7 +136,17 @@ export function HeroCarousel() {
   return (
     <section className="h1-hero">
       {/* Hero Carousel */}
-      <div className="h1-hero__carousel">
+      <div
+        className="h1-hero__carousel"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEndHandler}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUpHandler}
+        onMouseLeave={onMouseLeave}
+        onDragStart={(e) => e.preventDefault()}
+      >
         {slides.map((slide, idx) => {
           const isActive = idx === currentSlide;
           return (
@@ -151,7 +222,10 @@ export function HeroCarousel() {
               <button
                 key={idx}
                 className={`h1-hero__dot ${idx === currentSlide ? 'h1-hero__dot--active' : ''}`}
-                onClick={() => setCurrentSlide(idx)}
+                onClick={() => {
+                  setCurrentSlide(idx);
+                  handleInteraction();
+                }}
                 aria-label={`Go to slide ${idx + 1}`}
               />
             ))}

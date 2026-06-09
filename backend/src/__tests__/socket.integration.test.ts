@@ -1,4 +1,4 @@
-﻿/// <reference types="jest" />
+/// <reference types="jest" />
 
 import http from 'http';
 import jwt from 'jsonwebtoken';
@@ -82,7 +82,7 @@ describe('Socket.io namespaces', () => {
     new Promise((resolve, reject) => {
       const socket = ioClient(`http://127.0.0.1:${port}${namespace}`, {
         transports: ['websocket'],
-        forcereturnDocument: 'after',
+        forceNew: true,
         reconnection: false,
         auth: token ? { token } : {},
       });
