@@ -34,6 +34,7 @@ export interface IUser extends ISoftDeleted {
       startDate: Date;
       endDate: Date;
     };
+    customizationNote?: string;
   }>;
   recentlyViewed?: Array<{
     product: mongoose.Types.ObjectId;
@@ -114,6 +115,7 @@ const UserSchema: Schema = new Schema(
             startDate: { type: Date },
             endDate: { type: Date },
           },
+          customizationNote: { type: String, trim: true, maxlength: 2000 },
         },
       ],
       validate: [(val: any[]) => val.length <= 50, '{PATH} exceeds the limit of 50 items'],

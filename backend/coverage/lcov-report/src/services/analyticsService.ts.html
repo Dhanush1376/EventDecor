@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">41.66% </span>
+                <span class="strong">29.16% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/24</span>
+                <span class='fraction'>7/24</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">25% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">41.66% </span>
+                <span class="strong">29.16% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/24</span>
+                <span class='fraction'>7/24</span>
             </div>
         
             
@@ -161,19 +161,19 @@
 <a name='L96'></a><a href='#L96'>96</a>
 <a name='L97'></a><a href='#L97'>97</a>
 <a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<a name='L99'></a><a href='#L99'>99</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -258,7 +258,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import Order from '../models/Order';
 import Product from '../models/Product';
 import User from '../models/User';
@@ -268,10 +268,10 @@ import { analyticsCache, broadcastCacheDelete } from '../utils/MemoryCache';
 &nbsp;
 class AnalyticsService {
   // Method to programmatically invalidate analytics cache when orders/inventory changes
-  static clearCache() {
-    logger.info('[ANALYTICS CACHE] Invalidation triggered. Purging stale dashboard statistics cache.');
-    analyticsCache.delete('dashboard_stats');
-    broadcastCacheDelete('analyticsCache', 'dashboard_stats');
+<span class="fstat-no" title="function not covered" >  static </span>clearCache() {
+<span class="cstat-no" title="statement not covered" >    logger.info('[ANALYTICS CACHE] Invalidation triggered. Purging stale dashboard statistics cache.');</span>
+<span class="cstat-no" title="statement not covered" >    analyticsCache.delete('dashboard_stats');</span>
+<span class="cstat-no" title="statement not covered" >    broadcastCacheDelete('analyticsCache', 'dashboard_stats');</span>
   }
 &nbsp;
 <span class="fstat-no" title="function not covered" >  static </span>async getDashboardStats() {
@@ -340,12 +340,12 @@ class AnalyticsService {
         totalProducts,
         totalEvents
       },
-      monthlyRevenue: monthlyRevenue.map(<span class="fstat-no" title="function not covered" >item </span>=&gt; (<span class="cstat-no" title="statement not covered" >{</span>
+      monthlyRevenue: monthlyRevenue.map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span>
         month: `${item._id.year}-${item._id.month}`,
         revenue: item.revenue,
         orders: item.orders
       })),
-      categoryPerformance: categoryPerformance.map(<span class="fstat-no" title="function not covered" >item </span>=&gt; (<span class="cstat-no" title="statement not covered" >{</span>
+      categoryPerformance: categoryPerformance.map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span>
         name: item._id || 'Uncategorized',
         value: item.value
       }))
@@ -364,7 +364,7 @@ export default AnalyticsService;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-07T09:06:38.503Z
+                at 2026-06-07T12:54:17.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { showcaseService, uploadService } from '../../services/domainServices';
+import { showcaseService, uploadService, cmsService } from '../../services/domainServices';
+import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { SkeletonForm } from '../components/AdminUIKit';
 import { compressImage, formatBytes } from '../../utils/imageCompressor';
@@ -34,11 +35,19 @@ export function AdminAddShowcase() {
   const [currentStep, setCurrentStep] = useState(0);
   const [mobileTab, setMobileTab] = useState('form');
   const [isLoading, setIsLoading] = useState(isEditMode);
+  const [categories, setCategories] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [lastDraftSaved, setLastDraftSaved] = useState(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionProgress, setCompressionProgress] = useState(0);
   const [compressionStats, setCompressionStats] = useState([]);
+
+  const [aiAnalysisResult, setAiAnalysisResult] = useState(null);
+  const [showAIHUD, setShowAIHUD] = useState(false);
+  const [aiChatInput, setAiChatInput] = useState('');
+  const [isAILearning, setIsAILearning] = useState(false);
+  const [isApplyingFields, setIsApplyingFields] = useState(false);
+  const [focusedField, setFocusedField] = useState('');
 
   const {
     formData,
@@ -124,33 +133,130 @@ export function AdminAddShowcase() {
     }
   }, [id, isEditMode, navigate]);
 
-  const handleAiAutofill = () => {
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get('/categories/active?type=event');
+        if (res.data && res.data.success) {
+          setCategories(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const handleAiAutofill = async () => {
     if (!formData.image) {
-      toast.error('Please upload or link a photo blueprint first for AI Vision analysis!');
+      toast.error('Please upload or paste an image URL first for AI Vision analysis!');
       return;
     }
     const loadId = toast.loading(
       '✨ AI Vision models analyzing floral accents & prop structures...',
     );
-    setTimeout(() => {
+    try {
+      const res = await cmsService.analyzeShowcaseImage(formData.image);
+      if (res.success) {
+        if (res.data.category && res.data.category.isNew) {
+          const newCat = {
+            ...res.data.category,
+            _id: res.data.category.id || res.data.category._id,
+          };
+          setCategories((prev) => [...prev, newCat]);
+        }
+        setAiAnalysisResult({
+          ...res.data.payload,
+          categoryId: res.data.category ? res.data.category.id || res.data.category._id : null,
+        });
+        setShowAIHUD(true);
+        toast.success('✨ AI Vision extracted details successfully');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to analyze image with AI');
+    } finally {
       toast.dismiss(loadId);
+    }
+  };
+
+  const handleAiChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!aiChatInput.trim() || !aiAnalysisResult) return;
+    setIsAILearning(true);
+    try {
+      const result = await cmsService.refineAiShowcase(aiAnalysisResult, aiChatInput);
+      if (result.success) {
+        if (result.data.category && result.data.category.isNew) {
+          const newCat = {
+            ...result.data.category,
+            _id: result.data.category.id || result.data.category._id,
+          };
+          setCategories((prev) => [...prev, newCat]);
+        }
+        setAiAnalysisResult({
+          ...result.data.payload,
+          categoryId: result.data.category
+            ? result.data.category.id || result.data.category._id
+            : null,
+        });
+        setAiChatInput('');
+        toast.success('AI updated the curation successfully!');
+      }
+    } catch (err) {
+      toast.error('AI refinement failed.');
+      console.error('AI refinement error:', err);
+    } finally {
+      setIsAILearning(false);
+    }
+  };
+
+  const handleApplyAISpecs = () => {
+    if (!aiAnalysisResult) return;
+
+    setIsApplyingFields(true);
+    setShowAIHUD(false);
+
+    const fieldsToFill = [
+      { key: 'title', value: aiAnalysisResult.title },
+      { key: 'subtitle', value: aiAnalysisResult.subtitle },
+      { key: 'category', value: aiAnalysisResult.categoryId || aiAnalysisResult.category },
+      { key: 'description', value: aiAnalysisResult.description },
+      { key: 'inclusionsText', value: aiAnalysisResult.inclusionsText },
+      { key: 'colorPalette', value: aiAnalysisResult.colorPalette },
+      { key: 'suggestedProps', value: aiAnalysisResult.suggestedProps },
+      {
+        key: 'setupTimeHours',
+        value: aiAnalysisResult.setupTimeHours ? String(aiAnalysisResult.setupTimeHours) : '',
+      },
+      { key: 'seoTitle', value: aiAnalysisResult.seoTitle },
+      { key: 'seoDescription', value: aiAnalysisResult.seoDescription },
+    ];
+
+    let index = 0;
+    setCurrentStep(1); // Jump to details
+
+    const interval = setInterval(() => {
+      if (index >= fieldsToFill.length) {
+        clearInterval(interval);
+        setIsApplyingFields(false);
+        setFocusedField('');
+        return;
+      }
+
+      const field = fieldsToFill[index];
+      setFocusedField(field.key);
+
       setFormData((prev) => ({
         ...prev,
-        title: prev.title || 'Lotus Gifting Crate',
-        subtitle: prev.subtitle || 'Carved coconuts with jasmine garlands',
-        category: 'telugu_heritage',
-        rentalPrice: 14500,
-        description:
-          prev.description ||
-          'A traditional side-stage presentation tray designed for engagement ceremonies with heritage coconuts and jasmine garlands.',
-        inclusionsText:
-          'Hand-carved Heritage Coconuts, Royal Brass Urlis, Jasmine Rope Runners, Beaded Ring Trays, Mogra Drops',
-        colorPalette: '#8B0000, #FFD700, #228B22',
-        setupTimeHours: 2,
-        isActive: true,
+        [field.key]: field.value || prev[field.key],
       }));
-      toast.success('✨ AI populated details');
-    }, 1200);
+
+      // If moving past details step
+      if (index === 4 && currentStep < 2) setCurrentStep(2);
+      if (index === 8 && currentStep < 4) setCurrentStep(4);
+
+      index++;
+    }, 400); // Staggered animation
   };
 
   const getStepErrors = () => {
@@ -689,7 +795,11 @@ export function AdminAddShowcase() {
                           value={formData.title}
                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                           placeholder="e.g. Lotus Gifting Crate"
-                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all ${
+                            focusedField === 'title'
+                              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                          }`}
                         />
                       </div>
 
@@ -702,7 +812,11 @@ export function AdminAddShowcase() {
                           value={formData.subtitle}
                           onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                           placeholder="e.g. Carved coconuts with jasmine garlands"
-                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all ${
+                            focusedField === 'subtitle'
+                              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                          }`}
                         />
                       </div>
 
@@ -714,11 +828,25 @@ export function AdminAddShowcase() {
                           required
                           value={formData.category}
                           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all ${
+                            focusedField === 'category'
+                              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                          }`}
                         >
-                          <option value="engagement_gift">Engagement Gifts</option>
-                          <option value="telugu_heritage">Telugu Heritage</option>
-                          <option value="wedding_rituals">Wedding Rituals</option>
+                          <option value="">Select a Category</option>
+                          {categories.map((cat) => (
+                            <option key={cat.slug || cat.id} value={cat.slug || cat.name}>
+                              {cat.name}
+                            </option>
+                          ))}
+                          {categories.length === 0 && (
+                            <>
+                              <option value="engagement_gift">Engagement Gifts</option>
+                              <option value="telugu_heritage">Telugu Heritage</option>
+                              <option value="wedding_rituals">Wedding Rituals</option>
+                            </>
+                          )}
                         </select>
                       </div>
                     </div>
@@ -770,7 +898,11 @@ export function AdminAddShowcase() {
                           onChange={(e) =>
                             setFormData({ ...formData, setupTimeHours: Number(e.target.value) })
                           }
-                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all ${
+                            focusedField === 'setupTimeHours'
+                              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                          }`}
                         />
                       </div>
 
@@ -785,7 +917,11 @@ export function AdminAddShowcase() {
                             setFormData({ ...formData, colorPalette: e.target.value })
                           }
                           placeholder="#8B0000, #FFD700"
-                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] font-mono outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] font-mono outline-none transition-all ${
+                            focusedField === 'colorPalette'
+                              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                          }`}
                         />
                       </div>
 
@@ -800,7 +936,11 @@ export function AdminAddShowcase() {
                             setFormData({ ...formData, inclusionsText: e.target.value })
                           }
                           placeholder="Lotus brass urli, Jasmine rope runners..."
-                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20 resize-none"
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all resize-none ${
+                            focusedField === 'inclusionsText'
+                              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                          }`}
                         />
                       </div>
 
@@ -815,7 +955,11 @@ export function AdminAddShowcase() {
                             setFormData({ ...formData, suggestedProps: e.target.value })
                           }
                           placeholder="Beaded shagun boxes, Mogra garland drops..."
-                          className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20 resize-none"
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all resize-none ${
+                            focusedField === 'suggestedProps'
+                              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                          }`}
                         />
                       </div>
                     </div>
@@ -845,7 +989,11 @@ export function AdminAddShowcase() {
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         placeholder="Describe the aesthetics, craftsmanship, and occasion contexts..."
-                        className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20 resize-none"
+                        className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all resize-none ${
+                          focusedField === 'description'
+                            ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                            : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                        }`}
                       />
                     </div>
                   </div>
@@ -873,7 +1021,11 @@ export function AdminAddShowcase() {
                           value={formData.seoTitle}
                           onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
                           placeholder="e.g. Lotus Gifting Crate | Siri Arts"
-                          className="w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white"
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all ${
+                            focusedField === 'seoTitle'
+                              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                          }`}
                         />
                       </div>
 
@@ -888,7 +1040,11 @@ export function AdminAddShowcase() {
                             setFormData({ ...formData, seoDescription: e.target.value })
                           }
                           placeholder="Describe the showcase item in 150-160 characters..."
-                          className="w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all resize-none border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white"
+                          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all resize-none ${
+                            focusedField === 'seoDescription'
+                              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
+                              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+                          }`}
                         />
                       </div>
 
@@ -1153,6 +1309,186 @@ export function AdminAddShowcase() {
           </div>
         </div>
       </div>
+
+      {/* Premium Apple-level SaaS AI Curation HUD Overlay Modal */}
+      {showAIHUD && aiAnalysisResult && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-md p-4 sm:p-6 animate-fade-in font-sans">
+          <div className="w-full max-w-2xl max-h-[90vh] flex flex-col bg-white/90 border border-white/40 shadow-[0_30px_60px_rgba(0,0,0,0.12)] rounded-[32px] overflow-hidden relative backdrop-blur-xl">
+            {/* Elegant Header */}
+            <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200/50 relative">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="material-symbols-outlined text-[18px] text-[#007AFF]">
+                    auto_awesome
+                  </span>
+                  <h3 className="text-[14px] font-semibold tracking-tight text-gray-900">
+                    Groq Vision Analysis
+                  </h3>
+                </div>
+                <p className="text-[12px] font-medium text-gray-500 tracking-tight">
+                  Multimodal Showcase Curation
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAIHUD(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="p-8 overflow-y-auto space-y-6">
+              {/* Concept & Confidence */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">
+                    Detected Concept
+                  </p>
+                  <h4 className="text-[22px] font-bold tracking-tight text-gray-900 leading-tight">
+                    {aiAnalysisResult.title || 'Unidentified Design'}
+                  </h4>
+                  <p className="text-[14px] font-medium text-gray-500 mt-1">
+                    {aiAnalysisResult.subtitle}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className="bg-[#E5F2FF] text-[#007AFF] px-4 py-2 rounded-2xl flex items-center gap-1.5 font-bold tracking-tight">
+                    <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                    92% Match
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid Data */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Category */}
+                <div className="p-5 bg-gray-50/50 border border-gray-100 rounded-[20px]">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Category Mapped
+                  </p>
+                  <div className="inline-flex items-center gap-1.5 text-gray-900 font-semibold text-[14px] tracking-tight">
+                    <span className="material-symbols-outlined text-[16px] text-[#007AFF]">
+                      category
+                    </span>
+                    {aiAnalysisResult.category || 'Event Decor'}
+                  </div>
+                </div>
+
+                {/* Setup Time */}
+                <div className="p-5 bg-gray-50/50 border border-gray-100 rounded-[20px]">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Setup Time
+                  </p>
+                  <div className="text-gray-900 font-semibold text-[14px] tracking-tight">
+                    {aiAnalysisResult.setupTimeHours || 2} Hours
+                  </div>
+                </div>
+
+                {/* Inclusions */}
+                <div className="col-span-2 p-5 bg-gray-50/50 border border-gray-100 rounded-[20px]">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Key Inclusions
+                  </p>
+                  <p className="text-[13px] font-medium text-gray-700 leading-relaxed">
+                    {aiAnalysisResult.inclusionsText}
+                  </p>
+                </div>
+
+                {/* Props */}
+                <div className="col-span-2 p-5 bg-gray-50/50 border border-gray-100 rounded-[20px]">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Suggested Props
+                  </p>
+                  <p className="text-[13px] font-medium text-gray-700 leading-relaxed">
+                    {aiAnalysisResult.suggestedProps}
+                  </p>
+                </div>
+
+                {/* Palette */}
+                <div className="col-span-2 p-5 bg-gray-50/50 border border-gray-100 rounded-[20px]">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
+                    Color Palette
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(aiAnalysisResult.colorPalette || '').split(',').map((c, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white border border-gray-200 px-3 py-1.5 rounded-full text-[12px] font-semibold text-gray-700 shadow-sm tracking-tight"
+                      >
+                        {c.trim()}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="col-span-2 p-5 bg-gray-50/50 border border-gray-100 rounded-[20px]">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">
+                    Narrative Description
+                  </p>
+                  <p className="text-[13.5px] text-gray-600 leading-relaxed font-medium">
+                    {aiAnalysisResult.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Chat Input Area (Spotlight style) */}
+            <div className="px-8 pb-4">
+              <form
+                onSubmit={handleAiChatSubmit}
+                className="flex items-center gap-2 bg-gray-100/80 hover:bg-gray-100 transition-colors rounded-[18px] p-2 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#007AFF]/30 focus-within:shadow-sm"
+              >
+                <div className="pl-3">
+                  {isAILearning ? (
+                    <span className="material-symbols-outlined text-[20px] text-gray-400 animate-spin">
+                      refresh
+                    </span>
+                  ) : (
+                    <span className="material-symbols-outlined text-[20px] text-gray-400">
+                      chat_bubble
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={aiChatInput}
+                  onChange={(e) => setAiChatInput(e.target.value)}
+                  placeholder="Ask AI to change title, category, props..."
+                  className="flex-1 bg-transparent border-none text-[14px] text-gray-900 placeholder-gray-400 font-medium px-2 py-2 focus:outline-none focus:ring-0"
+                  disabled={isAILearning}
+                />
+                <button
+                  type="submit"
+                  disabled={!aiChatInput.trim() || isAILearning}
+                  className="bg-[#007AFF] text-white w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-50 cursor-pointer hover:bg-[#0066D6] transition-colors shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-[18px] translate-x-px">
+                    arrow_upward
+                  </span>
+                </button>
+              </form>
+            </div>
+
+            {/* Footer Action */}
+            <div className="px-8 py-5 border-t border-gray-200/50 flex items-center justify-between bg-gray-50/30">
+              <span className="text-[12px] text-gray-500 font-medium flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px]">lock</span>
+                Rental price remains unchanged
+              </span>
+              <button
+                type="button"
+                onClick={handleApplyAISpecs}
+                className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-full text-[13px] font-semibold tracking-wide flex items-center gap-2 shadow-[0_4px_14px_rgba(0,0,0,0.15)] transition-all active:scale-95 cursor-pointer"
+              >
+                Apply AI Curation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <DraftRestoreModal
         isOpen={showRestoreModal}

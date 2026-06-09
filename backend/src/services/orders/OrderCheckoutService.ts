@@ -124,6 +124,7 @@ export class OrderCheckoutService {
           isNonRefundable: product.isNonRefundable || false,
           type: itemType,
           deposit: 0,
+          customizationNote: item.customizationNote,
         });
       }
 

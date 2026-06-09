@@ -15,7 +15,7 @@ export function PromoBanner({
 }) {
   return (
     <section
-      className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-8 md:mb-12 relative group ${className}`}
+      className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-6 md:mb-8 relative group ${className}`}
     >
       <motion.div
         initial={{ opacity: 0, y: 15 }}
@@ -34,7 +34,7 @@ export function PromoBanner({
             className="w-full h-full object-cover opacity-45 select-none pointer-events-none"
             alt="Promo Backdrop"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-black/80" />
         </div>
 
         {/* Content Side */}
@@ -46,19 +46,29 @@ export function PromoBanner({
             </span>
           </div>
 
-          <div className="flex flex-row items-center gap-2 sm:gap-4 min-w-0">
-            <h3 className="font-display text-[9.5px] xs:text-[11px] sm:text-[16px] md:text-[18px] lg:text-[22px] text-white font-medium leading-none truncate">
-              {title}{' '}
-              <span className="text-gold italic ml-0.5 sm:ml-1 whitespace-nowrap">
-                {highlightText}
-              </span>
-            </h3>
-            {statusText && (
-              <span className="hidden sm:inline-flex text-white/40 font-label-sm text-[10px] uppercase tracking-[0.2em] flex items-center gap-1.5 font-bold whitespace-nowrap">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                {statusText}
-              </span>
-            )}
+          <div className="flex-1 overflow-hidden relative flex items-center min-w-0 py-1" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 15px, black calc(100% - 15px), transparent)' }}>
+            <motion.div
+              animate={{ x: ["0%", "-50%"] }}
+              transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+              className="flex flex-row items-center whitespace-nowrap w-max"
+            >
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex flex-row items-center gap-2 sm:gap-4 px-4 sm:px-8">
+                  <h3 className="font-display text-[11px] sm:text-[16px] md:text-[18px] lg:text-[22px] text-white font-medium leading-none">
+                    {title}{' '}
+                    <span className="text-gold italic ml-0.5 sm:ml-1">
+                      {highlightText}
+                    </span>
+                  </h3>
+                  {statusText && (
+                    <span className="hidden sm:inline-flex text-white/40 font-label-sm text-[10px] uppercase tracking-[0.2em] flex items-center gap-1.5 font-bold whitespace-nowrap">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      {statusText}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </motion.div>
           </div>
         </div>
 
@@ -83,7 +93,7 @@ export function PromoBanner({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
             onClick={onCtaClick}
-            className="group/btn bg-primary text-surface font-label-sm text-[8px] sm:text-[11px] uppercase tracking-[0.1em] sm:tracking-[0.2em] font-bold px-3.5 py-2 sm:px-10 sm:py-3.5 rounded-full hover:bg-gold transition-all cursor-pointer shadow-luxury relative overflow-hidden whitespace-nowrap text-center"
+            className="group/btn bg-white text-black font-label-sm text-[8px] sm:text-[11px] uppercase tracking-[0.1em] sm:tracking-[0.2em] font-bold px-3.5 py-2 sm:px-10 sm:py-3.5 rounded-full hover:bg-white/90 transition-all cursor-pointer shadow-luxury relative overflow-hidden whitespace-nowrap text-center"
           >
             <span className="relative z-10">{ctaText}</span>
           </motion.button>

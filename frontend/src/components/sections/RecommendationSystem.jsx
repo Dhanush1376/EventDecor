@@ -123,12 +123,22 @@ export function RecommendationSystem({
 
   return (
     <section
-      className={`${compact ? 'pt-4 pb-0 md:py-4' : 'py-12'} bg-transparent relative overflow-hidden`}
+      className={`${compact ? 'pt-4 pb-0 md:py-4' : 'pt-6 pb-12 md:pt-10 md:pb-16'} bg-transparent relative overflow-hidden`}
     >
       {/* Subtle Glow Accent */}
       <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
 
       <div className="max-w-max-width mx-auto px-4 md:px-6 lg:px-8 relative z-10">
+        {!compact && !hideHeader && (
+          <div className="w-full flex justify-center mb-10 md:mb-14">
+            <div className="w-full max-w-[180px] flex items-center justify-center gap-3 opacity-60">
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#C4A87C] to-[#C4A87C]" />
+              <span className="material-symbols-outlined text-[16px] text-[#C4A87C]" style={{ fontVariationSettings: "'wght' 300" }}>local_florist</span>
+              <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-[#C4A87C] to-[#C4A87C]" />
+            </div>
+          </div>
+        )}
+
         {!hideHeader && (
           <div className={`${compact ? 'mb-3' : 'mb-6'} w-full text-left`}>
             <h3

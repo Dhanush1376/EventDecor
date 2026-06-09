@@ -128,7 +128,7 @@ class PrefetchManager {
     if (this.prefetchedModules.has(key)) return;
 
     const importers = {
-      '/': () => import('../pages/Home'),
+      '/': () => import('../pages/Home/Home'),
       '/collections': () => import('../pages/ProductListing'),
       '/cart': () => import('../pages/Cart'),
       '/checkout': () => import('../pages/Checkout'),

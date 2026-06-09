@@ -43,6 +43,16 @@ export const createProductSchema = z
     rentalMinDays: z.number().min(1).optional(),
     rentalMaxDays: z.number().min(1).optional(),
     isManualRentalPricing: z.boolean().optional(),
+    customizationConfig: z
+      .object({
+        enabled: z.boolean().optional(),
+        required: z.boolean().optional(),
+        label: z.string().max(100).optional(),
+        placeholder: z.string().max(200).optional(),
+        maxLength: z.number().min(1).max(2000).optional(),
+        helperText: z.string().max(500).optional(),
+      })
+      .optional(),
     variants: z.array(z.any()).optional(),
   })
   .strict();

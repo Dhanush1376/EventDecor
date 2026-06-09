@@ -14,6 +14,7 @@ export default function CheckoutRentalDurationStep() {
     rentalCostBreakdown,
     rentalAvailability,
     isCheckingAvailability,
+    checkoutSteps,
   } = useCheckout();
 
   // Find the rental item to check availability (backend handles 1 item per checkout currently)
@@ -60,7 +61,8 @@ export default function CheckoutRentalDurationStep() {
       return;
     }
 
-    setActiveStep(2); // Proceed to Address
+    const nextIndex = checkoutSteps.indexOf('DURATION') + 1;
+    setActiveStep(nextIndex); // Proceed to next step
   };
 
   const getMinDate = () => {

@@ -410,38 +410,35 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
         </div>
 
         {/* Custom Design Consultation Card */}
-        <div className="p-6 rounded-3xl bg-on-surface-variant text-surface relative overflow-hidden group shadow-lg">
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+        <div className="p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5">
+          <div className="relative z-10 flex flex-col items-center text-center gap-5">
             <div>
-              <h4 className="font-headline-sm mb-1 text-gold font-normal tracking-wide">
-                Need a Custom Design?
+              <h4 className="font-headline-sm mb-1 text-[#C4A87C] font-normal tracking-wide">
+                Need a Custom Theme?
               </h4>
-              <p className="font-body-sm text-surface font-medium">
-                Personalize this design to perfectly match your wedding theme.
+              <p className="font-body-sm text-white/90 font-medium">
+                Personalize this setup to perfectly match your vision.
               </p>
             </div>
-            <div className="flex flex-col gap-2 w-full md:w-auto">
+            <div className="flex flex-row gap-2 w-full">
               <button
                 onClick={() =>
                   runProtectedAction(() =>
                     navigate(`/custom-orders?product=${product._id || product.id}`),
                   )
                 }
-                className="bg-surface text-on-surface w-full md:w-auto px-6 py-2.5 rounded-full font-label-sm text-[12px] uppercase tracking-[0.2em] hover:bg-primary-container transition-all whitespace-nowrap font-bold shadow-sm"
+                className="bg-white text-black flex-1 px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-stone-200 transition-all whitespace-nowrap font-bold shadow-sm flex items-center justify-center"
               >
-                Customize This Product
+                Customize
               </button>
               <button
                 onClick={() => runProtectedAction(handleWhatsAppChat)}
-                className="bg-transparent border border-surface/30 w-full md:w-auto text-surface px-6 py-2.5 rounded-full font-label-sm text-[12px] uppercase tracking-[0.2em] hover:bg-surface/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-2"
+                className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[16px]">chat</span>
-                WhatsApp Inquiry
+                <span className="material-symbols-outlined text-[14px]">chat</span>
+                WhatsApp
               </button>
             </div>
-          </div>
-          <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:opacity-10 transition-opacity">
-            <span className="material-symbols-outlined text-[120px]">architecture</span>
           </div>
         </div>
       </div>

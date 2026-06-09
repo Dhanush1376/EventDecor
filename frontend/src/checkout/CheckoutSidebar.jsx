@@ -31,6 +31,7 @@ export default function CheckoutSidebar() {
     orderType,
     rentalCostBreakdown,
     settings,
+    checkoutSteps,
   } = useCheckout();
 
   const siriCoinEarnRate = settings?.siriCoinEarnRate ?? 10;
@@ -51,57 +52,60 @@ export default function CheckoutSidebar() {
         className="lg:col-span-5 xl:col-span-4 space-y-4"
       >
         {/* Wallet Balance Card */}
-        {user && (user.walletBalance > 0 || (backendTotals && backendTotals.walletBalance > 0)) && (
-          <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="checkout-use-wallet-checkbox"
-                  checked={useWallet}
-                  onChange={(e) => setUseWallet(e.target.checked)}
-                  className="mt-1 rounded text-primary focus:ring-0 cursor-pointer h-4 w-4"
-                />
-                <label
-                  htmlFor="checkout-use-wallet-checkbox"
-                  className="cursor-pointer select-none"
-                >
-                  <span className="text-xs font-bold text-on-surface block uppercase tracking-wider">
-                    Use Siri Pay Wallet
-                  </span>
-                  <span className="text-[10px] text-secondary font-light">
-                    Available Balance:{' '}
-                    <strong className="text-on-surface font-semibold">
-                      ₹
-                      {((backendTotals?.walletBalance ?? user?.walletBalance) || 0).toLocaleString(
-                        'en-IN',
-                      )}
-                    </strong>
-                  </span>
-                </label>
+        {user &&
+          (user.walletBalance > 0 || (backendTotals && backendTotals.walletBalance > 0)) &&
+          checkoutSteps[activeStep] !== 'PAYMENT' && (
+            <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="checkout-use-wallet-checkbox"
+                    checked={useWallet}
+                    onChange={(e) => setUseWallet(e.target.checked)}
+                    className="mt-1 rounded text-primary focus:ring-0 cursor-pointer h-4 w-4"
+                  />
+                  <label
+                    htmlFor="checkout-use-wallet-checkbox"
+                    className="cursor-pointer select-none"
+                  >
+                    <span className="text-xs font-bold text-on-surface block uppercase tracking-wider">
+                      Use Siri Pay Wallet
+                    </span>
+                    <span className="text-[10px] text-secondary font-light">
+                      Available Balance:{' '}
+                      <strong className="text-on-surface font-semibold">
+                        ₹
+                        {(
+                          (backendTotals?.walletBalance ?? user?.walletBalance) ||
+                          0
+                        ).toLocaleString('en-IN')}
+                      </strong>
+                    </span>
+                  </label>
+                </div>
+                <span className="material-symbols-outlined text-primary text-sm animate-pulse">
+                  stars
+                </span>
               </div>
-              <span className="material-symbols-outlined text-primary text-sm animate-pulse">
-                stars
-              </span>
-            </div>
 
-            {useWallet && backendTotals && backendTotals.walletDeduction > 0 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mt-3 pt-3 border-t border-outline-variant/30 text-[11px] text-primary font-bold flex justify-between"
-              >
-                <span>Wallet Deducted:</span>
-                <span>− ₹{backendTotals?.walletDeduction?.toLocaleString('en-IN') || 0}</span>
-              </motion.div>
-            )}
-          </div>
-        )}
+              {useWallet && backendTotals && backendTotals.walletDeduction > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-3 pt-3 border-t border-outline-variant/30 text-[11px] text-primary font-bold flex justify-between"
+                >
+                  <span>Wallet Deducted:</span>
+                  <span>− ₹{backendTotals?.walletDeduction?.toLocaleString('en-IN') || 0}</span>
+                </motion.div>
+              )}
+            </div>
+          )}
 
         {/* Promo Coupon Card */}
-        {orderType !== 'rental' && activeStep !== 2 && (
+        {orderType !== 'rental' && checkoutSteps[activeStep] !== 'PAYMENT' && (
           <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative">
-            <h4 className="text-xs font-bold text-secondary uppercase tracking-wider pb-2 border-b border-outline-variant/40 mb-3 flex items-center justify-between">
+            <h4 className="text-[10px] font-label font-bold text-on-surface uppercase tracking-widest pb-2 border-b border-outline-variant/40 mb-3 flex items-center justify-between">
               <span>Apply Promo Coupon</span>
               <span className="material-symbols-outlined text-[15px] text-primary">sell</span>
             </h4>
@@ -218,7 +222,7 @@ export default function CheckoutSidebar() {
         {/* Price Details Card */}
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs sticky top-28 relative overflow-hidden">
           <div className="pb-3 border-b border-outline-variant/40 mb-4 relative z-10 flex items-center justify-between">
-            <h3 className="font-sans text-xs font-bold text-secondary uppercase tracking-wider">
+            <h3 className="text-[10px] font-label font-bold text-on-surface uppercase tracking-widest">
               {orderType === 'rental' ? 'Rental Order' : 'Purchase Summary'} ({activeItems.length}{' '}
               Items)
             </h3>
@@ -425,7 +429,7 @@ export default function CheckoutSidebar() {
           </div>
 
           {orderType === 'rental' ? (
-            activeStep !== 3 && (
+            checkoutSteps[activeStep] !== 'PAYMENT' && (
               <div className="mt-4 pt-3 border-t border-surface-container-low text-[11px] text-primary space-y-1.5">
                 <p className="flex items-center gap-1.5 font-medium">
                   <span className="material-symbols-outlined text-sm">fact_check</span>
@@ -464,7 +468,7 @@ export default function CheckoutSidebar() {
           )}
 
           {/* Integrated Payment Button at the bottom of the Price Details Card */}
-          {activeStep === (orderType === 'rental' ? 4 : 2) && (
+          {checkoutSteps[activeStep] === 'PAYMENT' && (
             <div className="mt-4 pt-4 border-t border-outline-variant/30">
               <motion.button
                 whileHover={!isProcessing ? { scale: 1.01 } : {}}
@@ -495,7 +499,7 @@ export default function CheckoutSidebar() {
         </div>
 
         {/* Total Amount card shown specifically on Step 2 below Price Details */}
-        {activeStep === 2 && (
+        {checkoutSteps[activeStep] === 'PAYMENT' && (
           <div className="bg-surface-bright p-5 border border-outline-variant/40 rounded-lg shadow-xs mt-4">
             <div className="flex justify-between items-center">
               <span className="text-[11px] text-secondary font-bold uppercase tracking-widest">

@@ -21,7 +21,7 @@ export const cacheResponse = (durationSeconds: number) => {
       } else {
         res.setHeader(
           'Cache-Control',
-          `public, max-age=${durationSeconds}, stale-while-revalidate=${durationSeconds * 2}`,
+          `public, max-age=0, s-maxage=60, stale-while-revalidate=120`,
         );
       }
     } catch {

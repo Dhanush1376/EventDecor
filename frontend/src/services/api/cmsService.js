@@ -24,4 +24,12 @@ export const cmsService = {
     const response = await api.post('/cms/ai-generate', { text, style });
     return response.data;
   },
+  analyzeShowcaseImage: async (imageUrl) => {
+    const response = await api.post('/cms/ai-vision-showcase', { imageUrl });
+    return response.data;
+  },
+  refineAiShowcase: async (previousData, prompt) => {
+    const response = await api.post('/cms/ai-vision-refine-showcase', { previousData, prompt });
+    return response.data;
+  },
 };

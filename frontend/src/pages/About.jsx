@@ -617,7 +617,7 @@ export function About() {
               </motion.h2>
             </div>
 
-            <div className="max-w-[1440px] mx-auto px-6 md:px-12 columns-2 md:columns-4 gap-4 md:gap-6">
+            <div className="max-w-[1440px] mx-auto px-6 md:px-12 columns-2 md:columns-3 lg:columns-4 gap-4 md:gap-6">
               {galleryPreview.map((item, i) => {
                 const dynamicHeight =
                   !item.height || item.height === 'aspect-square'

@@ -71,6 +71,7 @@ export const addToCartSchema = z.object({
       })
       .optional(),
     deposit: z.number().nonnegative().optional(),
+    customizationNote: z.string().max(2000).optional(),
   }),
 });
 
@@ -89,6 +90,7 @@ export const syncCartSchema = z.object({
           })
           .optional(),
         deposit: z.number().nonnegative().optional(),
+        customizationNote: z.string().max(2000).optional(),
       }),
     ),
   }),

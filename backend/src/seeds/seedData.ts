@@ -392,6 +392,9 @@ const initialWebsiteContent = {
         'Discover masterfully crafted decor pieces that honor ancient traditions with contemporary luxury sensibilities.',
       backgroundImage:
         'https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204',
+      mobileBackgroundImage: '',
+      mobileTitle: '',
+      mobileSubtitle: '',
     },
     promo: {
       title: 'Seasonal Decor â€”',
@@ -414,6 +417,9 @@ const initialWebsiteContent = {
         'Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.',
       backgroundImage:
         'https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g',
+      mobileBackgroundImage: '',
+      mobileTitle: '',
+      mobileSubtitle: '',
     },
     promo: {
       backgroundImage:
@@ -424,6 +430,7 @@ const initialWebsiteContent = {
   featuredProducts: {
     sectionTitle: 'Bestselling Masterpieces',
     sectionSubtitle: 'The most loved creations from our atelier',
+    mode: 'auto', // 'auto' or 'manual'
     productIds: [], // Will be updated after products are created
     maxDisplay: 4,
     isVisible: true,
@@ -474,12 +481,88 @@ const initialWebsiteContent = {
 
   homepageSections: [
     { id: 'hero', label: 'Hero Banner', isVisible: true },
-    { id: 'featuredCollections', label: 'Featured Collections', isVisible: true },
+    { id: 'promoBanner', label: 'Promotional Banner', isVisible: true },
+    { id: 'categoryGrid', label: 'Shop By Category', isVisible: true },
+    { id: 'trendingProducts', label: 'Trending Now', isVisible: true },
+    { id: 'shopByOccasion', label: 'Shop By Occasion', isVisible: true },
     { id: 'featuredProducts', label: 'Bestselling Products', isVisible: true },
+    { id: 'recommendedProducts', label: 'Recommended For You', isVisible: true },
+    { id: 'fashionInspiration', label: 'Fashion Inspiration', isVisible: true },
     { id: 'storyTeaser', label: 'Our Story Teaser', isVisible: true },
     { id: 'galleryPreview', label: 'Gallery Preview', isVisible: true },
     { id: 'testimonials', label: 'Testimonials', isVisible: true },
   ],
+  promoBanner: {
+    text: 'FREE SHIPPING ON ALL ORDERS ABOVE ₹999',
+    link: '/collections',
+    isActive: true,
+  },
+  categoryGrid: {
+    sectionTitle: 'Shop By Category',
+    sectionSubtitle: 'Explore our artisan-crafted collections',
+    selectedCategories: [
+      'Traditional Wedding Decor',
+      'Pooja Decoration Sets',
+      'Engagement Ring Trays',
+      'Customized Gift Hampers',
+      'Haldi Ceremony Kits',
+    ],
+    isVisible: true,
+  },
+  shopByOccasion: {
+    sectionTitle: 'Shop By Occasion',
+    sectionSubtitle: 'Curated for every milestone',
+    occasions: [
+      {
+        id: 1,
+        title: 'Weddings',
+        link: '/collections?category=Weddings',
+        image: IMAGES.luxuryRoyalWedding,
+      },
+      {
+        id: 2,
+        title: 'Engagements',
+        link: '/collections?category=Engagements',
+        image: IMAGES.galleryBackdrop,
+      },
+      {
+        id: 3,
+        title: 'Pooja',
+        link: '/collections?category=Pooja',
+        image: IMAGES.templeStyleMandap,
+      },
+      {
+        id: 4,
+        title: 'Festivals',
+        link: '/collections?category=Festivals',
+        image: IMAGES.haldiVibrantSetup,
+      },
+      {
+        id: 5,
+        title: 'Corporate',
+        link: '/collections?category=Corporate',
+        image: IMAGES.modernReceptionLounge,
+      },
+    ],
+    isVisible: true,
+  },
+  trendingProducts: {
+    sectionTitle: 'Trending Now',
+    maxDisplay: 8,
+    isVisible: true,
+  },
+  recommendedProducts: {
+    sectionTitle: 'Recommended For You',
+    mode: 'manual', // 'auto_ai' or 'manual'
+    productIds: [],
+    maxDisplay: 8,
+    isVisible: true,
+  },
+  fashionInspiration: {
+    sectionTitle: 'Fashion & Inspiration',
+    maxDisplay: 4,
+    isVisible: true,
+  },
   storeSettings: {
     returnPolicyDays: 7,
     giftWrapFee: 350,
@@ -604,7 +687,7 @@ const galleryInspirations = [
     description: 'Vibrant handcrafted heritage arrangements.',
   },
   {
-      title: 'Plate Decoration & Packing',
+    title: 'Plate Decoration & Packing',
     teluguTitle: 'à°ªà± à°²à±‡à°Ÿà±  à°ªà± à°¯à°¾à°•à°¿à°‚à°—à±  & à°…à°²à°‚à°•à°°à°£',
     category: 'Plate Decoration & Packing',
     event: 'Engagement Ceremony',
@@ -633,7 +716,7 @@ const seed = async () => {
   // 2. Confirmation Gate
   if (process.env.I_KNOW_THIS_WIPES_DATA !== 'true') {
     logger.error(
-      '❌ SAFETY GATE: You must set I_KNOW_THIS_WIPES_DATA=true to authorize destructive seed operations. Run: I_KNOW_THIS_WIPES_DATA=true npm run seed'
+      '❌ SAFETY GATE: You must set I_KNOW_THIS_WIPES_DATA=true to authorize destructive seed operations. Run: I_KNOW_THIS_WIPES_DATA=true npm run seed',
     );
     process.exit(1);
   }

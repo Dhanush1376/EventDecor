@@ -101,6 +101,7 @@ export default function CheckoutAddressStep() {
     handleSaveNewAddress,
     handleFetchCurrentLocation,
     PINCODE_MAP,
+    checkoutSteps,
   } = useCheckout();
 
   // Local state to toggle between Main View and Select List View
@@ -549,7 +550,7 @@ export default function CheckoutAddressStep() {
                   form="address-form"
                   type="submit"
                   disabled={isProcessing}
-                  className="flex-1 btn-primary py-3 rounded-full font-bold uppercase tracking-widest text-[10px] shadow-md flex justify-center disabled:opacity-70 cursor-pointer"
+                  className="flex-1 btn-primary py-3 rounded-full font-bold uppercase tracking-widest text-[10px] shadow-md flex justify-center disabled:opacity-70 cursor-pointer !text-white"
                 >
                   {isProcessing ? 'Saving...' : 'Save Address'}
                 </button>
@@ -640,7 +641,7 @@ export default function CheckoutAddressStep() {
             <div className="max-w-[1240px] w-full mx-auto">
               <button
                 onClick={() => setIsSelectingList(false)}
-                className="w-full btn-primary py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm transition-colors text-center"
+                className="w-full btn-primary py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm transition-colors text-center !text-white"
               >
                 Confirm Address
               </button>
@@ -732,7 +733,7 @@ export default function CheckoutAddressStep() {
 
         {/* Delivery Estimates Block */}
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs flex flex-col gap-4 mt-4">
-          <h2 className="font-sans text-base font-bold text-on-surface uppercase tracking-wider mb-2">
+          <h2 className="text-[10px] font-label font-bold text-on-surface uppercase tracking-widest mb-2">
             Delivery Estimates
           </h2>
           {activeItems.map((item) => (
@@ -756,16 +757,22 @@ export default function CheckoutAddressStep() {
                   toast.error('Please add and select a delivery address first.');
                   return;
                 }
-                setActiveStep(hasRentalItems ? 3 : 2);
+                const nextIndex = checkoutSteps.indexOf('ADDRESS') + 1;
+                setActiveStep(nextIndex);
               }}
               disabled={!activeSelectedAddress}
               className={`w-full py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm transition-colors text-center cursor-pointer ${
                 !activeSelectedAddress
                   ? 'bg-outline-variant text-on-surface/40 opacity-50 cursor-not-allowed'
-                  : 'btn-primary text-on-primary'
+                  : 'btn-primary !text-white'
               }`}
             >
-              Continue to {hasRentalItems ? 'Verification' : 'Payment'}
+              Continue to{' '}
+              {checkoutSteps[checkoutSteps.indexOf('ADDRESS') + 1] === 'VERIFY'
+                ? 'Verification'
+                : checkoutSteps[checkoutSteps.indexOf('ADDRESS') + 1] === 'CUSTOMIZATION'
+                  ? 'Note'
+                  : 'Payment'}
             </button>
           </div>
         </div>

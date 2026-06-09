@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">16.26% </span>
+                <span class="strong">9.75% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>20/123</span>
+                <span class='fraction'>12/123</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.14% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/70</span>
+                <span class='fraction'>0/70</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">14.28% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/7</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">16.52% </span>
+                <span class="strong">9.91% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>20/121</span>
+                <span class='fraction'>12/121</span>
             </div>
         
             
@@ -458,10 +458,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -471,13 +471,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -627,7 +627,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">﻿import crypto from 'crypto';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import PasswordResetToken from '../models/PasswordResetToken';
@@ -739,11 +739,11 @@ class AdminAuthService {
 <span class="cstat-no" title="statement not covered" >    await FailedLoginAttempt.deleteOne({ email: cleanEmail });</span>
   }
 &nbsp;
-  static async adminLogin(email: string, password: string, ip: string, userAgent: string) {
-    const cleanEmail = canonicalizeEmail(email);
+<span class="fstat-no" title="function not covered" >  static </span>async adminLogin(email: string, password: string, ip: string, userAgent: string) {
+    const cleanEmail = <span class="cstat-no" title="statement not covered" >canonicalizeEmail(email);</span>
 &nbsp;
-    const lockoutRecord = await FailedLoginAttempt.findOne({ email: cleanEmail });
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (lockoutRecord &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >lockoutRecord.lockoutUntil </span>&amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >lockoutRecord.lockoutUntil &gt; new Date())</span> {
+    const lockoutRecord = <span class="cstat-no" title="statement not covered" >await FailedLoginAttempt.findOne({ email: cleanEmail });</span>
+<span class="cstat-no" title="statement not covered" >    if (lockoutRecord &amp;&amp; lockoutRecord.lockoutUntil &amp;&amp; lockoutRecord.lockoutUntil &gt; new Date()) {</span>
       const remainingTime = <span class="cstat-no" title="statement not covered" >Math.ceil(</span>
         (lockoutRecord.lockoutUntil.getTime() - Date.now()) / 1000 / 60,
       );
@@ -753,13 +753,13 @@ class AdminAuthService {
       );
     }
 &nbsp;
-    const user = await User.findOne({ email: cleanEmail }).select('+passwordHash');
+    const user = <span class="cstat-no" title="statement not covered" >await User.findOne({ email: cleanEmail }).select('+passwordHash');</span>
 &nbsp;
-    const DUMMY_HASH = '$2a$12$R9h/cIPz0gi.URNNX3rub2A9WEjRRO.h1.2/n3hD0A3w.dG0uG.0i';
-    const isMatch = await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH);
+    const DUMMY_HASH = <span class="cstat-no" title="statement not covered" >'$2a$12$R9h/cIPz0gi.URNNX3rub2A9WEjRRO.h1.2/n3hD0A3w.dG0uG.0i';</span>
+    const isMatch = <span class="cstat-no" title="statement not covered" >await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH);</span>
 &nbsp;
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (!user) {
-      throw new ApiError(401, 'Invalid credentials');
+<span class="cstat-no" title="statement not covered" >    if (!user) {</span>
+<span class="cstat-no" title="statement not covered" >      throw new ApiError(401, 'Invalid credentials');</span>
     }
 &nbsp;
     const adminEmails = <span class="cstat-no" title="statement not covered" >getAdminEmails();</span>
@@ -866,7 +866,7 @@ class AdminAuthService {
     const tokenHash = <span class="cstat-no" title="statement not covered" >crypto.createHash('sha256').update(token).digest('hex');</span>
     const expiresAt = <span class="cstat-no" title="statement not covered" >new Date(Date.now() + 15 * 60 * 1000);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    await PasswordResetToken.deleteMany({ email: cleanEmail });</span>
+<span class="cstat-no" title="statement not covered" >    await PasswordResetToken.deleteMany({ email: cleanEmail }, { bypassDestructionGuard: true } as any);</span>
 <span class="cstat-no" title="statement not covered" >    await PasswordResetToken.create({</span>
       email: cleanEmail,
       tokenHash,
@@ -916,7 +916,7 @@ export default AdminAuthService;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-07T09:06:38.503Z
+                at 2026-06-07T12:54:17.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

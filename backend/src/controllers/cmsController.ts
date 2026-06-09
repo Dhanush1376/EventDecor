@@ -21,7 +21,7 @@ export const getAllSections = asyncHandler(async (req: Request, res: Response) =
 
 export const aiGenerateContent = asyncHandler(async (req: Request, res: Response) => {
   const { text, style } = req.body;
-  
+
   if (!text || !style) {
     throw new ApiError(400, 'Both text and style are required');
   }
@@ -31,7 +31,7 @@ export const aiGenerateContent = asyncHandler(async (req: Request, res: Response
     luxury: `Rewrite the following text in an ultra-premium luxury brand copywriting style. Think Cartier/Hermès level elegance. Keep it concise (1-2 sentences max).`,
     traditional: `Rewrite the following text with authentic Telugu traditional and ceremonial cultural context. Reference real Telugu customs and festivals where relevant. Keep it concise (1-2 sentences max).`,
     seo: `Rewrite the following text as an SEO-optimized snippet for an Ongole-based Indian wedding decorations ecommerce store. Include relevant local keywords naturally. Keep it concise (1-2 sentences max).`,
-    translate: `Translate the following English text into natural, fluent Telugu script (తెలుగు). Only output the Telugu translation, nothing else.`
+    translate: `Translate the following English text into natural, fluent Telugu script (తెలుగు). Only output the Telugu translation, nothing else.`,
   };
 
   const systemPrompt = stylePrompts[style];
@@ -51,19 +51,19 @@ export const aiGenerateContent = asyncHandler(async (req: Request, res: Response
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Original text: "${text}"` }
+          { role: 'user', content: `Original text: "${text}"` },
         ],
         temperature: 0.7,
-        max_tokens: 200
+        max_tokens: 200,
       }),
-      signal: controller.signal
+      signal: controller.signal,
     });
     clearTimeout(timeout);
 
@@ -78,7 +78,9 @@ export const aiGenerateContent = asyncHandler(async (req: Request, res: Response
       throw new ApiError(500, 'AI generated empty response');
     }
 
-    res.status(200).json(new ApiResponse(true, 'AI content generated', { text: generatedText, style }));
+    res
+      .status(200)
+      .json(new ApiResponse(true, 'AI content generated', { text: generatedText, style }));
   } catch (err: any) {
     clearTimeout(timeout);
     if (err instanceof ApiError) throw err;

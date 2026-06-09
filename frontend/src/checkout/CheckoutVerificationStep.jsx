@@ -8,6 +8,7 @@ export default function CheckoutVerificationStep() {
     setAadhaarNumber,
     agreementAccepted,
     setAgreementAccepted,
+    checkoutSteps,
   } = useCheckout();
 
   const handleAadhaarChange = (e) => {
@@ -24,7 +25,8 @@ export default function CheckoutVerificationStep() {
       toast.error('Please accept the rental agreement to proceed.');
       return;
     }
-    setActiveStep(4); // Proceed to Payment
+    const nextIndex = checkoutSteps.indexOf('VERIFY') + 1;
+    setActiveStep(nextIndex); // Proceed to Payment
   };
 
   return (

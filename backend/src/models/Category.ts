@@ -9,6 +9,7 @@ export interface ICategory extends ISoftDeleted {
   icon?: string;
   imageSrc?: string;
   parentCategory?: mongoose.Types.ObjectId;
+  coverProduct?: mongoose.Types.ObjectId;
   displayOrder: number;
   isActive: boolean;
   metadata?: any;
@@ -28,6 +29,7 @@ const CategorySchema: Schema = new Schema(
     icon: { type: String },
     imageSrc: { type: String },
     parentCategory: { type: Schema.Types.ObjectId, ref: 'Category', default: null },
+    coverProduct: { type: Schema.Types.ObjectId, ref: 'Product', default: null },
     displayOrder: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true, index: true },
     metadata: { type: Schema.Types.Mixed }, // Additional dynamic tags/configs

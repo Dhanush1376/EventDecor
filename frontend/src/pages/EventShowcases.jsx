@@ -388,7 +388,7 @@ export function EventShowcases() {
       {/* Sticky Navigation Bar */}
       <nav
         ref={navRef}
-        className={`sticky z-[49] -mt-8 md:-mt-12 mb-10 md:mb-12 transition-all duration-300 ${
+        className={`sticky z-[49] -mt-16 md:-mt-24 mb-0 md:-mb-2 transition-all duration-300 ${
           isSticky ? 'px-0' : 'px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">10% </span>
+                <span class="strong">8% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/100</span>
+                <span class='fraction'>8/100</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5.26% </span>
+                <span class="strong">2.63% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/38</span>
+                <span class='fraction'>1/38</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">20% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">10% </span>
+                <span class="strong">8% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/100</span>
+                <span class='fraction'>8/100</span>
             </div>
         
             
@@ -258,12 +258,12 @@
 <a name='L193'></a><a href='#L193'>193</a>
 <a name='L194'></a><a href='#L194'>194</a>
 <a name='L195'></a><a href='#L195'>195</a>
-<a name='L196'></a><a href='#L196'>196</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">14x</span>
+<a name='L196'></a><a href='#L196'>196</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -271,7 +271,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -433,18 +433,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -634,12 +634,12 @@ let sitemapTimeout: any = null;
  * Enterprise debounced sitemap updater.
  * Delays sitemap regeneration to avoid overhead on bulk modifications.
  */
-export function triggerSitemapUpdate(): void {
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (sitemapTimeout) {
+export function <span class="fstat-no" title="function not covered" >triggerSitemapUpdate(</span>): void {
+<span class="cstat-no" title="statement not covered" >  if (sitemapTimeout) {</span>
     (<span class="cstat-no" title="statement not covered" >globalThis as any).clearTimeout(sitemapTimeout);</span>
   }
   
-  sitemapTimeout = (globalThis as any).setTimeout(<span class="fstat-no" title="function not covered" >async </span>() =&gt; {
+<span class="cstat-no" title="statement not covered" >  sitemapTimeout = (globalThis as any).setTimeout(<span class="fstat-no" title="function not covered" >async </span>() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      await generateSitemap();</span>
     } catch (err: any) {
@@ -655,7 +655,7 @@ export function triggerSitemapUpdate(): void {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-07T09:06:38.503Z
+                at 2026-06-07T12:54:17.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

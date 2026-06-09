@@ -111,30 +111,32 @@ export function NetworkProvider({ children }) {
     // Ping failed. Debounce the offline state
     failedPingsRef.current += 1;
 
-    setNetworkState((prev) => {
-      if (isBooting) {
-        // Show a friendly loading toast on second failure if it's during initial boot to avoid false positives on fast local refresh
-        if (failedPingsRef.current === 2) {
-          toast.loading('Warming up the server. This might take a moment on cold start...', {
-            id: 'backend-cold-start',
-            duration: 12000,
-          });
-        }
-        return 'reconnecting';
+    let nextState = networkState;
+    if (isBooting) {
+      // Show a friendly loading toast on second failure if it's during initial boot to avoid false positives on fast local refresh
+      if (failedPingsRef.current === 2) {
+        toast.loading('Warming up the server. This might take a moment on cold start...', {
+          id: 'backend-cold-start',
+          duration: 12000,
+        });
       }
-
-      if (failedPingsRef.current === 1 && prev === 'online') {
-        return 'reconnecting';
+      nextState = 'reconnecting';
+    } else {
+      if (failedPingsRef.current === 1 && networkState === 'online') {
+        nextState = 'reconnecting';
       } else if (failedPingsRef.current >= 2) {
         setConnectionQuality('offline');
         toast.dismiss('backend-cold-start');
-        return 'offline';
+        nextState = 'offline';
       }
-      return prev;
-    });
+    }
+
+    if (nextState !== networkState) {
+      setNetworkState(nextState);
+    }
 
     return false;
-  }, [isBooting]);
+  }, [isBooting, networkState]);
 
   // Background ping — less aggressive when stable to reduce cold-start API noise
   useEffect(() => {

@@ -195,7 +195,7 @@ export default function CheckoutPaymentStep() {
       )}
 
       {/* Payment Header */}
-      <div className="bg-surface-bright mb-4 p-4 text-[11px] font-bold text-primary uppercase tracking-widest border border-outline-variant/40 rounded-lg shadow-xs">
+      <div className="bg-surface-bright mb-4 p-4 text-[10px] font-label font-bold text-on-surface uppercase tracking-widest border border-outline-variant/40 rounded-lg shadow-xs">
         Payment Options
       </div>
 

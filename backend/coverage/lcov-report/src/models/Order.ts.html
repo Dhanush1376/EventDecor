@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">95.23% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>17/17</span>
+                <span class='fraction'>20/21</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">95.23% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>17/17</span>
+                <span class='fraction'>20/21</span>
             </div>
         
             
@@ -308,7 +308,14 @@
 <a name='L243'></a><a href='#L243'>243</a>
 <a name='L244'></a><a href='#L244'>244</a>
 <a name='L245'></a><a href='#L245'>245</a>
-<a name='L246'></a><a href='#L246'>246</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">11x</span>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -430,7 +437,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -546,6 +553,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
@@ -554,6 +566,7 @@
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import mongoose, { Schema, Document } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 &nbsp;
 export interface IOrderStatusHistory {
   status: string;
@@ -589,7 +602,7 @@ export interface IShippingAddress {
   deliveryInstructions?: string;
 }
 &nbsp;
-export interface IOrder extends Document {
+export interface IOrder extends ISoftDeleted {
   user: mongoose.Types.ObjectId;
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
@@ -675,7 +688,7 @@ const OrderSchema: Schema = new Schema(
           isNonRefundable: { type: Boolean, default: false },
         },
       ],
-      validate: [(val: any[]) =&gt; val.length &lt;= 50, '{PATH} exceeds the limit of 50 items'],
+      validate: [<span class="fstat-no" title="function not covered" >(v</span>al: any[]) =&gt; <span class="cstat-no" title="statement not covered" >val.length &lt;= 50,</span> '{PATH} exceeds the limit of 50 items'],
     },
     shippingAddress: {
       name: { type: String, required: true },
@@ -796,7 +809,12 @@ OrderSchema.index({ user: 1, createdAt: -1 });
 OrderSchema.index({ orderStatus: 1, createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, razorpayOrderId: 1, createdAt: -1 });
 &nbsp;
-const Order = mongoose.model&lt;IOrder&gt;('Order', OrderSchema);
+OrderSchema.plugin(SoftDeletePlugin);
+&nbsp;
+import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
+OrderSchema.plugin(ForensicAuditPlugin);
+&nbsp;
+const Order = mongoose.model&lt;IOrder, SoftDeleteModel&lt;IOrder&gt;&gt;('Order', OrderSchema);
 export default Order;
 &nbsp;</pre></td></tr></table></pre>
 
@@ -805,7 +823,7 @@ export default Order;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-07T09:06:38.503Z
+                at 2026-06-07T12:54:17.001Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

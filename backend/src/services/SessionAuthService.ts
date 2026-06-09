@@ -55,6 +55,9 @@ class SessionAuthService {
     }
 
     const tokenHash = this.hashRefreshToken(refreshToken);
+    logger.info(
+      `[DEBUG] refreshSession called with refreshToken=${refreshToken.substring(0, 10)}... Hash=${tokenHash}`,
+    );
 
     // 1. Detect if this token was already used (Replay attack detection)
     const isUsed = await UsedRefreshToken.findOne({ tokenHash });
@@ -89,6 +92,7 @@ class SessionAuthService {
     });
 
     if (!session) {
+      logger.warn(`[DEBUG] Refresh session NOT FOUND or EXPIRED for Hash=${tokenHash}`);
       throw new ApiError(401, 'Refresh session is invalid or expired');
     }
 

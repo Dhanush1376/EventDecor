@@ -89,11 +89,35 @@ export function CheckoutProvider({ children }) {
     persistentStorage.setItem('siri_checkout_step', activeStep, { session: true });
   }, [activeStep]);
 
+  const hasCustomizableItems = React.useMemo(() => {
+    return activeItems.some(
+      (item) => item.product?.customizationConfig?.enabled || item.customizationConfig?.enabled,
+    );
+  }, [activeItems]);
+
   const orderType = checkoutMode;
-  const checkoutSteps =
+  let checkoutSteps =
     orderType === 'rental'
       ? ['BAG', 'DURATION', 'ADDRESS', 'VERIFY', 'PAYMENT']
       : ['BAG', 'ADDRESS', 'PAYMENT'];
+
+  if (hasCustomizableItems) {
+    const paymentIndex = checkoutSteps.indexOf('PAYMENT');
+    checkoutSteps.splice(paymentIndex, 0, 'CUSTOMIZATION');
+  }
+
+  const [customizationNotes, setCustomizationNotes] = useState(() => {
+    return persistentStorage.getItem('siri_checkout_customization_notes', {
+      session: true,
+      fallback: {},
+    });
+  });
+
+  React.useEffect(() => {
+    persistentStorage.setItem('siri_checkout_customization_notes', customizationNotes, {
+      session: true,
+    });
+  }, [customizationNotes]);
 
   const [rentalStartDate, setRentalStartDate] = useState(() => {
     return persistentStorage.getItem('siri_checkout_rental_start', {
@@ -754,6 +778,7 @@ export function CheckoutProvider({ children }) {
     persistentStorage.removeItem('siri_checkout_applied_coupon', { session: true });
     persistentStorage.removeItem('siri_checkout_rental_start', { session: true });
     persistentStorage.removeItem('siri_checkout_rental_end', { session: true });
+    persistentStorage.removeItem('siri_checkout_customization_notes', { session: true });
   };
 
   // ─── Build shared shipping address payload ───
@@ -845,6 +870,10 @@ export function CheckoutProvider({ children }) {
         aadhaarNumber,
         agreementAccepted: true,
         paymentMethod: paymentOption === 'razorpay' ? 'razorpay' : 'cod',
+        customizationNote:
+          customizationNotes[
+            `${rentalItem.id || rentalItem._id}-${rentalItem.variant || 'default'}`
+          ] || undefined,
       };
 
       const createRes = await rentalService.createOrder(rentalPayload);
@@ -987,11 +1016,15 @@ export function CheckoutProvider({ children }) {
     setIsProcessing(true);
 
     const orderData = {
-      items: activeItems.map((item) => ({
-        productId: item.id || item._id,
-        quantity: item.quantity,
-        variant: item.variant || 'Default',
-      })),
+      items: activeItems.map((item) => {
+        const key = `${item.id || item._id}-${item.variant || 'default'}`;
+        return {
+          productId: item.id || item._id,
+          quantity: item.quantity,
+          variant: item.variant || 'Default',
+          customizationNote: customizationNotes[key] || undefined,
+        };
+      }),
       shippingAddress: buildShippingAddress(),
       couponCode: appliedCoupon || undefined,
       paymentMethod: paymentOption === 'razorpay' ? 'razorpay' : 'cod',
@@ -1134,6 +1167,9 @@ export function CheckoutProvider({ children }) {
     setRentalEndDate,
     orderType,
     checkoutSteps,
+    hasCustomizableItems,
+    customizationNotes,
+    setCustomizationNotes,
     // Rental-specific
     rentalCostBreakdown,
     setRentalCostBreakdown,

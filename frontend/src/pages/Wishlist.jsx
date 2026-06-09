@@ -25,11 +25,11 @@ export function Wishlist() {
     source: 'wishlist',
   });
 
-  const { data: trendingData = {}, isLoading: trendingLoading } = useProducts({
+  const { data: trendingData = {}, isPending: trendingLoading } = useProducts({
     limit: 4,
     sort: 'Popularity',
   });
-  const trendingProducts = trendingData?.items || (Array.isArray(trendingData) ? trendingData : []);
+  const trendingProducts = trendingData?.data || trendingData?.products || trendingData?.items || (Array.isArray(trendingData) ? trendingData : []);
 
   const sortOptions = [
     { value: 'latest', label: 'Latest Added' },

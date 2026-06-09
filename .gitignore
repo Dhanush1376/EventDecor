@@ -58,3 +58,12 @@ backend/old_seed_data_temp.txt
 backend/test-*.ts
 *.avif
 tmp/
+
+# Temp Scripts & Audits
+patch_frontend.py
+backend/fix-image.js
+backend/fix-all-images.js
+frontend/replaceImports.cjs
+migration_report.md
+backend/knip-report.json
+frontend/knip-report.json

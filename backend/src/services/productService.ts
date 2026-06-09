@@ -114,10 +114,21 @@ class ProductService {
       availabilityMode,
       spellcheck,
       bypassCorrection,
+      ids,
     } = queryParams;
     const { page, limit, skip } = getPaginationOptions(queryParams);
 
     const filter: any = isAdmin ? {} : { isActive: true };
+
+    if (ids) {
+      const idArray = String(ids)
+        .split(',')
+        .map((id) => id.trim())
+        .filter((id) => mongoose.Types.ObjectId.isValid(id));
+      if (idArray.length > 0) {
+        filter._id = { $in: idArray };
+      }
+    }
 
     if (category && String(category).toLowerCase() !== 'all') filter.category = category;
     if (featured === 'true') filter.featured = true;

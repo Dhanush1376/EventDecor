@@ -55,6 +55,14 @@ export interface IProduct extends ISoftDeleted {
   rentalMinDays: number;
   rentalMaxDays: number;
   isManualRentalPricing: boolean;
+  customizationConfig?: {
+    enabled: boolean;
+    required: boolean;
+    label: string;
+    placeholder: string;
+    maxLength: number;
+    helperText?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -117,6 +125,14 @@ const ProductSchema: Schema = new Schema(
     rentalMinDays: { type: Number, default: 1, min: 1 },
     rentalMaxDays: { type: Number, default: 365, min: 1 },
     isManualRentalPricing: { type: Boolean, default: false },
+    customizationConfig: {
+      enabled: { type: Boolean, default: false },
+      required: { type: Boolean, default: false },
+      label: { type: String, default: 'Customization Note' },
+      placeholder: { type: String, default: 'Enter customization details' },
+      maxLength: { type: Number, default: 500, max: 2000 },
+      helperText: { type: String },
+    },
   },
   {
     timestamps: true,

@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CartSkeleton, Skeleton } from '../components/ui/Skeleton';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 import { CheckoutSteps } from '../components/ui/CheckoutSteps';
+import { persistentStorage } from '../utils/persistentStorage';
 
 const RecommendationSystem = React.lazy(() =>
   import('../components/sections/RecommendationSystem').then((m) => ({
@@ -37,7 +38,7 @@ export function Cart() {
     rentalCartCount,
   } = useCart();
   const { addItem: addToWishlist } = useWishlist();
-  const { runProtectedAction, isAuthenticated } = useAuth();
+  const { runProtectedAction, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   // Track cart page view
@@ -108,9 +109,27 @@ export function Cart() {
 
   const shippingFee = summary?.shippingFee || 0;
   const platformFee = summary?.platformFee || 0;
+
+  // Wallet state
+  const [useWallet, setUseWallet] = useState(() => {
+    return persistentStorage.getItem('siri_checkout_use_wallet', {
+      session: true,
+      fallback: false,
+    });
+  });
+
+  useEffect(() => {
+    persistentStorage.setItem('siri_checkout_use_wallet', useWallet, { session: true });
+  }, [useWallet]);
+
+  const basePayableAmount = actualSubtotal - couponDiscountAmount + platformFee + shippingFee + depositTotal;
+  const walletDeduction = useWallet && user?.walletBalance > 0 
+    ? Math.min(user.walletBalance, basePayableAmount) 
+    : 0;
+
   const finalPayableAmount =
     items.length > 0
-      ? actualSubtotal - couponDiscountAmount + platformFee + shippingFee + depositTotal
+      ? basePayableAmount - walletDeduction
       : 0;
 
   // Find the closest coupon that the user is yet to unlock
@@ -639,10 +658,58 @@ export function Cart() {
                 transition={{ duration: 0.4, delay: 0.1 }}
                 className="lg:col-span-5 xl:col-span-4 space-y-3"
               >
+                {/* Wallet Balance Card */}
+                {user && user.walletBalance > 0 && (
+                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative overflow-hidden">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          id="cart-use-wallet-checkbox"
+                          checked={useWallet}
+                          onChange={(e) => setUseWallet(e.target.checked)}
+                          className="mt-1 rounded text-primary focus:ring-0 cursor-pointer h-4 w-4"
+                        />
+                        <label
+                          htmlFor="cart-use-wallet-checkbox"
+                          className="cursor-pointer select-none"
+                        >
+                          <span className="text-xs font-bold text-on-surface block uppercase tracking-wider">
+                            Use Siri Pay Wallet
+                          </span>
+                          <span className="text-[10px] text-secondary font-light">
+                            Available Balance:{' '}
+                            <strong className="text-on-surface font-semibold">
+                              ₹{user.walletBalance.toLocaleString('en-IN')}
+                            </strong>
+                          </span>
+                        </label>
+                      </div>
+                      <span className="material-symbols-outlined text-primary text-sm animate-pulse">
+                        stars
+                      </span>
+                    </div>
+
+                    <AnimatePresence>
+                      {useWallet && walletDeduction > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-3 pt-3 border-t border-outline-variant/30 text-[11px] text-primary font-bold flex justify-between"
+                        >
+                          <span>Wallet Deducted:</span>
+                          <span>− ₹{walletDeduction.toLocaleString('en-IN')}</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
                 {/* Coupons Block */}
                 <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-[13px] font-extrabold text-on-surface uppercase tracking-wide">
+                    <span className="text-[10px] font-label font-bold text-on-surface uppercase tracking-widest">
                       Coupons & Offers
                     </span>
                     {!appliedCoupon && (
@@ -762,7 +829,7 @@ export function Cart() {
                     </div>
                   )}
                   <div className="p-5">
-                    <h3 className="text-[13px] font-extrabold text-on-surface uppercase tracking-wide pb-4 border-b border-outline-variant/40 mb-4">
+                    <h3 className="text-[10px] font-label font-bold text-on-surface uppercase tracking-widest pb-4 border-b border-outline-variant/40 mb-4">
                       {activeCartMode === 'rental'
                         ? 'Rental Summary'
                         : `Price Details (${cartCount} Items)`}
@@ -836,6 +903,26 @@ export function Cart() {
                           {shippingFee === 0 ? 'Free' : `₹${shippingFee}`}
                         </span>
                       </div>
+
+                      <AnimatePresence>
+                        {useWallet && walletDeduction > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="flex justify-between items-center bg-primary/10 text-primary rounded-lg px-3 py-2 border border-primary/20 font-semibold"
+                          >
+                            <span className="flex items-center gap-1 font-medium text-[11px]">
+                              <span className="material-symbols-outlined text-[14px] text-primary">
+                                stars
+                              </span>
+                              Siri Pay Wallet applied
+                            </span>
+                            <span>− ₹{walletDeduction.toLocaleString()}</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       <div className="h-[1px] bg-outline-variant/40 my-3" />
                       <div className="flex justify-between items-baseline font-bold text-[15px]">
                         <span>

@@ -143,18 +143,6 @@ export function NavigationOrchestrator() {
     }
   }, [location.pathname]);
 
-  return (
-    <div
-      aria-hidden="true"
-      className={`pointer-events-none fixed left-0 top-0 h-[2px] z-[var(--z-loader)] transition-opacity duration-200 ${
-        loadingRoute ? "opacity-100" : "opacity-0"
-      }`}
-      style={{
-        width: loadingRoute ? "100%" : "0%",
-        background: "linear-gradient(90deg, transparent, var(--color-gold), transparent)",
-        animation: loadingRoute ? "nav-progress-shimmer 1.1s var(--ease-smooth) infinite" : "none",
-      }}
-    />
-  );
+  return null;
 }
 

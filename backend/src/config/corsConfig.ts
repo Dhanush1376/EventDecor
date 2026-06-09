@@ -49,16 +49,9 @@ export const isOriginAllowed = (origin: string): boolean => {
     const parsedOrigin = parsedUrl.origin;
     const hostname = parsedUrl.hostname;
 
-    // Allow local network IPs for mobile testing (only in development)
+    // Allow all origins for mobile testing in development
     if (process.env.NODE_ENV !== 'production') {
-      if (
-        hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('10.')
-      ) {
-        return true;
-      }
+      return true;
     }
 
     if (allowedOrigins.has(parsedOrigin)) {

@@ -49,21 +49,7 @@ const CMS_SIDEBAR = [
   {
     title: 'Storefront Layout',
     items: [
-      { id: 'hero', label: 'Hero Banner', icon: 'aspect_ratio', desc: 'Primary entrance visuals' },
-      {
-        id: 'collections',
-        label: 'Featured Collections',
-        icon: 'grid_view',
-        desc: 'Catalog category strips',
-      },
-      { id: 'story', label: 'About Teaser', icon: 'history_edu', desc: 'Studio lineage details' },
-      { id: 'bestsellers', label: 'Bestsellers', icon: 'stars', desc: 'Featured product rows' },
-      {
-        id: 'homepageSections',
-        label: 'Section Order',
-        icon: 'reorder',
-        desc: 'Reorder homepage blocks',
-      },
+      { id: 'home', label: 'Home Page Controller', icon: 'home', desc: 'Manage Home Page content' },
     ],
   },
   {
@@ -222,495 +208,539 @@ function AISparkButton({ text, onApply }) {
 // MINIMAL FIRST-CLASS STOREFRONT LAYOUT EDITORS
 // ═══════════════════════════════════════════════════════════
 
-// 1. HERO SHOWCASE
-function HeroSectionEditor({ content, onUpdate }) {
-  const hero = content.hero || {};
+// 1. HOME PAGE CONTROLLER
+function HomePageControllerEditor({ content, onUpdate }) {
+  const [activeTab, setActiveTab] = useState('layout');
+  const { products, productsError } = useAdmin();
+  const [coupons, setCoupons] = useState([]);
+  const [loadingCoupons, setLoadingCoupons] = useState(false);
+
+  const fetchAttempted = useRef(false);
+  useEffect(() => {
+    if (activeTab === 'promo' && !fetchAttempted.current) {
+      fetchAttempted.current = true;
+      setLoadingCoupons(true);
+      import('../../services/api/couponService').then(({ couponService }) => {
+        couponService
+          .getAll()
+          .then((res) => {
+            const payload = res?.data || res;
+            const list = payload?.coupons || payload?.data || payload || [];
+            setCoupons(Array.isArray(list) ? list : []);
+          })
+          .catch((err) => {
+            console.error('Failed to load coupons', err);
+            setCoupons([]);
+          })
+          .finally(() => setLoadingCoupons(false));
+      });
+    }
+  }, [activeTab]);
+
+  const updateSectionState = (sectionId, field, value) => {
+    onUpdate(sectionId, { ...(content[sectionId] || {}), [field]: value });
+  };
+
+  // Master Layout array
+  const defaultSections = [
+    { id: 'hero_1', isVisible: true },
+    { id: 'promoBanner_1', isVisible: true },
+    { id: 'categoryGrid_1', isVisible: true },
+    { id: 'trendingProducts_1', isVisible: true },
+    { id: 'shopByOccasion_1', isVisible: true },
+    { id: 'featuredProducts_1', isVisible: true },
+    { id: 'recommendedProducts_1', isVisible: true },
+    { id: 'galleryInspiration_1', isVisible: true },
+  ];
+
+  const homepageSections = content.homepageSections || defaultSections;
+
+  const moveSection = (idx, dir) => {
+    const newSections = [...homepageSections];
+    if (dir === -1 && idx > 0) {
+      [newSections[idx], newSections[idx - 1]] = [newSections[idx - 1], newSections[idx]];
+    } else if (dir === 1 && idx < newSections.length - 1) {
+      [newSections[idx], newSections[idx + 1]] = [newSections[idx + 1], newSections[idx]];
+    }
+    onUpdate('homepageSections', newSections);
+  };
+
+  const toggleSectionVis = (idx) => {
+    const newSections = [...homepageSections];
+    newSections[idx] = {
+      ...newSections[idx],
+      isVisible: newSections[idx].isVisible === false ? true : false,
+    };
+    onUpdate('homepageSections', newSections);
+  };
+
   return (
     <div className="admin-card p-6 space-y-6">
       <SectionHeader
-        icon="aspect_ratio"
-        title="Hero Banner"
-        description="Configure text and buttons for the homepage banner"
+        icon="home"
+        title="Home Page Controller"
+        description="Manage the storefront homepage layout, sections ordering, and content"
       />
-      <div className="space-y-5">
-        <AdminField
-          label="Primary Headline"
-          description="The main premium bold text welcoming storefront patrons"
-        >
-          <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
-            <AdminInput
-              value={hero.title || ''}
-              onChange={(e) => onUpdate('hero', { title: e.target.value })}
-              className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-            <div className="absolute right-2.5">
-              <AISparkButton
-                text={hero.title}
-                onApply={(val) => onUpdate('hero', { title: val })}
-              />
-            </div>
-          </div>
-        </AdminField>
 
-        <AdminField
-          label="Subtext Paragraph"
-          description="A descriptive sentence establishing the boutique curation context"
-        >
-          <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
-            <AdminTextarea
-              value={hero.subtitle || ''}
-              onChange={(e) => onUpdate('hero', { subtitle: e.target.value })}
-              rows={2}
-              className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-            <div className="absolute right-2.5 top-2.5">
-              <AISparkButton
-                text={hero.subtitle}
-                onApply={(val) => onUpdate('hero', { subtitle: val })}
-              />
-            </div>
-          </div>
-        </AdminField>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <AdminField
-            label="Gold Badge Tagline"
-            description="Main badge line (e.g. 'Artisan Excellence Since 2015')"
+      {/* Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-[var(--admin-border-subtle)] scrollbar-hide">
+        {[
+          'Layout',
+          'Hero',
+          'Promo',
+          'Categories',
+          'Trending',
+          'Occasions',
+          'Featured',
+          'Recommended',
+        ].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab.toLowerCase())}
+            className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
+              activeTab === tab.toLowerCase()
+                ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/30'
+                : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-transparent hover:bg-[var(--admin-surface-muted)]'
+            }`}
           >
-            <AdminInput
-              value={hero.badgeText || ''}
-              onChange={(e) => onUpdate('hero', { badgeText: e.target.value })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-          <AdminField
-            label="Rotating Seal Ring Text"
-            description="Floating seal label (e.g. '• HANDCRAFTED LUXURY • HERITAGE ARTISTRY •')"
-          >
-            <AdminInput
-              value={hero.rotatingSealText || ''}
-              onChange={(e) => onUpdate('hero', { rotatingSealText: e.target.value })}
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <ImageUpload
-            label="Lossless Background Image"
-            value={hero.backgroundImage || ''}
-            onChange={(val) => onUpdate('hero', { backgroundImage: val })}
-            folder="cms"
-          />
-
-          <ImageUpload
-            label="Mobile Background Image"
-            value={hero.mobileBackgroundImage || ''}
-            onChange={(val) => onUpdate('hero', { mobileBackgroundImage: val })}
-            folder="cms"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[var(--admin-border-subtle)]">
-          <AdminField label="Primary Action Button Text">
-            <AdminInput
-              value={hero.ctaPrimary?.text || ''}
-              onChange={(e) =>
-                onUpdate('hero', {
-                  ctaPrimary: { ...(hero.ctaPrimary || {}), text: e.target.value },
-                })
-              }
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-          <AdminField
-            label="Primary Action Button Destination Link"
-            description="Page path (e.g. '/collections')"
-          >
-            <AdminInput
-              value={hero.ctaPrimary?.link || ''}
-              onChange={(e) =>
-                onUpdate('hero', {
-                  ctaPrimary: { ...(hero.ctaPrimary || {}), link: e.target.value },
-                })
-              }
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
-          <AdminField label="Secondary Action Button Text">
-            <AdminInput
-              value={hero.ctaSecondary?.text || ''}
-              onChange={(e) =>
-                onUpdate('hero', {
-                  ctaSecondary: { ...(hero.ctaSecondary || {}), text: e.target.value },
-                })
-              }
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-          <AdminField
-            label="Secondary Action Button Destination Link"
-            description="Page path (e.g. '/about')"
-          >
-            <AdminInput
-              value={hero.ctaSecondary?.link || ''}
-              onChange={(e) =>
-                onUpdate('hero', {
-                  ctaSecondary: { ...(hero.ctaSecondary || {}), link: e.target.value },
-                })
-              }
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-        </div>
-
-        <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
-          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-accent)]">
-            Floating Glass Card Settings (Desktop View)
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <AdminField label="Floating Card Title">
-              <AdminInput
-                value={hero.floatingCardTitle || ''}
-                onChange={(e) => onUpdate('hero', { floatingCardTitle: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-              />
-            </AdminField>
-            <AdminField label="Floating Card Action Button Link">
-              <AdminInput
-                value={hero.floatingCardCtaLink || ''}
-                onChange={(e) => onUpdate('hero', { floatingCardCtaLink: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-              />
-            </AdminField>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <AdminField label="Floating Card Action Button Text">
-              <AdminInput
-                value={hero.floatingCardCtaText || ''}
-                onChange={(e) => onUpdate('hero', { floatingCardCtaText: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-              />
-            </AdminField>
-            <AdminField label="Floating Card Description Paragraph">
-              <AdminInput
-                value={hero.floatingCardDesc || ''}
-                onChange={(e) => onUpdate('hero', { floatingCardDesc: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-              />
-            </AdminField>
-          </div>
-        </div>
+            {tab}
+          </button>
+        ))}
       </div>
-    </div>
-  );
-}
 
-// 2. FEATURED STRIP
-function FeaturedCollectionsEditor({ content, onUpdate }) {
-  const fCol = content.featuredCollections || {};
-  return (
-    <div className="admin-card p-6 space-y-6">
-      <SectionHeader
-        icon="grid_view"
-        title="Featured Collections Strip"
-        description="Manage the dynamic catalog grid links showcasing signature design categories"
-      />
-      <div className="space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <AdminField label="Section Headline">
+      {activeTab === 'layout' && (
+        <div className="space-y-3">
+          <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block mb-4 border-b border-[var(--admin-border-subtle)] pb-2">
+            Section Ordering & Visibility
+          </span>
+          {homepageSections.map((sec, idx) => (
+            <div
+              key={sec.id}
+              className="flex items-center justify-between p-3 bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)] shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-[var(--admin-text-tertiary)] cursor-move">
+                  drag_indicator
+                </span>
+                <span className="font-bold text-[12px]">{sec.id.split('_')[0]}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <AdminToggle
+                  checked={sec.isVisible !== false}
+                  onChange={() => toggleSectionVis(idx)}
+                />
+                <div className="flex flex-col gap-1">
+                  <button
+                    disabled={idx === 0}
+                    onClick={() => moveSection(idx, -1)}
+                    className="disabled:opacity-30 hover:text-[var(--admin-accent)] cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">expand_less</span>
+                  </button>
+                  <button
+                    disabled={idx === homepageSections.length - 1}
+                    onClick={() => moveSection(idx, 1)}
+                    className="disabled:opacity-30 hover:text-[var(--admin-accent)] cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">expand_more</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeTab === 'hero' && (
+        <div className="space-y-4">
+          <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block mb-4 border-b border-[var(--admin-border-subtle)] pb-2">
+            Select Hero Products (Debug: {products ? products.length : 'undefined'} products loaded)
+          </span>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+            {!products || products.length === 0 ? (
+              <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+                No products available to select. Check if products exist in the catalog or if the
+                API failed.
+              </div>
+            ) : (
+              products.map((prd) => {
+                const isSelected = (content.hero?.selectedProductIds || []).includes(prd.id);
+                return (
+                  <div
+                    key={prd.id}
+                    onClick={() => {
+                      const currentIds = content.hero?.selectedProductIds || [];
+                      let newIds;
+                      if (isSelected) {
+                        newIds = currentIds.filter((id) => id !== prd.id);
+                      } else {
+                        newIds = [...currentIds, prd.id];
+                      }
+                      updateSectionState('hero', 'selectedProductIds', newIds);
+                    }}
+                    className={`relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
+                      isSelected
+                        ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
+                        : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-colors ${
+                        isSelected
+                          ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
+                          : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[14px] font-bold">check</span>
+                    </div>
+                    <img
+                      src={prd.image}
+                      alt={prd.name}
+                      className="w-full aspect-square object-cover rounded-xl shadow-inner border border-[var(--admin-border-subtle)]"
+                    />
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">
+                        {prd.name}
+                      </span>
+                      <span className="text-[10px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider block">
+                        {prd.category}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'promo' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border border-[var(--admin-border)] px-4.5 py-3 rounded-2xl bg-[var(--admin-surface)] mt-5 h-[46px] shadow-[var(--admin-shadow-xs)]">
+            <span className="text-[11px] font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+              Enable Promo Banner
+            </span>
+            <AdminToggle
+              checked={content.promoBanner?.isActive !== false}
+              onChange={() =>
+                updateSectionState(
+                  'promoBanner',
+                  'isActive',
+                  content.promoBanner?.isActive === false ? true : false,
+                )
+              }
+            />
+          </div>
+          <AdminField label="Banner Text">
             <AdminInput
-              value={fCol.sectionTitle || ''}
-              onChange={(e) => onUpdate('featuredCollections', { sectionTitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              value={content.promoBanner?.text || ''}
+              onChange={(e) => updateSectionState('promoBanner', 'text', e.target.value)}
+              className="!py-2.5 !text-[12px]"
             />
           </AdminField>
-          <AdminField label="Pill Subtitle">
+          <div className="grid grid-cols-2 gap-4">
+            <AdminField label="CTA Text">
+              <AdminInput
+                value={content.promoBanner?.ctaText || ''}
+                onChange={(e) => updateSectionState('promoBanner', 'ctaText', e.target.value)}
+                className="!py-2.5 !text-[12px]"
+              />
+            </AdminField>
+            <AdminField label="Select Coupon (Optional)">
+              <select
+                value={content.promoBanner?.couponCode || ''}
+                onChange={(e) => updateSectionState('promoBanner', 'couponCode', e.target.value)}
+                className="w-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] rounded-xl px-4 py-2.5 text-[12px] font-medium outline-none focus:border-[var(--admin-accent)] focus:ring-1 focus:ring-[var(--admin-accent)] transition-all cursor-pointer appearance-none"
+                disabled={loadingCoupons}
+              >
+                <option value="">-- No Coupon Selected --</option>
+                {coupons.map((c) => (
+                  <option key={c._id || c.id} value={c.code}>
+                    {c.code} (
+                    {c.discountType === 'percentage'
+                      ? `${c.discountValue}% OFF`
+                      : `₹${c.discountValue} OFF`}
+                    )
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-[50%] -translate-y-1/2 pointer-events-none text-[var(--admin-text-tertiary)]">
+                {loadingCoupons ? (
+                  <span className="material-symbols-outlined text-[14px] animate-spin block">
+                    refresh
+                  </span>
+                ) : (
+                  <span className="material-symbols-outlined text-[16px] block">expand_more</span>
+                )}
+              </div>
+            </AdminField>
+          </div>
+          <AdminField label="Redirect Link">
             <AdminInput
-              value={fCol.sectionSubtitle || ''}
-              onChange={(e) => onUpdate('featuredCollections', { sectionSubtitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              value={content.promoBanner?.link || ''}
+              onChange={(e) => updateSectionState('promoBanner', 'link', e.target.value)}
+              className="!py-2.5 !text-[12px]"
             />
           </AdminField>
         </div>
+      )}
 
-        <div className="space-y-4 pt-4 border-t border-[var(--admin-border-subtle)]">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-accent)] block mb-1">
-            Configure Category Nodes
-          </label>
-          <div className="grid grid-cols-1 gap-4.5">
-            {fCol.items?.map((item, idx) => (
-              <div
-                key={item.id || idx}
-                className="p-4 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] flex flex-col md:flex-row items-stretch md:items-center gap-4.5 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300"
+      {activeTab === 'categories' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <AdminField label="Section Title">
+              <AdminInput
+                value={content.categoryGrid?.sectionTitle || ''}
+                onChange={(e) => updateSectionState('categoryGrid', 'sectionTitle', e.target.value)}
+              />
+            </AdminField>
+            <AdminField label="Section Subtitle">
+              <AdminInput
+                value={content.categoryGrid?.sectionSubtitle || ''}
+                onChange={(e) =>
+                  updateSectionState('categoryGrid', 'sectionSubtitle', e.target.value)
+                }
+              />
+            </AdminField>
+          </div>
+
+          <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider">
+                Categories List
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const cats = [...(content.categoryGrid?.categories || [])];
+                  cats.push({ title: 'New Category', link: '', image: '' });
+                  updateSectionState('categoryGrid', 'categories', cats);
+                }}
+                className="text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent)] border border-[var(--admin-accent)]/30 px-3 py-1 rounded-full cursor-pointer transition-colors"
               >
-                <div className="flex-1 space-y-1.5">
-                  <span className="text-[11px] text-[var(--admin-text-tertiary)] font-semibold uppercase tracking-wider block font-sans">
-                    Node Name
-                  </span>
-                  <AdminInput
-                    value={item.name || ''}
-                    onChange={(e) => {
-                      const copy = [...fCol.items];
-                      copy[idx] = { ...copy[idx], name: e.target.value };
-                      onUpdate('featuredCollections', { items: copy });
-                    }}
-                    className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
-                  />
+                + Add Category
+              </button>
+            </div>
+
+            {(content.categoryGrid?.categories || []).map((cat, idx) => (
+              <div
+                key={`cat-${idx}`}
+                className="relative p-5 pr-14 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] shadow-sm flex flex-col md:flex-row gap-6 items-center group"
+              >
+                <div className="flex-1 space-y-4 w-full">
+                  <AdminField label="Category Title">
+                    <AdminInput
+                      value={cat.title || cat.name || ''}
+                      onChange={(e) => {
+                        const ObjectCopy = { ...content.categoryGrid };
+                        const cats = [...(ObjectCopy.categories || [])];
+                        cats[idx] = { ...cats[idx], title: e.target.value };
+                        updateSectionState('categoryGrid', 'categories', cats);
+                      }}
+                    />
+                  </AdminField>
+                  <AdminField label="Destination Link">
+                    <AdminInput
+                      value={cat.link || ''}
+                      onChange={(e) => {
+                        const ObjectCopy = { ...content.categoryGrid };
+                        const cats = [...(ObjectCopy.categories || [])];
+                        cats[idx] = { ...cats[idx], link: e.target.value };
+                        updateSectionState('categoryGrid', 'categories', cats);
+                      }}
+                    />
+                  </AdminField>
                 </div>
-                <div className="shrink-0">
+                <div className="w-full md:w-56 shrink-0 border-l border-[var(--admin-border-subtle)] pl-6">
                   <ImageUpload
-                    label=""
-                    value={item.image || ''}
+                    label="Cover Image"
+                    value={cat.image || ''}
                     onChange={(val) => {
-                      const copy = [...fCol.items];
-                      copy[idx] = { ...copy[idx], image: val };
-                      onUpdate('featuredCollections', { items: copy });
+                      const ObjectCopy = { ...content.categoryGrid };
+                      const cats = [...(ObjectCopy.categories || [])];
+                      cats[idx] = { ...cats[idx], image: val };
+                      updateSectionState('categoryGrid', 'categories', cats);
                     }}
                     folder="cms"
                   />
                 </div>
-                <div className="flex items-center gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-[var(--admin-accent)]/5 justify-between md:justify-end">
-                  <span className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
-                    Visible
-                  </span>
-                  <AdminToggle
-                    checked={item.isVisible}
-                    onChange={() => {
-                      const copy = [...fCol.items];
-                      copy[idx] = { ...copy[idx], isVisible: !copy[idx].isVisible };
-                      onUpdate('featuredCollections', { items: copy });
-                    }}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ObjectCopy = { ...content.categoryGrid };
+                    const cats = [...(ObjectCopy.categories || [])];
+                    cats.splice(idx, 1);
+                    updateSectionState('categoryGrid', 'categories', cats);
+                  }}
+                  className="absolute top-4 right-4 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] p-2 hover:bg-[var(--admin-error-light)] rounded-xl transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto z-10"
+                >
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                </button>
               </div>
             ))}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      )}
 
-// 3. ARTISAN STORY
-function StoryTeaserEditor({ content, onUpdate }) {
-  const story = content.storyTeaser || {};
-  return (
-    <div className="admin-card p-6 space-y-6">
-      <SectionHeader
-        icon="history_edu"
-        title="Artisan Story"
-        description="Share the brand story with visitors"
-      />
-      <div className="space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <AdminField label="Editorial Gold Subtitle">
+      {activeTab === 'trending' && (
+        <div className="space-y-4">
+          <AdminField label="Section Title">
             <AdminInput
-              value={story.subtitle || ''}
-              onChange={(e) => onUpdate('storyTeaser', { subtitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-          <AdminField label="Editorial Bold Headline">
-            <AdminInput
-              value={story.title || ''}
-              onChange={(e) => onUpdate('storyTeaser', { title: e.target.value })}
-              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-        </div>
-
-        <AdminField
-          label="Brand Chronology Paragraph"
-          description="Write a compelling, culturally rich editorial narrative"
-        >
-          <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
-            <AdminTextarea
-              value={story.description || ''}
-              onChange={(e) => onUpdate('storyTeaser', { description: e.target.value })}
-              rows={4}
-              className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-            <div className="absolute right-2.5 top-2.5">
-              <AISparkButton
-                text={story.description}
-                onApply={(val) => onUpdate('storyTeaser', { description: val })}
-              />
-            </div>
-          </div>
-        </AdminField>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <ImageUpload
-            label="Editorial Accent Graphic"
-            value={story.image || ''}
-            onChange={(val) => onUpdate('storyTeaser', { image: val })}
-            folder="cms"
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <AdminField label="Call to Action Button Label">
-              <AdminInput
-                value={story.ctaText || ''}
-                onChange={(e) => onUpdate('storyTeaser', { ctaText: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-              />
-            </AdminField>
-            <AdminField label="Heritage Year Badge Text">
-              <AdminInput
-                value={story.establishedYear || 'Est. in 2003'}
-                onChange={(e) => onUpdate('storyTeaser', { establishedYear: e.target.value })}
-                className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-              />
-            </AdminField>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// 4. BESTSELLERS
-function BestsellerStripEditor({ content, onUpdate }) {
-  const bs = content.featuredProducts || {};
-  return (
-    <div className="admin-card p-6 space-y-6">
-      <SectionHeader
-        icon="stars"
-        title="Bestsellers"
-        description="Control settings for the homepage bestsellers section"
-      />
-      <div className="space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <AdminField label="Section Header Headline">
-            <AdminInput
-              value={bs.sectionTitle || ''}
-              onChange={(e) => onUpdate('featuredProducts', { sectionTitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-          <AdminField label="Shelf Subtitle Tag">
-            <AdminInput
-              value={bs.sectionSubtitle || ''}
-              onChange={(e) => onUpdate('featuredProducts', { sectionSubtitle: e.target.value })}
-              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
-            />
-          </AdminField>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-[var(--admin-border-subtle)]">
-          <AdminField label="Max Items Rendered">
-            <AdminInput
-              type="number"
-              value={bs.maxDisplay || 4}
+              value={content.trendingProducts?.sectionTitle || ''}
               onChange={(e) =>
-                onUpdate('featuredProducts', { maxDisplay: parseInt(e.target.value) || 4 })
+                updateSectionState('trendingProducts', 'sectionTitle', e.target.value)
               }
-              className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
             />
           </AdminField>
-          <div className="flex items-center justify-between border border-[var(--admin-border)] px-4.5 py-3 rounded-2xl bg-[var(--admin-surface)] mt-5 h-[46px] shadow-[var(--admin-shadow-xs)]">
-            <span className="text-[11px] font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider">
-              Enable Section Shelf
-            </span>
-            <AdminToggle
-              checked={bs.isVisible}
-              onChange={() => onUpdate('featuredProducts', { isVisible: !bs.isVisible })}
+          <AdminField label="Section Subtitle">
+            <AdminInput
+              value={content.trendingProducts?.sectionSubtitle || ''}
+              onChange={(e) =>
+                updateSectionState('trendingProducts', 'sectionSubtitle', e.target.value)
+              }
             />
+          </AdminField>
+        </div>
+      )}
+
+      {activeTab === 'occasions' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <AdminField label="Section Title">
+              <AdminInput
+                value={content.shopByOccasion?.sectionTitle || ''}
+                onChange={(e) =>
+                  updateSectionState('shopByOccasion', 'sectionTitle', e.target.value)
+                }
+              />
+            </AdminField>
+            <AdminField label="Section Subtitle">
+              <AdminInput
+                value={content.shopByOccasion?.sectionSubtitle || ''}
+                onChange={(e) =>
+                  updateSectionState('shopByOccasion', 'sectionSubtitle', e.target.value)
+                }
+              />
+            </AdminField>
+          </div>
+          <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider">
+                Occasions List
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const occs = [...(content.shopByOccasion?.occasions || [])];
+                  occs.push({ title: 'New Occasion', link: '', image: '' });
+                  updateSectionState('shopByOccasion', 'occasions', occs);
+                }}
+                className="text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent)] border border-[var(--admin-accent)]/30 px-3 py-1 rounded-full cursor-pointer transition-colors"
+              >
+                + Add Occasion
+              </button>
+            </div>
+            {(content.shopByOccasion?.occasions || []).map((occ, idx) => (
+              <div
+                key={`occ-${idx}`}
+                className="relative p-5 pr-14 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] shadow-sm flex flex-col md:flex-row gap-6 items-center group"
+              >
+                <div className="flex-1 space-y-4 w-full">
+                  <AdminField label="Occasion Title">
+                    <AdminInput
+                      value={occ.title || ''}
+                      onChange={(e) => {
+                        const ObjectCopy = { ...content.shopByOccasion };
+                        const occs = [...(ObjectCopy.occasions || [])];
+                        occs[idx] = { ...occs[idx], title: e.target.value };
+                        updateSectionState('shopByOccasion', 'occasions', occs);
+                      }}
+                    />
+                  </AdminField>
+                  <AdminField label="Destination Link">
+                    <AdminInput
+                      value={occ.link || ''}
+                      onChange={(e) => {
+                        const ObjectCopy = { ...content.shopByOccasion };
+                        const occs = [...(ObjectCopy.occasions || [])];
+                        occs[idx] = { ...occs[idx], link: e.target.value };
+                        updateSectionState('shopByOccasion', 'occasions', occs);
+                      }}
+                    />
+                  </AdminField>
+                </div>
+                <div className="w-full md:w-56 shrink-0 border-l border-[var(--admin-border-subtle)] pl-6">
+                  <ImageUpload
+                    label="Cover Image"
+                    value={occ.image || ''}
+                    onChange={(val) => {
+                      const ObjectCopy = { ...content.shopByOccasion };
+                      const occs = [...(ObjectCopy.occasions || [])];
+                      occs[idx] = { ...occs[idx], image: val };
+                      updateSectionState('shopByOccasion', 'occasions', occs);
+                    }}
+                    folder="cms"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ObjectCopy = { ...content.shopByOccasion };
+                    const occs = [...(ObjectCopy.occasions || [])];
+                    occs.splice(idx, 1);
+                    updateSectionState('shopByOccasion', 'occasions', occs);
+                  }}
+                  className="absolute top-4 right-4 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] p-2 hover:bg-[var(--admin-error-light)] rounded-xl transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto z-10"
+                >
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      )}
 
-// ═══════════════════════════════════════════════════════════
-// 5.5 SECTION ORDERING EDITOR
-// ═══════════════════════════════════════════════════════════
-function SectionOrderEditor({ sections, onToggle, onReorder }) {
-  return (
-    <div className="admin-card p-6 space-y-6">
-      <SectionHeader
-        icon="reorder"
-        title="Homepage Section Order & Visibility"
-        description="Arrange the order of sections displayed on the live homepage and toggle their visibility"
-      />
+      {activeTab === 'featured' && (
+        <div className="space-y-4">
+          <AdminField label="Section Title">
+            <AdminInput
+              value={content.featuredProducts?.sectionTitle || ''}
+              onChange={(e) =>
+                updateSectionState('featuredProducts', 'sectionTitle', e.target.value)
+              }
+            />
+          </AdminField>
+          <AdminField label="Section Subtitle">
+            <AdminInput
+              value={content.featuredProducts?.sectionSubtitle || ''}
+              onChange={(e) =>
+                updateSectionState('featuredProducts', 'sectionSubtitle', e.target.value)
+              }
+            />
+          </AdminField>
+        </div>
+      )}
 
-      <div className="space-y-3.5">
-        {sections?.map((section, idx) => (
-          <div
-            key={section.id}
-            className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-4.5 p-4 rounded-2xl border transition-all duration-300 shadow-[var(--admin-shadow-xs)] hover:shadow-xs ${
-              section.isVisible
-                ? 'bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]/35'
-                : 'bg-[var(--admin-surface-muted)] border-transparent opacity-60'
-            }`}
-          >
-            <div className="flex items-center gap-4 min-w-0 flex-1">
-              {/* Position Badging */}
-              <div className="w-8 h-8 rounded-full bg-[var(--admin-text-primary)] text-white flex items-center justify-center font-semibold text-[11px] shrink-0 shadow-sm">
-                {idx + 1}
-              </div>
-
-              {/* Title / Description */}
-              <div className="flex-1 min-w-0">
-                <span className="text-[12px] font-semibold text-[var(--admin-text-primary)] block tracking-tight truncate">
-                  {section.label}
-                </span>
-                <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest block mt-0.5 truncate">
-                  {section.id === 'hero'
-                    ? 'Intro Visuals'
-                    : section.id === 'featuredCollections'
-                      ? 'Catalog Category Strip'
-                      : section.id === 'featuredProducts'
-                        ? 'Bestselling Products Shelf'
-                        : section.id === 'storyTeaser'
-                          ? 'Linage Editorial Story'
-                          : 'Patron Voices Reviews'}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between sm:justify-end gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-[var(--admin-border-subtle)] shrink-0">
-              {/* Position Reordering Buttons */}
-              <div className="flex items-center gap-1.5 shrink-0 bg-[var(--admin-bg-subtle)] p-1.5 rounded-xl border border-[var(--admin-border)]">
-                <button
-                  type="button"
-                  onClick={() => idx > 0 && onReorder(idx, idx - 1)}
-                  disabled={idx === 0}
-                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-[var(--admin-surface)] flex items-center justify-center transition-all border-none bg-transparent"
-                  title="Move Section Up"
-                >
-                  <span className="material-symbols-outlined text-[16px] font-bold">
-                    expand_less
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => idx < sections.length - 1 && onReorder(idx, idx + 1)}
-                  disabled={idx === sections.length - 1}
-                  className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] disabled:opacity-20 cursor-pointer disabled:cursor-default w-7 h-7 rounded-lg hover:bg-[var(--admin-surface)] flex items-center justify-center transition-all border-none bg-transparent"
-                  title="Move Section Down"
-                >
-                  <span className="material-symbols-outlined text-[16px] font-bold">
-                    expand_more
-                  </span>
-                </button>
-              </div>
-
-              {/* Visibility Toggle */}
-              <div className="flex items-center gap-2 border-l border-[var(--admin-border-subtle)] pl-4 shrink-0">
-                <span className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider hidden sm:inline">
-                  Visible
-                </span>
-                <AdminToggle checked={section.isVisible} onChange={() => onToggle(section.id)} />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {activeTab === 'recommended' && (
+        <div className="space-y-4">
+          <AdminField label="Section Title">
+            <AdminInput
+              value={content.recommendedProducts?.sectionTitle || ''}
+              onChange={(e) =>
+                updateSectionState('recommendedProducts', 'sectionTitle', e.target.value)
+              }
+            />
+          </AdminField>
+          <AdminField label="Section Subtitle">
+            <AdminInput
+              value={content.recommendedProducts?.sectionSubtitle || ''}
+              onChange={(e) =>
+                updateSectionState('recommendedProducts', 'sectionSubtitle', e.target.value)
+              }
+            />
+          </AdminField>
+        </div>
+      )}
     </div>
   );
 }
@@ -1851,7 +1881,7 @@ export function AdminContent() {
     dataLoading,
   } = useAdmin();
 
-  const [activeSection, setActiveSection] = useState('hero');
+  const [activeSection, setActiveSection] = useState('home');
 
   const {
     formData: draftWebsiteContent,
@@ -1875,15 +1905,19 @@ export function AdminContent() {
   const activeContent = draftWebsiteContent || websiteContent;
 
   const handleUpdateContent = (section, payload) => {
-    // If not auto-publishing, save to draft
-    if (!autoPublish) {
+    const isHomeSection = activeSection === 'home';
+    const isAutoPublishDisabled = isHomeSection ? true : !autoPublish;
+
+    // If auto-publish is disabled (globally or just for this section), save to draft
+    if (isAutoPublishDisabled) {
       setDraftWebsiteContent((prev) => ({
         ...prev,
         [section]: { ...(prev[section] || {}), ...payload },
       }));
     }
+
     // Also dispatch to context (which might auto-save depending on its logic)
-    updateContent(section, payload);
+    updateContent(section, payload, isAutoPublishDisabled);
   };
 
   const handlePublishAll = async () => {
@@ -1950,32 +1984,38 @@ export function AdminContent() {
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-nowrap sm:w-auto justify-end shrink-0">
-              <div className="hidden sm:flex items-center gap-2 text-[11px] text-[var(--admin-success)] font-semibold uppercase tracking-wider bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] px-4 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-success)] animate-pulse " />
-                Live Sync Mode
-              </div>
+              {activeSection !== 'home' && (
+                <>
+                  <div className="hidden sm:flex items-center gap-2 text-[11px] text-[var(--admin-success)] font-semibold uppercase tracking-wider bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] px-4 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-success)] animate-pulse " />
+                    Live Sync Mode
+                  </div>
 
-              {/* Quick Auto-Publish Toggle Switch */}
-              <div className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-3 rounded-full shadow-[var(--admin-shadow-xs)] h-[34px] shrink-0">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">
-                  Auto-Publish
-                </span>
-                <AdminToggle
-                  checked={autoPublish}
-                  onChange={toggleAutoPublish}
-                  size="sm"
-                  aria-label="Toggle Auto-Publish"
-                />
-              </div>
+                  {/* Quick Auto-Publish Toggle Switch */}
+                  <div className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-3 rounded-full shadow-[var(--admin-shadow-xs)] h-[34px] shrink-0">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">
+                      Auto-Publish
+                    </span>
+                    <AdminToggle
+                      checked={autoPublish}
+                      onChange={toggleAutoPublish}
+                      size="sm"
+                      aria-label="Toggle Auto-Publish"
+                    />
+                  </div>
 
-              {autoPublish ? (
-                <div className="flex items-center gap-2 px-3 bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] rounded-full text-[11px] font-bold uppercase tracking-wider h-[34px] shrink-0">
-                  <span className="material-symbols-outlined text-[14px] animate-spin-slow">
-                    sync
-                  </span>
-                  <span>Auto-Publishing</span>
-                </div>
-              ) : (
+                  {autoPublish && (
+                    <div className="flex items-center gap-2 px-3 bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] rounded-full text-[11px] font-bold uppercase tracking-wider h-[34px] shrink-0">
+                      <span className="material-symbols-outlined text-[14px] animate-spin-slow">
+                        sync
+                      </span>
+                      <span>Auto-Publishing</span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {(!autoPublish || activeSection === 'home') && (
                 <button
                   onClick={handlePublishAll}
                   className="flex items-center gap-2 px-4 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent-hover)] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[var(--admin-shadow-sm)] hover:shadow-[var(--admin-shadow-md)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[var(--admin-accent)]/40 h-[34px]"
@@ -2140,27 +2180,10 @@ export function AdminContent() {
                   exit={{ opacity: 0, y: -3 }}
                   transition={{ duration: 0.15 }}
                 >
-                  {activeSection === 'hero' && (
-                    <HeroSectionEditor content={activeContent} onUpdate={handleUpdateContent} />
-                  )}
-                  {activeSection === 'collections' && (
-                    <FeaturedCollectionsEditor
+                  {activeSection === 'home' && (
+                    <HomePageControllerEditor
                       content={activeContent}
                       onUpdate={handleUpdateContent}
-                    />
-                  )}
-                  {activeSection === 'story' && (
-                    <StoryTeaserEditor content={activeContent} onUpdate={handleUpdateContent} />
-                  )}
-                  {activeSection === 'bestsellers' && (
-                    <BestsellerStripEditor content={activeContent} onUpdate={handleUpdateContent} />
-                  )}
-
-                  {activeSection === 'homepageSections' && (
-                    <SectionOrderEditor
-                      sections={activeContent.homepageSections}
-                      onToggle={toggleHomepageSection}
-                      onReorder={reorderHomepageSections}
                     />
                   )}
                   {activeSection === 'gallery' && (

@@ -445,7 +445,7 @@ export function ProductListing() {
       {/* Sticky Search / Filter / Category Navigation Bar */}
       <nav
         ref={navRef}
-        className={`sticky ${isMobile && searchParam ? 'mt-6' : '-mt-6 md:-mt-8'} mb-8 md:mb-12 transition-all duration-300 ${isStuck ? 'px-0' : 'px-margin-mobile md:px-margin-desktop'}`}
+        className={`sticky ${isMobile && searchParam ? 'mt-6' : '-mt-12 md:-mt-16'} mb-4 md:mb-6 transition-all duration-300 ${isStuck ? 'px-0' : 'px-margin-mobile md:px-margin-desktop'}`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px`, zIndex: 49 }}
       >
         <div
@@ -567,7 +567,7 @@ export function ProductListing() {
           size={600}
           variant={2}
         />
-        <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
+        <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 xl:gap-12">
           {/* Sidebar Filter - Handles both Desktop Sidebar and Mobile Drawer */}
           <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 h-fit">
             <FilterPanel
@@ -582,7 +582,7 @@ export function ProductListing() {
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center justify-between mb-6 md:mb-10">
               <div className="flex flex-col gap-1">
                 <h2 className="font-headline-md text-on-surface font-bold text-[24px] md:text-[32px]">
                   The Artisan Collection

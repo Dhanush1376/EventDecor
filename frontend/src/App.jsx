@@ -44,7 +44,7 @@ const AuthModal = lazy(() =>
 );
 
 // Lazy load pages for performance optimization
-const Home = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
+const Home = lazy(() => import('./pages/Home/Home').then((m) => ({ default: m.Home })));
 const ProductListing = lazy(() =>
   import('./pages/ProductListing').then((m) => ({ default: m.ProductListing })),
 );

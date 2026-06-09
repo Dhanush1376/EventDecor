@@ -58,13 +58,13 @@ export function CheckoutSteps({
                     <span
                       className={`hidden sm:block whitespace-nowrap ${isActive ? 'font-extrabold text-on-surface' : 'font-bold'}`}
                     >
-                      {step}
+                      {step === 'CUSTOMIZATION' ? 'NOTE' : step}
                     </span>
                     {/* Show text below circle on mobile only */}
                     <span
                       className={`block sm:hidden text-[8px] sm:mt-1 text-center leading-tight whitespace-nowrap mt-[3px] ${isActive ? 'font-extrabold text-on-surface' : 'font-bold text-secondary/60'}`}
                     >
-                      {step}
+                      {step === 'CUSTOMIZATION' ? 'NOTE' : step}
                     </span>
                   </div>
 

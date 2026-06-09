@@ -144,6 +144,14 @@ export function AdminAddProduct({ editId }) {
       rentalMinDays: '1',
       rentalMaxDays: '365',
       isManualRentalPricing: false,
+      customizationConfig: {
+        enabled: false,
+        required: false,
+        label: 'Customization Note',
+        placeholder: 'Enter customization details',
+        maxLength: 500,
+        helperText: '',
+      },
     },
     initialPageState: { activeStep: 0 },
     enabled: true,
@@ -236,6 +244,8 @@ export function AdminAddProduct({ editId }) {
           ? aiAnalysisResult.description.substring(0, 155) + '...'
           : '',
       },
+      { key: 'isCustomizable', value: aiAnalysisResult.isCustomizable },
+      { key: 'customizationNote', value: aiAnalysisResult.customizationNote },
     ];
 
     let index = 0;
@@ -255,7 +265,7 @@ export function AdminAddProduct({ editId }) {
       const field = fieldsToFill[index];
 
       // Navigate/Scroll to different steps if they are on a different page for visual polish!
-      if (field.key === 'tags') {
+      if (field.key === 'tags' || field.key === 'isCustomizable') {
         setCurrentStep(2); // Attributes step (new index 2)
       } else if (field.key === 'seoTitle') {
         setCurrentStep(3); // SEO step (new index 3)
@@ -270,10 +280,29 @@ export function AdminAddProduct({ editId }) {
         setCategoriesList((prev) => [...prev, field.value].sort());
       }
 
-      setFormData((prev) => ({
-        ...prev,
-        [field.key]: field.value || prev[field.key],
-      }));
+      if (field.key === 'isCustomizable' && field.value) {
+        setFormData((prev) => ({
+          ...prev,
+          customizationConfig: {
+            ...prev.customizationConfig,
+            enabled: true,
+            required: true,
+          },
+        }));
+      } else if (field.key === 'customizationNote' && field.value) {
+        setFormData((prev) => ({
+          ...prev,
+          customizationConfig: {
+            ...prev.customizationConfig,
+            label: field.value,
+          },
+        }));
+      } else if (field.key !== 'isCustomizable' && field.key !== 'customizationNote') {
+        setFormData((prev) => ({
+          ...prev,
+          [field.key]: field.value || prev[field.key],
+        }));
+      }
 
       index++;
     }, 550); // Beautiful, smooth sequential populating delay!
@@ -353,6 +382,14 @@ export function AdminAddProduct({ editId }) {
               rentalMinDays: p.rentalMinDays || '1',
               rentalMaxDays: p.rentalMaxDays || '365',
               isManualRentalPricing: p.isManualRentalPricing || false,
+              customizationConfig: p.customizationConfig || {
+                enabled: false,
+                required: false,
+                label: 'Customization Note',
+                placeholder: 'Enter customization details',
+                maxLength: 500,
+                helperText: '',
+              },
             });
             if (p.rentalEnabled) setShowRentalSettings(true);
           }
@@ -408,6 +445,14 @@ export function AdminAddProduct({ editId }) {
         rentalMinDays: '1',
         rentalMaxDays: '365',
         isManualRentalPricing: false,
+        customizationConfig: {
+          enabled: false,
+          required: false,
+          label: 'Customization Note',
+          placeholder: 'Enter customization details',
+          maxLength: 500,
+          helperText: '',
+        },
       });
       setCurrentStep(0);
     }
@@ -645,6 +690,14 @@ export function AdminAddProduct({ editId }) {
         rentalMinDays: Number(formData.rentalMinDays) || 1,
         rentalMaxDays: Number(formData.rentalMaxDays) || 365,
         isManualRentalPricing: Boolean(formData.isManualRentalPricing),
+        customizationConfig: {
+          enabled: Boolean(formData.customizationConfig?.enabled),
+          required: Boolean(formData.customizationConfig?.required),
+          label: formData.customizationConfig?.label || 'Customization Note',
+          placeholder: formData.customizationConfig?.placeholder || 'Enter customization details',
+          maxLength: Number(formData.customizationConfig?.maxLength) || 500,
+          helperText: formData.customizationConfig?.helperText || '',
+        },
       };
 
       const res = isEditMode
@@ -1346,6 +1399,148 @@ export function AdminAddProduct({ editId }) {
                           className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20 resize-none"
                         />
                       </div>
+                    </div>
+
+                    {/* Product Personalization Settings */}
+                    <div
+                      className={`p-4 bg-[var(--admin-bg-subtle)] border rounded-2xl space-y-4 mt-6 transition-all duration-300 ${focusedField === 'isCustomizable' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50 scale-[1.01] shadow-lg' : 'border-[var(--admin-border)]'}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
+                            Customer Personalization Notes
+                          </p>
+                          <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
+                            Allow customers to add custom text (e.g. names, engravings) for this
+                            product during checkout.
+                          </p>
+                        </div>
+                        <AdminToggle
+                          checked={formData.customizationConfig?.enabled || false}
+                          onChange={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              customizationConfig: {
+                                ...prev.customizationConfig,
+                                enabled: !prev.customizationConfig?.enabled,
+                              },
+                            }))
+                          }
+                        />
+                      </div>
+
+                      {formData.customizationConfig?.enabled && (
+                        <div className="space-y-4 pt-2 border-t border-[var(--admin-border)]/50 mt-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+                                Input Label
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Name to Print"
+                                value={formData.customizationConfig?.label || ''}
+                                onChange={(e) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    customizationConfig: {
+                                      ...prev.customizationConfig,
+                                      label: e.target.value,
+                                    },
+                                  }))
+                                }
+                                className={`w-full bg-[var(--admin-surface)] rounded-xl px-4 py-2 text-[12.5px] border outline-none transition-all duration-300 ${focusedField === 'customizationNote' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50 scale-[1.02] shadow-md' : 'border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40'}`}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+                                Placeholder Text
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Enter name here..."
+                                value={formData.customizationConfig?.placeholder || ''}
+                                onChange={(e) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    customizationConfig: {
+                                      ...prev.customizationConfig,
+                                      placeholder: e.target.value,
+                                    },
+                                  }))
+                                }
+                                className="w-full bg-[var(--admin-surface)] rounded-xl px-4 py-2 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)]/40 transition-all"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+                                Max Length (chars)
+                              </label>
+                              <input
+                                type="number"
+                                placeholder="500"
+                                value={formData.customizationConfig?.maxLength || 500}
+                                onChange={(e) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    customizationConfig: {
+                                      ...prev.customizationConfig,
+                                      maxLength: e.target.value,
+                                    },
+                                  }))
+                                }
+                                className="w-full bg-[var(--admin-surface)] rounded-xl px-4 py-2 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)]/40 transition-all"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+                                Required Field?
+                              </label>
+                              <div className="flex items-center mt-2">
+                                <AdminToggle
+                                  checked={formData.customizationConfig?.required || false}
+                                  onChange={() =>
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      customizationConfig: {
+                                        ...prev.customizationConfig,
+                                        required: !prev.customizationConfig?.required,
+                                      },
+                                    }))
+                                  }
+                                />
+                                <span className="ml-2 text-[11px] text-[var(--admin-text-secondary)]">
+                                  Customers must provide this note to checkout.
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+                              Helper Description (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Please double check spelling before submitting."
+                              value={formData.customizationConfig?.helperText || ''}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  customizationConfig: {
+                                    ...prev.customizationConfig,
+                                    helperText: e.target.value,
+                                  },
+                                }))
+                              }
+                              className="w-full bg-[var(--admin-surface)] rounded-xl px-4 py-2 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)]/40 transition-all"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -2662,6 +2857,27 @@ export function AdminAddProduct({ editId }) {
                     })}
                   </div>
                 </div>
+
+                {/* Customization Note */}
+                {aiAnalysisResult.isCustomizable && (
+                  <div className="col-span-2 p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl space-y-1.5 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wider block">
+                        Auto-Detected Personalization
+                      </span>
+                      <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest flex items-center gap-0.5">
+                        <span className="material-symbols-outlined text-[10px]">check_circle</span>
+                        Enabled
+                      </span>
+                    </div>
+                    <p className="text-[12px] text-blue-900 font-medium">
+                      Label:{' '}
+                      <span className="font-bold italic">
+                        "{aiAnalysisResult.customizationNote}"
+                      </span>
+                    </p>
+                  </div>
+                )}
 
                 {/* Tags Generation */}
                 <div className="col-span-2 p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-2 shadow-sm">

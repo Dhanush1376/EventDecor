@@ -16,7 +16,7 @@ const router = Router();
 const requireAdminForSensitiveSections = (req: Request, res: Response, next: NextFunction) => {
   if (ContentService.isAdminOnlySection(req.params.key as string)) {
     return requireAuth(req, res, () =>
-      requireRole(['super_admin', 'main_admin'])(req, res, () => {
+      requireRole(['super_admin', 'main_admin', 'admin', 'content_manager'])(req, res, () => {
         const { applyNoCacheHeaders } = require('../middleware/noCacheMiddleware');
         applyNoCacheHeaders(res);
         next();
@@ -37,13 +37,37 @@ router.get(
 );
 
 // Admin Routes
-router.put('/:key', requireAuth, requireRole(['super_admin', 'main_admin']), updateSection);
-router.post('/publish-all', requireAuth, requireRole(['super_admin', 'main_admin']), publishAll);
+router.put(
+  '/:key',
+  requireAuth,
+  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
+  updateSection,
+);
+router.post(
+  '/publish-all',
+  requireAuth,
+  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
+  publishAll,
+);
 router.post(
   '/ai-generate',
   requireAuth,
-  requireRole(['super_admin', 'main_admin']),
+  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
   aiGenerateContent,
+);
+
+import { analyzeShowcaseImage, refineShowcaseImage } from '../controllers/aiVisionController';
+router.post(
+  '/ai-vision-showcase',
+  requireAuth,
+  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
+  analyzeShowcaseImage,
+);
+router.post(
+  '/ai-vision-refine-showcase',
+  requireAuth,
+  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
+  refineShowcaseImage,
 );
 
 export default router;

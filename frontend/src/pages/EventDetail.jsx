@@ -576,7 +576,7 @@ export function EventDetail() {
   };
 
   return (
-    <div className="bg-[#fbf9f6] min-h-screen text-on-surface selection:bg-primary/20 relative font-body">
+    <div className="bg-[#fbf9f6] min-h-screen text-on-surface selection:bg-primary/20 relative font-body pb-32 md:pb-12">
       <SEO
         title={event.seoTitle || `${event.title} | Event Masteries`}
         description={event.seoDescription || event.description}
@@ -804,26 +804,37 @@ export function EventDetail() {
           {/* Right Column: Artisan Customizer Form */}
           <div ref={customizerCardRef} className="lg:col-span-5 flex flex-col gap-6">
             {/* Custom Design Consultation Card */}
-            <div className="p-6 rounded-[2rem] bg-[#FAF6F0] border border-[#C4A87C]/30 text-black relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-              <div className="relative z-10 flex flex-col items-start gap-4">
+            <div className="p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5">
+              <div className="relative z-10 flex flex-col items-center text-center gap-5">
                 <div>
-                  <h4 className="font-display mb-1 text-primary text-[22px] font-normal tracking-wide">
+                  <h4 className="font-headline-sm mb-1 text-[#C4A87C] font-normal tracking-wide">
                     Need a Custom Theme?
                   </h4>
-                  <p className="text-[12px] text-black/70 font-medium font-body leading-relaxed max-w-[90%]">
-                    Personalize this setup to perfectly match your vision. Our design team will work
-                    with you to create a bespoke quotation.
+                  <p className="font-body-sm text-white/90 font-medium">
+                    Personalize this setup to perfectly match your vision.
                   </p>
                 </div>
-                <button
-                  onClick={() => navigate(`/custom-orders?event=${event._id || event.id}`)}
-                  className="bg-primary text-white px-6 py-2.5 rounded-full font-label-sm text-[11px] uppercase tracking-[0.2em] hover:bg-black transition-all font-bold shadow-sm active:scale-95"
-                >
-                  Customize This Setup
-                </button>
-              </div>
-              <div className="absolute -bottom-6 -right-6 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity duration-700 pointer-events-none text-primary">
-                <span className="material-symbols-outlined text-[140px]">architecture</span>
+                <div className="flex flex-row gap-2 w-full">
+                  <button
+                    onClick={() => navigate(`/custom-orders?event=${event._id || event.id}`)}
+                    className="bg-white text-black flex-1 px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-stone-200 transition-all whitespace-nowrap font-bold shadow-sm flex items-center justify-center"
+                  >
+                    Customize
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!event) return;
+                      const num = '919866006648';
+                      const link = `${window.location.origin}/events/${event._id || event.id}`;
+                      const msg = encodeURIComponent(`Hello, I'm interested in this event setup and would like to chat about it.\n\nLink: ${link}`);
+                      window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+                    }}
+                    className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">chat</span>
+                    WhatsApp
+                  </button>
+                </div>
               </div>
             </div>
 

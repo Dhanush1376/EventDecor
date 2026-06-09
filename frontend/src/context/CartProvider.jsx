@@ -68,6 +68,8 @@ export function CartProvider({ children }) {
         rentalInfo: item.rentalInfo,
         deposit: item.deposit || 0,
         isNonRefundable: item.product.isNonRefundable,
+        customizationConfig: item.product.customizationConfig,
+        product: item.product,
       }));
   }, []);
 
@@ -249,6 +251,8 @@ export function CartProvider({ children }) {
                 deposit: product.deposit || 0,
                 rentalInfo: product.rentalInfo,
                 isNonRefundable: product.isNonRefundable || false,
+                customizationConfig: product.customizationConfig,
+                product: product,
               },
             ];
           }

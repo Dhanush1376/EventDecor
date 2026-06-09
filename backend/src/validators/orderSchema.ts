@@ -13,6 +13,7 @@ export const createOrderSchema = z.object({
               productId: objectIdSchema,
               quantity: z.number().int().min(1, 'Quantity must be at least 1'),
               variant: z.string().trim().max(100).optional().or(z.literal('')),
+              customizationNote: z.string().trim().max(2000).optional().or(z.literal('')),
             })
             .strict(),
         )

@@ -521,6 +521,14 @@ export function AdminOrderDetail() {
                             )}
                           </div>
                         )}
+                        {item.customizationNote && (
+                          <div className="mt-1.5 p-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] rounded text-[11px] text-[var(--admin-text-secondary)] italic">
+                            <span className="font-bold text-[var(--admin-text-primary)] not-italic mr-1">
+                              Note:
+                            </span>
+                            "{item.customizationNote}"
+                          </div>
+                        )}
                         <p className="text-[12px] text-[var(--admin-text-tertiary)] font-bold mt-1">
                           Qty: {item.qty} × {formatCurrency(item.price)}
                         </p>

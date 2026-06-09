@@ -8,6 +8,7 @@ const CheckoutAddressStep = lazy(() => import('../checkout/CheckoutAddressStep')
 const CheckoutPaymentStep = lazy(() => import('../checkout/CheckoutPaymentStep'));
 const CheckoutRentalDurationStep = lazy(() => import('../checkout/CheckoutRentalDurationStep'));
 const CheckoutVerificationStep = lazy(() => import('../checkout/CheckoutVerificationStep'));
+const CheckoutCustomizationStep = lazy(() => import('../checkout/CheckoutCustomizationStep').then(m => ({ default: m.CheckoutCustomizationStep })));
 import { CheckoutSteps } from '../components/ui/CheckoutSteps';
 
 function StepFallback({ mode = 'address' }) {
@@ -52,27 +53,22 @@ function CheckoutContent() {
           {/* Left Column: Active Step Form Details */}
           <div
             className={
-              (orderType === 'rental' && activeStep === 2) ||
-              (orderType === 'purchase' && activeStep === 1)
+              checkoutSteps[activeStep] === 'ADDRESS'
                 ? 'lg:col-span-12 xl:col-span-12 w-full'
                 : 'lg:col-span-7 xl:col-span-8'
             }
           >
             <Suspense fallback={<StepFallback mode="address" />}>
-              {orderType === 'rental' && activeStep === 1 && <CheckoutRentalDurationStep />}
-              {((orderType === 'rental' && activeStep === 2) ||
-                (orderType === 'purchase' && activeStep === 1)) && <CheckoutAddressStep />}
-              {orderType === 'rental' && activeStep === 3 && <CheckoutVerificationStep />}
-              {((orderType === 'rental' && activeStep === 4) ||
-                (orderType === 'purchase' && activeStep === 2)) && <CheckoutPaymentStep />}
+              {checkoutSteps[activeStep] === 'DURATION' && <CheckoutRentalDurationStep />}
+              {checkoutSteps[activeStep] === 'ADDRESS' && <CheckoutAddressStep />}
+              {checkoutSteps[activeStep] === 'VERIFY' && <CheckoutVerificationStep />}
+              {checkoutSteps[activeStep] === 'CUSTOMIZATION' && <CheckoutCustomizationStep onNext={() => setActiveStep(activeStep + 1)} />}
+              {checkoutSteps[activeStep] === 'PAYMENT' && <CheckoutPaymentStep />}
             </Suspense>
           </div>
 
           {/* Right Column: Price Details Sidebar & Recommendations */}
-          {!(
-            (orderType === 'rental' && activeStep === 2) ||
-            (orderType === 'purchase' && activeStep === 1)
-          ) && (
+          {checkoutSteps[activeStep] !== 'ADDRESS' && checkoutSteps[activeStep] !== 'CUSTOMIZATION' && (
             <div className="lg:col-span-5 xl:col-span-4">
               <Suspense fallback={<CheckoutSidebarSkeleton />}>
                 <CheckoutSidebar />

@@ -220,36 +220,39 @@ export function AdminProvider({ children }) {
   const [showIdleWarning, setShowIdleWarning] = useState(false);
   const [idleSecondsLeft, setIdleSecondsLeft] = useState(30);
 
-  const logAdminAction = useCallback(async (action, details, status = 'Success') => {
-    const actorName = activeRole;
-    try {
-      const res = await analyticsService.createAuditLog(action, details, status);
-      if (res.success && res.data) {
-        const log = res.data;
+  const logAdminAction = useCallback(
+    async (action, details, status = 'Success') => {
+      const actorName = activeRole;
+      try {
+        const res = await analyticsService.createAuditLog(action, details, status);
+        if (res.success && res.data) {
+          const log = res.data;
+          const newLog = {
+            id: log._id || log.id,
+            actor: (log.actorRole || actorName).toUpperCase(),
+            action: log.path || action,
+            details: `Client Action on ${log.path || ''}: ${details}`,
+            timestamp: log.createdAt || new Date().toISOString(),
+            status: log.statusCode < 400 ? 'Success' : 'Failure',
+          };
+          setAuditLogs((prev) => [newLog, ...prev].slice(0, 100));
+        }
+      } catch (err) {
+        logger.error('Failed to log admin action to backend:', err);
+        // Fallback local state update to ensure UI interactivity
         const newLog = {
-          id: log._id || log.id,
-          actor: (log.actorRole || actorName).toUpperCase(),
-          action: log.path || action,
-          details: `Client Action on ${log.path || ''}: ${details}`,
-          timestamp: log.createdAt || new Date().toISOString(),
-          status: log.statusCode < 400 ? 'Success' : 'Failure',
+          id: `log-${Date.now()}`,
+          actor: actorName.toUpperCase(),
+          action,
+          details,
+          timestamp: new Date().toISOString(),
+          status,
         };
         setAuditLogs((prev) => [newLog, ...prev].slice(0, 100));
       }
-    } catch (err) {
-      logger.error('Failed to log admin action to backend:', err);
-      // Fallback local state update to ensure UI interactivity
-      const newLog = {
-        id: `log-${Date.now()}`,
-        actor: actorName.toUpperCase(),
-        action,
-        details,
-        timestamp: new Date().toISOString(),
-        status,
-      };
-      setAuditLogs((prev) => [newLog, ...prev].slice(0, 100));
-    }
-  }, []);
+    },
+    [activeRole],
+  );
 
   const clearAuditLogs = useCallback(async () => {
     try {
@@ -389,13 +392,14 @@ export function AdminProvider({ children }) {
   const themeMode = 'light';
 
   // ─── Backend-Connected State ───
+  const [dashboardStats, setDashboardStats] = useState(null);
   const [products, setProducts] = useState([]);
+  const [productsError, setProductsError] = useState(null);
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [eventBookings, setEventBookings] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [dashboardStats, setDashboardStats] = useState(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchPaletteOpen, setSearchPaletteOpen] = useState(false);
@@ -524,11 +528,18 @@ export function AdminProvider({ children }) {
           notificationService.getAdminAlerts(),
         ]);
 
+        // Products
         if (productsRes.status === 'fulfilled' && productsRes.value?.success) {
           const payload = productsRes.value.data;
           const list = payload?.products || payload?.data || payload || [];
           setProducts((Array.isArray(list) ? list : []).map(mapDbProductToFrontend));
+          setProductsError(null);
+        } else if (productsRes.status === 'rejected') {
+          setProductsError(productsRes.reason?.message || 'API Rejected');
+        } else if (productsRes.status === 'fulfilled' && !productsRes.value?.success) {
+          setProductsError(productsRes.value?.message || 'API Success=false');
         }
+
         if (ordersRes.status === 'fulfilled' && ordersRes.value?.success) {
           const payload = ordersRes.value.data;
           const list = payload?.orders || payload?.data || payload || [];
@@ -597,15 +608,6 @@ export function AdminProvider({ children }) {
         if (response.success && response.data && Object.keys(response.data).length > 0) {
           setWebsiteContent((prev) => {
             const merged = { ...initialWebsiteContent, ...response.data };
-            if (response.data.hero) {
-              merged.hero = { ...initialWebsiteContent.hero, ...response.data.hero };
-            }
-            if (response.data.heroNavigationCards) {
-              merged.heroNavigationCards = {
-                ...initialWebsiteContent.heroNavigationCards,
-                ...response.data.heroNavigationCards,
-              };
-            }
             if (response.data.eventsPage) {
               merged.eventsPage = {
                 ...initialWebsiteContent.eventsPage,
@@ -994,7 +996,7 @@ export function AdminProvider({ children }) {
 
   // ─── Website Content Actions (Backend-Connected) ───
   const updateContent = useCallback(
-    (section, data) => {
+    (section, data, disableAutoPublish = false) => {
       setWebsiteContent((prev) => {
         const newContent = {
           ...prev,
@@ -1009,7 +1011,7 @@ export function AdminProvider({ children }) {
       });
 
       // Auto-publish support (Debounced 3s for Draft Mode UX)
-      if (autoPublish) {
+      if (autoPublish && !disableAutoPublish) {
         if (autoSaveTimers.current[section]) {
           clearTimeout(autoSaveTimers.current[section]);
         }
@@ -1027,7 +1029,7 @@ export function AdminProvider({ children }) {
   );
 
   const updateNestedContent = useCallback(
-    (section, path, value) => {
+    (section, path, value, disableAutoPublish = false) => {
       setWebsiteContent((prev) => {
         const newContent = structuredClone(prev);
         const keys = path.split('.');
@@ -1042,7 +1044,7 @@ export function AdminProvider({ children }) {
       });
 
       // Auto-publish support (Debounced 3s for Draft Mode UX)
-      if (autoPublish) {
+      if (autoPublish && !disableAutoPublish) {
         if (autoSaveTimers.current[section]) {
           clearTimeout(autoSaveTimers.current[section]);
         }
@@ -1259,6 +1261,7 @@ export function AdminProvider({ children }) {
         deleteCustomCategory,
         // Products
         products,
+        productsError,
         setProducts,
         deleteProduct,
         toggleProductFeatured,

@@ -208,11 +208,13 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
     8. Generate a clean, simple, short SEO-friendly slug.
     9. Suggest an estimated, realistic price in INR (e.g., 999, 1500, 2500) based on the intricacy and materials.
     10. Suggest 1 or 2 catchy storefront badges (e.g. "Bestseller", "Trending", "Limited Edition").
+    11. CUSTOMIZATION DETECTION: Intelligently determine if this specific item is commonly personalized with text/names by customers (e.g. welcome boards, ring trays, named coconuts). If yes, set "isCustomizable" to true and provide a "customizationNote" prompt for the customer (e.g., "Enter names to be printed").
+    12. CONFIDENCE SCORE: Output an accurate "confidence" integer (between 1 and 100) representing your certainty about the detected object class. DO NOT just hardcode 95; evaluate the image clarity and ambiguity.
 
     Please output a clean JSON object matching the following structure strictly (do not include any markdown block ticks, just raw JSON):
     {
       "detected_object": "Exact detected object class name",
-      "confidence": 95,
+      "confidence": 88,
       "english_title": "Short, clean 2-5 word title (e.g. Floral Ring Tray)",
       "telugu_title": "Natural Telugu translated title in Telugu script",
       "slug": "simple-url-slug",
@@ -226,7 +228,9 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
       "badges": ["Bestseller", "Trending"],
       "price": 1500,
       "description": "Premium, clean 2-sentence description",
-      "seo_keywords": ["keyword1", "keyword2"]
+      "seo_keywords": ["keyword1", "keyword2"],
+      "isCustomizable": true,
+      "customizationNote": "Enter names to be printed"
     }
   `;
 

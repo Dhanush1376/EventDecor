@@ -1,0 +1,643 @@
+/* ════════════════════════════════════════════════════════════════
+   Home.css — Recovered and patched for correct layout
+   ════════════════════════════════════════════════════════════════ */
+
+.h1-page {
+  width: 100%;
+  overflow-x: clip;
+  background-color: var(--color-surface);
+}
+
+/* ─── Hero Carousel ─── */
+.h1-hero {
+  position: relative;
+  width: 100%;
+  height: 62.5vh; /* 2.5/4 of screen */
+  min-height: 450px;
+  max-height: 900px;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .h1-hero {
+    height: 80vh;
+    min-height: 600px;
+  }
+}
+
+.h1-hero__carousel {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.h1-hero__slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+  pointer-events: none;
+}
+
+.h1-hero__slide--active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.h1-hero__slide-image-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.h1-hero__slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (min-width: 768px) {
+  .h1-hero__slide-image {
+    mask-image: linear-gradient(to right, transparent 0%, black 80%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 80%);
+  }
+}
+
+.h1-hero__slide-overlay {
+  position: absolute;
+  inset: 0;
+  /* Keep bottom gradient for text contrast on mobile, but reduce overall darkening since we have the split layout on desktop */
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.1) 40%, transparent 100%);
+  pointer-events: none;
+}
+
+.h1-hero__slide-content {
+  position: absolute;
+  bottom: 10%;
+  left: 5%;
+  width: 90%;
+  max-width: 800px;
+  color: white;
+  z-index: 2;
+  text-align: left;
+}
+
+@media (min-width: 768px) {
+  .h1-hero__slide-content {
+    bottom: 15%;
+    left: 8%;
+  }
+}
+
+.h1-hero__slide-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: white;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.h1-hero__slide-title {
+  font-size: clamp(18px, 3.5vw, 36px);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+}
+
+.h1-hero__slide-tagline {
+  font-size: clamp(12px, 1.2vw, 15px);
+  opacity: 0.9;
+  margin-bottom: 16px;
+  max-width: 600px;
+}
+
+.h1-hero__slide-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: white;
+  padding: 4px 0 6px 0;
+  border-radius: 0;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.8);
+  transition: opacity 0.3s ease;
+}
+
+.h1-hero__slide-cta:hover {
+  opacity: 0.8;
+  transform: none;
+  box-shadow: none;
+}
+
+.h1-hero__dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+}
+
+.h1-hero__dot {
+  width: 4px !important;
+  height: 4px !important;
+  min-height: 4px !important;
+  min-width: 4px !important;
+  max-height: 4px !important;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  margin: 0;
+}
+
+.h1-hero__dot--active {
+  width: 12px !important;
+  min-width: 12px !important;
+  border-radius: 2px;
+  background: white;
+  transform: none;
+}
+
+/* ─── Scroll Reveal Animations ─── */
+.h1-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.h1-reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .h1-reveal {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ─── Shared Layout & Components ─── */
+.h1-container {
+  width: min(100% - 32px, var(--spacing-max-width));
+  margin-inline: auto;
+}
+
+.h1-section {
+  padding: 64px 0;
+}
+
+.h1-section-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.h1-section-header__title {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.h1-section-header__kicker {
+  color: var(--color-primary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+/* ─── Grids ─── */
+.h1-categories__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .h1-categories__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .h1-categories__grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+  }
+}
+
+.h1-categories__item {
+  display: block;
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 4/5;
+  text-decoration: none;
+}
+
+.h1-categories__img-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.h1-categories__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.h1-categories__item:hover .h1-categories__img {
+  transform: scale(1.05);
+}
+
+.h1-categories__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent 50%);
+}
+
+.h1-categories__label {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+  z-index: 1;
+}
+
+/* ─── Scroll Container ─── */
+.h1-scroll-container {
+  position: relative;
+  width: 100%;
+}
+
+.h1-scroll-container__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+.h1-scroll-container__track::-webkit-scrollbar {
+  display: none;
+}
+
+.h1-scroll-item {
+  flex: 0 0 auto;
+  width: 280px;
+  scroll-snap-align: start;
+}
+
+/* ─── Product Card Overrides ─── */
+.h1-product-grid--2col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .h1-product-grid--2col {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .h1-product-grid--2col {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 32px;
+  }
+}
+/* --- Promo Banner --- */
+.h1-promo-banner {
+  position: relative;
+  background-color: var(--color-surface-container-high);
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+}
+
+.h1-promo-banner__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
+}
+
+.h1-promo-banner__content {
+  position: relative;
+  z-index: 2;
+  padding: 48px;
+  max-width: 500px;
+  color: white;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.h1-promo-banner__title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 700;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.h1-promo-banner__text {
+  font-size: 18px;
+  margin-bottom: 32px;
+  opacity: 0.9;
+}
+
+/* --- Shop By Occasion --- */
+.h1-occasion-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .h1-occasion-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.h1-occasion-card {
+  position: relative;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  text-decoration: none;
+  display: block;
+}
+
+.h1-occasion-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s var(--ease-luxury);
+}
+
+.h1-occasion-card:hover .h1-occasion-card__img {
+  transform: scale(1.05);
+}
+
+.h1-occasion-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  display: flex;
+  align-items: flex-end;
+  padding: 32px;
+}
+
+.h1-occasion-card__title {
+  color: white;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+/* --- Gallery Inspiration (Masonry) --- */
+.h1-gallery-grid {
+  column-count: 2;
+  column-gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .h1-gallery-grid {
+    column-count: 3;
+    column-gap: 24px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .h1-gallery-grid {
+    column-count: 4;
+  }
+}
+
+.h1-gallery-item {
+  break-inside: avoid;
+  margin-bottom: 16px;
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .h1-gallery-item {
+    margin-bottom: 24px;
+  }
+}
+
+.h1-gallery-item__img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.h1-gallery-item:hover .h1-gallery-item__img {
+  transform: scale(1.03);
+}
+
+.h1-gallery-item__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.h1-gallery-item:hover .h1-gallery-item__overlay {
+  opacity: 1;
+}
+
+.h1-gallery-item__icon {
+  color: white;
+  font-size: 32px;
+  transform: scale(0.8);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.h1-gallery-item:hover .h1-gallery-item__icon {
+  transform: scale(1);
+}
+
+
+/* --- Promo Banner Marquee --- */
+@keyframes marquee-custom {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee-custom {
+  animation: marquee-custom 25s linear infinite;
+  will-change: transform;
+}
+
+/* --- Hover Lift Glow --- */
+.hover-lift-glow {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+}
+
+.hover-lift-glow:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 0 40px rgba(180, 150, 100, 0.2);
+  z-index: 10;
+}
+
+/* --- Gallery Utilities --- */
+.shadow-ambient {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.shadow-ambient:hover {
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+/* --- Custom Grids --- */
+.columns-2 { column-count: 2; }
+.columns-3 { column-count: 3; }
+.columns-4 { column-count: 4; }
+.columns-5 { column-count: 5; }
+
+@media (min-width: 768px) {
+  .md\:columns-3 { column-count: 3; }
+}
+@media (min-width: 1024px) {
+  .lg\:columns-4 { column-count: 4; }
+  .lg\:columns-5 { column-count: 5; }
+}
+@media (min-width: 1280px) {
+  .xl\:columns-4 { column-count: 4; }
+  .xl\:columns-5 { column-count: 5; }
+}
+
+/* --- Recommended Grid Horizontal Scroll Fixes --- */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* --- Product Card specific tweaks for homepage --- */
+.h1-product-card-override {
+  height: 100%;
+}
+
+
+/* --- Scroll Container Fades & Arrows --- */
+.h1-scroll-container__fade {
+  position: absolute;
+  top: 0;
+  bottom: 16px;
+  width: 60px;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.h1-scroll-container__fade--left {
+  left: 0;
+  background: linear-gradient(to right, var(--color-surface), transparent);
+}
+
+.h1-scroll-container__fade--right {
+  right: 0;
+  background: linear-gradient(to left, var(--color-surface), transparent);
+}
+
+.h1-scroll-container__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  color: black;
+  transition: all 0.2s ease;
+}
+
+.h1-scroll-container__arrow:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.h1-scroll-container__arrow--left {
+  left: -20px;
+}
+
+.h1-scroll-container__arrow--right {
+  right: -20px;
+}
+
+
+/* --- Section Header Additions --- */
+.h1-section-header__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.h1-section-header__see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.h1-section-header__see-all:hover {
+  opacity: 0.8;
+}
+

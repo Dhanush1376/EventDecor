@@ -17,6 +17,7 @@ export interface IOrderItem {
   imageSrc: string;
   category?: string;
   isNonRefundable?: boolean;
+  customizationNote?: string;
 }
 
 export interface IShippingAddress {
@@ -119,6 +120,7 @@ const OrderSchema: Schema = new Schema(
           imageSrc: { type: String, required: true },
           category: { type: String },
           isNonRefundable: { type: Boolean, default: false },
+          customizationNote: { type: String, trim: true, maxlength: 2000 },
         },
       ],
       validate: [(val: any[]) => val.length <= 50, '{PATH} exceeds the limit of 50 items'],

@@ -36,6 +36,19 @@ export function TopNavbar() {
   const { scrollDirection, isAtTop } = useScrollDirection();
   const hideNavbar = !isAtTop && scrollDirection === 'down' && !isMobileOrTablet;
 
+  const searchParams = new URLSearchParams(location.search);
+  const searchParam = searchParams.get('search');
+
+  const isHomePage = location.pathname === '/';
+  const isShopPage = location.pathname === '/collections';
+  const isEventsPage = location.pathname === '/events';
+  const isAboutPage = location.pathname === '/about';
+
+  // Disable transparency on shop page if on mobile with an active search (since hero is hidden)
+  const isTransparent =
+    (isHomePage || (isShopPage && !(isMobile && searchParam)) || isEventsPage || isAboutPage) &&
+    isAtTop;
+
   const adminRoles = [
     'owner',
     'super_admin',
@@ -137,13 +150,15 @@ export function TopNavbar() {
     <>
       <nav
         className={`top-navbar fixed top-0 w-full transition-all duration-500 ${
-          !isAtTop
-            ? 'bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-1.5'
-            : 'bg-surface/90 backdrop-blur-md py-2 border-b border-outline-variant/10'
+          isTransparent
+            ? 'bg-gradient-to-b from-black/50 to-transparent border-transparent py-2'
+            : !isAtTop
+              ? 'bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-1.5'
+              : 'bg-surface/90 backdrop-blur-md py-2 border-b border-outline-variant/10'
         } ${hideNavbar ? '-translate-y-full' : 'translate-y-0'}`}
         style={{
           zIndex: 'var(--z-sticky)',
-          boxShadow: !isAtTop ? 'var(--shadow-md)' : 'var(--shadow-xs)',
+          boxShadow: isTransparent ? 'none' : !isAtTop ? 'var(--shadow-md)' : 'var(--shadow-xs)',
         }}
       >
         <h1 className="sr-only">Siri Arts & Crafts</h1>
@@ -155,12 +170,16 @@ export function TopNavbar() {
                 <div className="flex flex-col justify-center">
                   {/* Desktop Layout: Side-by-side */}
                   <div className="hidden md:flex items-center">
-                    <SiriLogo size="36px" />
+                    <SiriLogo size="36px" variant={isTransparent ? 'white' : 'default'} />
                   </div>
 
                   {/* Mobile Layout: Stacked */}
                   <div className="flex md:hidden flex-col leading-none">
-                    <SiriLogo size="36px" showSubtitle={false} />
+                    <SiriLogo
+                      size="36px"
+                      showSubtitle={false}
+                      variant={isTransparent ? 'white' : 'default'}
+                    />
                   </div>
                 </div>
               </Link>
@@ -179,14 +198,20 @@ export function TopNavbar() {
                         <Link
                           className={`relative font-label-sm text-[10px] lg:text-[11px] uppercase tracking-[0.2em] lg:tracking-[0.25em] px-2.5 lg:px-3.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold whitespace-nowrap ${
                             active
-                              ? 'text-primary bg-primary-container/10'
-                              : 'text-on-surface hover:text-primary hover:bg-surface-container-low'
+                              ? isTransparent
+                                ? 'text-white bg-white/20'
+                                : 'text-primary bg-primary-container/10'
+                              : isTransparent
+                                ? 'text-white hover:bg-white/10'
+                                : 'text-on-surface hover:text-primary hover:bg-surface-container-low'
                           }`}
                           to={link.href}
                         >
                           {link.label}
                           {active && (
-                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+                            <span
+                              className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isTransparent ? 'bg-white' : 'bg-primary'}`}
+                            />
                           )}
                         </Link>
                       </li>
@@ -207,8 +232,12 @@ export function TopNavbar() {
                       key={idx}
                       className={`relative font-label-sm text-[10px] uppercase tracking-[0.15em] px-2.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold whitespace-nowrap ${
                         active
-                          ? 'text-primary bg-primary-container/10'
-                          : 'text-on-surface hover:text-primary'
+                          ? isTransparent
+                            ? 'text-white bg-white/20'
+                            : 'text-primary bg-primary-container/10'
+                          : isTransparent
+                            ? 'text-white hover:bg-white/10'
+                            : 'text-on-surface hover:text-primary'
                       }`}
                       to={link.href}
                     >
@@ -228,8 +257,12 @@ export function TopNavbar() {
                       onClick={() => setIsMoreOpen(!isMoreOpen)}
                       className={`font-label-sm text-[10px] uppercase tracking-[0.15em] px-2.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold cursor-pointer ${
                         isMoreActive
-                          ? 'text-primary bg-primary-container/10'
-                          : 'text-on-surface hover:text-primary'
+                          ? isTransparent
+                            ? 'text-white bg-white/20'
+                            : 'text-primary bg-primary-container/10'
+                          : isTransparent
+                            ? 'text-white hover:bg-white/10'
+                            : 'text-on-surface hover:text-primary'
                       }`}
                     >
                       More
@@ -275,18 +308,27 @@ export function TopNavbar() {
               <div className="flex items-center gap-1 md:gap-1.5">
                 <button
                   onClick={search.handleOpen}
-                  className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
+                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                   aria-label="Search Catalog (⌘K)"
                 >
-                  <span className="material-symbols-outlined text-[18px]">search</span>
+                  <span
+                    className="material-symbols-outlined text-[18px]"
+                    style={{ fontVariationSettings: "'wght' 200" }}
+                  >
+                    search
+                  </span>
                 </button>
 
                 <Link
                   to="/wishlist"
-                  className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold icon-button-touch-target"
+                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full relative group icon-button-touch-target`}
                   aria-label="View Wishlist"
                 >
-                  <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                  <span
+                    className="material-symbols-outlined text-[18px]"
+                    aria-hidden="true"
+                    style={{ fontVariationSettings: "'wght' 200" }}
+                  >
                     favorite
                   </span>
                 </Link>
@@ -297,10 +339,14 @@ export function TopNavbar() {
                   onClick={() => {
                     navigate('/cart');
                   }}
-                  className="text-on-surface hover:text-[#d4af37] transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#d4af37]/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
+                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-[#d4af37] hover:bg-[#d4af37]/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                   aria-label="View Bag"
                 >
-                  <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                  <span
+                    className="material-symbols-outlined text-[20px]"
+                    aria-hidden="true"
+                    style={{ fontVariationSettings: "'wght' 200" }}
+                  >
                     shopping_cart
                   </span>
                   {cartCount > 0 && (
@@ -317,10 +363,15 @@ export function TopNavbar() {
                 {!isAuthenticated ? (
                   <button
                     onClick={openAuthModal}
-                    className="text-on-surface hover:text-primary transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full hover:bg-primary-container/10 relative group font-bold cursor-pointer min-h-0 icon-button-touch-target"
+                    className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                     aria-label="User Account"
                   >
-                    <span className="material-symbols-outlined text-[18px]">login</span>
+                    <span
+                      className="material-symbols-outlined text-[18px]"
+                      style={{ fontVariationSettings: "'wght' 200" }}
+                    >
+                      login
+                    </span>
                   </button>
                 ) : (
                   <div className="relative hidden md:block">
@@ -329,10 +380,12 @@ export function TopNavbar() {
                       onMouseEnter={() =>
                         prefetchManager.prefetchRoute('/dashboard', { kind: 'hover' })
                       }
-                      className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square min-h-0"
+                      className={`w-8 h-8 rounded-full border flex items-center justify-center cursor-pointer transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square min-h-0 ${isTransparent ? 'bg-white/20 border-white/30 hover:bg-white/30 text-white' : 'bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary'}`}
                       aria-label="User Dropdown"
                     >
-                      <span className="text-[10px] text-primary uppercase font-bold tracking-wider">
+                      <span
+                        className={`text-[10px] uppercase font-bold tracking-wider ${isTransparent ? 'text-white' : 'text-primary'}`}
+                      >
                         {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || 'U'}
                       </span>
                       {hasPendingInvite && (
@@ -436,14 +489,14 @@ export function TopNavbar() {
                   prefetchManager.prefetchRoute('/collections', { kind: 'hover' })
                 }
                 onClick={() => setIsOpen(true)}
-                className="md:hidden flex flex-col items-center justify-center gap-[4.5px] w-9 h-9 rounded-full hover:bg-primary-container/10 hover:text-primary transition-all duration-300 hover:scale-110 cursor-pointer text-on-surface min-h-0 icon-button-touch-target"
+                className={`md:hidden flex flex-col items-center justify-center gap-[4.5px] w-9 h-9 rounded-full transition-all duration-300 hover:scale-110 cursor-pointer min-h-0 icon-button-touch-target ${isTransparent ? 'text-white hover:bg-white/10' : 'hover:bg-primary-container/10 hover:text-primary text-on-surface'}`}
                 aria-label="Open navigation menu"
                 aria-expanded={isOpen}
                 aria-controls="mobile-menu-drawer"
               >
-                <span className="w-5 h-[1.5px] bg-current" />
-                <span className="w-5 h-[1.5px] bg-current" />
-                <span className="w-5 h-[1.5px] bg-current" />
+                <span className="w-5 h-[1.2px] bg-current" />
+                <span className="w-5 h-[1.2px] bg-current" />
+                <span className="w-5 h-[1.2px] bg-current" />
               </button>
             </div>
           </div>

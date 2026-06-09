@@ -51,11 +51,13 @@ export const updateCategory = async (req: Request, res: Response) => {
 
     const dto = {
       name: req.body.name,
+      slug: req.body.slug,
       description: req.body.description,
       displayOrder: req.body.displayOrder,
       isActive: req.body.isActive,
       type: req.body.type,
       image: req.body.image,
+      coverProduct: req.body.coverProduct || null,
     };
     Object.keys(dto).forEach((k) => (dto as any)[k] === undefined && delete (dto as any)[k]);
 

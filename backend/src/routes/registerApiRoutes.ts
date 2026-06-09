@@ -68,7 +68,6 @@ export const registerApiRoutes = (
   apiRouter.use('/refunds', noCacheMiddleware, lazyRouter('./refundRoutes'));
 
   // Aggregated endpoints
-  apiRouter.use('/homepage', lazyRouter('./homepageRoutes'));
 
   // Dynamic Configuration & Architecture Routes
   apiRouter.use('/config', lazyRouter('./appConfigRoutes'));
