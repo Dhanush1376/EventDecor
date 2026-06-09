@@ -5,42 +5,63 @@ import toast from 'react-hot-toast';
 
 const checkAuthLocal = () => hasSessionMarker();
 
-export function useUserProfile() {
+export function useUserProfile(options = {}) {
+  const {
+    enabled = true,
+    staleTime = 5 * 60 * 1000,
+    gcTime = 30 * 60 * 1000,
+    ...restOptions
+  } = options;
   return useQuery({
     queryKey: ['user', 'profile'],
     queryFn: async ({ signal }) => {
       const res = await userService.getProfile({ signal });
       return res.success ? res.data : res;
     },
-    enabled: checkAuthLocal(),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    enabled: checkAuthLocal() && enabled,
+    staleTime,
+    gcTime,
+    ...restOptions,
   });
 }
 
-export function useUserAddresses() {
+export function useUserAddresses(options = {}) {
+  const {
+    enabled = true,
+    staleTime = 5 * 60 * 1000,
+    gcTime = 30 * 60 * 1000,
+    ...restOptions
+  } = options;
   return useQuery({
     queryKey: ['user', 'addresses'],
     queryFn: async () => {
       const res = await userService.getAddresses();
       return res.success ? res.data : res;
     },
-    enabled: checkAuthLocal(),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    enabled: checkAuthLocal() && enabled,
+    staleTime,
+    gcTime,
+    ...restOptions,
   });
 }
 
-export function useRecentlyViewed() {
+export function useRecentlyViewed(options = {}) {
+  const {
+    enabled = true,
+    staleTime = 5 * 60 * 1000,
+    gcTime = 30 * 60 * 1000,
+    ...restOptions
+  } = options;
   return useQuery({
     queryKey: ['user', 'recentlyViewed'],
     queryFn: async () => {
       const res = await userService.getRecentlyViewed();
       return res.success ? res.data : res;
     },
-    enabled: checkAuthLocal(),
-    staleTime: 30 * 1000, // short TTL for recently viewed
-    gcTime: 5 * 60 * 1000,
+    enabled: checkAuthLocal() && enabled,
+    staleTime,
+    gcTime,
+    ...restOptions,
   });
 }
 
@@ -58,7 +79,7 @@ export function useUpdateProfileMutation() {
     },
     onError: (err) => {
       toast.error(err?.message || 'Failed to update profile');
-    }
+    },
   });
 }
 
@@ -97,7 +118,7 @@ export function useAddressMutations() {
       const previousAddresses = queryClient.getQueryData(['user', 'addresses']) || [];
       queryClient.setQueryData(
         ['user', 'addresses'],
-        previousAddresses.map((addr) => (addr._id === id ? { ...addr, ...data } : addr))
+        previousAddresses.map((addr) => (addr._id === id ? { ...addr, ...data } : addr)),
       );
       return { previousAddresses };
     },
@@ -120,7 +141,7 @@ export function useAddressMutations() {
       const previousAddresses = queryClient.getQueryData(['user', 'addresses']) || [];
       queryClient.setQueryData(
         ['user', 'addresses'],
-        previousAddresses.filter((addr) => addr._id !== id)
+        previousAddresses.filter((addr) => addr._id !== id),
       );
       return { previousAddresses };
     },
@@ -146,7 +167,7 @@ export function useAddressMutations() {
         previousAddresses.map((addr) => ({
           ...addr,
           isDefault: addr._id === id,
-        }))
+        })),
       );
       return { previousAddresses };
     },

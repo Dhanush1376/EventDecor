@@ -11,6 +11,7 @@ import {
   EventFilterPanel,
   PromoBanner,
   Skeleton,
+  OptimizedImage,
 } from '../components/ui';
 import { eventService, productService, couponService } from '../services/domainServices';
 import { SEO } from '../components/seo/SEO';
@@ -410,9 +411,10 @@ export function EventCollections() {
           transition={{ duration: 1.5 }}
           className="absolute inset-0"
         >
-          <img
-            onError={handleImageError}
+          <OptimizedImage
             src={eventsPageContent.hero.backgroundImage}
+            width={1920}
+            eager={true}
             className="w-full h-full object-cover"
             alt="Cinematic Events Background"
           />
@@ -534,27 +536,55 @@ export function EventCollections() {
         </div>
       </nav>
 
-      {/* Early Booking Banner - Cinematic Luxury Redesign */}
-      {promoCoupon && (
+      {/* Promo Banner - Cinematic Luxury Redesign */}
+      {eventsPageContent?.promo?.isActive !== false && (
         <PromoBanner
           backgroundImage={eventsPageContent.promo.backgroundImage}
-          badgeText={`Active Promo: ${promoCoupon.code}`}
-          statusText="Ends Soon"
-          title="Limited Offer — "
-          highlightText={
-            promoCoupon.discountType === 'percentage'
-              ? `${promoCoupon.discountValue}% Off`
-              : `₹${promoCoupon.discountValue} Off`
+          badgeText={
+            promoCoupon ? `Active Promo: ${promoCoupon.code}` : eventsPageContent.promo.badgeText
           }
-          description={`Claim coupon code ${promoCoupon.code} for immediate savings on your checkout selections.`}
-          ctaText="Claim Offer"
-          onCtaClick={handleClaimOffer}
-          timer={[
-            { l: 'D', v: countdown.D },
-            { l: 'H', v: countdown.H },
-            { l: 'M', v: countdown.M },
-            { l: 'S', v: countdown.S },
-          ]}
+          statusText={eventsPageContent.promo.statusText}
+          title={eventsPageContent.promo.title}
+          highlightText={
+            promoCoupon
+              ? promoCoupon.discountType === 'percentage'
+                ? `${promoCoupon.discountValue}% Off`
+                : `₹${promoCoupon.discountValue} Off`
+              : eventsPageContent.promo.highlightText
+          }
+          description={
+            promoCoupon
+              ? `Claim coupon code ${promoCoupon.code} for immediate savings on your checkout selections.`
+              : eventsPageContent.promo.description
+          }
+          ctaText={eventsPageContent.promo.ctaText}
+          onCtaClick={() => {
+            if (promoCoupon) {
+              handleClaimOffer();
+            } else {
+              const link = eventsPageContent.promo.ctaLink;
+              if (link && link.startsWith('/')) {
+                navigate(link);
+              } else if (link && !link.includes(' ')) {
+                const el = document.getElementById(link);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                else navigate('/coupons');
+              } else {
+                const el = document.getElementById('event-collection');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }
+          }}
+          timer={
+            promoCoupon
+              ? [
+                  { l: 'D', v: countdown.D },
+                  { l: 'H', v: countdown.H },
+                  { l: 'M', v: countdown.M },
+                  { l: 'S', v: countdown.S },
+                ]
+              : null
+          }
         />
       )}
 
@@ -606,15 +636,21 @@ export function EventCollections() {
 
             <AnimatePresence mode="wait">
               {isLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="space-y-4">
-                      <Skeleton className="aspect-[4/3] md:aspect-[3/2] w-full rounded-[16px] md:rounded-[32px]" />
-                      <Skeleton className="h-3 w-20" />
-                      <Skeleton className="h-6 w-full" />
-                      <div className="flex justify-between items-center pt-2">
-                        <Skeleton className="h-3 w-24" />
-                        <Skeleton className="h-3 w-16" />
+                    <div key={i} className="flex flex-col group">
+                      <Skeleton className="aspect-[4/3] md:aspect-[3/2] w-full rounded-[16px] md:rounded-[32px] mb-3 md:mb-4 border border-black/5" />
+                      <div className="flex flex-col flex-1 py-1">
+                        <div className="mb-2 md:mb-4">
+                          <Skeleton className="h-2 md:h-2.5 w-16 md:w-24 mb-1.5 md:mb-2.5 rounded-full" />
+                          <Skeleton className="h-4 md:h-6 w-3/4 rounded-full" />
+                        </div>
+                        <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-black/5 mt-auto">
+                          <div className="flex items-center gap-1.5 md:gap-3">
+                            <Skeleton className="h-2.5 md:h-3 w-16 md:w-20 rounded-full" />
+                          </div>
+                          <Skeleton className="h-2.5 md:h-3 w-12 md:w-16 rounded-full" />
+                        </div>
                       </div>
                     </div>
                   ))}

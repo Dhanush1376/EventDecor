@@ -106,7 +106,8 @@ export const initialWebsiteContent = {
       badgeText: 'Limited Time Offer',
       statusText: 'Ends Soon',
       ctaText: 'Claim Offer',
-      ctaLink: 'Festive Decor',
+      ctaLink: '/coupons',
+      isActive: true,
     },
     status: 'published',
   },
@@ -124,8 +125,28 @@ export const initialWebsiteContent = {
         'https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g',
     },
     promo: {
+      title: '',
+      highlightText: 'Up to 25% Off',
+      description: 'Book your event early and secure premium availability with special discounts.',
       backgroundImage:
         'https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w',
+      badgeText: 'Early Booking Promo',
+      statusText: 'Ends Soon',
+      ctaText: 'Claim Offer',
+      ctaLink: '/coupons',
+      isActive: true,
+    },
+    status: 'published',
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // CUSTOM ORDERS PAGE
+  // ═══════════════════════════════════════════════════════
+  customOrdersPage: {
+    hero: {
+      title: 'Custom Event Decor Studio',
+      subtitle: 'Bespoke Curations',
+      description: 'Design your custom decor, get price estimates, and track your orders.',
     },
     status: 'published',
   },

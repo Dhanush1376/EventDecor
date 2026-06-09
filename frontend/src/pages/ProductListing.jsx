@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ProductCard,
@@ -15,7 +15,7 @@ import { useCart } from '../context/CartContext';
 
 import { couponService } from '../services/domainServices';
 import toast from 'react-hot-toast';
-import { useProducts, useCategories } from '../hooks/useProductQueries';
+import { useProducts, useCategories, useDynamicFilters } from '../hooks/useProductQueries';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -28,6 +28,8 @@ import logger from '../utils/logger';
 import { persistentStorage } from '../utils/persistentStorage';
 
 export function ProductListing() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { setClaimedCoupon } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category') || 'All';
@@ -202,17 +204,9 @@ export function ProductListing() {
   const [filters, setFilters] = useState(() => {
     const saved = persistentStorage.getItem('siri_product_filters');
     if (saved && typeof saved === 'object') {
-      return {
-        price: Array.isArray(saved.price) ? saved.price : [],
-        material: Array.isArray(saved.material) ? saved.material : [],
-        collection: Array.isArray(saved.collection) ? saved.collection : [],
-      };
+      return saved;
     }
-    return {
-      price: [],
-      material: [],
-      collection: [],
-    };
+    return {};
   });
 
   useEffect(() => {
@@ -263,7 +257,29 @@ export function ProductListing() {
     spellcheck: searchParams.get('spellcheck') || undefined,
   };
 
+  if (filters.priceRange && filters.priceRange.length > 0) {
+    let min = Infinity;
+    let max = -Infinity;
+    filters.priceRange.forEach((range) => {
+      const parts = range.split('-');
+      const currentMin = parseInt(parts[0], 10) || 0;
+      const currentMax = parts[1] ? parseInt(parts[1], 10) : Infinity;
+      if (currentMin < min) min = currentMin;
+      if (currentMax > max) max = currentMax;
+    });
+    if (min !== Infinity) queryParams.minPrice = min;
+    if (max !== -Infinity && max !== Infinity) queryParams.maxPrice = max;
+  }
+
+  // Inject all other dynamic filters into queryParams
+  Object.keys(filters).forEach((key) => {
+    if (key !== 'priceRange' && filters[key]?.length > 0) {
+      queryParams[key] = filters[key].join(',');
+    }
+  });
+
   const { data: productsData, isLoading: loading, isFetching, isError } = useProducts(queryParams);
+  const { data: filterGroups = [] } = useDynamicFilters(queryParams);
 
   useEffect(() => {
     if (isError) {
@@ -351,16 +367,22 @@ export function ProductListing() {
 
   const toggleFilter = React.useCallback((type, value) => {
     setFilters((prev) => {
-      const current = prev[type];
+      const current = prev[type] || [];
       const next = current.includes(value)
         ? current.filter((i) => i !== value)
         : [...current, value];
+
+      if (next.length === 0) {
+        const newFilters = { ...prev };
+        delete newFilters[type];
+        return newFilters;
+      }
       return { ...prev, [type]: next };
     });
   }, []);
 
   const clearAllFilters = React.useCallback(() => {
-    setFilters({ price: [], material: [], collection: [] });
+    setFilters({});
     setActiveCategory('All');
     setSearchQuery('');
     setSearchParams({});
@@ -514,47 +536,55 @@ export function ProductListing() {
       </nav>
 
       {/* Promo Banner - Hide when searching on mobile */}
-      {!(isMobile && searchParam) && (
-        <>
-          {/* Flash Sale Banner - Cinematic Luxury Redesign */}
-          {promoCoupon && (
-            <PromoBanner
-              backgroundImage={shopContent.promo.backgroundImage}
-              badgeText={`Active Promo: ${promoCoupon.code}`}
-              statusText={shopContent.promo.statusText}
-              title="Limited Time Offer — "
-              highlightText={
-                promoCoupon.discountType === 'percentage'
-                  ? `${promoCoupon.discountValue}% Off`
-                  : `₹${promoCoupon.discountValue} Off`
-              }
-              description={`Use code ${promoCoupon.code} at checkout to save.`}
-              ctaText="Claim Offer"
-              onCtaClick={handleClaimOffer}
-              timer={[
-                { l: 'D', v: countdown.D },
-                { l: 'H', v: countdown.H },
-                { l: 'M', v: countdown.M },
-                { l: 'S', v: countdown.S },
-              ]}
-            />
-          )}
-
-          {/* Default Promo Banner */}
-          {!promoCoupon && (
-            <PromoBanner
-              backgroundImage={shopContent.promo.backgroundImage}
-              badgeText={shopContent.promo.badgeText}
-              title={shopContent.promo.title}
-              highlightText={shopContent.promo.highlightText}
-              ctaText={shopContent.promo.ctaText}
-              onCtaClick={() => {
+      {!(isMobile && searchParam) && shopContent?.promo?.isActive !== false && (
+        <PromoBanner
+          backgroundImage={shopContent.promo.backgroundImage}
+          badgeText={
+            promoCoupon ? `Active Promo: ${promoCoupon.code}` : shopContent.promo.badgeText
+          }
+          statusText={shopContent.promo.statusText}
+          title={shopContent.promo.title}
+          highlightText={
+            promoCoupon
+              ? promoCoupon.discountType === 'percentage'
+                ? `${promoCoupon.discountValue}% Off`
+                : `₹${promoCoupon.discountValue} Off`
+              : shopContent.promo.highlightText
+          }
+          description={
+            promoCoupon
+              ? `Use code ${promoCoupon.code} at checkout to save.`
+              : shopContent.promo.description
+          }
+          ctaText={shopContent.promo.ctaText}
+          onCtaClick={() => {
+            if (promoCoupon) {
+              handleClaimOffer();
+            } else {
+              const link = shopContent.promo.ctaLink;
+              if (link && link.startsWith('/')) {
+                navigate(link);
+              } else if (link && !link.includes(' ')) {
+                const el = document.getElementById(link);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                else navigate('/coupons');
+              } else {
                 const el = document.getElementById('artisan-collection');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-            />
-          )}
-        </>
+              }
+            }
+          }}
+          timer={
+            promoCoupon
+              ? [
+                  { l: 'D', v: countdown.D },
+                  { l: 'H', v: countdown.H },
+                  { l: 'M', v: countdown.M },
+                  { l: 'S', v: countdown.S },
+                ]
+              : null
+          }
+        />
       )}
 
       {/* Main Grid Section */}
@@ -571,6 +601,7 @@ export function ProductListing() {
           {/* Sidebar Filter - Handles both Desktop Sidebar and Mobile Drawer */}
           <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 h-fit">
             <FilterPanel
+              filterGroups={filterGroups}
               currentFilters={filters}
               onToggleFilter={toggleFilter}
               onClearAll={clearAllFilters}

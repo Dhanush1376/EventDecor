@@ -50,7 +50,8 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
       .select('name email phone role loyaltyTier walletBalance createdAt updatedAt isVerified')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
     User.countDocuments(filter),
   ]);
 
@@ -134,7 +135,7 @@ export const getProductCategories = asyncHandler(async (req: Request, res: Respo
 
 // Profile Management
 export const getProfile = asyncHandler(async (req: any, res: Response) => {
-  const user = await User.findById(req.user.id).select('-password');
+  const user = await User.findById(req.user.id).select('-password').lean();
   if (!user) throw new ApiError(404, 'User not found');
   res.status(200).json(new ApiResponse(true, 'Profile fetched', user));
 });
@@ -167,7 +168,7 @@ export const updateProfile = asyncHandler(async (req: any, res: Response) => {
 // Address Management
 export const getAddresses = asyncHandler(async (req: any, res: Response) => {
   const Address = require('../models/Address').default;
-  const addresses = await Address.find({ user: req.user.id });
+  const addresses = await Address.find({ user: req.user.id }).lean();
   res.status(200).json(new ApiResponse(true, 'Addresses fetched', addresses));
 });
 
@@ -535,7 +536,7 @@ export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
 
 // Recently Viewed Products tracking
 export const getRecentlyViewed = asyncHandler(async (req: any, res: Response) => {
-  const user = await User.findById(req.user.id).populate('recentlyViewed.product');
+  const user = await User.findById(req.user.id).populate('recentlyViewed.product').lean();
   if (!user) throw new ApiError(404, 'User not found');
 
   const list = (user.recentlyViewed || []).filter((item: any) => item.product != null);
@@ -625,9 +626,10 @@ export const getTeamMembers = asyncHandler(async (req: Request, res: Response) =
     User.find({ role: { $in: STAFF_ROLES } })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
     User.countDocuments({ role: { $in: STAFF_ROLES } }),
-    TeamInvite.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+    TeamInvite.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     TeamInvite.countDocuments(),
   ]);
 

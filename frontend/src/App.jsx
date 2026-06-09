@@ -110,6 +110,7 @@ const BlogPost = lazy(() => import('./pages/BlogPost').then((m) => ({ default: m
 const LocationLanding = lazy(() =>
   import('./pages/LocationLanding').then((m) => ({ default: m.LocationLanding })),
 );
+const Coupons = lazy(() => import('./pages/Coupons').then((m) => ({ default: m.Coupons })));
 
 // ─── Admin Portal (Lazy Loaded) ───
 const AdminLayout = lazy(() =>
@@ -254,14 +255,20 @@ function RouteDiagnostics() {
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
-      // Fallback for background refetch failures or unhandled query errors
-      if (query.state.data !== undefined) {
-        toast.error(`Background update failed: ${error.message || 'Network error'}`);
-      }
+      // Intentionally do not show a global toast for background refetch failures
+      // The user already has cached data, so background failures shouldn't interrupt them
+      logger.warn(
+        `[QueryCache] Background update failed for query ${query.queryKey.join('-')}:`,
+        error,
+      );
     },
   }),
   mutationCache: new MutationCache({
     onError: (error, _variables, _context, mutation) => {
+      // Intentionally ignore mutations that were successfully queued offline
+      // as NetworkProvider already shows a success toast for them
+      if (error.offlineQueued) return;
+
       // Only show global toast if the mutation didn't define its own custom onError handler
       if (!mutation.options.onError) {
         toast.error(
@@ -294,13 +301,24 @@ const queryClient = new QueryClient({
 });
 
 queryClient.setQueryDefaults(['product'], { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 30 });
-queryClient.setQueryDefaults(['products'], { staleTime: 1000 * 60 * 10, gcTime: 1000 * 60 * 60 });
+queryClient.setQueryDefaults(['products'], {
+  staleTime: 1000 * 60 * 10,
+  gcTime: 1000 * 60 * 60,
+  refetchOnMount: false,
+  refetchOnReconnect: false,
+});
 queryClient.setQueryDefaults(['cart'], { staleTime: 1000 * 30, gcTime: 1000 * 60 * 5 });
 queryClient.setQueryDefaults(['profile'], { staleTime: 1000 * 60 * 2, gcTime: 1000 * 60 * 10 });
-queryClient.setQueryDefaults(['cms'], { staleTime: 1000 * 60 * 15, gcTime: 1000 * 60 * 60 });
+queryClient.setQueryDefaults(['cms'], {
+  staleTime: 1000 * 60 * 15,
+  gcTime: 1000 * 60 * 60,
+  refetchOnMount: false,
+  refetchOnReconnect: false,
+});
 queryClient.setQueryDefaults(['recommendations'], {
-  staleTime: 1000 * 60 * 5,
+  staleTime: 1000 * 60 * 10,
   gcTime: 1000 * 60 * 30,
+  refetchOnMount: false,
 });
 
 hydrateQueryClientCache(queryClient);
@@ -466,6 +484,7 @@ function App() {
                               <Route path="/privacy" element={<Privacy />} />
                               <Route path="/terms" element={<Terms />} />
                               <Route path="/accept-invite" element={<AcceptInvite />} />
+                              <Route path="/coupons" element={<Coupons />} />
                               <Route path="*" element={<NotFound />} />
                             </Route>
                             <Route element={<MinimalLayout />}>

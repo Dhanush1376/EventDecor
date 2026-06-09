@@ -78,7 +78,6 @@ export function NetworkProvider({ children }) {
       const readinessUrl = `${getApiRootUrl()}/readiness`;
       const response = await fetch(`${readinessUrl}?t=${Date.now()}`, {
         method: 'GET',
-        credentials: 'include',
         headers: {
           Accept: 'application/json',
         },

@@ -21,6 +21,11 @@ const urlCache = new Map();
 export const getOptimizedUrl = (url, width, height, quality = 'auto', format = 'auto') => {
   if (!url) return '';
 
+  // Fix for old cloudinary cloud name
+  if (url.includes('dwy7sz5eh')) {
+    url = url.replace('dwy7sz5eh', 'drxgnnzeb');
+  }
+
   const cacheKey = `${url}|${width}|${height}|${quality}|${format}`;
   if (urlCache.has(cacheKey)) {
     return urlCache.get(cacheKey);
@@ -30,9 +35,18 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
   let resultUrl = url;
 
   if (isCloudinary) {
-    // Cloudinary Free Tier often throws 401/400 for dynamic transformations
-    // if Strict Transformations is enabled or signatures are required.
-    // Serving the raw URL ensures it loads successfully.
+    let transform = [];
+    if (width) transform.push(`w_${width}`);
+    if (height) transform.push(`h_${height}`);
+    if (quality && quality !== 'auto') transform.push(`q_${quality}`);
+    else transform.push('q_auto:good'); // Optimize bandwidth using good quality heuristic
+    if (format && format !== 'auto') transform.push(`f_${format}`);
+    else transform.push('f_auto');
+
+    const transformStr = transform.join(',');
+
+    // Due to Cloudinary account strict transformation settings causing 404s,
+    // we bypass dynamic transformations and use the original URL.
     resultUrl = url;
   } else {
     // Local/static images route through backend dynamic media optimization pipeline
@@ -53,8 +67,15 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
 
       resultUrl = targetUrl;
     } else if (isAbsoluteExternal) {
-      // Just return the external URL as-is to avoid proxying
-      resultUrl = url;
+      if (url.includes('googleusercontent.com') && !url.includes('=')) {
+        let flags = [];
+        if (width) flags.push(`w${width}`);
+        if (height) flags.push(`h${height}`);
+        flags.push('rw'); // request webp format
+        resultUrl = `${url}=${flags.join('-')}`;
+      } else {
+        resultUrl = url;
+      }
     }
   }
 
@@ -120,26 +141,32 @@ export const getSrcSet = (url, maxWidth = null, format = 'auto') => {
   if (url.startsWith('data:') || url.startsWith('blob:')) return null;
 
   const isAbsoluteExternal = url.startsWith('http://') || url.startsWith('https://');
-  if (isAbsoluteExternal) return null; // Can't dynamically resize external/Cloudinary without transforms
+  const isCloudinary = url.includes('cloudinary.com');
+  if (isAbsoluteExternal && !isCloudinary) return null; // Can't dynamically resize external non-Cloudinary without transforms
 
   let validWidths = [];
 
-  if (maxWidth && maxWidth <= 200) {
+  // Bandwidth protection: Hard cap maximum requested width
+  const effectiveMaxWidth = maxWidth && maxWidth > 1536 ? 1536 : maxWidth;
+
+  if (effectiveMaxWidth && effectiveMaxWidth <= 200) {
     // For thumbnails, only generate 1x and 2x
-    validWidths = [maxWidth, maxWidth * 2];
-  } else if (maxWidth && maxWidth <= 600) {
-    validWidths = [320, 640, maxWidth * 2].filter((w) => w <= maxWidth * 2);
+    validWidths = [effectiveMaxWidth, effectiveMaxWidth * 2];
+  } else if (effectiveMaxWidth && effectiveMaxWidth <= 600) {
+    validWidths = [320, 640, effectiveMaxWidth * 2].filter((w) => w <= effectiveMaxWidth * 2);
   } else {
     const breakpoints = [320, 640, 1024, 1536];
-    validWidths = maxWidth ? breakpoints.filter((w) => w <= maxWidth * 1.5) : breakpoints;
+    validWidths = effectiveMaxWidth
+      ? breakpoints.filter((w) => w <= effectiveMaxWidth * 1.5)
+      : breakpoints;
   }
 
   // Deduplicate and sort
   validWidths = [...new Set(validWidths)].sort((a, b) => a - b);
 
   // Always ensure at least one fallback width
-  if (validWidths.length === 0 && maxWidth) {
-    validWidths.push(getResponsiveWidth(maxWidth));
+  if (validWidths.length === 0 && effectiveMaxWidth) {
+    validWidths.push(getResponsiveWidth(effectiveMaxWidth));
   }
 
   return validWidths

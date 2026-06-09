@@ -15,14 +15,20 @@ export const getAuditLogs = asyncHandler(async (req: Request, res: Response) => 
   const { page, limit, skip } = getPaginationOptions(req.query);
 
   const [logs, totalCount] = await Promise.all([
-    AdminAuditLog.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+    AdminAuditLog.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     AdminAuditLog.countDocuments(),
   ]);
 
   setPaginationHeaders(res, totalCount, page, limit);
-  res.status(200).json(
-    new ApiResponse(true, 'Audit logs retrieved', formatPaginationResponse(logs, totalCount, page, limit))
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Audit logs retrieved',
+        formatPaginationResponse(logs, totalCount, page, limit),
+      ),
+    );
 });
 
 export const createAuditLog = asyncHandler(async (req: Request, res: Response) => {
@@ -42,5 +48,13 @@ export const createAuditLog = asyncHandler(async (req: Request, res: Response) =
 
 export const clearAuditLogs = asyncHandler(async (req: Request, res: Response) => {
   // Production Safety: Audit logs must never be cleared.
-  res.status(403).json(new ApiResponse(false, 'Forbidden: Audit logs are permanent and cannot be cleared for compliance and data safety reasons.', {}));
+  res
+    .status(403)
+    .json(
+      new ApiResponse(
+        false,
+        'Forbidden: Audit logs are permanent and cannot be cleared for compliance and data safety reasons.',
+        {},
+      ),
+    );
 });

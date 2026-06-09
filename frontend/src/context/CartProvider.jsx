@@ -151,13 +151,20 @@ export function CartProvider({ children }) {
               }
             });
 
-            const syncPayload = Array.from(mergedPayloadMap.values()).map((item) => ({
-              product: item.product?._id || item.product?.id || item.product,
-              quantity: item.quantity,
-              type: item.type || 'purchase',
-              rentalInfo: item.rentalInfo,
-              deposit: item.deposit,
-            }));
+            const syncPayload = Array.from(mergedPayloadMap.values()).map((item) => {
+              const rInfo =
+                item.rentalInfo && Object.keys(item.rentalInfo).length > 0
+                  ? item.rentalInfo
+                  : undefined;
+              return {
+                product:
+                  item.product?._id || item.product?.id || item._id || item.id || item.product,
+                quantity: item.quantity,
+                type: item.type || 'purchase',
+                rentalInfo: rInfo,
+                deposit: item.deposit,
+              };
+            });
 
             await syncCart({ cartItems: syncPayload });
             toast.success('Your guest shopping bag was merged successfully!');
@@ -388,13 +395,20 @@ export function CartProvider({ children }) {
               ...(currentCart?.rentalCart?.items || []),
             ];
 
-            const payload = allItems.map((item) => ({
-              product: item.product?._id || item.product?.id,
-              quantity: item.quantity,
-              type: item.type || 'purchase',
-              rentalInfo: item.rentalInfo,
-              deposit: item.deposit,
-            }));
+            const payload = allItems.map((item) => {
+              const rInfo =
+                item.rentalInfo && Object.keys(item.rentalInfo).length > 0
+                  ? item.rentalInfo
+                  : undefined;
+              return {
+                product:
+                  item.product?._id || item.product?.id || item._id || item.id || item.product,
+                quantity: item.quantity,
+                type: item.type || 'purchase',
+                rentalInfo: rInfo,
+                deposit: item.deposit,
+              };
+            });
             try {
               await syncCart({ cartItems: payload });
             } catch (err) {
@@ -444,13 +458,19 @@ export function CartProvider({ children }) {
           const currentCart = queryClient.getQueryData(['cart']);
           const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart';
           const otherItems = currentCart?.[otherCartKey]?.items || [];
-          const payload = otherItems.map((item) => ({
-            product: item.product?._id || item.product?.id,
-            quantity: item.quantity,
-            type: item.type || 'purchase',
-            rentalInfo: item.rentalInfo,
-            deposit: item.deposit,
-          }));
+          const payload = otherItems.map((item) => {
+            const rInfo =
+              item.rentalInfo && Object.keys(item.rentalInfo).length > 0
+                ? item.rentalInfo
+                : undefined;
+            return {
+              product: item.product?._id || item.product?.id || item._id || item.id || item.product,
+              quantity: item.quantity,
+              type: item.type || 'purchase',
+              rentalInfo: rInfo,
+              deposit: item.deposit,
+            };
+          });
           await syncCart({ cartItems: payload }); // Leaves only the other cart's items
         } catch (err) {
           logger.error('Failed to clear database cart:', err);

@@ -9,8 +9,9 @@ import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { GallerySlideshow } from '../components/gallery/GallerySlideshow';
 import { GallerySkeleton } from '../components/ui/Skeleton';
+import { FilterPanel } from '../components/ui/FilterPanel';
 import { useQuery } from '@tanstack/react-query';
-import { useInfiniteGallery } from '../hooks/useInfiniteGallery';
+import { useInfiniteGallery, useGalleryDynamicFilters } from '../hooks/useInfiniteGallery';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import toast from 'react-hot-toast';
@@ -18,13 +19,12 @@ import toast from 'react-hot-toast';
 export function GalleryInner() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
-  const [activeEvent, setActiveEvent] = useState('All');
-  const [activeStyle, setActiveStyle] = useState('All');
+  const [filters, setFilters] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [filterType, setFilterType] = useState('all'); // all, inspiration, product
-  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isGalleryMode, setIsGalleryMode] = useState(false);
   const [slideshowIndex, setSlideshowIndex] = useState(-1);
   const [showFloatingExit, setShowFloatingExit] = useState(false);
@@ -44,6 +44,18 @@ export function GalleryInner() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const queryParams = {
+    category: activeCategory,
+    type: filterType,
+    search: debouncedSearch,
+  };
+
+  Object.keys(filters).forEach((key) => {
+    if (filters[key]?.length > 0) {
+      queryParams[key] = filters[key].join(',');
+    }
+  });
+
   const {
     items: filteredItems,
     fetchNextPage,
@@ -52,13 +64,9 @@ export function GalleryInner() {
     isFetchingNextPage,
     isLoading: isGalleryLoading,
     isError: isGalleryError,
-  } = useInfiniteGallery({
-    category: activeCategory,
-    event: activeEvent,
-    style: activeStyle,
-    type: filterType,
-    search: debouncedSearch,
-  });
+  } = useInfiniteGallery(queryParams);
+
+  const { data: filterGroups = [] } = useGalleryDynamicFilters(queryParams);
 
   const {
     data: categories = ['All'],
@@ -155,13 +163,35 @@ export function GalleryInner() {
   }, [isGalleryMode]);
 
   useEffect(() => {
-    if (isFilterDrawerOpen) {
+    if (isFilterOpen) {
       document.body.classList.add('filters-open');
     } else {
       document.body.classList.remove('filters-open');
     }
     return () => document.body.classList.remove('filters-open');
-  }, [isFilterDrawerOpen]);
+  }, [isFilterOpen]);
+
+  const toggleFilter = React.useCallback((type, value) => {
+    setFilters((prev) => {
+      const current = prev[type] || [];
+      const next = current.includes(value)
+        ? current.filter((i) => i !== value)
+        : [...current, value];
+
+      if (next.length === 0) {
+        const newFilters = { ...prev };
+        delete newFilters[type];
+        return newFilters;
+      }
+      return { ...prev, [type]: next };
+    });
+  }, []);
+
+  const clearAllFilters = React.useCallback(() => {
+    setFilters({});
+    setActiveCategory('All');
+    setSearchQuery('');
+  }, []);
 
   const isGalleryModeRef = React.useRef(isGalleryMode);
   useEffect(() => {
@@ -263,7 +293,7 @@ export function GalleryInner() {
 
             {/* Mobile Filter Toggle */}
             <button
-              onClick={() => setIsFilterDrawerOpen(true)}
+              onClick={() => setIsFilterOpen(true)}
               aria-label="Open filters"
               className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-[0.98] active:opacity-90 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
             >
@@ -356,39 +386,55 @@ export function GalleryInner() {
           />
         </div>
 
-        {isLoading ? (
-          <GallerySkeleton />
-        ) : (
-          <>
-            <VirtualizedMasonry
-              items={filteredItems}
-              loadMore={fetchNextPage}
-              hasMore={hasNextPage}
-              isLoading={isFetchingNextPage}
-              renderItem={renderGalleryItem}
-              columns={{ sm: 2, md: 2, lg: 4, xl: 4 }}
-              gap="gap-2 sm:gap-3"
-              batchSize={20}
+        <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 xl:gap-12">
+          {/* Sidebar Filter - Handles both Desktop Sidebar and Mobile Drawer */}
+          <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 h-fit">
+            <FilterPanel
+              filterGroups={filterGroups.filter((group) => group.id !== 'category')} // Category is already in tabs!
+              currentFilters={filters}
+              onToggleFilter={toggleFilter}
+              onClearAll={clearAllFilters}
+              isOpen={isFilterOpen}
+              onClose={() => setIsFilterOpen(false)}
             />
+          </aside>
 
-            {filteredItems.length === 0 && (
-              <div className="py-32 text-center">
-                <h3 className="font-headline-sm text-black/40">
-                  No moments found matching your criteria.
-                </h3>
-                <button
-                  onClick={() => {
-                    setActiveCategory('All');
-                    setSearchQuery('');
-                  }}
-                  className="mt-4 font-label-sm text-primary underline uppercase tracking-widest text-[10px] font-bold"
-                >
-                  Clear all filters
-                </button>
-              </div>
+          <div className="flex-1 min-w-0">
+            {isLoading ? (
+              <GallerySkeleton />
+            ) : (
+              <>
+                <VirtualizedMasonry
+                  items={filteredItems}
+                  loadMore={fetchNextPage}
+                  hasMore={hasNextPage}
+                  isLoading={isFetchingNextPage}
+                  renderItem={renderGalleryItem}
+                  columns={{ sm: 2, md: 2, lg: 4, xl: 4 }}
+                  gap="gap-2 sm:gap-3"
+                  batchSize={20}
+                />
+
+                {filteredItems.length === 0 && (
+                  <div className="py-32 text-center">
+                    <h3 className="font-headline-sm text-black/40">
+                      No moments found matching your criteria.
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setActiveCategory('All');
+                        setSearchQuery('');
+                      }}
+                      className="mt-4 font-label-sm text-primary underline uppercase tracking-widest text-[10px] font-bold"
+                    >
+                      Clear all filters
+                    </button>
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </main>
 
       <AnimatePresence>
@@ -411,68 +457,6 @@ export function GalleryInner() {
       </AnimatePresence>
 
       <div className="fixed inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay z-[400] bg-marble" />
-
-      {/* Filter Drawer for Mobile */}
-      <AnimatePresence>
-        {isFilterDrawerOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsFilterDrawerOpen(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] md:hidden"
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-              className="fixed bottom-0 left-0 right-0 bg-[#fcfbf9] rounded-t-3xl z-[201] p-6 pb-12 md:hidden max-h-[80vh] overflow-y-auto shadow-2xl"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="font-display text-xl text-black">Refine Gallery</h3>
-                <button
-                  onClick={() => setIsFilterDrawerOpen(false)}
-                  className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center text-black"
-                >
-                  <span className="material-symbols-outlined text-sm">close</span>
-                </button>
-              </div>
-
-              <div className="space-y-8">
-                <div>
-                  <span className="font-label-sm text-[10px] uppercase tracking-widest text-black/40 font-bold block mb-4">
-                    Categories
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => setActiveCategory(cat)}
-                        className={`px-4 py-2 rounded-xl border font-bold text-[10px] uppercase tracking-wider transition-all ${
-                          activeCategory === cat
-                            ? 'bg-black text-white border-black'
-                            : 'bg-white text-black/40 border-black/10'
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setIsFilterDrawerOpen(false)}
-                  className="w-full bg-black text-white py-4 rounded-2xl font-bold text-[12px] uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-transform"
-                >
-                  Apply Filters
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

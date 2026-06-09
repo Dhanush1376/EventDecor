@@ -22,13 +22,24 @@ export const cacheHeadersMiddleware = (req: Request, res: Response, next: NextFu
 
   // By default, for GET requests on the API, apply a short baseline cache or rely on endpoint-specific caching
   if (req.method === 'GET') {
-    // We only set this if the endpoint hasn't already set a Cache-Control header
     const originalSend = res.send;
     res.send = function (body) {
       if (!res.getHeader('Cache-Control')) {
-        // Default API cache: private, max-age=0, must-revalidate
-        // This ensures the browser validates with the server (ETag) but doesn't cache stale data
-        res.setHeader('Cache-Control', 'private, no-cache, must-revalidate');
+        // Only cache public/static API responses that don't depend on user authentication
+        // We assume routes ending in /cms, /products (lists), or public gallery can be cached.
+        const path = req.originalUrl || req.url;
+        const isPublicCacheable =
+          path.includes('/cms') || path.includes('/products') || path.includes('/gallery');
+
+        if (isPublicCacheable && !req.headers.authorization && !req.cookies?.token) {
+          // Cloudflare & Browser caching: public, cache for 1 hour
+          res.setHeader(
+            'Cache-Control',
+            'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+          );
+        } else {
+          res.setHeader('Cache-Control', 'private, no-cache, must-revalidate');
+        }
       }
       return originalSend.call(this, body);
     };

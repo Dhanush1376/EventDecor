@@ -8,10 +8,13 @@ import {
 } from '../controllers/categoryController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 
+import { dynamicResponseCache } from '../middleware/dynamicCacheMiddleware';
+import { cacheResponse } from '../middleware/cacheMiddleware';
+
 const router = express.Router();
 
 // Public routes
-router.get('/active', getActiveCategories);
+router.get('/active', dynamicResponseCache(600, 'public'), cacheResponse(600), getActiveCategories);
 
 // Admin routes
 router.use(requireAuth);

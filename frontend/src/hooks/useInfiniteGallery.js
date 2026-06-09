@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { galleryService } from '../services/domainServices';
 
 /**
@@ -12,7 +12,7 @@ import { galleryService } from '../services/domainServices';
  * - Deduplicates items across pages
  */
 export function useInfiniteGallery(filters = {}) {
-  const { category, event, style, type, search } = filters;
+  const { category, type, search, ...dynamicFilters } = filters;
 
   const {
     data,
@@ -24,7 +24,7 @@ export function useInfiniteGallery(filters = {}) {
     isError,
     error,
   } = useInfiniteQuery({
-    queryKey: ['infiniteGallery', category, event, style, type, search],
+    queryKey: ['infiniteGallery', category, type, search, dynamicFilters],
     queryFn: async ({ pageParam = 1 }) => {
       const params = {
         page: pageParam,
@@ -33,10 +33,15 @@ export function useInfiniteGallery(filters = {}) {
 
       // Only add filters if they are not the "All" default
       if (category && category !== 'All') params.category = category;
-      if (event && event !== 'All') params.event = event;
-      if (style && style !== 'All') params.style = style;
       if (type && type !== 'all') params.type = type;
       if (search && search.trim() !== '') params.search = search;
+
+      // Inject dynamic filters (like tags, style, event)
+      Object.keys(dynamicFilters).forEach((key) => {
+        if (dynamicFilters[key]) {
+          params[key] = dynamicFilters[key];
+        }
+      });
 
       const res = await galleryService.getAll(params);
       if (!res.success) throw new Error('Failed to fetch gallery items');
@@ -94,3 +99,21 @@ export function useInfiniteGallery(filters = {}) {
 }
 
 export default useInfiniteGallery;
+
+export function useGalleryDynamicFilters(queryParams = {}) {
+  return useQuery({
+    queryKey: ['galleryDynamicFilters', queryParams],
+    queryFn: async () => {
+      const params = { ...queryParams };
+      // Strip out non-filter params
+      delete params.page;
+      delete params.limit;
+      delete params.spellcheck;
+
+      const res = await galleryService.getDynamicFilters(params);
+      if (!res.success) throw new Error('Failed to fetch dynamic filters for gallery');
+      return res.data; // array of filterGroups
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}

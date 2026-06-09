@@ -57,6 +57,7 @@ const CMS_SIDEBAR = [
     items: [
       { id: 'gallery', label: 'Gallery', icon: 'photo_library', desc: 'Pinterest grid tags' },
       { id: 'about', label: 'About Page', icon: 'info', desc: 'Brand chronicler' },
+      { id: 'shop-page', label: 'Shop Page', icon: 'storefront', desc: 'Shop collections banner' },
       {
         id: 'events-page',
         label: 'Events Page',
@@ -1183,6 +1184,176 @@ function AboutPageDetailsEditor({ content, onUpdate }) {
 }
 
 // 7.5. EVENTS PAGE BANNER & PROMOS
+function ShopPageEditor({ content, onUpdate }) {
+  const sp = content || {};
+  const hero = sp.hero || {};
+  const promo = sp.promo || {};
+
+  return (
+    <div className="admin-card p-6 space-y-6">
+      <SectionHeader
+        icon="storefront"
+        title="Shop Page Customizer"
+        description="Configure banner headline, description, hero background image, and promo banner."
+      />
+      <div className="space-y-6">
+        {/* Hero Section Banner */}
+        <div className="admin-card p-5 space-y-4">
+          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2">
+            1. Hero Section Banner
+          </span>
+
+          <AdminField label="Hero Title" description="The primary main headline of the shop page">
+            <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
+              <AdminInput
+                value={hero.title || ''}
+                onChange={(e) => onUpdate('shopPage', { hero: { ...hero, title: e.target.value } })}
+                className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              />
+              <div className="absolute right-2.5">
+                <AISparkButton
+                  text={hero.title}
+                  onApply={(val) => onUpdate('shopPage', { hero: { ...hero, title: val } })}
+                />
+              </div>
+            </div>
+          </AdminField>
+
+          <AdminField label="Hero Subtitle" description="A short tagline or category group text">
+            <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
+              <AdminInput
+                value={hero.subtitle || ''}
+                onChange={(e) =>
+                  onUpdate('shopPage', { hero: { ...hero, subtitle: e.target.value } })
+                }
+                className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              />
+              <div className="absolute right-2.5">
+                <AISparkButton
+                  text={hero.subtitle}
+                  onApply={(val) => onUpdate('shopPage', { hero: { ...hero, subtitle: val } })}
+                />
+              </div>
+            </div>
+          </AdminField>
+
+          <AdminField
+            label="Hero Description"
+            description="Immersive description paragraph detailing the shop collections"
+          >
+            <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
+              <AdminTextarea
+                value={hero.description || ''}
+                onChange={(e) =>
+                  onUpdate('shopPage', { hero: { ...hero, description: e.target.value } })
+                }
+                rows={3}
+                className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              />
+              <div className="absolute right-2.5 top-2.5">
+                <AISparkButton
+                  text={hero.description}
+                  onApply={(val) => onUpdate('shopPage', { hero: { ...hero, description: val } })}
+                />
+              </div>
+            </div>
+          </AdminField>
+
+          <ImageUpload
+            label="Hero Background Image"
+            value={hero.backgroundImage || ''}
+            onChange={(val) => onUpdate('shopPage', { hero: { ...hero, backgroundImage: val } })}
+            folder="cms"
+          />
+        </div>
+        <div className="admin-card p-5 space-y-4">
+          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2">
+            2. Promo Banner Settings
+          </span>
+          <div className="flex items-center justify-between border border-[var(--admin-border)] px-4.5 py-3 rounded-2xl bg-[var(--admin-surface)] mt-5 h-[46px] shadow-[var(--admin-shadow-xs)]">
+            <span className="text-[11px] font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+              Enable Promo Banner
+            </span>
+            <AdminToggle
+              checked={promo.isActive !== false}
+              onChange={() =>
+                onUpdate('shopPage', {
+                  promo: { ...promo, isActive: promo.isActive === false ? true : false },
+                })
+              }
+            />
+          </div>
+          <AdminField label="Title">
+            <AdminInput
+              value={promo.title || ''}
+              onChange={(e) => onUpdate('shopPage', { promo: { ...promo, title: e.target.value } })}
+            />
+          </AdminField>
+          <AdminField label="Highlight Text">
+            <AdminInput
+              value={promo.highlightText || ''}
+              onChange={(e) =>
+                onUpdate('shopPage', { promo: { ...promo, highlightText: e.target.value } })
+              }
+            />
+          </AdminField>
+          <AdminField label="Description">
+            <AdminTextarea
+              value={promo.description || ''}
+              onChange={(e) =>
+                onUpdate('shopPage', { promo: { ...promo, description: e.target.value } })
+              }
+              rows={3}
+            />
+          </AdminField>
+          <div className="grid grid-cols-2 gap-4">
+            <AdminField label="Badge Text">
+              <AdminInput
+                value={promo.badgeText || ''}
+                onChange={(e) =>
+                  onUpdate('shopPage', { promo: { ...promo, badgeText: e.target.value } })
+                }
+              />
+            </AdminField>
+            <AdminField label="Status Text">
+              <AdminInput
+                value={promo.statusText || ''}
+                onChange={(e) =>
+                  onUpdate('shopPage', { promo: { ...promo, statusText: e.target.value } })
+                }
+              />
+            </AdminField>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <AdminField label="CTA Text">
+              <AdminInput
+                value={promo.ctaText || ''}
+                onChange={(e) =>
+                  onUpdate('shopPage', { promo: { ...promo, ctaText: e.target.value } })
+                }
+              />
+            </AdminField>
+            <AdminField label="CTA Link">
+              <AdminInput
+                value={promo.ctaLink || ''}
+                onChange={(e) =>
+                  onUpdate('shopPage', { promo: { ...promo, ctaLink: e.target.value } })
+                }
+              />
+            </AdminField>
+          </div>
+          <ImageUpload
+            label="Promo Section Background Image"
+            value={promo.backgroundImage || ''}
+            onChange={(val) => onUpdate('shopPage', { promo: { ...promo, backgroundImage: val } })}
+            folder="cms"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EventsPageEditor({ content, onUpdate }) {
   const ep = content || {};
   const hero = ep.hero || {};
@@ -1273,6 +1444,80 @@ function EventsPageEditor({ content, onUpdate }) {
           <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2">
             2. Promo Banner Settings
           </span>
+          <div className="flex items-center justify-between border border-[var(--admin-border)] px-4.5 py-3 rounded-2xl bg-[var(--admin-surface)] mt-5 h-[46px] shadow-[var(--admin-shadow-xs)]">
+            <span className="text-[11px] font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider">
+              Enable Promo Banner
+            </span>
+            <AdminToggle
+              checked={promo.isActive !== false}
+              onChange={() =>
+                onUpdate('eventsPage', {
+                  promo: { ...promo, isActive: promo.isActive === false ? true : false },
+                })
+              }
+            />
+          </div>
+          <AdminField label="Title">
+            <AdminInput
+              value={promo.title || ''}
+              onChange={(e) =>
+                onUpdate('eventsPage', { promo: { ...promo, title: e.target.value } })
+              }
+            />
+          </AdminField>
+          <AdminField label="Highlight Text">
+            <AdminInput
+              value={promo.highlightText || ''}
+              onChange={(e) =>
+                onUpdate('eventsPage', { promo: { ...promo, highlightText: e.target.value } })
+              }
+            />
+          </AdminField>
+          <AdminField label="Description">
+            <AdminTextarea
+              value={promo.description || ''}
+              onChange={(e) =>
+                onUpdate('eventsPage', { promo: { ...promo, description: e.target.value } })
+              }
+              rows={3}
+            />
+          </AdminField>
+          <div className="grid grid-cols-2 gap-4">
+            <AdminField label="Badge Text">
+              <AdminInput
+                value={promo.badgeText || ''}
+                onChange={(e) =>
+                  onUpdate('eventsPage', { promo: { ...promo, badgeText: e.target.value } })
+                }
+              />
+            </AdminField>
+            <AdminField label="Status Text">
+              <AdminInput
+                value={promo.statusText || ''}
+                onChange={(e) =>
+                  onUpdate('eventsPage', { promo: { ...promo, statusText: e.target.value } })
+                }
+              />
+            </AdminField>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <AdminField label="CTA Text">
+              <AdminInput
+                value={promo.ctaText || ''}
+                onChange={(e) =>
+                  onUpdate('eventsPage', { promo: { ...promo, ctaText: e.target.value } })
+                }
+              />
+            </AdminField>
+            <AdminField label="CTA Link">
+              <AdminInput
+                value={promo.ctaLink || ''}
+                onChange={(e) =>
+                  onUpdate('eventsPage', { promo: { ...promo, ctaLink: e.target.value } })
+                }
+              />
+            </AdminField>
+          </div>
           <ImageUpload
             label="Promo Section Background Image"
             value={promo.backgroundImage || ''}
@@ -1378,7 +1623,9 @@ function ContactInfoEditor({ content, onUpdate }) {
 
 // 9. CUSTOM INTAKE FORM
 function CustomOrdersEditor({ content, onUpdate }) {
-  const co = content || {};
+  const co = content.customOrdersPage || {};
+  const hero = co.hero || {};
+
   return (
     <div className="admin-card p-6 space-y-6">
       <SectionHeader
@@ -1386,21 +1633,77 @@ function CustomOrdersEditor({ content, onUpdate }) {
         title="Custom Orders Settings"
         description="Configure titles and messages for the bespoke intake flow"
       />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <AdminField label="Intake Page Headline">
-          <AdminInput
-            value={co.pageTitle || ''}
-            onChange={(e) => onUpdate('custom-orders', { pageTitle: e.target.value })}
-            className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
-          />
-        </AdminField>
-        <AdminField label="Intake Form Notice Text">
-          <AdminInput
-            value={co.noticeText || ''}
-            onChange={(e) => onUpdate('custom-orders', { noticeText: e.target.value })}
-            className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
-          />
-        </AdminField>
+      <div className="space-y-6">
+        <div className="admin-card p-5 space-y-4">
+          <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2">
+            Hero Section Banner
+          </span>
+
+          <AdminField
+            label="Hero Title"
+            description="The primary main headline of the custom orders page"
+          >
+            <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
+              <AdminInput
+                value={hero.title || ''}
+                onChange={(e) =>
+                  onUpdate('customOrdersPage', { hero: { ...hero, title: e.target.value } })
+                }
+                className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              />
+              <div className="absolute right-2.5">
+                <AISparkButton
+                  text={hero.title}
+                  onApply={(val) => onUpdate('customOrdersPage', { hero: { ...hero, title: val } })}
+                />
+              </div>
+            </div>
+          </AdminField>
+
+          <AdminField label="Hero Subtitle" description="A short tagline or category group text">
+            <div className="relative flex items-center w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
+              <AdminInput
+                value={hero.subtitle || ''}
+                onChange={(e) =>
+                  onUpdate('customOrdersPage', { hero: { ...hero, subtitle: e.target.value } })
+                }
+                className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              />
+              <div className="absolute right-2.5">
+                <AISparkButton
+                  text={hero.subtitle}
+                  onApply={(val) =>
+                    onUpdate('customOrdersPage', { hero: { ...hero, subtitle: val } })
+                  }
+                />
+              </div>
+            </div>
+          </AdminField>
+
+          <AdminField
+            label="Hero Description"
+            description="Immersive description paragraph detailing the intake flow"
+          >
+            <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
+              <AdminTextarea
+                value={hero.description || ''}
+                onChange={(e) =>
+                  onUpdate('customOrdersPage', { hero: { ...hero, description: e.target.value } })
+                }
+                rows={3}
+                className="!pr-12 !py-3 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              />
+              <div className="absolute right-2.5 top-2.5">
+                <AISparkButton
+                  text={hero.description}
+                  onApply={(val) =>
+                    onUpdate('customOrdersPage', { hero: { ...hero, description: val } })
+                  }
+                />
+              </div>
+            </div>
+          </AdminField>
+        </div>
       </div>
     </div>
   );
@@ -1653,6 +1956,112 @@ function AnnouncementBarEditor({ banners, onUpdate }) {
 
 // 13. HEADER & FOOTERS
 function NavigationFooterEditor({ nav, footer, onUpdate }) {
+  // Navigation arrays
+  const mainLinks = nav.mainLinks || [];
+
+  // Footer arrays
+  const exploreLinks = footer.exploreLinks || [];
+  const studioLinks = footer.studioLinks || [];
+
+  const handleLinkUpdate = (category, idx, field, value) => {
+    if (category === 'mainLinks') {
+      const copy = [...mainLinks];
+      copy[idx] = { ...copy[idx], [field]: value };
+      onUpdate('navigation', { mainLinks: copy });
+    } else {
+      const copy = category === 'exploreLinks' ? [...exploreLinks] : [...studioLinks];
+      copy[idx] = { ...copy[idx], [field]: value };
+      onUpdate('footer', { [category]: copy });
+    }
+  };
+
+  const handleAddLink = (category) => {
+    if (category === 'mainLinks') {
+      const copy = [...mainLinks];
+      copy.push({ label: 'New Link', href: '/', isVisible: true });
+      onUpdate('navigation', { mainLinks: copy });
+    } else {
+      const copy = category === 'exploreLinks' ? [...exploreLinks] : [...studioLinks];
+      copy.push({ label: 'New Link', href: '/' });
+      onUpdate('footer', { [category]: copy });
+    }
+  };
+
+  const handleDeleteLink = (category, idx) => {
+    if (category === 'mainLinks') {
+      const copy = [...mainLinks];
+      copy.splice(idx, 1);
+      onUpdate('navigation', { mainLinks: copy });
+    } else {
+      const copy = category === 'exploreLinks' ? [...exploreLinks] : [...studioLinks];
+      copy.splice(idx, 1);
+      onUpdate('footer', { [category]: copy });
+    }
+  };
+
+  const renderLinkEditor = (title, items, category) => (
+    <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-6 space-y-5 shadow-[var(--admin-shadow-xs)] relative overflow-hidden">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-[12px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em]">
+          {title}
+        </span>
+        <button
+          onClick={() => handleAddLink(category)}
+          className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-accent)] border border-[var(--admin-accent)]/30 hover:border-[var(--admin-accent)] px-3.5 py-1.5 rounded-full bg-[var(--admin-surface)] transition-all cursor-pointer shadow-[var(--admin-shadow-xs)] hover:shadow-xs"
+        >
+          + Add Link
+        </button>
+      </div>
+      <div className="space-y-4">
+        {items.map((link, idx) => (
+          <div
+            key={idx}
+            className="flex flex-col sm:flex-row gap-3 items-end p-4 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-xl"
+          >
+            <div className="flex-1 w-full">
+              <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] mb-1 block">
+                Label
+              </span>
+              <AdminInput
+                value={link.label || ''}
+                onChange={(e) => handleLinkUpdate(category, idx, 'label', e.target.value)}
+                className="!py-2 !text-[11px] bg-[var(--admin-surface)]"
+              />
+            </div>
+            <div className="flex-1 w-full">
+              <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] mb-1 block">
+                URL Path
+              </span>
+              <AdminInput
+                value={link.href || ''}
+                onChange={(e) => handleLinkUpdate(category, idx, 'href', e.target.value)}
+                className="!py-2 !text-[11px] bg-[var(--admin-surface)]"
+              />
+            </div>
+            {category === 'mainLinks' && (
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)]">
+                  Visible
+                </span>
+                <AdminToggle
+                  checked={link.isVisible !== false}
+                  onChange={() => handleLinkUpdate(category, idx, 'isVisible', !link.isVisible)}
+                />
+              </div>
+            )}
+            <button
+              onClick={() => handleDeleteLink(category, idx)}
+              className="mb-1 w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all cursor-pointer shrink-0"
+              title="Remove Link"
+            >
+              <span className="material-symbols-outlined text-[16px]">delete</span>
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-6 space-y-5 shadow-[var(--admin-shadow-xs)] relative overflow-hidden">
@@ -1683,6 +2092,8 @@ function NavigationFooterEditor({ nav, footer, onUpdate }) {
         </div>
       </div>
 
+      {renderLinkEditor('Main Navigation Links', mainLinks, 'mainLinks')}
+
       <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-6 space-y-5 shadow-[var(--admin-shadow-xs)] relative overflow-hidden">
         <SectionHeader
           icon="bottom_navigation"
@@ -1697,7 +2108,74 @@ function NavigationFooterEditor({ nav, footer, onUpdate }) {
             className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
           />
         </AdminField>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <AdminField label="Contact Phone">
+            <AdminInput
+              value={footer.phone || ''}
+              onChange={(e) => onUpdate('footer', { phone: e.target.value })}
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+            />
+          </AdminField>
+          <AdminField label="Contact Email">
+            <AdminInput
+              value={footer.email || ''}
+              onChange={(e) => onUpdate('footer', { email: e.target.value })}
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+            />
+          </AdminField>
+          <AdminField label="Copyright Notice">
+            <AdminInput
+              value={footer.copyright || ''}
+              onChange={(e) => onUpdate('footer', { copyright: e.target.value })}
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+            />
+          </AdminField>
+        </div>
+
+        <div className="pt-4 border-t border-[var(--admin-border-subtle)]">
+          <span className="text-[12px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] mb-4 block">
+            Social Media Links
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <AdminField label="Instagram URL">
+              <AdminInput
+                value={footer.socialLinks?.instagram || ''}
+                onChange={(e) =>
+                  onUpdate('footer', {
+                    socialLinks: { ...footer.socialLinks, instagram: e.target.value },
+                  })
+                }
+                className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              />
+            </AdminField>
+            <AdminField label="Facebook URL">
+              <AdminInput
+                value={footer.socialLinks?.facebook || ''}
+                onChange={(e) =>
+                  onUpdate('footer', {
+                    socialLinks: { ...footer.socialLinks, facebook: e.target.value },
+                  })
+                }
+                className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              />
+            </AdminField>
+            <AdminField label="Pinterest URL">
+              <AdminInput
+                value={footer.socialLinks?.pinterest || ''}
+                onChange={(e) =>
+                  onUpdate('footer', {
+                    socialLinks: { ...footer.socialLinks, pinterest: e.target.value },
+                  })
+                }
+                className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)]"
+              />
+            </AdminField>
+          </div>
+        </div>
       </div>
+
+      {renderLinkEditor('Footer Explore Links', exploreLinks, 'exploreLinks')}
+      {renderLinkEditor('Footer Studio Links', studioLinks, 'studioLinks')}
     </div>
   );
 }
@@ -1898,18 +2376,18 @@ export function AdminContent() {
     module: 'Content',
     pageTitle: 'Content Management',
     initialData: websiteContent,
-    enabled: !autoPublish && !dataLoading,
+    enabled: !dataLoading,
   });
 
-  // Use draft content if available, otherwise fallback to context content
-  const activeContent = draftWebsiteContent || websiteContent;
+  const isHomeSection = activeSection === 'home';
+  const isDraftMode = true;
+
+  // Use draft content if in draft mode, otherwise fallback to context content
+  const activeContent = isDraftMode ? draftWebsiteContent : websiteContent;
 
   const handleUpdateContent = (section, payload) => {
-    const isHomeSection = activeSection === 'home';
-    const isAutoPublishDisabled = isHomeSection ? true : !autoPublish;
-
     // If auto-publish is disabled (globally or just for this section), save to draft
-    if (isAutoPublishDisabled) {
+    if (isDraftMode) {
       setDraftWebsiteContent((prev) => ({
         ...prev,
         [section]: { ...(prev[section] || {}), ...payload },
@@ -1917,14 +2395,12 @@ export function AdminContent() {
     }
 
     // Also dispatch to context (which might auto-save depending on its logic)
-    updateContent(section, payload, isAutoPublishDisabled);
+    updateContent(section, payload, isDraftMode);
   };
 
   const handlePublishAll = async () => {
     await publishAllContent();
-    if (!autoPublish) {
-      await deleteDraft();
-    }
+    await deleteDraft();
   };
 
   const categoryScrollRef = useRef(null);
@@ -1978,52 +2454,17 @@ export function AdminContent() {
                 <p className="text-[10px] text-[var(--admin-text-secondary)] tracking-wide">
                   Website Layout & Theme Styling
                 </p>
-                {!autoPublish && (
-                  <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
-                )}
+                <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-nowrap sm:w-auto justify-end shrink-0">
-              {activeSection !== 'home' && (
-                <>
-                  <div className="hidden sm:flex items-center gap-2 text-[11px] text-[var(--admin-success)] font-semibold uppercase tracking-wider bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] px-4 py-1.5 rounded-full shadow-[var(--admin-shadow-xs)]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-success)] animate-pulse " />
-                    Live Sync Mode
-                  </div>
-
-                  {/* Quick Auto-Publish Toggle Switch */}
-                  <div className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-3 rounded-full shadow-[var(--admin-shadow-xs)] h-[34px] shrink-0">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">
-                      Auto-Publish
-                    </span>
-                    <AdminToggle
-                      checked={autoPublish}
-                      onChange={toggleAutoPublish}
-                      size="sm"
-                      aria-label="Toggle Auto-Publish"
-                    />
-                  </div>
-
-                  {autoPublish && (
-                    <div className="flex items-center gap-2 px-3 bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] rounded-full text-[11px] font-bold uppercase tracking-wider h-[34px] shrink-0">
-                      <span className="material-symbols-outlined text-[14px] animate-spin-slow">
-                        sync
-                      </span>
-                      <span>Auto-Publishing</span>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {(!autoPublish || activeSection === 'home') && (
-                <button
-                  onClick={handlePublishAll}
-                  className="flex items-center gap-2 px-4 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent-hover)] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[var(--admin-shadow-sm)] hover:shadow-[var(--admin-shadow-md)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[var(--admin-accent)]/40 h-[34px]"
-                >
-                  <span className="material-symbols-outlined text-[14px] font-bold">publish</span>
-                  <span>Publish</span>
-                </button>
-              )}
+              <button
+                onClick={handlePublishAll}
+                className="flex items-center gap-2 px-4 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent-hover)] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[var(--admin-shadow-sm)] hover:shadow-[var(--admin-shadow-md)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[var(--admin-accent)]/40 h-[34px]"
+              >
+                <span className="material-symbols-outlined text-[14px] font-bold">publish</span>
+                <span>Publish</span>
+              </button>
             </div>
           </motion.div>
 
@@ -2198,6 +2639,12 @@ export function AdminContent() {
                       onUpdate={handleUpdateContent}
                     />
                   )}
+                  {activeSection === 'shop-page' && (
+                    <ShopPageEditor
+                      content={activeContent.shopPage}
+                      onUpdate={handleUpdateContent}
+                    />
+                  )}
                   {activeSection === 'events-page' && (
                     <EventsPageEditor
                       content={activeContent.eventsPage}
@@ -2242,7 +2689,7 @@ export function AdminContent() {
           </div>
 
           <PublishBar
-            hasChanges={hasUnsavedContent && !autoPublish}
+            hasChanges={hasUnsavedContent}
             onPublish={handlePublishAll}
             onReset={() => {}}
           />

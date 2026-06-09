@@ -13,6 +13,26 @@
     <!-- Anti-Stale Service Worker Cleanup Script -->
     <script defer src="/sw-cleanup.js"></script>
 
+    <!-- Font Loading Fallback Handler -->
+    <script>
+      // Add a class while fonts are loading, and replace it when they succeed or fail
+      if ("fonts" in document) {
+        document.documentElement.classList.add('fonts-loading');
+        Promise.all([
+          document.fonts.load('24px "Material Symbols Outlined"'),
+          document.fonts.load('16px "Inter"')
+        ]).then(function() {
+          document.documentElement.classList.remove('fonts-loading');
+          document.documentElement.classList.add('fonts-loaded');
+        }).catch(function() {
+          document.documentElement.classList.remove('fonts-loading');
+          document.documentElement.classList.add('fonts-failed');
+        });
+      } else {
+        document.documentElement.classList.add('fonts-loaded');
+      }
+    </script>
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -110,7 +130,7 @@
 
       /* Prevent FOUC/FOIT and layout shifts for Material symbols */
       .material-symbols-outlined {
-        font-family: 'Material Symbols Outlined';
+        font-family: 'Material Symbols Outlined', sans-serif;
         font-weight: normal;
         font-style: normal;
         font-size: 24px;
@@ -119,6 +139,19 @@
         text-transform: none;
         display: inline-block;
         white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased;
+        /* Prevent long fallback text from breaking layout */
+        max-width: 1em;
+        overflow: hidden;
+      }
+
+      /* Hide ugly ligature text (e.g. "storefront") completely until the font is loaded */
+      html:not(.fonts-loaded) .material-symbols-outlined {
+        color: transparent !important;
+        user-select: none !important;
       }
 
       html.fonts-loading .material-symbols-outlined::after {

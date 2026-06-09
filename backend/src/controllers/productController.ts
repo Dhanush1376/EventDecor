@@ -3,6 +3,7 @@ import fs from 'fs';
 import dns from 'dns/promises';
 import path from 'path';
 import ProductService from '../services/productService';
+import FilterService from '../services/FilterService';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -12,6 +13,12 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const result = await ProductService.getAllProducts(req.query);
   res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
   res.status(200).json(new ApiResponse(true, 'Products fetched successfully', result));
+});
+
+export const getDynamicFilters = asyncHandler(async (req: Request, res: Response) => {
+  const result = await FilterService.getDynamicFilters(req.query);
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+  res.status(200).json(new ApiResponse(true, 'Filters fetched successfully', result));
 });
 
 export const getAdminProducts = asyncHandler(async (req: Request, res: Response) => {

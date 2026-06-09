@@ -103,6 +103,13 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (rating === 0) return toast.error('Please select a star rating.');

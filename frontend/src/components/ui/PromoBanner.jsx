@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { handleImageError } from '../../utils/imageUtils';
+import { getOptimizedUrl } from '../../utils/imageUtils';
 
 export function PromoBanner({
   backgroundImage,
@@ -30,7 +31,7 @@ export function PromoBanner({
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 10, ease: 'linear' }}
             onError={handleImageError}
-            src={backgroundImage}
+            src={getOptimizedUrl(backgroundImage)}
             className="w-full h-full object-cover opacity-45 select-none pointer-events-none"
             alt="Promo Backdrop"
           />

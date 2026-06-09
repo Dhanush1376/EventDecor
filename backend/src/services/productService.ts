@@ -99,11 +99,10 @@ function normalizeProductImages(data: Partial<IProduct>, existingProduct?: IProd
 }
 
 class ProductService {
-  static async getAllProducts(queryParams: any, isAdmin: boolean = false) {
+  static async buildProductFilterQuery(queryParams: any, isAdmin: boolean = false) {
     const {
       category,
       search,
-      sort,
       featured,
       minPrice,
       maxPrice,
@@ -115,8 +114,8 @@ class ProductService {
       spellcheck,
       bypassCorrection,
       ids,
+      ...dynamicFilters
     } = queryParams;
-    const { page, limit, skip } = getPaginationOptions(queryParams);
 
     const filter: any = isAdmin ? {} : { isActive: true };
 
@@ -170,6 +169,44 @@ class ProductService {
         };
     }
 
+    // Dynamic Filters (e.g. ?Color=Red,Blue or ?Size=M)
+    const dynamicFilterOrs: any[] = [];
+    Object.keys(dynamicFilters).forEach((key) => {
+      // Ignore pagination and known sorts
+      if (['page', 'limit', 'skip', 'sort'].includes(key)) return;
+
+      const values = String(dynamicFilters[key])
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+
+      if (values.length > 0) {
+        // Build regex for each value
+        const valRegexes = values.map((v) => new RegExp(`^${escapeRegex(v)}$`, 'i'));
+
+        dynamicFilterOrs.push({
+          $or: [
+            // Option 1: It's a tag
+            { tags: { $in: valRegexes } },
+            // Option 2: It's a variant where name matches key and value matches val
+            {
+              variants: {
+                $elemMatch: {
+                  name: new RegExp(`^${escapeRegex(key)}$`, 'i'),
+                  value: { $in: valRegexes },
+                },
+              },
+            },
+          ],
+        });
+      }
+    });
+
+    if (dynamicFilterOrs.length > 0) {
+      filter.$and = filter.$and || [];
+      filter.$and.push(...dynamicFilterOrs);
+    }
+
     let correctedQuery: string | undefined;
     const shouldSpellcheck = spellcheck !== 'false' && bypassCorrection !== 'true';
 
@@ -211,7 +248,7 @@ class ProductService {
       const uniqueSearchTerms = [...new Set(allSearchTerms.filter(Boolean))];
       const regexPatterns = uniqueSearchTerms.map((t) => new RegExp(escapeRegex(t), 'i'));
 
-      filter.$or = [
+      const searchOr = [
         { title: { $in: regexPatterns } },
         { teluguTitle: { $in: regexPatterns } },
         { category: { $in: regexPatterns } },
@@ -222,11 +259,26 @@ class ProductService {
 
       // Match colors if detected
       if (aiAnalysis.colors.length > 0) {
-        filter.$or.push({
+        searchOr.push({
           tags: { $in: aiAnalysis.colors.map((c) => new RegExp(escapeRegex(c), 'i')) },
         });
       }
+
+      if (filter.$and) {
+        filter.$and.push({ $or: searchOr });
+      } else {
+        filter.$or = searchOr;
+      }
     }
+
+    return { filter, correctedQuery };
+  }
+
+  static async getAllProducts(queryParams: any, isAdmin: boolean = false) {
+    const { sort } = queryParams;
+    const { page, limit, skip } = getPaginationOptions(queryParams);
+
+    const { filter, correctedQuery } = await this.buildProductFilterQuery(queryParams, isAdmin);
 
     let sortOptions: any = { createdAt: -1 };
     if (sort) {
@@ -237,7 +289,12 @@ class ProductService {
     }
 
     const [products, totalCount] = await Promise.all([
-      Product.find(filter).sort(sortOptions).skip(skip).limit(limit).lean(),
+      Product.find(filter)
+        .select(isAdmin ? '' : '-description -seo_keywords -customizationNote')
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
       Product.countDocuments(filter),
     ]);
 

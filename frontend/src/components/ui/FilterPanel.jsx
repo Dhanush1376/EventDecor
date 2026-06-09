@@ -59,6 +59,7 @@ const Checkbox = ({ label, count, type, currentFilters, onToggleFilter }) => {
 };
 
 export function FilterPanel({
+  filterGroups = [],
   currentFilters,
   onToggleFilter,
   onClearAll,
@@ -71,16 +72,39 @@ export function FilterPanel({
 }) {
   const [activeSections, setActiveSections] = useState({
     sort: true,
-    price: true,
-    material: true,
-    collection: true,
   });
+
+  // Initialize active sections for dynamic filters
+  useEffect(() => {
+    if (filterGroups && filterGroups.length > 0) {
+      setActiveSections((prev) => {
+        const next = { ...prev };
+        filterGroups.forEach((group) => {
+          if (next[group.id] === undefined) {
+            next[group.id] = true;
+          }
+        });
+        return next;
+      });
+    }
+  }, [filterGroups]);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   const toggleSection = (section) => {
     setActiveSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -101,7 +125,7 @@ export function FilterPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6 pb-3 border-b border-outline-variant/30">
         <div className="flex flex-col">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">Filters</h2>
+          <h2 className="font-label font-headline-md text-on-surface font-bold">Filters</h2>
           {isOpen && (
             <span className="font-label text-[10px] text-primary uppercase tracking-[0.3em] mt-1">
               {mobileSubtitle}
@@ -146,42 +170,37 @@ export function FilterPanel({
           ))}
         </FilterSection>
 
-        <FilterSection
-          title="Price Range"
-          id="price"
-          activeSections={activeSections}
-          onToggle={toggleSection}
-        >
-          {renderCheckbox('price', 'Under ₹2,000')}
-          {renderCheckbox('price', '₹2,000 - ₹5,000')}
-          {renderCheckbox('price', '₹5,000 - ₹10,000')}
-          {renderCheckbox('price', 'Over ₹10,000')}
-        </FilterSection>
+        {filterGroups.map((group) => {
+          // Collect all options for this group from backend + any currently selected ones
+          // to ensure selected options don't disappear if their count goes to 0 due to other filters
+          const backendOptions = group.options || [];
+          const selectedValues = currentFilters[group.id] || [];
 
-        <FilterSection
-          title="Material"
-          id="material"
-          activeSections={activeSections}
-          onToggle={toggleSection}
-        >
-          {renderCheckbox('material', 'Pure Silk', '12')}
-          {renderCheckbox('material', 'Brass', '8')}
-          {renderCheckbox('material', 'Organic Cotton', '15')}
-          {renderCheckbox('material', 'Handmade Paper', '24')}
-        </FilterSection>
+          const finalOptionsMap = new Map();
+          backendOptions.forEach((opt) => finalOptionsMap.set(opt.value, opt));
 
-        <FilterSection
-          title="Collection"
-          id="collection"
-          activeSections={activeSections}
-          onToggle={toggleSection}
-        >
-          {renderCheckbox('collection', 'Traditional Wedding Decor')}
-          {renderCheckbox('collection', 'Festival Decorations')}
-          {renderCheckbox('collection', 'Engagement Ring Trays')}
-          {renderCheckbox('collection', 'Pooja Decoration Sets')}
-          {renderCheckbox('collection', 'Floral Decoration Sets')}
-        </FilterSection>
+          selectedValues.forEach((val) => {
+            if (!finalOptionsMap.has(val)) {
+              finalOptionsMap.set(val, { value: val, label: val, count: 0 }); // Retain selected
+            }
+          });
+
+          const finalOptions = Array.from(finalOptionsMap.values());
+
+          return (
+            <FilterSection
+              key={group.id}
+              title={group.label}
+              id={group.id}
+              activeSections={activeSections}
+              onToggle={toggleSection}
+            >
+              {finalOptions.map((opt) =>
+                renderCheckbox(group.id, opt.value, opt.count > 0 ? opt.count : null),
+              )}
+            </FilterSection>
+          );
+        })}
       </div>
     </div>
   );

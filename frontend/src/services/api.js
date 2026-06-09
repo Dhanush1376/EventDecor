@@ -108,6 +108,9 @@ const isQueueable = (url, method) => {
   if (path.includes('/payment') || path.includes('/verify-payment')) return false;
   if (path.includes('/safety-lock') || path.includes('/cms/publish')) return false;
 
+  // Exclude tracking/analytics to prevent toast spam for background analytics
+  if (path.includes('/tracking') || path.includes('/analytics')) return false;
+
   return true;
 };
 

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 const buildId =
   process.env.VITE_BUILD_ID ||
@@ -12,7 +13,11 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_BUILD_ID': JSON.stringify(buildId),
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    visualizer({ filename: 'stats.html', gzipSize: true, template: 'treemap' }),
+  ],
 
   esbuild: {
     drop: ['debugger'],
@@ -49,90 +54,13 @@ export default defineConfig({
       },
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) {
-            // Feature-level splitting for app code (avoid monolithic chunks)
-            if (
-              id.includes('/src/admin/layouts/') ||
-              id.includes('/src/admin/context/') ||
-              id.includes('/src/admin/components/AdminSidebar') ||
-              id.includes('/src/admin/components/AdminTopBar')
-            ) {
-              return 'admin-core';
-            }
-            if (id.includes('/src/admin/pages/AdminAnalytics')) return 'admin-analytics';
-            if (id.includes('/src/admin/pages/AdminRecommendationAnalytics'))
-              return 'admin-recommendations';
-            if (id.includes('/src/admin/pages/AdminDashboard')) return 'admin-dashboard';
-            if (
-              id.includes('/src/admin/pages/AdminProducts') ||
-              id.includes('/src/admin/pages/AdminAddProduct') ||
-              id.includes('/src/admin/pages/AdminCategories') ||
-              id.includes('/src/admin/pages/AdminInventory')
-            ) {
-              return 'admin-catalog';
-            }
-            if (
-              id.includes('/src/admin/pages/AdminOrders') ||
-              id.includes('/src/admin/pages/AdminOrderDetail') ||
-              id.includes('/src/admin/pages/AdminPayments') ||
-              id.includes('/src/admin/pages/AdminBookingDetail')
-            ) {
-              return 'admin-orders';
-            }
-            if (
-              id.includes('/src/admin/pages/AdminContent') ||
-              id.includes('/src/admin/pages/AdminLayouts') ||
-              id.includes('/src/admin/pages/AdminGallery') ||
-              id.includes('/src/admin/pages/AdminEvents')
-            ) {
-              return 'admin-content';
-            }
-            if (
-              id.includes('/src/admin/pages/AdminCustomers') ||
-              id.includes('/src/admin/pages/AdminCustomerProfile') ||
-              id.includes('/src/admin/pages/AdminTeam') ||
-              id.includes('/src/admin/pages/AdminSystemUsers') ||
-              id.includes('/src/admin/pages/AdminSettings') ||
-              id.includes('/src/admin/pages/AdminConfig') ||
-              id.includes('/src/admin/pages/AdminCampaigns') ||
-              id.includes('/src/admin/pages/AdminNotifications') ||
-              id.includes('/src/admin/pages/AdminCoupons') ||
-              id.includes('/src/admin/pages/AdminCreateCoupon') ||
-              id.includes('/src/admin/pages/AdminInquiries')
-            ) {
-              return 'admin-management';
-            }
-            if (id.includes('/src/admin/pages/')) {
-              return 'admin-pages';
-            }
-            if (
-              id.includes('/src/checkout/CheckoutProvider') ||
-              id.includes('/src/pages/Checkout')
-            ) {
-              return 'checkout-core';
-            }
-            if (
-              id.includes('/src/checkout/CheckoutAddressStep') ||
-              id.includes('/src/checkout/CheckoutPaymentStep') ||
-              id.includes('/src/hooks/useRazorpay')
-            ) {
-              return 'checkout-payment';
-            }
-            if (
-              id.includes('/src/components/sections/RecommendationSystem') ||
-              id.includes('/src/services/recommendationService') ||
-              id.includes('/src/components/sections/PersonalizedFeed')
-            ) {
-              return 'recommendations';
-            }
-            if (id.includes('/src/pages/Dashboard') || id.includes('/src/hooks/useDashboardData')) {
-              return 'dashboard';
-            }
-            if (id.includes('/src/pages/CustomOrders')) return 'custom-orders';
-            if (id.includes('/src/pages/EventDetail')) return 'event-detail';
-            return undefined;
+          if (
+            id.includes('src/components/ui/') ||
+            id.includes('src/components/shared/') ||
+            id.includes('src/components/sections/')
+          ) {
+            return 'ui-components';
           }
-
           if (id.includes('node_modules/react-dom/') || id.includes('@hot-loader/react-dom')) {
             return 'react-dom';
           }

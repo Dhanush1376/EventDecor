@@ -8,6 +8,10 @@ export const galleryService = {
     const response = await api.get('/gallery', { params });
     return response.data;
   },
+  getDynamicFilters: async (params) => {
+    const response = await api.get('/gallery/filters', { params });
+    return response.data;
+  },
   getById: async (id) => {
     const response = await api.get(`/gallery/${id}`);
     return response.data;

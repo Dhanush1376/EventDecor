@@ -9,23 +9,67 @@ import logger from '../config/logger';
 import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 import { ChangeTracker } from '../utils/ChangeTracker';
 
-export const getGalleryItems = asyncHandler(async (req: Request, res: Response) => {
-  const { category, event, search, type } = req.query;
-  const { page, limit, skip } = getPaginationOptions(req.query);
+function escapeRegex(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildGalleryFilterQuery(queryParams: any) {
+  const { category, event, search, type, style, ...dynamicFilters } = queryParams;
 
   const filter: any = { isActive: true };
-  if (category) filter.category = category;
-  if (event) filter.event = event;
-  if (type) filter.type = type;
+  if (category && String(category).toLowerCase() !== 'all') filter.category = category;
+  if (event && String(event).toLowerCase() !== 'all') filter.event = event;
+  if (type && String(type).toLowerCase() !== 'all') filter.type = type;
+  if (style && String(style).toLowerCase() !== 'all') filter.style = style;
+
   let sortQuery: any = { createdAt: -1 };
 
   if (search) {
-    const cleanSearch = (search as string).trim();
+    const cleanSearch = String(search).trim();
     if (cleanSearch) {
       filter.$text = { $search: cleanSearch };
       sortQuery = { score: { $meta: 'textScore' } };
     }
   }
+
+  // Dynamic Filters (e.g. ?Tags=Wedding)
+  const dynamicFilterOrs: any[] = [];
+  Object.keys(dynamicFilters).forEach((key) => {
+    // Ignore pagination and known sorts
+    if (['page', 'limit', 'skip', 'sort'].includes(key)) return;
+
+    const values = String(dynamicFilters[key])
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    if (values.length > 0) {
+      const valRegexes = values.map((v) => new RegExp(`^${escapeRegex(v)}$`, 'i'));
+
+      dynamicFilterOrs.push({
+        $or: [
+          { tags: { $in: valRegexes } },
+          { style: { $in: valRegexes } },
+          { event: { $in: valRegexes } },
+        ],
+      });
+    }
+  });
+
+  if (dynamicFilterOrs.length > 0) {
+    if (filter.$and) {
+      filter.$and.push(...dynamicFilterOrs);
+    } else {
+      filter.$and = dynamicFilterOrs;
+    }
+  }
+
+  return { filter, sortQuery };
+}
+
+export const getGalleryItems = asyncHandler(async (req: Request, res: Response) => {
+  const { page, limit, skip } = getPaginationOptions(req.query);
+  const { filter, sortQuery } = buildGalleryFilterQuery(req.query);
 
   const [items, totalCount] = await Promise.all([
     Gallery.find(filter)
@@ -46,6 +90,77 @@ export const getGalleryItems = asyncHandler(async (req: Request, res: Response) 
         formatPaginationResponse(items, totalCount, page, limit),
       ),
     );
+});
+
+export const getDynamicGalleryFilters = asyncHandler(async (req: Request, res: Response) => {
+  const { filter } = buildGalleryFilterQuery(req.query);
+
+  const facetPipeline: any = {
+    categories: [{ $sortByCount: '$category' }],
+    events: [{ $match: { event: { $exists: true, $ne: '' } } }, { $sortByCount: '$event' }],
+    styles: [{ $match: { style: { $exists: true, $ne: '' } } }, { $sortByCount: '$style' }],
+    tags: [{ $unwind: '$tags' }, { $sortByCount: '$tags' }],
+  };
+
+  const aggregation = await Gallery.aggregate([{ $match: filter }, { $facet: facetPipeline }]);
+
+  const result = aggregation[0];
+  const filterGroups: any[] = [];
+
+  if (result.categories?.length > 1) {
+    filterGroups.push({
+      id: 'category',
+      label: 'Category',
+      type: 'checkbox',
+      options: result.categories.map((c: any) => ({
+        value: c._id,
+        label: c._id,
+        count: c.count,
+      })),
+    });
+  }
+
+  if (result.events?.length > 1) {
+    filterGroups.push({
+      id: 'event',
+      label: 'Event Type',
+      type: 'checkbox',
+      options: result.events.map((e: any) => ({
+        value: e._id,
+        label: e._id,
+        count: e.count,
+      })),
+    });
+  }
+
+  if (result.styles?.length > 1) {
+    filterGroups.push({
+      id: 'style',
+      label: 'Design Style',
+      type: 'checkbox',
+      options: result.styles.map((s: any) => ({
+        value: s._id,
+        label: s._id,
+        count: s.count,
+      })),
+    });
+  }
+
+  if (result.tags?.length > 1) {
+    filterGroups.push({
+      id: 'tags',
+      label: 'Tags',
+      type: 'checkbox',
+      options: result.tags.slice(0, 15).map((t: any) => ({
+        value: t._id,
+        label: t._id,
+        count: t.count,
+      })),
+    });
+  }
+
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+  res.status(200).json(new ApiResponse(true, 'Filters fetched successfully', filterGroups));
 });
 
 export const getGalleryById = asyncHandler(async (req: Request, res: Response) => {

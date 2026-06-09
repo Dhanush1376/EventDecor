@@ -34,6 +34,17 @@ export function LoyaltyPanel() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (isCouponModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isCouponModalOpen]);
+
   const handleApplyReferral = async (e) => {
     e.preventDefault();
     if (!referralInput.trim()) {

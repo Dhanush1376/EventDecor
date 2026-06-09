@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getProducts,
+  getDynamicFilters,
   getAdminProducts,
   getProductById,
   createProduct,
@@ -20,6 +21,7 @@ import { dynamicResponseCache } from '../middleware/dynamicCacheMiddleware';
 const router = Router();
 
 router.get('/', dynamicResponseCache(120, 'public'), cacheResponse(120), getProducts);
+router.get('/filters', dynamicResponseCache(60, 'public'), cacheResponse(60), getDynamicFilters);
 router.get('/categories', dynamicResponseCache(300, 'public'), cacheResponse(300), getCategories);
 
 // Protected Admin Routes

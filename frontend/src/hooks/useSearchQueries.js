@@ -2,6 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { searchService } from '../services/searchService';
 
 export function useSearch(query, options = {}) {
+  const {
+    enabled = true,
+    staleTime = 2 * 60 * 1000,
+    gcTime = 10 * 60 * 1000,
+    ...restOptions
+  } = options;
   const params = {
     q: query,
     category: options.category,
@@ -19,49 +25,72 @@ export function useSearch(query, options = {}) {
       const res = await searchService.search(query, { ...options, signal });
       return res.success ? res.data : res;
     },
-    enabled: Boolean(query || options.category || options.type),
-    staleTime: 2 * 60 * 1000, // 2 minutes search result cache
-    gcTime: 10 * 60 * 1000,
+    enabled: Boolean(query || options.category || options.type) && enabled,
+    staleTime,
+    gcTime,
+    ...restOptions,
   });
 }
 
 export function useAutocomplete(query, options = {}) {
-  const limit = options.limit || 8;
+  const {
+    limit = 8,
+    enabled = true,
+    staleTime = 5 * 60 * 1000,
+    gcTime = 15 * 60 * 1000,
+    ...restOptions
+  } = options;
   return useQuery({
     queryKey: ['autocomplete', query, limit],
     queryFn: async ({ signal }) => {
       const res = await searchService.autocomplete(query, { ...options, signal });
       return res.success ? res.data : res;
     },
-    enabled: Boolean(query && query.trim().length >= 2),
-    staleTime: 5 * 60 * 1000, // cache suggestions for 5 minutes
-    gcTime: 15 * 60 * 1000,
+    enabled: Boolean(query && query.trim().length >= 2) && enabled,
+    staleTime,
+    gcTime,
+    ...restOptions,
   });
 }
 
 export function useTrendingSearches(options = {}) {
-  const limit = options.limit || 10;
+  const {
+    limit = 10,
+    enabled = true,
+    staleTime = 10 * 60 * 1000,
+    gcTime = 30 * 60 * 1000,
+    ...restOptions
+  } = options;
   return useQuery({
     queryKey: ['search', 'trending', limit],
     queryFn: async ({ signal }) => {
       const res = await searchService.getTrending({ ...options, signal });
       return res.success ? res.data : res;
     },
-    staleTime: 10 * 60 * 1000, // trending searches rarely change, 10 min cache
-    gcTime: 30 * 60 * 1000,
+    staleTime,
+    gcTime,
+    enabled,
+    ...restOptions,
   });
 }
 
 export function useRelatedSearches(query, options = {}) {
-  const limit = options.limit || 5;
+  const {
+    limit = 5,
+    enabled = true,
+    staleTime = 5 * 60 * 1000,
+    gcTime = 15 * 60 * 1000,
+    ...restOptions
+  } = options;
   return useQuery({
     queryKey: ['search', 'related', query, limit],
     queryFn: async ({ signal }) => {
       const res = await searchService.getRelated(query, { ...options, signal });
       return res.success ? res.data : res;
     },
-    enabled: Boolean(query),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    enabled: Boolean(query) && enabled,
+    staleTime,
+    gcTime,
+    ...restOptions,
   });
 }

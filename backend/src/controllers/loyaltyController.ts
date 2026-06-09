@@ -31,10 +31,14 @@ export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Respon
   // Fetch detailed wallet ledger sorted by latest transaction first
   const transactions = await WalletTransaction.find({ userId })
     .populate('orderId', 'invoiceNumber total')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
 
   // Fetch active promotional coupons for the coupon center
-  const activeCoupons = await Coupon.find({ isActive: true, expiryDate: { $gt: new Date() } });
+  const activeCoupons = await Coupon.find({
+    isActive: true,
+    expiryDate: { $gt: new Date() },
+  }).lean();
 
   // Compute lifetime spend progress using fast MongoDB aggregation
   const spendAggregation = await Order.aggregate([
@@ -118,7 +122,8 @@ export const getAdminReviews = asyncHandler(async (req: Request, res: Response) 
       .populate('customer', 'name email walletBalance')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
     Review.countDocuments(filter),
   ]);
 

@@ -55,6 +55,7 @@
     "redis": "^5.12.1",
     "sharp": "^0.34.5",
     "socket.io": "^4.8.3",
+    "streamifier": "^0.1.1",
     "winston": "^3.19.0",
     "xss-clean": "^0.1.4",
     "zod": "^4.4.3"
@@ -74,6 +75,7 @@
     "@types/nodemailer": "^8.0.0",
     "@types/pdfkit": "^0.17.6",
     "@types/sharp": "^0.31.1",
+    "@types/streamifier": "^0.1.2",
     "@types/supertest": "^6.0.3",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.2",

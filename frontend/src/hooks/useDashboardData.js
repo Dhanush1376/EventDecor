@@ -19,8 +19,8 @@ export function useDashboardData(userId) {
       return Array.isArray(payload) ? payload : payload.data || [];
     },
     enabled: Boolean(userId),
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const rentalsQuery = useQuery({
@@ -31,8 +31,8 @@ export function useDashboardData(userId) {
       return Array.isArray(payload) ? payload : payload.data || [];
     },
     enabled: Boolean(userId),
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const addressesQuery = useUserAddresses();

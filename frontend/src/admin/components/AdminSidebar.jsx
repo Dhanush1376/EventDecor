@@ -30,7 +30,7 @@ const navSections = [
       {
         label: 'Edit Web Pages',
         icon: 'edit_note',
-        path: '/admin/content',
+        path: '/admin/homepage',
         keywords: 'cms, homepage, hero, pages, policy',
         domain: 'settings',
       },

@@ -7,6 +7,7 @@ import {
   deleteGalleryItem,
   likeGalleryItem,
   getGalleryCategories,
+  getDynamicGalleryFilters,
 } from '../controllers/galleryController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 import { cacheResponse } from '../middleware/cacheMiddleware';
@@ -22,6 +23,12 @@ const router = Router();
 
 // Public Routes (list endpoints only — :id increments view counts)
 router.get('/', dynamicResponseCache(300, 'public'), cacheResponse(300), getGalleryItems);
+router.get(
+  '/filters',
+  dynamicResponseCache(60, 'public'),
+  cacheResponse(60),
+  getDynamicGalleryFilters,
+);
 router.get(
   '/categories',
   dynamicResponseCache(600, 'public'),

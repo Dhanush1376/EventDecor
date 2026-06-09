@@ -20,7 +20,7 @@ export function useCartQuery() {
       return res.success ? res.data : res;
     },
     enabled: checkAuthLocal(),
-    staleTime: 1 * 60 * 1000, // 1 minute stale time
+    staleTime: 3 * 60 * 1000, // 3 minutes stale time
     gcTime: 30 * 60 * 1000,
   });
 }

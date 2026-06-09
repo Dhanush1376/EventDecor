@@ -25,7 +25,6 @@
     "lodash.debounce": "^4.0.8",
     "logrocket": "^12.1.1",
     "lucide-react": "^1.14.0",
-    "material-symbols": "^0.44.10",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.6",
     "react-barcode": "^1.6.1",
@@ -54,6 +53,7 @@
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "puppeteer": "^25.1.0",
+    "rollup-plugin-visualizer": "^7.0.1",
     "vite": "^8.0.12",
     "vitest": "^4.1.6"
   }

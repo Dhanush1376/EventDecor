@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
 import { showcaseService, bookingService, uploadService } from '../services/domainServices';
@@ -35,6 +35,8 @@ const CATEGORY_MAP = {
 
 export function EventShowcases() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const searchParam = searchParams.get('search') || '';
   const { isAuthenticated, runProtectedAction } = useAuth();
 
   const websiteContent = useWebsiteContent();
@@ -338,7 +340,8 @@ export function EventShowcases() {
             src={eventsPageContent.hero.backgroundImage}
             className="w-full h-full object-cover"
             alt="Showcase Hero"
-            priority={true}
+            eager={true}
+            width={1920}
           />
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-surface" />
@@ -388,7 +391,7 @@ export function EventShowcases() {
       {/* Sticky Navigation Bar */}
       <nav
         ref={navRef}
-        className={`sticky z-[49] -mt-16 md:-mt-24 mb-0 md:-mb-2 transition-all duration-300 ${
+        className={`sticky z-[49] ${isMobile && searchParam ? 'mt-6' : '-mt-12 md:-mt-16'} mb-4 md:mb-6 transition-all duration-300 ${
           isSticky ? 'px-0' : 'px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
@@ -463,7 +466,7 @@ export function EventShowcases() {
       {/* Main Grid Section */}
       <main
         id="showcase-collection"
-        className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-24 md:pb-40"
+        className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-8 md:pb-24"
       >
         <MandalaElement
           className="absolute top-[20%] -right-[10%] opacity-[0.03] pointer-events-none"
@@ -471,7 +474,7 @@ export function EventShowcases() {
           variant={2}
         />
 
-        <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
+        <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 xl:gap-12">
           {/* Sidebar Filter - Handles both Desktop Sidebar and Mobile Drawer */}
           <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 h-fit">
             <EventShowcaseFilterPanel
@@ -487,7 +490,7 @@ export function EventShowcases() {
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center justify-between mb-6 md:mb-10">
               <div className="flex flex-col gap-1">
                 <h2 className="font-headline-md text-on-surface font-bold text-[24px] md:text-[32px]">
                   Event Design Packages
@@ -511,9 +514,28 @@ export function EventShowcases() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
                 {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-48 md:h-72 w-full rounded-2xl md:rounded-[32px]" />
+                  <div key={i} className="flex flex-col z-10">
+                    <div className="relative h-44 sm:h-56 md:h-72 w-full mb-2.5 sm:mb-3 md:mb-4 bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5 shadow-2xs overflow-hidden">
+                      <Skeleton className="w-full h-full rounded-none" />
+                      <div className="absolute top-2 left-2 md:top-4 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
+                        <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full border-2 border-white shadow-lg" />
+                        <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full border-2 border-white shadow-md" />
+                      </div>
+                      <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20">
+                        <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full border border-black/5 shadow-sm" />
+                      </div>
+                    </div>
+                    <div className="py-1 flex flex-col flex-1">
+                      <div className="flex items-center gap-1 mb-1.5 sm:mb-2">
+                        <Skeleton className="h-2 md:h-2.5 w-1/3 rounded-full" />
+                        <Skeleton className="h-2 md:h-2.5 w-8 rounded-full ml-auto" />
+                      </div>
+                      <Skeleton className="h-3 md:h-4 w-4/5 rounded-full mb-1.5 sm:mb-2 md:mb-3" />
+                      <Skeleton className="h-4 md:h-5 w-1/2 rounded-full mt-auto" />
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : paginatedShowcases.length > 0 ? (

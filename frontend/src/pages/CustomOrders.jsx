@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 
 import logger from '../utils/logger';
 import { OptimizedImage } from '../components/ui/OptimizedImage';
+import { useWebsiteContent } from '../hooks/useWebsiteContent';
 
 // Framer motion presets
 const fadeUp = {
@@ -36,6 +37,15 @@ export function CustomOrders() {
   const [searchParams] = useSearchParams();
   const productIdQuery = searchParams.get('product');
   const eventIdQuery = searchParams.get('event');
+  const websiteContent = useWebsiteContent();
+
+  const customOrdersContent = websiteContent?.customOrdersPage || {
+    hero: {
+      title: 'Custom Event Decor Studio',
+      subtitle: 'Bespoke Curations',
+      description: 'Design your custom decor, get price estimates, and track your orders.',
+    },
+  };
 
   // ─── PRODUCT LINK STATE ───
   const [linkedProduct, setLinkedProduct] = useState(null);
@@ -723,10 +733,11 @@ export function CustomOrders() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[var(--color-on-surface)]/5 pb-5">
           <div>
             <h2 className="text-[24px] md:text-[36px] font-light text-[var(--color-on-surface)] font-display leading-tight">
-              Custom Event Decor Studio
+              {customOrdersContent.hero?.title || 'Custom Event Decor Studio'}
             </h2>
             <p className="text-[12px] md:text-[13px] text-[#685C57] mt-1 font-light tracking-wide max-w-lg">
-              Design your custom decor, get price estimates, and track your orders.
+              {customOrdersContent.hero?.description ||
+                'Design your custom decor, get price estimates, and track your orders.'}
             </p>
           </div>
 

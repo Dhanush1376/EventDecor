@@ -32,11 +32,16 @@ export function NavigationOrchestrator() {
   }, [location.pathname]);
 
   React.useEffect(() => {
+    let hoverTimeout;
     const onPointerIntent = (event) => {
       const anchor = event.target?.closest?.('a[href]');
       if (!shouldPrefetchAnchor(anchor)) return;
       const href = anchor.getAttribute('href');
-      prefetchManager.prefetchRoute(href);
+
+      clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(() => {
+        prefetchManager.prefetchRoute(href);
+      }, 50); // 50ms intent delay
     };
 
     const onNavClick = (event) => {
@@ -55,73 +60,13 @@ export function NavigationOrchestrator() {
     document.addEventListener('click', onNavClick, { capture: true });
 
     return () => {
+      clearTimeout(hoverTimeout);
       document.removeEventListener('mouseover', onPointerIntent, { capture: true });
       document.removeEventListener('touchstart', onPointerIntent, { capture: true });
       document.removeEventListener('pointerdown', onPointerIntent, { capture: true });
       document.removeEventListener('focusin', onPointerIntent, { capture: true });
       document.removeEventListener('click', onNavClick, { capture: true });
     };
-  }, [location.pathname]);
-
-  React.useEffect(() => {
-    let scrollTimeout;
-    let isScrolling = false;
-
-    const handleScroll = () => {
-      isScrolling = true;
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        isScrolling = false;
-      }, 150);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (isScrolling) return; // Skip prefetch during fast scroll
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const anchor = entry.target;
-          const href = anchor.getAttribute('href');
-          prefetchManager.prefetchRoute(href, { kind: 'viewport' });
-          observer.unobserve(anchor);
-        });
-      },
-      { rootMargin: '280px 0px' },
-    );
-
-    // Re-observe after a small delay to account for React re-renders / Suspense
-    const timer = setTimeout(() => {
-      const anchors = Array.from(document.querySelectorAll('a[href^="/"]'));
-      anchors.forEach((anchor) => {
-        if (shouldPrefetchAnchor(anchor)) observer.observe(anchor);
-      });
-    }, 500);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', handleScroll);
-      clearTimeout(scrollTimeout);
-      clearTimeout(timer);
-    };
-  }, [location.pathname]);
-
-  React.useEffect(() => {
-    const runIdlePrefetch = async () => {
-      for (const route of PRIORITY_ROUTES) {
-        await prefetchManager.prefetchRoute(route, { kind: 'idle' });
-      }
-      await prefetchManager.prefetchFrequentlyVisitedRoutes();
-    };
-
-    if (typeof requestIdleCallback === 'function') {
-      const id = requestIdleCallback(runIdlePrefetch, { timeout: 1800 });
-      return () => cancelIdleCallback(id);
-    }
-
-    const timer = window.setTimeout(runIdlePrefetch, 400);
-    return () => window.clearTimeout(timer);
   }, [location.pathname]);
 
   React.useEffect(() => {
