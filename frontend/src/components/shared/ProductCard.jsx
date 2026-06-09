@@ -209,14 +209,20 @@ export const ProductCard = React.memo(function ProductCard({
           {badges.slice(0, 2).map((badge, idx) => {
             const badgeText = typeof badge === 'object' && badge !== null ? badge.text : badge;
             const badgeIcon = typeof badge === 'object' && badge !== null ? badge.icon : null;
-            
+
             if (!badgeText && !badgeIcon) return null;
 
-            const words = String(badgeText || '').trim().split(/\s+/);
+            const words = String(badgeText || '')
+              .trim()
+              .split(/\s+/);
             const displayContent =
               words.length > 1 ? (
                 <>
-                  {badgeIcon && <span className="material-symbols-outlined text-[8px] md:text-[10px] mb-[1px]">{badgeIcon}</span>}
+                  {badgeIcon && (
+                    <span className="material-symbols-outlined text-[8px] md:text-[10px] mb-[1px]">
+                      {badgeIcon}
+                    </span>
+                  )}
                   <span className="leading-none text-[6px] md:text-[8px]">{words[0]}</span>
                   <span className="text-[5px] md:text-[6px] tracking-tight opacity-80 uppercase mt-0.5">
                     {words.slice(1).join(' ')}
@@ -224,10 +230,16 @@ export const ProductCard = React.memo(function ProductCard({
                 </>
               ) : (
                 <>
-                  {badgeIcon && <span className="material-symbols-outlined text-[8px] md:text-[10px] mb-[1px]">{badgeIcon}</span>}
-                  {badgeText && <span className="leading-none text-[6px] md:text-[8px] truncate max-w-full px-1">
-                    {badgeText}
-                  </span>}
+                  {badgeIcon && (
+                    <span className="material-symbols-outlined text-[8px] md:text-[10px] mb-[1px]">
+                      {badgeIcon}
+                    </span>
+                  )}
+                  {badgeText && (
+                    <span className="leading-none text-[6px] md:text-[8px] truncate max-w-full px-1">
+                      {badgeText}
+                    </span>
+                  )}
                 </>
               );
 

@@ -38,8 +38,12 @@ export function CarouselWrapper({ children, className = '', gap = '14px' }) {
   return (
     <div className={`h1-scroll-container ${className}`}>
       {/* Fade edges */}
-      {canScrollLeft && <div className="h1-scroll-container__fade h1-scroll-container__fade--left" />}
-      {canScrollRight && <div className="h1-scroll-container__fade h1-scroll-container__fade--right" />}
+      {canScrollLeft && (
+        <div className="h1-scroll-container__fade h1-scroll-container__fade--left" />
+      )}
+      {canScrollRight && (
+        <div className="h1-scroll-container__fade h1-scroll-container__fade--right" />
+      )}
 
       {/* Arrow buttons (desktop only) */}
       {canScrollLeft && (
@@ -61,11 +65,7 @@ export function CarouselWrapper({ children, className = '', gap = '14px' }) {
         </button>
       )}
 
-      <div
-        ref={scrollRef}
-        className="h1-scroll-container__track"
-        style={{ gap }}
-      >
+      <div ref={scrollRef} className="h1-scroll-container__track" style={{ gap }}>
         {children}
       </div>
     </div>

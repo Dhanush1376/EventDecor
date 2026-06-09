@@ -15,28 +15,34 @@ export function TrendingProducts() {
   const loading = cms?.loading;
   const config = cms?.trendingProducts || {};
   if (config.isVisible === false) return null;
-  
+
   const productIds = config.productIds || [];
-  
-  const { data: allProductsData, isLoading: isPending, isError, refetch } = useProducts(
-    { ids: productIds.join(','), limit: 10 },
-    { enabled: productIds.length > 0 }
-  );
-  
-  const products = allProductsData?.data || allProductsData?.items || allProductsData?.products || (Array.isArray(allProductsData) ? allProductsData : []);
+
+  const {
+    data: allProductsData,
+    isLoading: isPending,
+    isError,
+    refetch,
+  } = useProducts({ ids: productIds.join(','), limit: 10 }, { enabled: productIds.length > 0 });
+
+  const products =
+    allProductsData?.data ||
+    allProductsData?.items ||
+    allProductsData?.products ||
+    (Array.isArray(allProductsData) ? allProductsData : []);
 
   if ((isPending && productIds.length > 0) || loading) {
     return (
       <section className="h1-section relative overflow-hidden isolate" id="h1-trending">
         {/* Background glow gradient behind mandala */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary-container/20 rounded-full blur-[100px] pointer-events-none z-[-1]" />
-        
+
         {/* Decorative Mandala */}
         <MandalaArtDecor
           className="absolute -top-6 -right-[500px] opacity-[0.03] z-[-1]"
           size={1000}
         />
-        
+
         <div className="h1-container relative z-10 animate-pulse">
           <div className="flex justify-between items-end mb-8 md:mb-10">
             <div>
@@ -89,16 +95,20 @@ export function TrendingProducts() {
         duration={120}
       />
       <div className="h1-container relative z-10">
-        <SectionHeader kicker={config.kicker} title={config.sectionTitle} seeAllLink={config.seeAllLink} />
+        <SectionHeader
+          kicker={config.kicker}
+          title={config.sectionTitle}
+          seeAllLink={config.seeAllLink}
+        />
       </div>
       <div className="h1-container--full pl-4 md:pl-9 relative z-10">
         <CarouselWrapper gap="16px">
           {products.map((product) => (
             <div key={product.id || product._id} className="h1-scroll-item">
-              <ProductCard 
-                {...product} 
+              <ProductCard
+                {...product}
                 id={product.id || product._id}
-                imageSrc={product.imageSrc || product.image || product.thumbnail} 
+                imageSrc={product.imageSrc || product.image || product.thumbnail}
                 price={product.price || product.basePrice}
               />
             </div>

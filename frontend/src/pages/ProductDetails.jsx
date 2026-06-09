@@ -228,7 +228,9 @@ export function ProductDetails() {
                 });
               }}
               className={`w-[60px] h-[60px] rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0 ${
-                isWishlisted(product?._id || product?.id) ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-[0.5px] border-black/[0.04]' : 'bg-transparent text-[#8E8E93] hover:text-black/60'
+                isWishlisted(product?._id || product?.id)
+                  ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-[0.5px] border-black/[0.04]'
+                  : 'bg-transparent text-[#8E8E93] hover:text-black/60'
               }`}
             >
               <motion.span
@@ -238,7 +240,11 @@ export function ProductDetails() {
                 }}
                 transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
                 className="material-symbols-outlined text-[24px]"
-                style={{ fontVariationSettings: isWishlisted(product?._id || product?.id) ? "'FILL' 1" : "'FILL' 0" }}
+                style={{
+                  fontVariationSettings: isWishlisted(product?._id || product?.id)
+                    ? "'FILL' 1"
+                    : "'FILL' 0",
+                }}
               >
                 favorite
               </motion.span>
@@ -249,7 +255,10 @@ export function ProductDetails() {
                   atcRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   setTimeout(() => {
                     atcRef.current.classList.add('ring-4', 'ring-primary/40');
-                    setTimeout(() => atcRef.current.classList.remove('ring-4', 'ring-primary/40'), 1000);
+                    setTimeout(
+                      () => atcRef.current.classList.remove('ring-4', 'ring-primary/40'),
+                      1000,
+                    );
                   }, 500);
                 }
               }}

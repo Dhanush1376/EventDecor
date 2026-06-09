@@ -10,7 +10,7 @@ export function PromoBanner() {
   const cms = useWebsiteContent({ includeDefaults: false });
   const loading = cms?.loading;
   const navigate = useNavigate();
-  
+
   // Safely get cart context (might not be available in some admin views, so default to empty object)
   const cart = useCart() || {};
 
@@ -22,10 +22,10 @@ export function PromoBanner() {
   if (!promo?.text || !promo?.link) {
     return null;
   }
-  
+
   const ctaText = promo.ctaText || 'CLAIM OFFER';
 
-  const renderItems = () => (
+  const renderItems = () =>
     [...Array(4)].map((_, i) => (
       <div key={i} className="flex items-center gap-8 shrink-0">
         <span className="text-[#d4af37] text-[16px] animate-pulse">✦</span>
@@ -36,8 +36,7 @@ export function PromoBanner() {
           {ctaText}
         </span>
       </div>
-    ))
-  );
+    ));
 
   const handleBannerClick = (e) => {
     e.preventDefault();
@@ -52,8 +51,8 @@ export function PromoBanner() {
           color: '#2d2b29',
           background: '#ffffff',
           borderRadius: '12px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.08)'
-        }
+          boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+        },
       });
     }
     if (promo.link) {
@@ -63,7 +62,9 @@ export function PromoBanner() {
 
   return (
     <section className="relative w-full overflow-hidden bg-white py-4 border-y border-neutral-200 cursor-pointer group">
-      <style dangerouslySetInnerHTML={{__html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes marquee-scroll {
           0% { transform: translateX(0); }
           100% { transform: translateX(-100%); }
@@ -75,13 +76,18 @@ export function PromoBanner() {
         .group:hover .animate-marquee-custom {
           animation-play-state: paused;
         }
-      `}} />
+      `,
+        }}
+      />
       <a href={promo.link} onClick={handleBannerClick} className="block w-full">
         <div className="flex w-full overflow-hidden relative whitespace-nowrap gap-10">
           <div className="animate-marquee-custom flex items-center gap-10 shrink-0">
             {renderItems()}
           </div>
-          <div className="animate-marquee-custom flex items-center gap-10 shrink-0" aria-hidden="true">
+          <div
+            className="animate-marquee-custom flex items-center gap-10 shrink-0"
+            aria-hidden="true"
+          >
             {renderItems()}
           </div>
         </div>

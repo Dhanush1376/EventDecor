@@ -29,7 +29,11 @@ export function Wishlist() {
     limit: 4,
     sort: 'Popularity',
   });
-  const trendingProducts = trendingData?.data || trendingData?.products || trendingData?.items || (Array.isArray(trendingData) ? trendingData : []);
+  const trendingProducts =
+    trendingData?.data ||
+    trendingData?.products ||
+    trendingData?.items ||
+    (Array.isArray(trendingData) ? trendingData : []);
 
   const sortOptions = [
     { value: 'latest', label: 'Latest Added' },

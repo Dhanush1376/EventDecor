@@ -15,21 +15,24 @@ export function RecommendedGrid() {
   const loading = cms?.loading;
   const config = cms?.recommendedProducts || {};
   if (config.isVisible === false) return null;
-  
+
   const productIds = config.productIds || [];
 
   const { data, isPending, isError, refetch } = useProducts(
     { ids: productIds.join(','), limit: 10 },
-    { enabled: productIds.length > 0 }
+    { enabled: productIds.length > 0 },
   );
 
   if ((isPending && productIds.length > 0) || loading) {
     return (
-      <section className="h1-section bg-surface-container-lowest relative overflow-hidden isolate" id="h1-recommended">
+      <section
+        className="h1-section bg-surface-container-lowest relative overflow-hidden isolate"
+        id="h1-recommended"
+      >
         {/* Background glow gradients behind mandalas */}
         <div className="absolute -top-40 -left-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
         <div className="absolute -bottom-40 -right-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
-        
+
         <MandalaElement
           className="absolute -top-32 -left-32 opacity-[0.05] z-[-1]"
           size={500}
@@ -83,7 +86,10 @@ export function RecommendedGrid() {
   }
 
   return (
-    <section className="h1-section bg-surface-container-lowest relative overflow-hidden isolate" id="h1-recommended">
+    <section
+      className="h1-section bg-surface-container-lowest relative overflow-hidden isolate"
+      id="h1-recommended"
+    >
       {/* Background glow gradients behind mandalas */}
       <div className="absolute -top-40 -left-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
       <div className="absolute -bottom-40 -right-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
@@ -100,12 +106,16 @@ export function RecommendedGrid() {
         variant={4}
       />
       <div className="h1-container relative z-10">
-        <SectionHeader kicker={config.kicker} title={config.sectionTitle} seeAllLink={config.seeAllLink} />
+        <SectionHeader
+          kicker={config.kicker}
+          title={config.sectionTitle}
+          seeAllLink={config.seeAllLink}
+        />
       </div>
       <div className="h1-container relative z-10 mt-6">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
           {products.slice(0, config.maxDisplay || 8).map((product) => (
-            <ProductCard 
+            <ProductCard
               key={product.id || product._id}
               {...product}
               id={product.id || product._id}

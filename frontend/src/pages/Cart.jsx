@@ -122,15 +122,12 @@ export function Cart() {
     persistentStorage.setItem('siri_checkout_use_wallet', useWallet, { session: true });
   }, [useWallet]);
 
-  const basePayableAmount = actualSubtotal - couponDiscountAmount + platformFee + shippingFee + depositTotal;
-  const walletDeduction = useWallet && user?.walletBalance > 0 
-    ? Math.min(user.walletBalance, basePayableAmount) 
-    : 0;
+  const basePayableAmount =
+    actualSubtotal - couponDiscountAmount + platformFee + shippingFee + depositTotal;
+  const walletDeduction =
+    useWallet && user?.walletBalance > 0 ? Math.min(user.walletBalance, basePayableAmount) : 0;
 
-  const finalPayableAmount =
-    items.length > 0
-      ? basePayableAmount - walletDeduction
-      : 0;
+  const finalPayableAmount = items.length > 0 ? basePayableAmount - walletDeduction : 0;
 
   // Find the closest coupon that the user is yet to unlock
   const nextAvailableCoupon = React.useMemo(() => {

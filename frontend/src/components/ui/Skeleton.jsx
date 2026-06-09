@@ -565,15 +565,15 @@ export function HomeSkeleton() {
       {/* Hero Skeleton */}
       <div className="w-full h-[62.5vh] md:h-[80vh] bg-surface-container-high relative animate-pulse overflow-hidden">
         <div className="absolute bottom-[10%] left-[5%] md:bottom-[15%] md:left-[8%] flex flex-col w-[90%] max-w-[800px] z-10">
-           <div className="h-3 w-20 md:w-28 bg-surface-container-highest/60 rounded-full mb-2"></div>
-           <div className="h-8 md:h-16 w-[80%] bg-surface-container-highest/60 rounded-2xl md:rounded-3xl mb-3"></div>
-           <div className="h-4 md:h-5 w-[60%] bg-surface-container-highest/60 rounded-full mb-5"></div>
-           <div className="h-5 w-24 md:w-32 bg-surface-container-highest/60 rounded-none mb-2 border-b border-surface-container-highest/80"></div>
+          <div className="h-3 w-20 md:w-28 bg-surface-container-highest/60 rounded-full mb-2"></div>
+          <div className="h-8 md:h-16 w-[80%] bg-surface-container-highest/60 rounded-2xl md:rounded-3xl mb-3"></div>
+          <div className="h-4 md:h-5 w-[60%] bg-surface-container-highest/60 rounded-full mb-5"></div>
+          <div className="h-5 w-24 md:w-32 bg-surface-container-highest/60 rounded-none mb-2 border-b border-surface-container-highest/80"></div>
         </div>
         <div className="absolute bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
-           <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
-           <div className="w-4 h-1.5 bg-surface-container-highest/80 rounded-[2px]"></div>
-           <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
+          <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
+          <div className="w-4 h-1.5 bg-surface-container-highest/80 rounded-[2px]"></div>
+          <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-surface-bright/80 via-surface-bright/10 to-transparent"></div>
       </div>
@@ -589,11 +589,14 @@ export function HomeSkeleton() {
           <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2"></div>
           <div className="h-8 w-48 md:w-64 bg-surface-container-high rounded-full"></div>
         </div>
-        
+
         {/* Mobile Grid */}
         <div className="grid grid-cols-2 gap-4 lg:hidden">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex flex-col items-center aspect-[4/5] bg-surface-container-high rounded-xl"></div>
+            <div
+              key={i}
+              className="flex flex-col items-center aspect-[4/5] bg-surface-container-high rounded-xl"
+            ></div>
           ))}
         </div>
 
@@ -638,9 +641,14 @@ export function HomeSkeleton() {
           <div className="h-8 md:h-10 w-48 md:w-64 bg-surface-container-high rounded-full mx-auto"></div>
         </div>
         <div className="columns-2 md:columns-3 lg:columns-5 gap-3 md:gap-5.5 space-y-3 md:space-y-5.5">
-          {['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'].map((aspect, i) => (
-            <div key={i} className={`w-full ${aspect} bg-surface-container-high rounded-[24px]`}></div>
-          ))}
+          {['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'].map(
+            (aspect, i) => (
+              <div
+                key={i}
+                className={`w-full ${aspect} bg-surface-container-high rounded-[24px]`}
+              ></div>
+            ),
+          )}
         </div>
       </div>
 
@@ -650,7 +658,7 @@ export function HomeSkeleton() {
           <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2"></div>
           <div className="h-8 md:h-10 w-56 md:w-72 bg-surface-container-high rounded-full"></div>
         </div>
-        
+
         {/* Mobile Swipe Carousel */}
         <div className="flex gap-6 justify-center overflow-hidden lg:hidden">
           <div className="w-[75vw] sm:w-[50vw] h-[400px] bg-surface-container-high rounded-[36px] shrink-0"></div>

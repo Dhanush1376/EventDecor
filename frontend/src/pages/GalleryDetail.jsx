@@ -297,10 +297,10 @@ export function GalleryDetail() {
                   {item.title}.
                 </h2>
               </div>
-              
+
               {/* Connecting Line */}
               <div className="flex-1 h-px bg-primary/20 mx-1 md:mx-2 min-w-[20px]" />
-              
+
               {/* Action Buttons */}
               <div className="flex items-center gap-2 shrink-0">
                 <button
@@ -349,7 +349,9 @@ export function GalleryDetail() {
                         if (!item) return;
                         const num = '919866006648';
                         const link = `${window.location.origin}/gallery/${item._id || item.id}`;
-                        const msg = encodeURIComponent(`Hello, I'm interested in this gallery setup and would like to chat about it.\n\nLink: ${link}`);
+                        const msg = encodeURIComponent(
+                          `Hello, I'm interested in this gallery setup and would like to chat about it.\n\nLink: ${link}`,
+                        );
                         window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
                       }}
                       className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
@@ -684,7 +686,9 @@ export function GalleryDetail() {
                         if (!item) return;
                         const num = '919866006648';
                         const link = `${window.location.origin}/gallery/${item._id || item.id}`;
-                        const msg = encodeURIComponent(`Hello, I'm interested in this gallery setup and would like to chat about it.\n\nLink: ${link}`);
+                        const msg = encodeURIComponent(
+                          `Hello, I'm interested in this gallery setup and would like to chat about it.\n\nLink: ${link}`,
+                        );
                         window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
                       }}
                       className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
@@ -735,7 +739,12 @@ export function GalleryDetail() {
             <div className="w-full flex justify-center mb-10 md:mb-14">
               <div className="w-full max-w-[180px] flex items-center justify-center gap-3 opacity-60">
                 <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#C4A87C] to-[#C4A87C]" />
-                <span className="material-symbols-outlined text-[16px] text-[#C4A87C]" style={{ fontVariationSettings: "'wght' 300" }}>local_florist</span>
+                <span
+                  className="material-symbols-outlined text-[16px] text-[#C4A87C]"
+                  style={{ fontVariationSettings: "'wght' 300" }}
+                >
+                  local_florist
+                </span>
                 <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-[#C4A87C] to-[#C4A87C]" />
               </div>
             </div>
@@ -802,7 +811,9 @@ export function GalleryDetail() {
             <button
               onClick={handleWishlistLook}
               className={`w-[60px] h-[60px] rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0 ${
-                isLiked ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-[0.5px] border-black/[0.04]' : 'bg-transparent text-[#8E8E93] hover:text-black/60'
+                isLiked
+                  ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-[0.5px] border-black/[0.04]'
+                  : 'bg-transparent text-[#8E8E93] hover:text-black/60'
               }`}
             >
               <motion.span

@@ -826,7 +826,9 @@ export function EventDetail() {
                       if (!event) return;
                       const num = '919866006648';
                       const link = `${window.location.origin}/events/${event._id || event.id}`;
-                      const msg = encodeURIComponent(`Hello, I'm interested in this event setup and would like to chat about it.\n\nLink: ${link}`);
+                      const msg = encodeURIComponent(
+                        `Hello, I'm interested in this event setup and would like to chat about it.\n\nLink: ${link}`,
+                      );
                       window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
                     }}
                     className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"

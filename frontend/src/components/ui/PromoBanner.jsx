@@ -46,19 +46,22 @@ export function PromoBanner({
             </span>
           </div>
 
-          <div className="flex-1 overflow-hidden relative flex items-center min-w-0 py-1" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 15px, black calc(100% - 15px), transparent)' }}>
+          <div
+            className="flex-1 overflow-hidden relative flex items-center min-w-0 py-1"
+            style={{
+              WebkitMaskImage:
+                'linear-gradient(to right, transparent, black 15px, black calc(100% - 15px), transparent)',
+            }}
+          >
             <motion.div
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+              animate={{ x: ['0%', '-50%'] }}
+              transition={{ repeat: Infinity, duration: 20, ease: 'linear' }}
               className="flex flex-row items-center whitespace-nowrap w-max"
             >
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="flex flex-row items-center gap-2 sm:gap-4 px-4 sm:px-8">
                   <h3 className="font-display text-[11px] sm:text-[16px] md:text-[18px] lg:text-[22px] text-white font-medium leading-none">
-                    {title}{' '}
-                    <span className="text-gold italic ml-0.5 sm:ml-1">
-                      {highlightText}
-                    </span>
+                    {title} <span className="text-gold italic ml-0.5 sm:ml-1">{highlightText}</span>
                   </h3>
                   {statusText && (
                     <span className="hidden sm:inline-flex text-white/40 font-label-sm text-[10px] uppercase tracking-[0.2em] flex items-center gap-1.5 font-bold whitespace-nowrap">

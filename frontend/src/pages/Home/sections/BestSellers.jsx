@@ -15,10 +15,10 @@ export function BestSellers() {
   const config = cms?.featuredProducts || {};
   if (config.isVisible === false) return null;
   const productIds = config.productIds || [];
-  
+
   const { data, isPending, isError, refetch } = useProducts(
     { ids: productIds.join(','), limit: 10 },
-    { enabled: productIds.length > 0 }
+    { enabled: productIds.length > 0 },
   );
 
   if ((isPending && productIds.length > 0) || loading) {
@@ -75,7 +75,11 @@ export function BestSellers() {
         variant={1}
       />
       <div className="h1-container relative z-10">
-        <SectionHeader kicker={config.kicker} title={config.sectionTitle} seeAllLink={config.seeAllLink} />
+        <SectionHeader
+          kicker={config.kicker}
+          title={config.sectionTitle}
+          seeAllLink={config.seeAllLink}
+        />
       </div>
       <div className="h1-container--full pl-4 md:pl-9 relative z-10">
         <CarouselWrapper gap="16px">
@@ -84,13 +88,13 @@ export function BestSellers() {
             if (config.badgeText || config.badgeIcon) {
               customBadges.push({
                 text: config.badgeText || '',
-                icon: config.badgeIcon || ''
+                icon: config.badgeIcon || '',
               });
             }
 
             return (
               <div key={product.id || product._id} className="h1-scroll-item">
-                <ProductCard 
+                <ProductCard
                   key={product.id || product._id}
                   {...product}
                   id={product.id || product._id}

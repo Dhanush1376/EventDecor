@@ -3,13 +3,27 @@ import { Helmet } from 'react-helmet-async';
 
 import { HeroCarousel } from './sections/HeroCarousel';
 
-const CategoryGrid = lazy(() => import('./sections/CategoryGrid').then(m => ({ default: m.CategoryGrid })));
-const TrendingProducts = lazy(() => import('./sections/TrendingProducts').then(m => ({ default: m.TrendingProducts })));
-const BestSellers = lazy(() => import('./sections/BestSellers').then(m => ({ default: m.BestSellers })));
-const PromoBanner = lazy(() => import('./sections/PromoBanner').then(m => ({ default: m.PromoBanner })));
-const RecommendedGrid = lazy(() => import('./sections/RecommendedGrid').then(m => ({ default: m.RecommendedGrid })));
-const ShopByOccasion = lazy(() => import('./sections/ShopByOccasion').then(m => ({ default: m.ShopByOccasion })));
-const GalleryInspiration = lazy(() => import('./sections/GalleryInspiration').then(m => ({ default: m.GalleryInspiration })));
+const CategoryGrid = lazy(() =>
+  import('./sections/CategoryGrid').then((m) => ({ default: m.CategoryGrid })),
+);
+const TrendingProducts = lazy(() =>
+  import('./sections/TrendingProducts').then((m) => ({ default: m.TrendingProducts })),
+);
+const BestSellers = lazy(() =>
+  import('./sections/BestSellers').then((m) => ({ default: m.BestSellers })),
+);
+const PromoBanner = lazy(() =>
+  import('./sections/PromoBanner').then((m) => ({ default: m.PromoBanner })),
+);
+const RecommendedGrid = lazy(() =>
+  import('./sections/RecommendedGrid').then((m) => ({ default: m.RecommendedGrid })),
+);
+const ShopByOccasion = lazy(() =>
+  import('./sections/ShopByOccasion').then((m) => ({ default: m.ShopByOccasion })),
+);
+const GalleryInspiration = lazy(() =>
+  import('./sections/GalleryInspiration').then((m) => ({ default: m.GalleryInspiration })),
+);
 
 import './home.css';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
@@ -23,7 +37,7 @@ export function Home() {
   }
 
   const isSectionVisible = (id) => {
-    const orderSection = cms?.homepageSections?.find(s => s.id === id);
+    const orderSection = cms?.homepageSections?.find((s) => s.id === id);
     if (orderSection && orderSection.isVisible !== undefined) {
       return orderSection.isVisible;
     }
@@ -39,17 +53,13 @@ export function Home() {
     <>
       <Helmet>
         <title>{cms?.seo?.homeTitle || cms?.siteName || 'Siri Arts & Crafts'}</title>
-        {cms?.seo?.homeDescription && (
-          <meta name="description" content={cms.seo.homeDescription} />
-        )}
+        {cms?.seo?.homeDescription && <meta name="description" content={cms.seo.homeDescription} />}
       </Helmet>
 
       <div className="h1-page relative bg-surface-bright overflow-hidden">
         {/* Global Background Art - Performance Optimized Gradients & Mandalas */}
         <div className="absolute inset-0 bg-marble opacity-[0.03] pointer-events-none mix-blend-multiply fixed"></div>
         <div className="absolute top-0 right-0 w-[600px] md:w-[1000px] h-[600px] md:h-[1000px] bg-primary-container/10 rounded-full blur-[160px] translate-x-1/3 -translate-y-1/3 pointer-events-none fixed z-0"></div>
-        
-
 
         <div className="relative z-10">
           {sections.length === 0 && <HomepageEmptyState />}
@@ -136,15 +146,15 @@ function HomeSkeleton() {
       {/* Hero Skeleton */}
       <div className="w-full h-[62.5vh] md:h-[80vh] bg-surface-container-high relative animate-pulse overflow-hidden">
         <div className="absolute bottom-[10%] left-[5%] md:bottom-[15%] md:left-[8%] flex flex-col w-[90%] max-w-[800px] z-10">
-           <div className="h-3 w-20 md:w-28 bg-surface-container-highest/60 rounded-full mb-2"></div>
-           <div className="h-8 md:h-16 w-[80%] bg-surface-container-highest/60 rounded-2xl md:rounded-3xl mb-3"></div>
-           <div className="h-4 md:h-5 w-[60%] bg-surface-container-highest/60 rounded-full mb-5"></div>
-           <div className="h-5 w-24 md:w-32 bg-surface-container-highest/60 rounded-none mb-2 border-b border-surface-container-highest/80"></div>
+          <div className="h-3 w-20 md:w-28 bg-surface-container-highest/60 rounded-full mb-2"></div>
+          <div className="h-8 md:h-16 w-[80%] bg-surface-container-highest/60 rounded-2xl md:rounded-3xl mb-3"></div>
+          <div className="h-4 md:h-5 w-[60%] bg-surface-container-highest/60 rounded-full mb-5"></div>
+          <div className="h-5 w-24 md:w-32 bg-surface-container-highest/60 rounded-none mb-2 border-b border-surface-container-highest/80"></div>
         </div>
         <div className="absolute bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
-           <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
-           <div className="w-4 h-1.5 bg-surface-container-highest/80 rounded-[2px]"></div>
-           <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
+          <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
+          <div className="w-4 h-1.5 bg-surface-container-highest/80 rounded-[2px]"></div>
+          <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-surface-bright/80 via-surface-bright/10 to-transparent"></div>
       </div>
@@ -160,11 +170,14 @@ function HomeSkeleton() {
           <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2"></div>
           <div className="h-8 w-48 md:w-64 bg-surface-container-high rounded-full"></div>
         </div>
-        
+
         {/* Mobile Grid */}
         <div className="grid grid-cols-2 gap-4 lg:hidden">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex flex-col items-center aspect-[4/5] bg-surface-container-high rounded-xl"></div>
+            <div
+              key={i}
+              className="flex flex-col items-center aspect-[4/5] bg-surface-container-high rounded-xl"
+            ></div>
           ))}
         </div>
 
@@ -209,9 +222,14 @@ function HomeSkeleton() {
           <div className="h-8 md:h-10 w-48 md:w-64 bg-surface-container-high rounded-full mx-auto"></div>
         </div>
         <div className="columns-2 md:columns-3 lg:columns-5 gap-3 md:gap-5.5 space-y-3 md:space-y-5.5">
-          {['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'].map((aspect, i) => (
-            <div key={i} className={`w-full ${aspect} bg-surface-container-high rounded-[24px]`}></div>
-          ))}
+          {['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'].map(
+            (aspect, i) => (
+              <div
+                key={i}
+                className={`w-full ${aspect} bg-surface-container-high rounded-[24px]`}
+              ></div>
+            ),
+          )}
         </div>
       </div>
 
@@ -221,7 +239,7 @@ function HomeSkeleton() {
           <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2"></div>
           <div className="h-8 md:h-10 w-56 md:w-72 bg-surface-container-high rounded-full"></div>
         </div>
-        
+
         {/* Mobile Swipe Carousel */}
         <div className="flex gap-6 justify-center overflow-hidden lg:hidden">
           <div className="w-[75vw] sm:w-[50vw] h-[400px] bg-surface-container-high rounded-[36px] shrink-0"></div>
@@ -259,7 +277,8 @@ function HomepageEmptyState() {
           Homepage content is not published
         </h1>
         <p className="text-on-surface-variant text-sm leading-6">
-          Publish the homepage layout and visible sections from Admin to render the storefront homepage.
+          Publish the homepage layout and visible sections from Admin to render the storefront
+          homepage.
         </p>
       </div>
     </section>

@@ -24,7 +24,7 @@ export function ShopByOccasion() {
             <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2"></div>
             <div className="h-8 md:h-10 w-56 md:w-72 bg-surface-container-high rounded-full"></div>
           </div>
-          
+
           {/* Mobile Swipe Carousel */}
           <div className="flex gap-6 justify-center overflow-hidden lg:hidden">
             <div className="w-[75vw] sm:w-[50vw] h-[400px] bg-surface-container-high rounded-[36px] shrink-0"></div>
@@ -45,14 +45,16 @@ export function ShopByOccasion() {
   const config = cms?.shopByOccasion || {};
   if (config.isVisible === false) return null;
   let occasions = config.occasions || [];
-  
+
   if (occasions.length > 0) {
     // Ensure backwards compatibility with label and desc fields
-    occasions = occasions.map(occ => ({
-      ...occ,
-      label: occ.title || occ.label,
-      desc: occ.desc || ''
-    })).filter(occ => occ.label && occ.link);
+    occasions = occasions
+      .map((occ) => ({
+        ...occ,
+        label: occ.title || occ.label,
+        desc: occ.desc || '',
+      }))
+      .filter((occ) => occ.label && occ.link);
   }
 
   if (!occasions || occasions.length === 0) {
@@ -91,7 +93,11 @@ export function ShopByOccasion() {
         variant={2}
       />
       <div className="h1-container relative z-10">
-        <SectionHeader kicker={config.kicker} title={config.sectionTitle} seeAllLink={config.seeAllLink} />
+        <SectionHeader
+          kicker={config.kicker}
+          title={config.sectionTitle}
+          seeAllLink={config.seeAllLink}
+        />
       </div>
 
       {/* --- MOBILE CAROUSEL LAYOUT --- */}
@@ -130,7 +136,7 @@ export function ShopByOccasion() {
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="absolute w-[75vw] sm:w-[50vw] md:w-[350px] h-[400px] cursor-grab active:cursor-grabbing origin-center"
               >
-                <Link 
+                <Link
                   to={occasion.link}
                   draggable={false}
                   onClick={(e) => {
@@ -142,16 +148,22 @@ export function ShopByOccasion() {
                 >
                   <div className="absolute inset-0 w-full h-full">
                     {occasion.image ? (
-                      <img src={occasion.image} alt={occasion.label} draggable={false} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 select-none pointer-events-none" />
+                      <img
+                        src={occasion.image}
+                        alt={occasion.label}
+                        draggable={false}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 select-none pointer-events-none"
+                      />
                     ) : (
                       <div className="w-full h-full bg-surface-container-high" aria-hidden="true" />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-                    
+
                     {/* Liquid Glass Shield Bulge Effect */}
                     <div className="absolute inset-0 rounded-[36px] pointer-events-none shadow-[inset_0_4px_14px_rgba(255,255,255,0.4),inset_0_-4px_14px_rgba(0,0,0,0.4)] border-[1.5px] border-white/30 group-hover:border-white/50 group-hover:shadow-[inset_0_6px_20px_rgba(255,255,255,0.5),inset_0_-6px_20px_rgba(0,0,0,0.5)] transition-all duration-500 z-20" />
                   </div>
-                  
+
                   <div className="absolute bottom-0 left-0 w-full p-8 flex items-end justify-between z-10 pb-8 gap-4">
                     <div className="flex flex-col items-start text-left min-w-0">
                       <span className="font-serif text-[18px] sm:text-[22px] lg:text-[26px] text-white font-normal tracking-[0.05em] uppercase drop-shadow-md leading-tight break-words hyphens-auto">
@@ -186,7 +198,8 @@ export function ShopByOccasion() {
                 minWidth: activeIndex === idx ? '9px' : '6px',
                 minHeight: activeIndex === idx ? '9px' : '6px',
                 borderRadius: '50%',
-                backgroundColor: activeIndex === idx ? 'var(--color-primary)' : 'rgba(180, 150, 100, 0.25)',
+                backgroundColor:
+                  activeIndex === idx ? 'var(--color-primary)' : 'rgba(180, 150, 100, 0.25)',
                 border: 'none',
                 padding: 0,
                 margin: 0,
@@ -201,24 +214,27 @@ export function ShopByOccasion() {
       {/* --- DESKTOP EXPANDING ACCORDION LAYOUT --- */}
       <div className="hidden lg:flex w-full max-w-[1200px] mx-auto h-[600px] gap-4 mt-8 px-8 relative z-20">
         {occasions.map((occasion, idx) => (
-          <Link 
+          <Link
             key={occasion.id || occasion._id || `occ-desk-${idx}`}
             to={occasion.link}
             className="group relative h-full flex-1 hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden rounded-[32px] border border-black/5 shadow-md hover:shadow-2xl cursor-pointer"
           >
             {occasion.image ? (
-              <img 
-                src={occasion.image} 
-                alt={occasion.label} 
+              <img
+                src={occasion.image}
+                alt={occasion.label}
                 loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
               />
             ) : (
-              <div className="absolute inset-0 w-full h-full bg-surface-container-high" aria-hidden="true" />
+              <div
+                className="absolute inset-0 w-full h-full bg-surface-container-high"
+                aria-hidden="true"
+              />
             )}
             {/* Base dark gradient, becomes darker on hover for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10 opacity-70 group-hover:opacity-90 transition-all duration-700"></div>
-            
+
             <div className="absolute inset-0 flex flex-col justify-end p-8">
               {/* Vertical Text (Visible when contracted) */}
               <div className="absolute inset-0 flex flex-col justify-end items-center pb-12 pointer-events-none group-hover:opacity-0 transition-opacity duration-300">
@@ -226,7 +242,7 @@ export function ShopByOccasion() {
                   {occasion.label}
                 </span>
               </div>
-              
+
               {/* Expanded Content (Visible on hover) */}
               <div className="opacity-0 translate-y-12 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 delay-100 flex flex-col items-start w-[320px] max-w-full">
                 <span className="font-serif text-[36px] text-white leading-none mb-3 drop-shadow-lg uppercase tracking-wider">
