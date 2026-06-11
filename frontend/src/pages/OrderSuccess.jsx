@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 
 import { SEO } from '../components/seo/SEO';
 import { handleImageError } from '../utils/imageUtils';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
-import { InvoiceTemplate, OrderSuccessSkeleton } from '../components/ui';
+import { InvoiceTemplate, OrderSuccessSkeleton, OptimizedImage } from '../components/ui';
 import { orderService, rentalService } from '../services/domainServices';
-import confetti from 'canvas-confetti';
 
 import logger from '../utils/logger';
 const BarcodeSVG = ({ val }) => (
@@ -129,19 +128,21 @@ export function OrderSuccess() {
       colors: ['var(--color-gold-dark)', '#d4af37', '#ffe088', '#ffffff'],
     };
 
-    function fire(particleRatio, opts) {
-      confetti({
-        ...defaults,
-        ...opts,
-        particleCount: Math.floor(count * particleRatio),
-      });
-    }
+    import('canvas-confetti').then(({ default: confetti }) => {
+      function fire(particleRatio, opts) {
+        confetti({
+          ...defaults,
+          ...opts,
+          particleCount: Math.floor(count * particleRatio),
+        });
+      }
 
-    fire(0.25, { spread: 26, startVelocity: 55 });
-    fire(0.2, { spread: 60 });
-    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-    fire(0.1, { spread: 120, startVelocity: 45 });
+      fire(0.25, { spread: 26, startVelocity: 55 });
+      fire(0.2, { spread: 60 });
+      fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+      fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+      fire(0.1, { spread: 120, startVelocity: 45 });
+    });
   }, [orderId]);
 
   useEffect(() => {
@@ -412,11 +413,12 @@ export function OrderSuccess() {
                 {order.items.map((item) => (
                   <div key={item.id} className="p-4 sm:p-6 flex gap-4 sm:gap-6">
                     <div className="w-20 h-24 sm:w-24 sm:h-32 rounded-lg overflow-hidden shrink-0 border border-outline-variant/20">
-                      <img
+                      <OptimizedImage
                         onError={handleImageError}
                         src={item.imageSrc}
                         alt="Traditional wedding event decoration"
                         className="w-full h-full object-cover"
+                        sizes="(max-width: 640px) 96px, 128px"
                       />
                     </div>
                     <div className="flex-1 min-w-0 py-1">

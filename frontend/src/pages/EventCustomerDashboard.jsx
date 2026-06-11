@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
 import { bookingService } from '../services/domainServices';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
@@ -236,7 +236,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
             </div>
             <Link
               to="/events"
-              className="bg-black text-white px-6 py-2.5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors self-start md:self-auto flex items-center gap-1.5"
+              className="bg-black text-white px-6 py-2.5 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors self-start md:self-auto flex items-center gap-1.5"
             >
               Browse Events & Setups
               <span className="material-symbols-outlined text-[14px] normal-case">add</span>
@@ -279,7 +279,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
             </div>
             <Link
               to="/events"
-              className="inline-block bg-primary text-white px-8 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg hover:shadow-primary/10 transition-all"
+              className="inline-block bg-primary text-white px-8 py-3 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold shadow-lg hover:shadow-primary/10 transition-all"
             >
               Browse Events & Setups
             </Link>
@@ -356,7 +356,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                         <button
                           type="button"
                           onClick={() => setIsMobileChatOpen(true)}
-                          className="lg:hidden flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-full font-label text-[9px] uppercase tracking-wider font-bold shadow-md active:scale-95 transition-transform"
+                          className="lg:hidden flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-lg font-label text-[9px] uppercase tracking-wider font-bold shadow-md active:scale-95 transition-transform"
                         >
                           <span className="material-symbols-outlined text-[14px]">forum</span>
                           Chat
@@ -748,13 +748,13 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                           <div className="grid grid-cols-2 gap-4 pt-6 border-t border-black/5 mt-4">
                             <button
                               onClick={() => handleApproveQuote(false)}
-                              className="py-3 rounded-full border border-stone-950/20 text-stone-800 font-label text-[10px] uppercase tracking-widest font-bold hover:bg-stone-50 transition-colors"
+                              className="py-3 rounded-lg border border-stone-950/20 text-stone-800 font-label text-[10px] uppercase tracking-widest font-bold hover:bg-stone-50 transition-colors"
                             >
                               Request Revisions
                             </button>
                             <button
                               onClick={() => handleApproveQuote(true)}
-                              className="bg-black text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-lg"
+                              className="bg-black text-white py-3 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-lg"
                             >
                               Approve Quotation
                             </button>
@@ -773,7 +773,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                             );
                             setIsPaymentModalOpen(true);
                           }}
-                          className="w-full mt-4 bg-primary text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg hover:shadow-primary/10 transition-all flex items-center justify-center gap-1.5"
+                          className="w-full mt-4 bg-primary text-white py-3 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold shadow-lg hover:shadow-primary/10 transition-all flex items-center justify-center gap-1.5"
                         >
                           Lodge Milestone Payment
                           <span className="material-symbols-outlined text-[16px]">
@@ -844,7 +844,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                       placeholder="Discuss color swatches, venue details..."
                       value={chatMessage}
                       onChange={(e) => setChatMessage(e.target.value)}
-                      className="flex-1 bg-[#FAF9F6] border border-black/5 px-4 py-2.5 rounded-full text-xs outline-none focus:border-primary/45 transition-colors"
+                      className="flex-1 bg-[#FAF9F6] border border-black/5 px-4 py-2.5 rounded-lg text-xs outline-none focus:border-primary/45 transition-colors"
                       required
                     />
                     <button
@@ -972,7 +972,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                   placeholder="Discuss color swatches, venue details..."
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
-                  className="flex-1 bg-[#FAF9F6] border border-black/5 px-4 py-3 rounded-full text-xs outline-none focus:border-primary/45 transition-colors"
+                  className="flex-1 bg-[#FAF9F6] border border-black/5 px-4 py-3 rounded-lg text-xs outline-none focus:border-primary/45 transition-colors"
                   required
                 />
                 <button
@@ -1031,7 +1031,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                     placeholder="Enter amount"
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
-                    className="w-full px-4 py-3 rounded-full border border-black/5 bg-[#fbf9f6] text-xs font-semibold focus:border-primary outline-none"
+                    className="w-full px-4 py-3 rounded-lg border border-black/5 bg-[#fbf9f6] text-xs font-semibold focus:border-primary outline-none"
                     required
                   />
                 </div>
@@ -1044,7 +1044,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                     type="text"
                     value={paymentNote}
                     onChange={(e) => setPaymentNote(e.target.value)}
-                    className="w-full px-4 py-3 rounded-full border border-black/5 bg-[#fbf9f6] text-xs focus:border-primary outline-none"
+                    className="w-full px-4 py-3 rounded-lg border border-black/5 bg-[#fbf9f6] text-xs focus:border-primary outline-none"
                     required
                   />
                 </div>
@@ -1061,7 +1061,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
 
                 <button
                   type="submit"
-                  className="w-full bg-black text-white py-3.5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-lg"
+                  className="w-full bg-black text-white py-3.5 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-lg"
                 >
                   Confirm simulated deposit
                 </button>

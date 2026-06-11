@@ -70,21 +70,29 @@ export function NavigationOrchestrator() {
   }, [location.pathname]);
 
   React.useEffect(() => {
-    // Predictive prefetch: after collections, likely next action is product detail/cart.
-    if (location.pathname === '/collections') {
-      prefetchManager.prefetchRoute('/cart', { kind: 'predictive' });
-      prefetchManager.prefetchRoute('/checkout', { kind: 'predictive' });
-    }
-    if (location.pathname.startsWith('/product/')) {
-      prefetchManager.prefetchRoute('/cart', { kind: 'predictive' });
-      prefetchManager.prefetchRoute('/checkout', { kind: 'predictive' });
-    }
-    if (location.pathname === '/cart') {
-      prefetchManager.prefetchRoute('/checkout', { kind: 'predictive' });
-      preloadRazorpay();
-    }
-    if (location.pathname === '/checkout') {
-      preloadRazorpay();
+    const schedulePrefetch = () => {
+      // Predictive prefetch: after collections, likely next action is product detail/cart.
+      if (location.pathname === '/collections') {
+        prefetchManager.prefetchRoute('/cart', { kind: 'predictive' });
+        prefetchManager.prefetchRoute('/checkout', { kind: 'predictive' });
+      }
+      if (location.pathname.startsWith('/product/')) {
+        prefetchManager.prefetchRoute('/cart', { kind: 'predictive' });
+        prefetchManager.prefetchRoute('/checkout', { kind: 'predictive' });
+      }
+      if (location.pathname === '/cart') {
+        prefetchManager.prefetchRoute('/checkout', { kind: 'predictive' });
+        preloadRazorpay();
+      }
+      if (location.pathname === '/checkout') {
+        preloadRazorpay();
+      }
+    };
+
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(schedulePrefetch, { timeout: 3000 });
+    } else {
+      setTimeout(schedulePrefetch, 1000);
     }
   }, [location.pathname]);
 

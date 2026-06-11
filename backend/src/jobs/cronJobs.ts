@@ -56,6 +56,14 @@ export const initJobs = () => {
     );
   });
 
+  // 2.a.1 Flush batched product view counters (every 5 minutes)
+  cron.schedule('*/5 * * * *', async () => {
+    await withCronLock('flush-view-counters', 4 * 60, async () => {
+      const { default: ProductService } = require('../services/productService');
+      await ProductService.flushAllViewCounters();
+    });
+  });
+
   // 2.b Sweep expired TTL inventory reservations (every 5 minutes)
   cron.schedule('*/5 * * * *', async () => {
     await withCronLock(

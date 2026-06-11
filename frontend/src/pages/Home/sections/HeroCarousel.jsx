@@ -164,15 +164,16 @@ export function HeroCarousel() {
               )}
 
               <div className="h1-hero__slide-image-wrap bg-black">
-                {/* 1. Blurred Background Image (Desktop Only) */}
+                {/* 1. Blurred Background Image (Desktop Only) - Fetching only 100px width! */}
                 <CloudinaryImage
                   src={slide.backgroundImage}
                   alt=""
                   className="hidden md:block w-full h-full object-cover opacity-60 blur-[60px] scale-125"
-                  loading={isActive ? 'eager' : 'lazy'}
-                  fetchPriority={isActive ? 'high' : 'auto'}
+                  loading="lazy"
+                  fetchPriority="low"
                   containerClassName="hidden md:block w-full h-full absolute inset-0 overflow-hidden"
-                  sizes="100vw"
+                  width={100}
+                  sizes="100px"
                   aria-hidden="true"
                 />
 
@@ -187,6 +188,7 @@ export function HeroCarousel() {
                   loading={isActive ? 'eager' : 'lazy'}
                   fetchPriority={isActive ? 'high' : 'auto'}
                   containerClassName="w-full md:w-[60%] h-full relative z-[2] ml-auto"
+                  width={1280}
                   sizes="(max-width: 768px) 100vw, 60vw"
                 />
 

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { PolicySidebar, MobilePolicyNav } from '../components/layout/PolicySidebar';
 import { SEO } from '../components/seo/SEO';
 import { useQuery } from '@tanstack/react-query';

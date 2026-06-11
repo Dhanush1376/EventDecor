@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { prefetchManager } from '../../utils/prefetchManager';
@@ -83,7 +83,7 @@ export function BottomNav() {
 }
 
 function NavIcon({ active, icon, label }) {
-  const activeColorClass = label === 'Wishlist' ? 'text-[#ff2d55]' : 'text-black';
+  const activeColorClass = 'text-black';
   return (
     <div
       className={`flex flex-col items-center justify-center transition-all duration-300 ${active ? `${activeColorClass} scale-[1.05]` : 'text-black/70 group-hover:text-black'}`}

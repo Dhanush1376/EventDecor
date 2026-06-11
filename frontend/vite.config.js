@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { visualizer } from 'rollup-plugin-visualizer';
+import viteCompression from 'vite-plugin-compression';
 
 const buildId =
   process.env.VITE_BUILD_ID ||
@@ -17,6 +18,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
     visualizer({ filename: 'stats.html', gzipSize: true, template: 'treemap' }),
+    viteCompression({ algorithm: 'brotliCompress', ext: '.br' }),
+    viteCompression({ algorithm: 'gzip', ext: '.gz' }),
   ],
 
   esbuild: {
@@ -42,8 +45,9 @@ export default defineConfig({
           (dep) =>
             dep.includes('react') ||
             dep.includes('router') ||
-            dep.includes('app-') ||
-            dep.includes('main'),
+            dep.includes('framework') ||
+            dep.includes('main') ||
+            dep.includes('state-networking'),
         );
       },
     },
@@ -54,64 +58,57 @@ export default defineConfig({
       },
       output: {
         manualChunks(id) {
+          // Group 1: Core Framework (React, Router, Animations)
           if (
-            id.includes('src/components/ui/') ||
-            id.includes('src/components/shared/') ||
-            id.includes('src/components/sections/')
-          ) {
-            return 'ui-components';
-          }
-          if (id.includes('node_modules/react-dom/') || id.includes('@hot-loader/react-dom')) {
-            return 'react-dom';
-          }
-          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
             id.includes('node_modules/react-router/') ||
-            id.includes('node_modules/react-router-dom/')
+            id.includes('node_modules/react-router-dom/') ||
+            id.includes('node_modules/framer-motion/')
           ) {
-            return 'router';
+            return 'framework';
           }
-          if (id.includes('node_modules/react/')) {
-            return 'react';
-          }
-          if (id.includes('node_modules/framer-motion/')) {
-            return 'animations';
-          }
+
+          // Group 2: State & Networking
           if (
-            /node_modules[\\/](recharts|victory-vendor)/.test(id) ||
-            /node_modules[\\/]d3-[^\\/]+/.test(id)
+            id.includes('node_modules/@tanstack/') ||
+            id.includes('node_modules/axios/') ||
+            id.includes('node_modules/socket.io-client/') ||
+            id.includes('node_modules/idb/')
           ) {
-            return 'charts';
+            return 'state-networking';
           }
+
+          // Group 3: Observability (Sentry, LogRocket)
+          if (id.includes('node_modules/@sentry/') || id.includes('node_modules/logrocket/')) {
+            return 'observability';
+          }
+
+          // Group 4: Heavy async tools (Keep them isolated so they don't block main thread)
           if (id.includes('node_modules/leaflet/') || id.includes('node_modules/react-leaflet/')) {
             return 'maps';
           }
-          if (
-            id.includes('node_modules/quill') ||
-            id.includes('node_modules/slate') ||
-            id.includes('node_modules/draft-js') ||
-            id.includes('node_modules/codemirror') ||
-            id.includes('node_modules/prosemirror')
-          ) {
+          if (/node_modules[\\/](recharts|victory-vendor|d3-[^\\/]+)/.test(id)) {
+            return 'charts';
+          }
+          if (/node_modules[\\/](quill|slate|draft-js|codemirror|prosemirror)/.test(id)) {
             return 'editor';
           }
-          if (id.includes('node_modules/@sentry')) return 'sentry';
-          if (id.includes('node_modules/@tanstack') || id.includes('node_modules/react-query'))
-            return 'tanstack-query';
-          if (id.includes('node_modules/socket.io-client')) return 'socket-io';
+
+          // Group 5: UI Utilities (Icons, Dates, Lodash)
           if (
-            id.includes('node_modules/canvas-confetti') ||
-            id.includes('node_modules/qrcode.react') ||
-            id.includes('node_modules/react-barcode')
+            id.includes('node_modules/lucide-react/') ||
+            id.includes('node_modules/date-fns/') ||
+            id.includes('node_modules/moment/') ||
+            id.includes('node_modules/lodash/') ||
+            id.includes('node_modules/canvas-confetti/') ||
+            id.includes('node_modules/qrcode.react/') ||
+            id.includes('node_modules/react-barcode/')
           ) {
-            return 'celebration';
+            return 'ui-utils';
           }
-          if (id.includes('node_modules/axios')) return 'http-client';
-          if (id.includes('node_modules/lucide-react')) return 'lucide-icons';
-          if (id.includes('node_modules/logrocket')) return 'logrocket';
-          if (id.includes('node_modules/lodash')) return 'lodash';
-          if (id.includes('node_modules/date-fns') || id.includes('node_modules/moment'))
-            return 'date-utils';
-          return 'vendor';
+
+          // Let Vite handle the rest automatically
         },
         assetFileNames: (assetInfo) => {
           const extType = assetInfo.name?.split('.').pop() || '';
@@ -135,6 +132,17 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.warn('[Vite Proxy Error] Failed to connect to backend target:', err.message);
+          });
+        },
+      },
+      '/socket.io': {
         target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false,

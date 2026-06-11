@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { galleryService } from '../../../services/domainServices';

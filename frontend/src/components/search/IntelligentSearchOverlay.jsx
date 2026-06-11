@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { SearchSuggestionsSkeleton } from '../ui/Skeleton';
 

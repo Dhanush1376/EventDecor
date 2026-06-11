@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
+import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 
 /**
  * Shop By Occasion / Event Types using real digital studio event types.
@@ -148,12 +149,14 @@ export function ShopByOccasion() {
                 >
                   <div className="absolute inset-0 w-full h-full">
                     {occasion.image ? (
-                      <img
+                      <CloudinaryImage
                         src={occasion.image}
                         alt={occasion.label}
-                        draggable={false}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 select-none pointer-events-none"
+                        containerClassName="absolute inset-0 w-full h-full"
+                        sizes="(max-width: 640px) 75vw, (max-width: 768px) 50vw, 350px"
+                        width={350}
                       />
                     ) : (
                       <div className="w-full h-full bg-surface-container-high" aria-hidden="true" />
@@ -220,11 +223,14 @@ export function ShopByOccasion() {
             className="group relative h-full flex-1 hover:flex-[3] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden rounded-[32px] border border-black/5 shadow-md hover:shadow-2xl cursor-pointer"
           >
             {occasion.image ? (
-              <img
+              <CloudinaryImage
                 src={occasion.image}
                 alt={occasion.label}
                 loading="lazy"
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                containerClassName="absolute inset-0 w-full h-full"
+                sizes="(max-width: 1024px) 100vw, 300px"
+                width={350}
               />
             ) : (
               <div

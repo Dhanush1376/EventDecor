@@ -34,6 +34,7 @@ export function SEO({
   description,
   keywords,
   ogImage,
+  preloadImage,
   canonicalUrl,
   schema,
   ogType = 'website',
@@ -259,6 +260,7 @@ export function SEO({
 
       {currentUrl && <link rel="alternate" hrefLang="en-in" href={currentUrl} />}
       {currentUrl && <link rel="alternate" hrefLang="x-default" href={currentUrl} />}
+      {preloadImage && <link rel="preload" as="image" href={preloadImage} />}
 
       <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
       <script type="application/ld+json">{JSON.stringify(websiteSchema)}</script>

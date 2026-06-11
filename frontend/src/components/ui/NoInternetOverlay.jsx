@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, RefreshCw, Database, ShieldAlert, AlertCircle } from 'lucide-react';
 import { useNetwork } from '../../context/NetworkContext';
 

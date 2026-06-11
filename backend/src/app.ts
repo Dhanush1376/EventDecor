@@ -140,14 +140,21 @@ app.use('/api', validateCsrf);
 app.use(dbReadinessGuard);
 
 // Enable production-safe structured request logging and execution telemetry
-app.use(requestLogger);
+if (process.env.DISABLE_LOGGING !== 'true') {
+  app.use(requestLogger);
+}
 
 // 4. Sanitization & Performance
-app.use(compression());
+if (process.env.DISABLE_COMPRESSION !== 'true') {
+  app.use(compression({ level: 6, threshold: 1024 }));
+}
 app.use(queryGuard); // Guard against complex NoSQL injection vectors (depth, raw $ operators in query)
 // Express 5 makes req.query a getter, so we cannot reassign it directly.
 // We apply sanitization in-place or handle it without reassignment.
 app.use((req, res, next) => {
+  if (process.env.DISABLE_XSS === 'true') {
+    return next();
+  }
   if (req.body) {
     mongoSanitize.sanitize(req.body);
     req.body = xssClean(req.body);
@@ -227,8 +234,10 @@ app.get('/sitemap.xml', async (req: Request, res: Response) => {
 app.use(requestTimeout(15000));
 
 // Apply global rate limiting and API flooding protection
-app.use('/api/', apiFloodingLimiter);
-app.use('/api/', globalLimiter);
+if (process.env.DISABLE_RATE_LIMITER !== 'true') {
+  app.use('/api/', apiFloodingLimiter);
+  app.use('/api/', globalLimiter);
+}
 
 // Version endpoint — minimal public payload (no environment disclosure)
 app.get(['/api/version', '/api/v1/version'], noCacheMiddleware, (req: Request, res: Response) => {

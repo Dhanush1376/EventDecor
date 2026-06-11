@@ -67,7 +67,8 @@ export interface IOrder extends ISoftDeleted {
     | 'Delivered'
     | 'Cancelled'
     | 'Returned'
-    | 'Refunded';
+    | 'Refunded'
+    | 'Settled';
   statusHistory: IOrderStatusHistory[];
   subtotal: number;
   shippingFee: number;
@@ -175,6 +176,7 @@ const OrderSchema: Schema = new Schema(
         'Cancelled',
         'Returned',
         'Refunded',
+        'Settled',
       ],
       default: 'Pending',
     },

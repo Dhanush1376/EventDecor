@@ -3,7 +3,8 @@
  */
 export const SITE_URL = import.meta.env.VITE_SITE_URL || '';
 export const SITE_NAME = import.meta.env.VITE_SITE_NAME || '';
-export const OG_IMAGE_URL = import.meta.env.VITE_OG_IMAGE_URL || (SITE_URL ? `${SITE_URL}/og-image.png` : '');
+export const OG_IMAGE_URL =
+  import.meta.env.VITE_OG_IMAGE_URL || (SITE_URL ? `${SITE_URL}/og-image.webp` : '');
 export const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '';
 export const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || '';
 

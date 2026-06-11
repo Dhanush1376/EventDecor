@@ -36,18 +36,39 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
 
   if (isCloudinary) {
     let transform = [];
-    if (width) transform.push(`w_${width}`);
-    if (height) transform.push(`h_${height}`);
+    if (width) transform.push(`w_${width},c_limit`);
+    if (height) transform.push(`h_${height},c_limit`);
+
     if (quality && quality !== 'auto') transform.push(`q_${quality}`);
-    else transform.push('q_auto:good'); // Optimize bandwidth using good quality heuristic
+    else transform.push('q_auto:good');
+
     if (format && format !== 'auto') transform.push(`f_${format}`);
     else transform.push('f_auto');
 
+    transform.push('dpr_auto');
+    transform.push('fl_strip_profile');
+
     const transformStr = transform.join(',');
 
-    // Due to Cloudinary account strict transformation settings causing 404s,
-    // we bypass dynamic transformations and use the original URL.
-    resultUrl = url;
+    const urlParts = url.split('/upload/');
+    if (urlParts.length === 2) {
+      let pathPart = urlParts[1];
+      const firstSlash = pathPart.indexOf('/');
+      if (firstSlash > 0) {
+        const potentialTransforms = pathPart.substring(0, firstSlash);
+        if (potentialTransforms.includes('_') && !potentialTransforms.startsWith('v')) {
+          pathPart = pathPart.substring(firstSlash + 1);
+        }
+      }
+
+      // We removed the hardcoded c_fill,h_750 here because it aggressively crops and zooms
+      // hero images and tall banners on large desktop breakpoints, breaking visual immutability.
+      const transformStrFinal = transformStr;
+
+      resultUrl = `${urlParts[0]}/upload/${transformStrFinal}/${pathPart}`;
+    } else {
+      resultUrl = url;
+    }
   } else {
     // Local/static images route through backend dynamic media optimization pipeline
     const isAbsoluteExternal = url.startsWith('http://') || url.startsWith('https://');
@@ -136,7 +157,7 @@ export const getResponsiveWidth = (targetWidth) => {
 /**
  * Generate a srcset for responsive images, capping at max requested width to save bandwidth
  */
-export const getSrcSet = (url, maxWidth = null, format = 'auto') => {
+export const getSrcSet = (url, maxWidth = null, quality = 'auto', format = 'auto') => {
   if (!url) return null;
   if (url.startsWith('data:') || url.startsWith('blob:')) return null;
 
@@ -144,21 +165,32 @@ export const getSrcSet = (url, maxWidth = null, format = 'auto') => {
   const isCloudinary = url.includes('cloudinary.com');
   if (isAbsoluteExternal && !isCloudinary) return null; // Can't dynamically resize external non-Cloudinary without transforms
 
-  let validWidths = [];
+  let validWidths;
 
   // Bandwidth protection: Hard cap maximum requested width
   const effectiveMaxWidth = maxWidth && maxWidth > 1536 ? 1536 : maxWidth;
 
+  let derivedQuality = 'auto:good';
   if (effectiveMaxWidth && effectiveMaxWidth <= 200) {
-    // For thumbnails, only generate 1x and 2x
     validWidths = [effectiveMaxWidth, effectiveMaxWidth * 2];
+    derivedQuality = 'auto:low';
+  } else if (effectiveMaxWidth && effectiveMaxWidth <= 320) {
+    validWidths = [320, 480];
+    derivedQuality = 'auto:good';
+  } else if (effectiveMaxWidth && effectiveMaxWidth <= 360) {
+    validWidths = [360, 480];
+    derivedQuality = 'auto:good';
   } else if (effectiveMaxWidth && effectiveMaxWidth <= 600) {
-    validWidths = [320, 640, effectiveMaxWidth * 2].filter((w) => w <= effectiveMaxWidth * 2);
+    // Tighter cap for eco tier - target 480px max retina
+    const maxRetina = 480;
+    validWidths = [240, 320, 360, 400, 480, 500].filter((w) => w <= maxRetina);
+    derivedQuality = 'auto:eco';
   } else {
-    const breakpoints = [320, 640, 1024, 1536];
+    const breakpoints = [240, 320, 400, 500, 640, 800, 1024, 1280, 1536];
     validWidths = effectiveMaxWidth
-      ? breakpoints.filter((w) => w <= effectiveMaxWidth * 1.5)
+      ? breakpoints.filter((w) => w <= effectiveMaxWidth * 2) // Cap at retina width
       : breakpoints;
+    derivedQuality = 'auto:good';
   }
 
   // Deduplicate and sort
@@ -170,7 +202,10 @@ export const getSrcSet = (url, maxWidth = null, format = 'auto') => {
   }
 
   return validWidths
-    .map((w) => `${getOptimizedUrl(url, w, null, 'auto', format)} ${w}w`)
+    .map((w) => {
+      const qualityParam = quality === 'auto' ? derivedQuality : quality;
+      return `${getOptimizedUrl(url, w, null, qualityParam, format)} ${w}w`;
+    })
     .join(', ');
 };
 
@@ -188,7 +223,7 @@ export const getResponsiveImageProps = (
   if (!url) return { src: '', srcSet: undefined, sizes: undefined };
 
   const optimizedSrc = getOptimizedUrl(url, width, height, quality, format);
-  const srcSet = getSrcSet(url, width, format);
+  const srcSet = getSrcSet(url, width, quality, format);
 
   return {
     src: optimizedSrc,

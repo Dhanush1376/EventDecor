@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
 import {
   AreaChart,

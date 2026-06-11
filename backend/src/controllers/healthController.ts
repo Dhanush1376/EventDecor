@@ -33,11 +33,6 @@ export class HealthController {
     try {
       const mongoState = mongoose.connection.readyState;
       if (mongoState === 1) {
-        // Connected — do a ping to check actual connectivity
-        await Promise.race([
-          mongoose.connection.db!.admin().ping(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Ping timeout')), 10000)),
-        ]);
         checks.mongodb = { status: 'connected', latencyMs: Date.now() - mongoStart };
       } else {
         checks.mongodb = { status: 'disconnected' };

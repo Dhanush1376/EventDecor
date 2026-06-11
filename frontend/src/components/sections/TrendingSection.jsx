@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { SectionWrapper } from '../layout';
 import { RecommendationCarousel } from '../ui/RecommendationCarousel';
 import { ProductCard } from '../ui/ProductCard';

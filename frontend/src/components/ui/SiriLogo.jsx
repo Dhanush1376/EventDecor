@@ -15,18 +15,20 @@ export function SiriLogo({
       style={{
         height: height + 'px',
         minHeight: height + 'px',
-        // We let width be auto to support rectangular logos correctly
       }}
     >
       <img
-        src="/logo-nobg-clean.png"
+        src="/logo-nobg-clean-sm.webp"
         alt="Siri Arts & Crafts Logo"
+        loading="eager"
+        fetchPriority="high"
         style={{
           height: '100%',
           width: 'auto',
           objectFit: 'contain',
           filter: variant === 'white' ? 'brightness(0) invert(1)' : 'none',
         }}
+        className="h-full flex items-center"
       />
     </div>
   );

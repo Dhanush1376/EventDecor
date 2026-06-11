@@ -16,13 +16,21 @@ export type OrderState =
 
 export class OrderStateMachine {
   private static readonly validTransitions: Record<OrderState, OrderState[]> = {
-    Pending: ['Confirmed', 'Cancelled'],
-    Confirmed: ['Packed', 'Cancelled'],
-    Packed: ['Ready to Ship', 'Shipped', 'Cancelled'],
-    'Ready to Ship': ['Shipped', 'Cancelled'],
+    Pending: [
+      'Confirmed',
+      'Packed',
+      'Ready to Ship',
+      'Shipped',
+      'Out for Delivery',
+      'Delivered',
+      'Cancelled',
+    ],
+    Confirmed: ['Packed', 'Ready to Ship', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'],
+    Packed: ['Ready to Ship', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'],
+    'Ready to Ship': ['Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'],
     Shipped: ['Out for Delivery', 'Delivered', 'Cancelled', 'Returned'],
     'Out for Delivery': ['Delivered', 'Cancelled', 'Returned'],
-    Delivered: ['Returned'],
+    Delivered: ['Returned', 'Settled'],
     Cancelled: [],
     Returned: ['Refunded'],
     Refunded: [],

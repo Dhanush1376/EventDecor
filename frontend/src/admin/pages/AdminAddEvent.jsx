@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { eventService } from '../../services/domainServices';

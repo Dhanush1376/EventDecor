@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useWishlist } from '../context/WishlistContext';
 import { GalleryCard } from '../components/gallery/GalleryCard';
 import { SEO } from '../components/seo/SEO';
@@ -215,10 +215,9 @@ export function GalleryDetail() {
               <video
                 src={item.video}
                 controls
-                autoPlay
                 muted
-                loop
                 playsInline
+                preload="none"
                 className="w-full h-auto object-cover max-h-[85vh] mx-auto block"
                 poster={item.image}
               />
@@ -383,10 +382,9 @@ export function GalleryDetail() {
                 <video
                   src={item.video}
                   controls
-                  autoPlay
                   muted
-                  loop
                   playsInline
+                  preload="none"
                   className="w-full h-auto object-cover block"
                   poster={item.image}
                 />

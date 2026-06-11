@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { prefetchManager } from '../../utils/prefetchManager';
@@ -449,7 +449,7 @@ export function CartDrawer({ isOpen, onClose }) {
                   to="/checkout"
                   onMouseEnter={() => prefetchManager.prefetchRoute('/checkout', { kind: 'hover' })}
                   onClick={onClose}
-                  className="block w-full bg-black text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-[#8c7335] hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-black/15"
+                  className="block w-full bg-black text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-orange-600 hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-black/15"
                 >
                   Proceed to Checkout
                 </Link>

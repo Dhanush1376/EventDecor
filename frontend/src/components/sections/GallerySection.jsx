@@ -1,6 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { m as motion, useScroll, useTransform } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { SectionWrapper } from '../layout/SectionWrapper';
 import { MandalaElement } from '../ui/MandalaElement';

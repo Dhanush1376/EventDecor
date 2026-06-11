@@ -1,5 +1,5 @@
-import React from "react";
-import { motion, useInView } from "framer-motion";
+import React from 'react';
+import { m as motion, useInView } from 'framer-motion';
 import { MANDALA_VARIANT_URLS } from '../../constants/mandalaAssets';
 
 /**
@@ -18,12 +18,12 @@ const VARIANT_MAP = MANDALA_VARIANT_URLS;
 export function MandalaArtDecor({
   variant = 1,
   size = 300,
-  className = "",
+  className = '',
   opacity = 0.2,
   spin = true,
   spinDuration = 150,
-  blendMode = "darken",
-  blendModeDark = "screen",
+  blendMode = 'darken',
+  blendModeDark = 'screen',
   dark = false,
 }) {
   const ref = React.useRef(null);
@@ -41,15 +41,15 @@ export function MandalaArtDecor({
       draggable={false}
       initial={{ opacity: 0, scale: 0.85 }}
       animate={isInView ? { opacity, scale: 1 } : { opacity: 0, scale: 0.85 }}
-      transition={{ duration: 1.5, ease: "easeOut" }}
+      transition={{ duration: 1.5, ease: 'easeOut' }}
       className={`absolute object-contain rounded-full pointer-events-none select-none ${
-        spin ? "animate-slow-spin" : ""
+        spin ? 'animate-slow-spin' : ''
       } ${className}`}
       style={{
         width: size,
         height: size,
         animationDuration: `${spinDuration}s`,
-        animationPlayState: isInView ? "running" : "paused",
+        animationPlayState: isInView ? 'running' : 'paused',
         mixBlendMode: blend,
       }}
       loading="lazy"

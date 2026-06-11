@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { notificationService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
 import { safeLocalStorage } from '../../utils/storage';
-import { initAnalytics } from '../../utils/analytics';
-import { initObservability } from '../../utils/observability';
 
 import logger from '../../utils/logger';
+
 export function ConsentPopup() {
-  const [isVisible, setIsVisible] = useState(false);
-  const [view, setView] = useState('banner'); // 'banner' | 'details'
+  const [step, setStep] = useState('idle'); // 'idle' | 'cookie' | 'notification' | 'done'
+  const [isExiting, setIsExiting] = useState(false);
 
   // Consent State Variables
   const [preferences, setPreferences] = useState({
@@ -20,15 +20,15 @@ export function ConsentPopup() {
     personalizedRecommendations: true,
   });
 
+  // Configure panel open state
+  const [showConfigure, setShowConfigure] = useState(false);
+
   useEffect(() => {
-    // Check if user has already made a preference selection
     const consentLogged = safeLocalStorage.getItem('siri_arts_consent_logged');
     if (!consentLogged) {
-      // Small delay before showing banner for ultra-smooth presentation
-      const timer = setTimeout(() => setIsVisible(true), 2500);
+      const timer = setTimeout(() => setStep('cookie'), 2000);
       return () => clearTimeout(timer);
     } else {
-      // Sync loaded choices from localStorage
       try {
         const saved = JSON.parse(consentLogged);
         setTimeout(() => setPreferences(saved), 0);
@@ -38,64 +38,91 @@ export function ConsentPopup() {
     }
   }, []);
 
-  const handleSaveConsent = async (finalPrefs, actionType) => {
-    // Instant optimistic UI update
-    setIsVisible(false);
-
-    try {
-      const consentToken = safeLocalStorage.getItem('siri_arts_consent_token') || '';
-
-      const payload = {
-        consentToken,
-        cookies: finalPrefs.cookies,
-        marketingEmails: finalPrefs.marketingEmails,
-        updateNotifications: finalPrefs.updateNotifications,
-        personalizedRecommendations: finalPrefs.personalizedRecommendations,
-      };
-
-      // Optimistically save to local storage immediately
-      safeLocalStorage.setItem('siri_arts_consent_logged', JSON.stringify(finalPrefs));
-      setPreferences(finalPrefs);
-
-      // Dynamically boostrap scripts after explicit consent
-      if (finalPrefs.personalizedRecommendations || finalPrefs.marketingEmails) {
-        initAnalytics();
-        initObservability();
-      }
-
-      if (actionType === 'accept') {
-        toast.success('Thank you for accepting Siri Arts cookies & alerts!', {
-          icon: '✦',
-          style: {
-            background: '#faf9f6',
-            color: 'var(--color-gold-dark)',
-            border: '1px solid #d0c5af',
-            fontFamily: "'Playfair Display', serif",
-          },
-        });
-      } else if (actionType === 'decline') {
-        toast.success('Preferences saved. Only essential cookies are active.');
+  const dismissWithAnimation = useCallback((nextStep) => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsExiting(false);
+      if (nextStep) {
+        setStep(nextStep);
       } else {
-        toast.success('Preferences updated successfully');
+        setStep('done');
       }
+    }, 350);
+  }, []);
 
-      // Async save to backend without blocking UI
-      notificationService
-        .saveConsent(payload)
-        .then((response) => {
-          if (response && response.success) {
-            safeLocalStorage.setItem('siri_arts_consent_token', response.data.consentToken);
-          }
-        })
-        .catch((err) => {
-          logger.error('Failed to persist GDPR consent selection to server:', err);
-        });
-    } catch (err) {
-      logger.error('Unexpected error in handleSaveConsent:', err);
-    }
-  };
+  const handleSaveConsent = useCallback(
+    async (finalPrefs, actionType) => {
+      try {
+        const consentToken = safeLocalStorage.getItem('siri_arts_consent_token') || '';
 
-  const handleAcceptAll = () => {
+        const payload = {
+          consentToken,
+          cookies: finalPrefs.cookies,
+          marketingEmails: finalPrefs.marketingEmails,
+          updateNotifications: finalPrefs.updateNotifications,
+          personalizedRecommendations: finalPrefs.personalizedRecommendations,
+        };
+
+        safeLocalStorage.setItem('siri_arts_consent_logged', JSON.stringify(finalPrefs));
+        setPreferences(finalPrefs);
+
+        if (finalPrefs.personalizedRecommendations || finalPrefs.marketingEmails) {
+          import('../../utils/analytics')
+            .then(({ initAnalytics }) => initAnalytics())
+            .catch(() => {});
+          import('../../utils/observability')
+            .then(({ initObservability }) => initObservability())
+            .catch(() => {});
+        }
+
+        // Proceed to notification step or close
+        const notifAsked = safeLocalStorage.getItem('siri_arts_notif_asked');
+        const supportsNotif = 'Notification' in window && Notification.permission === 'default';
+
+        if (!notifAsked && supportsNotif) {
+          dismissWithAnimation('notification');
+        } else {
+          dismissWithAnimation(null);
+        }
+
+        if (actionType === 'accept') {
+          toast.success('Preferences saved. Cookies & alerts enabled.', {
+            style: {
+              background: '#1a1a1a',
+              color: '#d4af37',
+              border: '1px solid rgba(212,175,55,0.2)',
+              fontSize: '12px',
+            },
+          });
+        } else if (actionType === 'decline') {
+          toast.success('Only essential cookies active.', {
+            style: { fontSize: '12px' },
+          });
+        } else {
+          toast.success('Preferences updated.', {
+            style: { fontSize: '12px' },
+          });
+        }
+
+        // Async save to backend
+        notificationService
+          .saveConsent(payload)
+          .then((response) => {
+            if (response && response.success) {
+              safeLocalStorage.setItem('siri_arts_consent_token', response.data.consentToken);
+            }
+          })
+          .catch((err) => {
+            logger.error('Failed to persist consent to server:', err);
+          });
+      } catch (err) {
+        logger.error('Unexpected error in handleSaveConsent:', err);
+      }
+    },
+    [dismissWithAnimation],
+  );
+
+  const handleAcceptAll = useCallback(() => {
     const allAccepted = {
       cookies: true,
       marketingEmails: true,
@@ -103,241 +130,292 @@ export function ConsentPopup() {
       personalizedRecommendations: true,
     };
     handleSaveConsent(allAccepted, 'accept');
-  };
+  }, [handleSaveConsent]);
 
-  const handleDeclineAll = () => {
+  const handleDeclineAll = useCallback(() => {
     const allDeclined = {
-      cookies: true, // Core functionality stays true
+      cookies: true,
       marketingEmails: false,
       updateNotifications: false,
       personalizedRecommendations: false,
     };
     handleSaveConsent(allDeclined, 'decline');
-  };
+  }, [handleSaveConsent]);
 
-  const handleCustomSave = () => {
+  const handleCustomSave = useCallback(() => {
     handleSaveConsent(preferences, 'custom');
-  };
+  }, [handleSaveConsent, preferences]);
 
-  if (!isVisible) return null;
+  // Browser Notification Permission
+  const handleEnableNotifications = useCallback(async () => {
+    safeLocalStorage.setItem('siri_arts_notif_asked', 'true');
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        toast.success('Notifications enabled successfully.', {
+          style: { fontSize: '12px' },
+        });
+      }
+    } catch (err) {
+      logger.error('Notification permission error:', err);
+    }
+    dismissWithAnimation(null);
+  }, [dismissWithAnimation]);
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[110] pointer-events-none flex items-end justify-center p-4 sm:p-6 md:p-8">
+  const handleSkipNotifications = useCallback(() => {
+    safeLocalStorage.setItem('siri_arts_notif_asked', 'true');
+    dismissWithAnimation(null);
+  }, [dismissWithAnimation]);
+
+  if (step === 'idle' || step === 'done') return null;
+
+  return createPortal(
+    <AnimatePresence mode="wait">
+      {/* COOKIE CONSENT BAR */}
+      {step === 'cookie' && !isExiting && (
         <motion.div
-          initial={{ opacity: 0, y: 100, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 80, scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-          className="pointer-events-auto w-full max-w-xl md:max-w-2xl bg-white/80 backdrop-blur-xl border border-[var(--color-gold-dark)]/15 shadow-[0_20px_50px_rgba(115,92,0,0.1)] rounded-2xl p-5 sm:p-6 text-on-surface"
+          key="cookie-bar"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="fixed bottom-0 left-0 right-0 z-[999999] px-3 pb-3 sm:px-4 sm:pb-4 md:px-6 md:pb-6"
         >
-          {view === 'banner' ? (
-            <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-5">
-              <div className="flex-1 text-center md:text-left">
-                <div className="flex items-center justify-center md:justify-start gap-2.5 mb-2.5">
-                  <span className="material-symbols-outlined text-[var(--color-gold-dark)] text-xl animate-pulse">
-                    verified_user
-                  </span>
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-[var(--color-gold-dark)] font-sans">
-                    Artistry & Privacy Choices
-                  </h3>
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-[#111]/95 backdrop-blur-2xl border border-white/[0.06] rounded-xl shadow-[0_-8px_40px_rgba(0,0,0,0.3)] overflow-hidden">
+              {/* Main Bar */}
+              <div className="px-4 py-3.5 sm:px-5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                {/* Icon + Text */}
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-[#d4af37]" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M21.27 20.058l-1.278-1.278a.75.75 0 00-.06-.052c-.489-.399-.816-1.012-.816-1.728v-1.96a2.25 2.25 0 01-.053-.476V10.5a7.499 7.499 0 00-5.395-7.201A.75.75 0 0013.5 3a1.5 1.5 0 10-3 0 .75.75 0 00-.168.468A7.499 7.499 0 004.878 10.5v4.063a2.25 2.25 0 01-.053.476V17c0 .716-.327 1.329-.816 1.728a.75.75 0 00-.06.052L2.73 20.058A.75.75 0 003.28 21.31h17.44a.75.75 0 00.55-1.252zM14.25 21.75a2.25 2.25 0 01-4.5 0" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[12px] sm:text-[13px] text-white/90 font-medium leading-snug">
+                      We use cookies to personalize your experience, deliver festive offers, and
+                      process orders.
+                    </p>
+                    <button
+                      onClick={() => setShowConfigure(!showConfigure)}
+                      className="text-[10px] text-[#d4af37]/70 hover:text-[#d4af37] font-medium mt-1 transition-colors cursor-pointer inline-flex items-center gap-1"
+                    >
+                      <span>{showConfigure ? 'Hide' : 'Manage'} preferences</span>
+                      <svg
+                        className={`w-3 h-3 transition-transform duration-200 ${showConfigure ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
-                <h2 className="text-sm font-bold font-serif text-zinc-900 leading-snug mb-2">
-                  Enhance your Siri Arts Curation & Updates
-                </h2>
-
-                <p className="text-[11px] text-zinc-600 font-light leading-relaxed">
-                  We use cookies and notification channels to elevate your design journey. Accepting
-                  lets us recommend hand-carved urlis, notify you of festive flash offers, and
-                  dispatch real-time order status updates to your screen.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row md:flex-col gap-2 w-full md:w-auto shrink-0 justify-center">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleAcceptAll}
-                  className="bg-[var(--color-gold-dark)] text-white rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest hover:bg-zinc-900 transition-colors shadow-md cursor-pointer text-center"
-                >
-                  Accept All
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setView('details')}
-                  className="border border-[var(--color-gold-dark)]/30 hover:border-[var(--color-gold-dark)] text-[var(--color-gold-dark)] rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest transition-colors cursor-pointer text-center"
-                >
-                  Configure
-                </motion.button>
-
-                <button
-                  onClick={handleDeclineAll}
-                  className="text-[10px] text-zinc-400 hover:text-zinc-900 transition-colors font-medium cursor-pointer text-center py-1 font-sans"
-                >
-                  Decline Non-Essential
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between border-b border-[var(--color-gold-dark)]/10 pb-3">
-                <div className="flex items-center gap-2">
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                   <button
-                    onClick={() => setView('banner')}
-                    className="material-symbols-outlined text-zinc-400 hover:text-[var(--color-gold-dark)] text-lg cursor-pointer"
+                    onClick={handleDeclineAll}
+                    className="text-[10px] text-white/40 hover:text-white/70 font-medium transition-colors cursor-pointer px-2 py-1.5 whitespace-nowrap"
                   >
-                    arrow_back
+                    Decline
                   </button>
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-[var(--color-gold-dark)] font-sans">
-                    Detailed Consent Settings
-                  </h3>
-                </div>
-                <span className="text-[10px] text-zinc-400 font-sans">
-                  GDPR & ePrivacy Compliant
-                </span>
-              </div>
-
-              {/* Preferences Grid */}
-              <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
-                {/* Preference 1: Essential Cookies */}
-                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl">
-                  <div className="mt-1">
-                    <input
-                      type="checkbox"
-                      disabled
-                      checked
-                      aria-label="Core Platform Operations (Always Active)"
-                      className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-not-allowed accent-[var(--color-gold-dark)]"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <strong className="text-[11px] font-bold text-zinc-950 font-sans">
-                        Core Platform Operations (Always Active)
-                      </strong>
-                      <span className="text-[8px] bg-zinc-200 text-zinc-700 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded font-sans">
-                        Required
-                      </span>
-                    </div>
-                    <p className="text-[9.5px] text-zinc-500 font-light leading-relaxed mt-0.5">
-                      Enables checkout bag sessions, security keys, and fundamental order processing
-                      databases. Without these, the atelier portal cannot function.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Preference 2: Personalized Recommendations */}
-                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl hover:border-[var(--color-gold-dark)]/25 transition-colors">
-                  <div className="mt-1">
-                    <input
-                      type="checkbox"
-                      id="consent-recs"
-                      checked={preferences.personalizedRecommendations}
-                      onChange={(e) =>
-                        setPreferences({
-                          ...preferences,
-                          personalizedRecommendations: e.target.checked,
-                        })
-                      }
-                      className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-pointer accent-[var(--color-gold-dark)]"
-                    />
-                  </div>
-                  <label htmlFor="consent-recs" className="flex-1 cursor-pointer">
-                    <strong className="text-[11px] font-bold text-zinc-950 font-sans">
-                      Personalized Design Recommendations
-                    </strong>
-                    <p className="text-[9.5px] text-zinc-500 font-light leading-relaxed mt-0.5">
-                      Allows us to analyze your decor views (like brass backdrops vs diyas) to
-                      recommend harmonious design elements.
-                    </p>
-                  </label>
-                </div>
-
-                {/* Preference 3: Marketing Emails */}
-                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl hover:border-[var(--color-gold-dark)]/25 transition-colors">
-                  <div className="mt-1">
-                    <input
-                      type="checkbox"
-                      id="consent-marketing"
-                      checked={preferences.marketingEmails}
-                      onChange={(e) =>
-                        setPreferences({ ...preferences, marketingEmails: e.target.checked })
-                      }
-                      className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-pointer accent-[var(--color-gold-dark)]"
-                    />
-                  </div>
-                  <label htmlFor="consent-marketing" className="flex-1 cursor-pointer">
-                    <strong className="text-[11px] font-bold text-zinc-950 font-sans">
-                      Festive Offers & Catalog Email Updates
-                    </strong>
-                    <p className="text-[9.5px] text-zinc-500 font-light leading-relaxed mt-0.5">
-                      Receive visually stunning, gold-branded marketing catalogs, limited collection
-                      releases, and flash holiday promo codes (e.g. 50% Off).
-                    </p>
-                  </label>
-                </div>
-
-                {/* Preference 4: Update Notifications */}
-                <div className="flex items-start gap-4 p-3 bg-zinc-50 border border-zinc-100 rounded-xl hover:border-[var(--color-gold-dark)]/25 transition-colors">
-                  <div className="mt-1">
-                    <input
-                      type="checkbox"
-                      id="consent-updates"
-                      checked={preferences.updateNotifications}
-                      onChange={(e) =>
-                        setPreferences({ ...preferences, updateNotifications: e.target.checked })
-                      }
-                      className="w-4 h-4 rounded text-[var(--color-gold-dark)] border-zinc-300 focus:ring-[var(--color-gold-dark)] cursor-pointer accent-[var(--color-gold-dark)]"
-                    />
-                  </div>
-                  <label htmlFor="consent-updates" className="flex-1 cursor-pointer">
-                    <strong className="text-[11px] font-bold text-zinc-950 font-sans">
-                      Order Logs & Dispatch Tracking Alerts
-                    </strong>
-                    <p className="text-[9.5px] text-zinc-500 font-light leading-relaxed mt-0.5">
-                      Receive real-time transactional dispatches on order placement, invoice pdf
-                      generation, courier dispatch, and delivery milestones.
-                    </p>
-                  </label>
-                </div>
-              </div>
-
-              {/* Preferences Footer Actions */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[var(--color-gold-dark)]/10 pt-4">
-                <button
-                  onClick={handleDeclineAll}
-                  className="text-[10px] text-zinc-400 hover:text-zinc-950 font-medium cursor-pointer font-sans"
-                >
-                  Decline All Optional
-                </button>
-
-                <div className="flex gap-2 w-full sm:w-auto shrink-0 justify-end">
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleCustomSave}
-                    className="bg-[var(--color-gold-dark)] text-white rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest hover:bg-zinc-900 transition-colors shadow-sm cursor-pointer text-center flex-1 sm:flex-none"
-                  >
-                    Commit My Preferences
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={handleAcceptAll}
-                    className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-full px-5 py-2.5 font-sans font-bold text-[9px] uppercase tracking-widest transition-colors cursor-pointer text-center flex-1 sm:flex-none"
+                    className="bg-[#d4af37] hover:bg-[#c9a42e] text-[#111] px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer shadow-[0_2px_12px_rgba(212,175,55,0.25)] whitespace-nowrap flex-1 sm:flex-none text-center"
                   >
                     Accept All
                   </motion.button>
                 </div>
               </div>
+
+              {/* Expandable Configure Panel */}
+              <AnimatePresence>
+                {showConfigure && (
+                  <motion.div
+                    key="configure-panel"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 border-t border-white/[0.06] pt-3.5 space-y-3">
+                      {/* Toggle Rows */}
+                      {[
+                        {
+                          id: 'cookies',
+                          label: 'Essential Cookies',
+                          desc: 'Security, cart sessions, checkout. Always active.',
+                          locked: true,
+                          checked: true,
+                        },
+                        {
+                          id: 'personalizedRecommendations',
+                          label: 'Personalized Recommendations',
+                          desc: 'Curated decor suggestions based on browsing.',
+                          locked: false,
+                          checked: preferences.personalizedRecommendations,
+                        },
+                        {
+                          id: 'marketingEmails',
+                          label: 'Marketing & Offers',
+                          desc: 'Festive flash sales, new collection launches.',
+                          locked: false,
+                          checked: preferences.marketingEmails,
+                        },
+                        {
+                          id: 'updateNotifications',
+                          label: 'Order & Dispatch Alerts',
+                          desc: 'Real-time shipping, delivery, and invoice updates.',
+                          locked: false,
+                          checked: preferences.updateNotifications,
+                        },
+                      ].map((item) => (
+                        <label
+                          key={item.id}
+                          className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors group ${
+                            item.locked
+                              ? 'bg-white/[0.03] cursor-default'
+                              : 'bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer'
+                          }`}
+                        >
+                          {/* Toggle Switch */}
+                          <div className="relative shrink-0">
+                            <input
+                              type="checkbox"
+                              checked={item.checked}
+                              disabled={item.locked}
+                              onChange={(e) => {
+                                if (!item.locked) {
+                                  setPreferences((prev) => ({
+                                    ...prev,
+                                    [item.id]: e.target.checked,
+                                  }));
+                                }
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div
+                              className={`w-9 h-5 rounded-full transition-colors duration-200 ${
+                                item.checked ? 'bg-[#d4af37]' : 'bg-white/10'
+                              } ${item.locked ? 'opacity-60' : ''}`}
+                            />
+                            <div
+                              className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                                item.checked ? 'translate-x-4' : 'translate-x-0'
+                              }`}
+                            />
+                          </div>
+
+                          {/* Label Text */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] text-white/80 font-semibold">
+                                {item.label}
+                              </span>
+                              {item.locked && (
+                                <span className="text-[8px] bg-white/10 text-white/40 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                                  Required
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-white/30 leading-tight block">
+                              {item.desc}
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+
+                      {/* Save Custom Button */}
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={handleCustomSave}
+                          className="bg-white/10 hover:bg-white/15 text-white/90 px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer"
+                        >
+                          Save Preferences
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          )}
+          </div>
         </motion.div>
-      </div>
-    </AnimatePresence>
+      )}
+
+      {/* BROWSER NOTIFICATION PROMPT */}
+      {step === 'notification' && !isExiting && (
+        <motion.div
+          key="notif-bar"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="fixed bottom-0 left-0 right-0 z-[999999] px-3 pb-3 sm:px-4 sm:pb-4 md:px-6 md:pb-6"
+        >
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-[#111]/95 backdrop-blur-2xl border border-white/[0.06] rounded-xl shadow-[0_-8px_40px_rgba(0,0,0,0.3)]">
+              <div className="px-4 py-3.5 sm:px-5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                {/* Icon + Text */}
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg
+                      className="w-4 h-4 text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+                      />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[12px] sm:text-[13px] text-white/90 font-medium leading-snug">
+                      Enable notifications to get real-time order updates and exclusive flash sale
+                      alerts.
+                    </p>
+                    <span className="text-[10px] text-white/30 mt-0.5 block">
+                      You can disable this anytime from browser settings.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                  <button
+                    onClick={handleSkipNotifications}
+                    className="text-[10px] text-white/40 hover:text-white/70 font-medium transition-colors cursor-pointer px-2 py-1.5 whitespace-nowrap"
+                  >
+                    Not now
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleEnableNotifications}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer shadow-[0_2px_12px_rgba(59,130,246,0.3)] whitespace-nowrap flex-1 sm:flex-none text-center"
+                  >
+                    Enable
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body,
   );
 }

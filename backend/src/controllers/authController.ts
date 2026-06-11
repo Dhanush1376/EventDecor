@@ -231,3 +231,4 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   res.setHeader('X-Session-Cache', 'MISS');
   res.status(200).json(new ApiResponse(true, 'Profile fetched', user));
 });
+// Trigger dev restart to pick up BYPASS_OTP_CODE env change

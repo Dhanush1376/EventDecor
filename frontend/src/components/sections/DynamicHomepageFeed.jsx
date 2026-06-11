@@ -1,7 +1,7 @@
 import { Component, useEffect, useState } from 'react';
 import { usePersonalizedSections } from '../../hooks/usePersonalizedSections';
 import { RecommendationCarousel } from '../ui/RecommendationCarousel';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { recommendationService } from '../../services/recommendationService';
 import logger from '../../utils/logger';
 

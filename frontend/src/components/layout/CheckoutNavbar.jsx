@@ -33,7 +33,7 @@ export function CheckoutNavbar() {
             <span className="font-label text-[9px] uppercase tracking-widest text-secondary/60">
               Siri Arts & Crafts
             </span>
-            <span className="font-display text-[13px] sm:text-[14px] font-bold text-primary">
+            <span className="font-body text-[13px] sm:text-[14px] font-bold text-primary">
               Secure Checkout
             </span>
           </div>

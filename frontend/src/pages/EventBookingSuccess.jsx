@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { bookingService } from '../services/domainServices';
-import confetti from 'canvas-confetti';
 
 import logger from '../utils/logger';
 
@@ -17,34 +16,36 @@ export function EventBookingSuccess() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Only fire confetti once per session per booking
+    // Fire confetti dynamically
     const lockKey = `siri_arts_confetti_lock_${id}`;
     if (!sessionStorage.getItem(lockKey)) {
-      const duration = 3000;
-      const end = Date.now() + duration;
+      import('canvas-confetti').then(({ default: confetti }) => {
+        const duration = 3000;
+        const end = Date.now() + duration;
 
-      const frame = () => {
-        confetti({
-          particleCount: 5,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ['var(--color-gold-dark)', '#C4A87C', '#FFD700', '#8B0000'],
-        });
-        confetti({
-          particleCount: 5,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['var(--color-gold-dark)', '#C4A87C', '#FFD700', '#8B0000'],
-        });
+        const frame = () => {
+          confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['var(--color-gold-dark)', '#C4A87C', '#FFD700', '#8B0000'],
+          });
+          confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['var(--color-gold-dark)', '#C4A87C', '#FFD700', '#8B0000'],
+          });
 
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      };
-      frame();
-      sessionStorage.setItem(lockKey, 'fired');
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        };
+        frame();
+        sessionStorage.setItem(lockKey, 'fired');
+      });
     }
   }, [id]);
 

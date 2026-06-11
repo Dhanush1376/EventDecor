@@ -93,8 +93,6 @@ class DatabaseManager {
           instances = num;
         }
       }
-    } else if (process.env.NODE_ENV === 'production') {
-      instances = os.cpus().length || 1;
     }
 
     // Set max connections budget across all instances to 100
@@ -156,26 +154,30 @@ class DatabaseManager {
       }
     }
 
-    // Critical Production Data Safety Task: 
+    // Critical Production Data Safety Task:
     // Prevent test, scripts, CI/CD, etc. from ever connecting to the production database.
     const isAtlas = MONGO_URI.includes('mongodb.net');
     if (isAtlas) {
-        if (process.env.NODE_ENV === 'test' || process.env.CI === 'true') {
-           logger.error('[DATABASE] CRITICAL FATAL: Tests and CI are strictly prohibited from connecting to MongoDB Atlas production clusters.');
-           process.exit(1);
-        }
-        
-        if (!isProduction && process.env.ALLOW_PROD_DB_LOCAL?.trim() !== 'true') {
-          logger.error(
-            '[DATABASE] CRITICAL: Accessing Atlas Production cluster from local development is forbidden. Set ALLOW_PROD_DB_LOCAL=true to override.',
-          );
-          process.exit(1);
-        }
+      if (process.env.NODE_ENV === 'test' || process.env.CI === 'true') {
+        logger.error(
+          '[DATABASE] CRITICAL FATAL: Tests and CI are strictly prohibited from connecting to MongoDB Atlas production clusters.',
+        );
+        process.exit(1);
+      }
+
+      if (!isProduction && process.env.ALLOW_PROD_DB_LOCAL?.trim() !== 'true') {
+        logger.error(
+          '[DATABASE] CRITICAL: Accessing Atlas Production cluster from local development is forbidden. Set ALLOW_PROD_DB_LOCAL=true to override.',
+        );
+        process.exit(1);
+      }
     }
 
     if (process.env.NODE_ENV === 'test') {
       if (!MONGO_URI.toLowerCase().includes('test')) {
-        logger.error('[DATABASE] CRITICAL: In test mode, the MONGO_URI database name must contain "test".');
+        logger.error(
+          '[DATABASE] CRITICAL: In test mode, the MONGO_URI database name must contain "test".',
+        );
         process.exit(1);
       }
     }
@@ -224,14 +226,16 @@ class DatabaseManager {
 
         // Layer 2: Monkey patch dangerous operations on the raw database connection
         if (process.env.NODE_ENV === 'production' && mongoose.connection.db) {
-           mongoose.connection.db.dropDatabase = async function(...args) {
-              logger.error('[DATABASE] FATAL: Blocked database drop attempt in production!');
-              throw new Error('Database drop is strictly prohibited in production.');
-           };
-           mongoose.connection.db.dropCollection = async function(name: string, ...args) {
-              logger.error(`[DATABASE] FATAL: Blocked collection drop attempt in production for collection: ${name}!`);
-              throw new Error('Collection drop is strictly prohibited in production.');
-           };
+          mongoose.connection.db.dropDatabase = async function (...args) {
+            logger.error('[DATABASE] FATAL: Blocked database drop attempt in production!');
+            throw new Error('Database drop is strictly prohibited in production.');
+          };
+          mongoose.connection.db.dropCollection = async function (name: string, ...args) {
+            logger.error(
+              `[DATABASE] FATAL: Blocked collection drop attempt in production for collection: ${name}!`,
+            );
+            throw new Error('Collection drop is strictly prohibited in production.');
+          };
         }
       });
 

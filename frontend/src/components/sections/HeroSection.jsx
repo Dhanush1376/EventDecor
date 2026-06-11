@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { MandalaElement } from '../ui/MandalaElement';
 import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import { useWindowHeight } from '../../hooks/useWindowHeight';

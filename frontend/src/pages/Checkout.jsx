@@ -26,7 +26,7 @@ function CheckoutContent() {
     useCheckout();
 
   return (
-    <div className="bg-surface-container-low min-h-screen pb-32 font-body text-on-surface">
+    <div className="bg-surface-container-low min-h-screen pb-32 font-body text-on-surface modern-sans-headings">
       <SEO
         title="Secure Checkout"
         description="Finalize your Siri Arts & Crafts order through our secure checkout portal."

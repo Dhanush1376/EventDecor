@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
 import { eventService, bookingService, uploadService } from '../services/domainServices';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';

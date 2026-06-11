@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
 import { handleImageError } from '../../utils/imageUtils';
 import { productService } from '../../services/api/productService';

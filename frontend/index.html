@@ -34,7 +34,6 @@
     </script>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
@@ -103,7 +102,6 @@
     <!-- Performance: Preconnect & DNS Prefetch -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://checkout.razorpay.com" />
     <link rel="preconnect" href="https://siri-arts-n-crafts.onrender.com" crossorigin />
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin fetchpriority="high" />
     <link rel="dns-prefetch" href="https://res.cloudinary.com" />
@@ -111,10 +109,14 @@
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />
     
     <!-- Critical Assets Preload -->
+    <link rel="preload" as="image" href="/logo-nobg-clean-sm.webp" type="image/webp" fetchpriority="high" />
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600&display=swap" /></noscript>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0..1,0&display=swap" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0..1,0&display=swap" /></noscript>
 
     <!-- Critical CSS: Prevent FOUC -->
     <style>
@@ -128,7 +130,6 @@
         color: #000000;
       }
 
-      /* Prevent FOUC/FOIT and layout shifts for Material symbols */
       .material-symbols-outlined {
         font-family: 'Material Symbols Outlined', sans-serif;
         font-weight: normal;
@@ -137,15 +138,20 @@
         line-height: 1;
         letter-spacing: normal;
         text-transform: none;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
         white-space: nowrap;
         word-wrap: normal;
         direction: ltr;
         -webkit-font-feature-settings: 'liga';
         -webkit-font-smoothing: antialiased;
-        /* Prevent long fallback text from breaking layout */
-        max-width: 1em;
-        overflow: hidden;
+      }
+
+      .material-symbols-outlined:not(.absolute) {
+        position: relative;
+        top: 4px;
       }
 
       /* Hide ugly ligature text (e.g. "storefront") completely until the font is loaded */
@@ -196,7 +202,6 @@
       #root {
         min-height: 100vh;
       }
-
 
     </style>
 

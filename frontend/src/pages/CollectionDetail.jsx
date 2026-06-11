@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { SectionWrapper } from '../components/layout';
 import { ProductCard, FilterPanel, ShareButton } from '../components/ui';
 import { fadeUp } from '../animations/variants';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { couponService } from '../services/domainServices';
 import { fadeUp, staggerContainer } from '../animations/variants';
 import { Helmet } from 'react-helmet-async';

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { MandalaElement } from './MandalaElement';
 import { SiriLogo } from './SiriLogo';
 

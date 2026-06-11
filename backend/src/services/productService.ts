@@ -4,11 +4,18 @@ import Gallery from '../models/Gallery';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import logger from '../config/logger';
 import { bumpPublicCacheVersion } from '../utils/cacheVersion';
-import { categoryCache } from '../utils/MemoryCache';
+import { categoryCache, MemoryCache } from '../utils/MemoryCache';
+import redisClient from '../utils/redis';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import { analyzeQueryWithAI, escapeRegex, getMatchingProductCategory } from './searchService';
 import ApiError from '../utils/ApiError';
 import { ChangeTracker } from '../utils/ChangeTracker';
+
+const productCountCache = new MemoryCache({
+  defaultTtlMs: 60 * 1000,
+  maxKeys: 1000,
+  name: 'productCountCache',
+});
 
 function enforceSmartPricing(data: Partial<IProduct>, existingProduct?: IProduct) {
   const isManual =
@@ -288,14 +295,20 @@ class ProductService {
       else if (sort === 'rating') sortOptions = { rating: -1 };
     }
 
+    const filterHash = JSON.stringify(filter);
+
     const [products, totalCount] = await Promise.all([
       Product.find(filter)
-        .select(isAdmin ? '' : '-description -seo_keywords -customizationNote')
+        .select(
+          isAdmin
+            ? ''
+            : '-description -seoTitle -seoDescription -customizationConfig -variants -dimensions -weight',
+        )
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
         .lean(),
-      Product.countDocuments(filter),
+      productCountCache.getOrSet(filterHash, () => Product.countDocuments(filter)),
     ]);
 
     const response: any = formatPaginationResponse(products, totalCount, page, limit);
@@ -305,21 +318,81 @@ class ProductService {
 
   static async getProductById(idOrSlug: string) {
     let product;
-    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
-      product = await Product.findByIdAndUpdate(
-        idOrSlug,
-        { $inc: { views: 1 } },
-        { new: true },
-      ).lean();
+    const isObjectId = mongoose.Types.ObjectId.isValid(idOrSlug);
+
+    // Fetch the product first without updating the counter in DB
+    if (isObjectId) {
+      product = await Product.findById(idOrSlug).lean();
     } else {
-      product = await Product.findOneAndUpdate(
-        { slug: idOrSlug.toLowerCase() },
-        { $inc: { views: 1 } },
-        { new: true },
-      ).lean();
+      product = await Product.findOne({ slug: idOrSlug.toLowerCase() }).lean();
     }
+
     if (!product || !product.isActive) return null;
+
+    // Batch view counter updates using Redis to reduce DB write IOPS
+    const productIdStr = product._id.toString();
+    try {
+      if (redisClient && redisClient.isReady) {
+        const viewKey = `product:views:${productIdStr}`;
+        const views = await redisClient.incr(viewKey);
+
+        // If it's the first view in this batch, set an expiry to prevent orphaned keys
+        if (views === 1) {
+          await redisClient.expire(viewKey, 3600); // 1 hour max TTL
+        }
+
+        // Flush to DB every 10 views to reduce write frequency by 90%
+        if (views >= 10) {
+          await Product.findByIdAndUpdate(productIdStr, { $inc: { views: views } });
+          await redisClient.del(viewKey);
+        }
+      } else {
+        // Fallback to direct DB update if Redis is unavailable
+        await Product.findByIdAndUpdate(productIdStr, { $inc: { views: 1 } });
+      }
+    } catch (err) {
+      logger.warn(`Failed to increment product views in Redis for ${productIdStr}:`, err);
+      // Failsafe DB update
+      Product.findByIdAndUpdate(productIdStr, { $inc: { views: 1 } }).catch(() => {});
+    }
+
     return product;
+  }
+
+  static async flushAllViewCounters() {
+    try {
+      if (!redisClient || !redisClient.isReady) return;
+
+      const keys = await redisClient.keys('product:views:*');
+      if (keys.length === 0) return;
+
+      logger.info(`[PRODUCT VIEWS] Flushing ${keys.length} product view counters to DB...`);
+
+      const ops = [];
+      for (const key of keys) {
+        const viewsStr = await redisClient.get(key);
+        if (viewsStr) {
+          const views = parseInt(viewsStr, 10);
+          const productId = key.split(':').pop();
+          if (views > 0 && productId && mongoose.Types.ObjectId.isValid(productId)) {
+            ops.push({
+              updateOne: {
+                filter: { _id: productId },
+                update: { $inc: { views: views } },
+              },
+            });
+            await redisClient.del(key);
+          }
+        }
+      }
+
+      if (ops.length > 0) {
+        await Product.bulkWrite(ops);
+        logger.info(`[PRODUCT VIEWS] Successfully flushed ${ops.length} products`);
+      }
+    } catch (err) {
+      logger.error('[PRODUCT VIEWS] Failed to flush view counters:', err);
+    }
   }
 
   static async createProduct(data: Partial<IProduct>, actor?: any) {
@@ -335,6 +408,7 @@ class ProductService {
     }
     logger.info('[CATEGORY CACHE] Purging distinct categories cache due to new product creation');
     categoryCache.delete('product:distinct_categories');
+    productCountCache.clear();
     await bumpPublicCacheVersion();
     return saved;
   }
@@ -395,6 +469,7 @@ class ProductService {
     }
     logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product update');
     categoryCache.delete('product:distinct_categories');
+    productCountCache.clear();
     await bumpPublicCacheVersion();
     return product;
   }
@@ -412,7 +487,13 @@ class ProductService {
     // Clean up User wishlist, cart, and recentlyViewed references to prevent orphan/dead links
     const User = require('../models/User').default || require('../models/User');
     User.updateMany(
-      {},
+      {
+        $or: [
+          { wishlist: product._id },
+          { 'cart.product': product._id },
+          { 'recentlyViewed.product': product._id },
+        ],
+      },
       {
         $pull: {
           wishlist: product._id,
@@ -433,6 +514,7 @@ class ProductService {
 
     logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product deletion');
     categoryCache.delete('product:distinct_categories');
+    productCountCache.clear();
     await bumpPublicCacheVersion();
     return product;
   }

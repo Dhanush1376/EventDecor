@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { CloudinaryImage } from './CloudinaryImage';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';

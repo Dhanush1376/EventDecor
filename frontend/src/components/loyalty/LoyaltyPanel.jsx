@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { loyaltyService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
@@ -387,7 +387,7 @@ export function LoyaltyPanel() {
           </div>
           <button
             onClick={() => setIsCouponModalOpen(true)}
-            className="w-full sm:w-auto text-[10px] text-primary border border-primary/20 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 font-bold px-5 py-2.5 rounded-full cursor-pointer uppercase tracking-widest shrink-0 text-center"
+            className="w-full sm:w-auto text-[10px] text-primary border border-primary/20 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 font-bold px-5 py-2.5 rounded-lg cursor-pointer uppercase tracking-widest shrink-0 text-center"
           >
             View Available Coupons
           </button>

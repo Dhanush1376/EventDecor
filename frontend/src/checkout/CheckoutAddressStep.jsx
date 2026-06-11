@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 import { useCheckout } from './CheckoutProvider';
@@ -569,17 +569,17 @@ export default function CheckoutAddressStep() {
     return (
       <>
         <div className="bg-surface-bright pb-24">
-          <div className="p-4 max-w-2xl mx-auto">
-            <button
+          <div className="p-4 max-w-2xl mx-auto flex items-center justify-between border-b border-outline-variant/15 mb-2">
+            <h2 className="font-semibold text-sm text-on-surface tracking-wide">Saved Addresses</h2>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleAddNew}
-              className="w-full btn-primary bg-transparent text-primary py-3.5 border border-primary/60 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-primary/5 transition-colors"
+              className="w-6 h-6 p-0 min-h-0 rounded-full border border-primary/50 text-primary bg-transparent flex items-center justify-center cursor-pointer hover:bg-primary hover:text-surface transition-all shrink-0"
+              title="Add New Address"
             >
-              Add New Address
-            </button>
-          </div>
-
-          <div className="bg-surface-container-low px-4 py-2 text-[11px] font-bold text-secondary uppercase tracking-widest border-y border-outline-variant/20">
-            Default Address
+              <span className="material-symbols-outlined text-[12px] font-bold">add</span>
+            </motion.button>
           </div>
 
           <div className="divide-y divide-outline-variant/20">

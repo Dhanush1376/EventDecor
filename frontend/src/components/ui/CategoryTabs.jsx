@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 
 export function CategoryTabs({ categories = [], activeCategory, onCategoryChange }) {
   if (!categories.length) return null;

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import {
   ProductCard,
   QuickViewModal,
@@ -307,7 +307,9 @@ export function ProductListing() {
 
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        setIsStuck(rect.top <= currentNavHeight + 1);
+        const topThreshold = parseFloat(navRef.current.style.top) || 0;
+        // Simply check if the element has reached its sticky top position
+        setIsStuck(rect.top <= topThreshold + 1);
       }
     };
     window.addEventListener('scroll', measure, { passive: true });

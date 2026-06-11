@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { reviewService } from '../../services/domainServices';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { reviewService, uploadService } from '../../services/domainServices';
 import { useAuth } from '../../context/AuthContext';
+import { OptimizedImage } from '../ui/OptimizedImage';
 import toast from 'react-hot-toast';
 
 // ─── Star Component ─────────────────────────────────────────────────────────
@@ -93,6 +94,25 @@ function ReviewCard({ review }) {
       {review.comment && (
         <p className="font-body text-[13px] text-black/70 leading-relaxed mt-3">{review.comment}</p>
       )}
+
+      {review.images && review.images.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-3.5">
+          {review.images.map((imgUrl, idx) => (
+            <div
+              key={idx}
+              className="w-16 h-16 rounded-xl overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-zoom-in relative group"
+              onClick={() => window.open(imgUrl, '_blank')}
+            >
+              <OptimizedImage
+                src={imgUrl}
+                alt={`Review photo ${idx + 1}`}
+                containerClassName="w-full h-full"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -102,6 +122,8 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -117,11 +139,29 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
 
     setSubmitting(true);
     try {
-      await reviewService.create({ productId, rating, comment: comment.trim() });
+      let imageUrls = [];
+      if (selectedFiles.length > 0) {
+        toast.loading('Uploading review images...', { id: 'review-upload' });
+        const formData = new FormData();
+        selectedFiles.forEach((file) => {
+          formData.append('images', file);
+        });
+        const uploadRes = await uploadService.uploadImages(formData);
+        imageUrls = uploadRes.images || [];
+        toast.dismiss('review-upload');
+      }
+
+      await reviewService.create({
+        productId,
+        rating,
+        comment: comment.trim(),
+        images: imageUrls,
+      });
       toast.success('Your review has been submitted for approval!');
       onSuccess?.();
       onClose();
     } catch (err) {
+      toast.dismiss('review-upload');
       const msg = err?.response?.data?.message || 'Failed to submit review.';
       toast.error(msg);
     } finally {
@@ -194,6 +234,53 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
               className="w-full px-4 py-3 rounded-2xl border border-black/10 bg-neutral-50 text-sm font-body text-black placeholder:text-black/30 outline-none focus:border-primary focus:bg-white transition-all resize-none"
             />
             <p className="text-[10px] text-black/30 mt-1 text-right">{comment.length} chars</p>
+          </div>
+
+          {/* Photo Uploader */}
+          <div>
+            <label className="font-label text-[10px] uppercase tracking-widest text-black/40 font-bold block mb-2">
+              Add Photos (Max 5)
+            </label>
+            <div className="flex flex-wrap gap-2.5">
+              {previews.map((preview, idx) => (
+                <div
+                  key={idx}
+                  className="relative w-16 h-16 rounded-xl overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs group flex-shrink-0"
+                >
+                  <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
+                      setPreviews((prev) => prev.filter((_, i) => i !== idx));
+                    }}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center cursor-pointer transition-all scale-90 group-hover:scale-100"
+                  >
+                    <span className="material-symbols-outlined text-[10px]">close</span>
+                  </button>
+                </div>
+              ))}
+              {selectedFiles.length < 5 && (
+                <label className="w-16 h-16 rounded-xl border border-dashed border-black/20 hover:border-primary/50 bg-neutral-50 hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-all gap-0.5 text-black/40 hover:text-primary flex-shrink-0">
+                  <span className="material-symbols-outlined text-[18px]">add_a_photo</span>
+                  <span className="text-[8px] font-bold uppercase tracking-wider">Add</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      const newFiles = [...selectedFiles, ...files].slice(0, 5);
+                      setSelectedFiles(newFiles);
+
+                      const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+                      setPreviews(newPreviews);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
           </div>
 
           <button

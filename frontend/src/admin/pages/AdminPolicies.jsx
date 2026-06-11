@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { policyService } from '../../services/domainServices';
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';

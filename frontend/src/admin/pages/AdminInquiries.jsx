@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { customOrderService } from '../../services/domainServices';
 import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';

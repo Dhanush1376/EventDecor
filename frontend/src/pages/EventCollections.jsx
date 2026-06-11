@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ProductCard,
@@ -677,11 +677,14 @@ export function EventCollections() {
                           to={`/events/${evItem.id}`}
                           className="relative aspect-[4/3] md:aspect-[3/2] overflow-hidden block rounded-[16px] md:rounded-[32px] border border-black/5"
                         >
-                          <img
+                          <OptimizedImage
                             onError={handleImageError}
                             src={evItem.image}
                             alt={evItem.title}
+                            width={360}
+                            height={240}
                             className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-40 md:group-hover:opacity-60 transition-opacity" />
 

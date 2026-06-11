@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { orderService } from '../services/domainServices';
 import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
@@ -211,7 +211,7 @@ export function OrderTrackingPublic() {
         <span className="material-symbols-outlined text-[64px] text-red-400 mb-4 animate-bounce">
           local_shipping
         </span>
-        <h2 className="font-display text-xl font-bold text-on-surface mb-2">
+        <h2 className="font-body text-xl font-bold text-on-surface mb-2">
           Tracking Record Unreachable
         </h2>
         <p className="text-xs text-secondary max-w-sm mb-6 leading-relaxed">
@@ -257,7 +257,7 @@ export function OrderTrackingPublic() {
             <span>{order.courierPartner || 'Delhivery Logistics'} Feed</span>
           </div>
 
-          <h2 className="font-display text-2xl font-bold text-on-surface mb-2">
+          <h2 className="font-body text-2xl font-bold text-on-surface mb-2">
             Live Dispatch Tracking
           </h2>
           <p className="text-xs text-secondary leading-relaxed max-w-md mx-auto">

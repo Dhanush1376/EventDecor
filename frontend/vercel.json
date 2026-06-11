@@ -35,7 +35,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://res.cloudinary.com https://flagcdn.com https://images.unsplash.com https://lh3.googleusercontent.com https://siri-arts-n-crafts.onrender.com https://*.pinimg.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.cloudinary.com https://siri-arts-n-crafts.onrender.com wss://siri-arts-n-crafts.onrender.com https://api.razorpay.com https://*.sentry.io https://*.logrocket.io; frame-src 'self' https://checkout.razorpay.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://res.cloudinary.com https://flagcdn.com https://images.unsplash.com https://lh3.googleusercontent.com https://siri-arts-n-crafts.onrender.com https://*.up.railway.app https://*.pinimg.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.cloudinary.com https://siri-arts-n-crafts.onrender.com wss://siri-arts-n-crafts.onrender.com https://*.up.railway.app wss://*.up.railway.app https://api.razorpay.com https://*.sentry.io https://*.logrocket.io; frame-src 'self' https://checkout.razorpay.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
         },
         {
           "key": "Permissions-Policy",
@@ -49,6 +49,24 @@
         {
           "key": "Cache-Control",
           "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(png|jpg|jpeg|gif|webp|svg|woff2)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }

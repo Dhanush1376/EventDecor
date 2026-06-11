@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { ProductGallery } from '../components/ui/ProductGallery';
 import { ProductInfo } from '../components/ui/ProductInfo';
 import { Skeleton, ProductDetailSkeleton } from '../components/ui/Skeleton';

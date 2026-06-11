@@ -3,11 +3,14 @@ import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
+import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
+
+import React from 'react';
 
 /**
  * Category grid strictly driven by CMS config. No fallbacks.
  */
-export function CategoryGrid() {
+export const CategoryGrid = React.memo(function CategoryGrid() {
   const cms = useWebsiteContent({ includeDefaults: false });
   const config = cms?.categoryGrid || {};
 
@@ -102,11 +105,14 @@ export function CategoryGrid() {
                 <Link key={categoryId} to={linkDest} className="h1-categories__item">
                   <div className="h1-categories__img-wrap">
                     {categoryImage ? (
-                      <img
+                      <CloudinaryImage
                         src={categoryImage}
                         alt={displayName}
                         className="h1-categories__img"
                         loading="lazy"
+                        containerClassName="h1-categories__img absolute inset-0 w-full h-full"
+                        sizes="(max-width: 1024px) 50vw, 300px"
+                        width={360}
                       />
                     ) : (
                       <div
@@ -149,11 +155,14 @@ export function CategoryGrid() {
               >
                 <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-md group-hover:shadow-xl group-hover:border-primary/20 transition-all duration-500 relative">
                   {categoryImage ? (
-                    <img
+                    <CloudinaryImage
                       src={categoryImage}
                       alt={displayName}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       loading="lazy"
+                      containerClassName="absolute inset-0 w-full h-full"
+                      sizes="200px"
+                      width={360}
                     />
                   ) : (
                     <div className="w-full h-full bg-surface-container-high" aria-hidden="true" />
@@ -170,4 +179,4 @@ export function CategoryGrid() {
       </div>
     </section>
   );
-}
+});

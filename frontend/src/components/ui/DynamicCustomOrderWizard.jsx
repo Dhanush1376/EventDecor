@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { customOrderService, uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';

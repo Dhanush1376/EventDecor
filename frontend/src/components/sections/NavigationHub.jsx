@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { m as motion, useScroll, useTransform } from 'framer-motion';
 import { MandalaElement } from '../ui/MandalaElement';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';

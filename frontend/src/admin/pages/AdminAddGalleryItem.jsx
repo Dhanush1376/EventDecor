@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { galleryService, productService } from '../../services/domainServices';
 import { ImageUpload } from '../components/ImageUpload';
 import { VideoUpload } from '../components/VideoUpload';

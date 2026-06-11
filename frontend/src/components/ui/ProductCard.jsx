@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useCartDispatch } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -25,7 +25,7 @@ export const ProductCard = React.memo(function ProductCard({
   hideDetails = false,
   loading = false,
   eager = false,
-  sizes = '(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 25vw',
+  sizes = '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px',
   rentalEnabled = false,
   availabilityMode,
   rentalPricing,
@@ -164,14 +164,14 @@ export const ProductCard = React.memo(function ProductCard({
             className="transition-all duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover:scale-110"
             loading={eager ? 'eager' : 'lazy'}
             fetchPriority={eager ? 'high' : 'auto'}
-            width={400}
-            height={500}
+            width={320}
+            height={400}
             sizes={sizes}
           />
         </Link>
 
         {/* Floating Utility Actions */}
-        <div className="absolute top-3 right-3 md:top-4 md:right-4 z-20 flex flex-col gap-2">
+        <div className="absolute top-2 right-3 md:top-3 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
             className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]`}
@@ -193,7 +193,7 @@ export const ProductCard = React.memo(function ProductCard({
         </div>
 
         {/* Badges */}
-        <div className="absolute top-3 left-3 md:top-4 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
+        <div className="absolute top-2 left-3 md:top-3 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
           {canRent && (
             <div className="w-8 h-8 md:w-10 md:h-10 bg-[#8c7335] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white z-[6] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
               <span className="material-symbols-outlined text-[10px] md:text-[12px] leading-none mb-[1px]">

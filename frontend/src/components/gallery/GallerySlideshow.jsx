@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { SearchBar } from '../ui/SearchBar';
 import { useWishlist } from '../../context/WishlistContext';
@@ -259,8 +259,8 @@ export function GallerySlideshow({
                       <video
                         src={currentItem.video}
                         controls
-                        autoPlay
                         playsInline
+                        preload="none"
                         className="max-w-full max-h-full object-contain rounded-none shadow-md"
                       />
                     ) : (
@@ -386,7 +386,11 @@ export function GallerySlideshow({
                       >
                         {isNearby ? (
                           item.video ? (
-                            <video src={item.video} className="w-full h-full object-cover" />
+                            <video
+                              src={item.video}
+                              preload="none"
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <CloudinaryImage
                               src={thumbImage}

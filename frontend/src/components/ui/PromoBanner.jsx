@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { handleImageError } from '../../utils/imageUtils';
 import { getOptimizedUrl } from '../../utils/imageUtils';
 

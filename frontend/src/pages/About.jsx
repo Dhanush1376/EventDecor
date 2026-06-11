@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { m as motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
@@ -226,7 +226,7 @@ export function About() {
             >
               <div className="w-full h-full rounded-[32px] md:rounded-t-full md:rounded-b-full overflow-hidden relative">
                 <CloudinaryImage
-                  src={cmsContent?.storyImage || '/assets/legacy_artistry_decor.png'}
+                  src={cmsContent?.storyImage || '/assets/legacy_artistry_decor.webp'}
                   alt="Handcrafted Details"
                   className="scale-[1.02] hover:scale-110 transition-transform duration-[3s] ease-out"
                   containerClassName="w-full h-full"

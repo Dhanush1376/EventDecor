@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { m as motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { MandalaElement } from '../ui/MandalaElement';
 import { MandalaArtDecor } from '../ui/MandalaArtDecor';

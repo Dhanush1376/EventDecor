@@ -1,5 +1,5 @@
-import React from "react";
-import { motion, useInView } from "framer-motion";
+import React from 'react';
+import { m as motion, useInView } from 'framer-motion';
 import { MANDALA_VARIANT_URLS } from '../../constants/mandalaAssets';
 
 /**
@@ -16,8 +16,8 @@ import { MANDALA_VARIANT_URLS } from '../../constants/mandalaAssets';
 
 const VARIANT_MAP = MANDALA_VARIANT_URLS;
 
-export function MandalaElement({
-  className = "",
+export const MandalaElement = React.memo(function MandalaElement({
+  className = '',
   size = 400,
   opacity = 0.12,
   color, // accepted but ignored (images have their own color)
@@ -41,18 +41,18 @@ export function MandalaElement({
       animate={{ opacity }}
       transition={{ opacity: { duration: 1.5 } }}
       className={`pointer-events-none select-none z-0 object-contain rounded-full ${
-        rotate ? "animate-slow-spin" : ""
+        rotate ? 'animate-slow-spin' : ''
       } ${className}`}
       style={{
         width: size,
         height: size,
-        maxWidth: "100%",
-        maxHeight: "100%",
+        maxWidth: '100%',
+        maxHeight: '100%',
         animationDuration: `${duration}s`,
-        animationPlayState: rotate && isInView ? "running" : "paused",
-        mixBlendMode: "darken",
+        animationPlayState: rotate && isInView ? 'running' : 'paused',
+        mixBlendMode: 'darken',
       }}
       loading="lazy"
     />
   );
-}
+});

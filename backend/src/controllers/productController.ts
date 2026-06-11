@@ -10,9 +10,15 @@ import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 
 export const getProducts = asyncHandler(async (req: Request, res: Response) => {
+  const start = performance.now();
   const result = await ProductService.getAllProducts(req.query);
+  const mid = performance.now();
+  console.log(`[Timing] ProductService + MongoQuery: ${(mid - start).toFixed(3)}ms`);
+
   res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
   res.status(200).json(new ApiResponse(true, 'Products fetched successfully', result));
+  const end = performance.now();
+  console.log(`[Timing] ResponseSerialization: ${(end - mid).toFixed(3)}ms`);
 });
 
 export const getDynamicFilters = asyncHandler(async (req: Request, res: Response) => {

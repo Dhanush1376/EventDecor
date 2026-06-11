@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import AppConfig from '../models/AppConfig';
 import logger from '../config/logger';
 
@@ -13,6 +13,10 @@ export const getPublicConfig = async (req: Request, res: Response) => {
       {} as Record<string, any>,
     );
 
+    res.setHeader(
+      'Cache-Control',
+      'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
+    );
     res.status(200).json({ success: true, data: configMap });
   } catch (error: any) {
     logger.error('Error fetching public config', error);

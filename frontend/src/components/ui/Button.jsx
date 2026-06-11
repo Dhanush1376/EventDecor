@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import React from 'react';
+import { m as motion } from 'framer-motion';
 import { EASE } from '../../constants/design-tokens';
 import { Skeleton } from './Skeleton';
 
@@ -9,7 +10,7 @@ import { Skeleton } from './Skeleton';
  * Sizes: sm | md | lg
  * Features: loading state, icon support, shine effect, link rendering via `as` prop
  */
-export function Button({
+export const Button = React.memo(function Button({
   children,
   variant = 'primary',
   className = '',
@@ -80,4 +81,4 @@ export function Button({
       {buttonContent}
     </motion.button>
   );
-}
+});

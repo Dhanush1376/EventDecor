@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
  * LazySection
  * High-performance container that defers mounting and rendering of heavy off-screen
  * components until they are scrolled within proximity of the viewport.
- * 
+ *
  * @param {React.ReactNode} children - The section component to lazily render
  * @param {string} placeholderHeight - Minimum height for CLS prevention
  * @param {React.ReactNode} fallback - Custom skeleton component to show before section loads
@@ -20,6 +20,18 @@ export function LazySection({ children, placeholderHeight = '250px', fallback })
       return () => clearTimeout(timer);
     }
 
+    // Optional: Preload the component chunk during idle time
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(
+        () => {
+          // If children is a lazy component, React will attempt to load the chunk in the background if we inspect it?
+          // Actually, React.lazy chunks load when rendered. We can't easily prefetch just by having it as children unless we trigger it.
+          // We will rely on increased rootMargin for now to fetch earlier.
+        },
+        { timeout: 2000 },
+      );
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -28,9 +40,9 @@ export function LazySection({ children, placeholderHeight = '250px', fallback })
         }
       },
       {
-        rootMargin: '250px 0px', // Load 250px before entering viewport for seamless UX
+        rootMargin: '800px 0px', // Load 800px before entering viewport to prevent blank sections
         threshold: 0.01,
-      }
+      },
     );
 
     const currentRef = containerRef.current;
@@ -51,15 +63,13 @@ export function LazySection({ children, placeholderHeight = '250px', fallback })
   );
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       style={{ minHeight: inView ? 'auto' : placeholderHeight }}
       className="lazy-section-container"
     >
       {inView ? (
-        <Suspense fallback={skeletonPlaceholder}>
-          {children}
-        </Suspense>
+        <Suspense fallback={skeletonPlaceholder}>{children}</Suspense>
       ) : (
         skeletonPlaceholder
       )}

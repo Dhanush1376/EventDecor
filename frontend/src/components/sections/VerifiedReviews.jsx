@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { reviewService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';

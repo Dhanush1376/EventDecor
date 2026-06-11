@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import rentalService from '../../services/rentalService';
 import { PageHeader, fadeUp, stagger } from '../components/AdminUIKit';

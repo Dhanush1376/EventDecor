@@ -10,7 +10,7 @@ export class FilterService {
     const { filter } = await ProductService.buildProductFilterQuery(queryParams, false);
 
     // 2. Load Admin configurations for filters
-    let config = { hidden: [], priority: [] };
+    let config: { hidden: string[]; priority: string[] } = { hidden: [], priority: [] };
     try {
       const appConfig = await AppConfig.findOne({ key: 'dynamic_filters_config' }).lean();
       if (appConfig && appConfig.value) {

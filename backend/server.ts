@@ -224,6 +224,14 @@ const startServer = async () => {
           });
         });
 
+        // 2.b Flush view counters to DB before closing Redis
+        try {
+          const { default: ProductService } = require('./src/services/productService');
+          await ProductService.flushAllViewCounters();
+        } catch (err) {
+          logger.error('Failed to flush view counters during shutdown:', err);
+        }
+
         // 3. Close Redis connections
         await closeWorkers();
         await closeQueues();

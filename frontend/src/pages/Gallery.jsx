@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { GalleryCard } from '../components/gallery/GalleryCard';
 import { VirtualizedMasonry } from '../components/gallery/VirtualizedMasonry';

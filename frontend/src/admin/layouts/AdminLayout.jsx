@@ -1,7 +1,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import api from '../../services/api';
 import { Outlet, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { AdminProvider, useAdmin } from '../context/AdminContext';
 import { DraftProvider } from '../context/DraftProvider';
 import { AdminSidebar } from '../components/AdminSidebar';

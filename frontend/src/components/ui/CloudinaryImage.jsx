@@ -16,7 +16,7 @@ function BaseOptimizedImage({
   loading = 'lazy',
   fetchPriority,
   containerClassName = '',
-  sizes = '(max-width: 768px) 100vw, 50vw',
+  sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
   aspectRatio,
   eager = false,
   skipObserver = false,
@@ -24,6 +24,9 @@ function BaseOptimizedImage({
 }) {
   const [isLoaded, setIsLoaded] = useState(eager || loading === 'eager');
   const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+
   // If skipObserver is true, we immediately treat it as in view
   // (the parent component is responsible for visibility gating)
   const [isInView, setIsInView] = useState(eager || loading === 'eager' || skipObserver);
@@ -59,6 +62,7 @@ function BaseOptimizedImage({
     if (src !== prevSrcRef.current) {
       setIsLoaded(eager || loading === 'eager');
       setHasError(false);
+      setRetryCount(0);
       prevSrcRef.current = src;
       loadStartTime.current = Date.now();
     }
@@ -81,7 +85,13 @@ function BaseOptimizedImage({
   }, [src, eager, loading]);
 
   const isDataUrl = src && (src.startsWith('data:') || src.startsWith('blob:'));
-  const optimizedUrl = isDataUrl ? src : src ? getOptimizedUrl(src, width, height) : '';
+  let optimizedUrl = isDataUrl ? src : src ? getOptimizedUrl(src, width, height) : '';
+
+  // Append retry cache-buster to bypass browser's failed request cache on transient errors
+  if (retryCount > 0 && optimizedUrl && !isDataUrl) {
+    optimizedUrl += (optimizedUrl.includes('?') ? '&' : '?') + `retry=${retryCount}`;
+  }
+
   // Cap srcset width at container width if provided
   const autoSrcSet = isDataUrl || !src ? null : getSrcSet(src, width);
 
@@ -157,12 +167,20 @@ function BaseOptimizedImage({
             }
           }}
           onError={(e) => {
-            handleImageError(e);
-            setHasError(true);
-            setIsLoaded(true);
+            if (retryCount < MAX_RETRIES) {
+              // Retry with exponential backoff to handle ERR_NETWORK_CHANGED gracefully
+              const delay = Math.pow(2, retryCount) * 500;
+              setTimeout(() => {
+                setRetryCount((prev) => prev + 1);
+              }, delay);
+            } else {
+              handleImageError(e);
+              setHasError(true);
+              setIsLoaded(true);
+            }
           }}
           className={`w-full ${isImageAutoHeight ? 'h-auto block' : `h-full ${hasObjectFit ? '' : 'object-cover'}`} rounded-[inherit] transition-all duration-500 ease-out transform-gpu ${className} ${
-            isLoaded ? 'opacity-100' : 'opacity-0 will-change-opacity'
+            isLoaded && !hasError ? 'opacity-100' : 'opacity-0 will-change-opacity'
           }`}
           {...props}
         />

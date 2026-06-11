@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { SEO } from '../components/seo/SEO';
 import { BlogCard } from '../components/blog/BlogCard';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -11,6 +11,8 @@ import { IntelligentSearchOverlay } from '../search/IntelligentSearchOverlay';
 import { prefetchManager } from '../../utils/prefetchManager';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { SiriLogo } from '../ui/SiriLogo';
+import { MandalaElement } from '../ui/MandalaElement';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 // Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {
@@ -429,7 +431,7 @@ export function TopNavbar() {
                                 className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors font-bold border-b border-outline-variant/10 mb-1.5 pb-2"
                               >
                                 <span className="material-symbols-outlined text-[15px]">
-                                  shield_person
+                                  settings
                                 </span>
                                 <span>Admin Portal</span>
                               </Link>
@@ -503,179 +505,177 @@ export function TopNavbar() {
         </div>
       </nav>
 
-      {/* Premium Mobile Menu Drawer */}
+      {/* Premium Full-Screen Immersive Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-md z-[110] lg:hidden"
+          <motion.div
+            ref={mobileMenuRef}
+            id="mobile-menu-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile Navigation Menu"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 w-full h-full bg-surface-bright z-[120] lg:hidden px-6 py-6 flex flex-col overflow-y-auto"
+          >
+            {/* Decorative Mandala Background - Positioned to bleed off the right edge */}
+            <MandalaArtDecor
+              variant={2}
+              size={700}
+              opacity={0.06}
+              className="absolute -top-[10%] -right-[40%] pointer-events-none"
+              spinDuration={200}
+              blendMode="multiply"
             />
-            <motion.div
-              ref={mobileMenuRef}
-              id="mobile-menu-drawer"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Mobile Navigation Menu"
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-              className="fixed right-0 top-0 h-full w-[80%] max-w-sm bg-surface-bright z-[120] lg:hidden p-6 md:p-8 flex flex-col shadow-2xl border-l border-outline-variant/10 rounded-l-2xl overflow-y-auto"
-            >
-              <div className="flex justify-between items-center mb-5 pb-3 border-b border-outline-variant/10">
-                <div className="flex items-center">
-                  <SiriLogo size="36px" />
-                </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="relative w-10 h-10 flex items-center justify-center text-on-surface hover:text-primary transition-colors cursor-pointer group/close"
-                  aria-label="Close menu"
+
+            {/* Minimal Header */}
+            <div className="flex justify-between items-center mb-12 px-2">
+              <SiriLogo size="32px" />
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-10 h-10 flex items-center justify-center text-on-surface hover:text-primary transition-colors cursor-pointer"
+                aria-label="Close menu"
+              >
+                <span
+                  className="material-symbols-outlined text-[32px] font-light"
+                  style={{ fontVariationSettings: "'wght' 200" }}
                 >
-                  <span className="absolute w-6 h-[1.2px] bg-current rotate-45 transition-transform group-hover/close:rotate-[135deg]" />
-                  <span className="absolute w-6 h-[1.2px] bg-current -rotate-45 transition-transform group-hover/close:-rotate-[45deg]" />
-                </button>
-              </div>
+                  close
+                </span>
+              </button>
+            </div>
 
-              <span className="font-label text-[9px] uppercase tracking-[0.25em] text-on-surface-variant/40 font-bold block mb-4">
-                Navigation
-              </span>
-
-              <ul className="space-y-0.5 mb-8">
+            {/* Massive Luxury Typography Navigation */}
+            <div className="flex-grow flex flex-col justify-center px-4 mb-12">
+              <ul className="space-y-5 relative z-10">
                 {navLinks.map((link, idx) => {
                   const active = isActive(link.href);
                   return (
-                    <li key={idx}>
+                    <motion.li
+                      key={idx}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        delay: 0.1 + idx * 0.05,
+                        duration: 0.5,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                    >
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className={`group flex items-center justify-between py-3.5 border-b border-outline-variant/10 text-[11px] uppercase tracking-[0.2em] font-semibold transition-all duration-300 ${
+                        className={`group flex items-center font-label font-bold uppercase tracking-[0.2em] text-[16px] md:text-[20px] transition-all duration-500 ${
                           active
-                            ? 'text-primary pl-2'
-                            : 'text-on-surface hover:text-primary hover:pl-2'
+                            ? 'text-primary'
+                            : 'text-on-surface hover:text-primary hover:translate-x-2'
                         }`}
                         to={link.href}
                       >
-                        <span>{link.label}</span>
-                        {active ? (
-                          <span
-                            className="w-1.5 h-1.5 rounded-full bg-primary"
-                            style={{ boxShadow: '0 0 8px var(--color-primary)' }}
-                          />
-                        ) : (
-                          <span className="material-symbols-outlined text-[14px] text-on-surface/20 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300">
-                            east
-                          </span>
-                        )}
+                        {link.label}
                       </Link>
-                    </li>
+                    </motion.li>
                   );
                 })}
               </ul>
+            </div>
 
-              <div className="mt-auto pt-6 border-t border-outline-variant/10">
-                <span className="font-label text-[9px] uppercase tracking-[0.25em] text-on-surface-variant/40 font-bold block mb-4">
-                  Account & Collections
-                </span>
-                <div className="grid grid-cols-2 gap-2.5 pb-2">
+            {/* Ultra-Minimal Footer */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-auto px-4 pb-8"
+            >
+              <div className="w-full h-[1px] bg-outline-variant/30 mb-8" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
                   <Link
                     to="/wishlist"
                     onClick={() => setIsOpen(false)}
-                    className="flex flex-col items-center justify-center py-4 bg-surface-bright border border-outline-variant/20 rounded-xl hover:border-primary text-on-surface hover:text-primary transition-all duration-300 group"
+                    className="text-on-surface hover:text-primary transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[16px] mb-1 text-on-surface-variant/70 group-hover:text-primary transition-colors">
+                    <span
+                      className="material-symbols-outlined text-[24px] font-light"
+                      style={{ fontVariationSettings: "'wght' 200" }}
+                    >
                       favorite
-                    </span>
-                    <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold">
-                      Wishlist
                     </span>
                   </Link>
                   <button
-                    id="cart-trigger-mobile"
                     onClick={() => {
                       setIsOpen(false);
                       setIsCartOpen(true);
                     }}
-                    className="flex flex-col items-center justify-center py-4 bg-surface-bright border border-outline-variant/20 rounded-xl hover:border-primary text-on-surface hover:text-primary transition-all duration-300 group relative cursor-pointer"
+                    className="text-on-surface hover:text-primary transition-colors relative cursor-pointer"
                   >
-                    <div className="relative p-0.5">
-                      <span className="material-symbols-outlined text-[16px] block text-on-surface-variant/70 group-hover:text-primary transition-colors">
-                        shopping_bag
-                      </span>
-                      {cartCount > 0 && (
-                        <span className="absolute -top-1 -right-1.5 w-[14px] h-[14px] bg-primary text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-md">
-                          {cartCount}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold mt-1">
-                      Bag
-                    </span>
-                  </button>
-
-                  {isAuthenticated ? (
-                    <>
-                      <Link
-                        to="/dashboard"
-                        onClick={() => setIsOpen(false)}
-                        className="flex flex-col items-center justify-center py-3 bg-surface-bright border border-outline-variant/20 rounded-xl hover:border-primary text-on-surface hover:text-primary transition-all group"
-                      >
-                        <span className="material-symbols-outlined text-[16px] mb-1 text-on-surface-variant/70 group-hover:text-primary transition-colors">
-                          person
-                        </span>
-                        <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold">
-                          Profile
-                        </span>
-                      </Link>
-                      <button
-                        onClick={() => {
-                          setIsOpen(false);
-                          logout();
-                        }}
-                        className="flex flex-col items-center justify-center py-3 bg-surface-bright border border-outline-variant/20 rounded-xl hover:border-error/20 hover:bg-error/5 text-on-surface hover:text-error transition-all group cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[16px] mb-1 text-on-surface-variant/70 group-hover:text-error transition-colors">
-                          logout
-                        </span>
-                        <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold">
-                          Sign Out
-                        </span>
-                      </button>
-                      {adminRoles.includes(user?.role) && (
-                        <Link
-                          to="/admin"
-                          onClick={() => setIsOpen(false)}
-                          className="flex items-center justify-center gap-2 py-3 bg-primary/5 border border-primary/20 rounded-xl text-primary hover:bg-primary/10 transition-all font-bold col-span-2"
-                        >
-                          <span className="material-symbols-outlined text-[15px]">
-                            shield_person
-                          </span>
-                          <span className="font-label text-[9px] uppercase tracking-[0.15em] font-bold">
-                            Admin Portal
-                          </span>
-                        </Link>
-                      )}
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setIsOpen(false);
-                        openAuthModal();
-                      }}
-                      className="flex items-center justify-center gap-2 py-3.5 bg-on-surface text-surface hover:bg-primary hover:text-white rounded-xl transition-all duration-300 col-span-2 cursor-pointer font-bold"
+                    <span
+                      className="material-symbols-outlined text-[24px] font-light"
+                      style={{ fontVariationSettings: "'wght' 200" }}
                     >
-                      <span className="material-symbols-outlined text-[16px]">login</span>
-                      <span className="font-label text-[9px] uppercase tracking-[0.2em] font-bold">
-                        Sign In
+                      shopping_bag
+                    </span>
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-primary-container text-on-primary-container text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                        {cartCount}
                       </span>
-                    </button>
+                    )}
+                  </button>
+                  {isAuthenticated && (
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setIsOpen(false)}
+                      className="text-on-surface hover:text-primary transition-colors"
+                    >
+                      <span
+                        className="material-symbols-outlined text-[24px] font-light"
+                        style={{ fontVariationSettings: "'wght' 200" }}
+                      >
+                        person
+                      </span>
+                    </Link>
+                  )}
+                  {isAuthenticated && adminRoles.includes(user?.role) && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setIsOpen(false)}
+                      className="text-primary hover:text-primary/70 transition-colors"
+                      aria-label="Admin Portal"
+                    >
+                      <span
+                        className="material-symbols-outlined text-[24px] font-light"
+                        style={{ fontVariationSettings: "'wght' 200" }}
+                      >
+                        settings
+                      </span>
+                    </Link>
                   )}
                 </div>
+
+                {!isAuthenticated ? (
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      openAuthModal();
+                    }}
+                    className="font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b border-on-surface pb-1 text-on-surface hover:text-primary hover:border-primary transition-colors cursor-pointer"
+                  >
+                    Sign In
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      logout();
+                    }}
+                    className="font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b border-on-surface pb-1 text-on-surface hover:text-error hover:border-error transition-colors cursor-pointer"
+                  >
+                    Sign Out
+                  </button>
+                )}
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
 

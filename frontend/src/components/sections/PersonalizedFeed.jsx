@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { SectionWrapper } from '../layout';
 import { ProductCard } from '../ui/ProductCard';
 import { MandalaElement } from '../ui/MandalaElement';

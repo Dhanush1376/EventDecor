@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import * as L from 'leaflet';
+
 import logger from '../../utils/logger';
 import 'leaflet/dist/leaflet.css';
 
@@ -78,7 +78,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
     }, 300);
   };
 
-  const initLeafletMap = () => {
+  const initLeafletMap = async () => {
     if (!isOpen) {
       setIsMapLoading(false);
       return;
@@ -129,6 +129,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
     const lng = parseCoord(initialLocation?.longitude || selectedLocation?.longitude, DEFAULT_LNG);
 
     try {
+      const L = await import('leaflet');
       // Initialize map instance
       const map = L.map('leaflet-map-canvas', {
         zoomControl: false,

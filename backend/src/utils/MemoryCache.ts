@@ -12,6 +12,7 @@ export class MemoryCache {
   private maxKeys: number;
   private defaultTtlMs: number;
   private readonly name: string;
+  private pendingPromises = new Map<string, Promise<any>>();
 
   // Global entry tracking across all instances
   private static totalEntries = 0;
@@ -148,9 +149,25 @@ export class MemoryCache {
     if (cached !== null) {
       return cached;
     }
-    const fresh = await fetchFn();
-    this.set(key, fresh, ttlMs);
-    return fresh;
+
+    // Cache stampede prevention
+    if (this.pendingPromises.has(key)) {
+      return this.pendingPromises.get(key) as Promise<T>;
+    }
+
+    const promise = fetchFn()
+      .then((fresh) => {
+        this.set(key, fresh, ttlMs);
+        this.pendingPromises.delete(key);
+        return fresh;
+      })
+      .catch((err) => {
+        this.pendingPromises.delete(key);
+        throw err;
+      });
+
+    this.pendingPromises.set(key, promise);
+    return promise;
   }
 }
 

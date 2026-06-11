@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { uploadService } from '../../services/domainServices';
 import { OptimizedImage } from './OptimizedImage';
 import toast from 'react-hot-toast';

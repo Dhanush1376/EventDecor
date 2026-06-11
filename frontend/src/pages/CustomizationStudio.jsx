@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useProduct } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
 import { customOrderService, uploadService } from '../services/domainServices';
@@ -9,6 +9,7 @@ import { MandalaElement } from '../components/ui/MandalaElement';
 import { Skeleton } from '../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 import logger from '../utils/logger';
+import { CloudinaryImage } from '../components/ui/CloudinaryImage';
 
 // ─── Animation Presets ───
 const fadeUp = {
@@ -251,10 +252,11 @@ function FileUploadZone({ label, accept, onUpload, files, onRemove, multiple = t
               className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-black/5 shadow-xs group"
             >
               {file.fileType === 'image' && isImageUrl(file.url) ? (
-                <img
+                <CloudinaryImage
                   src={file.url}
                   alt=""
                   className="w-10 h-10 rounded-lg object-cover border border-black/5"
+                  sizes="40px"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-lg bg-[var(--color-surface-ivory)] border border-black/5 flex items-center justify-center">
@@ -867,11 +869,12 @@ export function CustomizationStudio() {
                 style={{ minHeight: '350px' }}
               >
                 <div className="overflow-auto" style={{ maxHeight: '500px' }}>
-                  <img
+                  <CloudinaryImage
                     src={galleryImages[currentGalleryIndex] || product.imageSrc}
                     alt={product.title}
                     className="w-full object-contain transition-transform duration-500"
                     style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center center' }}
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                 </div>
 
@@ -897,7 +900,12 @@ export function CustomizationStudio() {
                           : 'border-transparent opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <CloudinaryImage
+                        src={img}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        sizes="56px"
+                      />
                     </button>
                   ))}
                 </div>

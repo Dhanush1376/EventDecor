@@ -7,10 +7,12 @@ import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../../../components/ui/MandalaArtDecor';
 import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 
+import React from 'react';
+
 /**
  * Trending products using real recommendation API.
  */
-export function TrendingProducts() {
+export const TrendingProducts = React.memo(function TrendingProducts() {
   const cms = useWebsiteContent({ includeDefaults: false });
   const loading = cms?.loading;
   const config = cms?.trendingProducts || {};
@@ -119,4 +121,4 @@ export function TrendingProducts() {
       </div>
     </section>
   );
-}
+});

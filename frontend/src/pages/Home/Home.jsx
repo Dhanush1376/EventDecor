@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import { HeroCarousel } from './sections/HeroCarousel';
+import { LazySection } from '../../components/ui/LazySection';
 
 const CategoryGrid = lazy(() =>
   import('./sections/CategoryGrid').then((m) => ({ default: m.CategoryGrid })),
@@ -92,43 +93,43 @@ export function Home() {
                 );
               case 'trendingProducts':
                 return (
-                  <RevealSection key={section.id}>
-                    <Suspense fallback={<SectionFallback />}>
+                  <LazySection key={section.id} fallback={<SectionFallback />}>
+                    <RevealSection>
                       <TrendingProducts />
-                    </Suspense>
-                  </RevealSection>
+                    </RevealSection>
+                  </LazySection>
                 );
               case 'shopByOccasion':
                 return (
-                  <RevealSection key={section.id}>
-                    <Suspense fallback={<SectionFallback />}>
+                  <LazySection key={section.id} fallback={<SectionFallback />}>
+                    <RevealSection>
                       <ShopByOccasion />
-                    </Suspense>
-                  </RevealSection>
+                    </RevealSection>
+                  </LazySection>
                 );
               case 'featuredProducts':
                 return (
-                  <RevealSection key={section.id}>
-                    <Suspense fallback={<SectionFallback />}>
+                  <LazySection key={section.id} fallback={<SectionFallback />}>
+                    <RevealSection>
                       <BestSellers />
-                    </Suspense>
-                  </RevealSection>
+                    </RevealSection>
+                  </LazySection>
                 );
               case 'recommendedProducts':
                 return (
-                  <RevealSection key={section.id}>
-                    <Suspense fallback={<SectionFallback />}>
+                  <LazySection key={section.id} fallback={<SectionFallback />}>
+                    <RevealSection>
                       <RecommendedGrid />
-                    </Suspense>
-                  </RevealSection>
+                    </RevealSection>
+                  </LazySection>
                 );
               case 'galleryInspiration':
                 return (
-                  <RevealSection key={section.id}>
-                    <Suspense fallback={<SectionFallback />}>
+                  <LazySection key={section.id} fallback={<SectionFallback />}>
+                    <RevealSection>
                       <GalleryInspiration />
-                    </Suspense>
-                  </RevealSection>
+                    </RevealSection>
+                  </LazySection>
                 );
               default:
                 return null;

@@ -26,15 +26,26 @@ const CardContent = React.memo(function CardContent({
       }}
       className="break-inside-avoid mb-2 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
     >
-      {/* Background Video — plays on hover via CSS opacity */}
+      {/* Background Video — plays on hover */}
       {item.video && (
         <video
           src={item.video}
           muted
           loop
-          autoPlay
           playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10 pointer-events-none rounded-[inherit]"
+          preload="none"
+          onMouseEnter={(e) => {
+            if (e.target.readyState >= 2) {
+              e.target.play().catch(() => {});
+            } else {
+              e.target.load();
+              e.target.play().catch(() => {});
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.target.pause();
+          }}
+          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10 rounded-[inherit]"
         />
       )}
 

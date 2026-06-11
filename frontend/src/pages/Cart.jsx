@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { SEO } from '../components/seo/SEO';
@@ -226,7 +226,7 @@ export function Cart() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="bg-surface-container-low min-h-screen pt-20 pb-40 font-body text-on-surface"
+        className="bg-surface-container-low min-h-screen pt-20 pb-40 font-body text-on-surface modern-sans-headings"
       >
         <SEO title="Your Bag" description="Review your selected items." />
 
@@ -248,24 +248,49 @@ export function Cart() {
           )}
         </AnimatePresence>
 
-        {/* CART TABS - Rectangular Below Navbar */}
-        <div className="w-full bg-surface-bright border-b border-outline-variant/40">
-          <div className="max-w-[1240px] mx-auto flex justify-center px-2 sm:px-6">
+        {/* CART TABS - Centered Premium Segmented Pill */}
+        <div className="w-full bg-surface-bright border-b border-outline-variant/30 py-3 flex justify-center px-4">
+          <div className="bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full inline-flex gap-1 items-center relative z-0 shadow-inner">
+            {/* Purchase Cart Tab */}
             <button
               onClick={() => setActiveCartMode('purchase')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-8 py-4 sm:py-4 text-[11px] sm:text-[13px] font-bold tracking-widest transition-all uppercase whitespace-nowrap border-b-2 cursor-pointer ${activeCartMode === 'purchase' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-on-surface hover:bg-surface-container-lowest'}`}
+              className={`relative px-5 py-2.5 min-h-0 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                activeCartMode === 'purchase'
+                  ? 'text-primary font-bold'
+                  : 'text-on-surface-variant/70 hover:text-on-surface font-medium'
+              }`}
             >
-              <span className="material-symbols-outlined text-[16px] sm:text-[18px]">
+              {activeCartMode === 'purchase' && (
+                <motion.div
+                  layoutId="activeCartTabBg"
+                  className="absolute inset-0 bg-surface-bright rounded-full shadow-[0_2px_8px_rgba(115,92,0,0.08)] border border-outline-variant/15 -z-10"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className="material-symbols-outlined text-[15px] sm:text-[17px]">
                 shopping_cart
               </span>
-              Purchase Cart ({purchaseCartCount})
+              <span>Purchase ({purchaseCartCount})</span>
             </button>
+
+            {/* Rental Cart Tab */}
             <button
               onClick={() => setActiveCartMode('rental')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-8 py-4 sm:py-4 text-[11px] sm:text-[13px] font-bold tracking-widest transition-all uppercase whitespace-nowrap border-b-2 cursor-pointer ${activeCartMode === 'rental' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-on-surface hover:bg-surface-container-lowest'}`}
+              className={`relative px-5 py-2.5 min-h-0 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                activeCartMode === 'rental'
+                  ? 'text-primary font-bold'
+                  : 'text-on-surface-variant/70 hover:text-on-surface font-medium'
+              }`}
             >
-              <span className="material-symbols-outlined text-[16px] sm:text-[18px]">sell</span>
-              Rental Cart ({rentalCartCount})
+              {activeCartMode === 'rental' && (
+                <motion.div
+                  layoutId="activeCartTabBg"
+                  className="absolute inset-0 bg-surface-bright rounded-full shadow-[0_2px_8px_rgba(115,92,0,0.08)] border border-outline-variant/15 -z-10"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className="material-symbols-outlined text-[15px] sm:text-[17px]">sell</span>
+              <span>Rental ({rentalCartCount})</span>
             </button>
           </div>
         </div>
@@ -960,7 +985,7 @@ export function Cart() {
                             });
                           })
                         }
-                        className="w-full mt-6 bg-black text-white hover:bg-[#8c7335] hover:text-white py-3.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-md transition-all text-center hidden lg:block cursor-pointer active:scale-[0.98]"
+                        className="w-full mt-6 bg-black text-white hover:bg-orange-600 hover:text-white py-3.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-md transition-all text-center hidden lg:block cursor-pointer active:scale-[0.98]"
                       >
                         {activeCartMode === 'rental' ? 'Continue Rental Booking' : 'Checkout'}
                       </button>
@@ -1029,7 +1054,7 @@ export function Cart() {
                     });
                   })
                 }
-                className="bg-black text-white hover:bg-[#8c7335] hover:text-white px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-md transition-all text-center block cursor-pointer active:scale-[0.98]"
+                className="bg-black text-white hover:bg-orange-600 hover:text-white px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-md transition-all text-center block cursor-pointer active:scale-[0.98]"
               >
                 {activeCartMode === 'rental' ? 'Rent Now' : 'Checkout'}
               </button>

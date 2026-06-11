@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { OptimizedImage } from './OptimizedImage';
 import { useWishlist } from '../../context/WishlistContext';
 import { ShareButton } from './ShareButton';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 
 const RecommendationSystem = React.lazy(() =>
   import('../sections/RecommendationSystem').then((m) => ({ default: m.RecommendationSystem })),
