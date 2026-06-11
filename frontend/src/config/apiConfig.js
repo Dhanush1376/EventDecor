@@ -3,10 +3,12 @@
  * Production must use VITE_API_URL (Render backend). Development uses the Vite /api proxy.
  */
 
-export const PRODUCTION_API_ORIGIN = 'https://siri-arts-n-crafts.onrender.com';
+export const PRODUCTION_API_ORIGIN = 'https://eventdecor-production.up.railway.app';
 
 const normalizeApiBase = (url) => {
-  const trimmed = String(url || '').trim().replace(/\/+$/, '');
+  const trimmed = String(url || '')
+    .trim()
+    .replace(/\/+$/, '');
   if (!trimmed) return '';
   if (trimmed.endsWith('/api/v1')) return trimmed;
   if (trimmed.endsWith('/api')) return `${trimmed}/v1`;
@@ -18,8 +20,10 @@ const resolveOrigin = (baseUrl) => {
     return window.location.origin;
   }
   try {
-    return new URL(baseUrl, typeof window !== 'undefined' ? window.location.origin : PRODUCTION_API_ORIGIN)
-      .origin;
+    return new URL(
+      baseUrl,
+      typeof window !== 'undefined' ? window.location.origin : PRODUCTION_API_ORIGIN,
+    ).origin;
   } catch {
     return PRODUCTION_API_ORIGIN;
   }
@@ -47,9 +51,7 @@ export const getApiConfig = () => {
     baseUrl = normalizeApiBase(productionBase);
   }
 
-  const apiRootUrl = baseUrl.startsWith('/')
-    ? '/api'
-    : baseUrl.replace(/\/v1\/?$/, '');
+  const apiRootUrl = baseUrl.startsWith('/') ? '/api' : baseUrl.replace(/\/v1\/?$/, '');
 
   return {
     baseUrl,

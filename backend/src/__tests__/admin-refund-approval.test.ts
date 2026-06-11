@@ -95,7 +95,7 @@ describe('AdminRefundApprovalService', () => {
 
   describe('rejectRefund', () => {
     it('rejects refund, marks as failed, and creates audit log', async () => {
-      const mockRefund = { _id: 'refund1', status: 'pending_approval', save: jest.fn() };
+      const mockRefund: any = { _id: 'refund1', status: 'pending_approval', save: jest.fn() };
       (RefundRecord.findById as jest.Mock).mockResolvedValue(mockRefund);
 
       await AdminRefundApprovalService.rejectRefund(
