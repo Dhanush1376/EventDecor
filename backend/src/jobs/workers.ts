@@ -74,7 +74,7 @@ export const initWorkers = async () => {
           },
         );
       },
-      { connection, concurrency: 5 },
+      { connection: connection as any, concurrency: 5 },
     );
 
     emailWorker.on('completed', (job) =>
@@ -113,7 +113,7 @@ export const initWorkers = async () => {
           },
         );
       },
-      { connection, concurrency: 5 },
+      { connection: connection as any, concurrency: 5 },
     );
 
     notificationWorker.on('error', (err: any) => {
@@ -141,7 +141,7 @@ export const initWorkers = async () => {
           },
         );
       },
-      { connection, concurrency: 2 },
+      { connection: connection as any, concurrency: 2 },
     );
 
     loyaltyWorker.on('error', (err: any) => {
@@ -340,7 +340,7 @@ export const initWorkers = async () => {
           },
         );
       },
-      { connection, concurrency: 2 },
+      { connection: connection as any, concurrency: 2 },
     );
 
     recommendationWorker.on('completed', (job) =>
@@ -384,7 +384,7 @@ export const initWorkers = async () => {
           },
         );
       },
-      { connection, concurrency: 5 },
+      { connection: connection as any, concurrency: 5 },
     );
 
     webhookWorker.on('completed', (job) =>
@@ -440,7 +440,7 @@ export const initWorkers = async () => {
           },
         );
       },
-      { connection, concurrency: 2 },
+      { connection: connection as any, concurrency: 2 },
     );
 
     refundWorker.on('completed', (job) => logger.info(`[WORKER] Refund job ${job.id} completed.`));
@@ -474,7 +474,7 @@ export const initWorkers = async () => {
           },
         );
       },
-      { connection, concurrency: 1 },
+      { connection: connection as any, concurrency: 1 },
     );
     systemWorker.on('error', (err: any) => {
       if (

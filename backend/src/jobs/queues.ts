@@ -87,7 +87,7 @@ connection.on('error', (err: any) => {
 });
 
 const defaultQueueOptions: QueueOptions = {
-  connection,
+  connection: connection as any,
   defaultJobOptions: {
     attempts: 3,
     backoff: {
