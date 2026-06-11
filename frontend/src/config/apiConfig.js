@@ -6,10 +6,13 @@
 export const PRODUCTION_API_ORIGIN = 'https://eventdecor-production.up.railway.app';
 
 const normalizeApiBase = (url) => {
-  const trimmed = String(url || '')
+  let trimmed = String(url || '')
     .trim()
     .replace(/\/+$/, '');
   if (!trimmed) return '';
+  if (!trimmed.startsWith('/') && !/^https?:\/\//i.test(trimmed)) {
+    trimmed = `https://${trimmed}`;
+  }
   if (trimmed.endsWith('/api/v1')) return trimmed;
   if (trimmed.endsWith('/api')) return `${trimmed}/v1`;
   return `${trimmed}/api/v1`;
