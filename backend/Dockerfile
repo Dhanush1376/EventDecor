@@ -23,6 +23,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --chown=node:node ecosystem.config.js ./
 
 # Install pm2 globally
 RUN npm install -g pm2
