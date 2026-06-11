@@ -47,7 +47,8 @@ export const getApiConfig = () => {
       !configured || /localhost:5000|127\.0\.0\.1:5000/i.test(configured);
     baseUrl = pointsToLocalBackend ? '/api/v1' : normalizeApiBase(configured);
   } else {
-    const productionBase = configured || `${PRODUCTION_API_ORIGIN}/api/v1`;
+    const productionBase =
+      configured && configured !== '/api' ? configured : `${PRODUCTION_API_ORIGIN}/api/v1`;
     baseUrl = normalizeApiBase(productionBase);
   }
 
