@@ -3,14 +3,11 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Set NODE_ENV for build-time optimizations (tree-shaking, dead code elimination)
-ENV NODE_ENV=production
-
 COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN NODE_ENV=production npm run build
 
 # Production Stage
 FROM node:22-alpine
