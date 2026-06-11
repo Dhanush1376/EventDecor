@@ -386,12 +386,6 @@ export function Cart() {
                   </div>
                   <div className="flex items-center gap-4 text-secondary">
                     <button
-                      className="hover:text-primary transition-colors cursor-pointer"
-                      title="Share"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">share</span>
-                    </button>
-                    <button
                       onClick={handleClearCart}
                       className="hover:text-red-600 transition-colors cursor-pointer"
                       title="Delete All"
@@ -499,6 +493,7 @@ export function Cart() {
                                       );
                                     }}
                                     className="w-7 h-full flex items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+                                    aria-label="Decrease quantity"
                                   >
                                     <span className="material-symbols-outlined text-[14px]">
                                       remove
@@ -518,6 +513,7 @@ export function Cart() {
                                     }}
                                     disabled={item.quantity >= item.stock}
                                     className={`w-7 h-full flex items-center justify-center transition-colors ${item.quantity >= item.stock ? 'text-secondary/30 cursor-not-allowed bg-surface-container-low' : 'text-secondary hover:text-on-surface hover:bg-surface-container cursor-pointer'}`}
+                                    aria-label="Increase quantity"
                                   >
                                     <span className="material-symbols-outlined text-[14px]">
                                       add

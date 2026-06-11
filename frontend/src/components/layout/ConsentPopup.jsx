@@ -26,8 +26,43 @@ export function ConsentPopup() {
   useEffect(() => {
     const consentLogged = safeLocalStorage.getItem('siri_arts_consent_logged');
     if (!consentLogged) {
-      const timer = setTimeout(() => setStep('cookie'), 2000);
-      return () => clearTimeout(timer);
+      // Show consent after user's first interaction (scroll/click/touch) + 1s buffer,
+      // or after 20s fallback — whichever comes first.
+      // This respects the critical first-impression trust formation window.
+      let interactionTimer = null;
+      let fallbackTimer = null;
+      let fired = false;
+
+      const showConsent = () => {
+        if (fired) return;
+        fired = true;
+        cleanup();
+        interactionTimer = setTimeout(() => setStep('cookie'), 1000);
+      };
+
+      const showConsentImmediate = () => {
+        if (fired) return;
+        fired = true;
+        cleanup();
+        setStep('cookie');
+      };
+
+      const cleanup = () => {
+        window.removeEventListener('scroll', showConsent);
+        window.removeEventListener('click', showConsent);
+        window.removeEventListener('touchstart', showConsent);
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+      };
+
+      window.addEventListener('scroll', showConsent, { once: true, passive: true });
+      window.addEventListener('click', showConsent, { once: true });
+      window.addEventListener('touchstart', showConsent, { once: true, passive: true });
+      fallbackTimer = setTimeout(showConsentImmediate, 20000);
+
+      return () => {
+        cleanup();
+        if (interactionTimer) clearTimeout(interactionTimer);
+      };
     } else {
       try {
         const saved = JSON.parse(consentLogged);
@@ -179,7 +214,7 @@ export function ConsentPopup() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-[999999] px-3 pb-3 sm:px-4 sm:pb-4 md:px-6 md:pb-6"
+          className="fixed bottom-0 left-0 right-0 z-[999999] px-3 pb-[calc(var(--bottom-nav-height,64px)+16px)] sm:px-4 md:px-6 md:pb-6"
         >
           <div className="max-w-3xl mx-auto">
             <div className="bg-[#111]/95 backdrop-blur-2xl border border-white/[0.06] rounded-xl shadow-[0_-8px_40px_rgba(0,0,0,0.3)] overflow-hidden">

@@ -48,41 +48,37 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
   };
 
   const handleAddToCart = () => {
-    runProtectedAction(() => {
-      attemptAddToCart({
-        id: product._id || product.id,
-        title: product.title,
-        price: product.price,
-        imageSrc: product.imageSrc || product.image,
-        formattedPrice: `Rs. ${product.price?.toLocaleString()}`,
-        quantity: quantity,
-        type: 'purchase',
-        isNonRefundable: product.isNonRefundable,
-      });
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+    attemptAddToCart({
+      id: product._id || product.id,
+      title: product.title,
+      price: product.price,
+      imageSrc: product.imageSrc || product.image,
+      formattedPrice: `Rs. ${product.price?.toLocaleString()}`,
+      quantity: quantity,
+      type: 'purchase',
+      isNonRefundable: product.isNonRefundable,
     });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
   const handleRentNow = () => {
-    runProtectedAction(() => {
-      attemptAddToCart({
-        id: product._id || product.id,
-        title: product.title,
-        price:
-          product.rentalPricing?.daily ||
-          product.rentalPricing?.weekly ||
-          product.rentalPricing?.monthly ||
-          product.price,
-        imageSrc: product.imageSrc || product.image,
-        formattedPrice: `Rs. ${product.price?.toLocaleString()}`,
-        quantity: quantity,
-        type: 'rental',
-        deposit: product.securityDeposit || 0,
-        isNonRefundable: product.isNonRefundable,
-      });
-      navigate('/cart');
+    attemptAddToCart({
+      id: product._id || product.id,
+      title: product.title,
+      price:
+        product.rentalPricing?.daily ||
+        product.rentalPricing?.weekly ||
+        product.rentalPricing?.monthly ||
+        product.price,
+      imageSrc: product.imageSrc || product.image,
+      formattedPrice: `Rs. ${product.price?.toLocaleString()}`,
+      quantity: quantity,
+      type: 'rental',
+      deposit: product.securityDeposit || 0,
+      isNonRefundable: product.isNonRefundable,
     });
+    navigate('/cart');
   };
 
   return (
@@ -93,22 +89,28 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
           <span className="font-label text-[11px] md:text-[12px] text-primary uppercase tracking-[0.4em] font-medium">
             {product.category || 'Artisanal Collection'}
           </span>
-          <span className="w-1 h-1 rounded-full bg-primary/40"></span>
-          <span className="font-label text-[11px] md:text-[12px] text-on-surface/50 uppercase tracking-widest font-normal">
-            Heritage Series
-          </span>
+          {(product.collection || product.subcategory) && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-primary/40"></span>
+              <span className="font-label text-[11px] md:text-[12px] text-on-surface/50 uppercase tracking-widest font-normal">
+                {product.collection || product.subcategory}
+              </span>
+            </>
+          )}
         </div>
         <div className="flex gap-2">
-          <div className="relative group/badge">
-            <div className="w-9 h-9 rounded-full bg-primary-container/10 border border-primary-container/20 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-[16px] text-primary">
-                workspace_premium
+          {(product.isBestseller || product.isFeatured) && (
+            <div className="relative group/badge">
+              <div className="w-9 h-9 rounded-full bg-primary-container/10 border border-primary-container/20 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[16px] text-primary">
+                  workspace_premium
+                </span>
+              </div>
+              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl">
+                Bestseller
               </span>
             </div>
-            <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl">
-              Bestseller
-            </span>
-          </div>
+          )}
           <div className="relative group/badge">
             <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
               <span className="material-symbols-outlined text-[16px] text-on-surface">draw</span>
@@ -186,14 +188,16 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
           <span className="font-body text-[24px] sm:text-[32px] text-on-surface font-medium">
             Rs. {product.price?.toLocaleString()}
           </span>
-          {oldPrice && (
+          {oldPrice > 0 && (
             <span className="font-body-sm text-on-surface/40 font-medium line-through text-[13px] sm:text-[15px]">
               Rs. {oldPrice.toLocaleString()}
             </span>
           )}
-          <span className="text-primary font-label-sm text-[11px] sm:text-[12px] font-bold">
-            ({discount}% off)
-          </span>
+          {discount > 0 && (
+            <span className="text-primary font-label-sm text-[11px] sm:text-[12px] font-bold">
+              ({discount}% off)
+            </span>
+          )}
         </div>
 
         <div className="space-y-2.5">
@@ -342,6 +346,36 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
                 ? 'LAST PIECE IN COLLECTION'
                 : `ONLY ${product.stock} LEFT IN COLLECTION`}
             </span>
+          </div>
+        )}
+
+        {/* Quantity Selector */}
+        {product.stock !== 0 && (
+          <div className="flex items-center gap-4">
+            <span className="font-label-sm text-[10px] text-on-surface/50 uppercase tracking-[0.2em] font-bold">
+              Quantity
+            </span>
+            <div className="flex items-center border border-outline-variant/60 rounded-lg overflow-hidden bg-surface-container-lowest h-[36px]">
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+                className={`w-10 h-full flex items-center justify-center transition-colors ${quantity <= 1 ? 'text-secondary/30 cursor-not-allowed bg-surface-container-low' : 'text-secondary hover:text-on-surface hover:bg-surface-container cursor-pointer'}`}
+                aria-label="Decrease quantity"
+              >
+                <span className="material-symbols-outlined text-[16px]">remove</span>
+              </button>
+              <div className="w-10 h-full flex items-center justify-center text-[13px] font-bold text-on-surface border-x border-outline-variant/30 bg-surface-bright">
+                {quantity}
+              </div>
+              <button
+                onClick={() => setQuantity(Math.min(product.stock || maxQuantity, quantity + 1))}
+                disabled={quantity >= (product.stock || maxQuantity)}
+                className={`w-10 h-full flex items-center justify-center transition-colors ${quantity >= (product.stock || maxQuantity) ? 'text-secondary/30 cursor-not-allowed bg-surface-container-low' : 'text-secondary hover:text-on-surface hover:bg-surface-container cursor-pointer'}`}
+                aria-label="Increase quantity"
+              >
+                <span className="material-symbols-outlined text-[16px]">add</span>
+              </button>
+            </div>
           </div>
         )}
 

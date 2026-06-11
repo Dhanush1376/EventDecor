@@ -163,6 +163,15 @@ export function TopNavbar() {
           boxShadow: isTransparent ? 'none' : !isAtTop ? 'var(--shadow-md)' : 'var(--shadow-xs)',
         }}
       >
+        {/* Background Mandala Art */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
+          {!isTransparent && (
+            <div className="opacity-[0.1]">
+              <MandalaElement size={350} duration={240} variant={1} skipFade={true} />
+            </div>
+          )}
+        </div>
+
         <h1 className="sr-only">Siri Arts & Crafts</h1>
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
           <div className="flex items-center justify-between w-full gap-4">
@@ -518,7 +527,7 @@ export function TopNavbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 w-full h-full bg-surface-bright z-[120] lg:hidden px-6 py-6 flex flex-col overflow-y-auto"
+            className="fixed inset-0 w-full h-full bg-surface-bright z-[120] lg:hidden px-6 py-6 flex flex-col overflow-y-auto overflow-x-hidden"
           >
             {/* Decorative Mandala Background - Positioned to bleed off the right edge */}
             <MandalaArtDecor

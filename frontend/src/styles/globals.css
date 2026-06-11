@@ -198,15 +198,8 @@
     @apply transition-all duration-200 active:scale-[0.96] cursor-pointer;
   }
 
-  /* Accessibility Focus Rings */
-  :focus,
-  [tabindex]:focus,
-  div:focus,
-  span:focus,
-  a:focus,
-  button:focus {
-    outline: none !important;
-  }
+  /* Accessibility Focus Rings — only :focus-visible is styled (below) */
+  /* :focus outline is NOT suppressed, allowing browser defaults for assistive tech */
 
   :focus-visible:not(.admin-section-root *),
   button:focus-visible:not(.admin-section-root *),
@@ -964,6 +957,13 @@ body.slideshow-active .whatsapp-widget {
 
 body.slideshow-active footer {
   display: none !important;
+}
+
+/* ─── Hide BottomNav when StickyMobileATC is active on PDP ─── */
+body.sticky-atc-active .bottom-nav {
+  transform: translate(-50%, 150%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 /* ─── Hide mobile navigation, whatsapp widget and footer when filter panel is open ─── */

@@ -95,10 +95,10 @@ export function Footer() {
               <div className="flex flex-col space-y-2 text-[10px] text-on-surface-variant/70 leading-relaxed font-medium">
                 <div className="flex flex-col">
                   <a
-                    href={`tel:${phone}`}
+                    href={`tel:${phone.startsWith('+') ? phone : '+91' + phone}`}
                     className="hover:text-primary transition-colors whitespace-nowrap"
                   >
-                    +91 {phone.replace('+91', '').trim()}
+                    {phone.startsWith('+91') ? phone : `+91 ${phone}`}
                   </a>
                 </div>
                 <a
@@ -158,44 +158,83 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Trust Signals Strip */}
+        <div className="mt-8 pt-6 border-t border-black/5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary/5 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[12px] text-primary">lock</span>
+              </div>
+              <span className="font-label-sm text-[8px] text-on-surface-variant/70 uppercase tracking-[0.15em] font-bold">
+                Secure Checkout
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary/5 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[12px] text-primary">draw</span>
+              </div>
+              <span className="font-label-sm text-[8px] text-on-surface-variant/70 uppercase tracking-[0.15em] font-bold">
+                100% Handcrafted
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary/5 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[12px] text-primary">
+                  local_shipping
+                </span>
+              </div>
+              <span className="font-label-sm text-[8px] text-on-surface-variant/70 uppercase tracking-[0.15em] font-bold">
+                Free Shipping*
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary/5 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[12px] text-primary">refresh</span>
+              </div>
+              <span className="font-label-sm text-[8px] text-on-surface-variant/70 uppercase tracking-[0.15em] font-bold">
+                Easy Returns
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Bottom Editorial Bar */}
-        <div className="mt-6 pt-4 border-t border-black/5 flex flex-wrap justify-between items-start md:items-center gap-3 text-left">
-          <p className="font-label-sm text-on-surface-variant/50 tracking-[0.1em] text-[11px] uppercase font-bold">
-            © {currentYear} Siri Arts & Crafts.
-          </p>
+        <div className="mt-6 pt-4 border-t border-black/5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 text-left">
+          <div className="flex flex-col gap-1">
+            <p className="font-label-sm text-on-surface-variant/50 tracking-[0.1em] text-[9px] uppercase font-bold">
+              © {currentYear} Siri Arts & Crafts.
+            </p>
+            <p className="font-body text-on-surface-variant/40 text-[8px] max-w-xl">
+              * Free shipping is available for prepaid orders. Cash on Delivery (COD) and deliveries
+              to certain locations may incur additional charges.
+            </p>
+          </div>
           <div className="flex items-center flex-wrap gap-4">
             <Link
               to="/privacy"
-              className="font-label-sm text-on-surface-variant/50 text-[11px] uppercase tracking-widest hover:text-on-surface"
+              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
             >
               Privacy
             </Link>
             <Link
               to="/returns"
-              className="font-label-sm text-on-surface-variant/50 text-[11px] uppercase tracking-widest hover:text-on-surface"
+              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
             >
               Returns
             </Link>
             <Link
               to="/shipping"
-              className="font-label-sm text-on-surface-variant/50 text-[11px] uppercase tracking-widest hover:text-on-surface"
+              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
             >
               Shipping
             </Link>
             <Link
               to="/terms"
-              className="font-label-sm text-on-surface-variant/50 text-[11px] uppercase tracking-widest hover:text-on-surface"
+              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
             >
               Terms
             </Link>
           </div>
-        </div>
-
-        {/* Version Display for Production Diagnostics */}
-        <div className="mt-4 flex justify-center md:justify-start">
-          <p className="font-mono text-[9px] text-black/20 uppercase tracking-widest">
-            Build: {import.meta.env.VITE_BUILD_ID || 'Local'}
-          </p>
         </div>
       </div>
     </footer>

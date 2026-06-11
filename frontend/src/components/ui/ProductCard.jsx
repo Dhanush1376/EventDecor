@@ -112,20 +112,18 @@ export const ProductCard = React.memo(function ProductCard({
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    runProtectedAction(() => {
-      attemptAddToCart({
-        id: productId,
-        title,
-        price,
-        imageSrc,
-        quantity: 1,
-        variant: 'Default',
-        type: 'purchase',
-        isNonRefundable,
-      });
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+    attemptAddToCart({
+      id: productId,
+      title,
+      price,
+      imageSrc,
+      quantity: 1,
+      variant: 'Default',
+      type: 'purchase',
+      isNonRefundable,
     });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
   const handleKeyDown = (e) => {
@@ -267,7 +265,8 @@ export const ProductCard = React.memo(function ProductCard({
               )}
             </button>
             <button
-              onClick={(e) =>
+              onClick={(e) => {
+                if (!onQuickView) return;
                 onQuickView(e, {
                   id,
                   _id,
@@ -282,8 +281,8 @@ export const ProductCard = React.memo(function ProductCard({
                   hoverImage,
                   category,
                   badges,
-                })
-              }
+                });
+              }}
               className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
             >
               Quick View

@@ -74,7 +74,10 @@ export function FilterPanel({
     sort: true,
   });
 
-  // Initialize active sections for dynamic filters
+  const [cumulativeOptions, setCumulativeOptions] = useState({});
+  const [cumulativeGroups, setCumulativeGroups] = useState([]);
+
+  // Initialize active sections for dynamic filters and build cumulative options
   useEffect(() => {
     if (filterGroups && filterGroups.length > 0) {
       setActiveSections((prev) => {
@@ -83,6 +86,40 @@ export function FilterPanel({
           if (next[group.id] === undefined) {
             next[group.id] = true;
           }
+        });
+        return next;
+      });
+
+      setCumulativeGroups((prev) => {
+        const next = [...prev];
+        filterGroups.forEach((fg) => {
+          if (!next.find((g) => g.id === fg.id)) {
+            next.push({ id: fg.id, label: fg.label });
+          }
+        });
+        return next;
+      });
+
+      setCumulativeOptions((prev) => {
+        const next = { ...prev };
+        filterGroups.forEach((group) => {
+          if (!next[group.id]) {
+            next[group.id] = new Map();
+          }
+          const groupMap = new Map(next[group.id]);
+
+          // Reset existing counts to 0 before applying new ones
+          groupMap.forEach((opt, key) => {
+            groupMap.set(key, { ...opt, count: 0 });
+          });
+
+          // Update with new options and counts
+          if (group.options) {
+            group.options.forEach((opt) => {
+              groupMap.set(opt.value, opt);
+            });
+          }
+          next[group.id] = groupMap;
         });
         return next;
       });
@@ -170,37 +207,41 @@ export function FilterPanel({
           ))}
         </FilterSection>
 
-        {filterGroups.map((group) => {
-          // Collect all options for this group from backend + any currently selected ones
-          // to ensure selected options don't disappear if their count goes to 0 due to other filters
-          const backendOptions = group.options || [];
-          const selectedValues = currentFilters[group.id] || [];
+        {cumulativeGroups.length > 0
+          ? cumulativeGroups.map((group) => {
+              // Use cumulative options to prevent items from disappearing when their count drops to 0
+              const cumulativeGroupOptions = cumulativeOptions[group.id]
+                ? Array.from(cumulativeOptions[group.id].values())
+                : [];
 
-          const finalOptionsMap = new Map();
-          backendOptions.forEach((opt) => finalOptionsMap.set(opt.value, opt));
+              const selectedValues = currentFilters[group.id] || [];
 
-          selectedValues.forEach((val) => {
-            if (!finalOptionsMap.has(val)) {
-              finalOptionsMap.set(val, { value: val, label: val, count: 0 }); // Retain selected
-            }
-          });
+              const finalOptionsMap = new Map();
+              cumulativeGroupOptions.forEach((opt) => finalOptionsMap.set(opt.value, opt));
 
-          const finalOptions = Array.from(finalOptionsMap.values());
+              selectedValues.forEach((val) => {
+                if (!finalOptionsMap.has(val)) {
+                  finalOptionsMap.set(val, { value: val, label: val, count: 0 }); // Retain selected
+                }
+              });
 
-          return (
-            <FilterSection
-              key={group.id}
-              title={group.label}
-              id={group.id}
-              activeSections={activeSections}
-              onToggle={toggleSection}
-            >
-              {finalOptions.map((opt) =>
-                renderCheckbox(group.id, opt.value, opt.count > 0 ? opt.count : null),
-              )}
-            </FilterSection>
-          );
-        })}
+              const finalOptions = Array.from(finalOptionsMap.values());
+
+              return (
+                <FilterSection
+                  key={group.id}
+                  title={group.label}
+                  id={group.id}
+                  activeSections={activeSections}
+                  onToggle={toggleSection}
+                >
+                  {finalOptions.map((opt) =>
+                    renderCheckbox(group.id, opt.value, opt.count > 0 ? opt.count : null),
+                  )}
+                </FilterSection>
+              );
+            })
+          : null}
       </div>
     </div>
   );

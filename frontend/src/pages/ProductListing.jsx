@@ -250,7 +250,7 @@ export function ProductListing() {
 
   const queryParams = {
     page: currentPage,
-    limit: 100,
+    limit: 16,
     search: debouncedSearch,
     category: activeCategory !== 'All' ? activeCategory : undefined,
     sort: sortMap[sortBy] || 'newest',

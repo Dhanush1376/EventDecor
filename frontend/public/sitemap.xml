@@ -129,7 +129,7 @@
   </url>
   <url>
     <loc>http://localhost:3000/product/6a0c76cc9b8633afb920dec8</loc>
-    <lastmod>2026-06-09</lastmod>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -219,7 +219,7 @@
   </url>
   <url>
     <loc>http://localhost:3000/gallery/6a0d5c8fc725a13dd9a95619</loc>
-    <lastmod>2026-06-09</lastmod>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
@@ -278,6 +278,16 @@
     </image:image>
   </url>
   <url>
+    <loc>http://localhost:3000/gallery/6a272dcf1dd5c8cd0696265b</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1780952455/siri-arts-crafts/products/f4ldm0rbm3o8ufechguq.jpg</image:loc>
+      <image:title>Gold Ring Tray</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>http://localhost:3000/gallery/6a0c75da9b8633afb920dea1</loc>
     <lastmod>2026-06-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -285,16 +295,6 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024561/eventdecor_migration/bqtn2xzugmcew8ubmqmn.jpg</image:loc>
       <image:title>Bangle Ceremony Tray</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>http://localhost:3000/gallery/6a272dcf1dd5c8cd0696265b</loc>
-    <lastmod>2026-06-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1780952455/siri-arts-crafts/products/f4ldm0rbm3o8ufechguq.jpg</image:loc>
-      <image:title>Gold Ring Tray</image:title>
     </image:image>
   </url>
   <url>

@@ -125,11 +125,28 @@ export function HeroCarousel() {
 
   if (slides.length === 0) {
     return (
-      <HomeSectionState
-        title="Hero banner is not configured"
-        message="Select products in the Admin panel to display in this section."
-        icon="wallpaper"
-      />
+      <section className="h1-hero">
+        <div className="h1-hero__carousel">
+          <div className="h1-hero__slide h1-hero__slide--active relative">
+            <div className="h1-hero__slide-image-wrap bg-[#1a1817]">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#1a1817] via-[#1a1817]/80 to-[#1a1817]/40 z-[3]" />
+            </div>
+            <div className="h1-hero__slide-content relative z-20 pointer-events-none">
+              <span className="h1-hero__slide-kicker">Handcrafted Heritage</span>
+              <h2 className="h1-hero__slide-title">Artisanal Decor for Every Celebration</h2>
+              <p className="h1-hero__slide-tagline">
+                Explore our curated collection of handmade Indian wedding & event decorations
+              </p>
+              <div className="flex flex-wrap items-center gap-6 mt-4">
+                <Link to="/collections" className="h1-hero__slide-cta pointer-events-auto">
+                  Explore Collections
+                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     );
   }
 

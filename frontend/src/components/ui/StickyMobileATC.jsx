@@ -47,6 +47,16 @@ export function StickyMobileATC({ product, triggerRef }) {
     return () => observer.disconnect();
   }, [triggerRef]);
 
+  // Coordinate with BottomNav: hide it when this sticky ATC is visible to avoid tap conflicts
+  React.useEffect(() => {
+    if (isVisible && !isScrollingDown) {
+      document.body.classList.add('sticky-atc-active');
+    } else {
+      document.body.classList.remove('sticky-atc-active');
+    }
+    return () => document.body.classList.remove('sticky-atc-active');
+  }, [isVisible, isScrollingDown]);
+
   const handleAddToCart = () => {
     runProtectedAction(() => {
       addItem({

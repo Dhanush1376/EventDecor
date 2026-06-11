@@ -84,7 +84,12 @@ router.get('/me/export', requireAuth, exportMyData);
 router.delete('/me', requireAuth, eraseMyAccount);
 
 // Admin Routes & Team Management
-router.get('/', requireAuth, requireRole(['super_admin', 'main_admin']), getUsers);
+router.get(
+  '/',
+  requireAuth,
+  requireRole(['super_admin', 'main_admin', 'admin', 'manager', 'coordinator']),
+  getUsers,
+);
 router.get('/team', requireAuth, requireRole(['super_admin', 'main_admin']), getTeamMembers);
 router.post('/team/invite', requireAuth, requireSuperAdmin, inviteTeamMember);
 router.delete('/team/invite/:id', requireAuth, requireSuperAdmin, cancelTeamInvite);

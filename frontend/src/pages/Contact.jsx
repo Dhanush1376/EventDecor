@@ -214,7 +214,7 @@ export function Contact() {
                     htmlFor="contact-email"
                     className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
                   >
-                    Digital Mail <span className="text-error font-normal">*</span>
+                    Email Address <span className="text-error font-normal">*</span>
                   </label>
                   <input
                     id="contact-email"

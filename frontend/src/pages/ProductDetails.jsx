@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { ProductGallery } from '../components/ui/ProductGallery';
 import { ProductInfo } from '../components/ui/ProductInfo';
 import { Skeleton, ProductDetailSkeleton } from '../components/ui/Skeleton';
@@ -11,7 +10,7 @@ import { MandalaElement } from '../components/ui/MandalaElement';
 import { userService } from '../services/domainServices';
 import { useProduct } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
-import { useWishlist } from '../context/WishlistContext';
+import { StickyMobileATC } from '../components/ui/StickyMobileATC';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 import { useQueryClient } from '@tanstack/react-query';
 import recommendationService from '../services/recommendationService';
@@ -27,26 +26,9 @@ export function ProductDetails() {
   const { id } = useParams();
   const atcRef = useRef(null);
   const { user } = useAuth();
-  const { toggleItem, isWishlisted } = useWishlist();
   const queryClient = useQueryClient();
 
-  const [isScrollingDown, setIsScrollingDown] = useState(false);
-  const lastScrollY = useRef(0);
-
   const { data: product, isLoading: loading, error } = useProduct(id);
-
-  // Scroll direction for mobile bottom bar
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (Math.abs(currentScrollY - lastScrollY.current) > 10) {
-        setIsScrollingDown(currentScrollY > lastScrollY.current && currentScrollY > 100);
-      }
-      lastScrollY.current = currentScrollY;
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Track product view, dwell time, and scroll depth
   useRecommendationTracker({
@@ -207,69 +189,8 @@ export function ProductDetails() {
         />
       </React.Suspense>
 
-      {/* ─── Mobile Floating Bottom Bar ─── */}
-      <AnimatePresence>
-        {!isScrollingDown && (
-          <motion.div
-            initial={{ y: 150, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 150, opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[#F5F5F7]/85 backdrop-blur-[32px] saturate-[180%] border-[0.5px] border-black/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full h-[72px] px-2 flex items-center justify-between gap-2 select-none w-[calc(100%-2rem)] max-w-[340px]"
-          >
-            <button
-              onClick={() => {
-                if (!product) return;
-                toggleItem({
-                  id: product._id || product.id,
-                  title: product.title,
-                  price: product.price,
-                  imageSrc: product.imageSrc || product.image,
-                });
-              }}
-              className={`w-[60px] h-[60px] rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0 ${
-                isWishlisted(product?._id || product?.id)
-                  ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-[0.5px] border-black/[0.04]'
-                  : 'bg-transparent text-[#8E8E93] hover:text-black/60'
-              }`}
-            >
-              <motion.span
-                animate={{
-                  scale: isWishlisted(product?._id || product?.id) ? [1, 1.3, 1] : 1,
-                  color: isWishlisted(product?._id || product?.id) ? '#ff2d55' : '#8E8E93',
-                }}
-                transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-                className="material-symbols-outlined text-[24px]"
-                style={{
-                  fontVariationSettings: isWishlisted(product?._id || product?.id)
-                    ? "'FILL' 1"
-                    : "'FILL' 0",
-                }}
-              >
-                favorite
-              </motion.span>
-            </button>
-            <button
-              onClick={() => {
-                if (atcRef.current) {
-                  atcRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  setTimeout(() => {
-                    atcRef.current.classList.add('ring-4', 'ring-primary/40');
-                    setTimeout(
-                      () => atcRef.current.classList.remove('ring-4', 'ring-primary/40'),
-                      1000,
-                    );
-                  }, 500);
-                }
-              }}
-              className="flex-1 bg-black text-white h-[60px] rounded-full font-label-sm text-[10px] uppercase tracking-[0.2em] font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_4px_12px_rgba(0,0,0,0.15)] mr-1"
-            >
-              <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
-              Add to Bag
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ─── Mobile Floating Bottom Bar — Actually adds to cart ─── */}
+      <StickyMobileATC product={product} triggerRef={atcRef} />
     </div>
   );
 }
