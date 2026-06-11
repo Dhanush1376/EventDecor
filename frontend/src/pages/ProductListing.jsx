@@ -257,7 +257,7 @@ export function ProductListing() {
     spellcheck: searchParams.get('spellcheck') || undefined,
   };
 
-  if (filters.priceRange && filters.priceRange.length > 0) {
+  if (filters.priceRange && Array.isArray(filters.priceRange) && filters.priceRange.length > 0) {
     let min = Infinity;
     let max = -Infinity;
     filters.priceRange.forEach((range) => {
@@ -273,7 +273,7 @@ export function ProductListing() {
 
   // Inject all other dynamic filters into queryParams
   Object.keys(filters).forEach((key) => {
-    if (key !== 'priceRange' && filters[key]?.length > 0) {
+    if (key !== 'priceRange' && Array.isArray(filters[key]) && filters[key].length > 0) {
       queryParams[key] = filters[key].join(',');
     }
   });
