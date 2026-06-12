@@ -32,7 +32,7 @@ RUN npm install -g pm2
 COPY --from=builder --chown=node:node /app/src/templates ./src/templates
 
 # Create required directories with correct ownership
-RUN mkdir -p logs public/temp && chown -R node:node logs public/temp
+RUN mkdir -p logs public/temp backups cache && chown -R node:node logs public/temp backups cache
 
 # Run as non-root user
 USER node
