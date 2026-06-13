@@ -2,7 +2,7 @@
 import logger from '../src/utils/logger.js';
 
 export default async function handler(req, res) {
-  const backendUrl = process.env.VITE_BACKEND_URL || 'https://eventdecor-production.up.railway.app';
+  const backendUrl = process.env.VITE_BACKEND_URL || 'https://siri-arts-n-crafts.onrender.com';
   try {
     const response = await fetch(`${backendUrl}/sitemap.xml`);
     if (!response.ok) throw new Error('Failed to fetch sitemap from backend');

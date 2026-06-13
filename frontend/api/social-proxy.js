@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   if (isBot && productId) {
     try {
       const backendUrl =
-        process.env.VITE_API_URL || 'https://eventdecor-production.up.railway.app/api/v1';
+        process.env.VITE_API_URL || 'https://siri-arts-n-crafts.onrender.com/api/v1';
       const url = new URL(`${backendUrl}/social/product/${productId}`);
 
       const response = await fetch(url.toString(), {
