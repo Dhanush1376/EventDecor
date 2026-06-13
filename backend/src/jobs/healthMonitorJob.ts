@@ -16,7 +16,9 @@ export const initHealthMonitorJob = () => {
     logger.info('[HEALTH MONITOR] Running database integrity checks...');
     try {
       const currentProductCount = await Product.countDocuments();
-      const currentAdminCount = await User.countDocuments({ role: { $in: ['admin', 'owner', 'super_admin'] } });
+      const currentAdminCount = await User.countDocuments({
+        role: { $in: ['admin', 'owner', 'super_admin'] },
+      });
 
       // First run initialization
       if (lastProductCount === -1) {
@@ -47,7 +49,6 @@ export const initHealthMonitorJob = () => {
 
       lastProductCount = currentProductCount;
       lastAdminCount = currentAdminCount;
-
     } catch (err: any) {
       logger.error(`[HEALTH MONITOR] Failed to run integrity checks: ${err.message}`);
     }
@@ -76,7 +77,7 @@ const handleAnomaly = async (message: string) => {
 
 const triggerEmergencyBackup = () => {
   try {
-    const backupDir = path.resolve(__dirname, '../../../recovery/backups');
+    const backupDir = path.join(process.cwd(), 'recovery', 'backups');
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
     }

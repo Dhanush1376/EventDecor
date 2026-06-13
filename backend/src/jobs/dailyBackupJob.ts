@@ -9,7 +9,7 @@ export const initDailyBackupJob = () => {
   cron.schedule('0 2 * * *', async () => {
     logger.info('[BACKUP] Starting automated daily database backup...');
     try {
-      const backupDir = path.resolve(__dirname, '../../../recovery/backups');
+      const backupDir = path.join(process.cwd(), 'recovery', 'backups');
       if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir, { recursive: true });
       }

@@ -7,12 +7,12 @@ const MAX_LOG_SIZE_MB = 50;
 const MAX_LOG_FILES = 5;
 
 const getLogFilePath = (index: number = 0) => {
-  const baseDir = path.resolve(__dirname, '../../logs');
+  const baseDir = path.join(process.cwd(), 'logs');
   if (!fs.existsSync(baseDir)) {
     fs.mkdirSync(baseDir, { recursive: true });
   }
-  return index === 0 
-    ? path.join(baseDir, 'forensic.log') 
+  return index === 0
+    ? path.join(baseDir, 'forensic.log')
     : path.join(baseDir, `forensic.${index}.log`);
 };
 
@@ -66,7 +66,11 @@ export const startDbAuditor = () => {
     const changeStream = mongoose.connection.db.watch([], { fullDocument: 'default' });
 
     changeStream.on('change', (change) => {
-      if (change.operationType === 'delete' || change.operationType === 'drop' || change.operationType === 'dropDatabase') {
+      if (
+        change.operationType === 'delete' ||
+        change.operationType === 'drop' ||
+        change.operationType === 'dropDatabase'
+      ) {
         const auditData = {
           source: 'MongoDB Change Stream',
           operationType: change.operationType,

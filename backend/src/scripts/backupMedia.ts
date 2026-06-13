@@ -9,7 +9,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 /**
  * Cloudinary Media Backup Script
- * 
+ *
  * Fetches all assets from Cloudinary and downloads them locally.
  * Can be run on a cron schedule and synced to AWS S3.
  */
@@ -20,23 +20,25 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const BACKUP_DIR = path.resolve(__dirname, '../../backups/media');
+const BACKUP_DIR = path.join(process.cwd(), 'backups', 'media');
 
 const downloadFile = (url: string, dest: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
-    https.get(url, (response) => {
-      if (response.statusCode !== 200) {
-        return reject(new Error(`Failed to get '${url}' (${response.statusCode})`));
-      }
-      response.pipe(file);
-      file.on('finish', () => {
-        file.close();
-        resolve();
+    https
+      .get(url, (response) => {
+        if (response.statusCode !== 200) {
+          return reject(new Error(`Failed to get '${url}' (${response.statusCode})`));
+        }
+        response.pipe(file);
+        file.on('finish', () => {
+          file.close();
+          resolve();
+        });
+      })
+      .on('error', (err) => {
+        fs.unlink(dest, () => reject(err));
       });
-    }).on('error', (err) => {
-      fs.unlink(dest, () => reject(err));
-    });
   });
 };
 
@@ -60,7 +62,7 @@ export const runMediaBackup = async () => {
       });
 
       const resources = result.resources || [];
-      
+
       for (const asset of resources) {
         const ext = asset.format || 'jpg';
         const filename = `${asset.public_id.replace(/\//g, '_')}.${ext}`;
@@ -85,8 +87,9 @@ export const runMediaBackup = async () => {
 
     logger.info(`[MEDIA BACKUP] Sync complete. Downloaded ${totalDownloaded} new assets.`);
     logger.info(`[MEDIA BACKUP] Assets stored at: ${BACKUP_DIR}`);
-    logger.info(`[MEDIA BACKUP] Tip: Use AWS CLI to sync this directory to S3: aws s3 sync ${BACKUP_DIR} s3://your-bucket/media/`);
-
+    logger.info(
+      `[MEDIA BACKUP] Tip: Use AWS CLI to sync this directory to S3: aws s3 sync ${BACKUP_DIR} s3://your-bucket/media/`,
+    );
   } catch (error: any) {
     logger.error(`[MEDIA BACKUP] Cloudinary API Error: ${error.message}`);
     process.exit(1);

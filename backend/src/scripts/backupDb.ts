@@ -12,17 +12,17 @@ const execPromise = util.promisify(exec);
 
 /**
  * MongoDB Offsite Backup Script
- * 
+ *
  * Uses `mongodump` to create a BSON/JSON dump of the Atlas cluster.
  * Zips the dump and can be configured to push to an S3 bucket.
- * 
+ *
  * Requirements:
  * - MongoDB Database Tools installed locally/on server (`mongodump` available in PATH)
  * - AWS CLI installed and configured (if pushing to S3)
  */
 
 const MONGO_URI = process.env.MONGO_URI;
-const BACKUP_DIR = path.resolve(__dirname, '../../backups/db');
+const BACKUP_DIR = path.join(process.cwd(), 'backups', 'db');
 const DATE_STR = new Date().toISOString().split('T')[0];
 const ARCHIVE_NAME = `siri-arts-db-backup-${DATE_STR}.archive`;
 const ARCHIVE_PATH = path.join(BACKUP_DIR, ARCHIVE_NAME);
@@ -46,12 +46,12 @@ export const runDbBackup = async () => {
     // Run mongodump (creates a single compressed archive file)
     // Note: We use --gzip to save space
     const dumpCmd = `mongodump --uri="${MONGO_URI}" --archive="${ARCHIVE_PATH}" --gzip`;
-    
+
     const { stdout, stderr } = await execPromise(dumpCmd);
     if (stderr && !stderr.includes('done dumping')) {
       logger.warn(`[BACKUP] mongodump stderr: ${stderr}`);
     }
-    
+
     logger.info(`[BACKUP] Database dump successful. Saved to ${ARCHIVE_PATH}`);
 
     // Optional: Push to S3
@@ -60,14 +60,13 @@ export const runDbBackup = async () => {
       const s3Cmd = `aws s3 cp "${ARCHIVE_PATH}" "${S3_BUCKET}${ARCHIVE_NAME}" --storage-class STANDARD_IA`;
       await execPromise(s3Cmd);
       logger.info(`[BACKUP] S3 upload complete.`);
-      
+
       // Cleanup local file after successful upload to save disk space
       fs.unlinkSync(ARCHIVE_PATH);
       logger.info(`[BACKUP] Cleaned up local archive file.`);
     } else {
       logger.info('[BACKUP] S3_BACKUP_BUCKET not set. Skipping cloud upload.');
     }
-
   } catch (error: any) {
     logger.error(`[BACKUP] Database backup failed: ${error.message}`);
     process.exit(1);

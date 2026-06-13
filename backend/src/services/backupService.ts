@@ -18,7 +18,19 @@ export class BackupService {
         fs.mkdirSync(this.backupRoot, { recursive: true });
       }
     } catch (err: any) {
-      logger.error(`[BackupService] Failed to create backup root directory: ${err.message}`);
+      logger.warn(
+        `[BackupService] Failed to create backup root at ${this.backupRoot}: ${err.message}. Falling back to /tmp/backups`,
+      );
+      this.backupRoot = '/tmp/backups';
+      try {
+        if (!fs.existsSync(this.backupRoot)) {
+          fs.mkdirSync(this.backupRoot, { recursive: true });
+        }
+      } catch (fallbackErr: any) {
+        logger.error(
+          `[BackupService] Failed to create fallback backup root: ${fallbackErr.message}`,
+        );
+      }
     }
   }
 
