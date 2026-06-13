@@ -5,10 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     
-    <!-- Anti-Stale Cache Headers -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
+    <!-- Anti-Stale Service Worker Cleanup Script -->
 
     <!-- Anti-Stale Service Worker Cleanup Script -->
     <script defer src="/sw-cleanup.js"></script>
@@ -34,8 +31,8 @@
     </script>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/webp" href="/favicon-32x32.webp" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.webp" />
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -79,7 +76,7 @@
     
     <meta
       property="og:image"
-      content="https://siriartsandcrafts.com/logo.png"
+      content="https://siriartsandcrafts.com/og-image.webp"
     />
     
     <meta property="og:url" content="https://siriartsandcrafts.com" />
@@ -95,13 +92,13 @@
     
     <meta
       name="twitter:image"
-      content="https://siriartsandcrafts.com/logo.png"
+      content="https://siriartsandcrafts.com/og-image.webp"
     />
 
     <!-- Performance: Preconnect & DNS Prefetch -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://siri-arts-n-crafts.onrender.com" crossorigin />
+    <link rel="preconnect" href="https://eventdecor-production-1647.up.railway.app" crossorigin />
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin fetchpriority="high" />
     <link rel="dns-prefetch" href="https://res.cloudinary.com" />
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
@@ -110,12 +107,12 @@
     <!-- Critical Assets Preload -->
     <link rel="preload" as="image" href="/logo-nobg-clean-sm.webp" type="image/webp" fetchpriority="high" />
 
-    <!-- Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600&display=swap" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600&display=swap" /></noscript>
-
+    <!-- Fonts Preload & Load -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600&display=swap" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0..1,0&display=swap" />
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0..1,0&display=swap" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0..1,0&display=swap" /></noscript>
 
     <!-- Critical CSS: Prevent FOUC -->
     <style>
@@ -187,15 +184,7 @@
         text-shadow: none !important;
       }
 
-      /* Reduced motion support */
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-          scroll-behavior: auto !important;
-        }
-      }
+
 
       /* Prevent CLS: reserve space for common layout elements */
       #root {
@@ -288,7 +277,7 @@
         <div class="skel-pulse skel-hero"></div>
       </div>
     </div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="/src/main.jsx" fetchpriority="high"></script>
 
   </body>
 </html>
