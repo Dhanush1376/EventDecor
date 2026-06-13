@@ -156,6 +156,32 @@ export function AuthModal() {
     }
   }, [otp]);
 
+  // WebOTP API for automatic SMS reading
+  useEffect(() => {
+    if (step === 'otp' && isAuthModalOpen && 'OTPCredential' in window) {
+      const ac = new AbortController();
+      navigator.credentials
+        .get({
+          otp: { transport: ['sms'] },
+          signal: ac.signal,
+        })
+        .then((otpCredential) => {
+          if (otpCredential && otpCredential.code) {
+            const newOtp = otpCredential.code.split('').slice(0, 6);
+            const paddedOtp = Array.from({ length: 6 }, (_, i) => newOtp[i] || '');
+            setOtp(paddedOtp);
+          }
+        })
+        .catch((err) => {
+          console.log('WebOTP API failed or aborted:', err);
+        });
+
+      return () => {
+        ac.abort();
+      };
+    }
+  }, [step, isAuthModalOpen]);
+
   // Listen to Escape key to close the auth modal
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
@@ -180,9 +206,33 @@ export function AuthModal() {
   };
 
   const handleOtpChange = (value, index) => {
+    if (!value) {
+      const newOtp = [...otp];
+      newOtp[index] = '';
+      setOtp(newOtp);
+      return;
+    }
+
+    // Handle multi-character autofill/paste
+    if (value.length > 1) {
+      const pastedData = value.replace(/\D/g, '').slice(0, 6).split('');
+      const newOtp = [...otp];
+      pastedData.forEach((char, idx) => {
+        if (idx < 6) newOtp[idx] = char;
+      });
+      setOtp(newOtp);
+      const lastFilledIndex = pastedData.length - 1;
+      if (lastFilledIndex >= 0 && lastFilledIndex < 5) {
+        otpRefs.current[lastFilledIndex + 1].focus();
+      } else if (lastFilledIndex >= 5) {
+        otpRefs.current[5].focus();
+      }
+      return;
+    }
+
     if (isNaN(value)) return;
     const newOtp = [...otp];
-    newOtp[index] = value.substring(value.length - 1);
+    newOtp[index] = value;
     setOtp(newOtp);
 
     if (value && index < 5) {
@@ -233,7 +283,7 @@ export function AuthModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative bg-[#faf9f6] w-full max-w-[440px] rounded-[32px] p-5 xs:p-8 sm:p-10 border border-outline-variant/30 shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-hidden"
+            className="relative bg-[#faf9f6] w-full max-w-[390px] rounded-[28px] p-6 xs:p-7 sm:p-8 border border-outline-variant/30 shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-hidden"
           >
             {/* Concentric rotating gold mandalas for luxury styling */}
             <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.06] z-0">
@@ -330,28 +380,41 @@ export function AuthModal() {
                     className="space-y-8"
                   >
                     {/* Headings */}
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <span className="font-label-sm text-[9px] text-primary uppercase tracking-[0.4em] block font-bold">
                         Bespoke Portal
                       </span>
-                      <h2 className="font-display text-[28px] sm:text-[32px] leading-tight text-on-surface-variant font-light">
+                      <h2 className="font-display text-[24px] sm:text-[28px] leading-tight text-on-surface-variant font-light">
                         {step === '2fa'
                           ? 'Enter Authenticator Code'
                           : step === 'otp'
-                            ? 'Enter Verification Code'
+                            ? 'Verification Code'
                             : 'Login or Sign Up'}
                       </h2>
-                      <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
-                        {step === '2fa'
-                          ? 'Enter the 6-digit code from your authenticator app.'
-                          : step === 'otp'
-                            ? 'A secure verification code has been sent to your email.'
+                      {step !== 'otp' && (
+                        <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
+                          {step === '2fa'
+                            ? 'Enter the 6-digit code from your authenticator app.'
                             : 'Experience passwordless, secure entry to our store.'}
-                      </p>
+                        </p>
+                      )}
+                      {step === 'otp' && (
+                        <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
+                          Code sent to{' '}
+                          <span className="font-semibold text-on-surface-variant">{email}</span>
+                          <button
+                            type="button"
+                            onClick={() => setStep('identifier')}
+                            className="text-primary font-bold hover:underline cursor-pointer ml-1.5 uppercase text-[10px] tracking-wider"
+                          >
+                            Change
+                          </button>
+                        </p>
+                      )}
                     </div>
 
                     {/* Form fields */}
-                    <div className="bg-white/80 rounded-2xl p-4 xs:p-5 sm:p-6 border border-outline-variant/20 shadow-Luxury">
+                    <div className="w-full">
                       <AnimatePresence mode="wait">
                         {step === 'identifier' ? (
                           <motion.form
@@ -456,24 +519,8 @@ export function AuthModal() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             onSubmit={handleVerifyOTP}
-                            className="space-y-6"
+                            className="space-y-5"
                           >
-                            <div className="space-y-2">
-                              <p className="font-body text-[12px] text-on-surface-variant/70 font-light pl-1">
-                                Securing access for <br />
-                                <span className="text-on-surface-variant font-semibold break-all">
-                                  {email}
-                                </span>
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => setStep('identifier')}
-                                className="font-label-sm text-[8px] text-primary uppercase tracking-[0.2em] font-bold hover:underline cursor-pointer"
-                              >
-                                Not you? Change email
-                              </button>
-                            </div>
-
                             <motion.div
                               animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}
                               transition={{ duration: 0.4 }}
@@ -487,7 +534,7 @@ export function AuthModal() {
                                   type="text"
                                   inputMode="numeric"
                                   pattern="[0-9]*"
-                                  maxLength={1}
+                                  maxLength={6}
                                   autoComplete="one-time-code"
                                   value={digit}
                                   onChange={(e) => handleOtpChange(e.target.value, idx)}

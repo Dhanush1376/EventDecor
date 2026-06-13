@@ -160,6 +160,9 @@ export const refreshAccessToken = async () => {
           refreshPromise = null;
           return refreshAccessToken(); // Retry the refresh with the new cookie/localStorage token
         }
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          dispatchUnauthorized();
+        }
         throw err;
       })
       .finally(() => {
@@ -446,11 +449,13 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshErr) {
-        if (refreshErr.response) {
-          logger.error('[API] Token refresh rejected by server.');
+        if (refreshErr.response?.status === 401 || refreshErr.response?.status === 403) {
+          logger.error('[API] Token refresh rejected by server (Unauthorized).');
           dispatchUnauthorized();
         } else {
-          logger.warn('[API] Token refresh failed due to network error. Preserving session.');
+          logger.warn(
+            '[API] Token refresh failed due to network/server error. Preserving session.',
+          );
         }
       }
     } else if (error.response?.status === 409 && isAuthRefresh) {

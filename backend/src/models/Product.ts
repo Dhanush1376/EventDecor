@@ -63,6 +63,10 @@ export interface IProduct extends ISoftDeleted {
     maxLength: number;
     helperText?: string;
   };
+  // AI Visual Search metadata
+  aiTags?: string[];
+  aiCategory?: string;
+  aiAttributes?: Record<string, string>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -133,6 +137,10 @@ const ProductSchema: Schema = new Schema(
       maxLength: { type: Number, default: 500, max: 2000 },
       helperText: { type: String },
     },
+    // AI Visual Search metadata
+    aiTags: [{ type: String, trim: true }],
+    aiCategory: { type: String, trim: true },
+    aiAttributes: { type: Schema.Types.Mixed, default: {} },
   },
   {
     timestamps: true,
@@ -161,6 +169,9 @@ ProductSchema.index({ isActive: 1, featured: 1, createdAt: -1 });
 // Rental Indexes
 ProductSchema.index({ isActive: 1, rentalEnabled: 1, category: 1 });
 ProductSchema.index({ isActive: 1, availabilityMode: 1, category: 1 });
+
+// AI Visual Search Index
+ProductSchema.index({ isActive: 1, aiTags: 1 }, { sparse: true });
 
 // Sitemap Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';

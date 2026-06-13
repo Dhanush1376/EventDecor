@@ -116,7 +116,11 @@ app.post(
 // 3. Request Parsing (MUST be before sanitization)
 // Pre-validate body size before parsing to prevent CPU exhaustion on XSS sanitization
 app.use((req: Request, res: Response, next) => {
-  if (req.path.includes('/upload') || req.path.includes('/webhook')) {
+  if (
+    req.path.includes('/upload') ||
+    req.path.includes('/webhook') ||
+    req.path.includes('/visual-search')
+  ) {
     return next();
   }
   const contentLength = parseInt(req.headers['content-length'] || '0', 10);

@@ -224,3 +224,11 @@ export const cloudinaryCircuitBreaker = new CircuitBreaker({
   resetTimeout: 45000, // 45 seconds
   operationTimeout: 20000, // 20 seconds
 });
+
+export const aiVisionCircuitBreaker = new CircuitBreaker({
+  name: 'ai-vision',
+  failureThreshold: 3,
+  resetTimeout: 90000, // 90 seconds (longer cooldown for rate-limited AI APIs)
+  operationTimeout: 25000, // 25 seconds (AI inference can be slow)
+  halfOpenSuccessThreshold: 2,
+});

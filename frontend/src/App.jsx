@@ -236,6 +236,9 @@ const AdminLayouts = lazy(() =>
 const AdminReviews = lazy(() =>
   import('./admin/pages/AdminReviews').then((m) => ({ default: m.AdminReviews })),
 );
+const AdminVisualSearch = lazy(() =>
+  import('./admin/pages/AdminVisualSearch').then((m) => ({ default: m.AdminVisualSearch })),
+);
 const AdminServiceAreas = lazy(() => import('./admin/pages/AdminServiceAreas'));
 
 // All /admin/* pages are React.lazy() — not in the storefront initial JS bundle (see npm run build:report).
@@ -561,6 +564,7 @@ function App() {
                                 <Route path="team" element={<AdminTeam />} />
                                 <Route path="system-users" element={<AdminSystemUsers />} />
                                 <Route path="reviews" element={<AdminReviews />} />
+                                <Route path="visual-search" element={<AdminVisualSearch />} />
                               </Route>
                             </Routes>
                           </Suspense>

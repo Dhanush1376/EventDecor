@@ -160,6 +160,13 @@ const navSections = [
         domain: 'settings',
       },
       {
+        label: 'Visual Search',
+        icon: 'lens_blur',
+        path: '/admin/visual-search',
+        keywords: 'ai, lens, vision, image search',
+        domain: 'settings',
+      },
+      {
         label: 'Marketing Emails',
         icon: 'campaign',
         path: '/admin/campaigns',

@@ -76,6 +76,9 @@ export const registerApiRoutes = (
   apiRouter.use('/search', lazyRouter('./searchRoutes'));
   apiRouter.use('/media', lazyRouter('./mediaRoutes'));
 
+  // AI Visual Search
+  apiRouter.use('/visual-search', lazyRouter('./visualSearchRoutes'));
+
   // Rental System Routes
   apiRouter.use('/rentals', noCacheMiddleware, lazyRouter('./rentalRoutes'));
   apiRouter.use('/rental-policies', lazyRouter('./rentalPolicyRoutes'));

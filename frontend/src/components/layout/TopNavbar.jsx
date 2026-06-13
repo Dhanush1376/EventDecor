@@ -10,6 +10,8 @@ import { useSearchOverlay } from '../../hooks/useSearchOverlay';
 import { IntelligentSearchOverlay } from '../search/IntelligentSearchOverlay';
 import { prefetchManager } from '../../utils/prefetchManager';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
+import { useVisualSearch } from '../../hooks/useVisualSearch';
+import { VisualSearchOverlay } from '../search/VisualSearchOverlay';
 import { SiriLogo } from '../ui/SiriLogo';
 import { MandalaElement } from '../ui/MandalaElement';
 import { MandalaArtDecor } from '../ui/MandalaArtDecor';
@@ -86,8 +88,9 @@ export function TopNavbar() {
     };
   }, [isAuthenticated, user]);
 
-  // ─── INTELLIGENT SEARCH OVERLAY (Powered by useSearchOverlay hook) ───
+  // ─── INTELLIGENT SEARCH OVERLAYS ───
   const search = useSearchOverlay();
+  const visualSearch = useVisualSearch();
 
   const mobileMenuRef = React.useRef(null);
   const mobileTriggerRef = React.useRef(null);
@@ -317,10 +320,49 @@ export function TopNavbar() {
             <div className="flex-shrink-0 flex items-center justify-end gap-1 md:gap-2">
               {/* Trailing Luxury Icons */}
               <div className="flex items-center gap-1 md:gap-1.5">
+                {/* Unified Search Bar (Tablet/Desktop) */}
+                <div
+                  onClick={search.handleOpen}
+                  className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full cursor-pointer transition-all duration-300 border backdrop-blur-md w-[200px] lg:w-[240px] group ${
+                    isTransparent
+                      ? 'bg-white/10 border-white/20 hover:bg-white/20 text-white'
+                      : 'bg-surface-container-low border-outline-variant/30 hover:border-primary/30 text-on-surface hover:shadow-sm'
+                  }`}
+                >
+                  <span
+                    className={`material-symbols-outlined text-[18px] transition-colors ${isTransparent ? 'opacity-70 group-hover:opacity-100' : 'text-on-surface-variant group-hover:text-primary'}`}
+                  >
+                    search
+                  </span>
+                  <span
+                    className={`flex-1 text-[12px] font-medium truncate select-none ${isTransparent ? 'opacity-70' : 'text-on-surface-variant/70'}`}
+                  >
+                    Search products...
+                  </span>
+
+                  {visualSearch.isEnabled && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        search.handleOpen('visual');
+                      }}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 ${
+                        isTransparent
+                          ? 'hover:bg-white/20 text-white/90'
+                          : 'hover:bg-primary/10 text-[#d4af37]'
+                      }`}
+                      aria-label="Visual Search"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">photo_camera</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Mobile Unified Search Icon */}
                 <button
                   onClick={search.handleOpen}
-                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
-                  aria-label="Search Catalog (⌘K)"
+                  className={`md:hidden ${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
+                  aria-label="Search Catalog"
                 >
                   <span
                     className="material-symbols-outlined text-[18px]"
@@ -691,6 +733,7 @@ export function TopNavbar() {
       {/* ─── INTELLIGENT AI-POWERED SEARCH OVERLAY ─── */}
       <IntelligentSearchOverlay
         isOpen={search.isOpen}
+        initialMode={search.initialMode}
         query={search.query}
         setQuery={search.setQuery}
         suggestions={search.suggestions}
@@ -704,9 +747,25 @@ export function TopNavbar() {
         onKeyDown={search.handleKeyDown}
         onSelectSuggestion={search.selectSuggestion}
         onExecuteSearch={search.executeSearch}
-        onRemoveRecent={search.removeRecentSearch}
         onClearRecent={search.clearRecentSearches}
         correctedQuery={search.correctedQuery}
+        visualSearch={visualSearch}
+      />
+
+      {/* ─── VISUAL SEARCH OVERLAY ─── */}
+      <VisualSearchOverlay
+        isOpen={visualSearch.isOpen}
+        phase={visualSearch.phase}
+        previewUrl={visualSearch.previewUrl}
+        results={visualSearch.results}
+        error={visualSearch.error}
+        scanProgress={visualSearch.scanProgress}
+        scanStatus={visualSearch.scanStatus}
+        config={visualSearch.config}
+        onClose={visualSearch.close}
+        onImageSelect={visualSearch.handleImageSelect}
+        onRetry={visualSearch.retry}
+        onReset={visualSearch.reset}
       />
     </>
   );

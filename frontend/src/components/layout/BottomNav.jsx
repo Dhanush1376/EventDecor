@@ -1,21 +1,25 @@
 import { Link, useLocation } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { prefetchManager } from '../../utils/prefetchManager';
 
 export function BottomNav() {
   const location = useLocation();
   const { cartCount, setIsCartOpen, isCartOpen } = useCart();
+  const { isAuthenticated, openAuthModal } = useAuth();
 
   const navItems = [
     { label: 'Home', icon: 'home', path: '/' },
     { label: 'Shop', icon: 'storefront', path: '/collections' },
     { label: 'Wishlist', icon: 'favorite', path: '/wishlist' },
     { label: 'Events', icon: 'celebration', path: '/events' },
-    { label: 'Profile', icon: 'person', path: '/dashboard' },
+    isAuthenticated
+      ? { label: 'Profile', icon: 'person', path: '/dashboard' }
+      : { label: 'Login', icon: 'login', onClick: openAuthModal },
   ];
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => path && location.pathname === path;
 
   if (isCartOpen) return null;
 
@@ -52,6 +56,14 @@ export function BottomNav() {
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
                 {cartCount > 0 && <CartBadge count={cartCount} />}
+              </button>
+            ) : item.onClick ? (
+              <button
+                onClick={item.onClick}
+                aria-label={`Open ${item.label}`}
+                className={`relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all hover:bg-black/5`}
+              >
+                <NavIcon active={false} icon={item.icon} label={item.label} />
               </button>
             ) : (
               <Link

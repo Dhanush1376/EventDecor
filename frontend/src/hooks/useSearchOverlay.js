@@ -10,6 +10,7 @@ const MAX_RECENT = 8;
  */
 export function useSearchOverlay() {
   const [isOpen, setIsOpen] = useState(false);
+  const [initialMode, setInitialMode] = useState('text');
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState([]);
@@ -207,12 +208,14 @@ export function useSearchOverlay() {
     [suggestions, activeIndex, selectSuggestion, executeSearch, query, handleClose],
   );
 
-  const handleOpen = useCallback(() => {
+  const handleOpen = useCallback((mode = 'text') => {
+    setInitialMode(typeof mode === 'string' ? mode : 'text');
     setIsOpen(true);
   }, []);
 
   return {
     isOpen,
+    initialMode,
     query,
     setQuery,
     suggestions,

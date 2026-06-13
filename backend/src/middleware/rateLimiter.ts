@@ -241,3 +241,14 @@ export const chatMessageLimiter = createRateLimiter('chatMessageLimiter', {
   message: 'You are sending messages too quickly. Please slow down and try again in a few minutes.',
   keyGenerator: accountKeyGenerator,
 });
+
+// Visual Search Limiter: 10 image analyses per 5 minutes per IP (AI API calls are expensive)
+export const visualSearchLimiter = createRateLimiter(
+  'visualSearchLimiter',
+  {
+    windowMs: 5 * 60 * 1000,
+    limit: 10,
+    message: 'Too many visual search requests. Please try again after 5 minutes.',
+  },
+  true,
+); // forceMemory = true
