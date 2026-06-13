@@ -16,16 +16,25 @@ import { UserSocketProvider } from './context/UserSocketProvider';
 import { MainLayout, MinimalLayout } from './layouts/MainLayout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { AdminInviteModal } from './components/auth/AdminInviteModal';
 import { NetworkProvider } from './context/NetworkProvider';
 import { ConfigProvider } from './context/ConfigContext';
-import { PwaUpdatePrompt } from './components/ui/PwaUpdatePrompt';
-import { SlowConnectionBanner } from './components/ui/SlowConnectionBanner';
-import { GlobalTracker } from './components/ui/GlobalTracker';
+const AdminInviteModal = lazy(() =>
+  import('./components/auth/AdminInviteModal').then((m) => ({ default: m.AdminInviteModal })),
+);
+const PwaUpdatePrompt = lazy(() =>
+  import('./components/ui/PwaUpdatePrompt').then((m) => ({ default: m.PwaUpdatePrompt })),
+);
+const SlowConnectionBanner = lazy(() =>
+  import('./components/ui/SlowConnectionBanner').then((m) => ({ default: m.SlowConnectionBanner })),
+);
+const GlobalTracker = lazy(() =>
+  import('./components/ui/GlobalTracker').then((m) => ({ default: m.GlobalTracker })),
+);
 import { NavigationOrchestrator } from './components/ui/NavigationOrchestrator';
 import { ScrollManager } from './components/ui/ScrollManager';
 import { prefetchManager } from './utils/prefetchManager';
 import { getRouteSkeletonVariant } from './components/ui/RouteSkeleton';
+import debounce from 'lodash.debounce';
 
 function AppRouteFallback() {
   const location = useLocation();
@@ -247,14 +256,14 @@ import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@ta
 import { hydrateQueryClientCache, subscribeToQueryCache } from './utils/queryPersister';
 import toast from 'react-hot-toast';
 
-function RouteDiagnostics() {
+const RouteDiagnostics = React.memo(function RouteDiagnostics() {
   const location = useLocation();
   React.useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     logRouteDiagnostic(location.pathname);
   }, [location.pathname]);
   return null;
-}
+});
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -333,26 +342,30 @@ function App() {
 
   React.useEffect(() => {
     setIsMounted(true);
-    // Pre-fetch CSRF token so it's ready before any user interaction
-    ensureCsrfToken().catch(() => {});
-  }, []);
 
-  React.useEffect(() => {
-    const handleResize = () => {
+    // Pre-fetch CSRF token so it's ready before any user interaction
+    // We defer this to prioritize FCP
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(() => ensureCsrfToken().catch(() => {}));
+    } else {
+      setTimeout(() => ensureCsrfToken().catch(() => {}), 1000);
+    }
+
+    prefetchManager.setQueryClient(queryClient);
+
+    const unsubscribe = subscribeToQueryCache(queryClient);
+
+    const handleResize = debounce(() => {
       setToastPosition(window.innerWidth < 768 ? 'top-center' : 'bottom-right');
-    };
+    }, 250);
     handleResize();
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
-  React.useEffect(() => {
-    prefetchManager.setQueryClient(queryClient);
-  }, []);
-
-  React.useEffect(() => {
-    const unsubscribe = subscribeToQueryCache(queryClient);
-    return () => unsubscribe();
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      handleResize.cancel();
+      unsubscribe();
+    };
   }, []);
 
   return (
@@ -417,13 +430,19 @@ function App() {
                           <AuthModal />
                         </Suspense>
                       )}
-                      {isMounted && <AdminInviteModal />}
+                      {isMounted && (
+                        <Suspense fallback={null}>
+                          <AdminInviteModal />
+                        </Suspense>
+                      )}
                       <Router>
                         <RouteDiagnostics />
                         <NavigationOrchestrator />
                         <ScrollManager />
-                        <GlobalTracker />
-                        <PwaUpdatePrompt />
+                        <Suspense fallback={null}>
+                          <GlobalTracker />
+                          <PwaUpdatePrompt />
+                        </Suspense>
                         <ErrorBoundary>
                           <Suspense fallback={<AppRouteFallback />}>
                             <Routes>

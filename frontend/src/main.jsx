@@ -117,12 +117,14 @@ if (isPrerendered) {
 
 // Fallback to ensure loader is removed even if React suspends indefinitely
 setTimeout(() => {
-  const shell = document.getElementById('app-shell');
-  if (shell) {
-    shell.style.transition = 'opacity 0.5s ease-out';
-    shell.style.opacity = '0';
-    setTimeout(() => shell.remove(), 500);
-  }
+  requestAnimationFrame(() => {
+    const shell = document.getElementById('app-shell');
+    if (shell) {
+      shell.style.transition = 'opacity 0.5s ease-out';
+      shell.style.opacity = '0';
+      setTimeout(() => shell.remove(), 500);
+    }
+  });
 }, 5000);
 
 if (shellEl) {

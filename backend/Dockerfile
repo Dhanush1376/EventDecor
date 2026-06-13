@@ -39,8 +39,8 @@ USER node
 
 EXPOSE 10000
 
-# Use readiness probe (matches render.yaml healthCheckPath) — does not depend on DB state
+# Use readiness probe (matches railway.json healthcheckPath) — does not depend on DB state
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:${PORT:-10000}/api/readiness || exit 1
+  CMD wget -qO- http://127.0.0.1:${PORT:-10000}/api/readiness || exit 1
 
 CMD ["npm", "run", "start:pm2"]

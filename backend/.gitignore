@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+*.log
+v8.log
+isolate-*.log
+*-report.json

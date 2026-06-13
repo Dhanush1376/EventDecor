@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { safeLocalStorage } from '../utils/storage';
 import { isPrerendering } from '../utils/prerender';
@@ -340,22 +340,31 @@ export function NetworkProvider({ children }) {
     window.__queueRequest = queueRequest;
   }, [queueRequest]);
 
-  return (
-    <NetworkContext.Provider
-      value={{
-        networkState,
-        isOnline: networkState === 'online', // Keep for backward compatibility
-        latency,
-        connectionQuality,
-        pendingQueue,
-        isSyncing,
-        checkConnection,
-        syncQueue,
-        queueRequest,
-        dequeueRequest,
-      }}
-    >
-      {children}
-    </NetworkContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      networkState,
+      isOnline: networkState === 'online', // Keep for backward compatibility
+      latency,
+      connectionQuality,
+      pendingQueue,
+      isSyncing,
+      checkConnection,
+      syncQueue,
+      queueRequest,
+      dequeueRequest,
+    }),
+    [
+      networkState,
+      latency,
+      connectionQuality,
+      pendingQueue,
+      isSyncing,
+      checkConnection,
+      syncQueue,
+      queueRequest,
+      dequeueRequest,
+    ],
   );
+
+  return <NetworkContext.Provider value={contextValue}>{children}</NetworkContext.Provider>;
 }

@@ -368,11 +368,17 @@ class ProductService {
 
       logger.info(`[PRODUCT VIEWS] Flushing ${keys.length} product view counters to DB...`);
 
-      const ops = [];
-      for (const key of keys) {
-        const viewsStr = await redisClient.get(key);
+      const pipeline = redisClient.multi();
+      keys.forEach((key) => pipeline.get(key));
+      const results = await pipeline.exec();
+
+      const ops: any[] = [];
+      const delPipeline = redisClient.multi();
+
+      keys.forEach((key, index) => {
+        const viewsStr = results[index];
         if (viewsStr) {
-          const views = parseInt(viewsStr, 10);
+          const views = parseInt(String(viewsStr), 10);
           const productId = key.split(':').pop();
           if (views > 0 && productId && mongoose.Types.ObjectId.isValid(productId)) {
             ops.push({
@@ -381,9 +387,14 @@ class ProductService {
                 update: { $inc: { views: views } },
               },
             });
-            await redisClient.del(key);
+            delPipeline.del(key);
           }
         }
+      });
+
+      if (ops.length > 0) {
+        await Promise.all([Product.bulkWrite(ops), delPipeline.exec()]);
+        logger.info(`[PRODUCT VIEWS] Successfully flushed ${ops.length} products`);
       }
 
       if (ops.length > 0) {

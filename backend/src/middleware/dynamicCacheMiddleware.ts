@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import redisClient from '../utils/redis';
 import { getPublicCacheVersion, getAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
 import logger from '../config/logger';
@@ -52,12 +53,19 @@ export const dynamicResponseCache = (ttlSeconds: number, scope: CacheScope = 'pu
         cached = await redisClient.get(cacheKey);
       } else {
         cached = fallbackResponseCache.get<string>(cacheKey);
-        console.log(`[Cache Debug] Fallback Cache GET for ${cacheKey}:`, cached ? 'HIT' : 'MISS');
       }
 
       if (cached) {
+        const etag = `W/"${crypto.createHash('md5').update(cached).digest('hex')}"`;
+        if (req.headers['if-none-match'] === etag) {
+          res.setHeader('X-Cache', 'HIT');
+          return res.status(304).end();
+        }
+
         res.setHeader('X-Cache', 'HIT');
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('ETag', etag);
+        res.setHeader('Content-Length', Buffer.byteLength(cached, 'utf8').toString());
         return res.status(200).send(cached);
       }
 
@@ -65,9 +73,6 @@ export const dynamicResponseCache = (ttlSeconds: number, scope: CacheScope = 'pu
       res.json = (body: unknown) => {
         if (res.statusCode >= 200 && res.statusCode < 300 && body !== undefined) {
           const stringified = typeof body === 'string' ? body : JSON.stringify(body);
-          console.log(
-            `[Cache Debug] Saving to cache: ${cacheKey}, Size: ${stringified.length} bytes`,
-          );
           if (redisClient) {
             redisClient
               .setex(cacheKey, ttlSeconds, stringified)
@@ -76,7 +81,6 @@ export const dynamicResponseCache = (ttlSeconds: number, scope: CacheScope = 'pu
               );
           } else {
             fallbackResponseCache.set(cacheKey, stringified, ttlSeconds * 1000);
-            console.log(`[Cache Debug] Fallback Cache SET for ${cacheKey}`);
           }
         }
         res.setHeader('X-Cache', 'MISS');

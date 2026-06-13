@@ -24,19 +24,19 @@ export default defineConfig({
 
   esbuild: {
     drop: ['debugger'],
-    pure: ['console.log'],
+    pure: ['console.log', 'console.warn'],
   },
 
   build: {
-    target: 'es2020',
-    cssTarget: 'chrome95',
+    target: 'es2022',
+    cssTarget: 'chrome105',
     minify: true,
     cssMinify: 'lightningcss',
     sourcemap: process.env.NODE_ENV === 'production' ? false : 'inline',
     cssCodeSplit: true,
     chunkSizeWarningLimit: 300,
     reportCompressedSize: true,
-    assetsInlineLimit: 2048,
+    assetsInlineLimit: 4096,
     modulePreload: {
       polyfill: true,
       resolveDependencies: (filename, deps, { hostId, hostType }) => {
@@ -46,27 +46,30 @@ export default defineConfig({
             dep.includes('react') ||
             dep.includes('router') ||
             dep.includes('framework') ||
-            dep.includes('main') ||
-            dep.includes('state-networking'),
+            dep.includes('main'),
         );
       },
     },
     rollupOptions: {
       treeshake: {
-        moduleSideEffects: false,
+        moduleSideEffects: 'no-external',
         propertyReadSideEffects: false,
       },
       output: {
         manualChunks(id) {
-          // Group 1: Core Framework (React, Router, Animations)
+          // Group 1: Core Framework (React, Router)
           if (
             id.includes('node_modules/react/') ||
             id.includes('node_modules/react-dom/') ||
             id.includes('node_modules/react-router/') ||
-            id.includes('node_modules/react-router-dom/') ||
-            id.includes('node_modules/framer-motion/')
+            id.includes('node_modules/react-router-dom/')
           ) {
             return 'framework';
+          }
+
+          // Animations
+          if (id.includes('node_modules/framer-motion/')) {
+            return 'animation';
           }
 
           // Group 2: State & Networking
@@ -79,23 +82,28 @@ export default defineConfig({
             return 'state-networking';
           }
 
-          // Group 3: Observability (Sentry, LogRocket)
-          if (id.includes('node_modules/@sentry/') || id.includes('node_modules/logrocket/')) {
+          // Group 3: Observability (Sentry)
+          if (id.includes('node_modules/@sentry/')) {
             return 'observability';
+          }
+
+          // Analytics
+          if (id.includes('node_modules/logrocket/')) {
+            return 'analytics';
           }
 
           // Group 4: Heavy async tools (Keep them isolated so they don't block main thread)
           if (id.includes('node_modules/leaflet/') || id.includes('node_modules/react-leaflet/')) {
             return 'maps';
           }
-          if (/node_modules[\\/](recharts|victory-vendor|d3-[^\\/]+)/.test(id)) {
+          if (/node_modules[\\/](chart\.js|recharts|victory-vendor|d3-[^\\/]+)/.test(id)) {
             return 'charts';
           }
           if (/node_modules[\\/](quill|slate|draft-js|codemirror|prosemirror)/.test(id)) {
             return 'editor';
           }
 
-          // Group 5: UI Utilities (Icons, Dates, Lodash)
+          // Group 5: UI Utilities (Icons, Dates, Lodash, DOMPurify)
           if (
             id.includes('node_modules/lucide-react/') ||
             id.includes('node_modules/date-fns/') ||
@@ -103,7 +111,8 @@ export default defineConfig({
             id.includes('node_modules/lodash/') ||
             id.includes('node_modules/canvas-confetti/') ||
             id.includes('node_modules/qrcode.react/') ||
-            id.includes('node_modules/react-barcode/')
+            id.includes('node_modules/react-barcode/') ||
+            id.includes('node_modules/dompurify/')
           ) {
             return 'ui-utils';
           }
@@ -162,14 +171,7 @@ export default defineConfig({
   },
 
   optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      'framer-motion',
-      'leaflet',
-      'react-leaflet',
-    ],
+    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
   },
 
   test: {

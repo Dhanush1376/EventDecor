@@ -33,7 +33,7 @@
     "react-dom": "^19.2.6",
     "react-helmet-async": "^3.0.0",
     "react-hot-toast": "^2.6.0",
-    "react-is": "^19.2.6",
+    "react-is": "^19.2.7",
     "react-router-dom": "^7.15.0",
     "recharts": "^3.8.1",
     "socket.io-client": "^4.8.3"

@@ -46,7 +46,7 @@ async function runPostMigrationAudit() {
             cloudinaryImages++;
           } else {
             legacyImages++;
-            if (url.includes('onrender.com')) {
+            if (url.includes('railway.app')) {
               renderUploads++;
             }
           }

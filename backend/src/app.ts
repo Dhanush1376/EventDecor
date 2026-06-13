@@ -42,8 +42,8 @@ const app: Application = express();
 // Disable x-powered-by to prevent tech stack signature disclosure
 app.disable('x-powered-by');
 
-// Trust proxy hops — enforced to 1 for Render.
-// If moving to Cloudflare + Render, this should be updated to 2.
+// Trust proxy hops — enforced to 1 for Railway/Render.
+// If moving to Cloudflare + Railway, this should be updated to 2.
 app.set('trust proxy', 1);
 logger.info(`[STARTUP] Express trust proxy hops: 1`);
 
@@ -215,7 +215,7 @@ app.get('/metrics', async (req: Request, res: Response) => {
   }
 });
 
-// Readiness Probe (Tracks HTTP readiness, not DB readiness to prevent Render crash loops)
+// Readiness Probe (Tracks HTTP readiness, not DB readiness to prevent orchestrator crash loops)
 app.get(['/api/readiness', '/api/v1/readiness'], noCacheMiddleware, HealthController.readiness);
 
 // Ignore favicon

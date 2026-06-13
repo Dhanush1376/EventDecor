@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { authService } from '../services/domainServices';
@@ -295,24 +295,23 @@ export function AuthProvider({ children }) {
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        isAuthenticated,
-        logout,
-        restoreSession,
-        checkAuth: restoreSession,
-        isAuthModalOpen,
-        openAuthModal,
-        closeAuthModal,
-        runProtectedAction,
-        loginSuccess,
-        isAuthInitialized,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      user,
+      loading,
+      isAuthenticated,
+      logout,
+      restoreSession,
+      checkAuth: restoreSession,
+      isAuthModalOpen,
+      openAuthModal,
+      closeAuthModal,
+      runProtectedAction,
+      loginSuccess,
+      isAuthInitialized,
+    }),
+    [user, loading, isAuthenticated, logout, restoreSession, isAuthModalOpen, isAuthInitialized],
   );
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }

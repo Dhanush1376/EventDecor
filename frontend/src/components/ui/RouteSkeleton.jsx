@@ -1,28 +1,6 @@
+import React, { Suspense, lazy } from 'react';
 import { PageLoader } from './PageLoader';
-import {
-  Skeleton,
-  ProductDetailSkeleton,
-  HomeSkeleton,
-  ProductListSkeleton,
-  CollectionSkeleton,
-  CartSkeleton,
-  CheckoutStepSkeleton,
-  DashboardSkeleton,
-  GallerySkeleton,
-  GalleryDetailSkeleton,
-  WishlistPageSkeleton,
-  EventDetailSkeleton,
-  ContactSkeleton,
-  AboutSkeleton,
-  BlogListingSkeleton,
-  BlogPostSkeleton,
-  CustomOrdersSkeleton,
-  EventCollectionsSkeleton,
-  EventShowcasesSkeleton,
-  LocationLandingSkeleton,
-  OrderSuccessSkeleton,
-  OrderTrackingSkeleton,
-} from './Skeleton';
+import { Skeleton } from './SkeletonBase';
 
 export function getRouteSkeletonVariant(path) {
   if (path === '/') return 'home';
@@ -52,54 +30,87 @@ export function getRouteSkeletonVariant(path) {
   return 'page';
 }
 
+const LazySkeletons = {
+  home: lazy(() => import('./Skeleton').then((m) => ({ default: m.HomeSkeleton }))),
+  'product-list': lazy(() =>
+    import('./Skeleton').then((m) => ({ default: m.ProductListSkeleton })),
+  ),
+  'collection-detail': lazy(() =>
+    import('./Skeleton').then((m) => ({ default: m.CollectionSkeleton })),
+  ),
+  'product-detail': lazy(() =>
+    import('./Skeleton').then((m) => ({ default: m.ProductDetailSkeleton })),
+  ),
+  cart: lazy(() => import('./Skeleton').then((m) => ({ default: m.CartSkeleton }))),
+  checkout: lazy(() => import('./Skeleton').then((m) => ({ default: m.CheckoutStepSkeleton }))),
+  dashboard: lazy(() => import('./Skeleton').then((m) => ({ default: m.DashboardSkeleton }))),
+  gallery: lazy(() => import('./Skeleton').then((m) => ({ default: m.GallerySkeleton }))),
+  'gallery-detail': lazy(() =>
+    import('./Skeleton').then((m) => ({ default: m.GalleryDetailSkeleton })),
+  ),
+  wishlist: lazy(() => import('./Skeleton').then((m) => ({ default: m.WishlistPageSkeleton }))),
+  event: lazy(() => import('./Skeleton').then((m) => ({ default: m.EventDetailSkeleton }))),
+  contact: lazy(() => import('./Skeleton').then((m) => ({ default: m.ContactSkeleton }))),
+  about: lazy(() => import('./Skeleton').then((m) => ({ default: m.AboutSkeleton }))),
+  blog: lazy(() => import('./Skeleton').then((m) => ({ default: m.BlogListingSkeleton }))),
+  'blog-post': lazy(() => import('./Skeleton').then((m) => ({ default: m.BlogPostSkeleton }))),
+  'custom-orders': lazy(() =>
+    import('./Skeleton').then((m) => ({ default: m.CustomOrdersSkeleton })),
+  ),
+  'event-collections': lazy(() =>
+    import('./Skeleton').then((m) => ({ default: m.EventCollectionsSkeleton })),
+  ),
+  'event-showcases': lazy(() =>
+    import('./Skeleton').then((m) => ({ default: m.EventShowcasesSkeleton })),
+  ),
+  location: lazy(() => import('./Skeleton').then((m) => ({ default: m.LocationLandingSkeleton }))),
+  'order-success': lazy(() =>
+    import('./Skeleton').then((m) => ({ default: m.OrderSuccessSkeleton })),
+  ),
+  'order-tracking': lazy(() =>
+    import('./Skeleton').then((m) => ({ default: m.OrderTrackingSkeleton })),
+  ),
+  admin: lazy(() => import('./Skeleton').then((m) => ({ default: m.DashboardSkeleton }))),
+};
+
 /** Lightweight route transition skeleton — avoids blank screens during lazy route loads. */
 export function RouteSkeleton({ variant = 'page' }) {
-  if (variant === 'home') return <HomeSkeleton />;
-  if (variant === 'product-list') return <ProductListSkeleton />;
-  if (variant === 'collection-detail') return <CollectionSkeleton />;
-  if (variant === 'product-detail') return <ProductDetailSkeleton />;
-
-  if (variant === 'cart') return <CartSkeleton />;
-  if (variant === 'checkout')
+  if (variant === 'page' || variant === 'policy') {
     return (
-      <div className="max-w-3xl mx-auto pt-8 px-4">
-        <CheckoutStepSkeleton />
-      </div>
-    );
-  if (variant === 'dashboard') return <DashboardSkeleton />;
-  if (variant === 'gallery') return <GallerySkeleton />;
-  if (variant === 'gallery-detail') return <GalleryDetailSkeleton />;
-  if (variant === 'wishlist') return <WishlistPageSkeleton />;
-  if (variant === 'event') return <EventDetailSkeleton />;
-  if (variant === 'contact') return <ContactSkeleton />;
-
-  // Newly Added Skeletons
-  if (variant === 'about') return <AboutSkeleton />;
-  if (variant === 'blog') return <BlogListingSkeleton />;
-  if (variant === 'blog-post') return <BlogPostSkeleton />;
-  if (variant === 'custom-orders') return <CustomOrdersSkeleton />;
-  if (variant === 'event-collections') return <EventCollectionsSkeleton />;
-  if (variant === 'event-showcases') return <EventShowcasesSkeleton />;
-  if (variant === 'location') return <LocationLandingSkeleton />;
-  if (variant === 'order-success') return <OrderSuccessSkeleton />;
-  if (variant === 'order-tracking') return <OrderTrackingSkeleton />;
-
-  if (variant === 'admin') return <DashboardSkeleton />;
-
-  return (
-    <>
-      <PageLoader />
-      <div
-        className="min-h-[50vh] flex flex-col items-center justify-center gap-6 px-4"
-        aria-busy="true"
-        aria-label="Loading page"
-      >
-        <div className="w-full max-w-3xl space-y-4">
-          <Skeleton className="h-8 w-2/3 mx-auto" />
-          <Skeleton className="h-4 w-1/2 mx-auto" />
-          <Skeleton className="h-48 w-full rounded-[28px]" />
+      <>
+        <PageLoader />
+        <div
+          className="min-h-[50vh] flex flex-col items-center justify-center gap-6 px-4"
+          aria-busy="true"
+          aria-label="Loading page"
+        >
+          <div className="w-full max-w-3xl space-y-4">
+            <Skeleton className="h-8 w-2/3 mx-auto" />
+            <Skeleton className="h-4 w-1/2 mx-auto" />
+            <Skeleton className="h-48 w-full rounded-[28px]" />
+          </div>
         </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  }
+
+  const Component = LazySkeletons[variant];
+  if (Component) {
+    if (variant === 'checkout') {
+      return (
+        <div className="max-w-3xl mx-auto pt-8 px-4">
+          <Suspense fallback={<PageLoader />}>
+            <Component />
+          </Suspense>
+        </div>
+      );
+    }
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Component />
+      </Suspense>
+    );
+  }
+
+  return <PageLoader />;
 }
