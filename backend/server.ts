@@ -1,4 +1,15 @@
 import './src/config/loadEnv'; // Load & validate environment variables before any other imports resolve!
+
+// ──── Early diagnostic output (bypasses winston, always visible in Railway logs) ────
+console.log(`[BOOT DIAGNOSTIC] NODE_ENV=${process.env.NODE_ENV}`);
+console.log(`[BOOT DIAGNOSTIC] PORT=${process.env.PORT || '(not set, defaulting to 5000)'}`);
+console.log(
+  `[BOOT DIAGNOSTIC] MONGO_URI=${process.env.MONGO_URI ? 'SET (length=' + process.env.MONGO_URI.length + ')' : 'NOT SET'}`,
+);
+console.log(`[BOOT DIAGNOSTIC] FRONTEND_URLS=${process.env.FRONTEND_URLS || '(not set)'}`);
+console.log(`[BOOT DIAGNOSTIC] LOG_LEVEL=${process.env.LOG_LEVEL || '(not set)'}`);
+// ──── End diagnostic output ────
+
 import { auditEnvOnStartup } from './src/config/secretAudit';
 auditEnvOnStartup();
 import { runStartupValidation } from './src/config/startupValidator';

@@ -11,7 +11,7 @@ module.exports = {
       node_args: '--max-old-space-size=768',
       env: {
         NODE_ENV: 'production',
-        LOG_LEVEL: 'warn',
+        LOG_LEVEL: 'info',
       },
       log_date_format: 'YYYY-MM-DD HH:mm Z',
       error_file: './logs/pm2-error.log',
