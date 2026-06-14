@@ -42,9 +42,65 @@ export function IntelligentSearchOverlay({
   const listRef = useRef(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   const [searchMode, setSearchMode] = useState('text'); // 'text' | 'visual'
   const [isDragging, setIsDragging] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+
+  // Toggle voice search recording
+  const toggleVoiceSearch = useCallback(() => {
+    if (isRecording) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert(
+        "Your browser doesn't support voice search. Try a modern browser like Chrome or Safari.",
+      );
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    // Set to true so user sees words as they speak, giving that cool interactive feel
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => setIsRecording(true);
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0])
+        .map((result) => result.transcript)
+        .join('');
+      setQuery(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error', event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      // Optional: you can auto-execute the search here by calling onExecuteSearch(query)
+      // but usually users prefer to see the interpreted text first.
+    };
+
+    try {
+      recognition.start();
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+    }
+  }, [isRecording, setQuery]);
 
   // Auto-focus input when opened
   useEffect(() => {
@@ -327,31 +383,83 @@ export function IntelligentSearchOverlay({
                       aria-controls="search-suggestions-list"
                     />
 
-                    {/* Clear button */}
-                    {query && !loading && (
-                      <button
-                        onClick={() => setQuery('')}
-                        className="w-8 h-8 rounded-full bg-stone-200/50 hover:bg-primary/10 flex items-center justify-center text-stone-500 hover:text-primary transition-all duration-300 flex-shrink-0 cursor-pointer"
-                        aria-label="Clear search"
-                      >
-                        <span className="material-symbols-outlined text-[15px] leading-none">
-                          close
-                        </span>
-                      </button>
-                    )}
+                    {/* Action Buttons Group */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
+                      {/* Clear button */}
+                      {query && !loading && (
+                        <button
+                          onClick={() => setQuery('')}
+                          className="flex items-center justify-center rounded-full bg-stone-200/50 hover:bg-primary/10 text-stone-500 hover:text-primary transition-all duration-300 cursor-pointer"
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            minWidth: '36px',
+                            minHeight: '36px',
+                            padding: 0,
+                          }}
+                          aria-label="Clear search"
+                        >
+                          <span className="material-symbols-outlined text-[16px] leading-none">
+                            close
+                          </span>
+                        </button>
+                      )}
 
-                    {/* Visual Search Button */}
-                    {visualSearch?.isEnabled && (
+                      {/* Voice Search Button */}
                       <button
-                        onClick={() => setSearchMode('visual')}
-                        className="w-8 h-8 rounded-full bg-stone-200/50 hover:bg-[#d4af37]/10 flex items-center justify-center text-stone-500 hover:text-[#d4af37] transition-all duration-300 flex-shrink-0 cursor-pointer"
-                        aria-label="Search by Image"
+                        onClick={toggleVoiceSearch}
+                        className={`relative flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer ${
+                          isRecording
+                            ? 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'
+                            : 'bg-stone-200/50 text-stone-500 hover:bg-[#d4af37]/10 hover:text-[#d4af37]'
+                        }`}
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          minWidth: '36px',
+                          minHeight: '36px',
+                          padding: 0,
+                        }}
+                        aria-label="Voice Search"
                       >
-                        <span className="material-symbols-outlined text-[18px] leading-none">
-                          photo_camera
+                        {/* Cool animation ripples when recording */}
+                        {isRecording && (
+                          <>
+                            <span
+                              className="absolute inset-0 rounded-full bg-rose-400 opacity-25 animate-ping"
+                              style={{ animationDuration: '1.5s' }}
+                            />
+                            <span
+                              className="absolute inset-0 rounded-full bg-rose-300 opacity-20 animate-ping"
+                              style={{ animationDuration: '2s', animationDelay: '0.4s' }}
+                            />
+                          </>
+                        )}
+                        <span className="material-symbols-outlined text-[20px] leading-none z-10">
+                          {isRecording ? 'mic' : 'mic_none'}
                         </span>
                       </button>
-                    )}
+
+                      {/* Visual Search Button */}
+                      {visualSearch?.isEnabled && (
+                        <button
+                          onClick={() => setSearchMode('visual')}
+                          className="flex items-center justify-center rounded-full bg-stone-200/50 hover:bg-[#d4af37]/10 text-stone-500 hover:text-[#d4af37] transition-all duration-300 cursor-pointer"
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            minWidth: '36px',
+                            minHeight: '36px',
+                            padding: 0,
+                          }}
+                          aria-label="Search by Image"
+                        >
+                          <span className="material-symbols-outlined text-[20px] leading-none">
+                            photo_camera
+                          </span>
+                        </button>
+                      )}
+                    </div>
 
                     {/* Keyboard shortcut hint */}
                     <kbd className="hidden md:flex items-center justify-center px-2.5 py-1 bg-stone-100 border border-stone-200 rounded-lg text-[9px] font-bold tracking-widest text-stone-500 shadow-xs select-none font-mono">
