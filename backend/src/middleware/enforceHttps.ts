@@ -21,6 +21,21 @@ export const enforceHttps = (req: Request, res: Response, next: NextFunction): v
     return next();
   }
 
+  // Skip HTTPS enforcement for health check and readiness probe paths
+  const path = (req.originalUrl || req.path || '').split('?')[0];
+  if (
+    path === '/health' ||
+    path === '/api/readiness' ||
+    path === '/api/v1/readiness' ||
+    path === '/api/health' ||
+    path === '/api/v1/health' ||
+    path.endsWith('/health') ||
+    path.endsWith('/readiness') ||
+    path.endsWith('/ready')
+  ) {
+    return next();
+  }
+
   // If proto is missing or not https, redirect
   const host = req.headers.host;
 
