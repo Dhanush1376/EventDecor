@@ -10,6 +10,7 @@ import {
   ShowcaseCard,
   Pagination,
   Skeleton,
+  EventShowcaseFilterPanel,
 } from '../components/ui';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';

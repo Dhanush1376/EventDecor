@@ -190,10 +190,16 @@ api.interceptors.request.use(
       path.includes('/users/team') ||
       path.includes('/orders') ||
       path.includes('/admin/') ||
-      path.includes('/custom-orders') ||
+      (path.includes('/custom-orders') &&
+        (!path.includes('/custom-orders/config') ||
+          path.includes('/config/admin') ||
+          path.includes('/config/draft') ||
+          path.includes('/config/publish'))) ||
       path.includes('/notifications') ||
       path.includes('/analytics/') ||
-      path.includes('/reviews') ||
+      (path.includes('/reviews') &&
+        !path.includes('/reviews/public') &&
+        !path.includes('/reviews/product/')) ||
       path.includes('/upload') ||
       path.includes('/recommendations/for-you');
 
