@@ -54,7 +54,8 @@ export const getApiConfig = () => {
       !configured || /localhost:5000|127\.0\.0\.1:5000/i.test(configured);
     baseUrl = pointsToLocalBackend ? '/api/v1' : normalizeApiBase(configured);
   } else {
-    const productionBase = configured && configured !== '/api' ? configured : '/api/v1';
+    // Force relative same-origin proxy routing to bypass ISP/carrier blocks on the direct Railway domain
+    const productionBase = '/api/v1';
     baseUrl = normalizeApiBase(productionBase);
   }
 

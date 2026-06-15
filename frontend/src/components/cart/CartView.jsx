@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { handleImageError } from '../../utils/imageUtils';
