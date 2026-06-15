@@ -19,6 +19,7 @@ import {
   clearAuthStorage,
   setFallbackRefreshToken,
 } from '../utils/authStorage';
+import { AuthContext } from './AuthContext';
 import logger from '../utils/logger';
 
 export function AuthProvider({ children }) {

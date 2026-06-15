@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { CartStateContext, CartDispatchContext } from './CartContext';
 import { useCartQuery, useCartMutations } from '../hooks/useCartQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
