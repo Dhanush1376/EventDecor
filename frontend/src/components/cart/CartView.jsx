@@ -12,6 +12,7 @@ import { useRecommendationTracker } from '../../hooks/useRecommendationTracker';
 import { persistentStorage } from '../../utils/persistentStorage';
 import { Skeleton, CartSkeleton } from '../ui';
 import { SEO } from '../seo/SEO';
+import { CheckoutSteps } from '../ui/CheckoutSteps';
 
 const RecommendationSystem = React.lazy(() =>
   import('../../components/sections/RecommendationSystem').then((m) => ({
