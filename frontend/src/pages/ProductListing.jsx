@@ -5,6 +5,15 @@ import { MandalaElement } from '../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { SEO } from '../components/seo/SEO';
 import { CloudinaryImage } from '../components/ui/CloudinaryImage';
+import {
+  SearchBar,
+  CategoryTabs,
+  CustomDropdown,
+  PromoBanner,
+  ProductCard,
+  QuickViewModal,
+  Pagination,
+} from '../components/ui';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useCart } from '../context/CartContext';
 import { couponService } from '../services/domainServices';
