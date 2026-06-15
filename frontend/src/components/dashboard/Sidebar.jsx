@@ -1,5 +1,7 @@
+import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
+import { OptimizedImage } from '../ui';
 
 export function Sidebar() {
   const navigate = useNavigate();

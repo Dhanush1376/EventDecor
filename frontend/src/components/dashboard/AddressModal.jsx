@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
+import { MandalaElement } from '../ui/MandalaElement';
 
 export function AddressModal() {
   const {

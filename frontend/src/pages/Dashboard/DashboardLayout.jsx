@@ -1,6 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
+import { Outlet } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
+import { SEO } from '../../components/seo/SEO';
+import { DashboardHeader } from '../../components/dashboard/DashboardHeader';
+import { Sidebar } from '../../components/dashboard/Sidebar';
+import { AddressModal } from '../../components/dashboard/AddressModal';
+import { WriteReviewModal } from '../../components/sections/ProductReviews';
+import { Skeleton } from '../../components/ui';
 
 const InvoiceTemplate = React.lazy(() =>
   import('../../components/ui').then((m) => ({ default: m.InvoiceTemplate })),

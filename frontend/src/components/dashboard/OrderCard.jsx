@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
+import { OptimizedImage } from '../ui';
 
 export function OrderCard({ order, item, itemIdx, idx }) {
   const { setSelectedOrderId, setSelectedOrderItemIndex, setReviewingProduct } = useDashboard();

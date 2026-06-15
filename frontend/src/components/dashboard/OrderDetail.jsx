@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
+import { OptimizedImage } from '../ui';
 
 const GPSMap = React.lazy(() => import('../../pages/GPSMapLazy'));
 

@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { Skeleton } from '../../components/ui';
 
 const EventCustomerDashboard = React.lazy(() =>
   import('../EventCustomerDashboard').then((m) => ({ default: m.EventCustomerDashboard })),

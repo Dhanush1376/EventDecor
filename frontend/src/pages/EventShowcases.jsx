@@ -3,6 +3,14 @@ import { SEO } from '../components/seo/SEO';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { OptimizedImage } from '../components/ui/OptimizedImage';
+import {
+  SearchBar,
+  CategoryTabs,
+  CustomDropdown,
+  ShowcaseCard,
+  Pagination,
+  Skeleton,
+} from '../components/ui';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { showcaseService, bookingService, uploadService } from '../services/domainServices';

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
 
 export function DashboardHeader() {

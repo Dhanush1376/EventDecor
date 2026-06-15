@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
 
 export function AddressCard({ addr }) {

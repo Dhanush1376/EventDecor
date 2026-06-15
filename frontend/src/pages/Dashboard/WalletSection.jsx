@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { LoyaltySkeleton } from '../../components/ui';
 
 const LoyaltyPanel = React.lazy(() =>
   import('../../components/loyalty/LoyaltyPanel').then((m) => ({ default: m.LoyaltyPanel })),

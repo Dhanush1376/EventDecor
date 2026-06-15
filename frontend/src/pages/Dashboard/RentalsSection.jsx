@@ -1,6 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
+import { StatCards } from '../../components/dashboard/StatCards';
+import { OrderCard } from '../../components/dashboard/OrderCard';
+import { OrderDetail } from '../../components/dashboard/OrderDetail';
+import { OrdersListSkeleton } from '../../components/ui';
 
 export function RentalsSection() {
   const { selectedOrderId, isOrdersLoading, orderItems, orderFilter, setOrderFilter } =
