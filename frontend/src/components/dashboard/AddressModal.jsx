@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
 
 export function AddressModal() {

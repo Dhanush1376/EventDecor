@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 

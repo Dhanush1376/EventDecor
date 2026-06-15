@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import React, { useState } from 'react';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';

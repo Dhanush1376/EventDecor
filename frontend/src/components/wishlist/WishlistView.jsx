@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';

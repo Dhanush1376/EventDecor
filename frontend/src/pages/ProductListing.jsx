@@ -1,5 +1,5 @@
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { FilterPanel } from '../components/ui/FilterPanel';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
