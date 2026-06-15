@@ -1,7 +1,5 @@
 import React from 'react';
-import { m as motion } from 'framer-motion';
 import { EASE } from '../../constants/design-tokens';
-import { Skeleton } from './Skeleton';
 
 /**
  * Premium button component — unified across the entire design system.

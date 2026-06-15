@@ -1,23 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { playSuccessBeep, playErrorBeep } from '../../utils/audioUtils';
 import toast from 'react-hot-toast';
-import {
-  PageHeader,
-  FilterBar,
-  StatusBadge,
-  formatCurrency,
-  fadeUp,
-  stagger,
-  SkeletonTable,
-  SkeletonList,
-  EmptyState,
-} from '../components/AdminUIKit';
+import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 const slideDrawer = {
   hidden: { x: '100%', opacity: 0 },

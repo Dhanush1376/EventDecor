@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { Share2, Copy, Check, MessageCircle, X } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 const FacebookIcon = (props) => (
   <svg
     {...props}

@@ -1,14 +1,7 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { galleryService } from '../../../services/domainServices';
-import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
-import { GallerySkeleton } from '../../../components/ui/Skeleton';
-import { SectionHeader } from '../../../components/shared/SectionHeader';
-import { MandalaArtDecor } from '../../../components/ui/MandalaArtDecor';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 
 /**
  * Fashion Inspiration section using real gallery data and Admin-managed copy.
@@ -144,7 +137,7 @@ export function GalleryInspiration() {
 
                   <div className="absolute inset-0 p-3 md:p-5 flex flex-col justify-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-700 delay-100">
                     <div className="flex items-end justify-between w-full gap-2">
-                      <span className="font-display text-white text-[10px] md:text-sm transform translate-y-0 md:translate-y-3.5 md:group-hover:translate-y-0 transition-transform duration-700 font-semibold tracking-wide text-left">
+                      <span className="font-body text-white text-[10px] md:text-sm transform translate-y-0 md:translate-y-3.5 md:group-hover:translate-y-0 transition-transform duration-700 font-semibold tracking-wide text-left">
                         {item.title}
                       </span>
                       <span className="material-symbols-outlined text-white/90 text-[12px] md:text-[16px] shrink-0 transform translate-y-0 md:translate-y-3.5 md:group-hover:translate-y-0 transition-transform duration-700 delay-75">

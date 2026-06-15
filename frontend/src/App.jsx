@@ -1,23 +1,10 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { lazyWithRetry as lazy } from './utils/lazyWithRetry';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { logRouteDiagnostic } from './utils/diagnostics';
-import { LazyMotion, domAnimation } from 'framer-motion';
-import { HelmetProvider } from 'react-helmet-async';
-import { Toaster, ToastBar } from 'react-hot-toast';
+import { domAnimation } from 'framer-motion';
 import { ensureCsrfToken } from './services/api';
-import { perfMonitor } from './utils/performanceMonitor';
 
-import { RouteSkeleton } from './components/ui/RouteSkeleton';
-import { CartProvider } from './context/CartProvider';
-import { WishlistProvider } from './context/WishlistProvider';
-import { AuthProvider } from './context/AuthProvider';
-import { UserSocketProvider } from './context/UserSocketProvider';
-import { MainLayout, MinimalLayout } from './layouts/MainLayout';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { NetworkProvider } from './context/NetworkProvider';
-import { ConfigProvider } from './context/ConfigContext';
 const AdminInviteModal = lazy(() =>
   import('./components/auth/AdminInviteModal').then((m) => ({ default: m.AdminInviteModal })),
 );
@@ -30,8 +17,6 @@ const SlowConnectionBanner = lazy(() =>
 const GlobalTracker = lazy(() =>
   import('./components/ui/GlobalTracker').then((m) => ({ default: m.GlobalTracker })),
 );
-import { NavigationOrchestrator } from './components/ui/NavigationOrchestrator';
-import { ScrollManager } from './components/ui/ScrollManager';
 import { prefetchManager } from './utils/prefetchManager';
 import { getRouteSkeletonVariant } from './components/ui/RouteSkeleton';
 import debounce from 'lodash.debounce';
@@ -252,7 +237,7 @@ const AdminServiceAreas = lazy(() => import('./admin/pages/AdminServiceAreas'));
 
 // All /admin/* pages are React.lazy() — not in the storefront initial JS bundle (see npm run build:report).
 
-import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
+import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { hydrateQueryClientCache, subscribeToQueryCache } from './utils/queryPersister';
 import toast from 'react-hot-toast';
 
@@ -478,7 +463,7 @@ function App() {
                                 <Route path="/wishlist" element={<Wishlist />} />
                                 <Route path="/collection/:id" element={<CollectionDetail />} />
                                 <Route
-                                  path="/dashboard"
+                                  path="/dashboard/*"
                                   element={
                                     <ProtectedRoute>
                                       <Dashboard />

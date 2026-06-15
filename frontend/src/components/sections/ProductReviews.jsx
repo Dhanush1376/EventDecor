@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { reviewService, uploadService } from '../../services/domainServices';
 import { useAuth } from '../../context/AuthContext';
-import { OptimizedImage } from '../ui/OptimizedImage';
 import toast from 'react-hot-toast';
 
 // ─── Star Component ─────────────────────────────────────────────────────────

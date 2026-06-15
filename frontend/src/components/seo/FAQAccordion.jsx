@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 
 export function FAQAccordion({ faqs, title = 'Frequently Asked Questions' }) {
   const [activeIndex, setActiveIndex] = useState(null);

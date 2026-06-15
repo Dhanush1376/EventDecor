@@ -1,30 +1,8 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+
 import api from '../../services/api';
 import logger from '../../utils/logger';
-import {
-  PageHeader,
-  StatCard,
-  ChartCard,
-  ChartTooltip,
-  SkeletonDashboard,
-  stagger,
-  CHART_COLORS,
-} from '../components/AdminUIKit';
+import { stagger, CHART_COLORS } from '../components/AdminUIKit';
 
 export function AdminRecommendationAnalytics() {
   const [stats, setStats] = useState(null);

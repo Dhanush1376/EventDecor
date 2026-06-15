@@ -1,6 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { CloudinaryImage } from '../ui/CloudinaryImage';
 
 const CardContent = React.memo(function CardContent({
   item,

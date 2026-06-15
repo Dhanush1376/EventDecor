@@ -1,15 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { ShieldAlert, ShieldCheck, UserPlus, Trash2, Edit2 } from 'lucide-react';
-import { SkeletonTable, PageHeader } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 export const AdminSystemUsers = () => {
   const { user } = useAuth();

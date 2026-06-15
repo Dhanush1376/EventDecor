@@ -1,5 +1,3 @@
-import React from "react";
-
 export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
   const visiblePages = pages.filter((page) => {
@@ -15,9 +13,7 @@ export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
         className="text-secondary hover:text-primary disabled:opacity-30 transition-colors p-1 sm:p-2 cursor-pointer font-bold"
         aria-label="Previous Page"
       >
-        <span className="material-symbols-outlined text-[18px] sm:text-[24px]">
-          arrow_back
-        </span>
+        <span className="material-symbols-outlined text-[18px] sm:text-[24px]">arrow_back</span>
       </button>
 
       {/* Mobile View: Compact Label */}
@@ -35,11 +31,11 @@ export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
               {showGap && <span className="flex h-10 items-center px-1 text-outline">...</span>}
               <button
                 onClick={() => onPageChange && onPageChange(page)}
-                aria-current={currentPage === page ? "page" : undefined}
+                aria-current={currentPage === page ? 'page' : undefined}
                 className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full font-label text-[11px] sm:text-[12px] flex items-center justify-center transition-all duration-300 font-bold cursor-pointer ${
                   currentPage === page
-                    ? "bg-primary text-white shadow-md scale-105"
-                    : "text-on-surface/80 hover:bg-surface-container border border-outline-variant/10"
+                    ? 'bg-primary text-white shadow-md scale-105'
+                    : 'text-on-surface/80 hover:bg-surface-container border border-outline-variant/10'
                 }`}
               >
                 {page}
@@ -55,9 +51,7 @@ export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
         className="text-secondary hover:text-primary disabled:opacity-30 transition-colors p-1 sm:p-2 cursor-pointer font-bold"
         aria-label="Next Page"
       >
-        <span className="material-symbols-outlined text-[18px] sm:text-[24px]">
-          arrow_forward
-        </span>
+        <span className="material-symbols-outlined text-[18px] sm:text-[24px]">arrow_forward</span>
       </button>
     </nav>
   );

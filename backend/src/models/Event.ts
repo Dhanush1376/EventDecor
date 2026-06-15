@@ -1,5 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import logger from '../config/logger';
+import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
 export interface IEvent extends ISoftDeleted {

@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import sharp from 'sharp';
 import Product from '../models/Product';
+import Event from '../models/Event';
+import ShowcaseCollection from '../models/ShowcaseCollection';
 import VisualSearchConfig, { IVisualSearchConfig } from '../models/VisualSearchConfig';
 import VisualSearchLog from '../models/VisualSearchLog';
 import { MemoryCache } from '../utils/MemoryCache';
@@ -26,6 +28,7 @@ export interface VisualSearchResult {
   similarityScore: number;
   matchSource: string;
   badges: string[];
+  itemType?: 'product' | 'event';
 }
 
 export interface VisualSearchResponse {
@@ -184,114 +187,704 @@ export async function processImage(
 // PRODUCT MATCHING ENGINE
 // ══════════════════════════════════════════════
 
+const cleanWord = (w: string): string => w.toLowerCase().trim().replace(/s$/, '');
+
+// ── Stop Words ──
+// These words are so common across all products that matching them adds noise, not signal
+const STOP_WORDS = new Set([
+  'decoration',
+  'decor',
+  'decorative',
+  'item',
+  'set',
+  'piece',
+  'beautiful',
+  'handmade',
+  'indian',
+  'traditional',
+  'design',
+  'new',
+  'best',
+  'premium',
+  'quality',
+  'special',
+  'unique',
+  'elegant',
+  'stunning',
+  'gorgeous',
+  'lovely',
+  'perfect',
+  'amazing',
+  'wonderful',
+  'exclusive',
+  'royal',
+  'grand',
+  'fancy',
+  'artistic',
+  'creative',
+  'modern',
+  'classic',
+  'vintage',
+  'antique',
+  'ethnic',
+  'cultural',
+  'festive',
+  'auspicious',
+  'sacred',
+  'divine',
+  'the',
+  'and',
+  'for',
+  'with',
+  'from',
+  'this',
+  'that',
+  'are',
+  'was',
+  'have',
+  'has',
+  'had',
+  'been',
+  'will',
+  'would',
+  'could',
+  'should',
+  'can',
+  'may',
+  'might',
+  'shall',
+  'its',
+  'our',
+  'your',
+  'their',
+  'also',
+  'just',
+  'very',
+  'more',
+  'most',
+  'much',
+  'many',
+  'some',
+  'any',
+  'each',
+  'every',
+  'all',
+  'both',
+  'few',
+  'several',
+  'own',
+  'such',
+  'only',
+  'other',
+  'than',
+  'then',
+  'when',
+  'where',
+  'how',
+  'what',
+  'which',
+  'who',
+  'whom',
+  'why',
+  'into',
+  'over',
+  'after',
+  'before',
+  'between',
+  'under',
+  'above',
+  'below',
+  'along',
+  'about',
+]);
+
+const isStopWord = (word: string): boolean => STOP_WORDS.has(cleanWord(word));
+
+const hexColorMap: Record<string, string> = {
+  '#ffd700': 'gold',
+  '#ffc0cb': 'pink',
+  '#8b0000': 'red',
+  '#ff0000': 'red',
+  '#228b22': 'green',
+  '#008000': 'green',
+  '#ffffff': 'white',
+  '#000000': 'black',
+  '#808080': 'gray',
+  '#0000ff': 'blue',
+  '#ffff00': 'yellow',
+  '#ffa500': 'orange',
+  '#800080': 'purple',
+  '#a52a2a': 'brown',
+  '#800000': 'maroon',
+  '#c0c0c0': 'silver',
+};
+
+const resolveColor = (colorStr: string): string => {
+  const clean = colorStr.toLowerCase().trim();
+  if (clean.startsWith('#')) {
+    return hexColorMap[clean] || clean;
+  }
+  return clean;
+};
+
+// ── Perceptual Image Hashing ──
+
+/**
+ * Compute a perceptual difference hash (dHash) for an image buffer using sharp.
+ * Returns a 64-bit hex string. Similar images produce similar hashes.
+ */
+export async function computeImageHash(imageBuffer: Buffer): Promise<string> {
+  try {
+    // Resize to 9x8 grayscale (produces 8x8 = 64 bit differences)
+    const pixels = await sharp(imageBuffer)
+      .resize(9, 8, { fit: 'fill' })
+      .grayscale()
+      .raw()
+      .toBuffer();
+
+    // Compare each pixel to its right neighbor
+    let hash = '';
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const left = pixels[row * 9 + col];
+        const right = pixels[row * 9 + col + 1];
+        hash += left < right ? '1' : '0';
+      }
+    }
+
+    // Convert binary string to hex
+    let hex = '';
+    for (let i = 0; i < 64; i += 4) {
+      hex += parseInt(hash.substring(i, i + 4), 2).toString(16);
+    }
+    return hex;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Compute Hamming distance between two hex hash strings.
+ * Lower = more similar. 0 = identical. Max = 64.
+ */
+function hammingDistance(hash1: string, hash2: string): number {
+  if (!hash1 || !hash2 || hash1.length !== hash2.length) return 64;
+  let distance = 0;
+  for (let i = 0; i < hash1.length; i++) {
+    const xor = parseInt(hash1[i], 16) ^ parseInt(hash2[i], 16);
+    // Count set bits
+    distance += ((xor >> 0) & 1) + ((xor >> 1) & 1) + ((xor >> 2) & 1) + ((xor >> 3) & 1);
+  }
+  return distance;
+}
+
+// ── Phrase & Bigram Matching Utilities ──
+
+/**
+ * Generate bigrams (2-word phrases) from an array of words.
+ */
+function generateBigrams(words: string[]): string[] {
+  const bigrams: string[] = [];
+  for (let i = 0; i < words.length - 1; i++) {
+    bigrams.push(`${words[i]} ${words[i + 1]}`);
+  }
+  return bigrams;
+}
+
 /**
  * Score how well a product matches the AI analysis results.
+ * Uses phrase matching, bigram matching, stop-word filtering,
+ * and capped description scoring.
  */
 function computeProductScore(
   product: any,
   analysis: AIAnalysisResult,
   sensitivity: number,
+  uploadedImageHash?: string,
 ): number {
   let score = 0;
-  const labels = analysis.labels.map((l) => l.toLowerCase());
-  const category = analysis.category.toLowerCase();
-  const attrs = analysis.attributes;
+  const labels = analysis.labels || [];
+  const category = analysis.category || '';
+  const attrs = analysis.attributes || {};
 
-  // 1. Title match (highest weight)
+  // Filter out stop words from label words
+  const cleanLabelWords = labels
+    .flatMap((l) => (l || '').split(/\s+/).map(cleanWord))
+    .filter((w) => w.length > 2 && !isStopWord(w));
+  const uniqueLabelWords = new Set(cleanLabelWords);
+
+  // Prepare product text fields
   const titleLower = (product.title || '').toLowerCase();
-  for (const label of labels) {
-    if (titleLower.includes(label)) {
-      score += 25;
-    } else {
-      // Partial word matching
-      const labelWords = label.split(/\s+/);
-      for (const word of labelWords) {
-        if (word.length > 2 && titleLower.includes(word)) {
-          score += 10;
-        }
-      }
-    }
-  }
-
-  // 2. AI Tags match (if product has been pre-tagged)
-  if (product.aiTags && Array.isArray(product.aiTags)) {
-    const productTags = product.aiTags.map((t: string) => t.toLowerCase());
-    for (const label of labels) {
-      if (productTags.includes(label)) {
-        score += 20;
-      }
-      // Partial tag match
-      for (const tag of productTags) {
-        if (tag.includes(label) || label.includes(tag)) {
-          score += 8;
-        }
-      }
-    }
-  }
-
-  // 3. Category match
-  const productCategory = (product.category || '').toLowerCase();
-  if (productCategory === category) {
-    score += 30;
-  } else if (productCategory.includes(category) || category.includes(productCategory)) {
-    score += 15;
-  }
-  // Also check aiCategory
-  if (product.aiCategory) {
-    const aiCat = product.aiCategory.toLowerCase();
-    if (aiCat === category) score += 20;
-    else if (aiCat.includes(category) || category.includes(aiCat)) score += 10;
-  }
-
-  // 4. Tags match
-  if (product.tags && Array.isArray(product.tags)) {
-    const productTags = product.tags.map((t: string) => t.toLowerCase());
-    for (const label of labels) {
-      if (productTags.some((t: string) => t.includes(label) || label.includes(t))) {
-        score += 12;
-      }
-    }
-  }
-
-  // 5. Description match
+  const titleWords = titleLower
+    .split(/\s+/)
+    .map(cleanWord)
+    .filter((w: string) => w.length > 2 && !isStopWord(w));
   const descLower = (product.description || '').toLowerCase();
-  for (const label of labels) {
-    if (descLower.includes(label)) {
-      score += 5;
+
+  // ── 1. IMAGE HASH MATCH (highest priority) ──
+  if (uploadedImageHash && product.imageHash) {
+    const dist = hammingDistance(uploadedImageHash, product.imageHash);
+    if (dist <= 5) {
+      score += 500; // Near-identical image → massive boost
+    } else if (dist <= 10) {
+      score += 200; // Very similar image
+    } else if (dist <= 15) {
+      score += 80; // Somewhat similar
     }
   }
 
-  // 6. Material match
+  // ── 2. FULL PHRASE MATCH (very high weight) ──
+  // Match entire multi-word labels against the title as substrings
+  for (const label of labels) {
+    if (!label || label.split(/\s+/).length < 2) continue; // Skip single-word labels
+    const labelLower = label.toLowerCase();
+    if (titleLower.includes(labelLower)) {
+      score += 80; // Full phrase found in title = strong signal
+    }
+  }
+
+  // ── 3. TITLE WORD MATCH (moderate weight, only non-stop words) ──
+  let titleWordMatches = 0;
+  for (const tWord of titleWords) {
+    if (uniqueLabelWords.has(tWord)) {
+      titleWordMatches++;
+    }
+  }
+  // Diminishing returns: first 3 matches worth more than subsequent ones
+  score += Math.min(titleWordMatches, 3) * 15 + Math.max(0, titleWordMatches - 3) * 5;
+
+  // ── 4. BIGRAM MATCHING (title bigrams vs label bigrams) ──
+  const titleBigrams = generateBigrams(titleWords);
+  const labelBigrams = generateBigrams(cleanLabelWords);
+  const labelBigramSet = new Set(labelBigrams);
+  let bigramMatches = 0;
+  for (const tb of titleBigrams) {
+    if (labelBigramSet.has(tb)) {
+      bigramMatches++;
+    }
+  }
+  score += bigramMatches * 25;
+
+  // ── 5. AI TAGS MATCH ──
+  if (product.aiTags && Array.isArray(product.aiTags)) {
+    // Phrase match: check if any AI label is fully contained in an aiTag or vice versa
+    for (const label of labels) {
+      if (!label) continue;
+      const labelLower = label.toLowerCase();
+      for (const tag of product.aiTags) {
+        const tagLower = (tag || '').toLowerCase();
+        if (tagLower.includes(labelLower) || labelLower.includes(tagLower)) {
+          score += 20;
+          break;
+        }
+      }
+    }
+
+    // Word-level aiTag matches (filtered)
+    const aiTagsClean = product.aiTags
+      .map((t: string) => cleanWord(t))
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+    let aiTagMatches = 0;
+    for (const tag of aiTagsClean) {
+      if (uniqueLabelWords.has(tag)) {
+        aiTagMatches++;
+      }
+    }
+    score += Math.min(aiTagMatches, 5) * 10;
+  }
+
+  // ── 6. CATEGORY MATCH ──
+  const productCategory = (product.category || '').toLowerCase();
+  const aiCatLower = category.toLowerCase();
+  if (productCategory === aiCatLower) {
+    score += 30;
+  } else {
+    const prodCatWords = productCategory
+      .split(/[\s_-]+/)
+      .map(cleanWord)
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+    const aiCatWords = aiCatLower
+      .split(/[\s_-]+/)
+      .map(cleanWord)
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+    const uniqueAiCatWords = new Set(aiCatWords);
+    let catMatches = 0;
+    for (const cWord of prodCatWords) {
+      if (uniqueAiCatWords.has(cWord)) {
+        catMatches++;
+      }
+    }
+    if (catMatches > 0) score += 15;
+  }
+
+  if (product.aiCategory) {
+    if (product.aiCategory.toLowerCase() === aiCatLower) {
+      score += 20;
+    }
+  }
+
+  // ── 7. TAGS MATCH (product.tags) ──
+  if (product.tags && Array.isArray(product.tags)) {
+    const productTagsClean = product.tags
+      .map((t: string) => cleanWord(t))
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+    let tagMatches = 0;
+    for (const tag of productTagsClean) {
+      if (uniqueLabelWords.has(tag)) {
+        tagMatches++;
+      }
+    }
+    score += Math.min(tagMatches, 5) * 10;
+  }
+
+  // ── 8. DESCRIPTION MATCH (capped to prevent noise) ──
+  const descWords = descLower
+    .split(/\s+/)
+    .map(cleanWord)
+    .filter((w: string) => w.length > 3 && !isStopWord(w));
+  let descWordMatches = 0;
+  for (const dWord of descWords) {
+    if (uniqueLabelWords.has(dWord)) {
+      descWordMatches++;
+      if (descWordMatches >= 5) break; // Cap at 5 description matches
+    }
+  }
+  score += descWordMatches * 3;
+
+  // ── 9. MATERIAL MATCH ──
   if (attrs.material && product.material) {
-    if (product.material.toLowerCase().includes(attrs.material.toLowerCase())) {
+    const matClean = cleanWord(attrs.material);
+    const prodMatWords = (product.material || '').split(/[\s,_-]+/).map(cleanWord);
+    if (prodMatWords.includes(matClean)) {
       score += 15;
     }
   }
 
-  // 7. Color match from attributes
+  // ── 10. COLOR MATCH ──
   if (attrs.primaryColor) {
-    const colorLower = attrs.primaryColor.toLowerCase();
-    if (titleLower.includes(colorLower) || descLower.includes(colorLower)) {
-      score += 8;
+    const colorLower = cleanWord(attrs.primaryColor);
+    if (!isStopWord(colorLower)) {
+      if (titleWords.includes(colorLower)) score += 10;
     }
-    if (product.tags?.some((t: string) => t.toLowerCase().includes(colorLower))) {
-      score += 5;
+  }
+  if (attrs.secondaryColor) {
+    const colorLower = cleanWord(attrs.secondaryColor);
+    if (!isStopWord(colorLower)) {
+      if (titleWords.includes(colorLower)) score += 5;
     }
   }
 
-  // 8. Boost for higher-rated products (tie-breaker)
-  score += (product.rating || 0) * 2;
+  // ── 11. SHAPE MATCH ──
+  if (attrs.shape) {
+    const shapeLower = cleanWord(attrs.shape);
+    if (titleLower.includes(shapeLower) || descLower.includes(shapeLower)) {
+      score += 15;
+    }
+  }
 
-  // Apply sensitivity multiplier
+  // ── 12. Small boost for higher-rated products (tie-breaker only) ──
+  score += product.rating || 0;
+
   return Math.round(score * sensitivity);
 }
 
 /**
- * Search for matching products based on AI analysis results.
+ * Score how well an event matches the AI analysis results.
+ */
+function computeEventScore(event: any, analysis: AIAnalysisResult, sensitivity: number): number {
+  let score = 0;
+  const labels = analysis.labels || [];
+  const category = analysis.category || '';
+  const attrs = analysis.attributes || {};
+
+  const cleanLabelWords = labels
+    .flatMap((l) => (l || '').split(/\s+/).map(cleanWord))
+    .filter((w) => w.length > 2 && !isStopWord(w));
+  const uniqueLabelWords = new Set(cleanLabelWords);
+
+  const titleLower = (event.title || '').toLowerCase();
+  const titleWords = titleLower
+    .split(/\s+/)
+    .map(cleanWord)
+    .filter((w: string) => w.length > 2 && !isStopWord(w));
+
+  // 1. Full phrase match against title
+  for (const label of labels) {
+    if (!label || label.split(/\s+/).length < 2) continue;
+    const labelLower = label.toLowerCase();
+    if (titleLower.includes(labelLower)) {
+      score += 80;
+    }
+  }
+
+  // 2. Title word match
+  let titleWordMatches = 0;
+  for (const tWord of titleWords) {
+    if (uniqueLabelWords.has(tWord)) {
+      titleWordMatches++;
+    }
+  }
+  score += Math.min(titleWordMatches, 3) * 15 + Math.max(0, titleWordMatches - 3) * 5;
+
+  // 3. Bigram matching
+  const titleBigrams = generateBigrams(titleWords);
+  const labelBigrams = generateBigrams(cleanLabelWords);
+  const labelBigramSet = new Set(labelBigrams);
+  let bigramMatches = 0;
+  for (const tb of titleBigrams) {
+    if (labelBigramSet.has(tb)) {
+      bigramMatches++;
+    }
+  }
+  score += bigramMatches * 25;
+
+  // 4. Category match
+  const eventCategory = (event.category || '').toLowerCase();
+  const aiCatLower = category.toLowerCase();
+  if (eventCategory === aiCatLower) {
+    score += 30;
+  } else {
+    const eventCatWords = eventCategory
+      .split(/[\s_-]+/)
+      .map(cleanWord)
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+    const aiCatWords = aiCatLower
+      .split(/[\s_-]+/)
+      .map(cleanWord)
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+    const uniqueAiCatWords = new Set(aiCatWords);
+    let catMatches = 0;
+    for (const cWord of eventCatWords) {
+      if (uniqueAiCatWords.has(cWord)) {
+        catMatches++;
+      }
+    }
+    if (catMatches > 0) score += 15;
+  }
+
+  // 5. Style match
+  const eventStyle = (event.style || '').toLowerCase();
+  if (attrs.style) {
+    const styleClean = cleanWord(attrs.style);
+    if (cleanWord(eventStyle) === styleClean || eventStyle.includes(styleClean)) {
+      score += 15;
+    }
+  }
+
+  // 6. Features match
+  if (event.features && Array.isArray(event.features)) {
+    const featuresClean = event.features
+      .map((f: string) => cleanWord(f))
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+    let featureMatches = 0;
+    for (const feat of featuresClean) {
+      if (uniqueLabelWords.has(feat)) {
+        featureMatches++;
+      }
+    }
+    score += Math.min(featureMatches, 5) * 10;
+  }
+
+  // 7. Description match (capped)
+  const descLower = (event.description || '').toLowerCase();
+  const descWords = descLower
+    .split(/\s+/)
+    .map(cleanWord)
+    .filter((w: string) => w.length > 3 && !isStopWord(w));
+  let descWordMatches = 0;
+  for (const dWord of descWords) {
+    if (uniqueLabelWords.has(dWord)) {
+      descWordMatches++;
+      if (descWordMatches >= 5) break;
+    }
+  }
+  score += descWordMatches * 3;
+
+  // 8. Color match
+  if (attrs.primaryColor) {
+    const colorLower = cleanWord(attrs.primaryColor);
+    if (!isStopWord(colorLower)) {
+      if (titleWords.includes(colorLower)) score += 10;
+      if (
+        event.colorPalette?.some((c: string) => {
+          const resolved = resolveColor(c);
+          return resolved.includes(colorLower) || colorLower.includes(resolved);
+        })
+      ) {
+        score += 8;
+      }
+    }
+  }
+
+  // 9. Shape match
+  if (attrs.shape) {
+    const shapeLower = cleanWord(attrs.shape);
+    if (titleLower.includes(shapeLower) || descLower.includes(shapeLower)) {
+      score += 15;
+    }
+  }
+
+  // 10. Base boost (tie-breaker)
+  score += 5;
+
+  return Math.round(score * sensitivity);
+}
+
+/**
+ * Score how well a showcase matches the AI analysis results.
+ */
+function computeShowcaseScore(
+  showcase: any,
+  analysis: AIAnalysisResult,
+  sensitivity: number,
+): number {
+  let score = 0;
+  const labels = analysis.labels || [];
+  const category = analysis.category || '';
+  const attrs = analysis.attributes || {};
+
+  const cleanLabelWords = labels
+    .flatMap((l) => (l || '').split(/\s+/).map(cleanWord))
+    .filter((w) => w.length > 2 && !isStopWord(w));
+  const uniqueLabelWords = new Set(cleanLabelWords);
+
+  const titleLower = (showcase.title || '').toLowerCase();
+  const titleWords = titleLower
+    .split(/\s+/)
+    .map(cleanWord)
+    .filter((w: string) => w.length > 2 && !isStopWord(w));
+
+  // 1. Full phrase match against title
+  for (const label of labels) {
+    if (!label || label.split(/\s+/).length < 2) continue;
+    const labelLower = label.toLowerCase();
+    if (titleLower.includes(labelLower)) {
+      score += 80;
+    }
+  }
+
+  // 2. Title word match
+  let titleWordMatches = 0;
+  for (const tWord of titleWords) {
+    if (uniqueLabelWords.has(tWord)) {
+      titleWordMatches++;
+    }
+  }
+  score += Math.min(titleWordMatches, 3) * 15 + Math.max(0, titleWordMatches - 3) * 5;
+
+  // 3. Bigram matching
+  const titleBigrams = generateBigrams(titleWords);
+  const labelBigrams = generateBigrams(cleanLabelWords);
+  const labelBigramSet = new Set(labelBigrams);
+  let bigramMatches = 0;
+  for (const tb of titleBigrams) {
+    if (labelBigramSet.has(tb)) {
+      bigramMatches++;
+    }
+  }
+  score += bigramMatches * 25;
+
+  // 4. Category match
+  const showcaseCategory = (showcase.category || '').toLowerCase();
+  const aiCatLower = category.toLowerCase();
+  if (showcaseCategory === aiCatLower) {
+    score += 30;
+  } else {
+    const showCatWords = showcaseCategory
+      .split(/[\s_-]+/)
+      .map(cleanWord)
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+    const aiCatWords = aiCatLower
+      .split(/[\s_-]+/)
+      .map(cleanWord)
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+    const uniqueAiCatWords = new Set(aiCatWords);
+    let catMatches = 0;
+    for (const cWord of showCatWords) {
+      if (uniqueAiCatWords.has(cWord)) {
+        catMatches++;
+      }
+    }
+    if (catMatches > 0) score += 15;
+  }
+
+  // 5. Style/description match
+  const descLower = (showcase.description || '').toLowerCase();
+  const descWords = descLower
+    .split(/\s+/)
+    .map(cleanWord)
+    .filter((w: string) => w.length > 3 && !isStopWord(w));
+  if (attrs.style) {
+    const styleClean = cleanWord(attrs.style);
+    if (descWords.includes(styleClean)) {
+      score += 15;
+    }
+  }
+
+  // 6. Inclusions match
+  let inclusionWords: string[] = [];
+  if (showcase.inclusions && Array.isArray(showcase.inclusions)) {
+    inclusionWords = showcase.inclusions
+      .flatMap((inc: any) => (inc.name || '').split(/\s+/).map(cleanWord))
+      .filter((w: string) => w.length > 2 && !isStopWord(w));
+
+    let inclusionMatches = 0;
+    for (const incWord of inclusionWords) {
+      if (uniqueLabelWords.has(incWord)) {
+        inclusionMatches++;
+      }
+    }
+    score += Math.min(inclusionMatches, 5) * 10;
+  }
+
+  // 7. Description match (capped)
+  let descWordMatches = 0;
+  for (const dWord of descWords) {
+    if (uniqueLabelWords.has(dWord)) {
+      descWordMatches++;
+      if (descWordMatches >= 5) break;
+    }
+  }
+  score += descWordMatches * 3;
+
+  // 8. Color match
+  if (attrs.primaryColor) {
+    const colorLower = cleanWord(attrs.primaryColor);
+    if (!isStopWord(colorLower)) {
+      if (titleWords.includes(colorLower) || inclusionWords.includes(colorLower)) score += 10;
+      if (
+        showcase.colorPalette?.some((c: string) => {
+          const resolved = resolveColor(c);
+          return resolved.includes(colorLower) || colorLower.includes(resolved);
+        })
+      ) {
+        score += 8;
+      }
+    }
+  }
+
+  // 9. Shape match
+  if (attrs.shape) {
+    const shapeLower = cleanWord(attrs.shape);
+    if (titleLower.includes(shapeLower) || descLower.includes(shapeLower)) {
+      score += 15;
+    }
+  }
+
+  // 10. Base boost (tie-breaker)
+  score += (showcase.popularityScore || 0) * 0.05;
+  score += 5;
+
+  return Math.round(score * sensitivity);
+}
+
+/**
+ * Search for matching products, events, and showcases based on AI analysis results.
  */
 export async function findMatchingProducts(
   analysis: AIAnalysisResult,
   config: IVisualSearchConfig,
+  uploadedImageHash?: string,
 ): Promise<{
   bestMatch: VisualSearchResult | null;
   similar: VisualSearchResult[];
@@ -325,13 +918,10 @@ export async function findMatchingProducts(
     ),
   ].map((t) => t!.toLowerCase());
 
-  // Extract individual words for better partial matching (e.g. 'Ganesh' from 'Ganesh decoration')
+  // Extract individual words for better partial matching, filtering stop words
   const words = searchTerms
     .flatMap((term) => term.split(/[\s_-]+/))
-    .filter(
-      (word) =>
-        word.length > 2 && !['and', 'the', 'with', 'for', 'decoration', 'ornament'].includes(word),
-    );
+    .filter((word) => word.length > 2 && !STOP_WORDS.has(word));
 
   const uniqueTermsAndWords = [...new Set([...searchTerms, ...words])];
 
@@ -359,24 +949,92 @@ export async function findMatchingProducts(
     $or: [{ category: categoryRegex }, { aiCategory: categoryRegex }],
   };
 
-  const [labelResults, categoryResults] = await Promise.all([
+  // Event queries
+  const eventLabelQuery = {
+    isActive: true,
+    $or: [
+      { title: { $in: regexPatterns } },
+      { category: { $in: regexPatterns } },
+      { style: { $in: regexPatterns } },
+      { description: { $in: regexPatterns } },
+      { features: { $in: regexPatterns } },
+      { materialStyle: { $in: regexPatterns } },
+    ],
+  };
+
+  const eventCategoryQuery = {
+    isActive: true,
+    category: categoryRegex,
+  };
+
+  // Showcase queries
+  const showcaseLabelQuery = {
+    isActive: true,
+    $or: [
+      { title: { $in: regexPatterns } },
+      { category: { $in: regexPatterns } },
+      { description: { $in: regexPatterns } },
+    ],
+  };
+
+  const showcaseCategoryQuery = {
+    isActive: true,
+    category: categoryRegex,
+  };
+
+  const [
+    labelResults,
+    categoryResults,
+    eventLabelResults,
+    eventCategoryResults,
+    showcaseLabelResults,
+    showcaseCategoryResults,
+  ] = await Promise.all([
     Product.find(labelQuery)
       .select(
-        '_id title slug category imageSrc images price oldPrice rating reviews tags description material badges aiTags aiCategory aiAttributes',
+        '_id title slug category imageSrc images price oldPrice rating reviews tags description material badges aiTags aiCategory aiAttributes imageHash',
       )
       .limit(100)
       .maxTimeMS(8000)
       .lean(),
     Product.find(categoryQuery)
       .select(
-        '_id title slug category imageSrc images price oldPrice rating reviews tags description material badges aiTags aiCategory aiAttributes',
+        '_id title slug category imageSrc images price oldPrice rating reviews tags description material badges aiTags aiCategory aiAttributes imageHash',
+      )
+      .limit(50)
+      .maxTimeMS(5000)
+      .lean(),
+    Event.find(eventLabelQuery)
+      .select(
+        '_id title category style image basePrice description features colorPalette materialStyle gallery',
+      )
+      .limit(100)
+      .maxTimeMS(8000)
+      .lean(),
+    Event.find(eventCategoryQuery)
+      .select(
+        '_id title category style image basePrice description features colorPalette materialStyle gallery',
+      )
+      .limit(50)
+      .maxTimeMS(5000)
+      .lean(),
+    ShowcaseCollection.find(showcaseLabelQuery)
+      .select(
+        '_id title category description image rentalPrice gallery inclusions colorPalette setupTimeHours popularityScore',
+      )
+      .limit(100)
+      .maxTimeMS(8000)
+      .lean(),
+    ShowcaseCollection.find(showcaseCategoryQuery)
+      .select(
+        '_id title category description image rentalPrice gallery inclusions colorPalette setupTimeHours popularityScore',
       )
       .limit(50)
       .maxTimeMS(5000)
       .lean(),
   ]);
 
-  // Merge and deduplicate
+  // Merge and deduplicate products
   const productMap = new Map<string, any>();
   for (const p of labelResults) {
     productMap.set(p._id.toString(), p);
@@ -388,61 +1046,146 @@ export async function findMatchingProducts(
     }
   }
 
-  // Score all products
-  const scored: { product: any; score: number }[] = [];
+  // Merge and deduplicate events
+  const eventMap = new Map<string, any>();
+  for (const e of eventLabelResults) {
+    eventMap.set(e._id.toString(), e);
+  }
+  for (const e of eventCategoryResults) {
+    const id = e._id.toString();
+    if (!eventMap.has(id)) {
+      eventMap.set(id, e);
+    }
+  }
+
+  // Merge and deduplicate showcases
+  const showcaseMap = new Map<string, any>();
+  for (const s of showcaseLabelResults) {
+    showcaseMap.set(s._id.toString(), s);
+  }
+  for (const s of showcaseCategoryResults) {
+    const id = s._id.toString();
+    if (!showcaseMap.has(id)) {
+      showcaseMap.set(id, s);
+    }
+  }
+
+  // Score all products, events, and showcases
+  const scored: { item: any; score: number; type: 'product' | 'event' | 'showcase' }[] = [];
   for (const product of productMap.values()) {
-    const score = computeProductScore(product, analysis, sensitivity);
-    scored.push({ product, score });
+    const score = computeProductScore(product, analysis, sensitivity, uploadedImageHash);
+    scored.push({ item: product, score, type: 'product' });
+  }
+  for (const event of eventMap.values()) {
+    const score = computeEventScore(event, analysis, sensitivity);
+    scored.push({ item: event, score, type: 'event' });
+  }
+  for (const showcase of showcaseMap.values()) {
+    const score = computeShowcaseScore(showcase, analysis, sensitivity);
+    scored.push({ item: showcase, score, type: 'showcase' });
   }
 
   // Sort by score descending
   scored.sort((a, b) => b.score - a.score);
 
-  // Normalize scores to 0-100 percentage
-  // Use a baseline max score of 120 to represent a "perfect" multi-dimensional match
-  // This prevents weak single-keyword matches from appearing as "100% Match"
-  const maxScore = Math.max(scored[0]?.score || 1, 120);
+  // Normalize scores to 0-100 percentage.
+  // Use the highest score actually found, but at least 80 to avoid inflating noise.
+  const maxScore = Math.max(scored[0]?.score || 1, 80);
 
   const formatResult = (
-    item: { product: any; score: number },
+    entry: { item: any; score: number; type: 'product' | 'event' | 'showcase' },
     maxS: number,
-  ): VisualSearchResult => ({
-    id: item.product._id.toString(),
-    title: item.product.title,
-    slug: item.product.slug,
-    category: item.product.category,
-    imageSrc: item.product.imageSrc,
-    images: item.product.images || [],
-    price: item.product.price,
-    oldPrice: item.product.oldPrice,
-    rating: item.product.rating || 0,
-    reviews: item.product.reviews || 0,
-    tags: item.product.tags || [],
-    description: item.product.description || '',
-    similarityScore: Math.round((item.score / maxS) * 100),
-    matchSource:
-      item.score > maxS * 0.7
-        ? 'visual_match'
-        : item.score > maxS * 0.4
-          ? 'category_match'
-          : 'related',
-    badges: item.product.badges || [],
-  });
+  ): VisualSearchResult => {
+    if (entry.type === 'event') {
+      return {
+        id: entry.item._id.toString(),
+        title: entry.item.title,
+        slug: entry.item._id.toString(),
+        category: entry.item.category,
+        imageSrc: entry.item.image,
+        images: entry.item.gallery || [],
+        price: entry.item.basePrice,
+        rating: 4.9,
+        reviews: 0,
+        tags: entry.item.features || [],
+        description: entry.item.description || '',
+        similarityScore: Math.round((entry.score / maxS) * 100),
+        matchSource:
+          entry.score > maxS * 0.7
+            ? 'visual_match'
+            : entry.score > maxS * 0.4
+              ? 'category_match'
+              : 'related',
+        badges: [],
+        itemType: 'event',
+      };
+    } else if (entry.type === 'showcase') {
+      return {
+        id: entry.item._id.toString(),
+        title: entry.item.title,
+        slug: entry.item._id.toString(),
+        category: entry.item.category,
+        imageSrc: entry.item.image,
+        images: entry.item.gallery || [],
+        price: entry.item.rentalPrice,
+        rating: 4.9,
+        reviews: 0,
+        tags: [],
+        description: entry.item.description || '',
+        similarityScore: Math.round((entry.score / maxS) * 100),
+        matchSource:
+          entry.score > maxS * 0.7
+            ? 'visual_match'
+            : entry.score > maxS * 0.4
+              ? 'category_match'
+              : 'related',
+        badges: [],
+        itemType: 'event',
+      };
+    } else {
+      return {
+        id: entry.item._id.toString(),
+        title: entry.item.title,
+        slug: entry.item.slug,
+        category: entry.item.category,
+        imageSrc: entry.item.imageSrc,
+        images: entry.item.images || [],
+        price: entry.item.price,
+        oldPrice: entry.item.oldPrice,
+        rating: entry.item.rating || 0,
+        reviews: entry.item.reviews || 0,
+        tags: entry.item.tags || [],
+        description: entry.item.description || '',
+        similarityScore: Math.round((entry.score / maxS) * 100),
+        matchSource:
+          entry.score > maxS * 0.7
+            ? 'visual_match'
+            : entry.score > maxS * 0.4
+              ? 'category_match'
+              : 'related',
+        badges: entry.item.badges || [],
+        itemType: 'product',
+      };
+    }
+  };
 
   // Filter by threshold (convert percentage threshold to absolute)
-  const thresholdScore = maxScore * threshold;
-  const qualified = scored.filter((s) => s.score >= thresholdScore);
+  const minQualifiedScore = maxScore * threshold;
 
-  // Split into tiers
-  const bestMatch = qualified.length > 0 ? formatResult(qualified[0], maxScore) : null;
+  // Split into tiers with zero gaps
+  const bestMatch =
+    scored.length > 0 && scored[0].score >= minQualifiedScore
+      ? formatResult(scored[0], maxScore)
+      : null;
 
-  const similar = qualified
-    .slice(1, Math.min(resultCount, qualified.length))
-    .filter((s) => s.score >= maxScore * 0.3)
+  const similar = scored
+    .slice(bestMatch ? 1 : 0)
+    .filter((s) => s.score >= minQualifiedScore)
+    .slice(0, resultCount - (bestMatch ? 1 : 0))
     .map((s) => formatResult(s, maxScore));
 
   const related = scored
-    .filter((s) => s.score < maxScore * 0.3 && s.score > 0)
+    .filter((s) => s.score < minQualifiedScore && s.score > 0)
     .slice(0, 10)
     .map((s) => formatResult(s, maxScore));
 
@@ -479,6 +1222,14 @@ export async function executeVisualSearch(
 
   // 2. Process image (resize + compress)
   const { base64, mimeType, hash } = await processImage(imageBuffer, imageMimeType);
+
+  // 2b. Compute perceptual hash of the uploaded image for image-to-image matching
+  let uploadedImageHash = '';
+  try {
+    uploadedImageHash = await computeImageHash(imageBuffer);
+  } catch {
+    // Non-critical: image hash comparison just won't work
+  }
 
   // 3. Check analysis cache
   let analysis: AIAnalysisResult;
@@ -541,8 +1292,12 @@ export async function executeVisualSearch(
     }
   }
 
-  // 5. Find matching products
-  const { bestMatch, similar, related } = await findMatchingProducts(analysis, config);
+  // 5. Find matching products (pass image hash for perceptual matching)
+  const { bestMatch, similar, related } = await findMatchingProducts(
+    analysis,
+    config,
+    uploadedImageHash,
+  );
 
   const searchDurationMs = Math.round(performance.now() - startTime);
 
@@ -711,14 +1466,23 @@ export async function bulkGenerateProductTags(
       const buffer = Buffer.from(arrayBuffer);
       const { base64, mimeType } = await processImage(buffer, 'image/jpeg');
 
+      // Compute perceptual image hash for image-to-image matching
+      let imageHash = '';
+      try {
+        imageHash = await computeImageHash(buffer);
+      } catch {
+        // Non-critical
+      }
+
       // Analyze with AI
       const analysis = await provider.analyzeImage(base64, mimeType);
 
-      // Update product
+      // Update product with AI tags and image hash
       await Product.findByIdAndUpdate(product._id, {
         aiTags: analysis.labels,
         aiCategory: analysis.category,
         aiAttributes: analysis.attributes,
+        ...(imageHash ? { imageHash } : {}),
       });
 
       processed++;

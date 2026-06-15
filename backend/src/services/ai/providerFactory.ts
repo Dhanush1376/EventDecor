@@ -10,12 +10,7 @@
  */
 
 import logger from '../../config/logger';
-import {
-  VISION_PROVIDER_CONFIG,
-  VISION_MODEL_REGISTRY,
-  VisionProviderConfig,
-  getVisionModel,
-} from './providerRegistry';
+import { VISION_PROVIDER_CONFIG, VisionProviderConfig, getVisionModel } from './providerRegistry';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -36,22 +31,37 @@ export interface IVisualAIProvider {
 // ── Shared Prompt ──────────────────────────────────────────────────────────
 
 const ANALYSIS_PROMPT = `You are a visual product recognition AI for "Siri Arts & Crafts", an Indian event decoration e-commerce store.
-Analyze the uploaded image and identify the product/object. Output ONLY a valid raw JSON object (no markdown) with these keys:
+Analyze the uploaded image and identify the EXACT product/object with maximum specificity. Output ONLY a valid raw JSON object (no markdown) with these keys:
 
-- "labels": Array of descriptive labels for the object (e.g. ["wedding tray", "coconut decoration", "golden tray", "traditional Indian wedding accessory"]). Include material, color, style, and purpose labels. Maximum 15 labels.
-- "category": The best matching product category (e.g. "Wedding Decor", "Pooja Items", "Engagement Trays", "Floral Arrangements", "Birthday Decorations", "Traditional Decorations", "Gift Hampers", "Coconut Decorations", "Bangle Trays", "Harathi Plates"). Use Title Case.
+- "productName": Your best guess at the exact product name (e.g. "Sacred Pellikuthuru Lotus Gifting Crate", "Golden Coconut Decoration Tray", "Ganesh Chaturthi Pooja Plate Set"). Be as specific as possible — include material, color, shape, and purpose in the name.
+- "labels": Array of 10-15 HIGHLY SPECIFIC identifying phrases. Each label should be 2-4 words and describe a UNIQUE visual characteristic. DO NOT use generic single words like "decoration", "beautiful", "traditional", "handmade", "Indian". Instead use specific multi-word phrases like:
+  - "lotus shaped brass tray" (not just "tray")
+  - "red velvet fabric lining" (not just "red")
+  - "hexagonal gift crate" (not just "gift box")
+  - "coconut shell with gold paint" (not just "coconut")
+  - "kundan stone border" (not just "stones")
+  Include the object's specific shape, form factor, construction method, distinct visual elements, and the exact items visible in the image.
+- "category": The best matching product category (e.g. "Wedding Decor", "Pooja Items", "Engagement Trays", "Floral Arrangements", "Birthday Decorations", "Traditional Decorations", "Gift Hampers", "Coconut Decorations", "Bangle Trays", "Harathi Plates", "Pellikuthuru Items", "Seemantham Decor", "Mehendi Plates", "Saree Packing Trays"). Use Title Case.
 - "attributes": Object with detected visual attributes:
-  - "primaryColor": Dominant color name
+  - "primaryColor": Dominant color name (be specific: "maroon" not "red", "gold metallic" not "yellow")
   - "secondaryColor": Secondary color if any
-  - "material": Detected material (e.g. "wood", "metal", "fabric", "flowers", "plastic")
-  - "style": Style (e.g. "traditional", "modern", "luxury", "minimalist", "rustic")
-  - "occasion": Event type (e.g. "wedding", "pooja", "birthday", "engagement", "festival")
+  - "material": Detected material (e.g. "brass", "wooden mdf", "silk fabric", "artificial flowers", "real flowers", "cardboard", "velvet", "jute")
+  - "style": Style (e.g. "traditional south indian", "modern minimalist", "royal luxury", "rustic ethnic")
+  - "occasion": Event type (e.g. "pellikuthuru", "seemantham", "engagement", "wedding", "pooja", "birthday", "naming ceremony", "housewarming")
   - "size": Estimated size (e.g. "small", "medium", "large")
+  - "shape": Shape of the object (e.g. "round", "rectangular", "lotus shaped", "hexagonal", "octagonal", "basket shaped")
+  - "distinctFeatures": Comma-separated list of the most unique visual features that distinguish this from similar items (e.g. "mirror work border, peacock motif center, beaded handle")
 - "confidence": Your confidence in the analysis (0.0 to 1.0)
 
-Focus on identifying decorative items, event accessories, trays, plates, floral arrangements, and ceremonial objects. If the image is not a decoration/event product, still describe it and set confidence lower.`;
+CRITICAL: Be extremely specific. Two similar-looking trays should get DIFFERENT labels based on their unique details (shape, border style, center motif, handle type, etc.). Generic labels make it impossible to distinguish between products.`;
 
-const SHORT_PROMPT = `Analyze this product image for an Indian event decoration e-commerce store. Output ONLY valid JSON with: "labels" (array of 10-15 descriptive keywords), "category" (product category in Title Case), "attributes" (object with primaryColor, secondaryColor, material, style, occasion, size), "confidence" (0.0-1.0).`;
+const SHORT_PROMPT = `Analyze this product image for an Indian event decoration store. Output ONLY valid JSON with:
+- "productName": exact product name guess (be very specific)
+- "labels": array of 10-15 SPECIFIC multi-word phrases describing unique visual features (NOT generic words like "decoration" or "beautiful")
+- "category": product category in Title Case
+- "attributes": object with primaryColor, secondaryColor, material, style, occasion, size, shape, distinctFeatures
+- "confidence": 0.0-1.0
+Be extremely specific — "lotus shaped brass tray with kundan border" NOT "golden tray".`;
 
 // ── Response Parser ────────────────────────────────────────────────────────
 
@@ -68,11 +78,40 @@ function parseAIResponse(text: string): AIAnalysisResult {
     parsed = JSON.parse(jsonMatch[0]);
   }
 
+  // Collect labels from multiple sources for richer matching
+  const rawLabels: string[] = Array.isArray(parsed.labels) ? parsed.labels.slice(0, 15) : [];
+
+  // Prepend the productName as the highest-priority label if present
+  if (typeof parsed.productName === 'string' && parsed.productName.trim()) {
+    rawLabels.unshift(parsed.productName.trim());
+  }
+
+  // Extract distinctFeatures from attributes and add as labels
+  const attrs =
+    typeof parsed.attributes === 'object' && parsed.attributes !== null ? parsed.attributes : {};
+  if (typeof attrs.distinctFeatures === 'string' && attrs.distinctFeatures.trim()) {
+    const features = attrs.distinctFeatures
+      .split(',')
+      .map((f: string) => f.trim())
+      .filter((f: string) => f.length > 2);
+    rawLabels.push(...features);
+  }
+
+  // Deduplicate labels (case-insensitive)
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const label of rawLabels) {
+    const key = label.toLowerCase().trim();
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      labels.push(label);
+    }
+  }
+
   return {
-    labels: Array.isArray(parsed.labels) ? parsed.labels.slice(0, 15) : [],
+    labels: labels.slice(0, 20),
     category: typeof parsed.category === 'string' ? parsed.category : 'General',
-    attributes:
-      typeof parsed.attributes === 'object' && parsed.attributes !== null ? parsed.attributes : {},
+    attributes: attrs,
     confidence:
       typeof parsed.confidence === 'number' ? Math.min(1, Math.max(0, parsed.confidence)) : 0.5,
   };

@@ -1,4 +1,3 @@
-import { m as motion } from 'framer-motion';
 import { fadeUp } from '../../animations/variants';
 
 export function SectionWrapper({

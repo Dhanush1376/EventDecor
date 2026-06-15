@@ -1,17 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import rentalService from '../../services/rentalService';
-import {
-  PageHeader,
-  FilterBar,
-  formatCurrency,
-  fadeUp,
-  stagger,
-  SkeletonTable,
-  EmptyState,
-} from '../components/AdminUIKit';
+import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
 
 const slideDrawer = {
   hidden: { x: '100%', opacity: 0 },

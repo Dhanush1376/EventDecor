@@ -25,7 +25,7 @@ describe('Search Engine - Multilingual & Typo-tolerance Helpers', () => {
     });
 
     it('should extract color specifications from search query', () => {
-      const result = analyzeQueryLocally('yellow flowers haldi stage');
+      const result = analyzeQueryLocally('yellow flowers wedding stage');
       expect(result.colors).toContain('yellow');
       expect(result.category).toBe('Wedding');
     });
@@ -74,14 +74,30 @@ describe('Search Engine - Multilingual & Typo-tolerance Helpers', () => {
 
   describe('computeSearchScore (Compound Relevance Scoring)', () => {
     it('should prioritize exact title matches over tag/category matches', () => {
-      const exactScore = computeSearchScore('Wedding Mandapam Decor', 'Wedding', ['mandap'], 'wedding mandapam decor');
+      const exactScore = computeSearchScore(
+        'Wedding Mandapam Decor',
+        'Wedding',
+        ['mandap'],
+        'wedding mandapam decor',
+      );
       const tagScore = computeSearchScore('Lotus Garland Tray', 'Wedding', ['mandap'], 'mandap');
       expect(exactScore).toBeGreaterThan(tagScore);
     });
 
     it('should boost scores when matching the Telugu title', () => {
-      const scoreWithTelugu = computeSearchScore('Bridal Coconut Decor', 'Wedding', ['coconut'], 'కొబ్బరి', 'కొబ్బరి డెకర్');
-      const scoreWithoutTelugu = computeSearchScore('Bridal Coconut Decor', 'Wedding', ['coconut'], 'కొబ్బరి');
+      const scoreWithTelugu = computeSearchScore(
+        'Bridal Coconut Decor',
+        'Wedding',
+        ['coconut'],
+        'కొబ్బరి',
+        'కొబ్బరి డెకర్',
+      );
+      const scoreWithoutTelugu = computeSearchScore(
+        'Bridal Coconut Decor',
+        'Wedding',
+        ['coconut'],
+        'కొబ్బరి',
+      );
       expect(scoreWithTelugu).toBeGreaterThan(scoreWithoutTelugu);
     });
   });

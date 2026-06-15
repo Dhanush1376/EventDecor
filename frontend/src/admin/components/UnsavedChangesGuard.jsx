@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 
 /**
  * A UI guard that works in tandem with useBlocker from react-router-dom

@@ -1,7 +1,3 @@
-import React from 'react';
-import { AdminField, AdminInput } from './AdminUIKit';
-import { ImageUpload } from './ImageUpload';
-
 export function OccasionEditor({ occasions = [], onChange }) {
   const handleAdd = () => {
     const newItem = {

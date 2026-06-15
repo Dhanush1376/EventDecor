@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
 export function WhatsAppWidget() {
@@ -19,7 +18,7 @@ export function WhatsAppWidget() {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0, x: 100 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="whatsapp-widget fixed bottom-28 right-6 md:bottom-10 md:right-10 z-[40]"
+          className="whatsapp-widget fixed bottom-20 right-6 md:bottom-10 md:right-10 z-[40]"
         >
           {/* Symmetrical Close Button */}
           <button
@@ -29,7 +28,7 @@ export function WhatsAppWidget() {
               setIsVisible(false);
             }}
             aria-label="Dismiss chat widget"
-            className="absolute -top-1.5 -right-1.5 w-5.5 h-5.5 min-h-0 aspect-square p-0 bg-black text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-md cursor-pointer hover:bg-red-500 transition-all z-50 border-2 border-white select-none shrink-0"
+            className="absolute -top-1 -right-1 w-5 h-5 min-h-0 aspect-square p-0 bg-black text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-md cursor-pointer hover:bg-red-500 transition-all z-50 border-2 border-white select-none shrink-0"
           >
             ✕
           </button>

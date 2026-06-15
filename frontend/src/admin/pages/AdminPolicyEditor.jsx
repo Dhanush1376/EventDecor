@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
 import { policyService } from '../../services/domainServices';
 import { createSafeHtml } from '../../utils/sanitize';
 import { toast } from 'react-hot-toast';
-import { SkeletonDashboard, stagger } from '../components/AdminUIKit';
+import { stagger } from '../components/AdminUIKit';
 import { getErrorMessage } from '../../utils/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 export function AdminPolicyEditor() {
   const navigate = useNavigate();

@@ -1,15 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
-import { GalleryCard } from '../components/gallery/GalleryCard';
-import { SEO } from '../components/seo/SEO';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
-import { ShareButton } from '../components/ui/ShareButton';
 import { galleryService } from '../services/domainServices';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
-import { CloudinaryImage } from '../components/ui/CloudinaryImage';
-import { GalleryDetailSkeleton } from '../components/ui/Skeleton';
 import logger from '../utils/logger';
 
 /* ─── Stagger animation helpers ─── */

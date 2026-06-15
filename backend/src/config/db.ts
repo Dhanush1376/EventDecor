@@ -1,7 +1,19 @@
 import mongoose from 'mongoose';
 import os from 'os';
+import dns from 'dns';
 import logger from './logger';
 import { DestructionGuard } from '../utils/DestructionGuard';
+
+// Prevent querySrv ETIMEOUT on local environments by using reliable public DNS resolvers
+const isLocal =
+  process.env.NODE_ENV !== 'production' && !process.env.RENDER && !process.env.RAILWAY_STATIC_URL;
+if (isLocal) {
+  try {
+    dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+  } catch (err: any) {
+    console.warn('[DATABASE] Failed to set public DNS resolvers:', err.message);
+  }
+}
 
 // Enforce global maxTimeMS to prevent runaway database queries
 mongoose.plugin((schema) => {

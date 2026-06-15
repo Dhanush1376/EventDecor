@@ -1,18 +1,9 @@
-import { m as motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
 import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';
-import {
-  PageHeader,
-  AdminToggle,
-  StatusBadge,
-  EmptyState,
-  SkeletonCard,
-  fadeUp,
-  stagger,
-} from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminCoupons() {
   const navigate = useNavigate();

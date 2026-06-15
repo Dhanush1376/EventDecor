@@ -3,177 +3,319 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 <style>
   body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    background-color: #faf9f6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f8fafc;
     margin: 0;
     padding: 0;
-    color: #2d2b29;
+    color: #334155;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
   }
-  .container {
+  table, td {
+    mso-table-lspace: 0pt;
+    mso-table-rspace: 0pt;
+  }
+  img {
+    -ms-interpolation-mode: bicubic;
+    border: 0;
+    height: auto;
+    line-height: 100%;
+    outline: none;
+    text-decoration: none;
+  }
+  table {
+    border-collapse: collapse !important;
+  }
+  .wrapper-table {
+    background-color: #f8fafc;
+    width: 100% !important;
+  }
+  .email-container {
     max-width: 600px;
-    margin: 40px auto;
-    background: #ffffff;
+    margin: 0 auto !important;
+    width: 100% !important;
+  }
+  .main-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 40px 32px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+  .brand-header {
+    padding-bottom: 24px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 32px;
+    text-align: left;
+  }
+  .brand-link {
+    text-decoration: none;
+    display: inline-block;
+  }
+  .brand-logo {
+    height: 36px;
+    width: 36px;
     border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    vertical-align: middle;
+    display: inline-block;
   }
-  .header {
-    background-color: #1a1a1a;
-    padding: 40px 20px;
-    text-align: center;
-    color: #d4af37;
+  .brand-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    vertical-align: middle;
+    margin-left: 10px;
+    letter-spacing: -0.01em;
   }
-  .header h1 {
-    margin: 0;
-    font-family: 'Playfair Display', serif;
-    font-weight: 400;
-    letter-spacing: 2px;
-    font-size: 24px;
-    text-transform: uppercase;
-  }
-  .content {
-    padding: 40px;
-  }
-  .greeting {
+  .title {
+    color: #0f172a;
     font-size: 18px;
-    margin-bottom: 20px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
   }
-  .order-details {
-    background-color: #f9f9f9;
+  .body-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 24px;
+  }
+  .order-details-box {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
     padding: 20px;
-    border-radius: 4px;
-    margin-bottom: 30px;
-  }
-  .order-details h3 {
-    margin-top: 0;
-    color: #d4af37;
-    font-family: 'Playfair Display', serif;
+    border-radius: 8px;
+    margin: 24px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #334155;
   }
   .product-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
+    margin: 24px 0;
   }
   .product-table th, .product-table td {
     padding: 12px 0;
-    border-bottom: 1px solid #eeeeee;
+    border-bottom: 1px solid #f1f5f9;
     text-align: left;
+    font-size: 13px;
   }
   .product-table th {
     font-weight: 600;
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
-    color: #888888;
+    color: #64748b;
+    letter-spacing: 0.05em;
   }
   .product-image {
-    width: 60px;
-    height: 60px;
+    width: 44px;
+    height: 44px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: 6px;
   }
   .total-row {
-    font-weight: bold;
-    font-size: 16px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #0f172a;
   }
-  .footer {
+  .button-wrapper {
+    margin: 32px 0;
     text-align: center;
-    padding: 30px;
-    background-color: #f5f5f5;
-    font-size: 12px;
-    color: #888888;
   }
-  .button {
-    display: inline-block;
-    background-color: #d4af37;
-    color: #ffffff;
+  .cta-button {
+    background-color: #0f172a;
+    color: #ffffff !important;
     text-decoration: none;
     padding: 12px 24px;
-    border-radius: 4px;
-    font-weight: bold;
-    margin-top: 20px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-block;
+  }
+  .footer-divider {
+    border-top: 1px solid #f1f5f9;
+    margin-top: 32px;
+    padding-top: 24px;
+    text-align: center;
+  }
+  .footer-text {
+    color: #64748b;
     font-size: 12px;
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+  }
+  .footer-text a {
+    color: #64748b;
+    text-decoration: underline;
+  }
+
+  /* Dark Mode support */
+  @media (prefers-color-scheme: dark) {
+    body, .wrapper-table {
+      background-color: #090d16 !important;
+      color: #e2e8f0 !important;
+    }
+    .main-card {
+      background-color: #0f172a !important;
+      border-color: #1e293b !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+    }
+    .brand-header {
+      border-bottom-color: #1e293b !important;
+    }
+    .brand-name, .title {
+      color: #f8fafc !important;
+    }
+    .body-text, .order-details-box, .product-table td {
+      color: #cbd5e1 !important;
+    }
+    .order-details-box {
+      background-color: #1e293b !important;
+      border-color: #334155 !important;
+    }
+    .product-table th {
+      color: #94a3b8 !important;
+      border-bottom-color: #1e293b !important;
+    }
+    .product-table td {
+      border-bottom-color: #1e293b !important;
+    }
+    .total-row {
+      color: #f8fafc !important;
+    }
+    .cta-button {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+    }
+    .footer-divider {
+      border-top-color: #1e293b !important;
+    }
+    .footer-text, .footer-text a {
+      color: #64748b !important;
+    }
+  }
+
+  /* Mobile responsiveness */
+  @media only screen and (max-width: 600px) {
+    .main-card {
+      padding: 24px 16px !important;
+    }
   }
 </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Siri Arts & Crafts</h1>
-    </div>
-    <div class="content">
-      <div class="greeting">
-        Hello {{customerName}},<br><br>
-        Thank you for your exquisite purchase. Your order has been successfully placed.
-      </div>
-
-      <div class="order-details">
-        <h3>Order #{{orderId}}</h3>
-        <p><strong>Date:</strong> {{formatDate orderDate}}</p>
-        <p><strong>Payment Method:</strong> {{paymentMethod}}</p>
-      </div>
-
-      <table class="product-table">
-        <thead>
+  <div style="display: none; max-height: 0px; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
+    Your order #{{orderId}} has been successfully placed.
+    &zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;
+  </div>
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" class="wrapper-table">
+    <tr>
+      <td align="center" style="padding: 20px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container">
           <tr>
-            <th>Item</th>
-            <th>Qty</th>
-            <th style="text-align: right">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each items}}
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center; gap: 15px;">
-                {{#if this.image}}
-                <img src="{{this.image}}" class="product-image" alt="{{this.name}}">
-                {{/if}}
-                <div>
-                  <strong style="display: block;">{{this.name}}</strong>
-                  {{#if this.variant}}
-                  <span style="font-size: 12px; color: #888;">{{this.variant}}</span>
-                  {{/if}}
-                </div>
+            <td class="main-card">
+              <!-- Header -->
+              <div class="brand-header">
+                <a href="https://siriartsandcrafts.com" target="_blank" class="brand-link">
+                  <img src="https://res.cloudinary.com/siriartscrafts/image/upload/v1/SiriLogo.webp" alt="Siri Arts & Crafts Logo" class="brand-logo" />
+                  <span class="brand-name">Siri Arts & Crafts</span>
+                </a>
+              </div>
+
+              <!-- Body -->
+              <h2 class="title">Order Confirmed</h2>
+              <p class="body-text">
+                Hello {{customerName}},
+              </p>
+              <p class="body-text">
+                Thank you for your purchase. Your order has been successfully placed and is now being processed.
+              </p>
+
+              <div class="order-details-box">
+                <strong style="color: #0f172a; display: block; margin-bottom: 8px;">Order Reference: #{{orderId}}</strong>
+                <strong style="color: #0f172a;">Date:</strong> {{formatDate orderDate}}<br/>
+                <strong style="color: #0f172a;">Payment Method:</strong> {{paymentMethod}}
+              </div>
+
+              <table class="product-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th style="text-align: center; width: 40px;">Qty</th>
+                    <th style="text-align: right; width: 80px;">Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each items}}
+                  <tr>
+                    <td>
+                      <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                          {{#if this.image}}
+                          <td style="padding-right: 12px; vertical-align: middle;">
+                            <img src="{{this.image}}" class="product-image" alt="{{this.name}}">
+                          </td>
+                          {{/if}}
+                          <td style="vertical-align: middle;">
+                            <strong style="display: block; font-size: 13px; color: #0f172a;">{{this.name}}</strong>
+                            {{#if this.variant}}
+                            <span style="font-size: 11px; color: #64748b;">{{this.variant}}</span>
+                            {{/if}}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td style="text-align: center; vertical-align: middle;">{{this.quantity}}</td>
+                    <td style="text-align: right; vertical-align: middle;">{{formatCurrency this.price}}</td>
+                  </tr>
+                  {{/each}}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="2" style="text-align: right; padding-top: 16px; border: none; color: #64748b;">Subtotal:</td>
+                    <td style="text-align: right; padding-top: 16px; border: none;">{{formatCurrency subtotal}}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" style="text-align: right; border: none; color: #64748b;">Shipping:</td>
+                    <td style="text-align: right; border: none;">{{formatCurrency shipping}}</td>
+                  </tr>
+                  <tr class="total-row">
+                    <td colspan="2" style="text-align: right; border-bottom: none; padding-top: 12px;">Total:</td>
+                    <td style="text-align: right; border-bottom: none; padding-top: 12px;">{{formatCurrency total}}</td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              <div class="order-details-box">
+                <strong style="color: #0f172a; display: block; margin-bottom: 6px;">Shipping Address:</strong>
+                {{shippingAddress}}
+              </div>
+
+              <div class="button-wrapper">
+                <a href="{{dashboardUrl}}" class="cta-button" target="_blank">View Order Status</a>
+              </div>
+
+              <!-- Footer -->
+              <div class="footer-divider">
+                <p class="footer-text">
+                  This email was sent by Siri Arts & Crafts.
+                </p>
+                <p class="footer-text">
+                  <a href="https://siriartsandcrafts.com" target="_blank">siriartsandcrafts.com</a> • Ongole, Andhra Pradesh, India
+                </p>
+                <p class="footer-text" style="color: #94a3b8; margin-top: 12px;">
+                  &copy; {{currentYear}} Siri Arts & Crafts. All rights reserved.
+                </p>
               </div>
             </td>
-            <td>{{this.quantity}}</td>
-            <td style="text-align: right">{{formatCurrency this.price}}</td>
           </tr>
-          {{/each}}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2" style="text-align: right; padding-top: 20px;">Subtotal:</td>
-            <td style="text-align: right; padding-top: 20px;">{{formatCurrency subtotal}}</td>
-          </tr>
-          <tr>
-            <td colspan="2" style="text-align: right;">Shipping:</td>
-            <td style="text-align: right;">{{formatCurrency shipping}}</td>
-          </tr>
-          <tr class="total-row">
-            <td colspan="2" style="text-align: right;">Total:</td>
-            <td style="text-align: right; color: #d4af37;">{{formatCurrency total}}</td>
-          </tr>
-        </tfoot>
-      </table>
-
-      <div class="order-details">
-        <h3>Shipping Details</h3>
-        <p>{{shippingAddress}}</p>
-      </div>
-
-      <center>
-        <a href="{{dashboardUrl}}" class="button">View Order Status</a>
-      </center>
-    </div>
-    <div class="footer">
-      &copy; {{currentYear}} Siri Arts & Crafts. All rights reserved.<br>
-      Authentic Indian Artistry & Elegance.
-    </div>
-  </div>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

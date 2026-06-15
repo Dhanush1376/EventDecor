@@ -1,19 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { SEO } from '../components/seo/SEO';
 
-import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { useWishlist } from '../context/WishlistContext';
-import { MandalaElement } from '../components/ui/MandalaElement';
-import { EventDetailSkeleton } from '../components/ui/Skeleton';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
-import { ShareButton } from '../components/ui/ShareButton';
 import { eventService, showcaseService, bookingService } from '../services/domainServices';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { LocationSelectorModal } from '../components/ui/LocationSelectorModal';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 
 import logger from '../utils/logger';
@@ -709,7 +701,7 @@ export function EventDetail() {
                           setActiveGalleryIndex(i);
                         }
                       }}
-                      className={`w-8 h-8 md:w-9 md:h-9 rounded-full backdrop-blur-md border transition-all duration-500 flex items-center justify-center font-display text-[13px] md:text-[14px] ${activeGalleryIndex === i ? 'bg-white border-white text-black shadow-lg scale-110' : 'bg-black/20 border-white/30 text-white/80 hover:bg-black/40 hover:border-white/50'}`}
+                      className={`w-8 h-8 md:w-9 md:h-9 rounded-full backdrop-blur-md border transition-all duration-500 flex items-center justify-center font-body text-[13px] md:text-[14px] ${activeGalleryIndex === i ? 'bg-white border-white text-black shadow-lg scale-110' : 'bg-black/20 border-white/30 text-white/80 hover:bg-black/40 hover:border-white/50'}`}
                     >
                       {i + 1}
                     </button>

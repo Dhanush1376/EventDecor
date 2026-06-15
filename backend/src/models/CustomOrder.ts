@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 
@@ -437,4 +437,7 @@ CustomOrderSchema.pre<ICustomOrder>('save', async function () {
 CustomOrderSchema.plugin(SoftDeletePlugin);
 CustomOrderSchema.plugin(ForensicAuditPlugin);
 
-export default mongoose.model<ICustomOrder, SoftDeleteModel<ICustomOrder>>('CustomOrder', CustomOrderSchema);
+export default mongoose.model<ICustomOrder, SoftDeleteModel<ICustomOrder>>(
+  'CustomOrder',
+  CustomOrderSchema,
+);

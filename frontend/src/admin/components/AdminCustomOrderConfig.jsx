@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { m as motion, AnimatePresence, Reorder } from 'framer-motion';
 import { customOrderService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { DynamicCustomOrderWizard } from '../../components/ui/DynamicCustomOrderWizard';
 
 export function AdminCustomOrderConfig() {
   const [config, setConfig] = useState({ types: [] });

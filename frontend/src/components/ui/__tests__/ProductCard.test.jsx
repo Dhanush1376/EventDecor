@@ -1,7 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { ProductCard } from '../ProductCard';
-import { BrowserRouter } from 'react-router-dom';
 
 // Mock dependencies
 vi.mock('../../../context/WishlistContext', () => ({

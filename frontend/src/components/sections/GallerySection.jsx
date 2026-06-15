@@ -1,14 +1,8 @@
 import { useRef, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { m as motion, useScroll, useTransform } from 'framer-motion';
+import { useScroll, useTransform } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { SectionWrapper } from '../layout/SectionWrapper';
-import { MandalaElement } from '../ui/MandalaElement';
-import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { galleryService } from '../../services/domainServices';
-import { CloudinaryImage } from '../ui/CloudinaryImage';
-import { GallerySkeleton } from '../ui/Skeleton';
 
 export function GallerySection() {
   const containerRef = useRef(null);

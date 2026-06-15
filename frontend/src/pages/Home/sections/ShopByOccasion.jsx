@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
-import { SectionHeader } from '../../../components/shared/SectionHeader';
-import { MandalaElement } from '../../../components/ui/MandalaElement';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
-import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 
 /**
  * Shop By Occasion / Event Types using real digital studio event types.

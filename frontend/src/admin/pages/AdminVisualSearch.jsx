@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
 import visualSearchService from '../../services/visualSearchService';
 import toast from 'react-hot-toast';
-import { fadeUp, stagger, PageHeader, SkeletonDashboard } from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -16,7 +15,6 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(
   CategoryScale,
@@ -69,14 +67,12 @@ export function AdminVisualSearch() {
 
   useEffect(() => {
     loadConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (activeTab === 'analytics' && !analytics) {
       loadAnalytics();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, analyticsDays]);
 
   const loadConfig = async () => {

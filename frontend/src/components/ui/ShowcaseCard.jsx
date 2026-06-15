@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { m as motion } from 'framer-motion';
-import { CloudinaryImage } from './CloudinaryImage';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
 export function ShowcaseCard({

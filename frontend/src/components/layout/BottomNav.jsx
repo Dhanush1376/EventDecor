@@ -1,5 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { prefetchManager } from '../../utils/prefetchManager';
@@ -27,7 +26,7 @@ export function BottomNav() {
     <motion.nav
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bottom-nav lg:hidden fixed bottom-2 left-2 right-2 z-[var(--z-overlay)] bg-[#F5F5F7] border-[0.5px] border-black/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full h-[60px] px-2 flex items-center justify-evenly select-none"
+      className="bottom-nav lg:hidden fixed bottom-2 left-2 right-2 z-[var(--z-overlay)] bg-white/10 backdrop-blur-2xl backdrop-saturate-150 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.3)] rounded-full h-[60px] px-2 flex items-center justify-evenly select-none"
     >
       {navItems.map((item) => {
         const active = item.isCart
@@ -39,20 +38,12 @@ export function BottomNav() {
             key={item.label || item.path}
             className="relative flex flex-col items-center justify-center"
           >
-            {active && (
-              <motion.div
-                layoutId="bottom-nav-active-pill"
-                className="absolute inset-0 bg-white rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.1),0_0_1px_rgba(0,0,0,0.2)] border-[0.5px] border-black/5 z-0"
-                transition={{ type: 'spring', bounce: 0.25, duration: 0.5 }}
-              />
-            )}
-
             {item.isCart ? (
               <button
                 onMouseEnter={() => prefetchManager.prefetchRoute('/cart', { kind: 'hover' })}
                 onClick={() => setIsCartOpen(true)}
                 aria-label="Open shopping bag"
-                className={`relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all ${!active ? 'hover:bg-black/5' : ''}`}
+                className="relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all"
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
                 {cartCount > 0 && <CartBadge count={cartCount} />}
@@ -61,7 +52,7 @@ export function BottomNav() {
               <button
                 onClick={item.onClick}
                 aria-label={`Open ${item.label}`}
-                className={`relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all hover:bg-black/5`}
+                className="relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all"
               >
                 <NavIcon active={false} icon={item.icon} label={item.label} />
               </button>
@@ -71,7 +62,7 @@ export function BottomNav() {
                 onMouseEnter={() => prefetchManager.prefetchRoute(item.path, { kind: 'hover' })}
                 aria-label={`Navigate to ${item.label}`}
                 aria-current={active ? 'page' : undefined}
-                className={`relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all ${!active ? 'hover:bg-black/5' : ''}`}
+                className="relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all"
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
               </Link>

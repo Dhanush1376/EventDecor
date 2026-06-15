@@ -36,7 +36,6 @@ export interface EmailPayload {
   headers?: Record<string, string>;
 }
 
-
 /**
  * Send email via Brevo HTTP API
  */
@@ -44,7 +43,7 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) throw new Error('BREVO_API_KEY missing');
 
-  const senderEmail = process.env.SMTP_FROM_EMAIL || 'no-reply@siriartsandcrafts.com';
+  const senderEmail = process.env.SMTP_FROM_EMAIL || 'noreply@siriartsandcrafts.com';
   const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
 
   const body: any = {
@@ -59,15 +58,18 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
   }
 
   if (payload.attachments && payload.attachments.length > 0) {
-    body.attachment = payload.attachments.map(a => ({
+    body.attachment = payload.attachments.map((a) => ({
       name: a.filename,
-      content: typeof a.content === 'string' ? Buffer.from(a.content).toString('base64') : a.content.toString('base64')
+      content:
+        typeof a.content === 'string'
+          ? Buffer.from(a.content).toString('base64')
+          : a.content.toString('base64'),
     }));
   }
 
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
-    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'api-key': apiKey },
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'api-key': apiKey },
     body: JSON.stringify(body),
   });
 
@@ -95,7 +97,9 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
 
   if (!cachedTransporter) {
     cachedTransporter = nodemailer.createTransport({
-      host: smtpHost, port: smtpPort, secure: smtpPort === 465,
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
       auth: { user: smtpUser, pass: smtpPass },
     });
   }
@@ -111,7 +115,7 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
     subject: payload.subject,
     html: payload.html,
     headers: payload.headers,
-    attachments: payload.attachments
+    attachments: payload.attachments,
   });
 
   logger.info(`[SMTP SUCCESS] Email sent to ${payload.to}. MessageId: ${info.messageId}`);
@@ -125,18 +129,18 @@ export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: str
   const errors: string[] = [];
 
   if (process.env.BREVO_API_KEY) {
-    try { 
-      return await sendViaBrevo(payload); 
-    } catch (err: any) { 
+    try {
+      return await sendViaBrevo(payload);
+    } catch (err: any) {
       logger.error(`Brevo failed: ${err.message}`);
       errors.push(`Brevo: ${err.message}`);
     }
   }
 
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    try { 
-      return await sendViaSMTP(payload); 
-    } catch (err: any) { 
+    try {
+      return await sendViaSMTP(payload);
+    } catch (err: any) {
       logger.error(`SMTP failed: ${err.message}`);
       errors.push(`SMTP: ${err.message}`);
     }
@@ -147,7 +151,9 @@ export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: str
     const nodemailer = require('nodemailer');
     const testAccount = await nodemailer.createTestAccount();
     const transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email', port: 587, secure: false,
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
       auth: { user: testAccount.user, pass: testAccount.pass },
     });
     const info = await transporter.sendMail({
@@ -155,7 +161,7 @@ export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: str
       to: payload.to,
       subject: payload.subject,
       html: payload.html,
-      attachments: payload.attachments
+      attachments: payload.attachments,
     });
     logger.info(`[ETHEREAL] Test email preview URL: ${nodemailer.getTestMessageUrl(info)}`);
     return { messageId: info.messageId };

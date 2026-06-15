@@ -1,5 +1,3 @@
-import { m as motion } from 'framer-motion';
-
 export default function ProfileTab({
   profileForm,
   setProfileForm,

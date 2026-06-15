@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function Skeleton({ className = '', variant = 'rect', delay = 0 }) {
   const variants = {
     rect: 'rounded-2xl',

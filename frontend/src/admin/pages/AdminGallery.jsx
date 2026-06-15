@@ -1,19 +1,11 @@
 import { useState, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { galleryService, productService } from '../../services/domainServices';
 import { handleImageError } from '../../utils/imageUtils';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import {
-  PageHeader,
-  FilterBar,
-  EmptyState,
-  AdminSkeleton,
-  fadeUp,
-  stagger,
-} from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminGallery() {
   const navigate = useNavigate();

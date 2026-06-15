@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -22,7 +21,9 @@ const seedConfig = async () => {
   }
 
   if (process.env.I_KNOW_THIS_WIPES_DATA !== 'true') {
-    console.error('❌ FATAL: Must set I_KNOW_THIS_WIPES_DATA=true to authorize mass data modification.');
+    console.error(
+      '❌ FATAL: Must set I_KNOW_THIS_WIPES_DATA=true to authorize mass data modification.',
+    );
     process.exit(1);
   }
 

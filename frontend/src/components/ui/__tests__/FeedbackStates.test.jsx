@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { EmptyState, ErrorState } from '../FeedbackStates';
 
 describe('FeedbackStates Component Suites', () => {
   describe('EmptyState Component', () => {

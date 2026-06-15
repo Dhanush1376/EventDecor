@@ -1,5 +1,4 @@
 import React from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 import { useCheckout } from './CheckoutProvider';

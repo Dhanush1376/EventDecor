@@ -1,16 +1,8 @@
 import { useState, useMemo } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
-import {
-  PageHeader,
-  FilterBar,
-  formatCurrency,
-  fadeUp,
-  stagger,
-  EmptyState,
-} from '../components/AdminUIKit';
+import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminCustomers() {
   const navigate = useNavigate();

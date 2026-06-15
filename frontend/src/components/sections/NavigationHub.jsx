@@ -1,10 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { m as motion, useScroll, useTransform } from 'framer-motion';
-import { MandalaElement } from '../ui/MandalaElement';
-import { CloudinaryImage } from '../ui/CloudinaryImage';
+import { useNavigate } from 'react-router-dom';
+import { useScroll, useTransform } from 'framer-motion';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
-import { NavigationHubSkeleton } from '../ui/Skeleton';
 
 // Removed static fallback arrays
 

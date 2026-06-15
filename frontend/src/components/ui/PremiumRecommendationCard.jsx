@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCartDispatch } from '../../context/CartContext';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
-import { CloudinaryImage } from './CloudinaryImage';
 
 export const PremiumRecommendationCard = React.memo(function PremiumRecommendationCard({
   item,
@@ -41,7 +39,7 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
   const oldPrice = item.oldPrice;
   const score = item.score;
   const source = item.source;
-  const targetType = item.targetType || 'product';
+  const targetType = item.targetType || item.type || 'product';
 
   const link =
     targetType === 'event'

@@ -1,10 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { SEO } from '../components/seo/SEO';
 import { bookingService } from '../services/domainServices';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
-import { DashboardSkeleton } from '../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 import logger from '../utils/logger';
@@ -236,7 +231,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
             </div>
             <Link
               to="/events"
-              className="bg-black text-white px-6 py-2.5 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors self-start md:self-auto flex items-center gap-1.5"
+              className="bg-black text-white px-6 py-2.5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors self-start md:self-auto flex items-center gap-1.5"
             >
               Browse Events & Setups
               <span className="material-symbols-outlined text-[14px] normal-case">add</span>
@@ -250,7 +245,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
               {[...Array(2)].map((_, i) => (
                 <div
                   key={i}
-                  className="p-5 rounded-2xl bg-white border border-outline-variant/10 space-y-4"
+                  className="p-5 rounded-lg bg-surface-bright border border-outline-variant/30 shadow-2xs space-y-4"
                 >
                   <div className="flex justify-between items-center">
                     <div className="h-4 w-24 bg-stone-100 rounded" />
@@ -267,7 +262,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
           )
         ) : bookings.length === 0 ? (
           /* Empty Curation Workspace state */
-          <div className="text-center py-20 bg-white rounded-3xl border border-black/5 shadow-xl max-w-xl mx-auto px-6 space-y-6">
+          <div className="text-center py-20 bg-surface-bright rounded-lg border border-outline-variant/30 shadow-2xs max-w-xl mx-auto px-6 space-y-6">
             <div className="w-20 h-20 bg-primary/5 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-[36px] normal-case">event_busy</span>
             </div>
@@ -277,12 +272,17 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                 You have no active event setups. Explore our collections today.
               </p>
             </div>
-            <Link
-              to="/events"
-              className="inline-block bg-primary text-white px-8 py-3 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold shadow-lg hover:shadow-primary/10 transition-all"
-            >
-              Browse Events & Setups
-            </Link>
+            <div className="flex justify-center">
+              <Link
+                to="/events"
+                className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary cursor-pointer"
+              >
+                <span>Browse Events & Setups</span>
+                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
+                  arrow_forward
+                </span>
+              </Link>
+            </div>
           </div>
         ) : (
           /* Main Workspace Dashboard */
@@ -300,10 +300,10 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                       <div
                         key={b._id || b.id}
                         onClick={() => handleSelectBooking(b)}
-                        className={`flex-shrink-0 min-w-[240px] md:min-w-[280px] p-4 rounded-2xl border text-left cursor-pointer transition-all ${
+                        className={`flex-shrink-0 min-w-[240px] md:min-w-[280px] p-4 rounded-lg border text-left cursor-pointer transition-all ${
                           isSelected
-                            ? 'bg-white border-primary shadow-md ring-1 ring-primary/20 scale-[1.01]'
-                            : 'border-black/5 hover:border-black/10 bg-white/70'
+                            ? 'bg-surface-bright border-primary shadow-2xs ring-1 ring-primary/20 scale-[1.01]'
+                            : 'border-outline-variant/30 hover:border-outline-variant bg-surface-bright/70'
                         }`}
                       >
                         <div className="space-y-2">
@@ -341,7 +341,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                 {/* Left Column: Timelines, Logistics, Invoices & Quotations */}
                 <div className="lg:col-span-8 space-y-6">
                   {/* Visual Setup/Inquiry Details */}
-                  <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
+                  <div className="bg-surface-bright rounded-lg border border-outline-variant/30 p-5 space-y-5 shadow-2xs relative overflow-hidden text-[11px]">
                     <div className="flex flex-col md:flex-row justify-between items-start border-b border-black/5 pb-4 gap-4 md:gap-0">
                       <div>
                         <span className="font-label text-[9px] text-primary uppercase tracking-[0.2em] font-bold block mb-1">
@@ -397,29 +397,29 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                           {selectedBooking.timing?.start} - {selectedBooking.timing?.end}
                         </span>
                       </div>
-                      <div className="space-y-1.5 col-span-2 sm:col-span-3 lg:col-span-2 bg-[#FAF6F0] p-4 md:p-5 rounded-2xl border border-[#C4A87C]/15 relative overflow-hidden">
-                        <span className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-1">
+                      <div className="space-y-1.5 col-span-2 sm:col-span-3 lg:col-span-2 bg-primary/5 p-4 rounded-lg border border-primary/10 relative overflow-hidden">
+                        <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block mb-1">
                           Setup Destination Address
                         </span>
                         {selectedBooking.venue?.name && (
-                          <span className="font-display text-xs text-black font-bold flex items-center gap-1.5 leading-none">
+                          <span className="font-display text-xs text-on-surface font-bold flex items-center gap-1.5 leading-none">
                             <span className="material-symbols-outlined text-primary text-[16px]">
                               storefront
                             </span>
                             {selectedBooking.venue.name}
                           </span>
                         )}
-                        <span className="font-body text-[11px] text-stone-700 font-light block leading-relaxed">
+                        <span className="font-body text-[11px] text-secondary font-light block leading-relaxed">
                           {selectedBooking.venue?.address || 'Address pending finalization'}
                         </span>
                         <div className="flex flex-wrap items-center gap-3 pt-1">
                           {selectedBooking.venue?.city && (
-                            <span className="font-body text-[9px] text-stone-500 font-semibold bg-stone-100 px-2 py-0.5 rounded-full">
+                            <span className="font-body text-[9px] text-secondary font-semibold bg-surface-container px-2 py-0.5 rounded-full">
                               City: {selectedBooking.venue.city}
                             </span>
                           )}
                           {selectedBooking.venue?.pincode && (
-                            <span className="font-body text-[9px] text-stone-500 font-semibold bg-stone-100 px-2 py-0.5 rounded-full">
+                            <span className="font-body text-[9px] text-secondary font-semibold bg-surface-container px-2 py-0.5 rounded-full">
                               Pincode: {selectedBooking.venue.pincode}
                             </span>
                           )}
@@ -455,7 +455,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                   {(selectedBooking.setupTiming ||
                     selectedBooking.pickupTiming ||
                     selectedBooking.assignedTeam?.length > 0) && (
-                    <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-6 shadow-xl">
+                    <div className="bg-surface-bright rounded-lg border border-outline-variant/30 p-5 space-y-5 shadow-2xs text-[11px]">
                       <h3 className="font-display text-lg text-black font-bold border-b border-black/5 pb-2">
                         Logistics & Crew Roster
                       </h3>
@@ -508,7 +508,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                               {selectedBooking.assignedTeam.map((team, idx) => (
                                 <div
                                   key={idx}
-                                  className="p-3 bg-stone-50 border border-black/5 rounded-xl flex items-center justify-between"
+                                  className="p-3 bg-surface-container border border-outline-variant/20 rounded-lg flex items-center justify-between"
                                 >
                                   <div>
                                     <span className="font-body text-xs text-black font-bold block">
@@ -538,8 +538,8 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                   )}
 
                   {/* Compact Modern Progress Bar & Highlighted Active Phase */}
-                  <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-5 shadow-xl">
-                    <div className="flex justify-between items-center border-b border-black/5 pb-3">
+                  <div className="bg-surface-bright rounded-lg border border-outline-variant/30 p-5 space-y-5 shadow-2xs text-[11px]">
+                    <div className="flex justify-between items-center border-b border-outline-variant/20 pb-3">
                       <div>
                         <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block mb-0.5">
                           TIMELINE STATUS
@@ -571,7 +571,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                     </div>
 
                     {/* Highlighted Current Step */}
-                    <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 flex items-start gap-3">
+                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 flex items-start gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 mt-0.5 animate-pulse">
                         <span className="material-symbols-outlined text-[16px]">
                           hourglass_empty
@@ -592,7 +592,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                       <button
                         type="button"
                         onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
-                        className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl border border-black/5 text-stone-850 hover:bg-stone-50 transition-colors font-label text-[10px] uppercase tracking-wider font-bold"
+                        className="flex items-center justify-between w-full px-4 py-2.5 rounded-lg border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-colors font-label text-[10px] uppercase tracking-wider font-bold"
                       >
                         <span>
                           {isTimelineExpanded
@@ -613,7 +613,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="overflow-hidden mt-4 pl-4 border-l border-black/5 space-y-4 ml-2"
+                            className="overflow-hidden mt-4 pl-4 border-l border-outline-variant/30 space-y-4 ml-2"
                           >
                             {STATUS_STEPS.map((step, idx) => {
                               const isPast = currentStatusIndex > idx;
@@ -626,7 +626,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                                         ? 'bg-primary border-primary scale-110 shadow-md'
                                         : isPast
                                           ? 'bg-primary/20 border-primary'
-                                          : 'bg-white border-black/10'
+                                          : 'bg-surface-bright border-outline-variant/30'
                                     }`}
                                   >
                                     {isPast && (
@@ -637,7 +637,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                                   </div>
                                   <div className="space-y-0.5">
                                     <h4
-                                      className={`font-display text-[12px] font-bold ${isCurrent ? 'text-primary font-bold' : isPast ? 'text-black/60 font-semibold' : 'text-black/35 font-normal'}`}
+                                      className={`font-body text-[12px] font-bold ${isCurrent ? 'text-primary font-bold' : isPast ? 'text-black/60 font-semibold' : 'text-black/35 font-normal'}`}
                                     >
                                       {step.label}
                                     </h4>
@@ -655,8 +655,8 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                   </div>
 
                   {/* Financial Quotation Summary details */}
-                  <div className="bg-white rounded-2xl md:rounded-3xl border border-black/5 p-4 md:p-8 space-y-6 shadow-xl">
-                    <div className="flex flex-col md:flex-row justify-between md:items-center border-b border-black/5 pb-3 gap-2">
+                  <div className="bg-surface-bright rounded-lg border border-outline-variant/30 p-5 space-y-5 shadow-2xs text-[11px]">
+                    <div className="flex flex-col md:flex-row justify-between md:items-center border-b border-outline-variant/20 pb-3 gap-2">
                       <h3 className="font-display text-lg text-black font-bold">
                         Quotation Estimate Details
                       </h3>
@@ -705,21 +705,21 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                         </div>
                       ))}
 
-                      <div className="border-t border-black/5 pt-4 flex justify-between items-end gap-3">
-                        <span className="font-display text-sm text-black font-bold leading-snug">
+                      <div className="border-t border-outline-variant/20 pt-4 flex justify-between items-end gap-3">
+                        <span className="font-display text-sm text-on-surface font-bold leading-snug">
                           Total Estimate Contract Price:
                         </span>
-                        <span className="font-display text-lg text-black font-bold italic shrink-0">
+                        <span className="font-display text-lg text-on-surface font-bold italic shrink-0">
                           ₹{selectedBooking.pricing?.totalPrice?.toLocaleString('en-IN')}
                         </span>
                       </div>
 
-                      <div className="border-t border-black/5 pt-4 flex justify-between items-end gap-3">
+                      <div className="border-t border-outline-variant/20 pt-4 flex justify-between items-end gap-3">
                         <div className="space-y-0.5">
-                          <span className="font-display text-[11px] text-stone-900 font-bold block leading-snug">
+                          <span className="font-display text-[11px] text-on-surface font-bold block leading-snug">
                             Milestone Deposit Required:
                           </span>
-                          <span className="font-body text-[10px] text-black/40 block">
+                          <span className="font-body text-[10px] text-secondary block">
                             25% to confirm schedules
                           </span>
                         </div>
@@ -728,16 +728,16 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                         </span>
                       </div>
 
-                      <div className="border-t border-black/5 pt-4 flex justify-between items-end gap-3">
+                      <div className="border-t border-outline-variant/20 pt-4 flex justify-between items-end gap-3">
                         <div className="space-y-0.5">
-                          <span className="font-display text-[11px] text-stone-900 font-bold block leading-snug">
+                          <span className="font-display text-[11px] text-on-surface font-bold block leading-snug">
                             Pending Balance Remaining:
                           </span>
-                          <span className="font-body text-[10px] text-black/40 block capitalize">
+                          <span className="font-body text-[10px] text-secondary block capitalize">
                             Payment Status: {selectedBooking.pricing?.paymentStatus}
                           </span>
                         </div>
-                        <span className="font-display text-lg text-black font-bold italic shrink-0">
+                        <span className="font-display text-lg text-on-surface font-bold italic shrink-0">
                           ₹{selectedBooking.pricing?.pendingBalance?.toLocaleString('en-IN')}
                         </span>
                       </div>
@@ -745,16 +745,16 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                       {/* Action buttons on Quote status */}
                       {selectedBooking.status === 'quotation_sent' &&
                         !selectedBooking.clientApproved && (
-                          <div className="grid grid-cols-2 gap-4 pt-6 border-t border-black/5 mt-4">
+                          <div className="grid grid-cols-2 gap-4 pt-6 border-t border-outline-variant/20 mt-4">
                             <button
                               onClick={() => handleApproveQuote(false)}
-                              className="py-3 rounded-lg border border-stone-950/20 text-stone-800 font-label text-[10px] uppercase tracking-widest font-bold hover:bg-stone-50 transition-colors"
+                              className="py-2.5 rounded-full border border-outline-variant text-secondary font-label text-[9px] uppercase tracking-widest font-bold hover:bg-surface-container transition-colors"
                             >
                               Request Revisions
                             </button>
                             <button
                               onClick={() => handleApproveQuote(true)}
-                              className="bg-black text-white py-3 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-lg"
+                              className="bg-black text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-lg"
                             >
                               Approve Quotation
                             </button>
@@ -773,7 +773,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                             );
                             setIsPaymentModalOpen(true);
                           }}
-                          className="w-full mt-4 bg-primary text-white py-3 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold shadow-lg hover:shadow-primary/10 transition-all flex items-center justify-center gap-1.5"
+                          className="w-full mt-4 bg-primary text-white py-2.5 rounded-full font-label text-[9px] uppercase tracking-widest font-bold shadow-md hover:shadow-primary/10 transition-all flex items-center justify-center gap-1.5"
                         >
                           Lodge Milestone Payment
                           <span className="material-symbols-outlined text-[16px]">
@@ -786,8 +786,8 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                 </div>
 
                 {/* Right Column: Creative design Live Studio Chat thread — desktop only */}
-                <div className="hidden lg:flex lg:col-span-4 bg-white rounded-3xl border border-black/5 p-4 md:p-6 shadow-xl flex-col h-[600px] lg:sticky lg:top-24">
-                  <div className="border-b border-black/5 pb-3 shrink-0 flex items-center justify-between">
+                <div className="hidden lg:flex lg:col-span-4 bg-surface-bright border border-outline-variant/30 rounded-lg p-5 shadow-2xs flex-col h-[600px] lg:sticky lg:top-24 text-[11px]">
+                  <div className="border-b border-outline-variant/20 pb-3 shrink-0 flex items-center justify-between">
                     <div>
                       <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">
                         LIVE WORKSPACE
@@ -844,7 +844,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                       placeholder="Discuss color swatches, venue details..."
                       value={chatMessage}
                       onChange={(e) => setChatMessage(e.target.value)}
-                      className="flex-1 bg-[#FAF9F6] border border-black/5 px-4 py-2.5 rounded-lg text-xs outline-none focus:border-primary/45 transition-colors"
+                      className="flex-1 bg-surface-container-low border border-outline-variant/30 px-4 py-2.5 rounded-lg text-xs outline-none focus:border-primary transition-colors text-on-surface font-semibold"
                       required
                     />
                     <button
@@ -1002,20 +1002,20 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-[24px] border border-black/5 shadow-2xl p-6 md:p-8 max-w-md w-full relative z-10 space-y-6"
+              className="bg-surface-bright rounded-lg border border-outline-variant/30 shadow-2xl p-6 md:p-8 max-w-md w-full relative z-10 space-y-6"
             >
-              <div className="flex justify-between items-start border-b border-black/5 pb-3">
+              <div className="flex justify-between items-start border-b border-outline-variant/20 pb-3">
                 <div className="space-y-0.5">
                   <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold">
                     MILESTONE TRANSACTION
                   </span>
-                  <h3 className="font-display text-lg text-black font-bold">
+                  <h3 className="font-display text-lg text-on-surface font-bold">
                     Lodge UPI/Credit Milestone Payment
                   </h3>
                 </div>
                 <button
                   onClick={() => setIsPaymentModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center active:scale-90"
+                  className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:scale-90"
                 >
                   <span className="material-symbols-outlined text-[18px]">close</span>
                 </button>
@@ -1023,7 +1023,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
 
               <form onSubmit={handleProcessPayment} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                  <label className="font-label text-[8px] uppercase tracking-widest text-secondary font-bold block">
                     Payment Amount (₹)
                   </label>
                   <input
@@ -1031,29 +1031,29 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
                     placeholder="Enter amount"
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-black/5 bg-[#fbf9f6] text-xs font-semibold focus:border-primary outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-outline-variant/30 bg-surface-container-low text-xs font-semibold focus:border-primary outline-none"
                     required
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                  <label className="font-label text-[8px] uppercase tracking-widest text-secondary font-bold block">
                     Payment Stage Description
                   </label>
                   <input
                     type="text"
                     value={paymentNote}
                     onChange={(e) => setPaymentNote(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-black/5 bg-[#fbf9f6] text-xs focus:border-primary outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-outline-variant/30 bg-surface-container-low text-xs focus:border-primary outline-none"
                     required
                   />
                 </div>
 
-                <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 space-y-1 text-[11px] leading-relaxed">
+                <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 space-y-1 text-[11px] leading-relaxed">
                   <span className="font-display font-bold text-primary block">
                     💳 Gilded UPI gateway simulation:
                   </span>
-                  <p className="text-stone-600">
+                  <p className="text-secondary">
                     Clicking below will simulate a secure UPI transaction callback and log credit
                     milestones directly into your Siri Arts & Crafts workspace ledger.
                   </p>
@@ -1061,7 +1061,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
 
                 <button
                   type="submit"
-                  className="w-full bg-black text-white py-3.5 rounded-lg font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-lg"
+                  className="w-full bg-black text-white py-2.5 rounded-full font-label text-[9px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-md"
                 >
                   Confirm simulated deposit
                 </button>

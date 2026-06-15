@@ -1,8 +1,6 @@
-import { Suspense, lazy } from 'react';
-import { SEO } from '../components/seo/SEO';
-import { CheckoutProvider, useCheckout } from '../checkout/CheckoutProvider';
+import { lazy } from 'react';
+import { useCheckout } from '../checkout/CheckoutProvider';
 import toast from 'react-hot-toast';
-import { CheckoutSidebarSkeleton, CheckoutStepSkeleton } from '../components/ui/Skeleton';
 
 const CheckoutAddressStep = lazy(() => import('../checkout/CheckoutAddressStep'));
 const CheckoutPaymentStep = lazy(() => import('../checkout/CheckoutPaymentStep'));
@@ -13,7 +11,6 @@ const CheckoutCustomizationStep = lazy(() =>
     default: m.CheckoutCustomizationStep,
   })),
 );
-import { CheckoutSteps } from '../components/ui/CheckoutSteps';
 
 function StepFallback({ mode = 'address' }) {
   return <CheckoutStepSkeleton mode={mode} />;

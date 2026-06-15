@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { couponService } from '../services/domainServices';
 import { fadeUp, staggerContainer } from '../animations/variants';
-import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
 
 export function Coupons() {

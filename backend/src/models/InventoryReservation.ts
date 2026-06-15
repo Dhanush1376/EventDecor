@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
 export interface IInventoryReservation extends ISoftDeleted {
@@ -46,8 +46,8 @@ import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 InventoryReservationSchema.plugin(ForensicAuditPlugin);
 InventoryReservationSchema.plugin(SoftDeletePlugin);
 
-const InventoryReservation = mongoose.model<IInventoryReservation, SoftDeleteModel<IInventoryReservation>>(
-  'InventoryReservation',
-  InventoryReservationSchema,
-);
+const InventoryReservation = mongoose.model<
+  IInventoryReservation,
+  SoftDeleteModel<IInventoryReservation>
+>('InventoryReservation', InventoryReservationSchema);
 export default InventoryReservation;

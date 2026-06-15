@@ -1,9 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { SectionWrapper } from '../layout';
-import { RecommendationCarousel } from '../ui/RecommendationCarousel';
-import { ProductCard } from '../ui/ProductCard';
 import { recommendationService } from '../../services/recommendationService';
 import logger from '../../utils/logger';
 

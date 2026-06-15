@@ -1,5 +1,3 @@
-import { m as motion, AnimatePresence } from 'framer-motion';
-
 export function DraftStatusIndicator({ status, lastSavedAt }) {
   // status: 'idle' | 'saving' | 'saved' | 'unsaved' | 'error'
 

@@ -1,7 +1,3 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, Calendar, User } from 'lucide-react';
-import { LazyImage } from '../ui/LazyImage';
-
 export function BlogCard({ post, featured = false }) {
   if (!post) return null;
 

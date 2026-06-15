@@ -1,7 +1,4 @@
-import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import Barcode from 'react-barcode';
-import { OptimizedImage } from '../ui/OptimizedImage';
 
 export default function OrdersTab({
   orderFilter,

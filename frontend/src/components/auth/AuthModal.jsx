@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/domainServices';
-import { MandalaElement } from '../ui/MandalaElement';
 import toast from 'react-hot-toast';
 
 export function AuthModal() {

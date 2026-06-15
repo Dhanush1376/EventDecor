@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 import logger from '../../utils/logger';

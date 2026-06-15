@@ -49,7 +49,13 @@ export class OrderQueryService {
    */
   static async getMyOrders(userId: string, query: any) {
     const { page, limit, skip } = getPaginationOptions(query);
-    const filter = { user: userId };
+    const filter: any = {
+      user: userId,
+      $or: [
+        { paymentMethod: 'cod' },
+        { paymentStatus: { $nin: ['pending', 'processing', 'failed'] } },
+      ],
+    };
 
     const [orders, total] = await Promise.all([
       Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),

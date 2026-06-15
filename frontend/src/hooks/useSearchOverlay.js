@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAutocomplete, useTrendingSearches } from './useSearchQueries';
+import { useAutocomplete, useTrendingSearches, useDiscoveryData } from './useSearchQueries';
 
 const RECENT_SEARCHES_KEY = 'siri_recent_searches';
 const MAX_RECENT = 8;
@@ -37,11 +37,28 @@ export function useSearchOverlay() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Fetch trending searches via React Query
-  const trendingQuery = useTrendingSearches({ limit: 8, enabled: isOpen });
+  // Fetch full discovery data
+  const discoveryQuery = useDiscoveryData({ enabled: isOpen && !debouncedQuery.trim() });
+
+  // Extract components from discovery data
+  const discoveryData = useMemo(() => {
+    return (
+      discoveryQuery.data || {
+        trending: [],
+        popularProducts: [],
+        newArrivals: [],
+        eventCollections: [],
+      }
+    );
+  }, [discoveryQuery.data]);
+
+  // Fallback for trending searches if discovery data is not ready
+  const trendingQuery = useTrendingSearches({ limit: 8, enabled: isOpen && !discoveryQuery.data });
   const trendingSearches = useMemo(() => {
-    return trendingQuery.data?.searches || [];
-  }, [trendingQuery.data]);
+    return discoveryData.trending.length > 0
+      ? discoveryData.trending
+      : trendingQuery.data?.searches || [];
+  }, [discoveryData.trending, trendingQuery.data]);
 
   // Fetch autocomplete suggestions via React Query
   const autocompleteQuery = useAutocomplete(debouncedQuery, {
@@ -154,7 +171,14 @@ export function useSearchOverlay() {
       } else if (suggestion.type === 'gallery') {
         navigate(`/gallery/${suggestion.id}`);
       } else {
-        navigate(`/collections?search=${encodeURIComponent(suggestion.title)}`);
+        const currentPath = window.location.pathname;
+        if (currentPath.startsWith('/events')) {
+          navigate(`/events?search=${encodeURIComponent(suggestion.title)}`);
+        } else if (currentPath.startsWith('/gallery')) {
+          navigate(`/gallery?search=${encodeURIComponent(suggestion.title)}`);
+        } else {
+          navigate(`/collections?search=${encodeURIComponent(suggestion.title)}`);
+        }
       }
 
       handleClose();
@@ -169,7 +193,16 @@ export function useSearchOverlay() {
       if (q.length < 1) return;
 
       saveRecentSearch(q);
-      navigate(`/collections?search=${encodeURIComponent(q)}`);
+
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/events')) {
+        navigate(`/events?search=${encodeURIComponent(q)}`);
+      } else if (currentPath.startsWith('/gallery')) {
+        navigate(`/gallery?search=${encodeURIComponent(q)}`);
+      } else {
+        navigate(`/collections?search=${encodeURIComponent(q)}`);
+      }
+
       handleClose();
     },
     [navigate, query, saveRecentSearch, handleClose],
@@ -221,6 +254,7 @@ export function useSearchOverlay() {
     suggestions,
     predictedCategories,
     correctedQuery,
+    discoveryData,
     trendingSearches,
     recentSearches,
     loading,

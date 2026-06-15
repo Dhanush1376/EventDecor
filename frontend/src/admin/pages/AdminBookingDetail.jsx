@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { m as motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { bookingService, userService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import { fadeUp, stagger, SkeletonDashboard } from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 import logger from '../../utils/logger';
 import { getErrorMessage } from '../../utils/errorHelpers';
 

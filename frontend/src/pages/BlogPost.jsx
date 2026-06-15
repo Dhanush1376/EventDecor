@@ -1,10 +1,5 @@
 import { useMemo } from 'react';
-import { useParams, Navigate, Link } from 'react-router-dom';
-import { Calendar, User, ArrowLeft, Share2 } from 'lucide-react';
-import { SEO } from '../components/seo/SEO';
-import { LazyImage } from '../components/ui/LazyImage';
-import { FAQAccordion } from '../components/seo/FAQAccordion';
-import { BlogCard } from '../components/blog/BlogCard';
+import { useParams } from 'react-router-dom';
 import fallbackBlogsData from '../content/blogs.json';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 

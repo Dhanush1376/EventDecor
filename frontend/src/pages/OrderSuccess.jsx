@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-import { SEO } from '../components/seo/SEO';
 import { handleImageError } from '../utils/imageUtils';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
-import { InvoiceTemplate, OrderSuccessSkeleton, OptimizedImage } from '../components/ui';
 import { orderService, rentalService } from '../services/domainServices';
 
 import logger from '../utils/logger';

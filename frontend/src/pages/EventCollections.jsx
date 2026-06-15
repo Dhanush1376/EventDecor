@@ -1,22 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  ProductCard,
-  QuickViewModal,
-  CustomDropdown,
-  SearchBar,
-  CategoryTabs,
-  Pagination,
-  EventFilterPanel,
-  PromoBanner,
-  Skeleton,
-  OptimizedImage,
-} from '../components/ui';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
 import { eventService, productService, couponService } from '../services/domainServices';
-import { SEO } from '../components/seo/SEO';
-import { MandalaElement } from '../components/ui/MandalaElement';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { handleImageError } from '../utils/imageUtils';
 import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
@@ -468,15 +453,15 @@ export function EventCollections() {
       <nav
         ref={navRef}
         className={`sticky z-[49] -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${
-          isSticky ? 'px-0' : 'px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto'
+          isSticky ? 'px-0' : 'px-3 md:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
         <div
           className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
             isSticky
-              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-margin-mobile md:px-margin-desktop w-full max-w-none'
-              : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 lg:p-2 w-full max-w-max-width'
+              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-3 md:px-margin-desktop w-full max-w-none'
+              : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 md:p-4 lg:p-2 w-full max-w-max-width'
           }`}
         >
           {/* Search Bar & Mobile Filter Toggle */}
@@ -488,8 +473,20 @@ export function EventCollections() {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
+                onCameraClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent('open-global-search', { detail: { mode: 'visual' } }),
+                  );
+                }}
+                onClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent('open-global-search', {
+                      detail: { mode: 'text', query: searchQuery },
+                    }),
+                  );
+                }}
                 placeholder="Search masteries..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
               />
             </div>
             {/* Mobile/Tablet Filter Toggle */}

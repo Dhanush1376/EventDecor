@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import { AdminToggle, fadeUp, stagger } from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 import { createSafeHtml } from '../../utils/sanitize';
 import logger from '../../utils/logger';
 import { getErrorMessage } from '../../utils/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 export function AdminCampaignCreate() {
   const navigate = useNavigate();

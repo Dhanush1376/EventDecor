@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { GalleryCard } from '../components/gallery/GalleryCard';
-import { VirtualizedMasonry } from '../components/gallery/VirtualizedMasonry';
-import { galleryService, productService } from '../services/domainServices';
-import { SearchBar, CategoryTabs, CustomDropdown } from '../components/ui';
-import { SEO } from '../components/seo/SEO';
-import { MandalaElement } from '../components/ui/MandalaElement';
-import { GallerySlideshow } from '../components/gallery/GallerySlideshow';
-import { GallerySkeleton } from '../components/ui/Skeleton';
-import { FilterPanel } from '../components/ui/FilterPanel';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { galleryService } from '../services/domainServices';
 import { useQuery } from '@tanstack/react-query';
 import { useInfiniteGallery, useGalleryDynamicFilters } from '../hooks/useInfiniteGallery';
 import { useScrollDirection } from '../hooks/useScrollDirection';
@@ -18,10 +9,12 @@ import toast from 'react-hot-toast';
 
 export function GalleryInner() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchParam = searchParams.get('search') || '';
   const [activeCategory, setActiveCategory] = useState('All');
   const [filters, setFilters] = useState({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParam);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [filterType, setFilterType] = useState('all'); // all, inspiration, product
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -43,6 +36,34 @@ export function GalleryInner() {
     }, 350);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Sync internal search query state if URL search query changes
+  useEffect(() => {
+    const s = searchParams.get('search') || '';
+    if (s !== searchQuery && s !== debouncedSearch) {
+      setSearchQuery(s);
+      setDebouncedSearch(s);
+    }
+  }, [searchParams]);
+
+  // Sync debounced search to URL search query param
+  useEffect(() => {
+    const currentSearchInUrl = searchParams.get('search') || '';
+    if (debouncedSearch !== currentSearchInUrl) {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (debouncedSearch) {
+            params.set('search', debouncedSearch);
+          } else {
+            params.delete('search');
+          }
+          return params;
+        },
+        { replace: true },
+      );
+    }
+  }, [debouncedSearch, setSearchParams, searchParams]);
 
   const queryParams = {
     category: activeCategory,
@@ -267,15 +288,15 @@ export function GalleryInner() {
       <nav
         ref={navRef}
         className={`sticky z-[49] -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${
-          isSticky ? 'px-0' : 'px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto'
+          isSticky ? 'px-0' : 'px-3 md:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
         <div
           className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
             isSticky
-              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-margin-mobile md:px-margin-desktop w-full max-w-none'
-              : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 lg:p-2 w-full max-w-max-width'
+              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-3 md:px-margin-desktop w-full max-w-none'
+              : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 md:p-4 lg:p-2 w-full max-w-max-width'
           }`}
         >
           {/* Search Bar & Mobile / Tablet Actions */}
@@ -286,8 +307,20 @@ export function GalleryInner() {
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                 }}
+                onCameraClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent('open-global-search', { detail: { mode: 'visual' } }),
+                  );
+                }}
+                onClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent('open-global-search', {
+                      detail: { mode: 'text', query: searchQuery },
+                    }),
+                  );
+                }}
                 placeholder="Search themes, colors..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
               />
             </div>
 

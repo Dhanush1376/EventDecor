@@ -211,6 +211,8 @@ export function validateAIResponse(data: any): {
   priceMin: number | null;
   priceMax: number | null;
   expandedTerms: string[];
+  expertResponse?: string;
+  intentSummary?: string;
 } | null {
   if (!data || typeof data !== 'object') return null;
 
@@ -278,6 +280,17 @@ export function validateAIResponse(data: any): {
       ? data.priceMax
       : null;
 
+  // Validate expertResponse and intentSummary fields
+  const expertResponse =
+    typeof data.expertResponse === 'string'
+      ? htmlEscapeString(data.expertResponse.substring(0, 400))
+      : undefined;
+
+  const intentSummary =
+    typeof data.intentSummary === 'string'
+      ? htmlEscapeString(data.intentSummary.substring(0, 100))
+      : undefined;
+
   return {
     detectedLanguage,
     correctedQuery,
@@ -288,6 +301,8 @@ export function validateAIResponse(data: any): {
     priceMin,
     priceMax,
     expandedTerms,
+    expertResponse,
+    intentSummary,
   };
 }
 

@@ -1,17 +1,9 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import {
-  PageHeader,
-  AdminToggle,
-  SkeletonTable,
-  EmptyState,
-  fadeUp,
-  stagger,
-} from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminCategories() {
   const navigate = useNavigate();

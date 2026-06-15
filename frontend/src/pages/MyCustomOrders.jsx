@@ -1,12 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useUserSocket } from '../context/UserSocketProvider';
 import { customOrderService, uploadService } from '../services/domainServices';
-import { SEO } from '../components/seo/SEO';
-import { Skeleton } from '../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 
 // ─── Animation Presets ───
@@ -334,7 +330,7 @@ export function MyCustomOrders() {
             >
               <span className="material-symbols-outlined text-[14px]">arrow_back</span> Back
             </button>
-            <h2 className="text-[20px] font-display font-light">Order: {selectedOrder.orderId}</h2>
+            <h2 className="text-[20px] font-body font-semibold">Order: {selectedOrder.orderId}</h2>
             <p className="text-[11px] text-black/50 font-bold uppercase tracking-wider">
               {productSnapshot?.title || selectedOrder.occasion}
             </p>

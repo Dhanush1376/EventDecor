@@ -1,13 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { SEO } from '../components/seo/SEO';
 import { eventService, bookingService, uploadService } from '../services/domainServices';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
-import { BookingWizardSkeleton } from '../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { OptimizedImage } from '../components/ui/OptimizedImage';
 
 import logger from '../utils/logger';
 

@@ -94,3 +94,23 @@ export function useRelatedSearches(query, options = {}) {
     ...restOptions,
   });
 }
+
+export function useDiscoveryData(options = {}) {
+  const {
+    enabled = true,
+    staleTime = 15 * 60 * 1000, // 15 mins
+    gcTime = 30 * 60 * 1000,
+    ...restOptions
+  } = options;
+  return useQuery({
+    queryKey: ['search', 'discovery'],
+    queryFn: async ({ signal }) => {
+      const res = await searchService.getDiscovery({ ...options, signal });
+      return res.success ? res.data : res;
+    },
+    staleTime,
+    gcTime,
+    enabled,
+    ...restOptions,
+  });
+}

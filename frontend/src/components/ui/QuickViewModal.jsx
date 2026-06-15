@@ -1,11 +1,9 @@
 import React from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { CloudinaryImage } from './CloudinaryImage';
 
 export const QuickViewModal = ({ isOpen, onClose, product }) => {
   const modalRef = React.useRef(null);

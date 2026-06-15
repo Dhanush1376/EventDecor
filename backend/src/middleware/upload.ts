@@ -1,7 +1,6 @@
 import multer from 'multer';
 import { Request, Response, NextFunction } from 'express';
 import ApiError from '../utils/ApiError';
-import logger from '../config/logger';
 import { storageService } from '../services/storage';
 
 const allowedMimeTypes = new Set([

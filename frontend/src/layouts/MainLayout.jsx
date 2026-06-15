@@ -1,18 +1,7 @@
-import { useEffect, Suspense } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { TopNavbar } from '../components/layout/TopNavbar';
-import { Footer } from '../components/layout/Footer';
-import { BottomNav } from '../components/layout/BottomNav';
-import { CartDrawer } from '../components/layout/CartDrawer';
-import { CheckoutNavbar } from '../components/layout/CheckoutNavbar';
-import { ConsentPopup } from '../components/layout/ConsentPopup';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { SEO } from '../components/seo/SEO';
-import { MandalaElement } from '../components/ui/MandalaElement';
-import { ErrorBoundary } from '../components/ui/ErrorBoundary';
-import { WhatsAppWidget } from '../components/ui/WhatsAppWidget';
-import { getRouteSkeletonVariant, RouteSkeleton } from '../components/ui/RouteSkeleton';
-import { AuthGate } from '../components/auth/AuthGate';
+import { getRouteSkeletonVariant } from '../components/ui/RouteSkeleton';
 
 export function MainLayout() {
   const { pathname } = useLocation();

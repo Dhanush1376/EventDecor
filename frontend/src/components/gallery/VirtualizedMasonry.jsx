@@ -159,7 +159,7 @@ export function VirtualizedMasonry({
         <div className="flex flex-col items-center justify-center py-8 z-20 relative">
           <button
             onClick={handleLoadMoreManual}
-            className="px-8 py-3.5 bg-[#f26a10] hover:bg-[#d85d0d] active:scale-95 text-white font-bold text-[11px] uppercase tracking-widest rounded-full shadow-lg hover:shadow-orange-500/20 transition-all duration-300 flex items-center gap-2 group outline-none"
+            className="btn-primary flex items-center gap-2 group outline-none shadow-lg hover:shadow-primary/20"
           >
             <span>Explore More Designs</span>
             <span className="material-symbols-outlined text-[16px] group-hover:translate-y-0.5 transition-transform">

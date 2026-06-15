@@ -1,9 +1,7 @@
 import { useState, useMemo } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { SkeletonDashboard } from '../components/AdminUIKit';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const listContainer = {

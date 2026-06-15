@@ -1,19 +1,11 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { adminInviteService } from '../../services/domainServices';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import {
-  PageHeader,
-  FilterBar,
-  fadeUp,
-  stagger,
-  SkeletonDashboard,
-  CustomSelect,
-} from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 
 const ROLE_WEIGHTS = {
   owner: 100,

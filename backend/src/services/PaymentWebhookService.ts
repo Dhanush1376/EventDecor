@@ -14,7 +14,6 @@ import crypto from 'crypto';
 import { InventoryService } from './InventoryService';
 import { UnifiedWebhookRouter } from './payments/UnifiedWebhookRouter';
 import Product from '../models/Product';
-import User from '../models/User';
 
 export class PaymentWebhookService {
   /**

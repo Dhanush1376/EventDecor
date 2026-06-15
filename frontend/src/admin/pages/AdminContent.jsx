@@ -1,21 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
-import {
-  SectionHeader,
-  AdminField,
-  AdminInput,
-  AdminTextarea,
-  AdminToggle,
-  PublishBar,
-  SkeletonDashboard,
-} from '../components/AdminUIKit';
-import { ImageUpload } from '../components/ImageUpload';
+
 import toast from 'react-hot-toast';
 import { useDraft } from '../hooks/useDraft';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { cmsService } from '../../services/domainServices';
 import logger from '../../utils/logger';
 import { DEFAULT_SPECIALIZATIONS, PLACEHOLDER_IMAGES } from '../../constants/placeholderImages';
@@ -2349,6 +2336,7 @@ export function AdminContent() {
   const {
     websiteContent,
     updateContent,
+    bulkUpdateContent,
     publishAllContent,
     hasUnsavedContent,
     reorderHomepageSections,
@@ -2377,6 +2365,11 @@ export function AdminContent() {
     pageTitle: 'Content Management',
     initialData: websiteContent,
     enabled: !dataLoading,
+    onRestored: (draftInfo) => {
+      if (draftInfo?.formData) {
+        bulkUpdateContent(draftInfo.formData);
+      }
+    },
   });
 
   const isHomeSection = activeSection === 'home';
@@ -2388,10 +2381,21 @@ export function AdminContent() {
   const handleUpdateContent = (section, payload) => {
     // If auto-publish is disabled (globally or just for this section), save to draft
     if (isDraftMode) {
-      setDraftWebsiteContent((prev) => ({
-        ...prev,
-        [section]: { ...(prev[section] || {}), ...payload },
-      }));
+      setDraftWebsiteContent((prev) => {
+        let updatedSection;
+        if (Array.isArray(payload)) {
+          updatedSection = [...payload];
+        } else if (Array.isArray(prev[section])) {
+          updatedSection = [...prev[section]];
+          Object.assign(updatedSection, payload);
+        } else {
+          updatedSection = { ...(prev[section] || {}), ...payload };
+        }
+        return {
+          ...prev,
+          [section]: updatedSection,
+        };
+      });
     }
 
     // Also dispatch to context (which might auto-save depending on its logic)

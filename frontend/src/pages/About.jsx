@@ -1,13 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
-import { m as motion, useScroll, useTransform } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { SEO } from '../components/seo/SEO';
-import { MandalaElement } from '../components/ui/MandalaElement';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { useScroll, useTransform } from 'framer-motion';
 import { galleryService, cmsService } from '../services/domainServices';
-import { CloudinaryImage } from '../components/ui/CloudinaryImage';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
-import { StackedSectionWrapper } from '../components/layout/StackedSectionWrapper';
 import { initialWebsiteContent } from '../admin/data/websiteContentData';
 
 import logger from '../utils/logger';

@@ -1,9 +1,6 @@
 import React, { useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { prefetchManager } from '../../utils/prefetchManager';
-import { CloudinaryImage } from '../ui/CloudinaryImage';
 
 const EMPTY_CART_ILLU =
   'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129342/event_decor_ecommerce/assets/event_decor_empty_cart_illustration.jpg';
@@ -449,7 +446,7 @@ export function CartDrawer({ isOpen, onClose }) {
                   to="/checkout"
                   onMouseEnter={() => prefetchManager.prefetchRoute('/checkout', { kind: 'hover' })}
                   onClick={onClose}
-                  className="block w-full bg-black text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-orange-600 hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-black/15"
+                  className="block w-full bg-black text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-[#8c7335] hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-black/15"
                 >
                   Proceed to Checkout
                 </Link>

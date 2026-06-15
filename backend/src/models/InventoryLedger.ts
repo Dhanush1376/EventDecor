@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 
@@ -52,5 +52,8 @@ InventoryLedgerSchema.index({ product: 1, fromAccount: 1, status: 1 });
 InventoryLedgerSchema.plugin(SoftDeletePlugin);
 InventoryLedgerSchema.plugin(ForensicAuditPlugin);
 
-const InventoryLedger = mongoose.model<IInventoryLedger, SoftDeleteModel<IInventoryLedger>>('InventoryLedger', InventoryLedgerSchema);
+const InventoryLedger = mongoose.model<IInventoryLedger, SoftDeleteModel<IInventoryLedger>>(
+  'InventoryLedger',
+  InventoryLedgerSchema,
+);
 export default InventoryLedger;

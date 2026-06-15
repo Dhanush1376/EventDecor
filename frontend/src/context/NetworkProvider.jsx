@@ -4,7 +4,6 @@ import { safeLocalStorage } from '../utils/storage';
 import { isPrerendering } from '../utils/prerender';
 import logger from '../utils/logger';
 import { getApiRootUrl } from '../config/apiConfig';
-import { NetworkContext } from './NetworkContext';
 
 export function NetworkProvider({ children }) {
   const [networkState, setNetworkState] = useState(() =>

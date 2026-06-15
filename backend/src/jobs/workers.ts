@@ -66,8 +66,12 @@ export const initWorkers = async () => {
                   email: job.data.to,
                   subject: job.data.subject,
                   customHtml: job.data.html,
+                  template: job.data.template,
+                  context: job.data.context,
+                  generatePdf: job.data.generatePdf,
                   type: job.data.type || 'system',
                   action: job.data.action || 'background_email',
+                  attachments: job.data.attachments,
                 };
 
             await sendDirectEmailProcessor(emailOptions);

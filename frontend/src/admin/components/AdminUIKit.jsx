@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
 
 // ═══════════════════════════════════════════════════════════════
 // SHARED ANIMATION VARIANTS

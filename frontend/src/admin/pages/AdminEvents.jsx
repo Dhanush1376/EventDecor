@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import {
@@ -12,18 +11,7 @@ import {
 import toast from 'react-hot-toast';
 import logger from '../../utils/logger';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import {
-  PageHeader,
-  StatCard,
-  ChartCard,
-  StatusBadge,
-  FilterBar,
-  formatCurrency,
-  fadeUp,
-  stagger,
-  SkeletonDashboard,
-  EmptyState,
-} from '../components/AdminUIKit';
+import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
 
 const EVENT_CATEGORIES = [
   'Wedding Ceremony',

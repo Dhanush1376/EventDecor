@@ -1,5 +1,3 @@
-import { m as motion } from 'framer-motion';
-
 import { useCheckout } from './CheckoutProvider';
 
 export default function CheckoutSidebar() {

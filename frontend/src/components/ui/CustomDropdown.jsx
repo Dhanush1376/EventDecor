@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 
 export function CustomDropdown({
   options,

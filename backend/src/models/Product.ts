@@ -1,5 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import logger from '../config/logger';
+import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
 export interface IRentalPricing {
@@ -67,6 +66,7 @@ export interface IProduct extends ISoftDeleted {
   aiTags?: string[];
   aiCategory?: string;
   aiAttributes?: Record<string, string>;
+  imageHash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -141,6 +141,7 @@ const ProductSchema: Schema = new Schema(
     aiTags: [{ type: String, trim: true }],
     aiCategory: { type: String, trim: true },
     aiAttributes: { type: Schema.Types.Mixed, default: {} },
+    imageHash: { type: String, trim: true, index: true },
   },
   {
     timestamps: true,

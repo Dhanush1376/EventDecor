@@ -1,16 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
 import { galleryService, productService } from '../../services/domainServices';
-import { ImageUpload } from '../components/ImageUpload';
-import { VideoUpload } from '../components/VideoUpload';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
-import { PageHeader, stagger } from '../components/AdminUIKit';
+import { stagger } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 export function AdminAddGalleryItem() {
   const navigate = useNavigate();

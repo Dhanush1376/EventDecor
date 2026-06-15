@@ -1,16 +1,10 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { customOrderService } from '../../services/domainServices';
 import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';
 import logger from '../../utils/logger';
-import { SkeletonDashboard } from '../components/AdminUIKit';
 import { getErrorMessage } from '../../utils/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
-import { AdminCustomOrderConfig } from '../components/AdminCustomOrderConfig';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 

@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import { Schema } from 'mongoose';
 import fs from 'fs';
 import path from 'path';
 
@@ -40,16 +40,21 @@ const ForensicAuditPlugin = (schema: Schema) => {
   // Track Deletes
   deleteMethods.forEach((method) => {
     schema.pre(method as any, async function (this: any) {
-      const collectionName = this.model?.collection?.collectionName || this.collection?.collectionName || 'Unknown';
-      const filter = this.getFilter ? this.getFilter() : (this._conditions || {});
-      
+      const collectionName =
+        this.model?.collection?.collectionName || this.collection?.collectionName || 'Unknown';
+      const filter = this.getFilter ? this.getFilter() : this._conditions || {};
+
       const auditData = {
         operation: method,
         collection: collectionName,
         filter: filter,
         stackTrace: getStackTrace(),
         processId: process.pid,
-        ...extractContext(typeof (this as any).getOptions === 'function' ? (this as any).getOptions() : (this as any).options),
+        ...extractContext(
+          typeof (this as any).getOptions === 'function'
+            ? (this as any).getOptions()
+            : (this as any).options,
+        ),
       };
 
       writeForensicLog(auditData);
@@ -59,8 +64,9 @@ const ForensicAuditPlugin = (schema: Schema) => {
   // Track Updates
   updateMethods.forEach((method) => {
     schema.pre(method as any, async function (this: any) {
-      const collectionName = this.model?.collection?.collectionName || this.collection?.collectionName || 'Unknown';
-      const filter = this.getFilter ? this.getFilter() : (this._conditions || {});
+      const collectionName =
+        this.model?.collection?.collectionName || this.collection?.collectionName || 'Unknown';
+      const filter = this.getFilter ? this.getFilter() : this._conditions || {};
       const update = this.getUpdate ? this.getUpdate() : {};
 
       const auditData = {
@@ -70,7 +76,11 @@ const ForensicAuditPlugin = (schema: Schema) => {
         updatePayload: update,
         stackTrace: getStackTrace(),
         processId: process.pid,
-        ...extractContext(typeof (this as any).getOptions === 'function' ? (this as any).getOptions() : (this as any).options),
+        ...extractContext(
+          typeof (this as any).getOptions === 'function'
+            ? (this as any).getOptions()
+            : (this as any).options,
+        ),
       };
 
       writeForensicLog(auditData);

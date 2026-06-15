@@ -1,19 +1,11 @@
 import { useState } from 'react';
-import { m as motion } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
 import { handleImageError } from '../../utils/imageUtils';
 import { productService } from '../../services/api/productService';
 import { refreshWebsiteContent } from '../../hooks/useWebsiteContent';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import {
-  PageHeader,
-  StatCard,
-  StatusBadge,
-  SkeletonDashboard,
-  fadeUp,
-  stagger,
-} from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminInventory() {
   const { products, setProducts, refreshProducts, dataLoading } = useAdmin();

@@ -1,5 +1,4 @@
 import React from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 
 /**
  * Reusable confirmation dialog for destructive actions.

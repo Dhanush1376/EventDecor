@@ -1,7 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { ProductCard } from '../ui/ProductCard';
-import { RecommendationSkeleton } from '../ui/Skeleton';
 import {
   useSimilarRecommendations,
   useCompleteSetup,
@@ -146,11 +143,12 @@ export function RecommendationSystem({
 
         {!hideHeader && (
           <div className={`${compact ? 'mb-3' : 'mb-6'} w-full text-left`}>
-            <h3
-              className={`${compact ? 'text-[11px] uppercase tracking-widest font-bold text-on-surface/80' : 'text-[18px] md:text-[22px] font-bold text-on-surface'} leading-tight`}
+            <div
+              className={`${compact ? 'text-[11px] uppercase tracking-widest font-bold text-on-surface/80' : 'text-[18px] md:text-[22px] font-bold text-on-surface'} font-label leading-tight`}
+              style={{ fontFamily: 'var(--font-label)' }}
             >
               You May Also Like
-            </h3>
+            </div>
           </div>
         )}
 
@@ -167,9 +165,9 @@ export function RecommendationSystem({
           ) : activeList.length > 0 ? (
             <motion.div
               key="grid-list"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className={
                 horizontalScroll
                   ? `flex gap-4 md:gap-6 ${compact ? 'pb-2' : 'pb-4'} overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar touch-pan-x`

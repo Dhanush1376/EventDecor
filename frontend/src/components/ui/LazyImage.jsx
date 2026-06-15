@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { OptimizedImage } from './OptimizedImage';
 
 /**
  * Enhanced lazy image component with

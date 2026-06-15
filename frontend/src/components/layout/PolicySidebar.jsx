@@ -1,5 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 export function PolicySidebar() {
   const { pathname } = useLocation();

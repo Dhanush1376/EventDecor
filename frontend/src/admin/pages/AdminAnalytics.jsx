@@ -1,27 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
-import { m as motion } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import {
-  PageHeader,
-  StatCard,
-  ChartCard,
-  ChartTooltip,
-  SkeletonDashboard,
-  formatCurrency,
-  fadeUp,
-  stagger,
-} from '../components/AdminUIKit';
+
+import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 export function AdminAnalytics() {

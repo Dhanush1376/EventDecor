@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
-import { SectionWrapper } from '../components/layout';
-import { ProductCard, FilterPanel, ShareButton } from '../components/ui';
+import { useParams } from 'react-router-dom';
 import { fadeUp } from '../animations/variants';
-import { SEO } from '../components/seo/SEO';
 import { handleImageError } from '../utils/imageUtils';
 import { productService } from '../services/domainServices';
 

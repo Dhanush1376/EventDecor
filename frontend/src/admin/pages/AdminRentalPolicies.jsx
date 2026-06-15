@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import rentalService from '../../services/rentalService';
-import { AdminToggle } from '../components/AdminUIKit';
 import toast from 'react-hot-toast';
 
 const DOC_OPTIONS = [

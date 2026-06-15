@@ -1,15 +1,10 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { eventService } from '../../services/domainServices';
-import { ImageUpload } from '../components/ImageUpload';
 import toast from 'react-hot-toast';
-import { fadeUp, stagger, SkeletonForm } from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 const DECOR_STYLES = ['Traditional', 'Floral', 'Modern', 'Royal', 'Minimalist', 'Rustic'];
 

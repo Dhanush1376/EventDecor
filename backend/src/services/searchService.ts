@@ -8,6 +8,19 @@ import logger from '../config/logger';
 import redisClient from '../utils/redis';
 import { sanitizePromptInput, validateAIResponse } from '../utils/aiSanitizer';
 import { MongoQueryBuilder } from '../utils/MongoQueryBuilder';
+import {
+  TRANSLITERATION_MAP,
+  SYNONYM_MAP,
+  CATEGORY_KEYWORDS,
+  INTENT_EXPANSION_MAP,
+  EVENT_KNOWLEDGE_GRAPH,
+} from './search/searchDictionaries';
+import {
+  getLearnedMappings,
+  getQueryInteractionBoosts,
+  getPopularProducts,
+  getNewArrivals,
+} from './search/SearchAnalyticsService';
 
 // ── In-memory caches ──
 const autocompleteCache = new MemoryCache({ defaultTtlMs: 5 * 60 * 1000, maxKeys: 500 });
@@ -65,171 +78,167 @@ async function setSearchCache<T>(
   else searchResultsCache.set(key, val, ttlMs);
 }
 
-// ── Multilingual Translation & Transliteration Dictionary ──
-const TRANSLITERATION_MAP: Record<string, string[]> = {
-  // Telugu in English script
-  pelli: ['wedding', 'marriage', 'kalyanam'],
-  pendli: ['wedding', 'marriage', 'kalyanam'],
-  kalyanam: ['wedding', 'marriage'],
-  shadi: ['wedding', 'marriage'],
-  vivaham: ['wedding', 'marriage'],
-  madapam: ['mandap', 'stage'],
-  mandapam: ['mandap', 'stage'],
-  nischayam: ['engagement'],
-  pasupu: ['haldi', 'yellow'],
-  poola: ['flower', 'floral'],
-  poolu: ['flower', 'floral'],
-  puja: ['pooja'],
-  deepavali: ['diwali'],
-  muggu: ['rangoli'],
-  kolam: ['rangoli'],
-  alankarana: ['decoration', 'decor'],
-  demudu: ['pooja', 'god'],
-  varalakshmi: ['pooja', 'festival'],
-  sravanamasam: ['pooja', 'traditional'],
-  pellikuturu: ['haldi', 'bridal'],
-  pelliaspatalu: ['wedding', 'marriage'],
-  // Hinglish
-  shaadi: ['wedding', 'marriage'],
-  dulhan: ['bride'],
-  dulha: ['groom'],
-  shandar: ['luxury', 'premium'],
-  sasta: ['cheap', 'budget', 'simple'],
-  accha: ['good', 'premium'],
-  phool: ['flower', 'floral'],
-  genda: ['marigold'],
-  diya: ['lamps', 'lighting'],
-  shubh: ['pooja', 'traditional'],
-  vivah: ['wedding'],
-  // Telugu Script
-  పెళ్లి: ['wedding', 'marriage', 'pelli'],
-  పెండ్లి: ['wedding', 'marriage', 'pelli'],
-  కళ్యాణం: ['wedding', 'marriage', 'kalyanam'],
-  మండపం: ['mandap', 'stage', 'mandapam'],
-  నిశ్చితార్థం: ['engagement', 'nischayam'],
-  హల్దీ: ['haldi', 'pasupu'],
-  మెహందీ: ['mehendi'],
-  పూజ: ['pooja', 'puja'],
-  దీపావళి: ['diwali', 'deepavali'],
-  ముగ్గు: ['rangoli', 'muggu'],
-  అలంకరణ: ['decoration', 'decor', 'alankarana'],
-  పువ్వులు: ['flower', 'floral', 'poolu'],
-  బంగారు: ['gold', 'golden'],
-  రంగులు: ['colors'],
-};
+// Expose these for intent expansion
+export { TRANSLITERATION_MAP, SYNONYM_MAP, CATEGORY_KEYWORDS };
 
-// ── Synonym expansion map for decor/event domain ──
-const SYNONYM_MAP: Record<string, string[]> = {
-  mandap: ['mandapam', 'stage', 'wedding altar', 'wedding stage', 'ceremony stage'],
-  mandapam: ['mandap', 'stage', 'wedding altar'],
-  wedding: ['marriage', 'shaadi', 'vivah', 'kalyanam', 'pelli'],
-  floral: ['flower', 'flowers', 'bouquet', 'garland', 'mala'],
-  pooja: ['puja', 'prayer', 'worship', 'homam', 'havan'],
-  rangoli: ['kolam', 'muggu', 'alpana', 'floor art'],
-  birthday: ['bday', 'celebration', 'party'],
-  engagement: ['ring ceremony', 'nischayam', 'betrothal'],
-  lighting: ['lights', 'lamps', 'candles', 'diyas', 'led', 'illumination'],
-  traditional: ['heritage', 'classical', 'ethnic', 'desi'],
-  modern: ['contemporary', 'minimalist', 'minimal', 'trendy'],
-  luxury: ['premium', 'exclusive', 'high-end', 'deluxe', 'grand'],
-  tray: ['thali', 'plate', 'platter', 'presentation'],
-  diwali: ['deepavali', 'festival of lights'],
-  haldi: ['turmeric ceremony', 'pithi'],
-  mehendi: ['mehndi', 'henna'],
-  sangeet: ['music night', 'dance night'],
-  reception: ['grand reception', 'wedding reception'],
-  decor: ['decoration', 'decorations', 'setup', 'arrangement'],
-  decoration: ['decor', 'setup', 'arrangement', 'styling'],
-  stage: ['backdrop', 'mandap', 'platform'],
-  balloon: ['balloons', 'helium', 'arch'],
-  gold: ['golden', 'gilded'],
-  silver: ['metallic', 'chrome'],
-  pink: ['rose', 'blush', 'magenta'],
-  red: ['crimson', 'maroon', 'scarlet'],
-  white: ['ivory', 'cream', 'pearl'],
-};
+// Singularization utility to support matching plurals (like "trays" -> "tray")
+export function getSingularForm(word: string): string {
+  const normalized = word.toLowerCase();
+  if (normalized.endsWith('ies') && normalized.length > 5) {
+    return normalized.slice(0, -3) + 'y';
+  }
+  if (normalized.endsWith('s') && !normalized.endsWith('ss') && normalized.length > 3) {
+    return normalized.slice(0, -1);
+  }
+  return normalized;
+}
 
-// ── Category keywords for intent prediction ──
-const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  Wedding: [
-    'wedding',
-    'marriage',
-    'bride',
-    'groom',
-    'mandap',
-    'mandapam',
-    'bridal',
-    'shaadi',
-    'kalyanam',
-    'pelli',
-    'vivah',
-    'sangeet',
-    'mehendi',
-    'haldi',
-    'reception',
-    'పెళ్లి',
-    'మండపం',
-  ],
-  Birthday: [
-    'birthday',
-    'bday',
-    'party',
-    'celebration',
-    'cake',
-    'balloon',
-    'balloons',
-    'kids',
-    'child',
-  ],
-  Pooja: [
-    'pooja',
-    'puja',
-    'prayer',
-    'homam',
-    'havan',
-    'worship',
-    'religious',
-    'temple',
-    'god',
-    'పూజ',
-  ],
-  Engagement: ['engagement', 'ring', 'proposal', 'nischayam', 'betrothal', 'నిశ్చితార్థం'],
-  Floral: [
-    'floral',
-    'flower',
-    'bouquet',
-    'garland',
-    'rose',
-    'jasmine',
-    'marigold',
-    'mala',
-    'పువ్వులు',
-  ],
-  Traditional: [
-    'traditional',
-    'heritage',
-    'ethnic',
-    'classical',
-    'rangoli',
-    'kolam',
-    'muggu',
-    'ముగ్గు',
-  ],
-  Modern: ['modern', 'contemporary', 'minimalist', 'trendy', 'sleek', 'chic'],
-  Lighting: [
-    'lighting',
-    'lights',
-    'lamps',
-    'candles',
-    'diyas',
-    'led',
-    'fairy lights',
-    'chandelier',
-    'దీపావళి',
-  ],
-  Stage: ['stage', 'backdrop', 'mandap', 'platform', 'entrance'],
-  Diwali: ['diwali', 'deepavali', 'festival', 'festive', 'rangoli'],
-};
+// Classifier to determine if query is "normal" (meaning we can bypass AI API)
+export function isNormalSearch(query: string): boolean {
+  const normalized = query.toLowerCase().trim();
+  if (normalized.length < 3) return true;
+
+  const words = normalized.split(/\s+/);
+
+  // Stop words to ignore
+  const stopWords = new Set([
+    'for',
+    'a',
+    'an',
+    'the',
+    'in',
+    'of',
+    'with',
+    'and',
+    'or',
+    'to',
+    'at',
+    'by',
+    'is',
+    'are',
+    'am',
+    'want',
+    'need',
+    'show',
+    'find',
+    'me',
+    'please',
+    'i',
+  ]);
+
+  // Budget/Price keywords and indicators
+  const budgetIndicators = new Set([
+    'under',
+    'below',
+    'less',
+    'than',
+    'within',
+    'budget',
+    'rs',
+    'inr',
+    'k',
+    'lakh',
+    'lopa',
+    'lopala',
+    'takkuva',
+    'thakkuva',
+    'kante',
+    'ధర',
+    'లోపల',
+    'తక్కువ',
+    'కంటే',
+  ]);
+
+  let knownWordsCount = 0;
+  let unknownWordsCount = 0;
+
+  for (const word of words) {
+    const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').trim();
+    if (!cleanWord) continue;
+    if (stopWords.has(cleanWord)) continue;
+    if (budgetIndicators.has(cleanWord)) {
+      knownWordsCount++;
+      continue;
+    }
+    // Check if it's a number
+    if (/^\d+(\.\d+)?$/.test(cleanWord)) {
+      knownWordsCount++;
+      continue;
+    }
+
+    const singular = getSingularForm(cleanWord);
+
+    const inTrans =
+      TRANSLITERATION_MAP[cleanWord] !== undefined || TRANSLITERATION_MAP[singular] !== undefined;
+    const inSyn = SYNONYM_MAP[cleanWord] !== undefined || SYNONYM_MAP[singular] !== undefined;
+    const inCat = Object.values(CATEGORY_KEYWORDS).some(
+      (kws) => kws.includes(cleanWord) || kws.includes(singular),
+    );
+    const inGraph = Object.values(EVENT_KNOWLEDGE_GRAPH).some(
+      (g) =>
+        g.aliases.includes(cleanWord) ||
+        g.aliases.includes(singular) ||
+        g.teluguAliases.includes(cleanWord) ||
+        g.teluguAliases.includes(singular) ||
+        g.searchTerms.includes(cleanWord) ||
+        g.searchTerms.includes(singular),
+    );
+    const isColor = [
+      'red',
+      'yellow',
+      'gold',
+      'golden',
+      'white',
+      'pink',
+      'rose',
+      'orange',
+      'green',
+      'blue',
+      'silver',
+      'ivory',
+      'cream',
+      'peach',
+      'purple',
+      'maroon',
+    ].includes(singular);
+    const isStyle = [
+      'traditional',
+      'modern',
+      'luxury',
+      'minimalist',
+      'simple',
+      'heritage',
+      'ethnic',
+      'desi',
+      'classical',
+      'contemporary',
+      'minimal',
+      'premium',
+      'exclusive',
+      'grand',
+      'royal',
+      'cheap',
+    ].includes(singular);
+
+    if (inTrans || inSyn || inCat || inGraph || isColor || isStyle) {
+      knownWordsCount++;
+    } else {
+      unknownWordsCount++;
+    }
+  }
+
+  // If we have recognized words and very few unrecognized ones, bypass AI.
+  if (knownWordsCount > 0 && unknownWordsCount <= 1) {
+    return true;
+  }
+
+  // If it's pure budget search e.g. "under 1000", that's normal
+  if (words.some((w) => budgetIndicators.has(w)) && unknownWordsCount <= 1) {
+    return true;
+  }
+
+  return false;
+}
 
 // ── Interface Definitions ──
 export interface AutocompleteResult {
@@ -267,6 +276,16 @@ export interface SearchResponse {
   predictedCategories: string[];
   query: string;
   correctedQuery?: string;
+  expertResponse?: string;
+  intentSummary?: string;
+  isFallback?: boolean;
+  recommendations?: {
+    bestMatches: SearchResult[];
+    popularChoices: SearchResult[];
+    budgetFriendly: SearchResult[];
+    similarIdeas: SearchResult[];
+    trending: SearchResult[];
+  };
 }
 
 export interface AIAnalysisResult {
@@ -279,6 +298,9 @@ export interface AIAnalysisResult {
   priceMin: number | null;
   priceMax: number | null;
   expandedTerms: string[];
+  expertResponse?: string;
+  intentSummary?: string;
+  cleanedQuery?: string;
 }
 
 // ══════════════════════════════════════════════
@@ -295,16 +317,23 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
   let priceMax: number | null = null;
   const priceMin: number | null = null;
 
-  // Regex to extract budget: "under 50000", "below 50k", "rs 30000", "under 1 lakh"
-  const priceMaxMatch = normalized.match(
-    /(?:under|below|less than|within|budget)\s*(?:rs\.?|inr)?\s*(\d+)\s*(k|lakh)?/i,
-  );
+  // Enhanced Regex to extract budget limit (English, Telugu transliterated, and Telugu native scripts)
+  const englishPattern =
+    /(?:under|below|less than|within|budget|price)\s*(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(k|lakh)?/i;
+  const reversePattern =
+    /(\d+(?:\.\d+)?)\s*(k|lakh)?\s*(?:under|below|less than|within|lopala|lopa|kante takkuva|kante thakkuva|takkuva|thakkuva|లోపల|కంటే తక్కువ|తక్కువ)/i;
+
+  let priceMaxMatch = normalized.match(englishPattern);
+  if (!priceMaxMatch) {
+    priceMaxMatch = normalized.match(reversePattern);
+  }
+
   if (priceMaxMatch) {
-    let val = parseInt(priceMaxMatch[1], 10);
+    let val = parseFloat(priceMaxMatch[1]);
     const unit = priceMaxMatch[2]?.toLowerCase();
     if (unit === 'k') val *= 1000;
-    if (unit === 'lakh') val *= 100000;
-    priceMax = val;
+    else if (unit === 'lakh') val *= 100000;
+    priceMax = Math.round(val);
   } else {
     const kMatch = normalized.match(/(\d+)\s*k/i);
     if (kMatch) {
@@ -316,6 +345,23 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
       }
     }
   }
+
+  // Clean the query from budget-related terms
+  let cleanedQuery = normalized;
+  if (priceMaxMatch) {
+    cleanedQuery = cleanedQuery.replace(priceMaxMatch[0], '');
+  }
+  cleanedQuery = cleanedQuery.replace(
+    /(?:under|below|less than|within|budget|price)\s*(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(k|lakh)?/gi,
+    '',
+  );
+  cleanedQuery = cleanedQuery.replace(
+    /(\d+(?:\.\d+)?)\s*(k|lakh)?\s*(?:under|below|less than|within|lopala|lopa|kante takkuva|kante thakkuva|takkuva|thakkuva|లోపల|కంటే తక్కువ|తక్కువ)/gi,
+    '',
+  );
+  cleanedQuery = cleanedQuery.replace(/\b\d+\s*k\b/gi, '');
+  cleanedQuery = cleanedQuery.replace(/\b\d{4,6}\b/g, ''); // strip remaining numbers
+  cleanedQuery = cleanedQuery.replace(/\s+/g, ' ').trim();
 
   // Detect style
   let style: string | null = null;
@@ -351,10 +397,27 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
 
   // Detect category
   let category: string | null = null;
-  for (const [catName, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-    if (keywords.some((kw) => normalized.includes(kw))) {
-      category = catName;
+  const expandedFromGraph: string[] = [];
+
+  // 1. Check Event Knowledge Graph first
+  for (const [eventName, data] of Object.entries(EVENT_KNOWLEDGE_GRAPH)) {
+    if (
+      data.aliases.some((alias) => normalized.includes(alias)) ||
+      data.teluguAliases.some((alias) => normalized.includes(alias))
+    ) {
+      category = eventName;
+      expandedFromGraph.push(...data.searchTerms, ...data.products.map((p) => p.toLowerCase()));
       break;
+    }
+  }
+
+  // 2. Check standard Category Keywords
+  if (!category) {
+    for (const [catName, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+      if (keywords.some((kw) => normalized.includes(kw))) {
+        category = catName;
+        break;
+      }
     }
   }
 
@@ -413,7 +476,29 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
   const teluguRegex = /[\u0c00-\u0c7f]/;
   const detectedLanguage = teluguRegex.test(query) ? 'telugu' : 'english';
 
-  const expandedTerms = getTransliterationsAndSynonyms(normalized);
+  const expandedTerms = [
+    ...new Set([...getTransliterationsAndSynonyms(cleanedQuery), ...expandedFromGraph]),
+  ];
+
+  // Construct dynamic expertResponse and intentSummary local fallbacks
+  let intentSummary = 'Custom Search';
+  let expertResponse =
+    "I've searched our collection for traditional Indian crafts and decor matching your request. Here are my top recommendations.";
+
+  const categoryLabel = category ? category : tags[0] ? tags[0] : '';
+  const styleLabel = style ? `${style.charAt(0).toUpperCase()}${style.slice(1)}` : '';
+  const budgetLabel = priceMax ? `under ₹${priceMax.toLocaleString('en-IN')}` : '';
+
+  if (categoryLabel && budgetLabel) {
+    intentSummary = `${styleLabel ? styleLabel + ' ' : ''}${categoryLabel} ${budgetLabel}`;
+    expertResponse = `I've put together some beautiful ${styleLabel ? styleLabel.toLowerCase() + ' ' : ''}${categoryLabel.toLowerCase()} selections ${budgetLabel} that fit your budget perfectly. Let me know if you would like to customize these!`;
+  } else if (categoryLabel) {
+    intentSummary = `${styleLabel ? styleLabel + ' ' : ''}${categoryLabel} Ideas`;
+    expertResponse = `Here are some stunning ${styleLabel ? styleLabel.toLowerCase() + ' ' : ''}${categoryLabel.toLowerCase()} decoration ideas for your ceremony. You can filter them by budget using the price controls.`;
+  } else if (budgetLabel) {
+    intentSummary = `Decorations ${budgetLabel}`;
+    expertResponse = `I found some lovely handcrafted props and setups ${budgetLabel}. Check out these budget-friendly recommendations.`;
+  }
 
   return {
     detectedLanguage,
@@ -425,6 +510,9 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
     priceMin,
     priceMax,
     expandedTerms,
+    expertResponse,
+    intentSummary,
+    cleanedQuery,
   };
 }
 
@@ -437,6 +525,13 @@ export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResul
   const cacheKey = `ai_analysis:${normalizedQuery}`;
   const cached = await getSearchCache<AIAnalysisResult>('full', cacheKey);
   if (cached) return cached;
+
+  if (isNormalSearch(normalizedQuery)) {
+    logger.info(`[SEARCH AI] Bypassing AI API for normal query: "${normalizedQuery}"`);
+    const localResult = analyzeQueryLocally(normalizedQuery);
+    await setSearchCache('full', cacheKey, localResult, 24 * 60 * 60 * 1000);
+    return localResult;
+  }
 
   // Sanitize input before AI processing
   const { sanitized: safeQuery, threatScore, blocked } = sanitizePromptInput(normalizedQuery);
@@ -457,37 +552,46 @@ export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResul
     // Use sanitized input in prompt — never embed raw user input
     const prompt = `
     You are an advanced search query analyzer and NLP engine for "Siri Arts & Crafts" (an Indian wedding, festival, and event decoration platform).
+    You are designed as a Telugu-first semantic AI search analyzer. The majority of customers search using Telugu, transliterated Telugu (English letters), mixed Telugu-English, or local event terminology.
     Analyze the following user search query and output a structured JSON response.
 
     Query: "${safeQuery}"
 
-    Guidelines:
+    Linguistic Guidelines:
     1. DETECT LANGUAGE: Identify the language (english, telugu, hinglish, mixed).
-    2. NORMALIZATION & TRANSLITERATION:
-       - If in Telugu Script (e.g. "పెళ్లి"), translate to English equivalent ("wedding", "marriage").
-       - If in Latin Script Telugu/Hinglish (e.g. "pelli decoration", "haldi setup", "pasupu"), map it to the proper English term (e.g. pelli/pasupu -> wedding/yellow/haldi).
-       - If misspelled, provide the corrected spelling in English (e.g. "weddng" -> "wedding").
-    3. EXTRACT INTENT AND ENTITIES:
-       - category: Map to one of our core store categories if relevant (Wedding, Birthday, Pooja, Engagement, Festival, Floral, Traditional, Modern, Lighting, Stage, Diwali, Mehendi, Haldi, Sangeet).
-       - style: (traditional, modern, luxury, minimalist, rustic, premium).
-       - colors: Array of color words if mentioned (e.g. red, yellow, gold, white, pink, rose, orange, green, blue).
-       - tags: List of keyword tags (e.g. balloons, flowers, backdrop, garlands, diyas, coconut, tray, welcome board).
-       - priceMax: Extracted budget limit. If query is "under 50k" or "under 50000" or "below 20000", parse the budget (e.g. 50000). Otherwise null.
-       - priceMin: Extracted min budget limit. Otherwise null.
-       - correctedQuery: The corrected version of the query in clean English/Telugu.
-       - expandedTerms: Array of related terms and synonyms (e.g. ["marriage", "stage", "pelli", "mandapam"]).
+    2. TELUGU-FIRST SEMANTIC MAPPING:
+       - If the user uses Telugu script (e.g. "పెళ్లి", "శీమంతం"), translate/map to English equivalents ("wedding", "baby shower").
+       - If the user uses transliterated Telugu/Hinglish (e.g., "pelli", "seemantham", "pendli", "gruhapravesam", "gruhapravesh", "kobbari bondam", "kumkuma", "pasupu", "satyanarayana vratam", "aksharabhyasam", "langa voni", "thambulam"), map to proper English terms (e.g., pelli/pendli -> wedding, seemantham -> baby shower, gruhapravesam -> housewarming, kobbari bondam -> coconut, pasupu -> haldi/turmeric, thambulam -> return gift/tray).
+    3. NO EMPTY EXPANDED TERMS:
+       - For Telugu or transliterated queries, NEVER return empty expandedTerms. Always suggest at least 5 related English product keywords and synonyms (e.g., for "pelli" -> ["wedding", "stage decor", "mandap", "garland", "coconut decor", "welcome board", "thambulam"]).
+       - If the query matches an event (like Housewarming/Gruhapravesam), expand with related pooja items, torans, mango leaves, and welcome signboards.
+
+    Extraction Guidelines:
+    1. category: Map to one of the following exact categories if matching or relevant:
+       "Wedding", "Birthday", "Pooja", "Engagement", "Floral", "Traditional", "Modern", "Lighting", "Stage", "Diwali", "Housewarming", "BabyShower", "Anniversary", "Corporate", "NamingCeremony", "HalfSareeFunction", "Haldi", "Mehendi", "Sangeet".
+    2. style: (traditional, modern, luxury, minimalist, simple).
+    3. colors: Array of color words if mentioned (e.g. red, yellow, gold, white, pink, rose, orange, green, blue).
+    4. tags: List of keyword tags (e.g. balloons, flowers, backdrop, garlands, diyas, coconut, tray, welcome board).
+    5. priceMax: Extracted budget limit. If query is "under 50k" or "under 50000" or "below 20000", parse the budget (e.g. 50000). Otherwise null.
+    6. priceMin: Extracted min budget limit. Otherwise null.
+    7. correctedQuery: The corrected version of the query in clean English/Telugu.
+    8. expandedTerms: Array of related terms, synonyms, and transliterations (e.g. ["wedding", "stage decor", "mandap", "garland", "coconut", "thambulam"]).
+    9. expertResponse: A warm, helpful 1-2 sentence response from an event planner expert explaining what we found based on their query details. For example: "I found some lovely traditional coconut decor designs under ₹1000. These are very affordable options that look beautiful for wedding or housewarming ceremonies!"
+    10. intentSummary: A short title summarizing the query (e.g., "Coconut decor under ₹1000", "Traditional Telugu pelli decoration", "Simple birthday setup under ₹5000").
 
     Your output MUST be a valid JSON object only (do not wrap in markdown code blocks, do not write anything else), matching the format:
     {
       "detectedLanguage": "english | telugu | hinglish | mixed",
       "correctedQuery": "clean corrected query",
-      "category": "Wedding" | "Birthday" | "Pooja" | "Engagement" | "Festival" | null,
+      "category": "Wedding" | "Birthday" | "Pooja" | "Engagement" | "Festival" | "Housewarming" | "BabyShower" | null,
       "style": "traditional" | "modern" | "luxury" | "minimalist" | null,
       "colors": ["color1", "color2"],
       "tags": ["tag1", "tag2"],
       "priceMin": number | null,
       "priceMax": number | null,
-      "expandedTerms": ["term1", "term2"]
+      "expandedTerms": ["term1", "term2"],
+      "expertResponse": "conversational expert response statement",
+      "intentSummary": "short intent label summary"
     }
     `;
 
@@ -529,6 +633,25 @@ export async function analyzeQueryWithAI(query: string): Promise<AIAnalysisResul
         );
         throw new Error('AI response schema validation failed');
       }
+
+      // Compute cleanedQuery for AI response too!
+      let cleanedQuery = normalizedQuery;
+      if (validated.priceMax) {
+        cleanedQuery = normalizedQuery
+          .replace(
+            /(?:under|below|less than|within|budget|price)\s*(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(k|lakh)?/gi,
+            '',
+          )
+          .replace(
+            /(\d+(?:\.\d+)?)\s*(k|lakh)?\s*(?:under|below|less than|within|lopa|lopala|takkuva|thakkuva|kante takkuva|kante thakkuva|లోపల|తక్కువ|కంటే తక్కువ)/gi,
+            '',
+          )
+          .replace(/\b\d+\s*k\b/gi, '')
+          .replace(/\b\d{4,6}\b/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+      (validated as any).cleanedQuery = cleanedQuery;
 
       await setSearchCache('full', cacheKey, validated, 24 * 60 * 60 * 1000);
       return validated;
@@ -576,14 +699,42 @@ export async function getAutocomplete(
   if (cached) return cached;
 
   try {
-    // Generate transliterations and synonyms locally for instant speed
-    const allTerms = getTransliterationsAndSynonyms(normalizedQuery);
-    const fuzzyTerms = generateFuzzyVariants(normalizedQuery);
+    // Clean budget patterns locally in autocomplete to get clean suggestions matching the core query
+    let cleanedQuery = normalizedQuery;
+    const priceMaxMatch =
+      normalizedQuery.match(
+        /(?:under|below|less than|within|budget|price)\s*(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(k|lakh)?/i,
+      ) ||
+      normalizedQuery.match(
+        /(\d+(?:\.\d+)?)\s*(k|lakh)?\s*(?:under|below|less than|within|lopala|lopa|kante takkuva|kante thakkuva|takkuva|thakkuva|లోపల|కంటే తక్కువ|తక్కువ)/i,
+      );
+    if (priceMaxMatch) {
+      cleanedQuery = cleanedQuery
+        .replace(priceMaxMatch[0], '')
+        .replace(
+          /(?:under|below|less than|within|budget|price)\s*(?:rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(k|lakh)?/gi,
+          '',
+        )
+        .replace(
+          /(\d+(?:\.\d+)?)\s*(k|lakh)?\s*(?:under|below|less than|within|lopala|lopa|kante takkuva|kante thakkuva|takkuva|thakkuva|లోపల|కంటే తక్కువ|తక్కువ)/gi,
+          '',
+        )
+        .replace(/\b\d+\s*k\b/gi, '')
+        .replace(/\b\d{4,6}\b/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    const baseSearchQuery = cleanedQuery || normalizedQuery;
+
+    // Generate transliterations and synonyms locally for instant speed using cleaned query
+    const allTerms = getTransliterationsAndSynonyms(baseSearchQuery);
+    const fuzzyTerms = generateFuzzyVariants(baseSearchQuery);
     const searchTerms = [...new Set([...allTerms, ...fuzzyTerms])];
     const regexPatterns = searchTerms.map((term) => new RegExp(escapeRegex(term), 'i'));
 
-    // Predict intent categories
-    const predictedCategories = predictCategories(normalizedQuery);
+    // Predict intent categories using cleaned query
+    const predictedCategories = predictCategories(baseSearchQuery);
 
     const productQuery = MongoQueryBuilder.create<any>()
       .withRegexFallback(searchTerms, ['title', 'teluguTitle', 'category', 'tags'])
@@ -623,6 +774,19 @@ export async function getAutocomplete(
       });
     }
 
+    // Add intent expansion suggestions
+    const expandedIntents = getIntentExpansions(normalizedQuery);
+    if (expandedIntents.length > 0) {
+      for (const intent of expandedIntents) {
+        suggestions.push({
+          id: `intent:${intent}`,
+          title: intent,
+          type: 'suggestion',
+          score: 1.1,
+        });
+      }
+    }
+
     // Score products
     for (const p of products) {
       suggestions.push({
@@ -637,7 +801,7 @@ export async function getAutocomplete(
           p.title,
           p.category,
           p.tags || [],
-          normalizedQuery,
+          baseSearchQuery,
           p.teluguTitle,
         ),
       });
@@ -657,7 +821,48 @@ export async function getAutocomplete(
       });
     }
 
-    suggestions.sort((a, b) => b.score - a.score);
+    // Parse budget limit locally for suggestions sorting
+    let budgetLimit: number | null = null;
+    if (priceMaxMatch) {
+      let val = parseFloat(priceMaxMatch[1]);
+      const unit = priceMaxMatch[2]?.toLowerCase();
+      if (unit === 'k') val *= 1000;
+      else if (unit === 'lakh') val *= 100000;
+      budgetLimit = Math.round(val);
+    }
+
+    suggestions.sort((a, b) => {
+      const typeOrder: Record<string, number> = {
+        category: 1,
+        product: 2,
+        event: 2,
+        suggestion: 3,
+      };
+      const orderA = typeOrder[a.type] || 4;
+      const orderB = typeOrder[b.type] || 4;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      // If we have a budget limit and both are products/events, sort in-budget first, then out-of-budget by price asc
+      if (
+        budgetLimit !== null &&
+        (a.type === 'product' || a.type === 'event') &&
+        (b.type === 'product' || b.type === 'event')
+      ) {
+        const pA = a.price;
+        const pB = b.price;
+        const aIn = pA === undefined || pA <= budgetLimit;
+        const bIn = pB === undefined || pB <= budgetLimit;
+
+        if (aIn && !bIn) return -1;
+        if (!aIn && bIn) return 1;
+        if (!aIn && !bIn) {
+          return (pA ?? Infinity) - (pB ?? Infinity);
+        }
+      }
+      return b.score - a.score;
+    });
     const final = suggestions.slice(0, limit);
 
     // Local spelling/transliteration recommendation for overlay banner
@@ -722,13 +927,17 @@ export async function searchAll(
     const aiAnalysis = await analyzeQueryWithAI(normalizedQuery);
     const shouldSpellcheck = options.spellcheck !== 'false' && options.bypassCorrection !== 'true';
 
-    // Stage 2: Merge terms and build regex patterns (capped at 15 to prevent regex explosion / ReDoS)
+    // Retrieve past interaction boosts for AI search memory mapping
+    const interactionBoosts = await getQueryInteractionBoosts(normalizedQuery);
+
+    // Stage 2: Merge terms and build regex patterns
+    const searchBaseQuery = aiAnalysis.cleanedQuery || normalizedQuery;
     const terms = [
-      normalizedQuery,
+      searchBaseQuery,
       ...(shouldSpellcheck && aiAnalysis.correctedQuery ? [aiAnalysis.correctedQuery] : []),
       ...aiAnalysis.expandedTerms,
-      ...getTransliterationsAndSynonyms(normalizedQuery),
-      ...generateFuzzyVariants(normalizedQuery),
+      ...getTransliterationsAndSynonyms(searchBaseQuery),
+      ...generateFuzzyVariants(searchBaseQuery),
     ];
     const uniqueTerms = [...new Set(terms.filter((t) => t.length > 1))].slice(0, 15);
     const regexPatterns = uniqueTerms.map((term) => new RegExp(escapeRegex(term), 'i'));
@@ -767,11 +976,15 @@ export async function searchAll(
 
     const promises: Promise<void>[] = [];
 
-    // Setup Price parameters (combining manual filter + AI budget parser)
-    const minPrice =
-      options.priceMin !== undefined ? options.priceMin : aiAnalysis.priceMin || undefined;
-    const maxPrice =
-      options.priceMax !== undefined ? options.priceMax : aiAnalysis.priceMax || undefined;
+    // Separate manual filters (options) from query budget constraints (aiAnalysis)
+    // so we don't strictly filter out out-of-budget fallback items from MongoDB.
+    const dbMinPrice = options.priceMin;
+    const dbMaxPrice = options.priceMax;
+
+    const queryBudgetMin =
+      options.priceMin === undefined ? aiAnalysis.priceMin || undefined : undefined;
+    const queryBudgetMax =
+      options.priceMax === undefined ? aiAnalysis.priceMax || undefined : undefined;
 
     if (searchProducts) {
       const productQuery = MongoQueryBuilder.create<any>()
@@ -784,7 +997,7 @@ export async function searchAll(
           'description',
         ])
         .withCategory(activeProductCategory)
-        .withPriceRange(minPrice, maxPrice, 'price')
+        .withPriceRange(dbMinPrice, dbMaxPrice, 'price')
         .withTags(aiAnalysis.colors)
         .build();
 
@@ -816,8 +1029,11 @@ export async function searchAll(
               if (aiAnalysis.tags.some((t) => p.tags?.map((pt) => pt.toLowerCase()).includes(t)))
                 aiBoost += 0.25;
 
+              const productIdStr = (p._id as any).toString();
+              const interactionBoost = interactionBoosts[productIdStr] || 0;
+
               items.push({
-                id: (p._id as any).toString(),
+                id: productIdStr,
                 title: p.title,
                 type: 'product',
                 category: p.category,
@@ -827,7 +1043,7 @@ export async function searchAll(
                 reviews: p.reviews,
                 tags: p.tags,
                 slug: p.slug,
-                score: searchScore * seasonalBoost * aiBoost + popularityBoost,
+                score: searchScore * seasonalBoost * aiBoost + popularityBoost + interactionBoost,
                 matchSource: getMatchSource(
                   p.title,
                   p.category,
@@ -845,7 +1061,7 @@ export async function searchAll(
       const eventQuery = MongoQueryBuilder.create<any>()
         .withRegexFallback(uniqueTerms, ['title', 'category', 'style', 'features', 'description'])
         .withCategory(activeEventCategory)
-        .withPriceRange(minPrice, maxPrice, 'basePrice')
+        .withPriceRange(dbMinPrice, dbMaxPrice, 'basePrice')
         .build();
 
       promises.push(
@@ -872,8 +1088,11 @@ export async function searchAll(
               )
                 aiBoost += 0.25;
 
+              const eventIdStr = (e._id as any).toString();
+              const interactionBoost = interactionBoosts[eventIdStr] || 0;
+
               items.push({
-                id: (e._id as any).toString(),
+                id: eventIdStr,
                 title: e.title,
                 type: 'event',
                 category: e.category,
@@ -881,7 +1100,7 @@ export async function searchAll(
                 image: e.image,
                 price: e.basePrice,
                 tags: e.features,
-                score: searchScore * seasonalBoost * aiBoost,
+                score: searchScore * seasonalBoost * aiBoost + interactionBoost,
                 matchSource: getMatchSource(e.title, e.category, e.features || [], normalizedQuery),
               });
             }
@@ -919,15 +1138,18 @@ export async function searchAll(
               if (aiAnalysis.tags.some((t) => g.tags?.map((gt) => gt.toLowerCase()).includes(t)))
                 aiBoost += 0.25;
 
+              const galleryIdStr = (g._id as any).toString();
+              const interactionBoost = interactionBoosts[galleryIdStr] || 0;
+
               items.push({
-                id: (g._id as any).toString(),
+                id: galleryIdStr,
                 title: g.title,
                 type: 'gallery',
                 category: g.category,
                 style: g.style,
                 image: g.image,
                 tags: g.tags,
-                score: searchScore * aiBoost + popularityBoost,
+                score: searchScore * aiBoost + popularityBoost + interactionBoost,
                 matchSource: getMatchSource(
                   g.title,
                   g.category,
@@ -953,16 +1175,175 @@ export async function searchAll(
       }
     }
 
-    // Sort combined results
-    if (options.sort === 'price_asc') {
-      deduplicatedItems.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
-    } else if (options.sort === 'price_desc') {
-      deduplicatedItems.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
-    } else if (options.sort === 'rating') {
-      deduplicatedItems.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-    } else {
-      deduplicatedItems.sort((a, b) => b.score - a.score);
+    let isFallback = false;
+    let finalExpertResponse = aiAnalysis.expertResponse;
+    let finalIntentSummary = aiAnalysis.intentSummary;
+
+    // Check if we need to load fallbacks (Empty State Prevention)
+    if (deduplicatedItems.length === 0) {
+      isFallback = true;
+      finalIntentSummary = aiAnalysis.intentSummary || 'No exact matches found';
+      finalExpertResponse = `I couldn't find exact matches for your search "${query}". However, as an event planning expert, I have gathered some of our most popular items, new arrivals, and collections that you can check out!`;
+
+      // Fetch popular products and new arrivals
+      const [popularProducts, newArrivals] = await Promise.all([
+        getPopularProducts(10),
+        getNewArrivals(10),
+      ]);
+
+      // Map popularProducts and newArrivals to SearchResult format
+      const popularMapped: SearchResult[] = popularProducts.map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        type: 'product',
+        image: p.image,
+        price: p.price,
+        slug: p.slug,
+        score: 1.0,
+        matchSource: 'fallback_popular',
+      }));
+
+      const newArrivalsMapped: SearchResult[] = newArrivals.map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        type: 'product',
+        image: p.image,
+        price: p.price,
+        slug: p.slug,
+        score: 1.0,
+        matchSource: 'fallback_new',
+      }));
+
+      // In fallback state, populate the recommendations nicely
+      const bestMatches = popularMapped.slice(0, 4);
+      const popularChoices = popularMapped.slice(4, 8);
+      const budgetFriendly = newArrivalsMapped
+        .filter((item) => (item.price ?? 0) <= 2000)
+        .slice(0, 4);
+      const trending = newArrivalsMapped.slice(4, 8);
+      const similarIdeas = popularMapped.slice(0, 4);
+
+      const total = 0;
+      const paginated: SearchResult[] = [];
+
+      const result: SearchResponse = {
+        items: paginated,
+        total,
+        page,
+        limit,
+        predictedCategories: [],
+        query,
+        correctedQuery: undefined,
+        expertResponse: finalExpertResponse,
+        intentSummary: finalIntentSummary,
+        isFallback,
+        recommendations: {
+          bestMatches,
+          popularChoices,
+          budgetFriendly,
+          similarIdeas,
+          trending,
+        },
+      };
+
+      await setSearchCache('full', cacheKey, result, 10 * 60 * 1000);
+      return result;
     }
+
+    // Proximity and budget-aware sorting helper
+    const targetBudgetMax = queryBudgetMax;
+
+    const sortItems = (arr: SearchResult[], activeSort?: string) => {
+      if (targetBudgetMax === undefined || targetBudgetMax === null) {
+        if (activeSort === 'price_asc') {
+          arr.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+        } else if (activeSort === 'price_desc') {
+          arr.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+        } else if (activeSort === 'rating') {
+          arr.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+        } else {
+          arr.sort((a, b) => b.score - a.score);
+        }
+        return arr;
+      }
+
+      // Separate into in-budget and out-of-budget
+      const inBudget = arr.filter(
+        (item) => item.price === undefined || item.price <= targetBudgetMax,
+      );
+      const outOfBudget = arr.filter(
+        (item) => item.price !== undefined && item.price > targetBudgetMax,
+      );
+
+      // Sort in-budget using active sort
+      if (activeSort === 'price_asc') {
+        inBudget.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+      } else if (activeSort === 'price_desc') {
+        inBudget.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+      } else if (activeSort === 'rating') {
+        inBudget.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+      } else {
+        inBudget.sort((a, b) => b.score - a.score);
+      }
+
+      // Sort out-of-budget strictly in ascending order of price (proximity to budget)
+      outOfBudget.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+
+      return [...inBudget, ...outOfBudget];
+    };
+
+    // Sort combined results for flat list (budget-aware)
+    const sortedList = sortItems(deduplicatedItems, options.sort);
+    deduplicatedItems.length = 0;
+    deduplicatedItems.push(...sortedList);
+
+    // Now, build structured recommendations from deduplicatedItems
+    // 1. Best Matches: Sort items according to relevance/score with budget awareness
+    const itemsSortedByScore = sortItems([...deduplicatedItems]);
+    const bestMatches = itemsSortedByScore.slice(0, 4);
+
+    // 2. Popular Choices: Sort items by rating / views / basePrice desc
+    const popularChoices = [...deduplicatedItems]
+      .sort((a, b) => {
+        const popA = (a.rating ?? 0) * 10 + (a.reviews ?? 0);
+        const popB = (b.rating ?? 0) * 10 + (b.reviews ?? 0);
+        return popB - popA;
+      })
+      .slice(0, 4);
+
+    // 3. Budget Friendly: items under parsed limit or under ₹2000 (if not), sorted price asc
+    const budgetMaxLimit =
+      dbMaxPrice !== undefined ? dbMaxPrice : queryBudgetMax !== undefined ? queryBudgetMax : 2000;
+    const budgetFriendly = [...deduplicatedItems]
+      .filter((a) => a.price !== undefined && a.price <= budgetMaxLimit)
+      .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
+      .slice(0, 4);
+
+    // 4. Similar Ideas: items of type 'gallery' (inspirations) or same category
+    const similarIdeas = [...deduplicatedItems]
+      .filter(
+        (a) => a.type === 'gallery' || (aiAnalysis.category && a.category === aiAnalysis.category),
+      )
+      .slice(0, 4);
+
+    // 5. Trending: items from the itemsSortedByScore that aren't already in bestMatches
+    const trending = itemsSortedByScore
+      .filter((item) => !bestMatches.some((bm) => bm.id === item.id))
+      .slice(0, 4);
+
+    // Helper to backfill from bestMatches if any list is empty
+    const backfill = (arr: SearchResult[]) => {
+      if (arr.length === 0) return bestMatches.slice(0, 4);
+      return arr;
+    };
+
+    const finalRecommendations = {
+      bestMatches: backfill(bestMatches),
+      popularChoices: backfill(popularChoices),
+      budgetFriendly: backfill(budgetFriendly),
+      similarIdeas: backfill(similarIdeas),
+      trending: backfill(trending),
+    };
 
     // Determine if we should present a spelling/translation suggestion
     let correctedQuery: string | undefined;
@@ -981,6 +1362,10 @@ export async function searchAll(
       predictedCategories: aiAnalysis.category ? [aiAnalysis.category] : [],
       query,
       correctedQuery,
+      expertResponse: finalExpertResponse,
+      intentSummary: finalIntentSummary,
+      isFallback,
+      recommendations: finalRecommendations,
     };
 
     await setSearchCache('full', cacheKey, result, 10 * 60 * 1000);
@@ -1102,8 +1487,10 @@ export function getTransliterationsAndSynonyms(query: string): string[] {
   const expanded = new Set<string>([normalized]);
 
   for (const word of words) {
+    const singular = getSingularForm(word);
+
     // Check transliterations first
-    const trans = TRANSLITERATION_MAP[word];
+    const trans = TRANSLITERATION_MAP[word] || TRANSLITERATION_MAP[singular];
     if (trans) {
       for (const t of trans) {
         expanded.add(t);
@@ -1121,7 +1508,7 @@ export function getTransliterationsAndSynonyms(query: string): string[] {
     }
 
     // Check direct synonyms
-    const synonyms = SYNONYM_MAP[word];
+    const synonyms = SYNONYM_MAP[word] || SYNONYM_MAP[singular];
     if (synonyms) {
       for (const syn of synonyms) {
         expanded.add(syn);
@@ -1139,17 +1526,66 @@ export function getTransliterationsAndSynonyms(query: string): string[] {
   }
 
   for (const word of words) {
+    const singular = getSingularForm(word);
     if (word.length >= 2) {
       expanded.add(word);
-      const trans = TRANSLITERATION_MAP[word];
+      expanded.add(singular);
+      const trans = TRANSLITERATION_MAP[word] || TRANSLITERATION_MAP[singular];
       if (trans) trans.forEach((t) => expanded.add(t));
-      const synonyms = SYNONYM_MAP[word];
+      const synonyms = SYNONYM_MAP[word] || SYNONYM_MAP[singular];
       if (synonyms) synonyms.forEach((s) => expanded.add(s));
+    }
+  }
+
+  // Check Event Knowledge Graph
+  for (const [eventName, data] of Object.entries(EVENT_KNOWLEDGE_GRAPH)) {
+    if (
+      data.aliases.some((alias) => normalized.includes(alias)) ||
+      data.teluguAliases.some((alias) => normalized.includes(alias))
+    ) {
+      data.searchTerms.forEach((t) => expanded.add(t));
+      data.products.forEach((p) => expanded.add(p.toLowerCase()));
+    }
+  }
+
+  // Check learned mappings from continuous learning loop
+  const learned = getLearnedMappings();
+  const learnedSyns = learned[normalized];
+  if (learnedSyns) {
+    for (const syn of learnedSyns) {
+      expanded.add(syn.toLowerCase());
     }
   }
 
   // Cap total expanded terms to prevent unbounded regex growth
   return Array.from(expanded).slice(0, 30);
+}
+
+/**
+ * Maps partial search strings to intent expansions for autocomplete.
+ */
+function getIntentExpansions(query: string): string[] {
+  const normalized = query.toLowerCase().trim();
+  const intents: string[] = [];
+
+  for (const [key, expansions] of Object.entries(INTENT_EXPANSION_MAP)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      intents.push(...expansions);
+    }
+  }
+
+  // Check Event Knowledge Graph
+  for (const [eventName, data] of Object.entries(EVENT_KNOWLEDGE_GRAPH)) {
+    if (
+      data.aliases.some((alias) => normalized.includes(alias) || alias.includes(normalized)) ||
+      data.teluguAliases.some((alias) => normalized.includes(alias) || alias.includes(normalized))
+    ) {
+      intents.push(...data.products);
+    }
+  }
+
+  // Deduplicate and return a subset
+  return [...new Set(intents)].slice(0, 4);
 }
 
 /**
@@ -1218,12 +1654,41 @@ function predictCategories(query: string): string[] {
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     let score = 0;
     for (const word of words) {
+      const singular = getSingularForm(word);
       for (const keyword of keywords) {
-        if (keyword === word) score += 3;
-        else if (keyword.includes(word) || word.includes(keyword)) score += 1;
+        if (keyword === word || keyword === singular) score += 3;
+        else if (
+          keyword.includes(word) ||
+          word.includes(keyword) ||
+          keyword.includes(singular) ||
+          singular.includes(keyword)
+        )
+          score += 1;
       }
     }
-    if (score > 0) scores.set(category, score);
+    if (score > 0) scores.set(category, (scores.get(category) || 0) + score);
+  }
+
+  for (const [eventName, data] of Object.entries(EVENT_KNOWLEDGE_GRAPH)) {
+    let score = 0;
+    for (const word of words) {
+      const singular = getSingularForm(word);
+      if (
+        data.aliases.includes(word) ||
+        data.aliases.includes(singular) ||
+        data.teluguAliases.includes(word) ||
+        data.teluguAliases.includes(singular)
+      )
+        score += 4;
+      else if (
+        data.aliases.some(
+          (a) =>
+            a.includes(word) || word.includes(a) || a.includes(singular) || singular.includes(a),
+        )
+      )
+        score += 2;
+    }
+    if (score > 0) scores.set(eventName, (scores.get(eventName) || 0) + score);
   }
 
   return Array.from(scores.entries())

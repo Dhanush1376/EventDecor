@@ -1,11 +1,6 @@
 import { useState } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { MandalaElement } from '../components/ui/MandalaElement';
-import { SEO } from '../components/seo/SEO';
-import { Link } from 'react-router-dom';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { inquiryService } from '../services/domainServices';
-import { ContactSkeleton } from '../components/ui/Skeleton';
 import toast from 'react-hot-toast';
 import { MOTION_PRESETS, EASE, DURATION } from '../constants/design-tokens';
 

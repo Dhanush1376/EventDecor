@@ -1,11 +1,6 @@
-import { Link } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
-import { PolicySidebar, MobilePolicyNav } from '../components/layout/PolicySidebar';
-import { SEO } from '../components/seo/SEO';
 import { useQuery } from '@tanstack/react-query';
 import { policyService } from '../services/domainServices';
 import { createSafeHtml } from '../utils/sanitize';
-import { Skeleton } from '../components/ui';
 
 export function Privacy() {
   const {

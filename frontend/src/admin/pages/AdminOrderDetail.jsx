@@ -1,20 +1,10 @@
 import React from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import Barcode from 'react-barcode';
-import { QRCodeSVG } from 'qrcode.react';
-import { InvoiceTemplate } from '../../components/ui';
 import { playSuccessBeep, playErrorBeep } from '../../utils/audioUtils';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import {
-  StatusBadge,
-  formatCurrency,
-  fadeUp,
-  stagger,
-  SkeletonDashboard,
-} from '../components/AdminUIKit';
+import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
 
 const allStatuses = [
   'Pending',

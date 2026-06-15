@@ -1,8 +1,5 @@
-import { Link } from 'react-router-dom';
-import { MandalaElement } from '../ui/MandalaElement';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { CONTACT_EMAIL, SOCIAL_INSTAGRAM, SOCIAL_PINTEREST } from '../../constants/brandEnv';
-import { SiriLogo } from '../ui/SiriLogo';
 
 export function Footer() {
   const { contact, footer, navigation } = useWebsiteContent();

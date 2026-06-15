@@ -1,5 +1,3 @@
-import { m as motion, AnimatePresence } from 'framer-motion';
-
 export function DraftRestoreModal({ isOpen, onRestore, onDiscard, moduleName, lastSavedAt }) {
   if (!isOpen) return null;
 

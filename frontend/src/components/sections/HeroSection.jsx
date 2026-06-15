@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
-import { MandalaElement } from '../ui/MandalaElement';
-import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import { useWindowHeight } from '../../hooks/useWindowHeight';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
-import { CloudinaryImage } from '../ui/CloudinaryImage';
-import { HeroSkeleton } from '../ui/Skeleton';
 
 export function HeroSection({
   badgeText,

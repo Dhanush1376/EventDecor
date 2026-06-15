@@ -1,17 +1,8 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import {
-  PageHeader,
-  AdminInput,
-  AdminToggle,
-  SkeletonTable,
-  EmptyState,
-  fadeUp,
-  stagger,
-} from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminConfig() {
   const [configs, setConfigs] = useState([]);

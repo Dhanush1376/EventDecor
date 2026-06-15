@@ -14,7 +14,6 @@ import {
   VISION_PROVIDER_CONFIG,
   getValidationChain,
   getVisionModel,
-  isKnownProvider,
   detectProviderFromKey,
 } from './providerRegistry';
 

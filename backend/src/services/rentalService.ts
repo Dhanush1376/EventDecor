@@ -38,7 +38,13 @@ class RentalService {
    */
   static async getMyRentals(userId: string, queryParams: any) {
     const { status, page = 1, limit = 10 } = queryParams;
-    const filter: any = { user: userId };
+    const filter: any = {
+      user: userId,
+      $or: [
+        { paymentMethod: 'cod' },
+        { paymentStatus: { $nin: ['pending', 'processing', 'failed'] } },
+      ],
+    };
     if (status) filter.status = status;
 
     const skip = (Number(page) - 1) * Number(limit);

@@ -1,15 +1,7 @@
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../../services/api';
-import { Outlet, useLocation } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { AdminProvider, useAdmin } from '../context/AdminContext';
-import { DraftProvider } from '../context/DraftProvider';
-import { AdminSidebar } from '../components/AdminSidebar';
-import { AdminTopBar } from '../components/AdminTopBar';
-import { PublishToast } from '../components/AdminUIKit';
-import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
-import { GlobalSearchPalette } from '../components/GlobalSearchPalette';
-import { AdminLoader } from '../../components/ui/PageLoader';
+import { useLocation } from 'react-router-dom';
+import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';
 
 import '../../styles/admin.css';

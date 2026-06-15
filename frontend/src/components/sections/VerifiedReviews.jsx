@@ -1,11 +1,7 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { m as motion } from 'framer-motion';
+import React, { useState, useEffect, lazy } from 'react';
 import toast from 'react-hot-toast';
 import { reviewService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
-import { ReviewsSkeleton } from '../ui/Skeleton';
-
-import { OptimizedImage } from '../ui/OptimizedImage';
 
 import logger from '../../utils/logger';
 // Lazy load heavy interaction overlays to trim the main package bundle size

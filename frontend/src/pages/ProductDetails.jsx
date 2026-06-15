@@ -1,16 +1,9 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ProductGallery } from '../components/ui/ProductGallery';
-import { ProductInfo } from '../components/ui/ProductInfo';
-import { Skeleton, ProductDetailSkeleton } from '../components/ui/Skeleton';
+import { useParams } from 'react-router-dom';
 
-import { ProductReviews } from '../components/sections/ProductReviews';
-import { SEO } from '../components/seo/SEO';
-import { MandalaElement } from '../components/ui/MandalaElement';
 import { userService } from '../services/domainServices';
 import { useProduct } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
-import { StickyMobileATC } from '../components/ui/StickyMobileATC';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 import { useQueryClient } from '@tanstack/react-query';
 import recommendationService from '../services/recommendationService';

@@ -6,6 +6,8 @@ export function SearchBar({
   onChange,
   placeholder = 'Search collections...',
   className = '',
+  onCameraClick,
+  onClick,
 }) {
   const [localValue, setLocalValue] = useState(value);
 
@@ -35,11 +37,23 @@ export function SearchBar({
     onChange?.({ target: { value: '' } });
   };
 
+  const hasCamera = !!onCameraClick;
+  const hasClear = !!localValue;
+  const paddingRightClass =
+    hasCamera && hasClear ? 'pr-18 md:pr-20' : hasCamera || hasClear ? 'pr-11 md:pr-12' : 'pr-4';
+
   return (
     <div
-      className={`relative group w-full md:flex-1 bg-surface-bright/90 backdrop-blur-md border-none rounded-full transition-all duration-300 overflow-hidden ${className}`}
+      onClick={(e) => {
+        if (onClick) {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick();
+        }
+      }}
+      className={`relative group w-full md:flex-1 bg-surface-bright/90 backdrop-blur-md border-none rounded-full transition-all duration-300 overflow-hidden ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
-      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 transition-colors select-none pointer-events-none font-bold">
+      <span className="material-symbols-outlined absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 transition-colors select-none pointer-events-none font-bold">
         search
       </span>
       <input
@@ -47,7 +61,14 @@ export function SearchBar({
         value={localValue}
         onChange={handleInputChange}
         placeholder={placeholder}
-        className="w-full h-full pl-12 pr-12 py-0 bg-transparent border-none outline-none appearance-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50 search-portal-input"
+        readOnly={!!onClick}
+        onFocus={(e) => {
+          if (onClick) {
+            e.target.blur();
+            onClick();
+          }
+        }}
+        className={`w-full h-full pl-9 md:pl-12 ${paddingRightClass} py-0 bg-transparent border-none outline-none appearance-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50 search-portal-input ${onClick ? 'cursor-pointer' : ''}`}
         style={{
           outline: 'none',
           border: 'none',
@@ -57,15 +78,33 @@ export function SearchBar({
         }}
         aria-label="Search"
       />
-      {localValue && (
-        <button
-          onClick={handleClear}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-primary transition-colors p-1 rounded-full hover:bg-primary/5"
-          aria-label="Clear search"
-        >
-          <span className="material-symbols-outlined text-[18px]">close</span>
-        </button>
-      )}
+      <div className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-10">
+        {onCameraClick && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onCameraClick();
+            }}
+            className="text-on-surface-variant/60 hover:text-primary hover:scale-110 transition-all p-1 rounded-full hover:bg-primary/5 cursor-pointer"
+            aria-label="Search by image"
+          >
+            <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+          </button>
+        )}
+        {localValue && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClear();
+            }}
+            className="text-on-surface-variant/60 hover:text-primary transition-colors p-1 rounded-full hover:bg-primary/5 cursor-pointer"
+            aria-label="Clear search"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

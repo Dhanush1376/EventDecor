@@ -1,21 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { SEO } from '../components/seo/SEO';
 import { showcaseService, bookingService, uploadService } from '../services/domainServices';
 import { compressImage } from '../utils/imageCompressor';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
-import { MandalaElement } from '../components/ui/MandalaElement';
-import {
-  SearchBar,
-  CategoryTabs,
-  CustomDropdown,
-  Pagination,
-  Skeleton,
-  ShowcaseCard,
-  EventShowcaseFilterPanel,
-} from '../components/ui';
-import { OptimizedImage } from '../components/ui/OptimizedImage';
+
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
@@ -392,15 +379,15 @@ export function EventShowcases() {
       <nav
         ref={navRef}
         className={`sticky z-[49] ${isMobile && searchParam ? 'mt-6' : '-mt-12 md:-mt-16'} mb-4 md:mb-6 transition-all duration-300 ${
-          isSticky ? 'px-0' : 'px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto'
+          isSticky ? 'px-0' : 'px-3 md:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
         <div
           className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
             isSticky
-              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-margin-mobile md:px-margin-desktop w-full max-w-none'
-              : 'bg-transparent border-none shadow-none rounded-[2rem] p-3 md:p-4 lg:p-2 w-full max-w-max-width'
+              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-3 md:px-margin-desktop w-full max-w-none'
+              : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 md:p-4 lg:p-2 w-full max-w-max-width'
           }`}
         >
           {/* Search Bar & Mobile Filter Toggle */}
@@ -409,8 +396,9 @@ export function EventShowcases() {
               <SearchBar
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onCameraClick={() => navigate('/collections?visual=true')}
                 placeholder="Search event design packages..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-5 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
               />
             </div>
             <button
@@ -495,9 +483,6 @@ export function EventShowcases() {
                 <h2 className="font-headline-md text-on-surface font-bold text-[24px] md:text-[32px]">
                   Event Design Packages
                 </h2>
-                <p className="font-body-md text-on-surface-variant/60 font-medium">
-                  {totalCount} premium traditional arrangements available
-                </p>
               </div>
             </div>
 
@@ -864,7 +849,7 @@ export function EventShowcases() {
                           alt={sug.title}
                         />
                         <div className="min-w-0">
-                          <h5 className="font-display text-xs text-black font-bold truncate">
+                          <h5 className="font-body text-xs text-black font-bold truncate">
                             {sug.title}
                           </h5>
                           <span className="font-body text-[10px] text-black/50 block font-semibold">
@@ -881,7 +866,7 @@ export function EventShowcases() {
                     <span className="font-label text-[9px] uppercase tracking-widest text-black/40 block font-bold">
                       Live Rental Valuation
                     </span>
-                    <span className="font-display text-3xl font-bold text-black italic">
+                    <span className="font-body text-3xl font-bold text-black shrink-0">
                       ₹{calculateLivePrice().toLocaleString('en-IN')}*
                     </span>
                     <span className="font-body text-[10px] text-black/40 block font-light">

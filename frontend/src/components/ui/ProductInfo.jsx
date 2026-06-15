@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
-import { m as motion } from 'framer-motion';
 
 export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
   const navigate = useNavigate();

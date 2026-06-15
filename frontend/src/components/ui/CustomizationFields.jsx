@@ -1,7 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef } from 'react';
 import { uploadService } from '../../services/domainServices';
-import { OptimizedImage } from './OptimizedImage';
 import toast from 'react-hot-toast';
 
 // ─── Constants ───

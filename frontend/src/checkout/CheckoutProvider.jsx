@@ -58,6 +58,7 @@ export function CheckoutProvider({ children }) {
 
   const orderCompleteRef = React.useRef(false);
   const totalsRequestRef = React.useRef(0);
+  const autoApplyAttemptedRef = React.useRef(false);
 
   const activeItems = React.useMemo(() => {
     return (checkoutMode === 'rental' ? rentalCart?.items || [] : purchaseCart?.items || []).filter(
@@ -373,12 +374,13 @@ export function CheckoutProvider({ children }) {
 
   // Bulletproof reactive coupon synchronization from Cart/Storefront
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !autoApplyAttemptedRef.current) {
       const couponCodeToApply = location.state?.couponCode || claimedCoupon;
       if (couponCodeToApply && couponCodeToApply !== appliedCoupon) {
         logger.info(`Auto-applying coupon: ${couponCodeToApply}`);
         setCouponInput(couponCodeToApply);
         setAppliedCoupon(couponCodeToApply);
+        autoApplyAttemptedRef.current = true;
         if (claimedCoupon) {
           setClaimedCoupon('');
         }

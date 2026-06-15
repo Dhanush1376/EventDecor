@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
-import { SEO } from '../components/seo/SEO';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { useParams, useNavigate } from 'react-router-dom';
 import { bookingService } from '../services/domainServices';
 
 import logger from '../utils/logger';

@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { useProducts } from '../../../hooks/useProductQueries';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
-import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 
 /**
  * Full-width hero displaying top products and auto-scrolling.

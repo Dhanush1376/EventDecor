@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { showcaseService, uploadService, cmsService } from '../../services/domainServices';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { SkeletonForm } from '../components/AdminUIKit';
 import { compressImage, formatBytes } from '../../utils/imageCompressor';
 import { useDraft } from '../hooks/useDraft';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideIn = {

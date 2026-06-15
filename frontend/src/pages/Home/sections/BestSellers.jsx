@@ -1,10 +1,5 @@
 import { useProducts } from '../../../hooks/useProductQueries';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
-import { SectionHeader } from '../../../components/shared/SectionHeader';
-import { CarouselWrapper } from '../../../components/shared/CarouselWrapper';
-import { ProductCard } from '../../../components/shared/ProductCard';
-import { MandalaElement } from '../../../components/ui/MandalaElement';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 
 /**
  * Best sellers using real API data.

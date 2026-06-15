@@ -24,6 +24,21 @@ const stripSensitiveFromSectionData = (key: string, data: any) => {
   return data;
 };
 
+export const sanitizeArray = (val: any): any => {
+  if (val && typeof val === 'object' && !Array.isArray(val)) {
+    if ('0' in val) {
+      const arr: any[] = [];
+      let i = 0;
+      while (i.toString() in val) {
+        arr.push(val[i.toString()]);
+        i++;
+      }
+      return arr;
+    }
+  }
+  return val;
+};
+
 class ContentService {
   static isAdminOnlySection(key: string): boolean {
     return ADMIN_ONLY_SECTION_KEYS.has(key);
@@ -40,9 +55,8 @@ class ContentService {
         const flatContent: Record<string, unknown> = {};
         sections.forEach((section) => {
           if (ADMIN_ONLY_SECTION_KEYS.has(section.sectionKey)) return;
-          flatContent[section.sectionKey] = stripSensitiveFromSectionData(
-            section.sectionKey,
-            section.data,
+          flatContent[section.sectionKey] = sanitizeArray(
+            stripSensitiveFromSectionData(section.sectionKey, section.data),
           );
         });
         return flatContent;
@@ -162,14 +176,18 @@ class ContentService {
         throw new ApiError(404, `Section ${key} not found`);
       }
     }
-    if (section && key === 'studio_settings') {
-      section.data = stripSensitiveFromSectionData(key, section.data) as typeof section.data;
+    if (section) {
+      if (key === 'studio_settings') {
+        section.data = stripSensitiveFromSectionData(key, section.data) as typeof section.data;
+      }
+      section.data = sanitizeArray(section.data);
     }
     return section;
   }
 
   static async updateSection(key: string, newData: any, retry = 0): Promise<any> {
-    const payload = key === 'studio_settings' ? sanitizeStudioSettings(newData) : newData;
+    let payload = key === 'studio_settings' ? sanitizeStudioSettings(newData) : newData;
+    payload = sanitizeArray(payload);
     try {
       let section = await ContentSection.findOne({ sectionKey: key });
 

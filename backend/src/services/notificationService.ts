@@ -97,6 +97,10 @@ export interface EmailOptions {
     content: Buffer | string;
     contentType?: string;
   }[];
+  to?: string;
+  template?: string;
+  context?: Record<string, any>;
+  generatePdf?: boolean;
 }
 
 /**
@@ -127,43 +131,43 @@ export const sendDirectEmail = (options: EmailOptions) => {
  * Direct Email Dispatch with full open/click logging (INTERNAL PROCESSOR)
  */
 export const sendDirectEmailProcessor = async (options: EmailOptions) => {
-  const {
-    email,
-    subject,
-    templateName,
-    customHtml,
-    templateData = {},
-    type,
-    channel = 'email',
-    action,
-    userId,
-    campaignId,
-    scheduledAt,
-    attachments,
-  } = options;
+  // Normalize incoming fields for queue compatibilities
+  const emailVal = options.email || options.to || '';
+  const templateNameVal = options.templateName || options.template;
+  const templateDataVal = options.templateData || options.context || {};
+  const typeVal = options.type || 'system';
+  const actionVal = options.action || 'background_email';
+  const userIdVal = options.userId || (templateDataVal && templateDataVal.userId);
+  const attachmentsList = options.attachments ? [...options.attachments] : [];
+  const campaignIdVal = options.campaignId;
+  const channelVal = options.channel || 'email';
+  const scheduledAtVal = options.scheduledAt;
+
+  let bodyHtml = options.customHtml || '';
+  let finalSubject = options.subject;
 
   try {
     // 0. Idempotency check: prevent sending duplicate emails to the same recipient for the same action within 5 seconds
     const fiveSecondsAgo = new Date(Date.now() - 5000);
     const existingLog = await NotificationLog.findOne({
-      recipientEmail: email,
-      type: type as any,
-      action,
+      recipientEmail: emailVal,
+      type: typeVal as any,
+      action: actionVal,
       createdAt: { $gte: fiveSecondsAgo },
     });
 
     if (existingLog) {
-      logger.warn(`[IDEMPOTENCY] Blocked redundant email to ${email} for action: ${action}`);
+      logger.warn(`[IDEMPOTENCY] Blocked redundant email to ${emailVal} for action: ${actionVal}`);
       return existingLog;
     }
 
     // 1. Consent preference validation (for Marketing emails only)
-    if (type === 'marketing') {
-      if (userId) {
-        const user = await User.findById(userId);
+    if (typeVal === 'marketing') {
+      if (userIdVal) {
+        const user = await User.findById(userIdVal);
         if (user && user.notificationPreferences?.marketing === false) {
           logger.info(
-            `Skipped marketing email to registered user ${email} due to subscription opt-out.`,
+            `Skipped marketing email to registered user ${emailVal} due to subscription opt-out.`,
           );
           return null;
         }
@@ -171,59 +175,99 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
 
       // Also check general consent records
       const consent = await ConsentPreference.findOne({
-        $or: [{ userId }, { consentToken: email }],
+        $or: [{ userId: userIdVal }, { consentToken: emailVal }],
       });
       if (consent && consent.marketingEmails === false) {
-        logger.info(`Skipped marketing email to ${email} due to GDPR consent preferences.`);
+        logger.info(`Skipped marketing email to ${emailVal} due to GDPR consent preferences.`);
         return null;
       }
     }
 
-    // 2. Fetch email template html if templateName is provided
-    let bodyHtml = customHtml || '';
-    let finalSubject = subject;
-
-    if (templateName) {
-      const template = await EmailTemplate.findOne({ name: templateName, isActive: true });
-      if (!template) {
-        logger.warn(
-          `Email template "${templateName}" not found or disabled. Using fallback content.`,
-        );
-        if (!bodyHtml) {
-          bodyHtml = `
-            <div style="font-family: sans-serif; padding: 20px;">
-              <h2>Notification: ${finalSubject}</h2>
-              <p>You have a new system notification.</p>
-              <p>Please log in to your account dashboard to review.</p>
-            </div>
-          `;
-        }
-      } else {
+    // 2. Resolve template name if provided
+    if (templateNameVal) {
+      const template = await EmailTemplate.findOne({ name: templateNameVal, isActive: true });
+      if (template) {
         bodyHtml = template.htmlContent;
-        finalSubject = replacePlaceholders(template.subjectLine, templateData);
+        finalSubject = replacePlaceholders(template.subjectLine, templateDataVal);
+      } else {
+        // Fallback: check filesystem .hbs templates
+        try {
+          const { compileTemplate } = require('../utils/templateEngine');
+          bodyHtml = compileTemplate(templateNameVal, templateDataVal);
+        } catch (fileErr: any) {
+          logger.warn(
+            `Email template "${templateNameVal}" not found in DB or templates folder: ${fileErr.message}`,
+          );
+          if (!bodyHtml) {
+            bodyHtml = `
+              <div style="font-family: sans-serif; padding: 20px;">
+                <h2>Notification: ${finalSubject}</h2>
+                <p>You have a new system notification.</p>
+                <p>Please log in to your account dashboard to review.</p>
+              </div>
+            `;
+          }
+        }
       }
     }
 
     // Replace all placeholders inside body
-    bodyHtml = replacePlaceholders(bodyHtml, templateData);
+    bodyHtml = replacePlaceholders(bodyHtml, templateDataVal);
 
     // Add Unsubscribe link to marketing emails
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-    const unsubscribeLink = `${backendUrl}/api/notifications/unsubscribe?email=${encodeURIComponent(email)}`;
+    const unsubscribeLink = `${backendUrl}/api/notifications/unsubscribe?email=${encodeURIComponent(emailVal)}`;
     bodyHtml = replacePlaceholders(bodyHtml, { unsubscribe_link: unsubscribeLink });
+
+    // Enforce our premium card-based SaaS wrapper for plain HTML content
+    if (
+      bodyHtml &&
+      !bodyHtml.trim().toLowerCase().startsWith('<!doctype html') &&
+      !bodyHtml.trim().toLowerCase().startsWith('<html')
+    ) {
+      const { getLuxuryEmailWrapper } = require('../utils/emailTemplates');
+      bodyHtml = getLuxuryEmailWrapper(finalSubject, bodyHtml);
+    }
+
+    // Generate Invoice PDF if requested and order context exists
+    if (options.generatePdf && templateDataVal && templateDataVal.orderId) {
+      try {
+        const { generateInvoicePDF } = require('../utils/pdfGenerator');
+        const pdfBuffer = await generateInvoicePDF({
+          orderId: templateDataVal.orderId,
+          date: templateDataVal.orderDate || new Date(),
+          customerName: templateDataVal.customerName || 'Valued Customer',
+          shippingAddress: templateDataVal.shippingAddress || '',
+          items: templateDataVal.items || [],
+          subtotal: Number(templateDataVal.subtotal || 0),
+          shipping: Number(templateDataVal.shipping || 0),
+          total: Number(templateDataVal.total || 0),
+        });
+        const invoiceNum = `INV-${templateDataVal.orderId.substring(templateDataVal.orderId.length - 8).toUpperCase()}`;
+        attachmentsList.push({
+          filename: `${invoiceNum}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        });
+      } catch (pdfErr: any) {
+        logger.error(
+          `Failed to generate invoice PDF inside sendDirectEmailProcessor: ${pdfErr.message}`,
+        );
+      }
+    }
 
     // 3. Generate Tracking Token & log notification initial state
     const trackingToken = crypto.randomBytes(24).toString('hex');
     const log = new NotificationLog({
-      userId: userId ? new mongoose.Types.ObjectId(userId) : undefined,
-      recipientEmail: email,
-      campaignId: campaignId ? new mongoose.Types.ObjectId(campaignId) : undefined,
-      type,
-      channel,
-      action,
+      userId: userIdVal ? new mongoose.Types.ObjectId(userIdVal) : undefined,
+      recipientEmail: emailVal,
+      campaignId: campaignIdVal ? new mongoose.Types.ObjectId(campaignIdVal) : undefined,
+      type: typeVal,
+      channel: channelVal,
+      action: actionVal,
       trackingToken,
       status: 'pending',
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+      scheduledAt: scheduledAtVal ? new Date(scheduledAtVal) : undefined,
       queuedAt: new Date(),
       retryCount: 0,
     });
@@ -238,18 +282,18 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     const maxRetries = 3;
 
     const headers: Record<string, string> = {};
-    if (type === 'marketing') {
+    if (typeVal === 'marketing') {
       headers['List-Unsubscribe'] = `<${unsubscribeLink}>`;
     }
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         info = await smartSendEmail({
-          to: email,
+          to: emailVal,
           subject: finalSubject,
           html: bodyHtml,
           headers,
-          attachments: attachments,
+          attachments: attachmentsList,
         });
 
         log.status = 'sent'; // Marked as sent after handing off to provider
@@ -269,7 +313,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
 
         const backoffMs = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
         logger.warn(
-          `[EMAIL RETRY] Attempt ${attempt}/${maxRetries} failed for ${email}: ${err.message}. Retrying in ${backoffMs}ms...`,
+          `[EMAIL RETRY] Attempt ${attempt}/${maxRetries} failed for ${emailVal}: ${err.message}. Retrying in ${backoffMs}ms...`,
         );
         await new Promise((resolve) => setTimeout(resolve, backoffMs));
       }
@@ -280,12 +324,12 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     await log.save();
 
     logger.info(
-      `[EMAIL DELIVERED] ${email} (Type: ${type}, Action: ${action}, MessageId: ${info?.messageId || 'n/a'})`,
+      `[EMAIL DELIVERED] ${emailVal} (Type: ${typeVal}, Action: ${actionVal}, MessageId: ${info?.messageId || 'n/a'})`,
     );
 
     return log;
   } catch (err: any) {
-    logger.error(`Failed to deliver email notifications to ${email}:`, err);
+    logger.error(`Failed to deliver email notifications to ${emailVal}:`, err);
     throw err; // Propagate error so callers can handle or retry correctly
   }
 };

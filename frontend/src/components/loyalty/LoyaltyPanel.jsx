@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { loyaltyService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
@@ -84,14 +83,7 @@ export function LoyaltyPanel() {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="skeleton-box inline-block w-10 h-10 rounded-md" />
-        <span className="text-[11px] uppercase tracking-widest text-secondary font-semibold">
-          Synchronizing Luxury Wallet Ledger...
-        </span>
-      </div>
-    );
+    return <LoyaltySkeleton />;
   }
 
   if (!data) return null;

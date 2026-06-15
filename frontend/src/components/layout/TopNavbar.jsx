@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { adminInviteService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { useSearchOverlay } from '../../hooks/useSearchOverlay';
-import { IntelligentSearchOverlay } from '../search/IntelligentSearchOverlay';
 import { prefetchManager } from '../../utils/prefetchManager';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useVisualSearch } from '../../hooks/useVisualSearch';
-import { VisualSearchOverlay } from '../search/VisualSearchOverlay';
-import { SiriLogo } from '../ui/SiriLogo';
-import { MandalaElement } from '../ui/MandalaElement';
-import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 // Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {
@@ -91,6 +85,23 @@ export function TopNavbar() {
   // ─── INTELLIGENT SEARCH OVERLAYS ───
   const search = useSearchOverlay();
   const visualSearch = useVisualSearch();
+
+  // Connect inline search bars across pages to the global search overlay
+  useEffect(() => {
+    const handleOpenGlobalSearch = (e) => {
+      const mode = e.detail?.mode || 'text';
+      if (mode === 'visual') {
+        visualSearch.open();
+      } else {
+        search.handleOpen(mode);
+        if (e.detail?.query != null) {
+          search.setQuery(e.detail.query);
+        }
+      }
+    };
+    window.addEventListener('open-global-search', handleOpenGlobalSearch);
+    return () => window.removeEventListener('open-global-search', handleOpenGlobalSearch);
+  }, [search, visualSearch]);
 
   const mobileMenuRef = React.useRef(null);
   const mobileTriggerRef = React.useRef(null);
@@ -344,7 +355,7 @@ export function TopNavbar() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        search.handleOpen('visual');
+                        visualSearch.open();
                       }}
                       className={`w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 ${
                         isTransparent
@@ -730,7 +741,6 @@ export function TopNavbar() {
         )}
       </AnimatePresence>
 
-      {/* ─── INTELLIGENT AI-POWERED SEARCH OVERLAY ─── */}
       <IntelligentSearchOverlay
         isOpen={search.isOpen}
         initialMode={search.initialMode}
@@ -740,6 +750,8 @@ export function TopNavbar() {
         predictedCategories={search.predictedCategories}
         trendingSearches={search.trendingSearches}
         recentSearches={search.recentSearches}
+        discoveryData={search.discoveryData}
+        onRemoveRecent={search.removeRecentSearch}
         loading={search.loading}
         activeIndex={search.activeIndex}
         setActiveIndex={search.setActiveIndex}
@@ -751,8 +763,6 @@ export function TopNavbar() {
         correctedQuery={search.correctedQuery}
         visualSearch={visualSearch}
       />
-
-      {/* ─── VISUAL SEARCH OVERLAY ─── */}
       <VisualSearchOverlay
         isOpen={visualSearch.isOpen}
         phase={visualSearch.phase}
@@ -761,9 +771,8 @@ export function TopNavbar() {
         error={visualSearch.error}
         scanProgress={visualSearch.scanProgress}
         scanStatus={visualSearch.scanStatus}
-        config={visualSearch.config}
         onClose={visualSearch.close}
-        onImageSelect={visualSearch.handleImageSelect}
+        onImageSelect={(file, mode) => visualSearch.handleImageSelect(file, mode || 'upload')}
         onRetry={visualSearch.retry}
         onReset={visualSearch.reset}
       />

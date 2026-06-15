@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import Product from '../models/Product';
 import ProductService from './productService';
 import AppConfig from '../models/AppConfig';
@@ -150,7 +149,7 @@ export class FilterService {
     }
 
     // Apply Admin Config
-    let finalGroups = filterGroups.filter(
+    const finalGroups = filterGroups.filter(
       (g: any) => !(config.hidden || []).includes(g.id.toLowerCase()),
     );
 

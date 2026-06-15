@@ -1,14 +1,10 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { fadeUp, AdminToggle, SkeletonForm } from '../components/AdminUIKit';
+import { fadeUp } from '../components/AdminUIKit';
 import { getErrorMessage } from '../../utils/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 export function AdminAddCategory() {
   const { id } = useParams();

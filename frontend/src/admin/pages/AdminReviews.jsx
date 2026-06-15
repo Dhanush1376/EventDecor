@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import { loyaltyService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
 
 import logger from '../../utils/logger';
-import { SkeletonDashboard, PageHeader, FilterBar } from '../components/AdminUIKit';
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export function AdminReviews() {

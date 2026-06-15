@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f8fafc;
+    margin: 0;
+    padding: 0;
+    color: #334155;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  table, td {
+    mso-table-lspace: 0pt;
+    mso-table-rspace: 0pt;
+  }
+  img {
+    -ms-interpolation-mode: bicubic;
+    border: 0;
+    height: auto;
+    line-height: 100%;
+    outline: none;
+    text-decoration: none;
+  }
+  table {
+    border-collapse: collapse !important;
+  }
+  .wrapper-table {
+    background-color: #f8fafc;
+    width: 100% !important;
+  }
+  .email-container {
+    max-width: 600px;
+    margin: 0 auto !important;
+    width: 100% !important;
+  }
+  .main-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 40px 32px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+  .brand-header {
+    padding-bottom: 24px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 32px;
+    text-align: left;
+  }
+  .brand-link {
+    text-decoration: none;
+    display: inline-block;
+  }
+  .brand-logo {
+    height: 36px;
+    width: 36px;
+    border-radius: 8px;
+    vertical-align: middle;
+    display: inline-block;
+  }
+  .brand-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    vertical-align: middle;
+    margin-left: 10px;
+    letter-spacing: -0.01em;
+  }
+  .title {
+    color: #dc2626;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+  }
+  .body-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 24px;
+  }
+  .status-box {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 24px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #991b1b;
+  }
+  .footer-divider {
+    border-top: 1px solid #f1f5f9;
+    margin-top: 32px;
+    padding-top: 24px;
+    text-align: center;
+  }
+  .footer-text {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+  }
+  .footer-text a {
+    color: #64748b;
+    text-decoration: underline;
+  }
+
+  /* Dark Mode support */
+  @media (prefers-color-scheme: dark) {
+    body, .wrapper-table {
+      background-color: #090d16 !important;
+      color: #e2e8f0 !important;
+    }
+    .main-card {
+      background-color: #0f172a !important;
+      border-color: #1e293b !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+    }
+    .brand-header {
+      border-bottom-color: #1e293b !important;
+    }
+    .brand-name {
+      color: #f8fafc !important;
+    }
+    .title {
+      color: #f87171 !important;
+    }
+    .body-text {
+      color: #cbd5e1 !important;
+    }
+    .status-box {
+      background-color: #451a03 !important;
+      border-color: #78350f !important;
+      color: #fcd34d !important;
+    }
+    .footer-divider {
+      border-top-color: #1e293b !important;
+    }
+    .footer-text, .footer-text a {
+      color: #64748b !important;
+    }
+  }
+
+  /* Mobile responsiveness */
+  @media only screen and (max-width: 600px) {
+    .main-card {
+      padding: 24px 16px !important;
+    }
+  }
+</style>
+</head>
+<body>
+  <div style="display: none; max-height: 0px; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
+    Your order #{{orderId}} payment has failed.
+    &zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;
+  </div>
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" class="wrapper-table">
+    <tr>
+      <td align="center" style="padding: 20px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container">
+          <tr>
+            <td class="main-card">
+              <!-- Header -->
+              <div class="brand-header">
+                <a href="https://siriartsandcrafts.com" target="_blank" class="brand-link">
+                  <img src="https://res.cloudinary.com/siriartscrafts/image/upload/v1/SiriLogo.webp" alt="Siri Arts & Crafts Logo" class="brand-logo" />
+                  <span class="brand-name">Siri Arts & Crafts</span>
+                </a>
+              </div>
+
+              <!-- Body -->
+              <h2 class="title">Payment Failed</h2>
+              <p class="body-text">
+                Hello {{customerName}},
+              </p>
+              <p class="body-text">
+                Unfortunately, the payment for order <strong>#{{orderId}}</strong> could not be processed.
+              </p>
+              
+              {{#if reason}}
+              <div class="status-box">
+                <strong style="display: block; margin-bottom: 6px;">Failure Reason:</strong>
+                {{reason}}
+              </div>
+              {{/if}}
+
+              <p class="body-text">
+                If funds were deducted from your account, they will be automatically refunded within 5-7 business days. Please try placing your order again, or contact our support team if you need assistance.
+              </p>
+
+              <!-- Footer -->
+              <div class="footer-divider">
+                <p class="footer-text">
+                  This email was sent by Siri Arts & Crafts.
+                </p>
+                <p class="footer-text">
+                  <a href="https://siriartsandcrafts.com" target="_blank">siriartsandcrafts.com</a> • Ongole, Andhra Pradesh, India
+                </p>
+                <p class="footer-text" style="color: #94a3b8; margin-top: 12px;">
+                  &copy; {{currentYear}} Siri Arts & Crafts. All rights reserved.
+                </p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

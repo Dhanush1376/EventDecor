@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
 import { getAllDrafts, deleteDraft, deleteAllDrafts, formatBytes } from '../services/draftService';
 import { useDraftContext } from '../context/DraftProvider';

@@ -4,6 +4,7 @@ import {
   searchResults,
   trendingSearches,
   relatedSearches,
+  discoveryData,
 } from '../controllers/searchController';
 import { searchLimiter } from '../middleware/rateLimiter';
 import { dynamicResponseCache } from '../middleware/dynamicCacheMiddleware';
@@ -18,6 +19,9 @@ router.get('/results', searchLimiter, dynamicResponseCache(120, 'public'), searc
 
 // Trending search terms
 router.get('/trending', searchLimiter, trendingSearches);
+
+// Comprehensive discovery data (trending, popular, event collections, new arrivals)
+router.get('/discovery', searchLimiter, dynamicResponseCache(300, 'public'), discoveryData);
 
 // Related/similar search suggestions
 router.get('/related', searchLimiter, relatedSearches);

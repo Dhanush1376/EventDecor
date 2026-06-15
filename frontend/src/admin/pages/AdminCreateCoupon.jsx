@@ -1,14 +1,10 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { couponService, productService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { AdminToggle, SkeletonDashboard, fadeUp } from '../components/AdminUIKit';
+import { fadeUp } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 
 import logger from '../../utils/logger';
 

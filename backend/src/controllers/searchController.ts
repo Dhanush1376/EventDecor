@@ -5,6 +5,7 @@ import {
   getTrendingSearches,
   getRelatedSearches,
 } from '../services/searchService';
+import { getDiscoveryData, learnSearchPatterns } from '../services/search/SearchAnalyticsService';
 import logger from '../config/logger';
 
 const stripUnsafeControlChars = (value: string) =>
@@ -141,6 +142,32 @@ export const trendingSearches = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to load trending searches',
+    });
+  }
+};
+
+/**
+ * GET /search/discovery
+ * Comprehensive data endpoint for the empty-state discovery overlay.
+ */
+export const discoveryData = async (req: Request, res: Response) => {
+  try {
+    const data = await getDiscoveryData();
+
+    // Trigger continuous learning in the background asynchronously
+    learnSearchPatterns().catch((err) => {
+      logger.error(`[SEARCH CTRL] Background learnSearchPatterns error: ${err.message}`);
+    });
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err: any) {
+    logger.error(`[SEARCH CTRL] Discovery data error: ${err.message}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load discovery data',
     });
   }
 };

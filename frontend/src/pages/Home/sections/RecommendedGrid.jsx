@@ -1,11 +1,6 @@
 // import removed
 import { useProducts } from '../../../hooks/useProductQueries';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
-import { SectionHeader } from '../../../components/shared/SectionHeader';
-import { ProductCard } from '../../../components/shared/ProductCard';
-import { CarouselWrapper } from '../../../components/shared/CarouselWrapper';
-import { MandalaElement } from '../../../components/ui/MandalaElement';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 
 /**
  * Recommended grid using real personalized feed API or manual curation.

@@ -1,17 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { productCategories } from '../data/adminData';
 import { productService, uploadService } from '../../services/domainServices';
 import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';
-import { AdminToggle, SkeletonForm } from '../components/AdminUIKit';
 import { compressImage, formatBytes } from '../../utils/imageCompressor';
 import { useDraft } from '../hooks/useDraft';
-import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
-import { DraftConflictViewer } from '../components/DraftConflictViewer';
 
 import logger from '../../utils/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
@@ -233,7 +227,17 @@ export function AdminAddProduct({ editId }) {
       { key: 'slug', value: aiAnalysisResult.slug },
       { key: 'category', value: aiAnalysisResult.category },
       { key: 'material', value: (aiAnalysisResult.materials || []).join(',') },
-      { key: 'tags', value: (aiAnalysisResult.tags || []).join(',') },
+      {
+        key: 'tags',
+        value: [
+          ...new Set([
+            ...(aiAnalysisResult.tags || []),
+            ...(aiAnalysisResult.telugu_keywords || []),
+            ...(aiAnalysisResult.search_aliases || []),
+            ...(aiAnalysisResult.event_associations || []),
+          ]),
+        ].join(','),
+      },
       { key: 'badges', value: (aiAnalysisResult.badges || []).join(', ') },
       { key: 'description', value: aiAnalysisResult.description },
       { key: 'price', value: aiAnalysisResult.price ? String(aiAnalysisResult.price) : '' },

@@ -68,3 +68,7 @@ migration_report.md
 backend/knip-report.json
 frontend/knip-report.json
 frontend/stats.html
+
+# Agent directories
+brain/
+

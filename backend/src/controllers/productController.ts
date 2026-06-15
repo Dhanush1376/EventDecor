@@ -223,6 +223,10 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
     10. Suggest 1 or 2 catchy storefront badges (e.g. "Bestseller", "Trending", "Limited Edition").
     11. CUSTOMIZATION DETECTION: Intelligently determine if this specific item is commonly personalized with text/names by customers (e.g. welcome boards, ring trays, named coconuts). If yes, set "isCustomizable" to true and provide a "customizationNote" prompt for the customer (e.g., "Enter names to be printed").
     12. CONFIDENCE SCORE: Output an accurate "confidence" integer (between 1 and 100) representing your certainty about the detected object class. DO NOT just hardcode 95; evaluate the image clarity and ambiguity.
+    13. TELUGU SEARCH ALIASES & KEYWORDS:
+        - "telugu_keywords": Generate 3 to 5 transliterated Telugu search terms (written in English script) that local customers would use (e.g., ["kobbari", "kobbari bondam", "kobbari bondalu"] for a decorated coconut; ["pasupu", "kumkuma", "thambulam"] for a pooja/gifting plate).
+        - "event_associations": String array mapping this product to specific events where it is used (e.g., ["Wedding", "Housewarming", "Pooja", "BabyShower"]).
+        - "search_aliases": Array of alternate names/synonyms users might search for in English or Hindi (e.g., ["nariyal decor", "wedding coconut", "decorated shadi nariyal"]).
 
     Please output a clean JSON object matching the following structure strictly (do not include any markdown block ticks, just raw JSON):
     {
@@ -243,7 +247,10 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
       "description": "Premium, clean 2-sentence description",
       "seo_keywords": ["keyword1", "keyword2"],
       "isCustomizable": true,
-      "customizationNote": "Enter names to be printed"
+      "customizationNote": "Enter names to be printed",
+      "telugu_keywords": ["transliterated_telugu_1", "transliterated_telugu_2"],
+      "event_associations": ["Wedding", "Pooja"],
+      "search_aliases": ["alias1", "alias2"]
     }
   `;
 

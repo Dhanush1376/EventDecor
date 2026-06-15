@@ -973,9 +973,17 @@ export function AdminProvider({ children }) {
         await cmsService.updateSection(section, sectionData);
 
         setWebsiteContent((prev) => {
+          let updatedSection;
+          const currentVal = customData || prev[section];
+          if (Array.isArray(currentVal)) {
+            updatedSection = [...currentVal];
+            updatedSection.status = 'published';
+          } else {
+            updatedSection = { ...currentVal, status: 'published' };
+          }
           const next = {
             ...prev,
-            [section]: { ...prev[section], ...(customData || {}), status: 'published' },
+            [section]: updatedSection,
           };
           return next;
         });
@@ -998,9 +1006,20 @@ export function AdminProvider({ children }) {
   const updateContent = useCallback(
     (section, data, disableAutoPublish = false) => {
       setWebsiteContent((prev) => {
+        let updatedSection;
+        if (Array.isArray(data)) {
+          updatedSection = [...data];
+          updatedSection.status = 'modified';
+        } else if (Array.isArray(prev[section])) {
+          updatedSection = [...prev[section]];
+          Object.assign(updatedSection, data);
+          updatedSection.status = 'modified';
+        } else {
+          updatedSection = { ...prev[section], ...data, status: 'modified' };
+        }
         const newContent = {
           ...prev,
-          [section]: { ...prev[section], ...data, status: 'modified' },
+          [section]: updatedSection,
         };
         setContentHistory((h) => [
           ...h.slice(-19),
@@ -1088,7 +1107,13 @@ export function AdminProvider({ children }) {
         const updated = { ...prev };
         Object.keys(updated).forEach((key) => {
           if (updated[key]?.status && !failedSections.includes(key)) {
-            updated[key].status = 'published';
+            if (Array.isArray(updated[key])) {
+              const copy = [...updated[key]];
+              copy.status = 'published';
+              updated[key] = copy;
+            } else {
+              updated[key] = { ...updated[key], status: 'published' };
+            }
           }
         });
         return updated;
@@ -1124,25 +1149,35 @@ export function AdminProvider({ children }) {
     setHasUnsavedContent(false);
   }, []);
 
+  const bulkUpdateContent = useCallback((newContent) => {
+    setWebsiteContent(newContent);
+    setHasUnsavedContent(true);
+  }, []);
+
   // ─── Homepage Section Ordering ───
   const reorderHomepageSections = useCallback((fromIndex, toIndex) => {
     setWebsiteContent((prev) => {
       const sections = [...prev.homepageSections];
       const [moved] = sections.splice(fromIndex, 1);
       sections.splice(toIndex, 0, moved);
+      sections.status = 'modified';
       setHasUnsavedContent(true);
       return { ...prev, homepageSections: sections };
     });
   }, []);
 
   const toggleHomepageSection = useCallback((sectionId) => {
-    setWebsiteContent((prev) => ({
-      ...prev,
-      homepageSections: prev.homepageSections.map((s) =>
+    setWebsiteContent((prev) => {
+      const sections = prev.homepageSections.map((s) =>
         s.id === sectionId ? { ...s, isVisible: !s.isVisible } : s,
-      ),
-    }));
-    setHasUnsavedContent(true);
+      );
+      sections.status = 'modified';
+      setHasUnsavedContent(true);
+      return {
+        ...prev,
+        homepageSections: sections,
+      };
+    });
   }, []);
 
   // ─── Refresh functions for re-fetching data ───
@@ -1299,6 +1334,7 @@ export function AdminProvider({ children }) {
         websiteContent,
         updateContent,
         updateNestedContent,
+        bulkUpdateContent,
         publishContent,
         publishAllContent,
         resetContent,

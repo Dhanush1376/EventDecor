@@ -1,5 +1,4 @@
 import React from 'react';
-import { m as motion } from 'framer-motion';
 import { useCheckout } from './CheckoutProvider';
 import { useCart } from '../context/CartContext';
 

@@ -1,6 +1,3 @@
-import { Link } from 'react-router-dom';
-import { SiriLogo } from '../ui/SiriLogo';
-
 export function CheckoutNavbar() {
   return (
     <header className="bg-surface-bright border-b border-outline-variant/40 py-3 sm:py-4 px-4 sm:px-6 sticky top-0 z-50">

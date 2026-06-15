@@ -1,13 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
-import { SectionWrapper } from '../layout';
-import { ProductCard } from '../ui/ProductCard';
-import { MandalaElement } from '../ui/MandalaElement';
-import { MandalaArtDecor } from '../ui/MandalaArtDecor';
+import { useRef, useState, useEffect } from 'react';
 import { productService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
-import { BestsellerSkeleton } from '../ui/Skeleton';
 
 import logger from '../../utils/logger';
 export function BestsellerSection() {

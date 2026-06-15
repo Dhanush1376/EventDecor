@@ -59,6 +59,14 @@ export function useDraft({
     checkDraft();
   }, [draftKey, enabled]);
 
+  // Sync with initialData changes (e.g. after async fetch)
+  useEffect(() => {
+    if (enabled && initialData && !hasDraft) {
+      setFormDataInternal(initialData);
+      formDataRef.current = initialData;
+    }
+  }, [initialData, enabled, hasDraft]);
+
   // The debounced save function
   const debouncedSave = useCallback(
     debounce(async (dataToSave, stateToSave) => {
@@ -150,8 +158,9 @@ export function useDraft({
     setHasDraft(false);
     setDraftInfo(null);
     await deleteDraftDb(draftKey);
-    // Continue with initial data
-  }, [draftKey]);
+    setFormDataInternal(initialData);
+    formDataRef.current = initialData;
+  }, [draftKey, initialData]);
 
   const deleteDraft = useCallback(async () => {
     await deleteDraftDb(draftKey);

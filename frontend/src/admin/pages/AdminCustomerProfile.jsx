@@ -1,13 +1,6 @@
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import {
-  StatusBadge,
-  formatCurrency,
-  fadeUp,
-  stagger,
-  SkeletonProfile,
-} from '../components/AdminUIKit';
+import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminCustomerProfile() {
   const { customerId } = useParams();

@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../utils/logger';
-import { RecommendationGridSkeleton } from '../components/ui/Skeleton';
-import { CloudinaryImage } from '../components/ui/CloudinaryImage';
 
 // Helper utilities matching ProductCard.jsx
 const parseNumericPrice = (val) => {
@@ -88,7 +85,7 @@ function CheckoutRecommendationCard({ product }) {
     <motion.div
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       onClick={handleCardClick}
-      className="group w-full bg-white border border-[#d0c5af]/25 hover:border-[#f26a10]/35 rounded-xl p-2.5 flex flex-col relative select-none cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(242,106,16,0.05)] transition-all duration-300"
+      className="group w-full bg-white border border-[#d0c5af]/25 hover:border-[#8c7335]/35 rounded-xl p-2.5 flex flex-col relative select-none cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(140,115,53,0.05)] transition-all duration-300"
     >
       {/* Product Image and overlay utilities */}
       <div className="aspect-square w-full rounded-lg overflow-hidden bg-[#FAF9F6] border border-black/5 relative">
@@ -105,7 +102,7 @@ function CheckoutRecommendationCard({ product }) {
 
         {/* Small discount indicator */}
         {discount > 0 && (
-          <div className="absolute top-1.5 left-1.5 bg-[#f26a10] text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded shadow-sm z-10 select-none">
+          <div className="absolute top-1.5 left-1.5 bg-[#8c7335] text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded shadow-sm z-10 select-none">
             {discount}% OFF
           </div>
         )}
@@ -133,12 +130,12 @@ function CheckoutRecommendationCard({ product }) {
         <span className="text-[9px] uppercase tracking-wider text-[#685c57]/80 font-bold truncate">
           {product.category || 'Masterpiece'}
         </span>
-        <h4 className="text-[11px] font-bold text-[#1a1c1a] truncate leading-tight mt-0.5 group-hover:text-[#f26a10] transition-colors">
+        <h4 className="text-[11px] font-bold text-[#1a1c1a] truncate leading-tight mt-0.5 group-hover:text-[#8c7335] transition-colors">
           {product.title}
         </h4>
 
         <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
-          <span className="text-[12px] font-extrabold text-[#f26a10]">
+          <span className="text-[12px] font-extrabold text-[#8c7335]">
             ₹{formatPrice(product.price)}
           </span>
           {product.oldPrice && numericOldPrice > numericPrice && (

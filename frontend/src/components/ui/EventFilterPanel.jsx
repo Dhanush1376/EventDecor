@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
 
 const FilterSection = ({ title, id, isOpen, onToggle, children }) => (
   <div className="mb-5 border-b border-outline-variant/10 pb-4 last:border-0 last:pb-0">

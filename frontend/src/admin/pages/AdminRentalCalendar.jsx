@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import rentalService from '../../services/rentalService';
-import { PageHeader, fadeUp, stagger } from '../components/AdminUIKit';
+import { fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminRentalCalendar() {
   const [calendarData, setCalendarData] = useState([]);

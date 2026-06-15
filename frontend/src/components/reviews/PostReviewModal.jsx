@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { REVIEW_SAMPLE_IMAGES } from '../../constants/placeholderImages';
-import { OptimizedImage } from '../ui/OptimizedImage';
 
 const EXPERIENCE_TYPES = [
   {

@@ -54,7 +54,6 @@ export function useVisualSearch() {
     setError(null);
     setScanProgress(0);
     setScanStatus('');
-    document.body.style.overflow = 'hidden';
   }, [isEnabled]);
 
   // Close overlay and cleanup
@@ -71,7 +70,6 @@ export function useVisualSearch() {
       abortRef.current.abort();
       abortRef.current = null;
     }
-    document.body.style.overflow = '';
   }, [previewUrl]);
 
   // ESC key handler

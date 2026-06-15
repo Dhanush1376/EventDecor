@@ -1,19 +1,9 @@
 import { useState, useMemo } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { productCategories } from '../data/adminData';
 import { handleImageError } from '../../utils/imageUtils';
-import {
-  PageHeader,
-  StatusBadge,
-  formatCurrency,
-  fadeUp,
-  stagger,
-  SkeletonTable,
-  MobileFilterDrawer,
-  EmptyState,
-} from '../components/AdminUIKit';
+import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminProducts() {
   const navigate = useNavigate();

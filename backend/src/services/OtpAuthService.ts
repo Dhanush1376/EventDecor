@@ -120,7 +120,7 @@ class OtpAuthService {
     try {
       sendDirectEmail({
         email: cleanEmail,
-        subject: `Your Siri Arts Security Code - ${new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}`,
+        subject: `Your Siri Arts & Crafts Security Code - ${new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}`,
         customHtml: getOtpEmailTemplate(otp, expiryMinutes),
         type: 'security',
         action: 'otp_auth',

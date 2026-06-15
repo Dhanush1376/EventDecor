@@ -1,7 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { userService } from '../services/domainServices';
 import { useAuth } from './AuthContext';
-import { WishlistStateContext, WishlistDispatchContext } from './WishlistContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import logger from '../utils/logger';

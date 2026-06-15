@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useCartDispatch } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { CloudinaryImage } from './CloudinaryImage';
 import { prefetchManager } from '../../utils/prefetchManager';
 
 export const ProductCard = React.memo(function ProductCard({
@@ -135,10 +133,10 @@ export const ProductCard = React.memo(function ProductCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: '-50px' }}
-      transition={{ type: 'spring', stiffness: 70, damping: 15 }}
+      transition={{ duration: 0.3 }}
       onMouseEnter={() => {
         const route = itemType === 'event' ? `/events/${productId}` : `/product/${productId}`;
         prefetchManager.prefetchRoute(route, { kind: 'hover', productId });
@@ -249,20 +247,44 @@ export const ProductCard = React.memo(function ProductCard({
           <div className="space-y-2 transform translate-y-4 lg:group-hover:translate-y-0 transition-transform duration-500">
             <button
               onClick={handleAddToCart}
-              className={`w-full py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 ${
+              className={`w-full py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all duration-500 cursor-pointer flex items-center justify-center ${
                 added
                   ? 'bg-[#e0d6b8] text-[#1a1c1a]'
                   : 'bg-white text-black hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
               }`}
             >
-              {added ? (
-                <>
-                  <span className="material-symbols-outlined text-[14px]">check</span>
-                  Added
-                </>
-              ) : (
-                'Add to Bag'
-              )}
+              <AnimatePresence mode="wait">
+                {added ? (
+                  <motion.span
+                    key="added"
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.85 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                    className="flex items-center justify-center gap-1.5"
+                  >
+                    <motion.span
+                      initial={{ scale: 0.5, rotate: -30 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.05, type: 'spring', stiffness: 400, damping: 15 }}
+                      className="material-symbols-outlined text-[14px]"
+                    >
+                      check
+                    </motion.span>
+                    <span>Added</span>
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="add"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    Add to Bag
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
             <button
               onClick={(e) => {
@@ -294,18 +316,38 @@ export const ProductCard = React.memo(function ProductCard({
         <div className="xl:hidden absolute bottom-3 right-3 z-20">
           <button
             onClick={handleAddToCart}
-            className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all cursor-pointer ${
+            className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 cursor-pointer ${
               added
                 ? 'bg-[#e0d6b8] text-[#1a1c1a]'
                 : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
             }`}
             aria-label="Add to bag"
           >
-            <span
-              className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
-            >
-              {added ? 'check' : 'add'}
-            </span>
+            <AnimatePresence mode="wait">
+              {added ? (
+                <motion.span
+                  key="check"
+                  initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                  className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
+                >
+                  check
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="add"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  transition={{ duration: 0.2 }}
+                  className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
+                >
+                  add
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
         </div>
       </div>
@@ -335,27 +377,23 @@ export const ProductCard = React.memo(function ProductCard({
 
         <Link to={`/product/${productId}`} className="mb-2 md:mb-3 group/link block">
           {(teluguTitle || nameTE || teluguName) && (
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="block font-display text-[13px] md:text-[15px] text-black/85 font-medium tracking-wide truncate leading-none">
+            <div className="mb-1">
+              <span className="block font-body text-[13px] md:text-[15px] text-black/80 font-normal tracking-wide truncate leading-relaxed py-0.5">
                 {teluguTitle || nameTE || teluguName}
-              </span>
-              <span className="w-6 sm:w-8 h-[1px] bg-black/15 shrink-0"></span>
-              <span
-                className="material-symbols-outlined text-[10px] md:text-[12px] text-primary/80 shrink-0"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                favorite
               </span>
             </div>
           )}
-          <h3 className="font-display text-[14px] md:text-[19px] text-black group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-1">
+          <h3
+            className={`${compact ? 'font-body text-[13px] md:text-[14px]' : 'font-display text-[14px] md:text-[19px]'} text-black group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-1`}
+            style={compact ? { fontFamily: 'var(--font-body)' } : undefined}
+          >
             {title}
           </h3>
         </Link>
 
         <div className="mt-auto flex flex-col justify-end">
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-[16px] md:text-[22px] text-black leading-none">
+            <span className="font-body font-normal text-[16px] md:text-[22px] text-black leading-none">
               ₹
               {formatPrice(
                 canPurchase

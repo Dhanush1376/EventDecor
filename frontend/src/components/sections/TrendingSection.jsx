@@ -1,9 +1,4 @@
 import { useState } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { SectionWrapper } from '../layout';
-import { RecommendationCarousel } from '../ui/RecommendationCarousel';
-import { ProductCard } from '../ui/ProductCard';
-import { RecommendationSkeleton } from '../ui/Skeleton';
 import { useTrendingRecommendations } from '../../hooks/useRecommendationQueries';
 
 const FEED_TABS = [

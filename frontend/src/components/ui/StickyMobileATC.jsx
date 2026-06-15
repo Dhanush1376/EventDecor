@@ -1,7 +1,6 @@
 import React from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { m as motion, AnimatePresence } from 'framer-motion';
 
 export function StickyMobileATC({ product, triggerRef }) {
   const { addItem, setIsCartOpen } = useCart();

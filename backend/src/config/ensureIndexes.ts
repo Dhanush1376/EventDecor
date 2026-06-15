@@ -26,11 +26,12 @@ export const seedDefaultEmailTemplates = async (): Promise<void> => {
     ];
 
     for (const t of defaultTemplates) {
-      const exists = await EmailTemplate.findOne({ name: t.name });
-      if (!exists) {
-        logger.info(`[DATABASE] [SEED] Seeding default email template: "${t.name}"`);
-        await EmailTemplate.create(t);
-      }
+      logger.info(`[DATABASE] [SEED] Seeding/Updating default email template: "${t.name}"`);
+      await EmailTemplate.findOneAndUpdate(
+        { name: t.name },
+        { $set: t },
+        { upsert: true, new: true },
+      );
     }
   } catch (err: any) {
     logger.error('[DATABASE] [SEED] Failed to seed default email templates:', err);

@@ -617,7 +617,7 @@
   box-shadow: var(--shadow-md);
 
   &:hover {
-    @apply bg-orange-600 text-white;
+    @apply bg-[#8c7335] text-white;
     box-shadow: var(--shadow-lg);
   }
 }

@@ -1,22 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { MandalaElement } from '../components/ui/MandalaElement';
-import { SEO } from '../components/seo/SEO';
 import { customOrderService, uploadService } from '../services/domainServices';
 import { useProduct } from '../hooks/useProductQueries';
-import {
-  ProductSummaryCard,
-  ProductCustomizationSection,
-  FileUploadZone,
-} from '../components/ui/CustomizationFields';
-import { DynamicCustomOrderWizard } from '../components/ui/DynamicCustomOrderWizard';
+
 import { useAuth } from '../context/AuthContext';
 import { useUserSocket } from '../context/UserSocketProvider';
 import toast from 'react-hot-toast';
 
 import logger from '../utils/logger';
-import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 
 // Framer motion presets

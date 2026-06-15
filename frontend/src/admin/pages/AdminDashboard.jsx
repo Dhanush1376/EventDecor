@@ -1,37 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
-import { m as motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+
 import { useAdmin } from '../context/AdminContext';
 import { handleImageError } from '../../utils/imageUtils';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import {
-  PageHeader,
-  StatCard,
-  ChartCard,
-  ChartTooltip,
-  PeriodSelector,
-  StatusBadge,
   formatCurrency,
   getRelativeTime,
   fadeUp,
   stagger,
   CHART_COLORS,
-  SkeletonDashboard,
-  AdminToggle,
 } from '../components/AdminUIKit';
 
 const FALLBACK_DATE = new Date('2026-05-20T00:00:00Z');

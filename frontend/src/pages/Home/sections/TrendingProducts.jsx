@@ -1,11 +1,5 @@
 import { useTrendingRecommendations } from '../../../hooks/useRecommendationQueries';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
-import { SectionHeader } from '../../../components/shared/SectionHeader';
-import { CarouselWrapper } from '../../../components/shared/CarouselWrapper';
-import { ProductCard } from '../../../components/shared/ProductCard';
-import { MandalaElement } from '../../../components/ui/MandalaElement';
-import { MandalaArtDecor } from '../../../components/ui/MandalaArtDecor';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 
 import React from 'react';
 

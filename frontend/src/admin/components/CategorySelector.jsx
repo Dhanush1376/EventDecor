@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { productService } from '../../services/api/productService';
-import { AdminField } from './AdminUIKit';
-import toast from 'react-hot-toast';
 
 export function CategorySelector({ selectedCategories = [], onChange, maxItems = null }) {
   const [categories, setCategories] = useState([]);

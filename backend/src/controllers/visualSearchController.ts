@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import multer from 'multer';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';

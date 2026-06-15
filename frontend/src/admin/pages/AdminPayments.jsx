@@ -1,17 +1,6 @@
 import { useMemo, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import {
-  PageHeader,
-  StatCard,
-  ChartCard,
-  StatusBadge,
-  formatCurrency,
-  fadeUp,
-  stagger,
-  SkeletonDashboard,
-} from '../components/AdminUIKit';
+import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;

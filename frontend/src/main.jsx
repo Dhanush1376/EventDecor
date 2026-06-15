@@ -1,8 +1,5 @@
-import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import './styles/globals.css';
-import App from './App.jsx';
-import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { runAppBootstrap } from './utils/bootstrap';
 import { getApiRootUrl } from './config/apiConfig';
 import { logStartupDiagnostics } from './utils/diagnostics';

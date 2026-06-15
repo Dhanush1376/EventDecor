@@ -1,6 +1,7 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import PageLayout from '../models/PageLayout';
 import logger from '../config/logger';
+import { bumpPublicCacheVersion } from '../utils/cacheVersion';
 
 export const getLayoutByPath = async (req: Request, res: Response) => {
   try {
@@ -76,6 +77,11 @@ export const createOrUpdateLayout = async (req: Request, res: Response) => {
       { pagePath, name, sections, status, updatedBy: req.user?.id },
       { returnDocument: 'after', upsert: true },
     );
+    try {
+      await bumpPublicCacheVersion();
+    } catch (cacheErr) {
+      logger.warn('[PAGE_LAYOUT] Failed to bump cache version on layout update:', cacheErr);
+    }
     res.status(200).json({ success: true, data: layout });
   } catch (error: any) {
     logger.error('Error updating layout', error);

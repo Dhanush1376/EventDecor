@@ -1,9 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { CloudinaryImage } from '../ui/CloudinaryImage';
-import { SearchBar } from '../ui/SearchBar';
+import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 
@@ -31,6 +28,7 @@ export function GallerySlideshow({
   searchQuery = '',
   onSearchChange,
 }) {
+  const navigate = useNavigate();
   const currentItem = items[currentIndex];
   const currentId = currentItem ? currentItem._id || currentItem.id : null;
   const thumbnailContainerRef = useRef(null);
@@ -196,6 +194,10 @@ export function GallerySlideshow({
                 <SearchBar
                   value={searchQuery}
                   onChange={onSearchChange}
+                  onCameraClick={() => {
+                    onClose();
+                    navigate('/collections?visual=true');
+                  }}
                   placeholder="Search themes, colors..."
                   className="w-full !h-full !rounded-full bg-[#fcfbf9]/90 backdrop-blur-md shadow-sm !px-5 text-[12px] flex items-center border border-black/10 outline-none focus:outline-none"
                 />

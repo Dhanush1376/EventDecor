@@ -1,15 +1,6 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import {
-  m as motion,
-  AnimatePresence,
-  useDragControls,
-  useScroll,
-  useTransform,
-} from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useDragControls, useScroll, useTransform } from 'framer-motion';
 import '../../styles/visual-search.css';
-import { ProductCard } from '../ui/ProductCard';
-import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 
 /**
  * VisualSearchOverlay — Premium Google Lens-style visual search experience.
@@ -238,11 +229,11 @@ export function VisualSearchOverlay({
           {/* ═══ Main Modal Popup (Hidden during results) ═══ */}
           {phase !== 'results' && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="bg-surface-bright rounded-3xl shadow-2xl overflow-hidden flex flex-col w-[calc(100%-40px)] max-w-[420px] mx-auto z-10 border border-outline-variant/20"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 280 }}
+              className="bg-surface-bright rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col w-full md:w-[calc(100%-40px)] max-w-[420px] mx-auto z-10 border-t md:border border-outline-variant/20 mt-auto md:mb-8"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant/10 bg-surface-container-lowest">
@@ -370,14 +361,13 @@ export function VisualSearchOverlay({
                   >
                     {/* Image with Cinematic Gradient Scanning Effects */}
                     <div
-                      className={`vs-image-scanner w-full${phase === 'scanning' ? ' scanning' : ''}`}
-                      style={{ maxHeight: '50vh' }}
+                      className={`vs-image-scanner w-full aspect-square${phase === 'scanning' ? ' scanning' : ''}`}
                     >
                       <img
                         src={previewUrl}
                         alt="Uploaded for visual search"
-                        className="w-full h-full object-contain rounded-2xl"
-                        style={{ maxHeight: '50vh', position: 'relative', zIndex: 1 }}
+                        className="w-full h-full object-cover rounded-2xl"
+                        style={{ position: 'relative', zIndex: 1 }}
                       />
                       {phase === 'scanning' && (
                         <>
@@ -471,7 +461,7 @@ export function VisualSearchOverlay({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="fixed inset-0 z-[110] flex flex-col md:pt-[80px] overflow-hidden bg-surface md:bg-transparent"
+              className="fixed inset-0 z-[10000] flex flex-col md:pt-[80px] overflow-hidden bg-surface md:bg-transparent"
             >
               {/* --- DESKTOP BACKDROP --- */}
               <div className="hidden md:block absolute inset-0 bg-[#faf9f6]/95 backdrop-blur-xl -z-10" />

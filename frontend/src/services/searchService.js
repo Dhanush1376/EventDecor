@@ -28,12 +28,12 @@ async function fetchWithCache(cacheKey, fetchFn, options = {}) {
 
   // Fetch new data
   const requestPromise = fetchFn()
-    .then(data => {
+    .then((data) => {
       searchCache.set(cacheKey, { data, timestamp: Date.now() });
       pendingRequests.delete(cacheKey);
       return data;
     })
-    .catch(err => {
+    .catch((err) => {
       pendingRequests.delete(cacheKey);
       throw err;
     });
@@ -55,10 +55,10 @@ export const searchService = {
     if (!query || query.trim().length < 2) {
       return { success: true, data: { suggestions: [], predictedCategories: [] } };
     }
-    
+
     const limit = options.limit || 8;
     const cacheKey = `ac_${query.trim().toLowerCase()}_${limit}`;
-    
+
     return fetchWithCache(
       cacheKey,
       async () => {
@@ -68,7 +68,7 @@ export const searchService = {
         });
         return response.data;
       },
-      options
+      options,
     );
   },
 
@@ -86,20 +86,22 @@ export const searchService = {
       limit: options.limit || 20,
       priceMin: options.priceMin,
       priceMax: options.priceMax,
+      spellcheck: options.spellcheck,
+      bypassCorrection: options.bypassCorrection,
     };
-    
+
     const cacheKey = `search_${JSON.stringify(params)}`;
-    
+
     return fetchWithCache(
       cacheKey,
       async () => {
-        const response = await api.get('/search/results', { 
+        const response = await api.get('/search/results', {
           params,
-          signal: options.signal
+          signal: options.signal,
         });
         return response.data;
       },
-      options
+      options,
     );
   },
 
@@ -109,7 +111,7 @@ export const searchService = {
   getTrending: async (options = {}) => {
     const limit = options.limit || 10;
     const cacheKey = `trending_${limit}`;
-    
+
     return fetchWithCache(
       cacheKey,
       async () => {
@@ -119,7 +121,7 @@ export const searchService = {
         });
         return response.data;
       },
-      options
+      options,
     );
   },
 
@@ -129,7 +131,7 @@ export const searchService = {
   getRelated: async (query, options = {}) => {
     const limit = options.limit || 5;
     const cacheKey = `related_${query}_${limit}`;
-    
+
     return fetchWithCache(
       cacheKey,
       async () => {
@@ -139,16 +141,34 @@ export const searchService = {
         });
         return response.data;
       },
-      options
+      options,
     );
   },
-  
+
+  /**
+   * Get comprehensive discovery data (trending, popular, event collections, new arrivals).
+   */
+  getDiscovery: async (options = {}) => {
+    const cacheKey = `discovery_data`;
+
+    return fetchWithCache(
+      cacheKey,
+      async () => {
+        const response = await api.get('/search/discovery', {
+          signal: options.signal,
+        });
+        return response.data;
+      },
+      options,
+    );
+  },
+
   /**
    * Clear all frontend search caches
    */
   clearCache: () => {
     searchCache.clear();
-  }
+  },
 };
 
 export default searchService;

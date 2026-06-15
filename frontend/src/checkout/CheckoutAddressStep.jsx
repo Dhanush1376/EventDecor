@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 
 import { useCheckout } from './CheckoutProvider';
@@ -663,27 +662,33 @@ export default function CheckoutAddressStep() {
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs mb-4">
           {activeSelectedAddress ? (
             <div className="relative">
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-[14px] font-extrabold text-on-surface">
+              {/* Change button absolute-positioned at top-right corner to prevent layout squeezing */}
+              <button
+                onClick={() => setIsSelectingList(true)}
+                className="absolute top-0 right-0 text-[12px] font-bold text-primary uppercase tracking-wide cursor-pointer py-1 px-2 hover:opacity-85 transition-opacity"
+              >
+                Change
+              </button>
+
+              {/* Title row with Name and badges, padded on right to avoid the Change button */}
+              <div className="pr-16 mb-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[15px] font-extrabold text-on-surface capitalize">
                     {activeSelectedAddress.name}
                   </span>
-                  <span className="text-[11px] text-secondary">(Default)</span>
+                  <span className="text-[10px] text-secondary/80 font-medium bg-surface-container-low px-1.5 py-0.5 rounded">
+                    Default
+                  </span>
                   {activeSelectedAddress.tag && (
                     <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border border-primary text-primary rounded-full">
                       {activeSelectedAddress.tag}
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={() => setIsSelectingList(true)}
-                  className="text-[12px] font-bold text-primary uppercase tracking-wide cursor-pointer"
-                >
-                  Change
-                </button>
               </div>
 
-              <p className="text-[13px] text-on-surface leading-relaxed w-[85%]">
+              {/* Address details with premium line-height */}
+              <p className="text-[13px] text-on-surface/85 leading-relaxed w-[85%]">
                 {activeSelectedAddress.addressString || activeSelectedAddress.address}
                 <br />
                 {activeSelectedAddress.locality}
@@ -692,8 +697,10 @@ export default function CheckoutAddressStep() {
                 {activeSelectedAddress.pincode}
               </p>
 
-              <div className="mt-3 text-[13px]">
-                <span className="text-secondary">Mobile: </span>
+              {/* Mobile details row with top border and icon */}
+              <div className="mt-4 pt-3 border-t border-outline-variant/30 text-[13px] flex items-center gap-1.5 text-secondary">
+                <span className="material-symbols-outlined text-[15px] text-primary">phone</span>
+                <span>Mobile:</span>
                 <span className="font-extrabold text-on-surface">
                   {activeSelectedAddress.phone}
                 </span>
