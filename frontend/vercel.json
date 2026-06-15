@@ -9,8 +9,8 @@
       "destination": "/api/social-proxy?id=:id"
     },
     {
-      "source": "/api/v1/:path*",
-      "destination": "https://eventdecor-production-1647.up.railway.app/api/v1/:path*"
+      "source": "/api/:path*",
+      "destination": "https://eventdecor-production-1647.up.railway.app/api/:path*"
     },
     {
       "source": "/socket.io/:path*",
