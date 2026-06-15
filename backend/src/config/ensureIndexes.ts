@@ -30,7 +30,7 @@ export const seedDefaultEmailTemplates = async (): Promise<void> => {
       await EmailTemplate.findOneAndUpdate(
         { name: t.name },
         { $set: t },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: 'after' },
       );
     }
   } catch (err: any) {

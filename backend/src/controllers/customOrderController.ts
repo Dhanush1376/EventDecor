@@ -59,7 +59,7 @@ const generateOrderId = async (): Promise<string> => {
   const counter = await Counter.findByIdAndUpdate(
     { _id: `customOrder_${year}` },
     { $inc: { seq: 1 } },
-    { new: true, upsert: true },
+    { returnDocument: 'after', upsert: true },
   );
   return `CO-${year}-${String(counter.seq).padStart(6, '0')}`;
 };
@@ -658,7 +658,7 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
       },
       $inc: { __v: 1 },
     },
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   if (!updatedOrder) {

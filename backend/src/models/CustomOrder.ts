@@ -414,7 +414,7 @@ CustomOrderSchema.pre<ICustomOrder>('save', async function () {
         counter = await Counter.findByIdAndUpdate(
           { _id: `customOrder_${year}` },
           { $inc: { seq: 1 } },
-          { new: true, upsert: true },
+          { returnDocument: 'after', upsert: true },
         );
         break; // Success
       } catch (err: any) {
