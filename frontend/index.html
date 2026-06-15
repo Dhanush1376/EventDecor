@@ -107,6 +107,43 @@
     <!-- Critical Assets Preload -->
     <link rel="preload" as="image" href="/logo-nobg-clean-sm.webp" type="image/webp" fetchpriority="high" />
 
+    <!-- LCP Preload Script: Preload page-specific hero background image as early as possible -->
+    <script>
+      (function() {
+        try {
+          var path = window.location.pathname;
+          var bgImg = '';
+          var cached = localStorage.getItem("siri_arts_website_content");
+          var parsed = cached ? JSON.parse(cached) : null;
+
+          if (path === '/collections' || path === '/collections/') {
+            bgImg = (parsed && parsed.shopPage && parsed.shopPage.hero && parsed.shopPage.hero.backgroundImage)
+              ? parsed.shopPage.hero.backgroundImage
+              : 'https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204';
+          } else if (path === '/events/collections' || path === '/events/collections/' || path === '/events' || path === '/events/') {
+            bgImg = (parsed && parsed.eventsPage && parsed.eventsPage.hero && parsed.eventsPage.hero.backgroundImage)
+              ? parsed.eventsPage.hero.backgroundImage
+              : 'https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g';
+          }
+
+          if (bgImg) {
+            // Apply Cloudinary optimization transforms early if it is a Cloudinary URL to save bandwidth
+            if (bgImg.indexOf('cloudinary.com') !== -1) {
+              if (bgImg.indexOf('/upload/') !== -1 && bgImg.indexOf('w_') === -1) {
+                bgImg = bgImg.replace('/upload/', '/upload/f_auto,q_auto,w_1200/');
+              }
+            }
+            var link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = 'image';
+            link.href = bgImg;
+            link.setAttribute('fetchpriority', 'high');
+            document.head.appendChild(link);
+          }
+        } catch(e) {}
+      })();
+    </script>
+
     <!-- Fonts Preload & Load -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600&display=swap" />
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0..1,0&display=swap" />

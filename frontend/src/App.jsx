@@ -29,6 +29,7 @@ import { prefetchManager } from './utils/prefetchManager';
 import debounce from 'lodash.debounce';
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
 import { hydrateQueryClientCache, subscribeToQueryCache } from './utils/queryPersister';
+import logger from './utils/logger';
 
 const AdminInviteModal = lazy(() =>
   import('./components/auth/AdminInviteModal').then((m) => ({ default: m.AdminInviteModal })),

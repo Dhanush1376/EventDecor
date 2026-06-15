@@ -3,6 +3,18 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import {
+  SearchBar,
+  CategoryTabs,
+  CustomDropdown,
+  PromoBanner,
+  EventFilterPanel,
+  Skeleton,
+  ProductCard,
+  QuickViewModal,
+  Pagination,
+  OptimizedImage,
+} from '../components/ui';
 import React, { useState, useMemo, useEffect } from 'react';
 import { eventService, productService, couponService } from '../services/domainServices';
 import { handleImageError } from '../utils/imageUtils';
