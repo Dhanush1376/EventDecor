@@ -1,6 +1,6 @@
 import { PageLoader } from './PageLoader';
 import { Skeleton } from './SkeletonBase';
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 
 export function getRouteSkeletonVariant(path) {
   if (path === '/') return 'home';
