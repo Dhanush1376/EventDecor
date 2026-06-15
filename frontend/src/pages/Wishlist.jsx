@@ -1,3 +1,4 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
 export function Wishlist() {
   return (
     <motion.div

@@ -1,3 +1,4 @@
+import { Button } from '../Button';
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import axe from 'axe-core';

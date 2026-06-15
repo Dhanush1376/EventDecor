@@ -1,5 +1,8 @@
-import { lazy } from 'react';
-import { useCheckout } from '../checkout/CheckoutProvider';
+import { Suspense, lazy } from 'react';
+import { SEO } from '../components/seo/SEO';
+import { CheckoutProvider, useCheckout } from '../checkout/CheckoutProvider';
+import { CheckoutSidebarSkeleton, CheckoutStepSkeleton } from '../components/ui/Skeleton';
+import { CheckoutSteps } from '../components/ui/CheckoutSteps';
 import toast from 'react-hot-toast';
 
 const CheckoutAddressStep = lazy(() => import('../checkout/CheckoutAddressStep'));

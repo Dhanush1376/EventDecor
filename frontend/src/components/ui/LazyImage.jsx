@@ -1,3 +1,4 @@
+import { OptimizedImage } from './OptimizedImage';
 import { useState } from 'react';
 
 /**

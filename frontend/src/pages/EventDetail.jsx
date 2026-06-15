@@ -1,13 +1,19 @@
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SEO } from '../components/seo/SEO';
+import { OptimizedImage } from '../components/ui/OptimizedImage';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { EventDetailSkeleton } from '../components/ui/Skeleton';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { ShareButton } from '../components/ui/ShareButton';
+import { LocationSelectorModal } from '../components/ui/LocationSelectorModal';
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-
 import { useWishlist } from '../context/WishlistContext';
 import { eventService, showcaseService, bookingService } from '../services/domainServices';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
-
 import logger from '../utils/logger';
 
 const RecommendationSystem = React.lazy(() =>

@@ -1,5 +1,5 @@
-import { handleImageError } from '../../utils/imageUtils';
-import { getOptimizedUrl } from '../../utils/imageUtils';
+import { m as motion } from 'framer-motion';
+import { handleImageError, getOptimizedUrl } from '../../utils/imageUtils';
 
 export function PromoBanner({
   backgroundImage,

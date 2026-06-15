@@ -1,3 +1,4 @@
+import { m as motion } from 'framer-motion';
 import { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import { handleImageError } from '../../utils/imageUtils';

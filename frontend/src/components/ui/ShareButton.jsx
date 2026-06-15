@@ -1,5 +1,9 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { Share2, Copy, Check, MessageCircle, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import logger from '../../utils/logger';
+
 const FacebookIcon = (props) => (
   <svg
     {...props}
@@ -50,9 +54,7 @@ const LinkedinIcon = (props) => (
     <circle cx="4" cy="4" r="2" />
   </svg>
 );
-import { toast } from 'react-hot-toast';
 
-import logger from '../../utils/logger';
 /**
  * Universal Enterprise Share Button
  * Automatically uses Web Share API on mobile, falls back to a custom animated popover on desktop.

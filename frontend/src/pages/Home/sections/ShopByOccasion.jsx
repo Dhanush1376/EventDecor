@@ -1,3 +1,8 @@
+import { Link } from 'react-router-dom';
+import { m as motion } from 'framer-motion';
+import { SectionHeader } from '../../../components/shared/SectionHeader';
+import { MandalaElement } from '../../../components/ui/MandalaElement';
+import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { useState } from 'react';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 

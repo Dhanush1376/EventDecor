@@ -1,10 +1,13 @@
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SEO } from '../components/seo/SEO';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { InvoiceTemplate, OrderSuccessSkeleton, OptimizedImage } from '../components/ui';
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-
 import { handleImageError } from '../utils/imageUtils';
 import { orderService, rentalService } from '../services/domainServices';
-
 import logger from '../utils/logger';
+
 const BarcodeSVG = ({ val }) => (
   <svg viewBox="0 0 200 40" className="w-full h-9" xmlns="http://www.w3.org/2000/svg">
     <rect width="200" height="40" fill="#fff" />

@@ -1,4 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { AdminToggle, SkeletonForm } from '../components/AdminUIKit';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
+import { DraftConflictViewer } from '../components/DraftConflictViewer';
 import { useNavigate, useParams } from 'react-router-dom';
 import { productCategories } from '../data/adminData';
 import { productService, uploadService } from '../../services/domainServices';
@@ -6,8 +12,8 @@ import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';
 import { compressImage, formatBytes } from '../../utils/imageCompressor';
 import { useDraft } from '../hooks/useDraft';
-
 import logger from '../../utils/logger';
+
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideIn = {
   hidden: { opacity: 0, x: 20 },

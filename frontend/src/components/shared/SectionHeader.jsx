@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { m as motion } from 'framer-motion';
 /**
  * Reusable section header with kicker, title, and optional "See All" link.
  */

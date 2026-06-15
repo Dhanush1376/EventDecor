@@ -1,3 +1,5 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { OptimizedImage } from '../ui/OptimizedImage';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { REVIEW_SAMPLE_IMAGES } from '../../constants/placeholderImages';

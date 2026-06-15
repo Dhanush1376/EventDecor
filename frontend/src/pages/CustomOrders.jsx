@@ -1,3 +1,7 @@
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { SEO } from '../components/seo/SEO';
+import { DynamicCustomOrderWizard } from '../components/ui/DynamicCustomOrderWizard';
+import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { customOrderService, uploadService } from '../services/domainServices';

@@ -1,3 +1,6 @@
+import { LazyMotion, domAnimation, m as motion, AnimatePresence } from 'framer-motion';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
+import { SearchSuggestionsSkeleton } from '../ui/Skeleton';
 import { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMediaQuery } from '../../hooks/useMediaQuery';

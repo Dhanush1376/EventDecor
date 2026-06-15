@@ -1,9 +1,15 @@
+import { m as motion } from 'framer-motion';
+import { ImageUpload } from '../components/ImageUpload';
+import { VideoUpload } from '../components/VideoUpload';
+import { PageHeader, stagger } from '../components/AdminUIKit';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { galleryService, productService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
-import { stagger } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
 
 export function AdminAddGalleryItem() {

@@ -1,3 +1,4 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { adminInviteService } from '../../services/domainServices';

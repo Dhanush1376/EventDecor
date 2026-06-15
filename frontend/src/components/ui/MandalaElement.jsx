@@ -1,5 +1,5 @@
+import { m as motion, useInView } from 'framer-motion';
 import React from 'react';
-import { useInView } from 'framer-motion';
 import { MANDALA_VARIANT_URLS } from '../../constants/mandalaAssets';
 
 /**

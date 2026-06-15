@@ -1,3 +1,6 @@
+import { m as motion } from 'framer-motion';
+import { ReviewsSkeleton } from '../ui/Skeleton';
+import { OptimizedImage } from '../ui/OptimizedImage';
 import React, { useState, useEffect, lazy } from 'react';
 import toast from 'react-hot-toast';
 import { reviewService } from '../../services/domainServices';

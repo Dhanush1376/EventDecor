@@ -1,3 +1,5 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useMemo, useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';

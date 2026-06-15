@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom';
+import { MandalaElement } from '../ui/MandalaElement';
+import { SiriLogo } from '../ui/SiriLogo';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { CONTACT_EMAIL, SOCIAL_INSTAGRAM, SOCIAL_PINTEREST } from '../../constants/brandEnv';
 

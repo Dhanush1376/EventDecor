@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { AdminToggle } from './AdminUIKit';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { useAuth } from '../../context/AuthContext';

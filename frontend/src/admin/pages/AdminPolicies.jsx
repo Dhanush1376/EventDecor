@@ -1,9 +1,10 @@
+import { m as motion } from 'framer-motion';
+import { PageHeader, AdminSkeleton, StatusBadge, fadeUp, stagger } from '../components/AdminUIKit';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { policyService } from '../../services/domainServices';
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { fadeUp, stagger } from '../components/AdminUIKit';
 
 export function AdminPolicies() {
   const navigate = useNavigate();

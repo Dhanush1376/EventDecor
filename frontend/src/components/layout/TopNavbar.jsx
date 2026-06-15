@@ -1,5 +1,11 @@
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { IntelligentSearchOverlay } from '../search/IntelligentSearchOverlay';
+import { VisualSearchOverlay } from '../search/VisualSearchOverlay';
+import { SiriLogo } from '../ui/SiriLogo';
+import { MandalaElement } from '../ui/MandalaElement';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -9,6 +15,7 @@ import { useSearchOverlay } from '../../hooks/useSearchOverlay';
 import { prefetchManager } from '../../utils/prefetchManager';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useVisualSearch } from '../../hooks/useVisualSearch';
+
 // Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {

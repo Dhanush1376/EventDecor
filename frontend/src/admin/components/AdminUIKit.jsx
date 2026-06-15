@@ -1,3 +1,5 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 

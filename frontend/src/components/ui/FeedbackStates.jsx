@@ -1,3 +1,5 @@
+import { m as motion } from 'framer-motion';
+import { Button } from './Button';
 export function EmptyState({
   title = 'Nothing found',
   description = "We couldn't find what you were looking for.",

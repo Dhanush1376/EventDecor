@@ -1,3 +1,6 @@
+import { OptimizedImage } from './OptimizedImage';
+import { ShareButton } from './ShareButton';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';

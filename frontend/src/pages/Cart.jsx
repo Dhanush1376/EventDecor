@@ -1,3 +1,4 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
 export function Cart() {
   return (
     <motion.div

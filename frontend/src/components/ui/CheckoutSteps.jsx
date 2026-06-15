@@ -1,3 +1,5 @@
+import React from 'react';
+import { m as motion } from 'framer-motion';
 export function CheckoutSteps({
   currentStep,
   onStepClick,

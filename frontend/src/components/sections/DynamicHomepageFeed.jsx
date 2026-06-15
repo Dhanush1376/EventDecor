@@ -1,3 +1,5 @@
+import { RecommendationCarousel } from '../ui/RecommendationCarousel';
+import { m as motion } from 'framer-motion';
 import { Component, useEffect, useState } from 'react';
 import { usePersonalizedSections } from '../../hooks/usePersonalizedSections';
 import { recommendationService } from '../../services/recommendationService';

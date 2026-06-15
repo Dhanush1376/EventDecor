@@ -1,3 +1,8 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { ImageUpload } from '../components/ImageUpload';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect, useRef } from 'react';
 import { useAdmin } from '../context/AdminContext';
 

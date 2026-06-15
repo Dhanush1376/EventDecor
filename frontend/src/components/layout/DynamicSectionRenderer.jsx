@@ -1,3 +1,10 @@
+import {
+  HeroSkeleton,
+  NavigationHubSkeleton,
+  BestsellerSkeleton,
+  StorySkeleton,
+  GallerySkeleton,
+} from '../ui';
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import logger from '../../utils/logger';

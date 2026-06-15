@@ -1,3 +1,6 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
 import React, { useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import { prefetchManager } from '../../utils/prefetchManager';

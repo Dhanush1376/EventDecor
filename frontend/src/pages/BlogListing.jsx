@@ -1,3 +1,7 @@
+import { m as motion } from 'framer-motion';
+import { Search } from 'lucide-react';
+import { SEO } from '../components/seo/SEO';
+import { BlogCard } from '../components/blog/BlogCard';
 import { useState, useMemo } from 'react';
 import fallbackBlogsData from '../content/blogs.json';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';

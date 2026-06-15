@@ -1,11 +1,14 @@
+import { m as motion } from 'framer-motion';
+import { AdminToggle, SkeletonDashboard, fadeUp } from '../components/AdminUIKit';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { couponService, productService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { fadeUp } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
-
 import logger from '../../utils/logger';
 
 const AVAILABLE_CATEGORIES = [

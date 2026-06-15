@@ -1,6 +1,9 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { SEO } from '../components/seo/SEO';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-
 import { eventService, productService, couponService } from '../services/domainServices';
 import { handleImageError } from '../utils/imageUtils';
 import toast from 'react-hot-toast';
@@ -8,8 +11,8 @@ import { useCart } from '../context/CartContext';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useMediaQuery } from '../hooks/useMediaQuery';
-
 import logger from '../utils/logger';
+
 export function EventCollections() {
   const { setClaimedCoupon } = useCart();
   const navigate = useNavigate();

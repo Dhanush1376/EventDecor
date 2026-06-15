@@ -1,3 +1,8 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { fadeUp, stagger, SkeletonDashboard, PageHeader } from '../components/AdminUIKit';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect } from 'react';
 import { userService, cmsService, notificationService } from '../../services/domainServices';
 import { useAuth } from '../../context/AuthContext';
@@ -5,7 +10,6 @@ import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';
 import logger from '../../utils/logger';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { fadeUp, stagger } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
 
 export function AdminSettings() {

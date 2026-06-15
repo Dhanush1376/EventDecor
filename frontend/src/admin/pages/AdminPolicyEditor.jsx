@@ -1,9 +1,12 @@
+import { m as motion } from 'framer-motion';
+import { SkeletonDashboard, stagger } from '../components/AdminUIKit';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { policyService } from '../../services/domainServices';
 import { createSafeHtml } from '../../utils/sanitize';
 import { toast } from 'react-hot-toast';
-import { stagger } from '../components/AdminUIKit';
 import { getErrorMessage } from '../../utils/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
 

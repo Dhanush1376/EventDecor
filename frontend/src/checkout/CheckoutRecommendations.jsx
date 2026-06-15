@@ -1,3 +1,6 @@
+import { m as motion } from 'framer-motion';
+import { RecommendationGridSkeleton } from '../components/ui/Skeleton';
+import { CloudinaryImage } from '../components/ui/CloudinaryImage';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';

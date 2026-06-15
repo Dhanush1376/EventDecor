@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { SEO } from '../components/seo/SEO';
 export function NotFound() {
   return (
     <div className="min-h-[80vh] relative flex flex-col items-center justify-center px-4 overflow-hidden pt-24 md:pt-32 pb-24 md:pb-32">

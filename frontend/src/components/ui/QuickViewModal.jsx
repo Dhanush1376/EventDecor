@@ -1,3 +1,5 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { CloudinaryImage } from './CloudinaryImage';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';

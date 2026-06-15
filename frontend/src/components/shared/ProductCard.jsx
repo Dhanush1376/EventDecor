@@ -1,5 +1,7 @@
+import { useNavigate, Link } from 'react-router-dom';
+import { m as motion } from 'framer-motion';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useCartDispatch } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';

@@ -1,4 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SkeletonForm } from '../components/AdminUIKit';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useNavigate, useParams } from 'react-router-dom';
 import { showcaseService, uploadService, cmsService } from '../../services/domainServices';
 import api from '../../services/api';

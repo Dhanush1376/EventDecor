@@ -1,3 +1,6 @@
+import { m as motion } from 'framer-motion';
+import { MandalaElement } from './MandalaElement';
+import { SiriLogo } from './SiriLogo';
 import { useEffect } from 'react';
 
 export function SplashScreen({ onComplete }) {

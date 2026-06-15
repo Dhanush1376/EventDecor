@@ -1,3 +1,9 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { ShieldAlert, ShieldCheck, UserPlus, Trash2, Edit2 } from 'lucide-react';
+import { SkeletonTable, PageHeader } from '../components/AdminUIKit';
+import { DraftRestoreModal } from '../components/DraftRestoreModal';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';

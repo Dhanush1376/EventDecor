@@ -1,3 +1,5 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { MandalaElement } from '../ui/MandalaElement';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/domainServices';

@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SEO } from '../components/seo/SEO';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { BookingWizardSkeleton } from '../components/ui/Skeleton';
+import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { eventService, bookingService, uploadService } from '../services/domainServices';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-
 import logger from '../utils/logger';
+import { EVENT_TYPES, ADDON_PROPS } from '../config/constants';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -15,7 +20,7 @@ const loadRazorpayScript = () => {
     document.body.appendChild(script);
   });
 };
-import { EVENT_TYPES, ADDON_PROPS } from '../config/constants';
+
 export function EventBookingWizard() {
   const { isAuthenticated, runProtectedAction } = useAuth();
   const navigate = useNavigate();

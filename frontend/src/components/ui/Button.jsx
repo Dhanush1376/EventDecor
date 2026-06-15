@@ -1,3 +1,5 @@
+import { m as motion } from 'framer-motion';
+import { Skeleton } from './Skeleton';
 import React from 'react';
 import { EASE } from '../../constants/design-tokens';
 

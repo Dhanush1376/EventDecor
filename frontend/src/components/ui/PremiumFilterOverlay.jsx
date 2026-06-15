@@ -1,3 +1,4 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
 const COLOR_PALETTES = [

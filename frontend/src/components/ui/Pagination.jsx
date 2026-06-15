@@ -1,3 +1,4 @@
+import React from 'react';
 export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
   const visiblePages = pages.filter((page) => {

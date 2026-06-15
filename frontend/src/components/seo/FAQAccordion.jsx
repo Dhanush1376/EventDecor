@@ -1,3 +1,5 @@
+import { ChevronDown } from 'lucide-react';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
 export function FAQAccordion({ faqs, title = 'Frequently Asked Questions' }) {

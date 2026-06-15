@@ -1,3 +1,7 @@
+import { Link } from 'react-router-dom';
+import { SectionHeader } from '../../../components/shared/SectionHeader';
+import { MandalaElement } from '../../../components/ui/MandalaElement';
+import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 
 import React from 'react';

@@ -1,3 +1,4 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 

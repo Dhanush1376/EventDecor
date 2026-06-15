@@ -1,5 +1,7 @@
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SiriLogo } from '../../components/ui/SiriLogo';
 import React, { useState, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 
 const navSections = [

@@ -1,3 +1,5 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { WifiOff, RefreshCw, Database, ShieldAlert, AlertCircle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNetwork } from '../../context/NetworkContext';
 

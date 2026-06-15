@@ -1,3 +1,4 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';

@@ -1,3 +1,8 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SEO } from '../components/seo/SEO';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { OptimizedImage } from '../components/ui/OptimizedImage';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { showcaseService, bookingService, uploadService } from '../services/domainServices';

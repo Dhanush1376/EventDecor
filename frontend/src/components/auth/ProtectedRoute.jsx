@@ -1,5 +1,6 @@
+import { Navigate, useLocation } from 'react-router-dom';
+import { RouteSkeleton } from '../ui/RouteSkeleton';
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export function ProtectedRoute({ children, adminOnly = false }) {

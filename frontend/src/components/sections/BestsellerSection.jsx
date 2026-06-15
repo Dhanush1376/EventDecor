@@ -1,8 +1,15 @@
-import { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { m as motion } from 'framer-motion';
+import { SectionWrapper } from '../layout';
+import { ProductCard } from '../ui/ProductCard';
+import { MandalaElement } from '../ui/MandalaElement';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
+import { BestsellerSkeleton } from '../ui/Skeleton';
 import { productService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
-
 import logger from '../../utils/logger';
+
 export function BestsellerSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [bestsellers, setBestsellers] = useState([]);

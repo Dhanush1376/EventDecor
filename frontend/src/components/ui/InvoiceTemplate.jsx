@@ -1,3 +1,5 @@
+import Barcode from 'react-barcode';
+import { QRCodeSVG } from 'qrcode.react';
 export function InvoiceTemplate({ order, user = {}, onClose }) {
   if (!order) return null;
 

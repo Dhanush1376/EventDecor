@@ -1,3 +1,5 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { OptimizedImage } from '../ui/OptimizedImage';
 import { useState, useEffect } from 'react';
 
 export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose }) {

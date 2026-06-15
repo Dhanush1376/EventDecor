@@ -1,3 +1,8 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SectionWrapper } from '../layout';
+import { RecommendationCarousel } from '../ui/RecommendationCarousel';
+import { ProductCard } from '../ui/ProductCard';
+import { RecommendationSkeleton } from '../ui/Skeleton';
 import { useState } from 'react';
 import { useTrendingRecommendations } from '../../hooks/useRecommendationQueries';
 

@@ -1,3 +1,4 @@
+import { m as motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';

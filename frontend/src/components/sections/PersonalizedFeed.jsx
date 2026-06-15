@@ -1,4 +1,10 @@
-import { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SectionWrapper } from '../layout';
+import { ProductCard } from '../ui/ProductCard';
+import { MandalaElement } from '../ui/MandalaElement';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import { usePersonalizedFeed } from '../../hooks/useRecommendationQueries';
 import { useAuth } from '../../context/AuthContext';
 

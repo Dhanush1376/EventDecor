@@ -1,3 +1,7 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import Barcode from 'react-barcode';
+import { QRCodeSVG } from 'qrcode.react';
+import { InvoiceTemplate } from '../../components/ui';
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';

@@ -1,8 +1,10 @@
+import { m as motion } from 'framer-motion';
+import { fadeUp, stagger, PageHeader, SkeletonDashboard } from '../components/AdminUIKit';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { useState, useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import visualSearchService from '../../services/visualSearchService';
 import toast from 'react-hot-toast';
-import { fadeUp, stagger } from '../components/AdminUIKit';
 import {
   Chart as ChartJS,
   CategoryScale,

@@ -1,3 +1,4 @@
+import { SiriLogo } from './SiriLogo';
 import { useEffect, useState } from 'react';
 
 export default function CloudflareVerification({

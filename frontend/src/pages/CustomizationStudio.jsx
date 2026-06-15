@@ -1,5 +1,10 @@
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SEO } from '../components/seo/SEO';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { Skeleton } from '../components/ui/Skeleton';
+import { CloudinaryImage } from '../components/ui/CloudinaryImage';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useProduct } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
 import { customOrderService, uploadService } from '../services/domainServices';

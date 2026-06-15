@@ -1,5 +1,5 @@
+import { getRouteSkeletonVariant, RouteSkeleton } from '../ui/RouteSkeleton';
 import { useAuth } from '../../context/AuthContext';
-import { getRouteSkeletonVariant } from '../ui/RouteSkeleton';
 
 export function AuthGate({ children }) {
   const { isAuthInitialized } = useAuth();

@@ -1,10 +1,16 @@
+import { m as motion, useScroll, useTransform } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { SEO } from '../components/seo/SEO';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { CloudinaryImage } from '../components/ui/CloudinaryImage';
+import { StackedSectionWrapper } from '../components/layout/StackedSectionWrapper';
 import { useRef, useState, useEffect } from 'react';
-import { useScroll, useTransform } from 'framer-motion';
 import { galleryService, cmsService } from '../services/domainServices';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { initialWebsiteContent } from '../admin/data/websiteContentData';
-
 import logger from '../utils/logger';
+
 const cleanSignatureImg = (imgUrl, founderName) => {
   if (
     !imgUrl ||

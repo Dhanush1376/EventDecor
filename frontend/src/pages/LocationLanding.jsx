@@ -1,5 +1,9 @@
+import { useParams, Navigate, Link } from 'react-router-dom';
+import { ArrowRight, MapPin, Star, CheckCircle } from 'lucide-react';
+import { SEO } from '../components/seo/SEO';
+import { LazyImage } from '../components/ui/LazyImage';
+import { FAQAccordion } from '../components/seo/FAQAccordion';
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import fallbackLocationsData from '../content/locations.json';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 

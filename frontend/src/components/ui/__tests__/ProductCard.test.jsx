@@ -1,3 +1,5 @@
+import { ProductCard } from '../ProductCard';
+import { BrowserRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 

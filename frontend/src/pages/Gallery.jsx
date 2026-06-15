@@ -1,5 +1,14 @@
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { GalleryCard } from '../components/gallery/GalleryCard';
+import { VirtualizedMasonry } from '../components/gallery/VirtualizedMasonry';
+import { SearchBar, CategoryTabs, CustomDropdown } from '../components/ui';
+import { SEO } from '../components/seo/SEO';
+import { MandalaElement } from '../components/ui/MandalaElement';
+import { GallerySlideshow } from '../components/gallery/GallerySlideshow';
+import { GallerySkeleton } from '../components/ui/Skeleton';
+import { FilterPanel } from '../components/ui/FilterPanel';
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { galleryService } from '../services/domainServices';
 import { useQuery } from '@tanstack/react-query';
 import { useInfiniteGallery, useGalleryDynamicFilters } from '../hooks/useInfiniteGallery';

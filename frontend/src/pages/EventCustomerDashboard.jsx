@@ -1,3 +1,8 @@
+import { Link } from 'react-router-dom';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SEO } from '../components/seo/SEO';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { useState, useEffect, useRef } from 'react';
 import { bookingService } from '../services/domainServices';
 import toast from 'react-hot-toast';
