@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useUserSocket } from '../context/UserSocketProvider';
 import { customOrderService, uploadService } from '../services/domainServices';
 import toast from 'react-hot-toast';
+import logger from '../utils/logger';
 
 // ─── Animation Presets ───
 const fadeUp = {
@@ -79,7 +80,7 @@ export function MyCustomOrders() {
           });
         }
       } catch (err) {
-        console.error('Socket handleStatusChange error:', err);
+        logger.error('Socket handleStatusChange error: ', err);
       }
     };
 
@@ -94,7 +95,7 @@ export function MyCustomOrders() {
           toast.success(`New message from ${payload.senderName} regarding ${payload.orderId}`);
         }
       } catch (err) {
-        console.error('Socket handleNewMessage error:', err);
+        logger.error('Socket handleNewMessage error: ', err);
       }
     };
 
@@ -110,7 +111,7 @@ export function MyCustomOrders() {
           });
         }
       } catch (err) {
-        console.error('Socket handleQuoteCreated error:', err);
+        logger.error('Socket handleQuoteCreated error: ', err);
       }
     };
 

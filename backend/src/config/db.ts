@@ -11,7 +11,7 @@ if (isLocal) {
   try {
     dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
   } catch (err: any) {
-    console.warn('[DATABASE] Failed to set public DNS resolvers:', err.message);
+    logger.warn('[DATABASE] Failed to set public DNS resolvers: ' + err.message);
   }
 }
 

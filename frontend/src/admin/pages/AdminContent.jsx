@@ -217,7 +217,7 @@ function HomePageControllerEditor({ content, onUpdate }) {
             setCoupons(Array.isArray(list) ? list : []);
           })
           .catch((err) => {
-            console.error('Failed to load coupons', err);
+            logger.error('Failed to load coupons', err);
             setCoupons([]);
           })
           .finally(() => setLoadingCoupons(false));

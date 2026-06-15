@@ -2,6 +2,7 @@ import { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import '../../styles/visual-search.css';
+import logger from '../../utils/logger';
 
 /**
  * IntelligentSearchOverlay — premium luxury search portal experience.
@@ -140,7 +141,7 @@ export function IntelligentSearchOverlay({
     };
 
     recognition.onerror = (event) => {
-      console.error('Speech recognition error', event.error);
+      logger.error('Speech recognition error: ', event.error);
       setIsRecording(false);
     };
 
@@ -153,7 +154,7 @@ export function IntelligentSearchOverlay({
     try {
       recognition.start();
     } catch (err) {
-      console.error('Failed to start speech recognition:', err);
+      logger.error('Failed to start speech recognition: ', err);
     }
   }, [isRecording, setQuery]);
 

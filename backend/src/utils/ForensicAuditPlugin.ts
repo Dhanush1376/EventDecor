@@ -1,6 +1,7 @@
 import { Schema } from 'mongoose';
 import fs from 'fs';
 import path from 'path';
+import logger from '../config/logger';
 
 const getLogPath = () => {
   const dateStr = new Date().toISOString().split('T')[0];
@@ -17,7 +18,7 @@ const writeForensicLog = (data: any) => {
     const logEntry = `[${new Date().toISOString()}] FORENSIC EVENT:\n${JSON.stringify(data, null, 2)}\n\n`;
     fs.appendFileSync(logPath, logEntry);
   } catch (err) {
-    console.error('Failed to write forensic log', err);
+    logger.error('Failed to write forensic log: ', err);
   }
 };
 

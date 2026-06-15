@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { useDragControls, useScroll, useTransform } from 'framer-motion';
 import '../../styles/visual-search.css';
+import logger from '../../utils/logger';
 
 /**
  * VisualSearchOverlay — Premium Google Lens-style visual search experience.
@@ -164,7 +165,7 @@ export function VisualSearchOverlay({
         }
       });
     } catch (err) {
-      console.warn('Camera access failed or denied:', err);
+      logger.warn('Camera access failed or denied:', err);
       // Fallback if getUserMedia fails (e.g. permission denied)
       if (cameraInputRef.current) {
         cameraInputRef.current.click();

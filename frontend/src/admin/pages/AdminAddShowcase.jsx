@@ -5,6 +5,7 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { compressImage, formatBytes } from '../../utils/imageCompressor';
 import { useDraft } from '../hooks/useDraft';
+import logger from '../../utils/logger';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideIn = {
@@ -136,7 +137,7 @@ export function AdminAddShowcase() {
           setCategories(res.data.data);
         }
       } catch (err) {
-        console.error('Failed to fetch categories', err);
+        logger.error('Failed to fetch categories', err);
       }
     };
     fetchCategories();
@@ -199,7 +200,7 @@ export function AdminAddShowcase() {
       }
     } catch (err) {
       toast.error('AI refinement failed.');
-      console.error('AI refinement error:', err);
+      logger.error('AI refinement error: ', err);
     } finally {
       setIsAILearning(false);
     }

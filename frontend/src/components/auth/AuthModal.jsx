@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
+import logger from '../../utils/logger';
 
 export function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, loginSuccess } = useAuth();
@@ -171,7 +172,7 @@ export function AuthModal() {
           }
         })
         .catch((err) => {
-          console.log('WebOTP API failed or aborted:', err);
+          logger.info('WebOTP API failed or aborted:', err);
         });
 
       return () => {

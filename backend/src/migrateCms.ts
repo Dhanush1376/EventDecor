@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
+import logger from './config/logger';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -89,7 +90,7 @@ const newSections = [
 async function migrate() {
   try {
     await mongoose.connect(process.env.MONGO_URI || '');
-    console.log('Connected to DB');
+    logger.info('Connected to DB');
 
     for (const section of newSections) {
       await ContentSection.updateOne(
@@ -97,7 +98,7 @@ async function migrate() {
         { $setOnInsert: { data: section.data, status: section.status } },
         { upsert: true },
       );
-      console.log(`Upserted ${section.sectionKey}`);
+      logger.info(`Upserted ${section.sectionKey}`);
     }
 
     // Also update homepageSections
@@ -123,14 +124,14 @@ async function migrate() {
           { sectionKey: 'homepageSections' },
           { $set: { data: hp.data } },
         );
-        console.log('Updated homepageSections');
+        logger.info('Updated homepageSections');
       }
     }
 
-    console.log('Migration complete');
+    logger.info('Migration complete');
     process.exit(0);
   } catch (error) {
-    console.error('Error:', error);
+    logger.error('Error:', error);
     process.exit(1);
   }
 }

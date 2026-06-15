@@ -164,7 +164,7 @@ export function ProductListing() {
           const file = dataURLtoFile(pendingImage, 'visual-search.jpg');
           visualSearch.handleImageSelect(file, 'upload');
         } catch (err) {
-          console.error('Failed to convert base64 visual search image', err);
+          logger.error('Failed to convert base64 visual search image', err);
         }
         sessionStorage.removeItem('pending_visual_search_image');
       }

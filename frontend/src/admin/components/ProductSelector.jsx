@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { productService } from '../../services/api/productService';
+import logger from '../../utils/logger';
 import toast from 'react-hot-toast';
 
 export function ProductSelector({ selectedIds = [], onChange, maxItems = null }) {
@@ -27,7 +28,7 @@ export function ProductSelector({ selectedIds = [], onChange, maxItems = null })
           setProducts([]);
         }
       } catch (err) {
-        console.error('Failed to fetch products for selector', err);
+        logger.error('Failed to fetch products for selector', err);
       } finally {
         setLoading(false);
       }
@@ -65,7 +66,7 @@ export function ProductSelector({ selectedIds = [], onChange, maxItems = null })
       );
     } catch (err) {
       toast.error('Failed to toggle featured status');
-      console.error(err);
+      logger.error('Failed to toggle featured status: ', err);
     }
   };
 

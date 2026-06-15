@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
+import logger from '../utils/logger';
 import 'leaflet/dist/leaflet.css';
 
 // Fix Leaflet default marker icon resolution in Vite builds
@@ -69,7 +70,7 @@ const GPSMap = ({ address }) => {
           }
         }
       } catch (err) {
-        console.error('Error geocoding address:', err);
+        logger.error('Error geocoding address: ', err);
       }
 
       // Fallbacks
@@ -142,7 +143,7 @@ const GPSMap = ({ address }) => {
 
       mapInstanceRef.current = map;
     } catch (err) {
-      console.error('Leaflet initialization failed:', err);
+      logger.error('Leaflet initialization failed: ', err);
     }
 
     return () => {

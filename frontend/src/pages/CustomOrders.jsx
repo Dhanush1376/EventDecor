@@ -442,7 +442,7 @@ export function CustomOrders() {
           });
         }
       } catch (err) {
-        console.error('Socket handleStatusChange error:', err);
+        logger.error('Socket handleStatusChange error: ', err);
       }
     };
 
@@ -457,7 +457,7 @@ export function CustomOrders() {
           toast.success(`New message from ${payload.senderName} regarding ${payload.orderId}`);
         }
       } catch (err) {
-        console.error('Socket handleNewMessage error:', err);
+        logger.error('Socket handleNewMessage error: ', err);
       }
     };
 
@@ -473,7 +473,7 @@ export function CustomOrders() {
           });
         }
       } catch (err) {
-        console.error('Socket handleQuoteCreated error:', err);
+        logger.error('Socket handleQuoteCreated error: ', err);
       }
     };
 

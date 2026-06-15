@@ -3,6 +3,7 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import Category from '../models/Category';
+import logger from '../config/logger';
 
 export const analyzeShowcaseImage = asyncHandler(async (req: Request, res: Response) => {
   const { imageUrl } = req.body;
@@ -80,7 +81,7 @@ Do NOT include any extra text before or after the JSON.`;
 
     if (!groqResponse.ok) {
       const errData = await groqResponse.json().catch(() => ({}));
-      console.error('Groq API Error:', errData);
+      logger.error('Groq API Error: ' + JSON.stringify(errData));
       throw new ApiError(500, 'AI Vision service temporarily unavailable');
     }
 
@@ -95,7 +96,7 @@ Do NOT include any extra text before or after the JSON.`;
     try {
       parsedPayload = JSON.parse(generatedText);
     } catch (e) {
-      console.error('Failed to parse Groq response:', generatedText);
+      logger.error('Failed to parse Groq response: ' + generatedText);
       throw new ApiError(500, 'AI returned malformed JSON');
     }
 
@@ -141,7 +142,7 @@ Do NOT include any extra text before or after the JSON.`;
   } catch (err: any) {
     if (timeout) clearTimeout(timeout);
     if (err instanceof ApiError) throw err;
-    console.error('AI Vision Error:', err);
+    logger.error('AI Vision Error: ', err);
     throw new ApiError(500, 'AI Vision content generation failed');
   }
 });
@@ -189,7 +190,7 @@ Output ONLY a valid, raw JSON object (without markdown code blocks) representing
 
     if (!groqResponse.ok) {
       const errData = await groqResponse.json().catch(() => ({}));
-      console.error('Groq API Error in Refine:', errData);
+      logger.error('Groq API Error in Refine: ' + JSON.stringify(errData));
       throw new ApiError(500, 'AI service temporarily unavailable');
     }
 

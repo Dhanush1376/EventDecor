@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { encryptField, decryptField } from '../utils/fieldEncryption';
+import logger from '../config/logger';
 
 export interface IVisualSearchProvider {
   name: string;
@@ -95,7 +96,7 @@ VisualSearchConfigSchema.pre('save', function () {
   } catch (err) {
     // If encryption fails (e.g., missing FIELD_ENCRYPTION_KEY), log but don't block save
     // This allows the system to work in development without encryption configured
-    console.error('[VisualSearchConfig] Encryption failed:', (err as Error).message);
+    logger.error('[VisualSearchConfig] Encryption failed: ' + (err as Error).message);
   }
 });
 

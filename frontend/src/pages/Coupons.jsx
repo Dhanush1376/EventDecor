@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { couponService } from '../services/domainServices';
 import { fadeUp, staggerContainer } from '../animations/variants';
 import toast from 'react-hot-toast';
+import logger from '../utils/logger';
 
 export function Coupons() {
   const [coupons, setCoupons] = useState([]);
@@ -18,7 +19,7 @@ export function Coupons() {
           setCoupons(activeCoupons);
         }
       } catch (error) {
-        console.error('Failed to fetch coupons', error);
+        logger.error('Failed to fetch coupons', error);
       } finally {
         setIsLoading(false);
       }
