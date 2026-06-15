@@ -11,7 +11,29 @@ import {
   fadeUp,
   stagger,
   CHART_COLORS,
+  PageHeader,
+  StatCard,
+  ChartCard,
+  ChartTooltip,
+  StatusBadge,
+  PeriodSelector,
+  SkeletonDashboard,
+  AdminToggle,
 } from '../components/AdminUIKit';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+} from 'recharts';
 
 const FALLBACK_DATE = new Date('2026-05-20T00:00:00Z');
 const FALLBACK_PRODUCT_DATE = new Date('2026-05-17T00:00:00Z');
