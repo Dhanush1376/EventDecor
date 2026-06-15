@@ -1,4 +1,8 @@
-import { useEffect, useRef, useCallback, lazy } from 'react';
+import { useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { Helmet } from 'react-helmet-async';
+
+import { HeroCarousel } from './sections/HeroCarousel';
+import { LazySection } from '../../components/ui/LazySection';
 
 const CategoryGrid = lazy(() =>
   import('./sections/CategoryGrid').then((m) => ({ default: m.CategoryGrid })),
