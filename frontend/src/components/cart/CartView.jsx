@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRecommendationTracker } from '../../hooks/useRecommendationTracker';
 import { persistentStorage } from '../../utils/persistentStorage';
 import { Skeleton, CartSkeleton } from '../ui';
+import { SEO } from '../seo/SEO';
 
 const RecommendationSystem = React.lazy(() =>
   import('../../components/sections/RecommendationSystem').then((m) => ({
