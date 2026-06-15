@@ -127,17 +127,43 @@
           }
 
           if (bgImg) {
-            // Apply Cloudinary optimization transforms early if it is a Cloudinary URL to save bandwidth
-            if (bgImg.indexOf('cloudinary.com') !== -1) {
-              if (bgImg.indexOf('/upload/') !== -1 && bgImg.indexOf('w_') === -1) {
-                bgImg = bgImg.replace('/upload/', '/upload/f_auto,q_auto,w_1200/');
-              }
-            }
             var link = document.createElement('link');
             link.rel = 'preload';
             link.as = 'image';
-            link.href = bgImg;
             link.setAttribute('fetchpriority', 'high');
+
+            if (bgImg.indexOf('cloudinary.com') !== -1) {
+              var urlParts = bgImg.split('/upload/');
+              if (urlParts.length === 2) {
+                var pathPart = urlParts[1];
+                var firstSlash = pathPart.indexOf('/');
+                if (firstSlash > 0) {
+                  var potentialTransforms = pathPart.substring(0, firstSlash);
+                  if (potentialTransforms.indexOf('_') !== -1 && !potentialTransforms.startsWith('v')) {
+                    pathPart = pathPart.substring(firstSlash + 1);
+                  }
+                }
+                var breakpoints = [240, 320, 400, 500, 640, 800, 1024, 1280, 1536];
+                var srcsetArr = [];
+                for (var i = 0; i < breakpoints.length; i++) {
+                  var w = breakpoints[i];
+                  var t = 'w_' + w + ',c_limit,q_auto:good,f_auto,dpr_auto,fl_strip_profile';
+                  srcsetArr.push(urlParts[0] + '/upload/' + t + '/' + pathPart + ' ' + w + 'w');
+                }
+                link.setAttribute('imagesrcset', srcsetArr.join(', '));
+                link.setAttribute('imagesizes', '100vw');
+              } else {
+                link.href = bgImg;
+              }
+            } else if (bgImg.indexOf('googleusercontent.com') !== -1 && bgImg.indexOf('=') === -1) {
+              if (path === '/collections' || path === '/collections/') {
+                link.href = bgImg + '=w1920-h600-rw';
+              } else {
+                link.href = bgImg + '=w1920-rw';
+              }
+            } else {
+              link.href = bgImg;
+            }
             document.head.appendChild(link);
           }
         } catch(e) {}

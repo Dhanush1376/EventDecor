@@ -414,6 +414,7 @@ export function EventCollections() {
           <OptimizedImage
             src={eventsPageContent.hero.backgroundImage}
             width={1920}
+            sizes="100vw"
             eager={true}
             className="w-full h-full object-cover"
             alt="Cinematic Events Background"

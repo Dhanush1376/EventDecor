@@ -334,6 +334,7 @@ export function EventShowcases() {
             alt="Showcase Hero"
             eager={true}
             width={1920}
+            sizes="100vw"
           />
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-surface" />
