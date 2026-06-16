@@ -33,7 +33,7 @@ describe('Auth Services Integration Tests', () => {
     // Setup in-memory MongoDB or connect to local test DB
     // CRITICAL FIX: Always override MONGO_URI for tests to prevent wiping production data
     // if dotenv loaded the production URI from the .env file.
-    process.env.MONGO_URI = 'mongodb://localhost:27017/eventdecor_test_auth';
+    process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/eventdecor_test_auth';
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
     }

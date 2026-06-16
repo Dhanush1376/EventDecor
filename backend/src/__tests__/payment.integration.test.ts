@@ -15,7 +15,7 @@ describe('Payment Integration & State Machine', () => {
   beforeAll(async () => {
     // Setup in-memory MongoDB or connect to local test DB
     // CRITICAL FIX: Always override MONGO_URI for tests to prevent wiping production data
-    process.env.MONGO_URI = 'mongodb://localhost:27017/eventdecor_test_payment';
+    process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/eventdecor_test_payment';
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
     }

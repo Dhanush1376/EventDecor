@@ -1,4 +1,4 @@
-﻿import { InventoryService } from '../services/InventoryService';
+import { InventoryService } from '../services/InventoryService';
 import InventoryReservation from '../models/InventoryReservation';
 import Product from '../models/Product';
 import InventoryLog from '../models/InventoryLog';
