@@ -75,3 +75,18 @@ backend/migration_report_full.md
 # Agent directories
 brain/
 
+# Profiling & debug
+prof*.txt
+*.prof
+# Load test results
+load_tests/
+load-tests.yml
+# Audit artifacts
+*-audit-report*.json
+audit_performance.*
+runtime-audit*
+# Cached media
+backend/cache/
+# Filter debug
+filters*.json
+explain_output.json
