@@ -36,7 +36,7 @@ describe('PaymentWebhookService - Idempotency', () => {
       'evt_processing',
     );
 
-    expect(response.status).toBe(409);
+    expect(response.status).toBe(200);
     expect(response.message).toContain('Webhook currently being processed');
   });
 

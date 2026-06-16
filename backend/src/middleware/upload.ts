@@ -27,6 +27,7 @@ export const verifyImageSignature = (buffer: Buffer): string | null => {
   const hex = buffer.toString('hex', 0, 4).toUpperCase();
 
   if (hex === '89504E47') return 'image/png';
+  if (hex === '4F676753') return 'video/ogg';
   if (hex.startsWith('FFD8FF')) return 'image/jpeg';
   if (hex === '47494638') return 'image/gif';
   if (hex.startsWith('424D')) return 'image/bmp';

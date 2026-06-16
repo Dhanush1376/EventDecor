@@ -10,11 +10,11 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "https://eventdecor-production-1647.up.railway.app/api/:path*"
+      "destination": "https://api.siriartsandcrafts.com/api/:path*"
     },
     {
       "source": "/socket.io/:path*",
-      "destination": "https://eventdecor-production-1647.up.railway.app/socket.io/:path*"
+      "destination": "https://api.siriartsandcrafts.com/socket.io/:path*"
     },
     {
       "source": "/:path*",
@@ -48,7 +48,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://static.cloudflareinsights.com https://cdn.logr-in.com https://*.logrocket.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://res.cloudinary.com https://flagcdn.com https://images.unsplash.com https://lh3.googleusercontent.com https://eventdecor-production-1647.up.railway.app https://*.pinimg.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.cloudinary.com https://eventdecor-production-1647.up.railway.app wss://eventdecor-production-1647.up.railway.app https://api.razorpay.com https://*.sentry.io https://*.logrocket.io https://*.cloudflareinsights.com; worker-src 'self' blob:; frame-src 'self' https://checkout.razorpay.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://static.cloudflareinsights.com https://cdn.logr-in.com https://*.logrocket.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://res.cloudinary.com https://flagcdn.com https://images.unsplash.com https://lh3.googleusercontent.com https://api.siriartsandcrafts.com https://*.pinimg.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.cloudinary.com https://api.siriartsandcrafts.com wss://api.siriartsandcrafts.com https://api.razorpay.com https://*.sentry.io https://*.logrocket.io https://*.cloudflareinsights.com; worker-src 'self' blob:; frame-src 'self' https://checkout.razorpay.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
         },
         {
           "key": "Permissions-Policy",

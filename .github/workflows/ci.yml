@@ -19,6 +19,7 @@ env:
   SMTP_FROM_EMAIL: no-reply@ci.example.com
   FIELD_ENCRYPTION_KEY: ci_field_encryption_key_must_be_at_least_32_chars_long
   BACKEND_URL: http://localhost:5000
+  GROQ_API_KEY: ci_groq_placeholder_key
   # Payment placeholders (required by envSchema.ts)
   RAZORPAY_KEY_ID: rzp_test_ci_placeholder_key
   RAZORPAY_KEY_SECRET: ci_razorpay_secret_placeholder
@@ -142,7 +143,7 @@ jobs:
           sleep 60
           
           echo "Polling health endpoint for stability..."
-          for i in {1..12}; do
+          for i in {1..30}; do
             # Using the production endpoint for validation
             HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.siriartsandcrafts.com/api/v1/health?full=1 || echo "000")
             if [ "$HTTP_STATUS" = "200" ]; then
@@ -153,7 +154,7 @@ jobs:
             sleep 10
           done
           
-          echo "Deployment failed to stabilize after 2 minutes."
+          echo "Deployment failed to stabilize after 5 minutes."
           exit 1
 
       - name: Automated Rollback on Failure

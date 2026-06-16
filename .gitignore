@@ -90,3 +90,15 @@ backend/cache/
 # Filter debug
 filters*.json
 explain_output.json
+
+# Hardened Generated Artifacts Phase
+coverage/
+cache/
+logs/
+*.log
+stats.html
+stats.json
+knip-report.json
+codebase_report.txt
+codebase_tree_report.txt
+

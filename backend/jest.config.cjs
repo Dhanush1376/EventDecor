@@ -8,7 +8,7 @@ module.exports = {
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },
-  setupFiles: ['dotenv/config'],
+  setupFiles: ['<rootDir>/src/__tests__/setupEnv.ts'],
   clearMocks: true,
   forceExit: true,
   testTimeout: 15000,

@@ -92,8 +92,6 @@ services:
         fromConfig: true
       - key: LOG_REDACTION
         value: "true"
-      - key: OTP_EXPIRY_MINUTES
-        value: 5
 
   # Staging — validate changes before production (separate MongoDB + Redis recommended in Render config)
   - type: web
@@ -157,8 +155,6 @@ services:
         fromConfig: true
       - key: LOG_REDACTION
         value: "true"
-      - key: OTP_EXPIRY_MINUTES
-        value: 5
       - key: RAZORPAY_KEY_ID
         fromConfig: true
       - key: RAZORPAY_KEY_SECRET
@@ -182,6 +178,4 @@ services:
       - key: ADMIN_PASSWORD
         fromConfig: true
       - key: SUPER_ADMIN_EMAIL
-        fromConfig: true
-      - key: ADMIN_PHONE
         fromConfig: true

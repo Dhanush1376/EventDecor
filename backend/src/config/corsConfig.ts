@@ -1,7 +1,7 @@
 import { CorsOptions } from 'cors';
 import logger from './logger';
 
-export const ALLOWED_VERCEL_PREVIEWS = new Set([
+const ALLOWED_VERCEL_PREVIEWS = new Set([
   'https://siriarts-n-crafts.vercel.app',
   'https://siri-artsandcrafts.vercel.app',
   'https://siri-arts-n-crafts.vercel.app',
@@ -39,7 +39,7 @@ const getDynamicOrigins = (): Set<string> => {
   return origins;
 };
 
-export const allowedOrigins = getDynamicOrigins();
+const allowedOrigins = getDynamicOrigins();
 
 export const isOriginAllowed = (origin: string): boolean => {
   if (!origin || origin === 'null') return false;
@@ -50,7 +50,7 @@ export const isOriginAllowed = (origin: string): boolean => {
     const hostname = parsedUrl.hostname;
 
     // Allow all origins for mobile testing in development
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
       return true;
     }
 

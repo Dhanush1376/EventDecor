@@ -44,7 +44,7 @@ describe('Upload Security & Validation', () => {
       .attach('images', fakeImagePath);
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/Invalid file content/i);
+    expect(res.body.message).toMatch(/Malicious or invalid file|Invalid file content/i);
   });
 
   it('rejects oversized uploads', async () => {

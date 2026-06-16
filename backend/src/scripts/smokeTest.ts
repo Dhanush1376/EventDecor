@@ -1,11 +1,17 @@
 import assert from 'assert';
+import fs from 'fs';
 import dotenv from 'dotenv';
 import { ADMIN_ROLES, getAdminEmails } from '../config/adminConfig';
 import { collectMissingEnvVars } from '../config/envValidation';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 
-dotenv.config();
+// Mirror the progressive boot logic for local test stability
+if (fs.existsSync('.env.local')) {
+  dotenv.config({ path: '.env.local' });
+} else {
+  dotenv.config();
+}
 
 // Mirror CI workflow env when running smoke tests locally
 process.env.ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@ci.example.com';
