@@ -15,7 +15,9 @@ export class FilterService {
       if (appConfig && appConfig.value) {
         config = appConfig.value;
       }
-    } catch (e) {}
+    } catch (e) {
+      /* ignore */
+    }
 
     // 3. Construct MongoDB $facet pipeline to compute all dynamic attributes simultaneously
     const facetPipeline: any = {

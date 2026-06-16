@@ -392,25 +392,37 @@ class DatabaseManager {
       return;
     }
 
-    if (mongoose.connection.readyState === 0) {
-      this.isReconnecting = true;
-      this.reconnectAttempts++;
-      logger.info(
-        `[DATABASE] Self-healing: Connection is disconnected. Attempting to reconnect (Attempt ${this.reconnectAttempts})...`,
-      );
+    this.isReconnecting = true;
+    this.reconnectAttempts++;
+    logger.info(
+      `[DATABASE] Self-healing: Connection is unhealthy or disconnected. Attempting connection reset (Attempt ${this.reconnectAttempts})...`,
+    );
 
-      this.cachedConnectionPromise = null;
-      this.connect()
-        .then(() => {
-          this.isReconnecting = false;
-        })
-        .catch((err) => {
-          this.isReconnecting = false;
-          logger.error(
-            `[DATABASE] Self-healing reconnect attempt ${this.reconnectAttempts} failed: ${err.message}`,
-          );
-        });
-    }
+    this.cachedConnectionPromise = null;
+
+    const performReset = async () => {
+      try {
+        if (mongoose.connection.readyState !== 0) {
+          logger.info('[DATABASE] Self-healing: Closing active connection...');
+          await mongoose.connection.close();
+        }
+      } catch (closeErr: any) {
+        logger.warn(`[DATABASE] Self-healing: Connection close warning: ${closeErr.message}`);
+      }
+      logger.info('[DATABASE] Self-healing: Reconnecting...');
+      await this.connect();
+    };
+
+    performReset()
+      .then(() => {
+        this.isReconnecting = false;
+      })
+      .catch((err) => {
+        this.isReconnecting = false;
+        logger.error(
+          `[DATABASE] Self-healing reconnect attempt ${this.reconnectAttempts} failed: ${err.message}`,
+        );
+      });
   }
 
   public async disconnect(): Promise<void> {

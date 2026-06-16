@@ -153,7 +153,7 @@ export function isNormalSearch(query: string): boolean {
   let unknownWordsCount = 0;
 
   for (const word of words) {
-    const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').trim();
+    const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '').trim();
     if (!cleanWord) continue;
     if (stopWords.has(cleanWord)) continue;
     if (budgetIndicators.has(cleanWord)) {

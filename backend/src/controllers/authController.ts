@@ -155,7 +155,9 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
       if (decoded && decoded.exp) {
         expiresIn = Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
       }
-    } catch (err) {}
+    } catch (err) {
+      // Ignored
+    }
     await blacklistToken(accessToken, expiresIn);
   }
 
@@ -189,7 +191,9 @@ export const logoutAllDevices = asyncHandler(async (req: Request, res: Response)
       if (decoded && decoded.exp) {
         expiresIn = Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
       }
-    } catch (err) {}
+    } catch (err) {
+      // Ignored
+    }
     await blacklistToken(accessToken, expiresIn);
   }
 

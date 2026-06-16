@@ -249,7 +249,9 @@ export const submitCustomOrder = asyncHandler(async (req: any, res: Response) =>
       customerName: order.customerName,
       occasion: order.occasion,
     });
-  } catch (_) {}
+  } catch (_) {
+    // Ignored
+  }
 
   // Send emails
   try {
@@ -404,7 +406,9 @@ export const submitProductCustomization = asyncHandler(async (req: any, res: Res
       customerName: order.customerName,
       productTitle: product.title,
     });
-  } catch (_) {}
+  } catch (_) {
+    // Ignored
+  }
 
   // Send emails
   try {

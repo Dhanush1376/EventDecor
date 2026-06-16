@@ -209,6 +209,7 @@ class PerformanceMonitor {
   printDashboard() {
     if (!this.isDev) return;
     const report = this.getImageLoadReport();
+    // eslint-disable-next-line no-console
     console.groupCollapsed(
       '%c 🚀 Performance Dashboard',
       'background: #222; color: #bada55; padding: 4px; border-radius: 4px;',
@@ -219,6 +220,7 @@ class PerformanceMonitor {
     logger.info(`INP: ${Math.round(this.metrics.inp)}ms`);
     if (report) {
       logger.info('--- Image Performance ---');
+      // eslint-disable-next-line no-console
       console.table({
         Count: report.count,
         Average: report.average + 'ms',
@@ -227,6 +229,7 @@ class PerformanceMonitor {
         SlowCount: report.slowCount,
       });
     }
+    // eslint-disable-next-line no-console
     console.groupEnd();
   }
 }

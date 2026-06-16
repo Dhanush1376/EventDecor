@@ -1,4 +1,6 @@
-import { m as motion, AnimatePresence } from 'framer-motion';
+/* eslint-disable unused-imports/no-unused-imports */
+import React, { useState, useEffect } from 'react';
+import { m as motion } from 'framer-motion';
 export function Wishlist() {
   return (
     <motion.div

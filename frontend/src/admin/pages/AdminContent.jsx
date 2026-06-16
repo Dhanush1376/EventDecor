@@ -17,7 +17,6 @@ import {
   AdminField,
   AdminInput,
   AdminTextarea,
-  CustomSelect,
   SkeletonDashboard,
   PublishBar,
 } from '../components/AdminUIKit';

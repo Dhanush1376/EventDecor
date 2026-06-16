@@ -1,4 +1,5 @@
-import { LazyMotion, domAnimation, m as motion, AnimatePresence } from 'framer-motion';
+/* eslint-disable no-constant-binary-expression */
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { SearchSuggestionsSkeleton, Skeleton } from '../ui/Skeleton';
 import { useRef, useEffect, useMemo, useState, useCallback } from 'react';

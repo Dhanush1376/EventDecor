@@ -67,7 +67,9 @@ export class InventoryReconciliationService {
             productId: product._id.toString(),
             stock: product.stock,
           });
-        } catch (e) {}
+        } catch (e) {
+          /* ignore */
+        }
 
         needsFix = true;
         fixPayload.stock = 0;

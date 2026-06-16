@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { prefetchManager } from '../../utils/prefetchManager';

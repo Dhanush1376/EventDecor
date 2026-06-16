@@ -236,11 +236,12 @@ export class QueueFallbackService {
   private static getHandler(queueName: string): FallbackHandler {
     return async (jobName: string, data: any) => {
       switch (queueName) {
-        case 'emailQueue':
+        case 'emailQueue': {
           const { sendDirectEmailProcessor } = require('./notificationService');
           await sendDirectEmailProcessor(data);
           break;
-        case 'webhookQueue':
+        }
+        case 'webhookQueue': {
           const { UnifiedWebhookRouter } = require('./payments/UnifiedWebhookRouter');
           await UnifiedWebhookRouter.routeWebhookEvent(
             data.event,
@@ -249,14 +250,17 @@ export class QueueFallbackService {
             data.eventId,
           );
           break;
-        case 'refundQueue':
+        }
+        case 'refundQueue': {
           const { PaymentRefundService } = require('./PaymentRefundService');
           await PaymentRefundService.processRefundAsyncCore(data.refundRecordId);
           break;
-        case 'notificationQueue':
+        }
+        case 'notificationQueue': {
           const { createAdminNotification } = require('./notificationService');
           await createAdminNotification(data);
           break;
+        }
         case 'recommendationQueue':
           logger.warn(
             `[QUEUE FALLBACK] Ignoring recommendation task ${jobName} since it is heavy for memory queue`,

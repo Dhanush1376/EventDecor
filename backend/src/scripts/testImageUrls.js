@@ -1,3 +1,4 @@
+/* eslint-disable no-undef, no-console */
 async function checkUrl(url) {
   try {
     const res = await fetch(url, { method: 'HEAD' });
