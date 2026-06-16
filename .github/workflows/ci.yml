@@ -42,11 +42,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
+    services: {}
 
     steps:
       - uses: actions/checkout@v4
@@ -61,6 +57,12 @@ jobs:
           cache-dependency-path: |
             backend/package-lock.json
             frontend/package-lock.json
+
+      - name: Start MongoDB Replica Set (Required for Transactions)
+        uses: supercharge/mongodb-github-action@1.11.0
+        with:
+          mongodb-version: '7.0'
+          mongodb-replica-set: rs0
 
       # Pin TruffleHog to a specific release tag for reproducible builds
       - name: TruffleHog Secret Scanner

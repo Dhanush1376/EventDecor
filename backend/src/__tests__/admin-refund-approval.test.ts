@@ -4,6 +4,7 @@ import AdminAuditLog from '../models/AdminAuditLog';
 import { PaymentRefundService } from '../services/PaymentRefundService';
 import { createAdminNotification } from '../services/notificationService';
 
+jest.mock('../models/User', () => ({ findById: jest.fn().mockResolvedValue({ name: 'Admin' }) }));
 jest.mock('../models/RefundRecord');
 jest.mock('../models/AdminAuditLog');
 jest.mock('../services/PaymentRefundService');
