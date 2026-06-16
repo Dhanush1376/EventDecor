@@ -61,8 +61,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
-    "@types/bcryptjs": "^2.4.6",
+    "@eslint/js": "^10.0.1",
+    "@types/bcryptjs": "^3.0.0",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
@@ -76,17 +76,17 @@
     "@types/pdfkit": "^0.17.6",
     "@types/sharp": "^0.31.1",
     "@types/streamifier": "^0.1.2",
-    "@types/supertest": "^6.0.3",
+    "@types/supertest": "^7.2.0",
     "cross-env": "^10.1.0",
-    "eslint": "^9.39.4",
+    "eslint": "^10.5.0",
     "eslint-plugin-unused-imports": "^4.4.1",
-    "globals": "^16.5.0",
+    "globals": "^17.6.0",
     "jest": "^30.2.0",
     "socket.io-client": "^4.8.1",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.50.0"
+    "typescript-eslint": "^8.61.1"
   }
 }
