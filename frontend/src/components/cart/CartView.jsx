@@ -243,7 +243,7 @@ export function CartView({ isEmbedded = false }) {
       </AnimatePresence>
 
       {/* CART TABS - Centered Premium Segmented Pill */}
-      <div className="w-full bg-surface-bright border-b border-outline-variant/30 py-3 flex justify-center px-4">
+      <div className="w-full bg-surface-bright border-b border-outline-variant/30 py-2 md:py-2.5 flex justify-center px-4">
         <div className="bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full inline-flex gap-1 items-center relative z-0 shadow-inner">
           {/* Purchase Cart Tab */}
           <button
@@ -310,7 +310,7 @@ export function CartView({ isEmbedded = false }) {
       </div>
 
       {/* Top Header Checkout Workflow Strip */}
-      <div className="mb-8">
+      <div className="mb-4 md:mb-5">
         <CheckoutSteps
           steps={
             activeCartMode === 'rental'
@@ -1052,7 +1052,7 @@ export function CartView({ isEmbedded = false }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="bg-surface-container-low min-h-screen pt-20 pb-40 font-body text-on-surface"
+          className="bg-surface-container-low min-h-screen pt-[72px] md:pt-[88px] pb-24 md:pb-28 font-body text-on-surface"
         >
           {innerContent}
         </motion.div>

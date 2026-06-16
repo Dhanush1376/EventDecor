@@ -352,6 +352,21 @@
     text-indent: 100% !important;
     white-space: nowrap !important;
   }
+
+  /* Prevent native input type=date from overflowing parent containers, especially on Safari and mobile devices */
+  input[type='date'] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  /* Normalize appearance and prevent line-height collapses in iOS Safari and WebKit browsers */
+  input[type='date']::-webkit-date-and-time-value {
+    min-height: 1.5em;
+    text-align: left;
+  }
 }
 
 @layer components {
@@ -959,11 +974,18 @@ body.slideshow-active footer {
   display: none !important;
 }
 
-/* ─── Hide BottomNav when StickyMobileATC is active on PDP ─── */
+/* ─── Hide BottomNav when StickyMobileATC is active on PDP/EDP ─── */
 body.sticky-atc-active .bottom-nav {
   transform: translate(-50%, 150%) !important;
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+body.sticky-atc-active .whatsapp-widget {
+  transform: scale(0) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: transform var(--duration-normal) var(--ease-luxury) !important;
 }
 
 /* ─── Hide mobile navigation, whatsapp widget and footer when filter panel is open ─── */

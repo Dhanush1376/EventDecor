@@ -245,10 +245,11 @@ api.interceptors.request.use(
 
     // ─── OFFLINE & RECONNECTING INTEGRATION ───
     const isOfflineOrReconnecting =
-      window.__networkState === 'offline' || window.__networkState === 'reconnecting';
+      !import.meta.env.DEV &&
+      (window.__networkState === 'offline' || window.__networkState === 'reconnecting');
     const isBypass = config._bypassOfflineQueue === true;
 
-    if (isOfflineOrReconnecting && !isBypass) {
+    if (isOfflineOrReconnecting && !isBypass && !import.meta.env.DEV) {
       const method = config.method ? config.method.toLowerCase() : 'get';
 
       if (method === 'get') {

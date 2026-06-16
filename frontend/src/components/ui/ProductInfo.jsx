@@ -349,36 +349,6 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
           </div>
         )}
 
-        {/* Quantity Selector */}
-        {product.stock !== 0 && (
-          <div className="flex items-center gap-4">
-            <span className="font-label-sm text-[10px] text-on-surface/50 uppercase tracking-[0.2em] font-bold">
-              Quantity
-            </span>
-            <div className="flex items-center border border-outline-variant/60 rounded-lg overflow-hidden bg-surface-container-lowest h-[36px]">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                disabled={quantity <= 1}
-                className={`w-10 h-full flex items-center justify-center transition-colors ${quantity <= 1 ? 'text-secondary/30 cursor-not-allowed bg-surface-container-low' : 'text-secondary hover:text-on-surface hover:bg-surface-container cursor-pointer'}`}
-                aria-label="Decrease quantity"
-              >
-                <span className="material-symbols-outlined text-[16px]">remove</span>
-              </button>
-              <div className="w-10 h-full flex items-center justify-center text-[13px] font-bold text-on-surface border-x border-outline-variant/30 bg-surface-bright">
-                {quantity}
-              </div>
-              <button
-                onClick={() => setQuantity(Math.min(product.stock || maxQuantity, quantity + 1))}
-                disabled={quantity >= (product.stock || maxQuantity)}
-                className={`w-10 h-full flex items-center justify-center transition-colors ${quantity >= (product.stock || maxQuantity) ? 'text-secondary/30 cursor-not-allowed bg-surface-container-low' : 'text-secondary hover:text-on-surface hover:bg-surface-container cursor-pointer'}`}
-                aria-label="Increase quantity"
-              >
-                <span className="material-symbols-outlined text-[16px]">add</span>
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Action Buttons */}
 
         <div className="grid grid-cols-2 gap-3">

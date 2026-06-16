@@ -1,10 +1,8 @@
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { m as motion, AnimatePresence } from 'framer-motion';
-import { FilterPanel } from '../components/ui/FilterPanel';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { SEO } from '../components/seo/SEO';
-import { CloudinaryImage } from '../components/ui/CloudinaryImage';
 import {
   SearchBar,
   CategoryTabs,
@@ -13,7 +11,10 @@ import {
   ProductCard,
   QuickViewModal,
   Pagination,
+  FilterPanel,
 } from '../components/ui';
+import { CloudinaryImage } from '../components/ui/CloudinaryImage';
+
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useCart } from '../context/CartContext';
 import { couponService } from '../services/domainServices';

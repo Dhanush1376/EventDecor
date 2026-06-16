@@ -45,7 +45,7 @@ const envSchema = z
     CLOUDINARY_API_SECRET: z.string().min(1, 'CLOUDINARY_API_SECRET is required'),
 
     // URLs & Domains
-    FRONTEND_URLS: z.string().min(1, 'FRONTEND_URLS is required'),
+    FRONTEND_URLS: z.string().optional(),
     BACKEND_URL: z.string().min(1, 'BACKEND_URL is required'),
     COOKIE_DOMAIN: z.string().optional(),
 

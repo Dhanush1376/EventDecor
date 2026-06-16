@@ -429,7 +429,7 @@ export function IntelligentSearchOverlay({
 
             {/* Mobile Body Content Area */}
             {searchMode === 'visual' ? (
-              <div className="flex-1 overflow-y-auto bg-white px-5 py-6 flex flex-col gap-6">
+              <div className="flex-1 overflow-y-auto bg-white px-5 py-6 flex flex-col gap-6 overscroll-contain">
                 <div
                   onDragEnter={handleDragEnter}
                   onDragOver={handleDragOver}
@@ -468,7 +468,7 @@ export function IntelligentSearchOverlay({
                 ref={listRef}
                 id="search-suggestions-list"
                 role="listbox"
-                className="flex-1 overflow-y-auto bg-white flex flex-col"
+                className="flex-1 overflow-y-auto bg-white flex flex-col overscroll-contain"
               >
                 {predictedCategories.length > 0 && query.trim().length >= 2 && (
                   <div className="px-5 py-2.5 bg-stone-50 border-b border-stone-200/40 flex items-center gap-2 flex-wrap">
@@ -840,6 +840,9 @@ export function IntelligentSearchOverlay({
                 )}
               </div>
             )}
+
+            {/* iOS Safari/Chrome keyboard bottom gap cover */}
+            <div className="absolute top-full left-0 right-0 h-[600px] bg-white pointer-events-none" />
           </motion.div>
         ) : (
           /* Desktop Overlay (original layout) */

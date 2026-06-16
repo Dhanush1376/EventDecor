@@ -117,6 +117,7 @@ export function ProductGallery({ images = [], product }) {
             <OptimizedImage
               src={img}
               alt={`Thumbnail ${idx + 1}`}
+              containerClassName="w-full h-full"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-full"
               width={100}
               height={100}
@@ -142,6 +143,7 @@ export function ProductGallery({ images = [], product }) {
               <OptimizedImage
                 src={img}
                 alt={`Product Primary View ${idx + 1}`}
+                containerClassName="w-full h-full"
                 className="w-full h-full object-cover origin-center select-none transition-transform duration-500"
                 width={800}
                 height={800}
@@ -311,6 +313,7 @@ export function ProductGallery({ images = [], product }) {
                       <OptimizedImage
                         src={img}
                         alt={`Thumbnail ${idx + 1}`}
+                        containerClassName="w-full h-full"
                         className="w-full h-full object-cover pointer-events-none rounded-[18px]"
                         width={100}
                         height={100}

@@ -7,7 +7,7 @@ export function CheckoutSteps({
   orderType = 'purchase',
 }) {
   return (
-    <div className="bg-surface-bright border-b border-outline-variant/40 sticky top-[60px] md:top-[72px] z-40 shadow-[0_2px_15px_rgba(0,0,0,0.03)] backdrop-blur-md bg-surface-bright/95 py-3 sm:py-4 px-3 sm:px-8">
+    <div className="bg-surface-bright border-b border-outline-variant/40 sticky top-[60px] md:top-[72px] z-40 shadow-[0_2px_15px_rgba(0,0,0,0.03)] backdrop-blur-md bg-surface-bright/95 py-2.5 sm:py-3.5 px-3 sm:px-8">
       <div className="max-w-[1240px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
         {/* Left: Brand/Title - Mobile Top Bar */}
         <div className="w-full md:w-auto flex items-center justify-between md:justify-start">

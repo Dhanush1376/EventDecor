@@ -101,7 +101,7 @@ export default function CheckoutRentalDurationStep() {
               min={getMinDate()}
               value={rentalStartDate || ''}
               onChange={(e) => setRentalStartDate(e.target.value)}
-              className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+              className="w-full min-w-0 overflow-hidden bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
             />
           </div>
           <div className="relative">
@@ -113,7 +113,7 @@ export default function CheckoutRentalDurationStep() {
               min={rentalStartDate || getMinDate()}
               value={rentalEndDate || ''}
               onChange={(e) => setRentalEndDate(e.target.value)}
-              className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+              className="w-full min-w-0 overflow-hidden bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
             />
           </div>
         </div>

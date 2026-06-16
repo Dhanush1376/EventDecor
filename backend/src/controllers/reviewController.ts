@@ -1,8 +1,9 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Review from '../models/Review';
 import Product from '../models/Product';
 import Order from '../models/Order';
+import User from '../models/User';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -45,7 +46,12 @@ export const getProductReviews = asyncHandler(async (req: Request, res: Response
   const filter: any = { product: req.params.productId, status: 'approved', isMock: { $ne: true } };
 
   const [reviews, totalCount] = await Promise.all([
-    Review.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Review.find(filter)
+      .populate('customer', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Review.countDocuments(filter),
   ]);
 
@@ -93,10 +99,13 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
     if (existingReview) throw new ApiError(400, 'You have already reviewed this product');
   }
 
+  const user = await User.findById(req.user!.id);
+  const reviewerName = user?.name || req.user!.name || req.body.customerName || 'Anonymous';
+
   const review = new Review({
     product: productId || undefined,
     customer: req.user!.id,
-    customerName: req.body.customerName || 'Anonymous',
+    customerName: reviewerName,
     rating,
     comment,
     images: images || [],
@@ -199,6 +208,7 @@ export const getPublicReviews = asyncHandler(async (req: Request, res: Response)
   const [reviews, totalCount] = await Promise.all([
     Review.find(filter)
       .populate('product', 'title imageSrc')
+      .populate('customer', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

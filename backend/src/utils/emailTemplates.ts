@@ -214,7 +214,6 @@ export const getLuxuryEmailWrapper = (
   <!-- Preheader preview text for inbox clients -->
   <div style="display: none; max-height: 0px; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
     ${previewText}
-    &zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;
   </div>
   <table border="0" cellpadding="0" cellspacing="0" width="100%" class="wrapper-table">
     <tr>

@@ -671,7 +671,7 @@ export function EventShowcases() {
                       type="date"
                       value={bookingDate}
                       onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                      className="w-full min-w-0 overflow-hidden px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
                     />
                   </div>
                   <div className="space-y-1">

@@ -651,7 +651,10 @@ export function VisualSearchOverlay({
                             onClickCapture={(e) => {
                               // Close modal if a link or role=link is clicked inside the product card
                               if (e.target.closest('a') || e.target.closest('[role="link"]')) {
-                                onClose();
+                                // Delay the closing slightly to let the click and navigation handlers execute first
+                                setTimeout(() => {
+                                  onClose();
+                                }, 100);
                               }
                             }}
                           >

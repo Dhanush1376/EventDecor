@@ -10,6 +10,7 @@ export function SlowConnectionBanner() {
   const lastState = useRef({ networkState: 'online', connectionQuality: 'good' });
 
   useEffect(() => {
+    if (import.meta.env.DEV) return;
     const stateChanged =
       lastState.current.networkState !== networkState ||
       lastState.current.connectionQuality !== connectionQuality;

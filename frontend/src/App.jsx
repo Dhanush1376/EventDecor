@@ -68,6 +68,12 @@ const ProductListing = lazy(() =>
 const ProductDetails = lazy(() =>
   import('./pages/ProductDetails').then((m) => ({ default: m.ProductDetails })),
 );
+const ProductAllReviews = lazy(() =>
+  import('./pages/ProductAllReviews').then((m) => ({ default: m.ProductAllReviews })),
+);
+const ProductReviewImages = lazy(() =>
+  import('./pages/ProductReviewImages').then((m) => ({ default: m.ProductReviewImages })),
+);
 const Cart = lazy(() => import('./pages/Cart').then((m) => ({ default: m.Cart })));
 const Checkout = lazy(() => import('./pages/Checkout').then((m) => ({ default: m.Checkout })));
 const OrderSuccess = lazy(() =>
@@ -459,6 +465,14 @@ function App() {
                                 />
                                 <Route path="/collections" element={<ProductListing />} />
                                 <Route path="/product/:id" element={<ProductDetails />} />
+                                <Route
+                                  path="/product/:id/reviews"
+                                  element={<ProductAllReviews />}
+                                />
+                                <Route
+                                  path="/product/:id/reviews/images"
+                                  element={<ProductReviewImages />}
+                                />
                                 <Route path="/cart" element={<Cart />} />
                                 <Route path="/order-success" element={<OrderSuccess />} />
                                 <Route path="/about" element={<About />} />

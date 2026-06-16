@@ -13,7 +13,7 @@ export function NoInternetOverlay() {
 
   // Focus lock and accessibility management
   useEffect(() => {
-    if (networkState === 'offline') {
+    if (networkState === 'offline' && !import.meta.env.DEV) {
       // Store currently active element to restore focus later
       const previousActiveElement = document.activeElement;
 
@@ -48,7 +48,7 @@ export function NoInternetOverlay() {
   // Keyboard navigation listener (close overlay on Escape or trigger retry on space/enter if focused)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (networkState !== 'offline') return;
+      if (networkState !== 'offline' || import.meta.env.DEV) return;
       if (e.key === 'Escape') {
         e.preventDefault();
       }
@@ -59,7 +59,7 @@ export function NoInternetOverlay() {
 
   return (
     <AnimatePresence>
-      {networkState === 'offline' && (
+      {networkState === 'offline' && !import.meta.env.DEV && (
         <motion.div
           role="alertdialog"
           aria-modal="true"

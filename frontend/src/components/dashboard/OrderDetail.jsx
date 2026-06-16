@@ -72,9 +72,6 @@ export function OrderDetail() {
               <div className="bg-surface-container/60 border border-outline-variant/30 text-secondary text-[9px] sm:text-[10px] px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full font-medium">
                 Variant: <strong className="text-on-surface font-semibold">{prodVariant}</strong>
               </div>
-              <div className="bg-surface-container/60 border border-outline-variant/30 text-secondary text-[9px] sm:text-[10px] px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full font-medium">
-                Qty: <strong className="text-on-surface font-semibold">{item.quantity || 1}</strong>
-              </div>
             </div>
 
             <div className="pt-2 border-t border-surface-container/60 flex flex-wrap items-baseline gap-3 sm:gap-6">

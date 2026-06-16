@@ -479,7 +479,7 @@ export function DynamicCustomOrderWizard({
                             type="date"
                             value={formData.dynamicData[field.id] || ''}
                             onChange={(e) => handleUpdateDynamicField(field.id, e.target.value)}
-                            className="w-full bg-white border-2 border-black/10 hover:border-black/20 focus:border-black rounded-xl px-4 py-3 text-[13px] outline-none transition-all"
+                            className="w-full min-w-0 overflow-hidden bg-white border-2 border-black/10 hover:border-black/20 focus:border-black rounded-xl px-4 py-3 text-[13px] outline-none transition-all"
                           />
                         )}
 

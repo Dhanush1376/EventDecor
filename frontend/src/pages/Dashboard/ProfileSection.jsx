@@ -109,7 +109,7 @@ export function ProfileSection() {
                 autoComplete="bday"
                 value={profileForm.dateOfBirth}
                 onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
-                className="w-full min-w-0 max-w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-2 md:px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer text-on-surface"
+                className="w-full min-w-0 max-w-full overflow-hidden bg-surface-container-low border border-outline-variant/30 rounded-lg px-2 md:px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer text-on-surface"
               />
             </div>
           </div>

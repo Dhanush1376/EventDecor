@@ -103,7 +103,7 @@ export default function ProfileTab({
               autoComplete="bday"
               value={profileForm.dateOfBirth}
               onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
-              className="w-full min-w-0 max-w-full bg-white border border-outline-variant/30 rounded-lg px-2 md:px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+              className="w-full min-w-0 max-w-full overflow-hidden bg-white border border-outline-variant/30 rounded-lg px-2 md:px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
             />
           </div>
         </div>

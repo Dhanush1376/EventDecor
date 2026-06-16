@@ -1216,7 +1216,7 @@ export function CustomizationStudio() {
                       type="date"
                       value={eventDate}
                       onChange={(e) => setEventDate(e.target.value)}
-                      className="form-field !py-3 !text-[13px]"
+                      className="form-field !py-3 !text-[13px] min-w-0 overflow-hidden"
                     />
                   </div>
                   <div className="space-y-1">
