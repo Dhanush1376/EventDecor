@@ -1,6 +1,7 @@
 /* eslint-disable unused-imports/no-unused-imports */
 import React, { useState, useEffect } from 'react';
 import { m as motion } from 'framer-motion';
+import { WishlistView } from '../components/wishlist/WishlistView';
 export function Wishlist() {
   return (
     <motion.div

@@ -3,9 +3,9 @@ const path = require('path');
 const { XMLParser } = require('fast-xml-parser');
 
 const reconstruct = () => {
-  const sitemapPath = path.resolve(__dirname, '../sitemap_backup.xml');
-  const cloudinaryPath = path.resolve(__dirname, '../cloudinary_inventory.json');
-  const outputPath = path.resolve(__dirname, '../recovered_products_preview.json');
+  const sitemapPath = path.resolve(__dirname, '../../sitemap_backup.xml');
+  const cloudinaryPath = path.resolve(__dirname, '../../cloudinary_inventory.json');
+  const outputPath = path.resolve(__dirname, '../../recovered_products_preview.json');
 
   if (!fs.existsSync(sitemapPath) || !fs.existsSync(cloudinaryPath)) {
     console.error('Missing sitemap or cloudinary data.');

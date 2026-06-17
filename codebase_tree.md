@@ -6,33 +6,12 @@ EventDecor/
 │   └── workflows
 │       └── ci.yml
 ├── .gitignore
-├── .husky
-│   └── _
-│       ├── .gitignore
-│       ├── applypatch-msg
-│       ├── commit-msg
-│       ├── h
-│       ├── husky.sh
-│       ├── post-applypatch
-│       ├── post-checkout
-│       ├── post-commit
-│       ├── post-merge
-│       ├── post-rewrite
-│       ├── pre-applypatch
-│       ├── pre-auto-gc
-│       ├── pre-commit
-│       ├── pre-merge-commit
-│       ├── pre-push
-│       ├── pre-rebase
-│       └── prepare-commit-msg
 ├── .lintstagedrc.json
 ├── .npmrc
 ├── .prettierrc.json
 ├── backend
 │   ├── .dockerignore
 │   ├── .env.example
-│   ├── .env.local
-│   ├── .env.production.checklist.md
 │   ├── .gitignore
 │   ├── .npmrc
 │   ├── AI_SECURITY.md
@@ -44,53 +23,90 @@ EventDecor/
 │   ├── migrations
 │   │   └── README.md
 │   ├── ops
-│   │   ├── activate_products.js
-│   │   ├── add-missing-indexes.ts
-│   │   ├── add_missing_categories.js
-│   │   ├── check-admins.js
-│   │   ├── check-reviews.js
-│   │   ├── check_categories.js
-│   │   ├── check_lock.js
-│   │   ├── check_products.js
-│   │   ├── clear-wishlist-duplicates.js
-│   │   ├── cloudinaryExport.js
-│   │   ├── create-user-radha.js
-│   │   ├── drop_indexes.js
-│   │   ├── exportCurrentDb.js
-│   │   ├── extractProductsFromAudit.js
-│   │   ├── fixRazorpayPaths.js
-│   │   ├── importRecoveredProducts.js
-│   │   ├── invalidate_cache.js
-│   │   ├── list-users.js
-│   │   ├── migrate-reviews.js
-│   │   ├── migrate_legacy_media.ts
-│   │   ├── post_migration_audit.ts
-│   │   ├── prod-maintenance.sh
-│   │   ├── queryAuditLogs.js
-│   │   ├── reconstructProducts.js
-│   │   ├── refactorRazorpay.js
-│   │   ├── restoreAdmin.js
-│   │   ├── restore_categories.js
-│   │   ├── rotate-secrets.sh
-│   │   ├── run-explains.ts
-│   │   ├── run-matrix.js
-│   │   ├── run-test.js
-│   │   ├── testImageUrls.ts
-│   │   ├── test_admin_auth.js
-│   │   ├── test_groq.js
-│   │   └── verifyBackup.js
+│   │   ├── audits
+│   │   │   ├── check_categories.js
+│   │   │   ├── check_products.js
+│   │   │   ├── check-admins.js
+│   │   │   ├── check-reviews.js
+│   │   │   ├── cloudinaryExport.js
+│   │   │   ├── exportCurrentDb.js
+│   │   │   ├── list-users.js
+│   │   │   ├── post_migration_audit.ts
+│   │   │   ├── queryAuditLogs.js
+│   │   │   └── run-explains.ts
+│   │   ├── maintenance
+│   │   │   ├── activate_products.js
+│   │   │   ├── check_lock.js
+│   │   │   ├── clear-wishlist-duplicates.js
+│   │   │   ├── drop_indexes.js
+│   │   │   ├── fixRazorpayPaths.js
+│   │   │   ├── invalidate_cache.js
+│   │   │   ├── prod-maintenance.sh
+│   │   │   ├── refactorRazorpay.js
+│   │   │   └── rotate-secrets.sh
+│   │   ├── migrations
+│   │   │   ├── add_missing_categories.js
+│   │   │   ├── add-missing-indexes.ts
+│   │   │   ├── migrate_legacy_media.ts
+│   │   │   └── migrate-reviews.js
+│   │   ├── recovery
+│   │   │   ├── extractProductsFromAudit.js
+│   │   │   ├── importRecoveredProducts.js
+│   │   │   ├── reconstructProducts.js
+│   │   │   ├── restore_categories.js
+│   │   │   ├── restoreAdmin.js
+│   │   │   └── verifyBackup.js
+│   │   └── testing
+│   │       ├── create-test-user.js
+│   │       ├── run-matrix.js
+│   │       ├── run-test.js
+│   │       ├── test_admin_auth.js
+│   │       ├── test_groq.js
+│   │       └── testImageUrls.ts
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── PERFORMANCE_OPTIMIZATION.md
-│   ├── public
-│   │   └── temp
 │   ├── railway.json
 │   ├── README.md
 │   ├── render.yaml
 │   ├── SCALING.md
-│   ├── scripts
 │   ├── server.ts
 │   ├── src
+│   │   ├── __tests__
+│   │   │   ├── admin-refund-approval.test.ts
+│   │   │   ├── adminInvite.test.ts
+│   │   │   ├── api.integration.test.ts
+│   │   │   ├── auth.integration.test.ts
+│   │   │   ├── chaos
+│   │   │   │   └── resilience.test.ts
+│   │   │   ├── csrf.test.ts
+│   │   │   ├── fieldEncryption.test.ts
+│   │   │   ├── inventory-reservation.test.ts
+│   │   │   ├── inventory.integration.test.ts
+│   │   │   ├── load
+│   │   │   │   └── k6-load-test.js
+│   │   │   ├── media.integration.test.ts
+│   │   │   ├── modelTtlIndexes.test.ts
+│   │   │   ├── my-orders-filter.test.ts
+│   │   │   ├── order-checkout.test.ts
+│   │   │   ├── otp-auth.test.ts
+│   │   │   ├── payment-refund.test.ts
+│   │   │   ├── payment-state-machine.test.ts
+│   │   │   ├── payment-webhook-idempotency.test.ts
+│   │   │   ├── payment.integration.test.ts
+│   │   │   ├── rateLimit.integration.test.ts
+│   │   │   ├── recommendation.integration.test.ts
+│   │   │   ├── rental-block.test.ts
+│   │   │   ├── search-cache.test.ts
+│   │   │   ├── search.test.ts
+│   │   │   ├── security.test.ts
+│   │   │   ├── session-auth.test.ts
+│   │   │   ├── setupEnv.ts
+│   │   │   ├── socket.integration.test.ts
+│   │   │   ├── tsconfig.json
+│   │   │   ├── upload-security.test.ts
+│   │   │   ├── upload.integration.test.ts
+│   │   │   └── webhook.integration.test.ts
 │   │   ├── app.ts
 │   │   ├── config
 │   │   │   ├── adminConfig.ts
@@ -250,7 +266,6 @@ EventDecor/
 │   │   │   ├── VisualSearchLog.ts
 │   │   │   ├── WalletTransaction.ts
 │   │   │   └── WebsiteContent.ts
-│   │   ├── queues
 │   │   ├── routes
 │   │   │   ├── adminInviteRoutes.ts
 │   │   │   ├── adminSystemRoutes.ts
@@ -460,60 +475,24 @@ EventDecor/
 │   │   │   ├── twoFactorPending.ts
 │   │   │   ├── userSessionCache.ts
 │   │   │   └── walletMutations.ts
-│   │   ├── validators
-│   │   │   ├── authSchema.ts
-│   │   │   ├── authValidator.ts
-│   │   │   ├── commonValidator.ts
-│   │   │   ├── customOrderValidator.ts
-│   │   │   ├── eventBookingSchemas.ts
-│   │   │   ├── eventBookingValidator.ts
-│   │   │   ├── eventValidator.ts
-│   │   │   ├── galleryValidator.ts
-│   │   │   ├── inquirySchema.ts
-│   │   │   ├── inquiryValidator.ts
-│   │   │   ├── orderSchema.ts
-│   │   │   ├── orderValidator.ts
-│   │   │   ├── productValidator.ts
-│   │   │   ├── recommendationValidator.ts
-│   │   │   ├── rentalValidator.ts
-│   │   │   ├── reviewValidator.ts
-│   │   │   └── userSchema.ts
-│   │   ├── workers
-│   │   └── __tests__
-│   │       ├── admin-refund-approval.test.ts
-│   │       ├── adminInvite.test.ts
-│   │       ├── api.integration.test.ts
-│   │       ├── auth.integration.test.ts
-│   │       ├── chaos
-│   │       │   └── resilience.test.ts
-│   │       ├── csrf.test.ts
-│   │       ├── fieldEncryption.test.ts
-│   │       ├── inventory-reservation.test.ts
-│   │       ├── inventory.integration.test.ts
-│   │       ├── load
-│   │       │   └── k6-load-test.js
-│   │       ├── media.integration.test.ts
-│   │       ├── modelTtlIndexes.test.ts
-│   │       ├── my-orders-filter.test.ts
-│   │       ├── order-checkout.test.ts
-│   │       ├── otp-auth.test.ts
-│   │       ├── payment-refund.test.ts
-│   │       ├── payment-state-machine.test.ts
-│   │       ├── payment-webhook-idempotency.test.ts
-│   │       ├── payment.integration.test.ts
-│   │       ├── rateLimit.integration.test.ts
-│   │       ├── recommendation.integration.test.ts
-│   │       ├── rental-block.test.ts
-│   │       ├── search-cache.test.ts
-│   │       ├── search.test.ts
-│   │       ├── security.test.ts
-│   │       ├── session-auth.test.ts
-│   │       ├── setupEnv.ts
-│   │       ├── socket.integration.test.ts
-│   │       ├── tsconfig.json
-│   │       ├── upload-security.test.ts
-│   │       ├── upload.integration.test.ts
-│   │       └── webhook.integration.test.ts
+│   │   └── validators
+│   │       ├── authSchema.ts
+│   │       ├── authValidator.ts
+│   │       ├── commonValidator.ts
+│   │       ├── customOrderValidator.ts
+│   │       ├── eventBookingSchemas.ts
+│   │       ├── eventBookingValidator.ts
+│   │       ├── eventValidator.ts
+│   │       ├── galleryValidator.ts
+│   │       ├── inquirySchema.ts
+│   │       ├── inquiryValidator.ts
+│   │       ├── orderSchema.ts
+│   │       ├── orderValidator.ts
+│   │       ├── productValidator.ts
+│   │       ├── recommendationValidator.ts
+│   │       ├── rentalValidator.ts
+│   │       ├── reviewValidator.ts
+│   │       └── userSchema.ts
 │   ├── tsconfig.jest.json
 │   └── tsconfig.json
 ├── build-vercel.js
@@ -521,7 +500,6 @@ EventDecor/
 ├── docker-compose.yml
 ├── frontend
 │   ├── .dockerignore
-│   ├── .env
 │   ├── .env.example
 │   ├── .gitignore
 │   ├── .npmrc
@@ -535,15 +513,14 @@ EventDecor/
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── public
+│   │   ├── _redirects
 │   │   ├── .htaccess
 │   │   ├── .well-known
 │   │   │   └── security.txt
 │   │   ├── apple-touch-icon.webp
 │   │   ├── assets
 │   │   │   ├── legacy_artistry_decor-mobile.webp
-│   │   │   ├── legacy_artistry_decor.webp
-│   │   │   ├── products
-│   │   │   └── team
+│   │   │   └── legacy_artistry_decor.webp
 │   │   ├── favicon-32x32.webp
 │   │   ├── favicon.png
 │   │   ├── favicon.webp
@@ -553,12 +530,10 @@ EventDecor/
 │   │   ├── logo.png
 │   │   ├── logo.webp
 │   │   ├── manifest.json
-│   │   ├── occasions
 │   │   ├── og-image.webp
 │   │   ├── robots.txt
 │   │   ├── sitemap.xml
-│   │   ├── sw-cleanup.js
-│   │   └── _redirects
+│   │   └── sw-cleanup.js
 │   ├── scripts
 │   │   ├── add-lazy-loading.mjs
 │   │   ├── check-env.ci.mjs
@@ -658,7 +633,6 @@ EventDecor/
 │   │   │   ├── CheckoutSidebar.jsx
 │   │   │   └── CheckoutVerificationStep.jsx
 │   │   ├── components
-│   │   │   ├── admin
 │   │   │   ├── auth
 │   │   │   │   ├── AdminInviteModal.jsx
 │   │   │   │   ├── AuthGate.jsx
@@ -725,6 +699,12 @@ EventDecor/
 │   │   │   │   ├── ProductCard.jsx
 │   │   │   │   └── SectionHeader.jsx
 │   │   │   ├── ui
+│   │   │   │   ├── __tests__
+│   │   │   │   │   ├── a11y.smoke.test.jsx
+│   │   │   │   │   ├── Button.test.jsx
+│   │   │   │   │   ├── FeedbackStates.test.jsx
+│   │   │   │   │   ├── ProductCard.test.jsx
+│   │   │   │   │   └── SearchBar.test.jsx
 │   │   │   │   ├── Button.jsx
 │   │   │   │   ├── CategoryTabs.jsx
 │   │   │   │   ├── CheckoutSteps.jsx
@@ -775,13 +755,7 @@ EventDecor/
 │   │   │   │   ├── SplashScreen.jsx
 │   │   │   │   ├── StateRenderer.jsx
 │   │   │   │   ├── StickyMobileATC.jsx
-│   │   │   │   ├── WhatsAppWidget.jsx
-│   │   │   │   └── __tests__
-│   │   │   │       ├── a11y.smoke.test.jsx
-│   │   │   │       ├── Button.test.jsx
-│   │   │   │       ├── FeedbackStates.test.jsx
-│   │   │   │       ├── ProductCard.test.jsx
-│   │   │   │       └── SearchBar.test.jsx
+│   │   │   │   └── WhatsAppWidget.jsx
 │   │   │   └── wishlist
 │   │   │       └── WishlistView.jsx
 │   │   ├── config
@@ -810,6 +784,9 @@ EventDecor/
 │   │   │   ├── WishlistContext.jsx
 │   │   │   └── WishlistProvider.jsx
 │   │   ├── hooks
+│   │   │   ├── __tests__
+│   │   │   │   ├── useMediaQuery.test.js
+│   │   │   │   └── useWindowHeight.test.js
 │   │   │   ├── useApi.js
 │   │   │   ├── useCartQueries.js
 │   │   │   ├── useDashboardData.js
@@ -826,10 +803,7 @@ EventDecor/
 │   │   │   ├── useUserQueries.js
 │   │   │   ├── useVisualSearch.js
 │   │   │   ├── useWebsiteContent.js
-│   │   │   ├── useWindowHeight.js
-│   │   │   └── __tests__
-│   │   │       ├── useMediaQuery.test.js
-│   │   │       └── useWindowHeight.test.js
+│   │   │   └── useWindowHeight.js
 │   │   ├── layouts
 │   │   │   └── MainLayout.jsx
 │   │   ├── main.jsx
@@ -892,9 +866,9 @@ EventDecor/
 │   │   │   ├── Shipping.jsx
 │   │   │   ├── Terms.jsx
 │   │   │   └── Wishlist.jsx
-│   │   ├── routes
 │   │   ├── services
 │   │   │   ├── api
+│   │   │   │   ├── _shared.js
 │   │   │   │   ├── adminInviteService.js
 │   │   │   │   ├── analyticsService.js
 │   │   │   │   ├── authService.js
@@ -914,8 +888,7 @@ EventDecor/
 │   │   │   │   ├── reviewService.js
 │   │   │   │   ├── showcaseService.js
 │   │   │   │   ├── uploadService.js
-│   │   │   │   ├── userService.js
-│   │   │   │   └── _shared.js
+│   │   │   │   └── userService.js
 │   │   │   ├── api.js
 │   │   │   ├── domainServices.js
 │   │   │   ├── recommendationService.js
@@ -962,3 +935,133 @@ EventDecor/
 └── scripts
     ├── check-no-console.mjs
     └── optimize-assets.mjs
+
+## Gitignored Elements
+
+Below are the elements and patterns ignored by Git across the workspace:
+
+### Root .gitignore (c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/.gitignore)
+```gitignore
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Directories
+node_modules/
+dist/
+dist-ssr/
+build/
+.cache/
+coverage/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+*.secret
+.env.backup
+
+# Documents
+*.docx
+*.pdf
+*.pptx
+
+# Audit Artifacts & Temp Scripts
+scripts/extract_arch.js
+backend/test-mongoose.js
+
+# Recovery & Diagnostics
+backend/recovery/
+backend/cache/
+backend/recovered_products_preview.json
+backend/old_seed_data_temp.txt
+backend/test-*.ts
+*.avif
+tmp/
+
+# Temp Scripts & Audits
+patch_frontend.py
+backend/fix-image.js
+backend/fix-all-images.js
+frontend/replaceImports.cjs
+migration_report.md
+backend/knip-report.json
+frontend/knip-report.json
+frontend/stats.html
+frontend/stats.json
+stats.json
+backend/migration_report_full.md
+
+# Agent directories
+brain/
+
+# Profiling & debug
+prof*.txt
+*.prof
+# Load test results
+load_tests/
+load-tests.yml
+# Audit artifacts
+*-audit-report*.json
+audit_performance.*
+runtime-audit*
+# Cached media
+backend/cache/
+# Filter debug
+filters*.json
+explain_output.json
+
+# Hardened Generated Artifacts Phase
+coverage/
+cache/
+logs/
+*.log
+stats.html
+stats.json
+knip-report.json
+codebase_report.txt
+codebase_tree_report.txt
+```
+
+### Backend .gitignore (c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/backend/.gitignore)
+```gitignore
+node_modules/
+dist/
+.env
+*.log
+v8.log
+isolate-*.log
+*-report.json
+```
+
+### Frontend .gitignore (c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/.gitignore)
+```gitignore
+stats.html
+stats.json
+*.log
+*-report.json
+```

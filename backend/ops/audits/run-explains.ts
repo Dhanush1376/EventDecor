@@ -4,11 +4,11 @@ import path from 'path';
 import fs from 'fs';
 
 // Load env
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-import connectDB from '../src/config/db';
-import Product from '../src/models/Product';
-import Order from '../src/models/Order';
+import connectDB from '../../src/config/db';
+import Product from '../../src/models/Product';
+import Order from '../../src/models/Order';
 
 async function runExplains() {
   await connectDB();

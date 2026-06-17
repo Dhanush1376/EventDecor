@@ -2,11 +2,11 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-import Product from '../src/models/Product';
-import Gallery from '../src/models/Gallery';
-import Category from '../src/models/Category';
+import Product from '../../src/models/Product';
+import Gallery from '../../src/models/Gallery';
+import Category from '../../src/models/Category';
 
 async function runPostMigrationAudit() {
   await mongoose.connect(process.env.MONGO_URI as string);

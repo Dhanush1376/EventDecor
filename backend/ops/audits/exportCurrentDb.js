@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const exportDb = async () => {
   try {
@@ -23,7 +23,7 @@ const exportDb = async () => {
       exportData[collName] = data;
     }
 
-    const exportPath = path.resolve(__dirname, '../database_export_safe.json');
+    const exportPath = path.resolve(__dirname, '../../database_export_safe.json');
     fs.writeFileSync(exportPath, JSON.stringify(exportData, null, 2));
     console.log(`✅ Successfully exported surviving database to ${exportPath}`);
 

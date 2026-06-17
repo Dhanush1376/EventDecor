@@ -1,18 +1,44 @@
-import mongoose from 'mongoose';
-import Product from '../models/Product';
-import InventoryReservation from '../models/InventoryReservation';
-import { InventoryService } from '../services/InventoryService';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 
 describe('Inventory Integration', () => {
   let testProductId: string;
+  let replset: MongoMemoryReplSet;
+  let mongoose: any;
+  let Product: any;
+  let InventoryReservation: any;
+  let InventoryLog: any;
+  let InventoryService: any;
 
   beforeAll(async () => {
-    // Setup in-memory MongoDB or connect to local test DB
-    // CRITICAL FIX: Always override MONGO_URI for tests to prevent wiping production data
-    process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/eventdecor_test_inventory';
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URI);
+    // Clear Jest module registry to prevent mock pollution from other tests
+    jest.resetModules();
+
+    // Dynamically require mongoose AFTER resetModules so it matches the instance used by models
+    mongoose = require('mongoose');
+
+    // Setup in-memory MongoDB Replica Set for transactions
+    replset = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
+    const uri = replset.getUri();
+    process.env.MONGO_URI = uri;
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
     }
+    await mongoose.connect(uri);
+
+    // Dynamically require the real models and service
+    Product = require('../models/Product').default;
+    InventoryReservation = require('../models/InventoryReservation').default;
+    InventoryLog = require('../models/InventoryLog').default;
+    InventoryService = require('../services/InventoryService').InventoryService;
+
+    // Pre-create collections and build indexes to prevent MongoDB transaction "catalog changes" write failures
+    await Product.createCollection();
+    await Product.init();
+    await InventoryReservation.createCollection();
+    await InventoryReservation.init();
+    await InventoryLog.createCollection();
+    await InventoryLog.init();
+
     // Make sure we have a clean state
     await Product.deleteMany({}, { bypassDestructionGuard: true });
     await InventoryReservation.deleteMany({}, { bypassDestructionGuard: true });
@@ -28,13 +54,14 @@ describe('Inventory Integration', () => {
       category: 'Wedding',
       imageSrc: 'test.jpg',
     });
-    testProductId = (product._id as mongoose.Types.ObjectId).toString();
+    testProductId = product._id.toString();
   });
 
   afterAll(async () => {
     await Product.deleteMany({}, { bypassDestructionGuard: true });
     await InventoryReservation.deleteMany({}, { bypassDestructionGuard: true });
     await mongoose.connection.close();
+    await replset.stop();
   });
 
   describe('Concurrent Reservation', () => {

@@ -1,14 +1,5 @@
-import mongoose from 'mongoose';
-import User from '../models/User';
-import OtpVerification from '../models/OtpVerification';
-import OtpRequestLog from '../models/OtpRequestLog';
-import RefreshToken from '../models/RefreshToken';
-import UsedRefreshToken from '../models/UsedRefreshToken';
-import FailedLoginAttempt from '../models/FailedLoginAttempt';
-import OtpAuthService from '../services/OtpAuthService';
-import SessionAuthService from '../services/SessionAuthService';
-import AdminAuthService from '../services/AdminAuthService';
 import bcrypt from 'bcryptjs';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 
 // Setup Mock for redis
 jest.mock('../utils/redis', () => ({
@@ -28,19 +19,49 @@ jest.mock('../utils/otpVerifyCache', () => ({
 
 describe('Auth Services Integration Tests', () => {
   let testUser: any;
+  let replset: MongoMemoryReplSet;
+  let mongoose: any;
+  let User: any;
+  let OtpVerification: any;
+  let OtpRequestLog: any;
+  let RefreshToken: any;
+  let UsedRefreshToken: any;
+  let FailedLoginAttempt: any;
+  let OtpAuthService: any;
+  let SessionAuthService: any;
+  let AdminAuthService: any;
 
   beforeAll(async () => {
-    // Setup in-memory MongoDB or connect to local test DB
-    // CRITICAL FIX: Always override MONGO_URI for tests to prevent wiping production data
-    // if dotenv loaded the production URI from the .env file.
-    process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/eventdecor_test_auth';
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URI);
+    // Clear Jest module registry to prevent mock pollution from other tests
+    jest.resetModules();
+
+    // Dynamically require mongoose AFTER resetModules so it matches the instance used by models
+    mongoose = require('mongoose');
+
+    // Setup in-memory MongoDB Replica Set for transactions
+    replset = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
+    const uri = replset.getUri();
+    process.env.MONGO_URI = uri;
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
     }
+    await mongoose.connect(uri);
+
+    // Dynamically require models and services
+    User = require('../models/User').default;
+    OtpVerification = require('../models/OtpVerification').default;
+    OtpRequestLog = require('../models/OtpRequestLog').default;
+    RefreshToken = require('../models/RefreshToken').default;
+    UsedRefreshToken = require('../models/UsedRefreshToken').default;
+    FailedLoginAttempt = require('../models/FailedLoginAttempt').default;
+    OtpAuthService = require('../services/OtpAuthService').default;
+    SessionAuthService = require('../services/SessionAuthService').default;
+    AdminAuthService = require('../services/AdminAuthService').default;
   });
 
   afterAll(async () => {
     await mongoose.connection.close();
+    await replset.stop();
   });
 
   beforeEach(async () => {

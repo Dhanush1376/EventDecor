@@ -1,9 +1,14 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { useProducts } from '../../hooks/useProductQueries';
 import { useRecommendationTracker } from '../../hooks/useRecommendationTracker';
+import { SEO } from '../seo/SEO';
+import { ProductCard } from '../ui/ProductCard';
+import { QuickViewModal } from '../ui/QuickViewModal';
+import { WishlistPageSkeleton } from '../ui/Skeleton';
 
 export function WishlistView({ isEmbedded = false }) {
   const { items, removeItem, toggleItem, loading: wishlistLoading } = useWishlist();

@@ -26,6 +26,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@mongodb-js/zstd": "^7.0.0",
     "@sentry/node": "^10.53.1",
     "@socket.io/redis-adapter": "^8.3.0",
     "bcryptjs": "^3.0.3",

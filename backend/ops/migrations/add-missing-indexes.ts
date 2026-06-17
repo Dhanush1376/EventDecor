@@ -1,13 +1,13 @@
 import mongoose from 'mongoose';
-import '../src/config/loadEnv';
-import logger from '../src/config/logger';
+import '../../src/config/loadEnv';
+import logger from '../../src/config/logger';
 
 // Import all models to ensure schemas are registered and indexes are created
-import Order from '../src/models/Order';
-import PaymentWebhookEvent from '../src/models/PaymentWebhookEvent';
-import Product from '../src/models/Product';
-import InventoryReservation from '../src/models/InventoryReservation';
-import RefundRecord from '../src/models/RefundRecord';
+import Order from '../../src/models/Order';
+import PaymentWebhookEvent from '../../src/models/PaymentWebhookEvent';
+import Product from '../../src/models/Product';
+import InventoryReservation from '../../src/models/InventoryReservation';
+import RefundRecord from '../../src/models/RefundRecord';
 
 async function runIndexBuild() {
   try {

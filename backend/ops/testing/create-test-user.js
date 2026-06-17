@@ -17,11 +17,11 @@ mongoose
     // Check if user already exists
     const existing = await mongoose.connection.collection('users').findOne({ _id: userId });
     if (existing) {
-      console.log('User Radha Krishnan already exists in database:', existing);
+      console.log('Test user already exists in database:', existing);
     } else {
       const newUser = {
         _id: userId,
-        name: 'Radha Krishnan',
+        name: 'Test Customer',
         email: 'customer@siriartsandcrafts.com',
         role: 'customer',
         isVerified: true,
@@ -41,7 +41,7 @@ mongoose
       };
 
       const res = await mongoose.connection.collection('users').insertOne(newUser);
-      console.log('User Radha Krishnan created successfully:', res);
+      console.log('Test user created successfully:', res);
     }
     process.exit();
   })

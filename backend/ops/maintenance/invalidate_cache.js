@@ -5,7 +5,7 @@ const path = require('path');
 // Actually it's easier to just connect to redis directly if we have the URL
 const Redis = require('ioredis');
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 async function run() {
   await mongoose.connect(process.env.MONGO_URI);

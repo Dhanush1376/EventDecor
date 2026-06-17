@@ -22,7 +22,7 @@ export class AdminWorkflowEngine {
   ) {
     const User = require('../models/User').default;
     const adminUser = await User.findById(approvedBy);
-    if (!adminUser || adminUser.role !== 'superadmin') {
+    if (!adminUser || adminUser.role !== 'super_admin') {
       throw new ApiError(403, 'Forbidden: Only superadmins can approve high-value cancellations.');
     }
 

@@ -1,7 +1,7 @@
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -28,7 +28,7 @@ const exportCloudinary = async () => {
       console.log(`Fetched ${result.resources.length} resources... Total: ${allResources.length}`);
     } while (nextCursor);
 
-    const exportPath = path.resolve(__dirname, '../cloudinary_inventory.json');
+    const exportPath = path.resolve(__dirname, '../../cloudinary_inventory.json');
     fs.writeFileSync(exportPath, JSON.stringify(allResources, null, 2));
     console.log(
       `✅ Successfully exported ${allResources.length} Cloudinary resources to ${exportPath}`,

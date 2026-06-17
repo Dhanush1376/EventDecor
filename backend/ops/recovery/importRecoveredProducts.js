@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 // Manually define schema to ensure it works even if TypeScript compilation is messy
 const ProductSchema = new mongoose.Schema(
@@ -25,7 +25,7 @@ const importProducts = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
 
-    const dataPath = path.resolve(__dirname, '../recovered_products_preview.json');
+    const dataPath = path.resolve(__dirname, '../../recovered_products_preview.json');
     const recoveredData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
 
     console.log(`Starting import of ${recoveredData.length} recovered products...`);

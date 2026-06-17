@@ -10,7 +10,7 @@ import {
   useParams,
 } from 'react-router-dom';
 import { logRouteDiagnostic } from './utils/diagnostics';
-import { LazyMotion, domAnimation } from 'framer-motion';
+import { LazyMotion, domMax } from 'framer-motion';
 import { HelmetProvider } from 'react-helmet-async';
 import toast, { Toaster, ToastBar } from 'react-hot-toast';
 import { ensureCsrfToken } from './services/api';
@@ -379,7 +379,7 @@ function App() {
   }, []);
 
   return (
-    <LazyMotion features={domAnimation}>
+    <LazyMotion features={domMax}>
       <QueryClientProvider client={queryClient}>
         <NetworkProvider>
           <ConfigProvider>

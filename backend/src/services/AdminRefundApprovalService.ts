@@ -55,7 +55,7 @@ export class AdminRefundApprovalService {
   static async approveRefund(refundId: string, adminId: string, approvalNotes?: string) {
     const User = require('../models/User').default;
     const adminUser = await User.findById(adminId);
-    if (!adminUser || adminUser.role !== 'superadmin') {
+    if (!adminUser || adminUser.role !== 'super_admin') {
       throw new ApiError(403, 'Forbidden: Only superadmins can approve high-value refunds.');
     }
 
@@ -104,7 +104,7 @@ export class AdminRefundApprovalService {
   static async rejectRefund(refundId: string, adminId: string, rejectionReason: string) {
     const User = require('../models/User').default;
     const adminUser = await User.findById(adminId);
-    if (!adminUser || adminUser.role !== 'superadmin') {
+    if (!adminUser || adminUser.role !== 'super_admin') {
       throw new ApiError(403, 'Forbidden: Only superadmins can reject high-value refunds.');
     }
 
