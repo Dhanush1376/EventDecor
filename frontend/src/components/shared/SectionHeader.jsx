@@ -27,11 +27,11 @@ export function SectionHeader({ kicker, title, seeAllLink, className = '' }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="font-display text-3xl md:text-5xl text-on-surface font-semibold tracking-tight relative inline-block"
+            className="font-display text-3xl md:text-5xl text-on-surface font-normal tracking-tight relative inline-block"
           >
             {title}
             {/* Subtle premium underline accent */}
-            <div className="absolute -bottom-2 left-0 w-1/3 h-[2px] bg-gradient-to-r from-primary/50 to-transparent rounded-full"></div>
+            <div className="absolute -bottom-2 left-0 w-1/3 h-[2px] bg-gradient-to-r from-black/60 to-transparent rounded-full"></div>
           </motion.h2>
         </div>
 
