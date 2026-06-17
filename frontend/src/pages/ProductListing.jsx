@@ -977,7 +977,7 @@ export function ProductListing() {
                         </div>
                         <button
                           onClick={visualSearch.close}
-                          className="w-8 h-8 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-all cursor-pointer text-on-surface-variant/70 animate-none outline-none focus:outline-none"
+                          className="w-8 h-8 min-h-0 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-all cursor-pointer text-on-surface-variant/70 animate-none outline-none focus:outline-none"
                           aria-label="Close visual search"
                         >
                           <span className="material-symbols-outlined text-[20px]">close</span>
@@ -1016,7 +1016,7 @@ export function ProductListing() {
                               <div className="absolute bottom-5 left-0 right-0 flex justify-center gap-6 z-10">
                                 <button
                                   onClick={stopCamera}
-                                  className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center text-white border border-white/20 active:scale-90 transition-transform cursor-pointer"
+                                  className="w-12 h-12 min-h-0 rounded-full bg-black/60 flex items-center justify-center text-white border border-white/20 active:scale-90 transition-transform cursor-pointer"
                                 >
                                   <span className="material-symbols-outlined">close</span>
                                 </button>
@@ -1228,7 +1228,7 @@ export function ProductListing() {
                       filter_list_off
                     </span>
                   </div>
-                  <h3 className="font-headline-sm text-on-surface mb-3">No products found</h3>
+                  <h3 className="font-headline-sm text-on-surface mb-3">No search results available</h3>
                   <p className="font-body-md text-on-surface-variant/50 font-light mb-10 max-w-md mx-auto">
                     Try adjusting your filters or search terms to find what you're looking for.
                   </p>

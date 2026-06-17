@@ -253,7 +253,7 @@ export function VisualSearchOverlay({
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-all cursor-pointer text-on-surface-variant/70"
+                  className="w-8 h-8 min-h-0 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-all cursor-pointer text-on-surface-variant/70"
                   aria-label="Close visual search"
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
@@ -295,7 +295,7 @@ export function VisualSearchOverlay({
                         <div className="absolute bottom-5 left-0 right-0 flex justify-center gap-6 z-10">
                           <button
                             onClick={stopCamera}
-                            className="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center text-white border border-white/20 active:scale-90 transition-transform cursor-pointer"
+                            className="w-12 h-12 min-h-0 rounded-full bg-black/60 flex items-center justify-center text-white border border-white/20 active:scale-90 transition-transform cursor-pointer"
                           >
                             <span className="material-symbols-outlined">close</span>
                           </button>
@@ -493,7 +493,7 @@ export function VisualSearchOverlay({
               <div className="fixed top-5 left-5 right-5 flex justify-between items-center z-40 md:hidden pointer-events-none">
                 <button
                   onClick={onClose}
-                  className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-md active:scale-95 transition-transform pointer-events-auto cursor-pointer"
+                  className="w-10 h-10 min-h-0 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-md active:scale-95 transition-transform pointer-events-auto cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>

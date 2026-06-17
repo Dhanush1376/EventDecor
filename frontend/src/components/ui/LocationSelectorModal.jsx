@@ -433,7 +433,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
               <button
                 type="button"
                 onClick={onClose}
-                className="w-9 h-9 rounded-full bg-white hover:bg-red-50 text-stone-500 hover:text-red-500 border border-black/5 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                className="w-9 h-9 min-h-0 rounded-full bg-white hover:bg-red-50 text-stone-500 hover:text-red-500 border border-black/5 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -460,7 +460,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
                       setSearchQuery('');
                       setSuggestions([]);
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 min-h-0 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-700"
                   >
                     <span className="material-symbols-outlined text-[14px]">close</span>
                   </button>

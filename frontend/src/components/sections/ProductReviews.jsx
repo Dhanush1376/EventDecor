@@ -282,7 +282,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center transition-all"
+            className="w-9 h-9 min-h-0 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center transition-all"
           >
             <span className="material-symbols-outlined text-[18px] text-black">close</span>
           </button>

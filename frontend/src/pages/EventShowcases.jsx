@@ -635,7 +635,7 @@ export function EventShowcases() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <button
                   onClick={() => setSelectedShowcase(null)}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black transition-colors cursor-pointer"
+                  className="absolute top-4 right-4 w-10 h-10 min-h-0 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black transition-colors cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">close</span>
                 </button>

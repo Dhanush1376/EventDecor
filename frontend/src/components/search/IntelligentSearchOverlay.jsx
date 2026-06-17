@@ -596,7 +596,7 @@ export function IntelligentSearchOverlay({
                       search_off
                     </span>
                     <p className="text-[15px] text-stone-600 font-semibold">
-                      No results for "{query}"
+                      No search results available
                     </p>
                     <p className="text-[12px] text-stone-400 mt-1">
                       Check spelling or try different keywords.
@@ -639,7 +639,7 @@ export function IntelligentSearchOverlay({
                                 e.stopPropagation();
                                 onRemoveRecent(search);
                               }}
-                              className="w-8 h-8 rounded-full flex items-center justify-center active:bg-stone-200/60"
+                              className="w-8 h-8 min-h-0 rounded-full flex items-center justify-center active:bg-stone-200/60"
                               aria-label={`Remove ${search}`}
                             >
                               <span className="material-symbols-outlined text-[16px] text-stone-400">
@@ -654,54 +654,7 @@ export function IntelligentSearchOverlay({
                     <div className="py-2">
                       {/* Discovery Engine Modules */}
 
-                      {/* 0. Visual Search Onboarding Card */}
-                      <div
-                        onClick={() => {
-                          handleClose();
-                          navigate('/collections?visual=true');
-                        }}
-                        className="mx-5 mb-4 mt-2 p-3.5 rounded-2xl bg-gradient-to-r from-primary-container/15 via-surface-bright/95 to-primary-container/5 border border-primary-container/30 hover:border-primary-container/50 shadow-sm active:scale-[0.98] transition-all duration-300 flex items-center justify-between gap-4 cursor-pointer group"
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleClose();
-                            navigate('/collections?visual=true');
-                          }
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary-container/15 flex items-center justify-center text-primary-container flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                            <span className="material-symbols-outlined text-[20px]">
-                              photo_camera
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[14px] text-stone-800 font-display font-semibold tracking-wide">
-                              Have an image in mind?
-                            </span>
-                            <span className="text-[11px] text-stone-500 font-body font-normal mt-0.5">
-                              Find matching decors using any photo
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="w-9 h-9 min-h-0 flex items-center justify-center bg-[#d4af37] hover:bg-stone-900 text-white rounded-full transition-colors shadow-md cursor-pointer flex-shrink-0 group-hover:scale-105"
-                          aria-label="Upload Image"
-                          tabIndex={-1}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleClose();
-                            navigate('/collections?visual=true');
-                          }}
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
-                            arrow_forward
-                          </span>
-                        </button>
-                      </div>
+
 
                       {/* 1. Event Collections */}
                       {((discoveryData?.eventCollections &&
@@ -915,7 +868,7 @@ export function IntelligentSearchOverlay({
                     <>
                       <button
                         onClick={() => setSearchMode('text')}
-                        className="w-8 h-8 rounded-full bg-stone-200/50 hover:bg-stone-300/50 flex items-center justify-center text-stone-600 transition-all duration-300 flex-shrink-0 cursor-pointer -ml-2"
+                        className="w-8 h-8 min-h-0 rounded-full bg-stone-200/50 hover:bg-stone-300/50 flex items-center justify-center text-stone-600 transition-all duration-300 flex-shrink-0 cursor-pointer -ml-2"
                         aria-label="Back to text search"
                       >
                         <span className="material-symbols-outlined text-[20px]">arrow_back</span>
@@ -1253,7 +1206,7 @@ export function IntelligentSearchOverlay({
                             search_off
                           </span>
                           <p className="text-[15px] text-stone-600 font-medium">
-                            No results for "{query}"
+                            No search results available
                           </p>
                           <p className="text-[12px] text-stone-400 max-w-xs mx-auto font-light">
                             Try different spelling or keywords, or explore categories below.
@@ -1298,7 +1251,7 @@ export function IntelligentSearchOverlay({
                                       e.stopPropagation();
                                       onRemoveRecent(search);
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full flex items-center justify-center hover:bg-stone-200/50 cursor-pointer"
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 min-h-0 rounded-full flex items-center justify-center hover:bg-stone-200/50 cursor-pointer"
                                     aria-label={`Remove ${search}`}
                                   >
                                     <span className="material-symbols-outlined text-[14px] text-stone-400 hover:text-stone-700">
@@ -1411,57 +1364,6 @@ export function IntelligentSearchOverlay({
                               <div className="col-span-12 md:col-span-7 flex flex-col gap-6 relative">
                                 {/* Divider on desktop */}
                                 <div className="hidden md:block absolute left-[-16px] top-0 bottom-0 w-px bg-stone-200/40"></div>
-
-                                {/* Welcome / Visual Search Inspiration Card */}
-                                <div
-                                  onClick={() => {
-                                    handleClose();
-                                    navigate('/collections?visual=true');
-                                  }}
-                                  className="p-4 rounded-2xl bg-gradient-to-r from-primary-container/15 via-[#fdfbf7]/90 to-primary-container/5 border border-primary-container/25 hover:border-primary-container/45 shadow-sm hover:shadow-luxury hover:scale-[1.01] transition-all duration-300 flex items-center justify-between gap-4 cursor-pointer group"
-                                  role="button"
-                                  tabIndex={0}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                      e.preventDefault();
-                                      handleClose();
-                                      navigate('/collections?visual=true');
-                                    }
-                                  }}
-                                >
-                                  <div className="flex items-center gap-3.5">
-                                    <div className="w-11 h-11 rounded-full bg-primary-container/15 flex items-center justify-center text-primary-container flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                                      <span className="material-symbols-outlined text-[22px]">
-                                        photo_camera
-                                      </span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-[15.5px] text-stone-800 font-display font-semibold tracking-wide">
-                                        Visual Search Concierge
-                                      </span>
-                                      <span className="text-[12px] text-stone-500 font-body font-normal mt-0.5">
-                                        Drag & drop or upload an image to find matching decors
-                                        instantly
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className="px-4 py-2 min-h-0 rounded-full bg-primary hover:bg-[#8c7335] text-white flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] shadow-md transition-all duration-300"
-                                    aria-label="Open Visual Search"
-                                    tabIndex={-1}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleClose();
-                                      navigate('/collections?visual=true');
-                                    }}
-                                  >
-                                    <span>Upload Photo</span>
-                                    <span className="material-symbols-outlined text-[14px]">
-                                      arrow_forward
-                                    </span>
-                                  </button>
-                                </div>
 
                                 <div className="grid grid-cols-2 gap-x-6 gap-y-6">
                                   {/* 3. Popular Products */}

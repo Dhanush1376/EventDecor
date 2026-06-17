@@ -255,7 +255,7 @@ export function EventFilterPanel({
 
                   <button
                     onClick={onClose}
-                    className="absolute top-6 right-6 w-10 h-10 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
+                    className="absolute top-6 right-6 w-10 h-10 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
                   >
                     <span className="material-symbols-outlined text-[20px]">close</span>
                   </button>

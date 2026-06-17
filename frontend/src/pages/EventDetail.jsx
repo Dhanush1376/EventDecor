@@ -1095,7 +1095,7 @@ export function EventDetail() {
                   <button
                     type="button"
                     onClick={() => setIsDrawerOpen(false)}
-                    className="w-8 h-8 rounded-full bg-white hover:bg-stone-100 text-stone-500 border border-black/5 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                    className="w-8 h-8 min-h-0 rounded-full bg-white hover:bg-stone-100 text-stone-500 border border-black/5 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>
@@ -1699,7 +1699,7 @@ export function EventDetail() {
                     </span>
                     <button
                       onClick={() => setIsLightboxOpen(false)}
-                      className="w-10 h-10 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors"
+                      className="w-10 h-10 min-h-0 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors"
                       aria-label="Close lightbox"
                     >
                       <svg

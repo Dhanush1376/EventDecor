@@ -13,6 +13,7 @@ import { persistentStorage } from '../../utils/persistentStorage';
 import { Skeleton, CartSkeleton } from '../ui';
 import { SEO } from '../seo/SEO';
 import { CheckoutSteps } from '../ui/CheckoutSteps';
+import { useUserProfile, useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';
 
 const RecommendationSystem = React.lazy(() =>
   import('../../components/sections/RecommendationSystem').then((m) => ({
@@ -40,6 +41,16 @@ export function CartView({ isEmbedded = false }) {
   const { addItem: addToWishlist } = useWishlist();
   const { runProtectedAction, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+
+  const { data: addresses = [] } = useUserAddresses();
+  const { setDefaultAddress } = useAddressMutations();
+  const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
+
+  // Address lookup
+  const activeAddress = React.useMemo(() => {
+    if (!addresses || addresses.length === 0) return null;
+    return addresses.find((a) => a.isDefault) || addresses[0];
+  }, [addresses]);
 
   // Track cart page view
   useRecommendationTracker({
@@ -242,13 +253,90 @@ export function CartView({ isEmbedded = false }) {
         )}
       </AnimatePresence>
 
+      {/* Address Bar - Attached perfectly below topnav */}
+      {!isEmbedded && (
+        <div className={`w-full bg-[#fbf9f6] border-b border-black/10 relative hover:bg-[#f6f2ea] transition-colors ${isAddressDropdownOpen ? 'z-50' : 'z-30'}`}>
+          <div className="max-w-[1240px] mx-auto px-4 sm:px-8 relative">
+            <div 
+              onClick={() => setIsAddressDropdownOpen(!isAddressDropdownOpen)}
+              className="flex items-center justify-between py-3 cursor-pointer select-none"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="material-symbols-outlined text-[18px] text-primary">location_on</span>
+                <span className="text-[11px] md:text-xs text-[#1a1817] font-semibold truncate leading-none">
+                  {activeAddress ? (
+                    `${activeAddress.name} - ${activeAddress.addressString || activeAddress.address}, ${activeAddress.locality || ''}, ${activeAddress.city}`
+                  ) : (
+                    "Dhanush Atmakuri - Block- 15 (Uni mall)-shop-404 - Nellore"
+                  )}
+                </span>
+              </div>
+              <span className="material-symbols-outlined text-[18px] text-black/40">
+                {isAddressDropdownOpen ? 'expand_less' : 'expand_more'}
+              </span>
+            </div>
+
+            {/* Address Switcher Dropdown */}
+            <AnimatePresence>
+              {isAddressDropdownOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute top-full left-4 right-4 mt-1 bg-white border border-black/10 rounded-2xl shadow-xl z-50 p-3 max-h-60 overflow-y-auto"
+                >
+                  <div className="text-[9px] uppercase tracking-wider font-bold text-black/40 px-2.5 pb-2 mb-1 border-b border-black/5">
+                    Select Destination
+                  </div>
+                  {addresses && addresses.length > 0 ? (
+                    addresses.map(addr => (
+                      <div
+                        key={addr._id || addr.id}
+                        onClick={() => {
+                          setDefaultAddress(addr._id || addr.id);
+                          setIsAddressDropdownOpen(false);
+                        }}
+                        className={`p-2.5 rounded-xl text-[11px] cursor-pointer hover:bg-neutral-50 transition-colors flex items-start gap-2 ${addr.isDefault ? 'bg-primary/5 text-primary font-bold' : 'text-black/70'}`}
+                      >
+                        <span className="material-symbols-outlined text-[14px] mt-0.5">
+                          {addr.isDefault ? 'radio_button_checked' : 'radio_button_unchecked'}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="font-bold">{addr.name} ({addr.tag})</div>
+                          <div className="truncate text-black/50 text-[10px]">
+                            {addr.addressString || addr.address}, {addr.locality}, {addr.city}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-2.5 rounded-xl text-[11px] text-black/50 text-center">
+                      No other addresses saved.
+                    </div>
+                  )}
+                  <div className="mt-2 pt-2 border-t border-black/5 flex justify-end">
+                    <Link 
+                      to="/dashboard?tab=addresses"
+                      className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
+                    >
+                      Manage Addresses
+                      <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      )}
+
       {/* CART TABS - Centered Premium Segmented Pill */}
       <div className="w-full bg-surface-bright border-b border-outline-variant/30 py-2 md:py-2.5 flex justify-center px-4">
-        <div className="bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full inline-flex gap-1 items-center relative z-0 shadow-inner">
+        <div className="w-full bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full flex gap-1 items-center relative z-0 shadow-inner">
           {/* Purchase Cart Tab */}
           <button
             onClick={() => setActiveCartMode('purchase')}
-            className={`relative px-5 py-2.5 min-h-0 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+            className={`relative flex flex-1 items-center justify-center gap-1.5 px-5 py-2.5 min-h-0 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
               activeCartMode === 'purchase'
                 ? 'text-primary font-bold'
                 : 'text-on-surface-variant/70 hover:text-on-surface font-medium'
@@ -280,7 +368,7 @@ export function CartView({ isEmbedded = false }) {
           {/* Rental Cart Tab */}
           <button
             onClick={() => setActiveCartMode('rental')}
-            className={`relative px-5 py-2.5 min-h-0 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+            className={`relative flex flex-1 items-center justify-center gap-1.5 px-5 py-2.5 min-h-0 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
               activeCartMode === 'rental'
                 ? 'text-primary font-bold'
                 : 'text-on-surface-variant/70 hover:text-on-surface font-medium'
@@ -324,39 +412,53 @@ export function CartView({ isEmbedded = false }) {
 
       <div className="max-w-[1240px] mx-auto px-2 sm:px-6">
         {items.length === 0 ? (
-          /* Empty Bag State */
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-2xl mx-auto py-16 md:py-24"
-          >
-            {/* Minimalist Premium Icon Container */}
-            <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 mx-auto relative">
-              <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
-              <span className="material-symbols-outlined text-primary text-[30px] relative z-10">
-                {activeCartMode === 'rental' ? 'sell' : 'shopping_bag'}
-              </span>
-            </div>
-            <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
-              {activeCartMode === 'rental' ? 'No Rental Items Yet' : 'Your bag is empty.'}
-            </h2>
-            <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-8">
-              {activeCartMode === 'rental'
-                ? 'Browse rental products and reserve them for your event.'
-                : 'Explore our collections and add items to your bag.'}
-            </p>
-            <div className="flex justify-center">
-              <Link
-                to="/collections"
-                className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
-              >
-                <span>Explore Collections</span>
-                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                  arrow_forward
+          <>
+            {/* Empty Bag State */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center max-w-2xl mx-auto pt-8 pb-3 md:pt-12 md:pb-4"
+            >
+              {/* Minimalist Premium Icon Container */}
+              <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mb-4 mx-auto relative">
+                <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
+                <span className="material-symbols-outlined text-primary text-[28px] relative z-10">
+                  {activeCartMode === 'rental' ? 'sell' : 'shopping_bag'}
                 </span>
-              </Link>
+              </div>
+              <h2 className="font-display text-[20px] md:text-[22px] text-on-surface tracking-tight mb-1">
+                {activeCartMode === 'rental' ? 'No Rental Items Yet' : 'Your bag is empty.'}
+              </h2>
+              <p className="font-body text-[12.5px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-5">
+                {activeCartMode === 'rental'
+                  ? 'Browse rental products and reserve them for your event.'
+                  : 'Explore our collections and add items to your bag.'}
+              </p>
+              <div className="flex justify-center">
+                <Link
+                  to="/collections"
+                  className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-1.5 font-label text-[10.5px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
+                >
+                  <span>Explore Collections</span>
+                  <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
+                    arrow_forward
+                  </span>
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Empty Cart Cross Selling Recommendations */}
+            <div className="mt-3 pt-3 border-t border-outline-variant/10">
+              <React.Suspense fallback={<Skeleton className="h-52 w-full rounded-2xl" />}>
+                <RecommendationSystem
+                  hideHeader={false}
+                  horizontalScroll={true}
+                  compact={true}
+                  rentalOnly={false}
+                />
+              </React.Suspense>
             </div>
-          </motion.div>
+          </>
         ) : (
           /* Multi-column Classic Checkout Engine */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -446,7 +548,7 @@ export function CartView({ isEmbedded = false }) {
                             removeItem(item.id || item._id, item.variant, item.type);
                             triggerNotification(`Removed "${item.title}"`);
                           }}
-                          className="absolute top-3 right-3 text-secondary/60 hover:text-on-surface transition-colors cursor-pointer w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-container z-10"
+                          className="absolute top-3 right-3 text-secondary/60 hover:text-on-surface transition-colors cursor-pointer w-7 h-7 min-h-0 flex items-center justify-center rounded-full hover:bg-surface-container z-10"
                         >
                           <span className="material-symbols-outlined text-[20px]">close</span>
                         </button>
@@ -543,30 +645,10 @@ export function CartView({ isEmbedded = false }) {
                               </span>
                             )}
 
-                            {/* Pricing & Policy below Quantity */}
-                            <div className="mt-3 flex flex-col gap-2 w-full">
-                              {/* Pricing Row */}
-                              {activeCartMode === 'rental' ? (
-                                <div className="flex flex-col gap-0.5">
-                                  <div className="flex items-baseline gap-1.5 flex-wrap">
-                                    <span className="text-[13px] font-extrabold text-on-surface">
-                                      ₹
-                                      {(
-                                        (item.price + (item.deposit || 0)) *
-                                        item.quantity
-                                      ).toLocaleString()}
-                                    </span>
-                                    <span className="text-[9px] font-bold text-secondary uppercase tracking-widest">
-                                      Total Due
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5 text-[10px] text-secondary">
-                                    <span>Fee: ₹{item.price.toLocaleString()}</span>
-                                    <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
-                                    <span>Deposit: ₹{item.deposit?.toLocaleString() || 0}</span>
-                                  </div>
-                                </div>
-                              ) : (
+                            {/* Pricing & Policy below Quantity (only for purchase) */}
+                            {activeCartMode === 'purchase' && (
+                              <div className="mt-3 flex flex-col gap-2 w-full">
+                                {/* Pricing Row */}
                                 <div className="flex items-baseline gap-1.5 flex-wrap">
                                   <span className="text-[13px] font-extrabold text-on-surface">
                                     ₹{item.price.toLocaleString()}
@@ -582,36 +664,9 @@ export function CartView({ isEmbedded = false }) {
                                     </span>
                                   )}
                                 </div>
-                              )}
 
-                              {/* Return policy & delivery forecast strip */}
-                              <div className="text-[11px] text-secondary w-full">
-                                {activeCartMode === 'rental' ? (
-                                  <div className="flex flex-col gap-1.5 mt-1">
-                                    <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-                                      <span className="material-symbols-outlined text-[13px]">
-                                        calendar_month
-                                      </span>
-                                      <span>
-                                        Duration:{' '}
-                                        <span className="font-bold text-primary uppercase">
-                                          Select at checkout ➝
-                                        </span>
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-                                      <span className="material-symbols-outlined text-[13px]">
-                                        lock
-                                      </span>
-                                      <span>
-                                        Fully Refundable Deposit:{' '}
-                                        <span className="font-bold text-on-surface">
-                                          ₹{item.deposit?.toLocaleString() || 0}
-                                        </span>
-                                      </span>
-                                    </div>
-                                  </div>
-                                ) : (
+                                {/* Return policy & delivery forecast strip */}
+                                <div className="text-[11px] text-secondary w-full">
                                   <div className="flex flex-col gap-1.5 mt-1">
                                     {item.isNonRefundable ? (
                                       <div className="flex items-center gap-1.5 text-[#d97706] font-bold whitespace-nowrap text-[10px]">
@@ -645,11 +700,60 @@ export function CartView({ isEmbedded = false }) {
                                       </span>
                                     </div>
                                   </div>
-                                )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Rental pricing & policy details (displayed below the photo with premium styling) */}
+                        {activeCartMode === 'rental' && (
+                          <div className="mt-3 pt-3 border-t border-outline-variant/10 flex flex-col gap-2.5 w-full text-[11px] text-secondary">
+                            {/* Total Due Row */}
+                            <div className="flex items-baseline gap-2 flex-wrap">
+                              <span className="text-[14px] font-black text-on-surface">
+                                ₹
+                                {(
+                                  (item.price + (item.deposit || 0)) *
+                                  item.quantity
+                                ).toLocaleString()}
+                              </span>
+                              <span className="text-[9px] font-bold text-secondary uppercase tracking-widest">
+                                Total Due
+                              </span>
+                              <span className="text-secondary/25 mx-1 font-light">|</span>
+                              <span className="text-[10px]">Fee: ₹{item.price.toLocaleString()}</span>
+                              <span className="text-secondary/25 font-light">•</span>
+                              <span className="text-[10px] text-primary font-bold">Deposit: ₹{item.deposit?.toLocaleString() || 0}</span>
+                            </div>
+
+                            {/* Duration & Deposit details */}
+                            <div className="flex flex-col gap-2 mt-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[15px] text-primary shrink-0">
+                                  calendar_month
+                                </span>
+                                <span>
+                                  Duration:{' '}
+                                  <span className="font-extrabold text-primary uppercase text-[9.5px] tracking-wider ml-1">
+                                    Select at checkout ➝
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[15px] text-[#8c7335] shrink-0">
+                                  lock
+                                </span>
+                                <span>
+                                  Refundable Deposit:{' '}
+                                  <span className="font-extrabold text-on-surface text-[9.5px] ml-1">
+                                    ₹{item.deposit?.toLocaleString() || 0}
+                                  </span>
+                                </span>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Wishlist Button inside Card */}
                         <div className="border-t border-outline-variant/30 mt-2 pt-2 text-center">
@@ -678,7 +782,7 @@ export function CartView({ isEmbedded = false }) {
                     hideHeader={false}
                     horizontalScroll={true}
                     compact={true}
-                    rentalOnly={activeCartMode === 'rental'}
+                    rentalOnly={false}
                   />
                 </React.Suspense>
               </div>
@@ -1122,7 +1226,7 @@ export function CartView({ isEmbedded = false }) {
                   {/* Close Button */}
                   <button
                     onClick={() => setIsCouponModalOpen(false)}
-                    className="absolute top-6 right-6 w-8 h-8 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
+                    className="absolute top-6 right-6 w-8 h-8 min-h-0 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
                   >
                     <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>

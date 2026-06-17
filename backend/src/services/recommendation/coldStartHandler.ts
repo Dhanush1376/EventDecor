@@ -20,6 +20,11 @@ export interface ColdStartRecommendation {
   image?: string;
   category?: string;
   price?: number;
+  rentalEnabled?: boolean;
+  availabilityMode?: string;
+  rentalPricing?: any;
+  securityDeposit?: number;
+  isDepositRefundable?: boolean;
 }
 
 /**
@@ -51,7 +56,7 @@ export async function getColdStartFeed(
     // 2. Featured/popular products from DB
     const [featuredProducts, popularEvents, topGallery] = await Promise.all([
       Product.find({ isActive: true, featured: true })
-        .select('_id title imageSrc category price rating tags')
+        .select('_id title imageSrc category price rating tags rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
         .sort({ rating: -1, reviews: -1 })
         .limit(12)
         .lean(),
@@ -96,6 +101,11 @@ export async function getColdStartFeed(
         image: product.imageSrc,
         category: product.category,
         price: product.price,
+        rentalEnabled: product.rentalEnabled,
+        availabilityMode: product.availabilityMode,
+        rentalPricing: product.rentalPricing,
+        securityDeposit: product.securityDeposit,
+        isDepositRefundable: product.isDepositRefundable,
       });
     }
 

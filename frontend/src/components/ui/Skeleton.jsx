@@ -69,17 +69,43 @@ export function CollectionSkeleton() {
 // ─── Wishlist Page Skeleton ───
 export function WishlistPageSkeleton() {
   return (
-    <div className="bg-surface min-h-screen pt-24 pb-32">
+    <div className="w-full">
+      {/* Address Bar Skeleton aligned flush */}
+      <div className="-mt-6 mb-6">
+        <AddressBarSkeleton />
+      </div>
+
       <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-        <div className="flex gap-2 mb-6">
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-3 w-4" />
-          <Skeleton className="h-3 w-24" />
+        {/* Header Title & Count Skeleton */}
+        <div className="flex items-baseline gap-1.5 pb-4 border-b border-outline-variant/30 mb-4">
+          <Skeleton className="h-8 w-44 rounded-md" />
+          <Skeleton className="h-4 w-16 rounded-md" />
         </div>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-outline-variant/50 mb-8">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-12 w-full sm:w-80 rounded-full" />
+
+        {/* Centered Segmented Switcher Skeleton */}
+        <div className="flex justify-center w-full mb-6 relative">
+          <div className="w-full bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full flex gap-1 items-center relative shadow-inner">
+            <Skeleton className="h-10 flex-1 rounded-full" />
+            <Skeleton className="h-10 flex-1 rounded-full" />
+          </div>
         </div>
+
+        {/* Categories Circular Carousel Skeleton */}
+        <div className="mb-8 border-b border-black/5 pb-6">
+          <div className="flex items-center gap-4 overflow-x-auto scrollbar-none py-2 px-1 select-none scroll-smooth">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="flex flex-col items-center shrink-0 w-[72px] md:w-[88px]"
+              >
+                <Skeleton className="w-14 h-14 md:w-16 md:h-16 rounded-full" />
+                <Skeleton className="h-3 w-10 rounded mt-2" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Products Grid Skeleton */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {[...Array(8)].map((_, i) => (
             <ProductCardSkeleton key={i} />
@@ -1162,15 +1188,31 @@ export function ReviewsSkeleton() {
   );
 }
 
+// ─── Address Bar Skeleton ───
+export function AddressBarSkeleton() {
+  return (
+    <div className="w-full bg-[#fbf9f6] border-b border-black/10 relative py-3.5 hover:bg-[#f6f2ea] transition-colors">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-8 flex items-center justify-between">
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <span className="material-symbols-outlined text-[18px] text-[#8c7335]/30 animate-pulse">location_on</span>
+          <Skeleton className="h-[12px] w-[50%] rounded-md" />
+        </div>
+        <span className="material-symbols-outlined text-[18px] text-black/10">expand_more</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Cart Page Skeleton ───
 export function CartSkeleton() {
   return (
     <div className="bg-surface-container-low min-h-screen pt-20 pb-40 font-body text-on-surface">
+      <AddressBarSkeleton />
       {/* 1. Tabs Skeleton */}
       <div className="w-full bg-surface-bright border-b border-outline-variant/30 py-3 flex justify-center px-4">
-        <div className="bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full inline-flex gap-1 items-center relative shadow-inner">
-          <Skeleton className="h-10 w-36 rounded-full" />
-          <Skeleton className="h-10 w-32 rounded-full" />
+        <div className="w-full bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full flex gap-1 items-center relative shadow-inner">
+          <Skeleton className="h-10 flex-1 rounded-full" />
+          <Skeleton className="h-10 flex-1 rounded-full" />
         </div>
       </div>
 

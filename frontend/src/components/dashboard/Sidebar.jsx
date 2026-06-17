@@ -256,7 +256,7 @@ export function Sidebar() {
             role="tab"
             aria-selected={activeTab === 'collections'}
             whileHover={{ x: 3 }}
-            onClick={() => handleTabClick('collections', '/dashboard/collections')}
+            onClick={() => handleTabClick('collections', '/wishlist')}
             className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
               activeTab === 'collections'
                 ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
@@ -273,7 +273,7 @@ export function Sidebar() {
             role="tab"
             aria-selected={activeTab === 'shopping-bag'}
             whileHover={{ x: 3 }}
-            onClick={() => handleTabClick('shopping-bag', '/dashboard/shopping-bag')}
+            onClick={() => handleTabClick('shopping-bag', '/cart')}
             className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
               activeTab === 'shopping-bag'
                 ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'

@@ -102,10 +102,10 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(
-    req.body?.refreshToken ||
-      req.headers['x-refresh-token'] ||
-      req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
+    req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
       req.cookies?.[ADMIN_REFRESH_COOKIE] ||
+      req.body?.refreshToken ||
+      req.headers['x-refresh-token'] ||
       '',
   ).trim();
 
@@ -134,10 +134,10 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(
-    req.body?.refreshToken ||
-      req.headers['x-refresh-token'] ||
-      req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
+    req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
       req.cookies?.[ADMIN_REFRESH_COOKIE] ||
+      req.body?.refreshToken ||
+      req.headers['x-refresh-token'] ||
       '',
   ).trim();
   const userId = (req as any).user?.id;

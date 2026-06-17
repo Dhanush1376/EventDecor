@@ -372,7 +372,7 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
       // Default: mix of products, events, and galleries (exclude galleries on homepage per request)
       const [products, events, galleries] = await Promise.all([
         Product.find({ isActive: true })
-          .select('_id title imageSrc category price rating reviews tags slug featured createdAt')
+          .select('_id title imageSrc category price rating reviews tags slug featured createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
           .sort({ createdAt: -1 })
           .limit(Math.floor(limit * 0.6))
           .lean(),
@@ -406,7 +406,7 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
           $in: userProfile.topCategories.map((c: string) => new RegExp(escapeRegex(c), 'i')),
         },
       })
-        .select('_id title imageSrc category price rating reviews tags slug createdAt')
+        .select('_id title imageSrc category price rating reviews tags slug createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
         .limit(15)
         .lean();
 
@@ -458,6 +458,11 @@ async function enrichItems(items: ColdStartRecommendation[]): Promise<Recommende
     image: item.image,
     category: item.category,
     price: item.price,
+    rentalEnabled: item.rentalEnabled,
+    availabilityMode: item.availabilityMode,
+    rentalPricing: item.rentalPricing,
+    securityDeposit: item.securityDeposit,
+    isDepositRefundable: item.isDepositRefundable,
   }));
 }
 
@@ -488,7 +493,7 @@ export async function getSimilarRecommendations(
 
     if (targetType === 'product') {
       fullItems = await Product.find({ _id: { $in: ids }, isActive: true })
-        .select('_id title imageSrc category price rating reviews tags slug')
+        .select('_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
         .lean();
     } else if (targetType === 'event') {
       fullItems = await Event.find({ _id: { $in: ids }, isActive: true })
@@ -518,6 +523,11 @@ export async function getSimilarRecommendations(
           reviews: full.reviews,
           tags: full.tags,
           slug: full.slug,
+          rentalEnabled: full.rentalEnabled,
+          availabilityMode: full.availabilityMode,
+          rentalPricing: full.rentalPricing,
+          securityDeposit: full.securityDeposit,
+          isDepositRefundable: full.isDepositRefundable,
         };
       });
   } catch (err: any) {
@@ -540,7 +550,7 @@ export async function enrichScoredItems(
   const [products, events] = await Promise.all([
     productIds.length > 0
       ? Product.find({ _id: { $in: productIds }, isActive: true })
-          .select('_id title imageSrc category price rating reviews tags slug')
+          .select('_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
           .lean()
       : Promise.resolve([]),
     eventIds.length > 0
@@ -574,6 +584,11 @@ export async function enrichScoredItems(
         reviews: full.reviews,
         tags: full.tags,
         slug: full.slug,
+        rentalEnabled: full.rentalEnabled,
+        availabilityMode: full.availabilityMode,
+        rentalPricing: full.rentalPricing,
+        securityDeposit: full.securityDeposit,
+        isDepositRefundable: full.isDepositRefundable,
       };
     })
     .filter(Boolean);
@@ -604,7 +619,7 @@ export async function precomputeCatalogRecommendations(): Promise<void> {
       const compItems = await getComplementaryItems(p.category || '', [productId], { limit: 8 });
       const productIds = compItems.map((i) => i.targetId);
       const fullProducts = await Product.find({ _id: { $in: productIds }, isActive: true })
-        .select('_id title imageSrc category price rating reviews slug')
+        .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
         .lean();
 
       const enrichedComp = compItems
@@ -623,6 +638,11 @@ export async function precomputeCatalogRecommendations(): Promise<void> {
                 rating: full.rating,
                 reviews: full.reviews,
                 slug: full.slug,
+                rentalEnabled: full.rentalEnabled,
+                availabilityMode: full.availabilityMode,
+                rentalPricing: full.rentalPricing,
+                securityDeposit: full.securityDeposit,
+                isDepositRefundable: full.isDepositRefundable,
               }
             : null;
         })
@@ -723,6 +743,9 @@ export async function precomputeActiveUsersFeeds(): Promise<number> {
 export async function initRecommendationSystem(): Promise<void> {
   try {
     logger.info('[RECO ENGINE] Initializing recommendation system...');
+
+    // Clear stale caches to force schema projection updates
+    await RecommendationCache.clearAll();
 
     // Warm seasonal context
     await getCachedSeasonalContext();

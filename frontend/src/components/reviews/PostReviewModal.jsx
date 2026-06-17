@@ -168,7 +168,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-[#FAF9F6] border border-[#D4AF37]/30 flex items-center justify-center text-[#2D2B29] hover:bg-[var(--color-gold-dark)] hover:text-white transition-all cursor-pointer"
+            className="w-10 h-10 min-h-0 rounded-full bg-[#FAF9F6] border border-[#D4AF37]/30 flex items-center justify-center text-[#2D2B29] hover:bg-[var(--color-gold-dark)] hover:text-white transition-all cursor-pointer"
           >
             <span className="material-symbols-outlined text-lg">close</span>
           </button>

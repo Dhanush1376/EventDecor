@@ -192,7 +192,7 @@ export function ShareButton({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-neutral-400 hover:text-neutral-700 transition-colors p-1 rounded-full hover:bg-neutral-100"
+                className="text-neutral-400 hover:text-neutral-700 transition-colors w-7 h-7 min-h-0 flex items-center justify-center rounded-full hover:bg-neutral-100 flex-shrink-0"
                 aria-label="Close share menu"
               >
                 <X size={16} />

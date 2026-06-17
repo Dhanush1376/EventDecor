@@ -229,7 +229,7 @@ export const initWorkers = async () => {
                       _id: { $in: productIds },
                       isActive: true,
                     })
-                      .select('_id title imageSrc category price rating reviews slug')
+                      .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
                       .lean();
 
                     const enrichedComp = compItems
@@ -250,6 +250,11 @@ export const initWorkers = async () => {
                               rating: full.rating,
                               reviews: full.reviews,
                               slug: full.slug,
+                              rentalEnabled: full.rentalEnabled,
+                              availabilityMode: full.availabilityMode,
+                              rentalPricing: full.rentalPricing,
+                              securityDeposit: full.securityDeposit,
+                              isDepositRefundable: full.isDepositRefundable,
                             }
                           : null;
                       })

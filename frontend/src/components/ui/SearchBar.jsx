@@ -86,7 +86,7 @@ export function SearchBar({
               e.stopPropagation();
               onCameraClick();
             }}
-            className="text-on-surface-variant/60 hover:text-primary hover:scale-110 transition-all p-1 rounded-full hover:bg-primary/5 cursor-pointer"
+            className="text-on-surface-variant/60 hover:text-primary hover:scale-110 transition-all w-7 h-7 min-h-0 flex items-center justify-center rounded-full hover:bg-primary/5 cursor-pointer flex-shrink-0"
             aria-label="Search by image"
           >
             <span className="material-symbols-outlined text-[18px]">photo_camera</span>
@@ -98,7 +98,7 @@ export function SearchBar({
               e.stopPropagation();
               handleClear();
             }}
-            className="text-on-surface-variant/60 hover:text-primary transition-colors p-1 rounded-full hover:bg-primary/5 cursor-pointer"
+            className="text-on-surface-variant/60 hover:text-primary transition-colors w-7 h-7 min-h-0 flex items-center justify-center rounded-full hover:bg-primary/5 cursor-pointer flex-shrink-0"
             aria-label="Clear search"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>

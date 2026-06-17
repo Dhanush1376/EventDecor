@@ -821,14 +821,12 @@
 │   │   │   ├── [CustomOrders.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/CustomOrders.jsx)
 │   │   │   ├── [Dashboard](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard)
 │   │   │   │   ├── [AddressesSection.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/AddressesSection.jsx)
-│   │   │   │   ├── [CollectionsSection.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/CollectionsSection.jsx)
 │   │   │   │   ├── [DashboardLayout.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/DashboardLayout.jsx)
 │   │   │   │   ├── [EventsSection.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/EventsSection.jsx)
 │   │   │   │   ├── [OrdersSection.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/OrdersSection.jsx)
 │   │   │   │   ├── [ProfileSection.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/ProfileSection.jsx)
 │   │   │   │   ├── [RentalsSection.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/RentalsSection.jsx)
 │   │   │   │   ├── [SettingsSection.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/SettingsSection.jsx)
-│   │   │   │   ├── [ShoppingBagSection.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/ShoppingBagSection.jsx)
 │   │   │   │   └── [WalletSection.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard/WalletSection.jsx)
 │   │   │   ├── [Dashboard.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/Dashboard.jsx)
 │   │   │   ├── [EventBookingSuccess.jsx](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/pages/EventBookingSuccess.jsx)
@@ -928,6 +926,7 @@
 │   │   └── [vite-env.d.ts](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/src/vite-env.d.ts)
 │   ├── [vercel.json](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/vercel.json)
 │   └── [vite.config.js](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/frontend/vite.config.js)
+├── [linked_tree.md](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/linked_tree.md)
 ├── [nginx.example.conf](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/nginx.example.conf)
 ├── [package-lock.json](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/package-lock.json)
 ├── [package.json](file:///c:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/package.json)
@@ -1065,3 +1064,4 @@ stats.json
 *.log
 *-report.json
 ```
+

@@ -103,6 +103,31 @@ async function cacheDel(key: string, fallbackCache: MemoryCache): Promise<void> 
 // ────────────────────────────────────────────────
 
 export const RecommendationCache = {
+  // ── Clear All Recommendation Caches ──
+  async clearAll() {
+    // 1. Clear all L1 memory caches
+    personalFeedCache.clear();
+    trendingCache.clear();
+    similarCache.clear();
+    seasonalCache.clear();
+    sessionCache.clear();
+    coldStartCache.clear();
+    ctrCache.clear();
+
+    // 2. Clear all matching Redis keys
+    if (isRedisReady()) {
+      try {
+        const keys = await redisClient!.keys('reco:*');
+        if (keys && keys.length > 0) {
+          await redisClient!.del(keys);
+          logger.info(`[RECO CACHE] Successfully cleared ${keys.length} recommendation keys from Redis`);
+        }
+      } catch (err: any) {
+        logger.error(`[RECO CACHE] Failed to clear Redis recommendation keys: ${err.message}`);
+      }
+    }
+  },
+
   // ── Personalized Feed ──
   async getPersonalFeed(userId: string, page: string) {
     return cacheGet<any>(`reco:personal:${userId}:${page}`, personalFeedCache);

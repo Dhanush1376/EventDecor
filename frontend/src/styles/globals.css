@@ -301,6 +301,7 @@
       'GRAD' 0,
       'opsz' 24;
   }
+
   /*Logo alignment*/
   .material-symbols-outlined:not(.absolute) {
     transform: translateY(-4px) !important;
@@ -328,12 +329,10 @@
     position: absolute !important;
     inset: 0 !important;
     transform: translateX(-100%) !important;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.6),
-      transparent
-    ) !important;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.6),
+        transparent) !important;
     animation: font-shimmer 1.5s infinite !important;
   }
 
@@ -582,6 +581,7 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -700,6 +700,7 @@
   0% {
     transform: translateX(-65%);
   }
+
   100% {
     transform: translateX(65%);
   }
@@ -738,6 +739,7 @@
 }
 
 @keyframes pulse-subtle {
+
   0%,
   100% {
     opacity: 1;
@@ -859,6 +861,7 @@
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);
@@ -910,6 +913,7 @@ body.filters-open {
 
 /* ─── Reduced Motion Override ─── */
 @media (prefers-reduced-motion: reduce) {
+
   .animate-page-enter,
   .animate-content-reveal,
   .animate-fade-in-up,
@@ -927,6 +931,7 @@ body.filters-open {
 
 /* ─── Forced Colors / High Contrast Mode ─── */
 @media (forced-colors: active) {
+
   .btn-primary,
   .btn-outline,
   .btn-gold,
@@ -1070,13 +1075,13 @@ body.filters-open img[src*='mandala'] {
   }
 }
 
-.discovery-masonry > * {
+.discovery-masonry>* {
   break-inside: avoid;
   margin-bottom: 1rem;
 }
 
 @media (min-width: 768px) {
-  .discovery-masonry > * {
+  .discovery-masonry>* {
     margin-bottom: 1.25rem;
   }
 }
@@ -1197,6 +1202,6 @@ body.filters-open img[src*='mandala'] {
   display: none;
 }
 
-.linked-products-scroll > * {
+.linked-products-scroll>* {
   scroll-snap-align: start;
 }

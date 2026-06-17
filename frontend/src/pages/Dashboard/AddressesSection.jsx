@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
+import { AddressCard } from '../../components/dashboard/AddressCard';
 
 export function AddressesSection() {
   const {
@@ -8,6 +9,7 @@ export function AddressesSection() {
     setEditingAddressId,
     setAddressFormData,
     setIsAddressModalOpen,
+    user,
   } = useDashboard();
 
   return (
@@ -31,14 +33,19 @@ export function AddressesSection() {
               setEditingAddressId('new');
               setAddressFormData({
                 id: 'new',
-                name: '',
-                phone: '',
+                name: user?.name || '',
+                phone: user?.phone || '',
+                alternatePhone: '',
+                email: user?.email || '',
                 pincode: '',
                 locality: '',
                 addressString: '',
+                landmark: '',
                 city: '',
                 state: '',
+                country: 'India',
                 tag: 'Home',
+                deliveryInstructions: '',
                 latitude: null,
                 longitude: null,
               });
@@ -89,14 +96,19 @@ export function AddressesSection() {
                 setEditingAddressId('new');
                 setAddressFormData({
                   id: 'new',
-                  name: '',
-                  phone: '',
+                  name: user?.name || '',
+                  phone: user?.phone || '',
+                  alternatePhone: '',
+                  email: user?.email || '',
                   pincode: '',
                   locality: '',
                   addressString: '',
+                  landmark: '',
                   city: '',
                   state: '',
+                  country: 'India',
                   tag: 'Home',
+                  deliveryInstructions: '',
                   latitude: null,
                   longitude: null,
                 });

@@ -16,7 +16,7 @@ import { AuthGate } from '../components/auth/AuthGate';
 
 export function MainLayout() {
   const { pathname } = useLocation();
-  const { isCartOpen, setIsCartOpen } = useCart();
+  const { isCartOpen, setIsCartOpen, purchaseCartCount = 0, rentalCartCount = 0, activeCartMode } = useCart();
 
   // Scroll to top on route change with a slight delay to allow exit animations if any
   useEffect(() => {
@@ -79,7 +79,7 @@ export function MainLayout() {
         </ErrorBoundary>
       </main>
       {pathname !== '/cart' && <Footer />}
-      {pathname !== '/cart' && <BottomNav />}
+      {(pathname !== '/cart' || (activeCartMode === 'rental' ? rentalCartCount === 0 : purchaseCartCount === 0)) && <BottomNav />}
       <WhatsAppWidget />
       <ConsentPopup />
     </div>

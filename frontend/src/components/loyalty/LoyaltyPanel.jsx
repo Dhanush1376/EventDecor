@@ -416,7 +416,7 @@ export function LoyaltyPanel() {
                   {/* Close Button */}
                   <button
                     onClick={() => setIsCouponModalOpen(false)}
-                    className="absolute top-6 right-6 w-8 h-8 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
+                    className="absolute top-6 right-6 w-8 h-8 min-h-0 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
                   >
                     <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>

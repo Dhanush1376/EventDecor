@@ -6,6 +6,7 @@ import {
   useSimilarRecommendations,
   useCompleteSetup,
   useAlsoViewed,
+  useTrendingRecommendations,
 } from '../../hooks/useRecommendationQueries';
 import { useRecentlyViewed } from '../../hooks/useUserQueries';
 import { useAuth } from '../../context/AuthContext';
@@ -31,15 +32,20 @@ export function RecommendationSystem({
   }, []);
 
   const similarQuery = useSimilarRecommendations(targetType, currentProductId, 8, {
-    enabled: shouldFetch,
+    enabled: shouldFetch && !!currentProductId,
   });
-  const completeQuery = useCompleteSetup(currentProductId, targetType, 8, { enabled: shouldFetch });
-  const alsoViewedQuery = useAlsoViewed(currentProductId, targetType, 8, { enabled: shouldFetch });
+  const completeQuery = useCompleteSetup(currentProductId, targetType, 8, { enabled: shouldFetch && !!currentProductId });
+  const alsoViewedQuery = useAlsoViewed(currentProductId, targetType, 8, { enabled: shouldFetch && !!currentProductId });
   const recentlyViewedQuery = useRecentlyViewed();
+  const trendingQuery = useTrendingRecommendations(
+    { limit: 12 },
+    { enabled: shouldFetch && !currentProductId }
+  );
 
   const similarList = similarQuery.data?.items || similarQuery.data || [];
   const completeSetupList = completeQuery.data?.items || completeQuery.data || [];
   const alsoViewedList = alsoViewedQuery.data?.items || alsoViewedQuery.data || [];
+  const trendingList = trendingQuery.data?.items || trendingQuery.data || [];
 
   const recentlyViewedList = useMemo(() => {
     if (!isAuthenticated || !recentlyViewedQuery.data) return [];
@@ -60,8 +66,10 @@ export function RecommendationSystem({
         rating: item.product.rating || 4.8,
         slug: item.product.slug,
         isRentalAvailable: item.product.isRentalAvailable,
+        rentalEnabled: item.product.rentalEnabled,
         availabilityMode: item.product.availabilityMode,
         rentalPricing: item.product.rentalPricing,
+        securityDeposit: item.product.securityDeposit,
       }))
       .filter((p) => p.id !== currentProductId)
       .slice(0, 8);
@@ -71,9 +79,11 @@ export function RecommendationSystem({
   // We only show loading if we have started fetching AND we don't have any cached placeholder data
   const loading =
     shouldFetch &&
-    ((similarQuery.isPending && similarList.length === 0) ||
-      (completeQuery.isPending && completeSetupList.length === 0) ||
-      (alsoViewedQuery.isPending && alsoViewedList.length === 0));
+    (currentProductId
+      ? (similarQuery.isPending && similarList.length === 0) ||
+        (completeQuery.isPending && completeSetupList.length === 0) ||
+        (alsoViewedQuery.isPending && alsoViewedList.length === 0)
+      : (trendingQuery.isPending && trendingList.length === 0));
 
   const getActiveList = () => {
     const combined = [
@@ -81,6 +91,7 @@ export function RecommendationSystem({
       ...completeSetupList,
       ...alsoViewedList,
       ...recentlyViewedList,
+      ...trendingList,
     ];
     const uniqueIds = new Set();
     let uniqueList = [];
@@ -101,9 +112,18 @@ export function RecommendationSystem({
       uniqueList = uniqueList.filter(
         (item) =>
           item.isRentalAvailable ||
+          item.rentalEnabled ||
           item.availabilityMode === 'both' ||
           item.availabilityMode === 'rental' ||
+          item.availabilityMode === 'rent_only' ||
           item.rentalPricing,
+      );
+    } else {
+      uniqueList = uniqueList.filter(
+        (item) =>
+          item.targetType !== 'event' &&
+          item.availabilityMode !== 'rental' &&
+          item.availabilityMode !== 'rent_only'
       );
     }
 
@@ -150,7 +170,7 @@ export function RecommendationSystem({
               className={`${compact ? 'text-[11px] uppercase tracking-widest font-bold text-on-surface/80' : 'text-[18px] md:text-[22px] font-bold text-on-surface'} font-label leading-tight`}
               style={{ fontFamily: 'var(--font-label)' }}
             >
-              You May Also Like
+              {rentalOnly ? 'Rental Masterpieces' : 'You May Also Like'}
             </div>
           </div>
         )}
@@ -177,27 +197,35 @@ export function RecommendationSystem({
                   : 'grid grid-cols-2 md:grid-cols-4 gap-6 pb-6'
               }
             >
-              {activeList.map((product, idx) => (
-                <motion.div
-                  key={product.id || product._id || `reco-item-${idx}`}
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: idx * 0.04, duration: 0.4 }}
-                  className={
-                    horizontalScroll
-                      ? `${compact ? 'w-[140px] sm:w-[160px]' : 'w-[200px] sm:w-[240px] md:w-[280px]'} flex-shrink-0 snap-start`
-                      : 'w-full'
-                  }
-                >
-                  <ProductCard
-                    {...product}
-                    id={product.id || product._id}
-                    imageSrc={product.imageSrc || product.image}
-                    price={product.price || product.basePrice}
-                    compact={compact}
-                  />
-                </motion.div>
-              ))}
+              {activeList.map((product, idx) => {
+                const motionProps = horizontalScroll
+                  ? {}
+                  : {
+                      initial: { opacity: 0, scale: 0.96 },
+                      animate: { opacity: 1, scale: 1 },
+                      transition: { delay: idx * 0.04, duration: 0.4 },
+                    };
+                return (
+                  <motion.div
+                    key={product.id || product._id || `reco-item-${idx}`}
+                    {...motionProps}
+                    className={
+                      horizontalScroll
+                        ? `${compact ? 'w-[140px] sm:w-[160px]' : 'w-[200px] sm:w-[240px] md:w-[280px]'} flex-shrink-0 snap-start`
+                        : 'w-full'
+                    }
+                  >
+                    <ProductCard
+                      {...product}
+                      id={product.id || product._id}
+                      imageSrc={product.imageSrc || product.image}
+                      price={product.price || product.basePrice}
+                      compact={compact}
+                      cartType={rentalOnly ? 'rental' : 'purchase'}
+                    />
+                  </motion.div>
+                );
+              })}
             </motion.div>
           ) : null}
         </AnimatePresence>

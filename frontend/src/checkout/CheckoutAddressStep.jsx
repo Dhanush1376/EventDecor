@@ -109,6 +109,12 @@ export default function CheckoutAddressStep() {
 
   const [mapPosition, setMapPosition] = useState({ lat: 20.5937, lng: 78.9629 }); // Default India
 
+  useEffect(() => {
+    if (newAddress?.latitude && newAddress?.longitude) {
+      setMapPosition({ lat: newAddress.latitude, lng: newAddress.longitude });
+    }
+  }, [newAddress?.latitude, newAddress?.longitude]);
+
   const fetchAddressFromCoords = async (lat, lng) => {
     try {
       toast.loading('Locating address...', { id: 'geocoding' });
@@ -135,12 +141,14 @@ export default function CheckoutAddressStep() {
 
         setNewAddress((prev) => ({
           ...prev,
-          pincode: newPincode,
+          pincode: newPincode.replace(/\s/g, ''),
           city: newCity,
           state: newState,
-          locality: newLocality,
-          landmark: newLandmark || prev.landmark,
+          locality: newLocality || prev.locality,
+          landmark: newLandmark || prev.landmark || newLocality || newCity,
           address: newHouse || prev.address,
+          latitude: lat,
+          longitude: lng,
         }));
 
         toast.success('Address auto-filled from map!', { id: 'geocoding' });
@@ -167,8 +175,10 @@ export default function CheckoutAddressStep() {
       city: addr.city || '',
       state: addr.state || '',
       country: addr.country || 'India',
-      type: addr.tag || addr.type || 'Home',
+      tag: addr.tag || addr.type || 'Home',
       deliveryInstructions: addr.deliveryInstructions || '',
+      latitude: addr.latitude || null,
+      longitude: addr.longitude || null,
     });
     setIsAddingNewAddress(true);
     setIsSelectingList(false);
@@ -187,8 +197,10 @@ export default function CheckoutAddressStep() {
       city: '',
       state: '',
       country: 'India',
-      type: 'Home',
+      tag: 'Home',
       deliveryInstructions: '',
+      latitude: null,
+      longitude: null,
     });
     setIsAddingNewAddress(true);
     setIsSelectingList(false);
@@ -229,13 +241,13 @@ export default function CheckoutAddressStep() {
             className="fixed bottom-0 left-0 right-0 z-[101] bg-surface-container-low rounded-t-2xl sm:rounded-t-3xl max-h-[90vh] w-full max-w-[800px] mx-auto shadow-2xl flex flex-col"
           >
             <div className="bg-surface-bright z-10 pt-5 pb-4 px-6 flex justify-between items-center border-b border-outline-variant/20 rounded-t-2xl sm:rounded-t-3xl shrink-0">
-              <h2 className="font-sans text-base font-bold text-on-surface uppercase tracking-wider">
+              <h2 className="font-display text-base font-bold text-on-surface uppercase tracking-wider">
                 {newAddress?.id ? 'Edit Address' : 'Add New Address'}
               </h2>
               <button
                 type="button"
                 onClick={() => setIsAddingNewAddress(false)}
-                className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center border border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer"
+                className="w-8 h-8 min-h-0 rounded-full bg-surface-container-low flex items-center justify-center border border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -251,23 +263,23 @@ export default function CheckoutAddressStep() {
                   )}
 
                   {/* Contact Details Block */}
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs">
-                    <h2 className="font-sans text-base font-bold text-on-surface uppercase tracking-wider mb-5">
+                  <div className="py-6 border-b border-outline-variant/20">
+                    <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider mb-5">
                       Contact Details
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
                         <label
                           htmlFor="name"
-                          className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
                         >
-                          Name*
+                          Receiver Full Name*
                         </label>
                         <input
                           id="name"
                           type="text"
                           required
-                          placeholder="Enter Name"
+                          placeholder="Receiver full name"
                           value={newAddress.name}
                           onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
                           className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
@@ -276,9 +288,9 @@ export default function CheckoutAddressStep() {
                       <div>
                         <label
                           htmlFor="phone"
-                          className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
                         >
-                          Mobile No*
+                          Contact Phone Number*
                         </label>
                         <input
                           id="phone"
@@ -291,18 +303,33 @@ export default function CheckoutAddressStep() {
                           className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
                         />
                       </div>
-                      <div className="sm:col-span-2">
+                      <div>
+                        <label
+                          htmlFor="alternatePhone"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
+                        >
+                          Alternate Phone Number
+                        </label>
+                        <input
+                          id="alternatePhone"
+                          type="tel"
+                          placeholder="Optional alternate number"
+                          value={newAddress.alternatePhone}
+                          onChange={(e) => setNewAddress({ ...newAddress, alternatePhone: e.target.value })}
+                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                        />
+                      </div>
+                      <div>
                         <label
                           htmlFor="email"
-                          className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
                         >
-                          Email Address*
+                          Email Address
                         </label>
                         <input
                           id="email"
                           type="email"
-                          required
-                          placeholder="Enter Email Address"
+                          placeholder="Enter email address"
                           value={newAddress.email}
                           onChange={(e) => setNewAddress({ ...newAddress, email: e.target.value })}
                           className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
@@ -312,9 +339,9 @@ export default function CheckoutAddressStep() {
                   </div>
 
                   {/* Address Block */}
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs mt-4">
-                    <h2 className="font-sans text-base font-bold text-on-surface uppercase tracking-wider mb-5">
-                      Address
+                  <div className="py-6 border-b border-outline-variant/20">
+                    <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider mb-5">
+                      Address Details
                     </h2>
 
                     <div className="w-full h-48 bg-surface-container-low rounded-lg mb-4 relative overflow-hidden border border-outline-variant/30 z-0">
@@ -356,20 +383,34 @@ export default function CheckoutAddressStep() {
                       </div>
                     </div>
 
+                    {newAddress.latitude && newAddress.longitude && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-4 flex items-center gap-2 text-[10px] text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider inline-flex"
+                      >
+                        <span className="material-symbols-outlined text-xs">share_location</span>
+                        <span>
+                          GPS Locked: {newAddress.latitude.toFixed(6)},{' '}
+                          {newAddress.longitude.toFixed(6)}
+                        </span>
+                      </motion.div>
+                    )}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
                         <label
                           htmlFor="pincode"
-                          className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
                         >
-                          Pin Code*
+                          6-Digit Pincode*
                         </label>
                         <input
                           id="pincode"
                           type="tel"
                           required
                           maxLength={6}
-                          placeholder="6-digit PIN"
+                          placeholder="e.g. 560041"
                           value={newAddress.pincode}
                           onChange={(e) => {
                             const val = e.target.value.replace(/\D/g, '').slice(0, 6);
@@ -386,36 +427,16 @@ export default function CheckoutAddressStep() {
 
                       <div>
                         <label
-                          htmlFor="address"
-                          className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-                        >
-                          House Number/Tower/Block*
-                        </label>
-                        <input
-                          id="address"
-                          type="text"
-                          required
-                          placeholder="e.g. Flat 2B, Galaxy Apts"
-                          value={newAddress.address}
-                          onChange={(e) =>
-                            setNewAddress({ ...newAddress, address: e.target.value })
-                          }
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label
                           htmlFor="locality"
-                          className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
                         >
-                          Address (locality,building,street)*
+                          Locality / Sector*
                         </label>
                         <input
                           id="locality"
                           type="text"
                           required
-                          placeholder="e.g. Whitefield Main Road"
+                          placeholder="e.g. Sector 4 / Jayanagar"
                           value={newAddress.locality}
                           onChange={(e) =>
                             setNewAddress({ ...newAddress, locality: e.target.value })
@@ -426,15 +447,33 @@ export default function CheckoutAddressStep() {
 
                       <div className="sm:col-span-2">
                         <label
-                          htmlFor="landmark"
-                          className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          htmlFor="address"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
                         >
-                          Landmark*
+                          Street Address & Building Details*
+                        </label>
+                        <textarea
+                          id="address"
+                          required
+                          placeholder="Flat, House no., Building, Apartment details"
+                          value={newAddress.address}
+                          onChange={(e) =>
+                            setNewAddress({ ...newAddress, address: e.target.value })
+                          }
+                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all min-h-[70px] font-semibold"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label
+                          htmlFor="landmark"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
+                        >
+                          Landmark
                         </label>
                         <input
                           id="landmark"
                           type="text"
-                          required
                           placeholder="e.g. Near Apollo Hospital"
                           value={newAddress.landmark}
                           onChange={(e) =>
@@ -447,7 +486,7 @@ export default function CheckoutAddressStep() {
                       <div>
                         <label
                           htmlFor="city"
-                          className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
                         >
                           City / District*
                         </label>
@@ -465,7 +504,7 @@ export default function CheckoutAddressStep() {
                       <div>
                         <label
                           htmlFor="state"
-                          className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
                         >
                           State*
                         </label>
@@ -482,52 +521,56 @@ export default function CheckoutAddressStep() {
                     </div>
                   </div>
 
-                  {/* Address Type Block */}
-                  <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs mt-4">
-                    <h2 className="font-sans text-base font-bold text-on-surface uppercase tracking-wider mb-5">
-                      Address Type
+                  {/* Destination and Options Block */}
+                  <div className="py-6">
+                    <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider mb-5">
+                      Destination & Options
                     </h2>
-                    <div className="flex items-center gap-6 mb-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div
-                          className={`w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center ${newAddress.type === 'Home' ? 'border-primary' : 'border-outline-variant'}`}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
+                      <div>
+                        <label
+                          htmlFor="tag"
+                          className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
                         >
-                          {newAddress.type === 'Home' && (
-                            <div className="w-2 h-2 rounded-full bg-primary"></div>
-                          )}
-                        </div>
-                        <span className="text-[13px] text-on-surface">Home</span>
-                        <input
-                          type="radio"
-                          className="hidden"
-                          checked={newAddress.type === 'Home'}
-                          onChange={() => setNewAddress({ ...newAddress, type: 'Home' })}
-                        />
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div
-                          className={`w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center ${newAddress.type === 'Work' || newAddress.type === 'Office' ? 'border-primary' : 'border-outline-variant'}`}
+                          Destination Type
+                        </label>
+                        <select
+                          id="tag"
+                          value={newAddress.tag}
+                          onChange={(e) => setNewAddress({ ...newAddress, tag: e.target.value })}
+                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-3 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
                         >
-                          {(newAddress.type === 'Work' || newAddress.type === 'Office') && (
-                            <div className="w-2 h-2 rounded-full bg-primary"></div>
-                          )}
-                        </div>
-                        <span className="text-[13px] text-on-surface">Office</span>
-                        <input
-                          type="radio"
-                          className="hidden"
-                          checked={newAddress.type === 'Work' || newAddress.type === 'Office'}
-                          onChange={() => setNewAddress({ ...newAddress, type: 'Office' })}
-                        />
-                      </label>
+                          <option value="Home">Home</option>
+                          <option value="Work">Work</option>
+                          <option value="Venue">Venue</option>
+                          <option value="Warehouse">Warehouse</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <label className="flex items-center gap-2 cursor-pointer mt-2">
-                      <div className="w-4 h-4 rounded flex items-center justify-center bg-primary">
-                        <span className="material-symbols-outlined text-[12px] text-surface font-bold">
-                          check
-                        </span>
-                      </div>
+                    <div className="sm:col-span-2 mb-4">
+                      <label
+                        htmlFor="deliveryInstructions"
+                        className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display"
+                      >
+                        Delivery Instructions
+                      </label>
+                      <textarea
+                        id="deliveryInstructions"
+                        placeholder="E.g. Leave with security, call before delivery"
+                        value={newAddress.deliveryInstructions}
+                        onChange={(e) => setNewAddress({ ...newAddress, deliveryInstructions: e.target.value })}
+                        className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all min-h-[70px] font-semibold"
+                      />
+                    </div>
+
+                    <label className="flex items-center gap-2 cursor-pointer mt-2 select-none">
+                      <input
+                        type="checkbox"
+                        checked={newAddress.isDefault || false}
+                        onChange={(e) => setNewAddress({ ...newAddress, isDefault: e.target.checked })}
+                        className="w-4 h-4 rounded border-outline-variant/40 text-primary focus:ring-primary cursor-pointer"
+                      />
                       <span className="text-[12px] text-on-surface">
                         Make this as my default address
                       </span>

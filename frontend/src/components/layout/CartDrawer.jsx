@@ -211,7 +211,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                           onClick={() =>
                                             updateQuantity(item.id, item.variant, item.quantity - 1)
                                           }
-                                          className="w-7 h-7 rounded-full flex items-center justify-center text-[#685c57] hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
+                                          className="w-7 h-7 min-h-0 rounded-full flex items-center justify-center text-[#685c57] hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
                                           aria-label="Decrease quantity"
                                         >
                                           <span className="material-symbols-outlined text-[16px]">
@@ -227,7 +227,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                                 variant: item.variant,
                                               })
                                             }
-                                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-error text-white shadow-md' : 'text-error/60 hover:bg-error/10 hover:text-error'}`}
+                                            className={`w-7 h-7 min-h-0 rounded-full flex items-center justify-center transition-all cursor-pointer ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-error text-white shadow-md' : 'text-error/60 hover:bg-error/10 hover:text-error'}`}
                                             aria-label="Confirm remove"
                                           >
                                             <span className="material-symbols-outlined text-[14px]">
@@ -350,7 +350,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                           onClick={() =>
                                             updateQuantity(item.id, item.variant, item.quantity - 1)
                                           }
-                                          className="w-7 h-7 rounded-full flex items-center justify-center text-[#685c57] hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
+                                          className="w-7 h-7 min-h-0 rounded-full flex items-center justify-center text-[#685c57] hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
                                           aria-label="Decrease quantity"
                                         >
                                           <span className="material-symbols-outlined text-[16px]">
@@ -366,7 +366,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                                 variant: item.variant,
                                               })
                                             }
-                                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-error text-white shadow-md' : 'text-error/60 hover:bg-error/10 hover:text-error'}`}
+                                            className={`w-7 h-7 min-h-0 rounded-full flex items-center justify-center transition-all cursor-pointer ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-error text-white shadow-md' : 'text-error/60 hover:bg-error/10 hover:text-error'}`}
                                             aria-label="Confirm remove"
                                           >
                                             <span className="material-symbols-outlined text-[14px]">

@@ -25,6 +25,11 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
 
   const handleAddToCart = () => {
     if (!product) return;
+    if (product.itemType === 'event') {
+      onClose();
+      navigate(`/events/${product._id || product.id}`);
+      return;
+    }
     runProtectedAction(() => {
       addItem({
         id: product._id || product.id,
@@ -99,7 +104,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
 
   const handleViewDetails = () => {
     onClose();
-    navigate(`/product/${productId}`);
+    navigate(product.itemType === 'event' ? `/events/${productId}` : `/product/${productId}`);
   };
 
   return (
@@ -139,7 +144,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
             {/* Close Button - Fixed in Modal Container */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 rounded-full border border-outline-variant/30 bg-surface/80 backdrop-blur-md flex items-center justify-center hover:bg-surface-container-low transition-colors cursor-pointer z-[60] shadow-sm icon-button-touch-target"
+              className="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 min-h-0 rounded-full border border-outline-variant/30 bg-surface/80 backdrop-blur-md flex items-center justify-center hover:bg-surface-container-low transition-colors cursor-pointer z-[60] shadow-sm icon-button-touch-target"
               aria-label="Close product quick view"
             >
               <span className="material-symbols-outlined text-[20px] md:text-[24px]">close</span>
@@ -193,9 +198,10 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
 
               <div className="flex items-baseline gap-4 mb-6 md:mb-10">
                 <span className="font-body font-bold text-[28px] md:text-[36px] text-on-surface">
-                  ₹{product.price.toLocaleString('en-IN')}
+                  ₹{(product.itemType === 'event' ? (product.rentalPrice || product.price) : product.price)?.toLocaleString('en-IN') || '0'}
+                  {product.itemType === 'event' && <span className="font-label text-xs text-on-surface-variant/60 ml-1">/ day</span>}
                 </span>
-                {product.oldPrice && (
+                {product.itemType !== 'event' && product.oldPrice && (
                   <span className="font-body text-on-surface-variant/30 line-through text-[18px] md:text-[20px]">
                     ₹{product.oldPrice.toLocaleString('en-IN')}
                   </span>
@@ -217,8 +223,10 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                   onClick={handleAddToCart}
                   className="w-full btn-primary !py-4 md:!py-5 flex items-center justify-center gap-3 font-bold cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"
                 >
-                  <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
-                  Add to Collection
+                  <span className="material-symbols-outlined text-[20px]">
+                    {product.itemType === 'event' ? 'event' : 'shopping_bag'}
+                  </span>
+                  {product.itemType === 'event' ? 'Book Setup' : 'Add to Collection'}
                 </button>
 
                 <div className="grid grid-cols-2 gap-3">

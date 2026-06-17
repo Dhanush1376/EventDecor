@@ -208,7 +208,7 @@ export function GallerySlideshow({
 
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors shrink-0"
+                className="w-10 h-10 min-h-0 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors shrink-0"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -291,7 +291,7 @@ export function GallerySlideshow({
                       e.stopPropagation();
                       handlePrev();
                     }}
-                    className="w-10 h-10 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
+                    className="w-10 h-10 min-h-0 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
                   >
                     <span className="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">
                       arrow_back_ios_new
@@ -302,7 +302,7 @@ export function GallerySlideshow({
                       e.stopPropagation();
                       handleNext();
                     }}
-                    className="w-10 h-10 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
+                    className="w-10 h-10 min-h-0 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
                   >
                     <span className="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">
                       arrow_forward_ios
@@ -332,7 +332,7 @@ export function GallerySlideshow({
                     <button
                       onClick={() => toggleItem(currentItem)}
                       aria-label="Toggle wishlist"
-                      className="w-9 h-9 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-all shadow-sm active:scale-95 bg-white"
+                      className="w-9 h-9 min-h-0 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-all shadow-sm active:scale-95 bg-white"
                     >
                       <span
                         className={`material-symbols-outlined text-[16px] transition-colors ${isWishlisted(currentId) ? 'text-red-500 font-fill' : 'text-black/60'}`}

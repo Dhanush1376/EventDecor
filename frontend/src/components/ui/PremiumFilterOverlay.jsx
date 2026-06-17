@@ -73,7 +73,7 @@ export function PremiumFilterOverlay({ isOpen, onClose, filters, setFilters, onA
               <h3 className="font-display text-2xl">Refine Search</h3>
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors"
+                className="w-10 h-10 min-h-0 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>

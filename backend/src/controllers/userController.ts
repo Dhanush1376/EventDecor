@@ -176,8 +176,13 @@ export const addAddress = asyncHandler(async (req: any, res: Response) => {
   const Address = require('../models/Address').default;
   const existingAddressesCount = await Address.countDocuments({ user: req.user.id });
 
+  const email = req.body.email || req.user.email;
+  const country = req.body.country || 'India';
+
   await Address.create({
     ...req.body,
+    email,
+    country,
     user: req.user.id,
     isDefault: existingAddressesCount === 0,
   });
@@ -188,9 +193,18 @@ export const addAddress = asyncHandler(async (req: any, res: Response) => {
 
 export const updateAddress = asyncHandler(async (req: any, res: Response) => {
   const Address = require('../models/Address').default;
+
+  const updateData = { ...req.body };
+  if (updateData.email === undefined && req.user.email) {
+    updateData.email = req.user.email;
+  }
+  if (updateData.country === undefined) {
+    updateData.country = 'India';
+  }
+
   const address = await Address.findOneAndUpdate(
     { _id: req.params.addressId, user: req.user.id },
-    req.body,
+    updateData,
     { returnDocument: 'after' },
   );
 

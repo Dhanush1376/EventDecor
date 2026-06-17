@@ -140,9 +140,14 @@ const dispatchUnauthorized = () => {
   window.dispatchEvent(new Event('auth-unauthorized'));
 };
 
-export const refreshAccessToken = async () => {
+export const refreshAccessToken = async (retryCount = 0) => {
   if (!hasLocalAuthMarker()) {
     return null;
+  }
+  if (retryCount > 3) {
+    logger.error('[API] Max refresh retry attempts reached (409 conflict loops).');
+    dispatchUnauthorized();
+    throw new Error('Max refresh retry attempts reached');
   }
   if (!refreshPromise) {
     refreshPromise = api
@@ -154,11 +159,11 @@ export const refreshAccessToken = async () => {
       .catch(async (err) => {
         if (err.response?.status === 409) {
           logger.warn(
-            '[API] Concurrent refresh detected (409). Retrying in 1s to pick up new tokens from other tab.',
+            `[API] Concurrent refresh detected (409). Retrying (attempt ${retryCount + 1}/3) in 1s to pick up new tokens from other tab.`,
           );
           await new Promise((r) => setTimeout(r, 1000));
           refreshPromise = null;
-          return refreshAccessToken(); // Retry the refresh with the new cookie/localStorage token
+          return refreshAccessToken(retryCount + 1); // Retry the refresh with the new cookie/localStorage token
         }
         if (err.response?.status === 401 || err.response?.status === 403) {
           dispatchUnauthorized();

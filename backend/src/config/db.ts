@@ -7,13 +7,28 @@ import { DestructionGuard } from '../utils/DestructionGuard';
 // Prevent querySrv ETIMEOUT on local environments by using reliable public DNS resolvers
 const isLocal =
   process.env.NODE_ENV !== 'production' && !process.env.RENDER && !process.env.RAILWAY_STATIC_URL;
-if (isLocal) {
+
+const setupLocalDns = async () => {
+  if (!isLocal) return;
+  
+  // Try resolving a public host using the default DNS first
   try {
-    dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+    await new Promise<void>((resolve, reject) => {
+      dns.resolve('google.com', (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    logger.info('[DATABASE] Default DNS resolution works. Using system resolvers.');
   } catch (err: any) {
-    logger.warn('[DATABASE] Failed to set public DNS resolvers: ' + err.message);
+    logger.warn(`[DATABASE] Default DNS lookup failed: ${err.message}. Falling back to public DNS resolvers.`);
+    try {
+      dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+    } catch (dnsErr: any) {
+      logger.error('[DATABASE] Failed to set public DNS resolvers fallback: ' + dnsErr.message);
+    }
   }
-}
+};
 
 // Enforce global maxTimeMS to prevent runaway database queries
 mongoose.plugin((schema) => {
@@ -149,6 +164,7 @@ class DatabaseManager {
   }
 
   public async connect(): Promise<typeof mongoose> {
+    await setupLocalDns();
     const MONGO_URI = process.env.MONGO_URI;
 
     if (!MONGO_URI) {

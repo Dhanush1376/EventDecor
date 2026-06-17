@@ -821,14 +821,12 @@ EventDecor/
 │   │   │   ├── CustomOrders.jsx
 │   │   │   ├── Dashboard
 │   │   │   │   ├── AddressesSection.jsx
-│   │   │   │   ├── CollectionsSection.jsx
 │   │   │   │   ├── DashboardLayout.jsx
 │   │   │   │   ├── EventsSection.jsx
 │   │   │   │   ├── OrdersSection.jsx
 │   │   │   │   ├── ProfileSection.jsx
 │   │   │   │   ├── RentalsSection.jsx
 │   │   │   │   ├── SettingsSection.jsx
-│   │   │   │   ├── ShoppingBagSection.jsx
 │   │   │   │   └── WalletSection.jsx
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── EventBookingSuccess.jsx
@@ -928,6 +926,7 @@ EventDecor/
 │   │   └── vite-env.d.ts
 │   ├── vercel.json
 │   └── vite.config.js
+├── linked_tree.md
 ├── nginx.example.conf
 ├── package-lock.json
 ├── package.json
@@ -1065,3 +1064,4 @@ stats.json
 *.log
 *-report.json
 ```
+

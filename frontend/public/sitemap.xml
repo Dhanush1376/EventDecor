@@ -3,113 +3,123 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>http://localhost:3000</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>http://localhost:3000/collections</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>http://localhost:3000/wedding-decorations-hyderabad</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>http://localhost:3000/event-decorators-telangana</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>http://localhost:3000/event-decorators-secunderabad</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>http://localhost:3000/event-decorators-ongole</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>http://localhost:3000/about</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>http://localhost:3000/contact</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>http://localhost:3000/gallery</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>http://localhost:3000/custom-orders</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>http://localhost:3000/events</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>http://localhost:3000/showcases</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>http://localhost:3000/shipping</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>http://localhost:3000/returns</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>http://localhost:3000/privacy</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>http://localhost:3000/terms</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>http://localhost:3000/product/6a0c74fa9b8633afb920de7b</loc>
-    <lastmod>2026-06-16</lastmod>
+    <loc>http://localhost:3000/product/6a0d5c8ec725a13dd9a95618</loc>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024546/eventdecor_migration/dakfqhkzlgqw5vjkfg6v.jpg</image:loc>
-      <image:title>Floral Jewelry Tray</image:title>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024554/eventdecor_migration/z9ae90bxj0n3bflsiqod.jpg</image:loc>
+      <image:title>Floral Ring Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost:3000/product/6a19cb169875c9a89386d920</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024558/eventdecor_migration/hgvuv234fqdoa2b05mul.jpg</image:loc>
+      <image:title>Wooden Wedding Ring Tray</image:title>
     </image:image>
   </url>
   <url>
     <loc>http://localhost:3000/product/6a0c75c89b8633afb920de8f</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -118,8 +128,18 @@
     </image:image>
   </url>
   <url>
+    <loc>http://localhost:3000/product/6a0c74fa9b8633afb920de7b</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024546/eventdecor_migration/dakfqhkzlgqw5vjkfg6v.jpg</image:loc>
+      <image:title>Floral Jewelry Tray</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>http://localhost:3000/product/6a0c764b9b8633afb920deb4</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -128,8 +148,18 @@
     </image:image>
   </url>
   <url>
+    <loc>http://localhost:3000/product/6a1982f6594e9ef6fa074f28</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024557/eventdecor_migration/jo53gy9svsag2yieuimb.jpg</image:loc>
+      <image:title>Pearl Engagement Tray</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>http://localhost:3000/product/6a0c76cc9b8633afb920dec8</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -139,52 +169,12 @@
   </url>
   <url>
     <loc>http://localhost:3000/product/6a0c781bb048b5d5827cdf89</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024552/eventdecor_migration/zynacnozzbi26cdhk3yk.jpg</image:loc>
       <image:title>Pearl Pooja Thambulam</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>http://localhost:3000/product/6a0d5c8ec725a13dd9a95618</loc>
-    <lastmod>2026-06-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024554/eventdecor_migration/z9ae90bxj0n3bflsiqod.jpg</image:loc>
-      <image:title>Floral Ring Tray</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>http://localhost:3000/product/6a11579708fa7569dfc015a0</loc>
-    <lastmod>2026-06-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024555/eventdecor_migration/sxglj11lgi99fwxij9bp.jpg</image:loc>
-      <image:title>Beaded Coconut Decor</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>http://localhost:3000/product/6a1982f6594e9ef6fa074f28</loc>
-    <lastmod>2026-06-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024557/eventdecor_migration/jo53gy9svsag2yieuimb.jpg</image:loc>
-      <image:title>Pearl Engagement Tray</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>http://localhost:3000/product/6a19cb169875c9a89386d920</loc>
-    <lastmod>2026-06-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024558/eventdecor_migration/hgvuv234fqdoa2b05mul.jpg</image:loc>
-      <image:title>Wooden Wedding Ring Tray</image:title>
     </image:image>
   </url>
   <url>
@@ -198,8 +188,18 @@
     </image:image>
   </url>
   <url>
+    <loc>http://localhost:3000/product/6a11579708fa7569dfc015a0</loc>
+    <lastmod>2026-06-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024555/eventdecor_migration/sxglj11lgi99fwxij9bp.jpg</image:loc>
+      <image:title>Beaded Coconut Decor</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>http://localhost:3000/product/6a272dcf1dd5c8cd06962659</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -209,7 +209,7 @@
   </url>
   <url>
     <loc>http://localhost:3000/product/6a275711dccad738269ad33e</loc>
-    <lastmod>2026-06-15</lastmod>
+    <lastmod>2026-06-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -288,16 +288,6 @@
     </image:image>
   </url>
   <url>
-    <loc>http://localhost:3000/gallery/6a0c75da9b8633afb920dea1</loc>
-    <lastmod>2026-06-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024561/eventdecor_migration/bqtn2xzugmcew8ubmqmn.jpg</image:loc>
-      <image:title>Bangle Ceremony Tray</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>http://localhost:3000/gallery/6a1ddc2fec4c5d301651507f</loc>
     <lastmod>2026-06-15</lastmod>
     <changefreq>weekly</changefreq>
@@ -305,6 +295,16 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1780341771/products/lndeyicnz8tdnmklwsau.jpg</image:loc>
       <image:title>Rope Dry Fruit Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>http://localhost:3000/gallery/6a0c75da9b8633afb920dea1</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024561/eventdecor_migration/bqtn2xzugmcew8ubmqmn.jpg</image:loc>
+      <image:title>Bangle Ceremony Tray</image:title>
     </image:image>
   </url>
   <url>

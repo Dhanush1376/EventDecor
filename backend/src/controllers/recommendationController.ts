@@ -142,7 +142,7 @@ export const getSimilar = async (req: Request, res: Response) => {
           _id: { $ne: targetId },
           isActive: true,
         })
-          .select('_id title imageSrc category price rating reviews slug')
+          .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
           .limit(limit)
           .lean();
         fallbackItems = products.map((p) => ({
@@ -155,6 +155,11 @@ export const getSimilar = async (req: Request, res: Response) => {
           rating: p.rating,
           reviews: p.reviews,
           slug: p.slug,
+          rentalEnabled: p.rentalEnabled,
+          availabilityMode: p.availabilityMode,
+          rentalPricing: p.rentalPricing,
+          securityDeposit: p.securityDeposit,
+          isDepositRefundable: p.isDepositRefundable,
         }));
       }
     } else if (targetType === 'event') {
@@ -307,7 +312,7 @@ export const getSeasonal = async (req: Request, res: Response) => {
         { tags: { $in: boostedCategories.map((c) => new RegExp(escapeRegex(c), 'i')) } },
       ],
     })
-      .select('_id title imageSrc category price rating reviews tags slug')
+      .select('_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
       .sort({ rating: -1, reviews: -1 })
       .limit(limit)
       .lean();
@@ -323,6 +328,11 @@ export const getSeasonal = async (req: Request, res: Response) => {
       reviews: p.reviews,
       tags: p.tags,
       slug: p.slug,
+      rentalEnabled: p.rentalEnabled,
+      availabilityMode: p.availabilityMode,
+      rentalPricing: p.rentalPricing,
+      securityDeposit: p.securityDeposit,
+      isDepositRefundable: p.isDepositRefundable,
       seasonalBoost: computeSeasonalBoost(p.category, undefined, p.tags, seasonal),
     }));
 
@@ -434,7 +444,7 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
         _id: { $ne: targetId },
         isActive: true,
       })
-        .select('_id title imageSrc category price rating reviews slug')
+        .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
         .limit(limit)
         .lean();
 
@@ -448,6 +458,11 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
         rating: p.rating,
         reviews: p.reviews,
         slug: p.slug,
+        rentalEnabled: p.rentalEnabled,
+        availabilityMode: p.availabilityMode,
+        rentalPricing: p.rentalPricing,
+        securityDeposit: p.securityDeposit,
+        isDepositRefundable: p.isDepositRefundable,
       }));
     } else {
       const event = await Event.findById(targetId).select('category').lean();
@@ -525,7 +540,7 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
           _id: { $ne: targetId },
           isActive: true,
         })
-          .select('_id title imageSrc category price rating reviews slug')
+          .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
           .limit(limit)
           .lean();
         fallbackItems = products.map((p) => ({
@@ -538,6 +553,11 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
           rating: p.rating,
           reviews: p.reviews,
           slug: p.slug,
+          rentalEnabled: p.rentalEnabled,
+          availabilityMode: p.availabilityMode,
+          rentalPricing: p.rentalPricing,
+          securityDeposit: p.securityDeposit,
+          isDepositRefundable: p.isDepositRefundable,
         }));
       }
     } else {
@@ -598,7 +618,7 @@ async function enrichTrendingItems(items: any[]): Promise<any[]> {
   const [products, events] = await Promise.all([
     productIds.length > 0
       ? Product.find({ _id: { $in: productIds }, isActive: true })
-          .select('_id title imageSrc category price rating reviews tags slug')
+          .select('_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
           .lean()
       : Promise.resolve([]),
     eventIds.length > 0
@@ -633,6 +653,11 @@ async function enrichTrendingItems(items: any[]): Promise<any[]> {
         reviews: full.reviews,
         tags: full.tags,
         slug: full.slug,
+        rentalEnabled: full.rentalEnabled,
+        availabilityMode: full.availabilityMode,
+        rentalPricing: full.rentalPricing,
+        securityDeposit: full.securityDeposit,
+        isDepositRefundable: full.isDepositRefundable,
       };
     })
     .filter(Boolean);

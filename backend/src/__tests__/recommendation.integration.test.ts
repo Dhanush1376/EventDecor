@@ -8,6 +8,7 @@ jest.mock('../models/Product', () => ({
   default: {
     findById: jest.fn().mockImplementation(() => ({
       select: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnThis(),
       lean: jest.fn().mockResolvedValue({
         _id: '6a18315776e357ead3a22319',
         category: 'Wedding',
@@ -19,6 +20,7 @@ jest.mock('../models/Product', () => ({
     })),
     find: jest.fn().mockImplementation(() => ({
       select: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
       lean: jest.fn().mockResolvedValue([
         {
@@ -39,6 +41,7 @@ jest.mock('../models/Event', () => ({
   default: {
     findById: jest.fn().mockImplementation(() => ({
       select: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnThis(),
       lean: jest.fn().mockResolvedValue({
         _id: '6a18315776e357ead3a22321',
         category: 'Wedding',
@@ -49,6 +52,7 @@ jest.mock('../models/Event', () => ({
     })),
     find: jest.fn().mockImplementation(() => ({
       select: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
       lean: jest.fn().mockResolvedValue([
         {

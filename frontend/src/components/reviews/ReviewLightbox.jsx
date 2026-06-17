@@ -39,7 +39,7 @@ export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose })
         </span>
         <button
           onClick={onClose}
-          className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer border border-white/20 backdrop-blur-md"
+          className="w-11 h-11 min-h-0 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer border border-white/20 backdrop-blur-md"
         >
           <span className="material-symbols-outlined text-xl">close</span>
         </button>
@@ -94,13 +94,13 @@ export function ReviewLightbox({ media = [], activeIndex = 0, isOpen, onClose })
           <>
             <button
               onClick={handlePrev}
-              className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-black/60 hover:bg-black text-white border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-30 shadow-xl"
+              className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 min-h-0 rounded-full bg-black/60 hover:bg-black text-white border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-30 shadow-xl"
             >
               <span className="material-symbols-outlined text-2xl">chevron_left</span>
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-black/60 hover:bg-black text-white border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-30 shadow-xl"
+              className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 min-h-0 rounded-full bg-black/60 hover:bg-black text-white border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-30 shadow-xl"
             >
               <span className="material-symbols-outlined text-2xl">chevron_right</span>
             </button>

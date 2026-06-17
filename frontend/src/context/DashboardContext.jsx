@@ -382,12 +382,17 @@ export function DashboardProvider({ children }) {
       id: addr._id || addr.id,
       name: addr.name || '',
       phone: addr.phone || '',
+      alternatePhone: addr.alternatePhone || '',
+      email: addr.email || user?.email || '',
       pincode: addr.pincode || '',
       locality: addr.locality || '',
       addressString: addr.addressString || '',
+      landmark: addr.landmark || '',
       city: addr.city || '',
       state: addr.state || '',
+      country: addr.country || 'India',
       tag: addr.tag || 'Home',
+      deliveryInstructions: addr.deliveryInstructions || '',
       latitude: addr.latitude || null,
       longitude: addr.longitude || null,
     });
@@ -406,13 +411,31 @@ export function DashboardProvider({ children }) {
       return;
     }
 
+    const payload = {
+      name: addressFormData.name,
+      phone: addressFormData.phone,
+      alternatePhone: addressFormData.alternatePhone || undefined,
+      email: addressFormData.email || user?.email || undefined,
+      pincode: addressFormData.pincode,
+      locality: addressFormData.locality,
+      addressString: addressFormData.addressString,
+      landmark: addressFormData.landmark || undefined,
+      city: addressFormData.city,
+      state: addressFormData.state,
+      country: addressFormData.country || 'India',
+      tag: addressFormData.tag,
+      deliveryInstructions: addressFormData.deliveryInstructions || undefined,
+      latitude: addressFormData.latitude,
+      longitude: addressFormData.longitude,
+    };
+
     setIsAddressSaving(true);
     try {
       if (editingAddressId === 'new') {
-        await userService.addAddress(addressFormData);
+        await userService.addAddress(payload);
         toast.success('New address added successfully!');
       } else {
-        await userService.updateAddress(editingAddressId, addressFormData);
+        await userService.updateAddress(editingAddressId, payload);
         toast.success('Address modified successfully!');
       }
       await fetchAddressesList();
@@ -420,7 +443,7 @@ export function DashboardProvider({ children }) {
       setEditingAddressId(null);
       setAddressFormData(null);
     } catch (err) {
-      toast.error('Failed to store address information');
+      toast.error(err.response?.data?.message || 'Failed to store address information');
     } finally {
       setIsAddressSaving(false);
     }

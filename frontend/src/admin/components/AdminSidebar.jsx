@@ -360,7 +360,7 @@ export function AdminSidebar() {
             {sidebarSearch && (
               <button
                 onClick={() => setSidebarSearch('')}
-                className="p-0.5 rounded-full hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] flex items-center justify-center min-h-0"
+                className="w-5 h-5 min-h-0 flex items-center justify-center rounded-full hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] flex-shrink-0"
               >
                 <span className="material-symbols-outlined text-[12px]">close</span>
               </button>

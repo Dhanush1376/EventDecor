@@ -193,8 +193,10 @@ export function CheckoutProvider({ children }) {
         city: '',
         state: '',
         country: 'India',
-        type: 'Home',
+        tag: 'Home',
         deliveryInstructions: '',
+        latitude: null,
+        longitude: null,
       },
     });
   });
@@ -551,6 +553,8 @@ export function CheckoutProvider({ children }) {
             city,
             state,
             country,
+            latitude,
+            longitude,
           }));
 
           toast.success('Address auto-filled from your location!', { id: toastId });
@@ -617,16 +621,14 @@ export function CheckoutProvider({ children }) {
     if (
       !newAddress.name ||
       !newAddress.phone ||
-      !newAddress.email ||
       !newAddress.address ||
-      !newAddress.landmark ||
+      !newAddress.locality ||
       !newAddress.pincode ||
       !newAddress.city ||
-      !newAddress.state ||
-      !newAddress.country
+      !newAddress.state
     ) {
       setAddressError(
-        'Please fill in all mandatory address parameters (Name, Phone, Email, Address, Pincode, Locality, Landmark, City, State, Country).',
+        'Please fill in all mandatory address parameters (Name, Phone, Address, Locality, Pincode, City, State).',
       );
       return;
     }
@@ -638,7 +640,7 @@ export function CheckoutProvider({ children }) {
       setAddressError('Please enter a valid 10-digit alternate mobile number.');
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newAddress.email)) {
+    if (newAddress.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newAddress.email)) {
       setAddressError('Please enter a valid email address.');
       return;
     }
@@ -650,16 +652,18 @@ export function CheckoutProvider({ children }) {
       name: newAddress.name,
       phone: newAddress.phone,
       alternatePhone: newAddress.alternatePhone || undefined,
-      email: newAddress.email,
+      email: newAddress.email || undefined,
       pincode: newAddress.pincode,
       locality: newAddress.locality,
       addressString: newAddress.address,
-      landmark: newAddress.landmark,
+      landmark: newAddress.landmark || undefined,
       city: newAddress.city,
       state: newAddress.state,
-      country: newAddress.country,
-      tag: newAddress.type,
+      country: newAddress.country || 'India',
+      tag: newAddress.tag || 'Home',
       deliveryInstructions: newAddress.deliveryInstructions || undefined,
+      latitude: newAddress.latitude,
+      longitude: newAddress.longitude,
     };
     try {
       setIsProcessing(true);
