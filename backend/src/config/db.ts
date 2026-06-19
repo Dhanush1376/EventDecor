@@ -5,28 +5,17 @@ import logger from './logger';
 import { DestructionGuard } from '../utils/DestructionGuard';
 
 // Prevent querySrv ETIMEOUT on local environments by using reliable public DNS resolvers
-const isLocal =
-  process.env.NODE_ENV !== 'production' && !process.env.RENDER && !process.env.RAILWAY_STATIC_URL;
-
 const setupLocalDns = async () => {
+  const isLocal =
+    process.env.NODE_ENV !== 'production' && !process.env.RENDER && !process.env.RAILWAY_STATIC_URL;
   if (!isLocal) return;
-  
-  // Try resolving a public host using the default DNS first
   try {
-    await new Promise<void>((resolve, reject) => {
-      dns.resolve('google.com', (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    logger.info('[DATABASE] Default DNS resolution works. Using system resolvers.');
-  } catch (err: any) {
-    logger.warn(`[DATABASE] Default DNS lookup failed: ${err.message}. Falling back to public DNS resolvers.`);
-    try {
-      dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
-    } catch (dnsErr: any) {
-      logger.error('[DATABASE] Failed to set public DNS resolvers fallback: ' + dnsErr.message);
-    }
+    const { Resolver } = dns.promises;
+    const resolver = new Resolver();
+    await resolver.resolve('google.com');
+  } catch {
+    logger.warn('[DNS] Local DNS resolver seems unstable, falling back to 8.8.8.8');
+    dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
   }
 };
 
@@ -122,10 +111,11 @@ class DatabaseManager {
       }
     }
 
-    // Set max connections budget across all instances to 100
-    const TOTAL_BUDGET = 100;
-    const calculatedMax = Math.max(10, Math.floor(TOTAL_BUDGET / instances));
-    const calculatedMin = Math.max(2, Math.floor(calculatedMax / 5));
+    // Set max connections budget across all instances to a safe Atlas M0 value (20)
+    // To accommodate horizontal scaling (e.g. 5 containers = max 100 connections total)
+    const TOTAL_BUDGET = 20;
+    const calculatedMax = Math.max(5, Math.floor(TOTAL_BUDGET / instances));
+    const calculatedMin = Math.max(1, Math.floor(calculatedMax / 5));
 
     logger.info(
       `[DATABASE] Dynamic connection pool: ${instances} instances detected. Configured maxPoolSize=${calculatedMax}, minPoolSize=${calculatedMin}`,
@@ -254,11 +244,11 @@ class DatabaseManager {
 
         // Layer 2: Monkey patch dangerous operations on the raw database connection
         if (process.env.NODE_ENV === 'production' && mongoose.connection.db) {
-          mongoose.connection.db.dropDatabase = async function (...args) {
+          mongoose.connection.db.dropDatabase = async function (..._args) {
             logger.error('[DATABASE] FATAL: Blocked database drop attempt in production!');
             throw new Error('Database drop is strictly prohibited in production.');
           };
-          mongoose.connection.db.dropCollection = async function (name: string, ...args) {
+          mongoose.connection.db.dropCollection = async function (name: string, ..._args) {
             logger.error(
               `[DATABASE] FATAL: Blocked collection drop attempt in production for collection: ${name}!`,
             );
