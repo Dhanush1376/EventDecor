@@ -1,161 +1,54 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
-import { OptimizedImage } from '../components/ui/OptimizedImage';
-import { MandalaElement } from '../components/ui/MandalaElement';
-import { EventDetailSkeleton } from '../components/ui/Skeleton';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
-import { ShareButton } from '../components/ui/ShareButton';
 import { LocationSelectorModal } from '../components/ui/LocationSelectorModal';
-import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { EventDetailSkeleton } from '../components/ui/Skeleton';
 import { useWishlist } from '../context/WishlistContext';
-import { eventService, showcaseService, bookingService } from '../services/domainServices';
-import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
+import { eventService, showcaseService } from '../services/domainServices';
 import logger from '../utils/logger';
 
+// Extracted Components
+import { useEventBookingForm } from './eventDetail/useEventBookingForm';
+import { EventGallery } from './eventDetail/EventGallery';
+import { EventBookingCard } from './eventDetail/EventBookingCard';
+import { EventCustomizerDrawer } from './eventDetail/EventCustomizerDrawer';
+
+// Lazy loading Recommendations
 const RecommendationSystem = React.lazy(() =>
   import('../components/sections/RecommendationSystem').then((m) => ({
     default: m.RecommendationSystem,
   })),
 );
 
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
-const EVENT_TYPES = [
-  {
-    id: 'wedding',
-    label: 'Wedding / Vivaham',
-    icon: 'church',
-    desc: 'Grand traditional structures, modular mandaps & royal backdrops',
-  },
-  {
-    id: 'engagement',
-    label: 'Engagement Ceremony',
-    icon: 'diamond',
-    desc: 'Modern floral panels, elegant backdrops & grand entrances',
-  },
-  {
-    id: 'haldi',
-    label: 'Haldi & Mehndi',
-    icon: 'palette',
-    desc: 'Vibrant yellow marigold blasting, traditional swings & photo booths',
-  },
-  {
-    id: 'reception',
-    label: 'Reception Gala',
-    icon: 'celebration',
-    desc: 'Bespoke stage styling, luxury uplighting & contemporary look',
-  },
-  {
-    id: 'birthday',
-    label: 'Birthday / Cradle',
-    icon: 'child_care',
-    desc: 'Vibrant custom themes, balloon archways & kid-friendly elements',
-  },
-  {
-    id: 'festival',
-    label: 'Festival / Puja Decor',
-    icon: 'spa',
-    desc: 'Traditional South Indian mango leaves, lotus hangings & brass props',
-  },
-  {
-    id: 'other',
-    label: 'Other Celebration',
-    icon: 'more_horiz',
-    desc: 'Specify your custom milestone celebration and setup blueprints',
-  },
-];
-
 export function EventDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { isAuthenticated, runProtectedAction } = useAuth();
-  const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const lightboxScrollRef = useRef(null);
   const { toggleItem, isWishlisted } = useWishlist();
-
-  useEffect(() => {
-    if (isLightboxOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.classList.add('slideshow-active');
-    } else {
-      document.body.style.overflow = '';
-      document.body.classList.remove('slideshow-active');
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.classList.remove('slideshow-active');
-    };
-  }, [isLightboxOpen]);
-
-  useEffect(() => {
-    if (isDrawerOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isDrawerOpen]);
-
-  const openLightbox = (idx) => {
-    setActiveGalleryIndex(idx);
-    setIsLightboxOpen(true);
-    setTimeout(() => {
-      if (lightboxScrollRef.current) {
-        lightboxScrollRef.current.scrollTo({
-          left: idx * lightboxScrollRef.current.clientWidth,
-          behavior: 'instant',
-        });
-      }
-    }, 10);
-  };
 
   const [event, setEvent] = useState(null);
   const [relatedEvents, setRelatedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState(null);
 
-  // Ported Customizer States
-  const [customInclusions, setCustomInclusions] = useState([]);
-  const [rentalDurationDays, setRentalDurationDays] = useState(1);
-  const [selectedPaletteColor, setSelectedPaletteColor] = useState('');
-  const [placementPreference, setPlacementPreference] = useState('Side-Stage Showcase Corner');
-  const [uploadedReferenceName, setUploadedReferenceName] = useState('');
-  const [customNote, setCustomNote] = useState('');
-  const [bookingDate, setBookingDate] = useState('');
-  const [venueDetails, setVenueDetails] = useState(null);
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [isManualLocationInput, setIsManualLocationInput] = useState(false);
-  const [manualVenueName, setManualVenueName] = useState('');
-  const [manualAddress, setManualAddress] = useState('');
-  const [manualCity, setManualCity] = useState('');
-  const [manualState, setManualState] = useState('');
-  const [manualPincode, setManualPincode] = useState('');
-  const [guestCount, setGuestCount] = useState(100);
-  const [startTime, setStartTime] = useState('09:00 AM');
-  const [endTime, setEndTime] = useState('09:00 PM');
-  const [isOutdoor, setIsOutdoor] = useState(false);
-  const [customizerStep, setCustomizerStep] = useState(1);
-  const [eventType, setEventType] = useState('wedding');
-  const [customOccasion, setCustomOccasion] = useState('');
-  const customizerCardRef = useRef(null);
+  const reserveButtonRef = useRef(null);
 
-  // Track event view
+  // Use Custom Hook for all booking form logic
+  const bookingForm = useEventBookingForm(
+    event,
+    isAuthenticated,
+    runProtectedAction,
+    () => (window.location.href = '/events'),
+  );
+  const { state: bookingState, actions: bookingActions } = bookingForm;
+
+  // Sticky Mobile Hook & Observer
+  const [showMobileSticky, setShowMobileSticky] = useState(false);
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+  const lastScrollY = useRef(0);
+
   useRecommendationTracker({
     targetType: 'event',
     targetId: event?._id || event?.id,
@@ -165,57 +58,13 @@ export function EventDetail() {
   });
 
   useEffect(() => {
-    if (venueDetails) {
-      setManualVenueName(venueDetails.name || '');
-      setManualAddress(venueDetails.address || '');
-      setManualCity(venueDetails.city || '');
-      setManualState(venueDetails.state || '');
-      setManualPincode(venueDetails.pincode || '');
-    }
-  }, [venueDetails]);
-
-  const handleManualFieldChange = (field, value) => {
-    const updated = {
-      ...(venueDetails || {
-        name: '',
-        address: '',
-        city: '',
-        state: '',
-        country: 'India',
-        pincode: '',
-        latitude: null,
-        longitude: null,
-        googleMapsLink: '',
-      }),
-      [field]: value,
-    };
-
-    const namePart = updated.name ? updated.name + ', ' : '';
-    const fullSearch =
-      `${namePart}${updated.address} ${updated.city} ${updated.state} ${updated.pincode}`.trim();
-    updated.googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullSearch)}`;
-
-    setVenueDetails(updated);
-  };
-
-  const reserveButtonRef = useRef(null);
-  const [showMobileSticky, setShowMobileSticky] = useState(false);
-  const [isScrollingDown, setIsScrollingDown] = useState(false);
-  const lastScrollY = useRef(0);
-
-  useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       if (Math.abs(currentScrollY - lastScrollY.current) > 10) {
-        if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
-          setIsScrollingDown(true);
-        } else {
-          setIsScrollingDown(false);
-        }
+        setIsScrollingDown(currentScrollY > lastScrollY.current && currentScrollY > 100);
       }
       lastScrollY.current = currentScrollY;
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -225,14 +74,12 @@ export function EventDetail() {
       setShowMobileSticky(false);
       return;
     }
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         setShowMobileSticky(!entry.isIntersecting);
       },
       { threshold: 0 },
     );
-
     observer.observe(reserveButtonRef.current);
     return () => observer.disconnect();
   }, [loading, event]);
@@ -250,755 +97,110 @@ export function EventDetail() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        let res = null;
-        try {
-          res = await showcaseService.getById(id);
-        } catch (err) {
-          logger.warn('Not found in showcases, trying events service', err);
-        }
+        let res = await showcaseService.getById(id).catch((err) => {
+          logger.warn('Not found in showcases', err);
+          return null;
+        });
 
-        if (!res || !res.success || !res.data) {
+        if (!res?.success || !res?.data) {
           res = await eventService.getById(id);
         }
 
-        if (res && res.success) {
-          setEvent(res.data);
-
-          // Pre-populate customizer defaults
-          const sc = res.data;
-          const defaultInclusions = [
-            { name: 'Traditional Backdrop Panel Setup', defaultQty: 1 },
-            { name: 'Mysore Brass Urlis & Diyas', defaultQty: 2 },
-            { name: 'Fresh Marigold Garland Hangings', defaultQty: 4 },
-          ];
-          setCustomInclusions(
-            sc.inclusions?.map((inc) => ({ ...inc, selected: true, qty: inc.defaultQty || 1 })) ||
-              defaultInclusions.map((inc) => ({ ...inc, selected: true, qty: inc.defaultQty })),
-          );
-          setSelectedPaletteColor(sc.colorPalette?.[0] || '#8B0000');
-
-          // Pre-populate occasion category matching
-          const cat = sc.category?.toLowerCase() || 'wedding';
-          if (EVENT_TYPES.some((t) => t.id === cat)) {
-            setEventType(cat);
-          } else {
-            setEventType('other');
-            setCustomOccasion(sc.category || '');
-          }
-        }
+        if (res?.success) setEvent(res.data);
 
         const relatedRes = await showcaseService.getAll();
         if (relatedRes.success) {
-          const relatedItems = relatedRes.data || [];
-          setRelatedEvents(relatedItems.filter((e) => e._id !== id && e.id !== id).slice(0, 4));
+          setRelatedEvents(relatedRes.data.filter((e) => e._id !== id && e.id !== id).slice(0, 4));
         }
       } catch (err) {
-        logger.error('Failed to fetch event masteries', err);
+        logger.error('Failed to fetch event details', err);
         setError('Could not load event details.');
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
     window.scrollTo(0, 0);
   }, [id]);
 
-  const toggleInclusion = (name) => {
-    setCustomInclusions((prev) =>
-      prev.map((inc) => (inc.name === name ? { ...inc, selected: !inc.selected } : inc)),
-    );
-  };
-
-  const updateInclusionQty = (name, delta) => {
-    setCustomInclusions((prev) =>
-      prev.map((inc) => (inc.name === name ? { ...inc, qty: Math.max(1, inc.qty + delta) } : inc)),
-    );
-  };
-
-  const calculateLivePrice = () => {
-    if (!event) return 0;
-
-    let basePrice = event.basePrice || 35000;
-    if (!event.basePrice) {
-      if (event.rentalPrice) {
-        basePrice = Number(event.rentalPrice);
-      } else if (event.pricing) {
-        basePrice = parseInt(event.pricing.replace(/[^0-9]/g, '')) || 35000;
-      }
-    }
-
-    const durationMultiplier =
-      rentalDurationDays === 1
-        ? 1
-        : rentalDurationDays === 2
-          ? 1.5
-          : 1.5 + (rentalDurationDays - 2) * 0.4;
-    return Math.round(basePrice * durationMultiplier);
-  };
-
-  const validateStep1 = () => {
-    if (eventType === 'other' && !customOccasion.trim()) {
-      toast.error('Please specify your custom occasion.');
-      return false;
-    }
-    if (!bookingDate) {
-      toast.error('Please select a Ceremony Date.');
-      return false;
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selected = new Date(bookingDate);
-    if (selected < today) {
-      toast.error('Ceremony Date cannot be in the past.');
-      return false;
-    }
-    return true;
-  };
-
-  const validateStep3 = () => {
-    const finalAddress = isManualLocationInput
-      ? `${manualVenueName ? manualVenueName + ', ' : ''}${manualAddress} ${manualCity} ${manualState} ${manualPincode}`.trim()
-      : venueDetails?.address || '';
-
-    if (!finalAddress) {
-      toast.error('Please configure your venue location (either by map or manual entry).');
-      return false;
-    }
-    if (isManualLocationInput) {
-      if (!manualVenueName.trim()) {
-        toast.error('Please enter a Venue Name.');
-        return false;
-      }
-      if (!manualAddress.trim()) {
-        toast.error('Please enter the Full Address.');
-        return false;
-      }
-      if (!manualCity.trim()) {
-        toast.error('Please enter the City.');
-        return false;
-      }
-      if (!manualState.trim()) {
-        toast.error('Please enter the State.');
-        return false;
-      }
-      if (!manualPincode.trim()) {
-        toast.error('Please enter the Pincode.');
-        return false;
-      }
-      if (!/^\d{6}$/.test(manualPincode.trim())) {
-        toast.error('Pincode must be exactly 6 digits.');
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const handleBookRental = async () => {
-    if (!isAuthenticated) {
-      runProtectedAction(() => handleBookRental());
-      return;
-    }
-
-    // Validation
-    if (!validateStep1()) {
-      setCustomizerStep(1);
-      return;
-    }
-    if (!validateStep3()) {
-      setCustomizerStep(3);
-      return;
-    }
-
-    const loadId = toast.loading('Initializing secure checkout...');
-    try {
-      const isScriptLoaded = await loadRazorpayScript();
-      if (!isScriptLoaded) {
-        toast.dismiss(loadId);
-        toast.error('Failed to load payment gateway. Please check your connection.');
-        return;
-      }
-
-      // Prepare venue payload
-      const venuePayload = isManualLocationInput
-        ? {
-            name: manualVenueName,
-            address: manualAddress,
-            city: manualCity,
-            state: manualState,
-            pincode: manualPincode,
-            country: 'India',
-            isOutdoor: isOutdoor,
-            googleMapsLink: venueDetails?.googleMapsLink || '',
-          }
-        : {
-            name: venueDetails?.name,
-            address: venueDetails?.address,
-            city: venueDetails?.city,
-            state: venueDetails?.state,
-            pincode: venueDetails?.pincode,
-            country: venueDetails?.country || 'India',
-            latitude: venueDetails?.latitude,
-            longitude: venueDetails?.longitude,
-            googleMapsLink: venueDetails?.googleMapsLink,
-            isOutdoor: isOutdoor,
-          };
-
-      const finalEventType = eventType === 'other' ? customOccasion : eventType;
-
-      const checkoutPayload = {
-        eventPackageId: event._id || event.id,
-        eventType: finalEventType,
-        title: `${event.title} Booking`,
-        date: bookingDate,
-        rentalDurationDays,
-        timing: { start: startTime, end: endTime },
-        guestCount,
-        venue: venuePayload,
-        customization: {
-          themeColor: selectedPaletteColor || event.colorPalette?.[0] || 'Standard',
-          floralPreference: 'Standard Garlands',
-          lightingPreference: 'Standard Lighting',
-          stageSize: 'Standard',
-          additionalRequests: customNote || '',
-        },
-        selectedAddons: [],
-        inspirationImages: [],
-      };
-
-      // 1. Initialize Booking Checkout
-      const initRes = await bookingService.initializeCheckout(checkoutPayload);
-      if (!initRes.success || !initRes.data) {
-        toast.dismiss(loadId);
-        toast.error(initRes.message || 'Failed to initialize checkout.');
-        return;
-      }
-
-      const { bookingId, razorpayOrderId, amount, currency, key } = initRes.data;
-      toast.dismiss(loadId);
-
-      // 2. Open Razorpay Modal
-      const options = {
-        key,
-        amount: amount * 100, // in paise
-        currency,
-        name: 'Siri Arts Event Decor',
-        description: `Advance Deposit for ${event.title}`,
-        order_id: razorpayOrderId,
-        handler: async function (response) {
-          const verifyLoadId = toast.loading('Verifying your payment securely...');
-          try {
-            // 3. Verify Payment Signature
-            const verifyRes = await bookingService.verifyCheckout({
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-              bookingId,
-            });
-
-            toast.dismiss(verifyLoadId);
-            if (verifyRes.success) {
-              toast.success('Payment successful! Your luxury event is confirmed.');
-              navigate(`/booking-success/${bookingId}`);
-            } else {
-              toast.error(verifyRes.message || 'Payment verification failed.');
-            }
-          } catch (err) {
-            toast.dismiss(verifyLoadId);
-            logger.error('Verification Error:', err);
-            toast.error('An error occurred during verification. Contact support.');
-          }
-        },
-        prefill: {
-          name: 'Customer',
-          email: 'customer@example.com',
-        },
-        theme: {
-          color: 'var(--color-gold-dark)',
-        },
-      };
-
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.on('payment.failed', function (response) {
-        toast.error(
-          `Payment Failed: ${response.error.description}. If on iPhone/Safari, disable Tracking Protection/Adblockers.`,
-        );
-      });
-      paymentObject.open();
-    } catch (err) {
-      toast.dismiss(loadId);
-      logger.error(err);
-      toast.error(
-        err.response?.data?.message ||
-          'An error occurred. Please verify required fields and login state.',
-      );
-    }
-  };
-
-  if (loading) {
-    return <EventDetailSkeleton />;
-  }
+  if (loading) return <EventDetailSkeleton />;
 
   if (!event) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <div className="text-center">
-          <h2 className="font-display text-3xl mb-4 text-on-surface">Event not found</h2>
-          <Link to="/events" className="btn-primary">
-            Back to Events
-          </Link>
-        </div>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+        <h1 className="font-display text-4xl text-black mb-4">Masterpiece Not Found</h1>
+        <p className="font-body text-stone-600 mb-8 max-w-md">
+          This event setup might have been archived or customized for a private client.
+        </p>
+        <Link
+          to="/events"
+          className="px-8 py-3 bg-primary text-black rounded-full font-label-sm uppercase tracking-widest"
+        >
+          Explore Current Collections
+        </Link>
       </div>
     );
   }
 
-  const formattedCategory = event.category
-    ? String(event.category)
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase())
-    : 'Traditional Setup';
-
-  const stats = [
-    { label: 'Design Style', value: event.style || 'Traditional Royal', icon: 'palette' },
-    { label: 'Decor Elements', value: event.decorCount || '95+ Elements', icon: 'dashboard' },
-    { label: 'Venue Type', value: event.venueType || 'Indoor & Outdoor', icon: 'meeting_room' },
-    { label: 'Master Category', value: formattedCategory, icon: 'verified' },
-  ];
-
-  const eventSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: event.title,
-    description: event.description,
-    image: event.image,
-    startDate: bookingDate || new Date().toISOString().split('T')[0],
-    endDate: bookingDate || new Date().toISOString().split('T')[0],
-    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    eventStatus: 'https://schema.org/EventScheduled',
-    location: {
-      '@type': 'Place',
-      name: venueDetails?.name || 'Client Venue',
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: venueDetails?.address || '',
-        addressLocality: venueDetails?.city || '',
-        addressRegion: venueDetails?.state || '',
-        postalCode: venueDetails?.pincode || '',
-        addressCountry: 'IN',
-      },
-    },
-    offers: {
-      '@type': 'Offer',
-      url: typeof window !== 'undefined' ? window.location.href : '',
-      price: event.basePrice || event.rentalPrice || 35000,
-      priceCurrency: 'INR',
-      availability: 'https://schema.org/InStock',
-    },
-  };
+  const livePrice = bookingActions.calculateLivePrice();
 
   return (
-    <div className="bg-[#fbf9f6] min-h-screen text-on-surface selection:bg-primary/20 relative font-body pb-32 md:pb-12">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen bg-surface selection:bg-[#C4A87C]/30 selection:text-black"
+    >
       <SEO
-        title={event.seoTitle || `${event.title} | Event Masteries`}
-        description={event.seoDescription || event.description}
-        ogImage={event.image}
-        schema={eventSchema}
+        title={`${event.title} | Premium Decor`}
+        description={event.description}
+        image={event.image}
       />
 
-      {/* 1. BREADCRUMBS HEADER (Preserved for Desktop) */}
-      <div className="hidden md:block pt-32 pb-4 max-w-max-width mx-auto px-margin-desktop relative z-10">
-        <MandalaArtDecor
-          variant={2}
-          size={400}
-          className="-top-20 -right-20 absolute pointer-events-none"
-          opacity={0.1}
-          spinDuration={240}
-        />
-
-        <nav className="flex items-center gap-3 font-label-sm text-[12px] uppercase tracking-[0.3em] text-black/40 font-bold">
-          <Link to="/events" className="hover:text-primary transition-colors">
-            Event Masteries
-          </Link>
-          <span className="material-symbols-outlined text-[14px] opacity-20">chevron_right</span>
-          <span className="text-primary font-bold">{formattedCategory}</span>
-        </nav>
-      </div>
-
-      {/* 2. MAIN DETAILS PAGE SECTION */}
-      <section className="pt-[72px] md:pt-4 pb-20 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
-          {/* Left Column: Event Gallery & Specs */}
-          <div className="lg:col-span-7 space-y-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative aspect-[4/3] md:aspect-[16/10] rounded-[32px] md:rounded-[48px] overflow-hidden shadow-2xl group"
-            >
-              {/* Mobile-Only Overlay Back Button */}
-              <button
-                onClick={() => navigate(-1)}
-                className="flex md:hidden absolute top-4 left-4 z-20 items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8]/90 backdrop-blur-xs shadow-lg border border-black/5 active:scale-90 transition-all text-black outline-none focus:outline-none"
-              >
-                <span className="material-symbols-outlined text-[16px] text-black">arrow_back</span>
-              </button>
-
-              {/* Overlay Action Buttons (Visible on Mobile & Desktop) */}
-              <div className="absolute top-4 right-4 z-20 flex flex-row gap-2 pointer-events-auto">
-                <button
-                  onClick={() => toggleItem({ ...event, image: event.image })}
-                  className="flex items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8] shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white"
-                >
-                  <motion.span
-                    animate={{
-                      scale: isWishlisted(event.id) ? [1, 1.3, 1] : 1,
-                      color: isWishlisted(event.id) ? '#ff2d55' : '#1a1817',
-                      fontVariationSettings: isWishlisted(event.id) ? "'FILL' 1" : "'FILL' 0",
-                    }}
-                    className="material-symbols-outlined text-[16px]"
-                  >
-                    favorite
-                  </motion.span>
-                </button>
-                <ShareButton
-                  url={window.location.href}
-                  title={`Siri Arts & Crafts: ${event.title}`}
-                  variant="custom"
-                  size="custom"
-                  className="flex items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8] shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white text-[16px]"
-                  iconOnly={true}
-                />
-              </div>
-
-              {/* Mobile Horizontal Scroll Gallery */}
-              <div className="md:hidden flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full w-full">
-                {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map(
-                  (img, i) => (
-                    <div
-                      key={i}
-                      onClick={() => openLightbox(i)}
-                      className="flex-shrink-0 w-full h-full snap-center cursor-zoom-in"
-                    >
-                      <OptimizedImage
-                        src={img}
-                        containerClassName="w-full h-full"
-                        className="w-full h-full object-cover"
-                        alt={`${event.title} perspective ${i + 1}`}
-                      />
-                    </div>
-                  ),
-                )}
-              </div>
-
-              {/* Desktop-Only Fade Gallery */}
-              <div className="hidden md:block h-full w-full relative">
-                <motion.div
-                  key={activeGalleryIndex}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.6 }}
-                  onClick={() => openLightbox(activeGalleryIndex)}
-                  className="w-full h-full cursor-zoom-in"
-                >
-                  <OptimizedImage
-                    src={event.gallery?.[activeGalleryIndex] || event.image}
-                    containerClassName="w-full h-full"
-                    className="w-full h-full object-cover"
-                    alt={event.title}
-                    priority={true}
-                  />
-                </motion.div>
-              </div>
-
-              {/* Floating Perspective Badges */}
-              {event.gallery && event.gallery.length > 1 && (
-                <div className="absolute bottom-6 left-6 md:bottom-8 md:left-8 flex gap-2.5 z-10">
-                  {event.gallery.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        if (window.innerWidth >= 768) {
-                          setActiveGalleryIndex(i);
-                        } else {
-                          const container = document.querySelector('.snap-x');
-                          if (container) {
-                            container.scrollTo({
-                              left: i * container.offsetWidth,
-                              behavior: 'smooth',
-                            });
-                          }
-                          setActiveGalleryIndex(i);
-                        }
-                      }}
-                      className={`w-8 h-8 md:w-9 md:h-9 rounded-full backdrop-blur-md border transition-all duration-500 flex items-center justify-center font-body text-[13px] md:text-[14px] ${activeGalleryIndex === i ? 'bg-white border-white text-black shadow-lg scale-110' : 'bg-black/20 border-white/30 text-white/80 hover:bg-black/40 hover:border-white/50'}`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-
-            {/* Visual Indicators Strip */}
-            {event.gallery && event.gallery.length > 1 && (
-              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-                {event.gallery.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveGalleryIndex(i)}
-                    className={`relative w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden shrink-0 transition-all duration-500 ${activeGalleryIndex === i ? 'ring-2 ring-primary ring-offset-2 scale-95' : 'opacity-45 grayscale-[70%] hover:opacity-100 hover:grayscale-0'}`}
-                  >
-                    <OptimizedImage
-                      src={img}
-                      containerClassName="w-full h-full"
-                      className="w-full h-full object-cover"
-                      alt={`Thumb ${i}`}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Header Information */}
-            <div className="space-y-3 py-6 border-t border-b border-black/5 mt-4">
-              <span className="font-label-sm text-primary uppercase tracking-[0.4em] font-bold text-[10px] md:text-[12px] block">
-                {event.subtitle || 'The Digital Studio Mastery'}
-              </span>
-              <h2 className="font-display text-black text-[32px] md:text-[44px] font-normal leading-tight tracking-tight">
-                {event.title}
-              </h2>
-              <p className="font-body text-black/60 text-[14px] leading-relaxed font-light mt-4">
-                {event.description}
-              </p>
-            </div>
-
-            {/* Signature Masterpieces Included Highlights Panel */}
-            {event.features && event.features.length > 0 && (
-              <div className="bg-[#FAF6F0] p-6 rounded-[2rem] border border-[#C4A87C]/20 space-y-3">
-                <span className="font-label-sm text-[10px] uppercase tracking-[0.3em] text-[var(--color-gold-dark)] font-bold flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px] text-primary">
-                    verified
-                  </span>
-                  Signature Masterpieces Included
-                </span>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1.5">
-                  {event.features.map((feature, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2.5 text-stone-700 text-xs font-semibold leading-relaxed"
-                    >
-                      <span className="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">
-                        star
-                      </span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Speciation Stats Cards Grid */}
-            <div className="pt-6">
-              <span className="font-label-sm text-[10px] uppercase tracking-[0.3em] text-black/40 font-bold block mb-6">
-                Technical Specifications
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {stats.map((stat, i) => (
-                  <div
-                    key={i}
-                    className="bg-white border border-stone-200/50 p-4 rounded-2xl space-y-1.5 shadow-2xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary text-[16px]">
-                        {stat.icon}
-                      </span>
-                      <span className="font-label text-[8px] uppercase tracking-wider text-black/40 font-bold">
-                        {stat.label}
-                      </span>
-                    </div>
-                    <span className="font-body text-black font-semibold text-[13px] block">
-                      {stat.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Artisan Customizer Form */}
-          <div ref={customizerCardRef} className="lg:col-span-5 flex flex-col gap-6">
-            {/* Custom Design Consultation Card */}
-            <div className="p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5">
-              <div className="relative z-10 flex flex-col items-center text-center gap-5">
-                <div>
-                  <h4 className="font-headline-sm mb-1 text-[#C4A87C] font-normal tracking-wide">
-                    Need a Custom Theme?
-                  </h4>
-                  <p className="font-body-sm text-white/90 font-medium">
-                    Personalize this setup to perfectly match your vision.
-                  </p>
-                </div>
-                <div className="flex flex-row gap-2 w-full">
-                  <button
-                    onClick={() => navigate(`/custom-orders?event=${event._id || event.id}`)}
-                    className="bg-white text-black flex-1 px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-stone-200 transition-all whitespace-nowrap font-bold shadow-sm flex items-center justify-center"
-                  >
-                    Customize
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!event) return;
-                      const num = '919866006648';
-                      const link = `${window.location.origin}/events/${event._id || event.id}`;
-                      const msg = encodeURIComponent(
-                        `Hello, I'm interested in this event setup and would like to chat about it.\n\nLink: ${link}`,
-                      );
-                      window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
-                    }}
-                    className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">chat</span>
-                    WhatsApp
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Premium Reservation & Saving Card */}
-            <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-[#C4A87C]/20 p-6 md:p-8 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)]">
-              <div className="flex items-center gap-2 pb-3 border-b border-black/5">
-                <span className="material-symbols-outlined text-primary text-[18px]">
-                  calendar_today
-                </span>
-                <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">
-                  Reservation Crate
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <span className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
-                    Starting Package Price
-                  </span>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-display text-[28px] md:text-[32px] text-black font-bold font-sans">
-                      ₹{(event.basePrice || event.rentalPrice || 35000).toLocaleString('en-IN')}
-                    </span>
-                    <span className="text-stone-400 text-xs font-light">/ Setup</span>
-                  </div>
-                </div>
-
-                <p className="font-body text-black/60 text-[13px] leading-relaxed font-light">
-                  Plan your dream celebration setup. Add custom florals, verify venue logistics,
-                  specify date & environment using our guided Artisan Customizer.
-                </p>
-
-                <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/15 space-y-2.5">
-                  <div className="flex items-center gap-2 text-[11px] font-semibold text-stone-700">
-                    <span className="material-symbols-outlined text-primary text-[16px]">
-                      local_shipping
-                    </span>
-                    <span>Free Setup, Logistics & Teardown</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] font-semibold text-stone-700">
-                    <span className="material-symbols-outlined text-primary text-[16px]">
-                      verified
-                    </span>
-                    <span>100% Refundable Deposit up to 14 days prior</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-row gap-3 pt-2">
-                  <button
-                    ref={reserveButtonRef}
-                    onClick={() => setIsDrawerOpen(true)}
-                    className="flex-1 bg-black text-white hover:bg-[#C4A87C] hover:text-white py-3 px-6 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <span>Book</span>
-                    <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                  </button>
-                  <button
-                    onClick={() => toggleItem({ ...event, image: event.image })}
-                    className={`flex-1 py-3 px-6 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all active:scale-95 border flex items-center justify-center gap-1.5 cursor-pointer ${
-                      isWishlisted(event._id || event.id)
-                        ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100'
-                        : 'bg-white border-black/10 text-stone-700 hover:bg-stone-50'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[14px]">
-                      {isWishlisted(event._id || event.id) ? 'favorite' : 'favorite_border'}
-                    </span>
-                    <span>{isWishlisted(event._id || event.id) ? 'Saved' : 'Save'}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. FURTHER DISCOVERY JOURNEYS */}
-      <section className="pt-12 pb-0 md:pt-24 md:pb-8">
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4 mb-8 md:mb-16">
-            <h2 className="font-display text-[28px] md:text-[48px] text-black font-normal leading-none">
-              Further Discovery.
-            </h2>
-            <Link
-              to="/events"
-              className="font-label-sm text-[10px] uppercase tracking-widest text-primary font-bold underline decoration-primary/20"
-            >
-              All Collections →
+      <section className="pt-24 pb-8 md:pt-32 md:pb-12 bg-surface">
+        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop space-y-6 md:space-y-8">
+          <nav className="flex items-center gap-2 font-label text-[10px] uppercase tracking-widest text-black/40 font-bold overflow-x-auto whitespace-nowrap no-scrollbar">
+            <Link to="/" className="hover:text-primary transition-colors">
+              Home
             </Link>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-            {relatedEvents.map((rel) => (
-              <Link key={rel._id} to={`/events/${rel._id}`} className="group space-y-4">
-                <div className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-gray-100 shadow-lg">
-                  <OptimizedImage
-                    src={rel.image}
-                    containerClassName="w-full h-full"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    alt={rel.title}
-                  />
-                </div>
-                <div className="space-y-1 px-1">
-                  <span className="font-label-sm text-primary text-[8px] md:text-[9px] uppercase tracking-widest font-bold block">
-                    {rel.category}
-                  </span>
-                  <h4 className="font-display text-lg text-black font-normal leading-none">
-                    {rel.title}
-                  </h4>
-                </div>
-              </Link>
-            ))}
+            <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+            <Link to="/events" className="hover:text-primary transition-colors">
+              Collections
+            </Link>
+            <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+            <span className="text-black line-clamp-1">{event.title}</span>
+          </nav>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 lg:gap-16 items-start">
+            <div className="lg:col-span-7 space-y-10 md:space-y-16">
+              <EventGallery event={event} toggleItem={toggleItem} isWishlisted={isWishlisted} />
+              <div className="space-y-4">
+                <span className="font-label-sm text-primary text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold block">
+                  {event.category}
+                </span>
+                <h1 className="font-display text-[40px] md:text-[56px] lg:text-[64px] text-black leading-[1.05] font-normal">
+                  {event.title}
+                </h1>
+                <p className="font-body text-[15px] md:text-[16px] text-stone-600 leading-relaxed font-light max-w-2xl">
+                  {event.description}
+                </p>
+              </div>
+            </div>
+
+            <EventBookingCard
+              event={event}
+              toggleItem={toggleItem}
+              isWishlisted={isWishlisted}
+              setIsDrawerOpen={bookingActions.setIsDrawerOpen}
+              reserveButtonRef={reserveButtonRef}
+            />
           </div>
         </div>
-
-        {/* Subtle background art anchor at the bottom */}
-        <MandalaArtDecor
-          variant={1}
-          size={600}
-          className="-bottom-24 -left-24 hidden lg:block z-0"
-          opacity={0.2}
-          spinDuration={180}
-        />
-        <MandalaArtDecor
-          variant={1}
-          size={300}
-          className="-bottom-12 -left-12 lg:hidden z-0"
-          opacity={0.25}
-          spinDuration={180}
-        />
       </section>
 
       {/* Smart Recommendations */}
       <React.Suspense
-        fallback={
-          <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8">
-            <div className="h-44 w-full rounded-2xl bg-surface-container animate-pulse" />
-          </div>
-        }
+        fallback={<div className="h-44 w-full rounded-2xl bg-surface-container animate-pulse" />}
       >
         <RecommendationSystem
           category={event.category}
@@ -1007,794 +209,44 @@ export function EventDetail() {
         />
       </React.Suspense>
 
-      {/* 4. STICKY MOBILE PRICE CARD (Floats above mobile bottom navigation) */}
+      {/* Mobile Sticky CTA */}
       <AnimatePresence>
         {showMobileSticky && !isScrollingDown && (
           <motion.div
             initial={{ y: 150, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 150, opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className="sticky-mobile-atc fixed bottom-0 left-0 w-full h-[calc(72px+env(safe-area-inset-bottom,0px))] md:h-[80px] z-[100] md:hidden bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 pb-[env(safe-area-inset-bottom,0px)] flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none"
+            transition={{ type: 'spring' }}
+            className="sticky-mobile-atc fixed bottom-0 left-0 w-full h-[80px] z-[100] md:hidden bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 flex items-center justify-between shadow-lg"
           >
             <div className="flex flex-col truncate">
-              <span className="font-label text-[8px] uppercase tracking-[0.25em] text-on-surface-variant/45 font-bold leading-none">
+              <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold">
                 Estimated Rental
               </span>
-              <p className="font-sans text-[15px] text-black font-bold leading-none mt-1">
-                ₹{calculateLivePrice().toLocaleString('en-IN')}
+              <p className="font-sans text-[15px] text-black font-bold">
+                ₹{livePrice.toLocaleString('en-IN')}
               </p>
             </div>
-
             <button
-              type="button"
-              onClick={() => setIsDrawerOpen(true)}
-              className="bg-on-surface text-surface h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 shrink-0"
-              aria-label="Book event decor package"
+              onClick={() => bookingActions.setIsDrawerOpen(true)}
+              className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold flex items-center gap-1.5"
             >
               <span>Book Now</span>
-              <span className="material-symbols-outlined text-[14px]">tune</span>
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 5. DRAWER FOR ARTISAN CUSTOMIZER */}
-      <AnimatePresence>
-        {isDrawerOpen && (
-          <>
-            {/* Backdrop Blur Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsDrawerOpen(false)}
-              className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm"
-            />
-
-            {/* Bottom Drawer Sheet */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:w-[600px] z-[1000] bg-[#FCFAF6] border-t border-[#C4A87C]/30 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col max-h-[85vh] md:max-h-[90vh]"
-            >
-              {/* Header Bar */}
-              <div className="bg-[#FAF6F0] px-6 py-4 border-b border-black/5 flex items-center justify-between shrink-0 relative rounded-t-[2.5rem]">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[20px]">tune</span>
-                  <div>
-                    <h3 className="font-display text-sm md:text-base text-black font-semibold">
-                      Artisan Customizer
-                    </h3>
-                    <p className="text-[9px] text-black/50 uppercase tracking-widest font-bold font-label">
-                      Step {customizerStep} of 4
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {/* Stepper Progress Indicator */}
-                  <div className="hidden sm:flex items-center gap-1 mr-4">
-                    {[1, 2, 3, 4].map((stepNum) => (
-                      <div
-                        key={stepNum}
-                        className={`w-4 h-4 rounded-full flex items-center justify-center font-display text-[8px] font-bold ${
-                          customizerStep === stepNum
-                            ? 'bg-black text-white'
-                            : customizerStep > stepNum
-                              ? 'bg-primary text-black'
-                              : 'bg-stone-200 text-stone-400'
-                        }`}
-                      >
-                        {customizerStep > stepNum ? '✓' : stepNum}
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="w-8 h-8 min-h-0 rounded-full bg-white hover:bg-stone-100 text-stone-500 border border-black/5 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Scrollable Form Body */}
-              <div className="p-6 md:p-8 overflow-y-auto flex-1 space-y-6">
-                {/* Stepper Progress Indicator for Mobile */}
-                <div className="flex sm:hidden items-center justify-between pb-4 border-b border-black/5">
-                  {[
-                    { number: 1, label: 'Occasion' },
-                    { number: 2, label: 'Schedule' },
-                    { number: 3, label: 'Venue' },
-                    { number: 4, label: 'Confirm' },
-                  ].map((s, idx) => (
-                    <React.Fragment key={s.number}>
-                      <div className="flex flex-col items-center gap-1">
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center font-display text-[10px] font-bold transition-all duration-300 ${
-                            customizerStep === s.number
-                              ? 'bg-black text-white scale-110 shadow-md'
-                              : customizerStep > s.number
-                                ? 'bg-primary text-black'
-                                : 'bg-stone-100 text-stone-400'
-                          }`}
-                        >
-                          {customizerStep > s.number ? '✓' : s.number}
-                        </div>
-                        <span
-                          className={`text-[8px] uppercase tracking-wider font-semibold ${
-                            customizerStep === s.number ? 'text-black' : 'text-stone-400'
-                          }`}
-                        >
-                          {s.label}
-                        </span>
-                      </div>
-                      {idx < 3 && (
-                        <div
-                          className={`h-[1px] flex-1 border-t ${
-                            customizerStep > s.number ? 'border-primary' : 'border-stone-200'
-                          } -mt-4`}
-                        />
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-
-                {/* STEP 1: Occasion & Basic Schedule */}
-                {customizerStep === 1 && (
-                  <div className="space-y-4 pt-2">
-                    {/* Select Your Occasion */}
-                    <div className="space-y-1.5">
-                      <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
-                        Select Your Occasion *
-                      </label>
-                      <select
-                        value={eventType}
-                        onChange={(e) => setEventType(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                      >
-                        {EVENT_TYPES.map((type) => (
-                          <option key={type.id} value={type.id}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {eventType === 'other' && (
-                      <div className="space-y-1.5 bg-primary/5 p-4 rounded-2xl border border-primary/20">
-                        <label className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block">
-                          Specify Custom Occasion *
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Housewarming, Baby Shower"
-                          value={customOccasion}
-                          onChange={(e) => setCustomOccasion(e.target.value)}
-                          className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                        />
-                      </div>
-                    )}
-
-                    {/* Date & Duration Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
-                          Ceremony Date *
-                        </label>
-                        <input
-                          type="date"
-                          value={bookingDate}
-                          onChange={(e) => setBookingDate(e.target.value)}
-                          className="w-full min-w-0 overflow-hidden px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
-                          Rental Days
-                        </label>
-                        <select
-                          value={rentalDurationDays}
-                          onChange={(e) => setRentalDurationDays(Number(e.target.value))}
-                          className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                        >
-                          <option value={1}>1 Day Setup (Standard)</option>
-                          <option value={2}>2 Days Setup (Ceremony + Return)</option>
-                          <option value={3}>3 Days Setup (Extensive)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Setup Environment Toggle */}
-                    <div className="space-y-2">
-                      <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">
-                        Setup Environment
-                      </label>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setIsOutdoor(false)}
-                          className={`flex-1 py-2 px-3 rounded-full font-semibold text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${!isOutdoor ? 'bg-black text-white border-none shadow-sm' : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border border-black/10'}`}
-                        >
-                          <span className="material-symbols-outlined text-[14px]">home</span>
-                          <span>Indoor</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setIsOutdoor(true)}
-                          className={`flex-1 py-2 px-3 rounded-full font-semibold text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${isOutdoor ? 'bg-black text-white border-none shadow-sm' : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border border-black/10'}`}
-                        >
-                          <span className="material-symbols-outlined text-[14px]">park</span>
-                          <span>Outdoor</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 2: Timings & Placement */}
-                {customizerStep === 2 && (
-                  <div className="space-y-4 pt-2">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
-                          Setup Start Time
-                        </label>
-                        <select
-                          value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                        >
-                          <option value="06:00 AM">06:00 AM (Early Dawn)</option>
-                          <option value="09:00 AM">09:00 AM (Standard Morning)</option>
-                          <option value="12:00 PM">12:00 PM (Midday)</option>
-                          <option value="03:00 PM">03:00 PM (Afternoon)</option>
-                          <option value="06:00 PM">06:00 PM (Evening Glow)</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
-                          Ceremony End Time
-                        </label>
-                        <select
-                          value={endTime}
-                          onChange={(e) => setEndTime(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                        >
-                          <option value="01:00 PM">01:00 PM (Afternoon)</option>
-                          <option value="05:00 PM">05:00 PM (Sundown)</option>
-                          <option value="09:00 PM">09:00 PM (Standard Night)</option>
-                          <option value="11:00 PM">11:00 PM (Late Night Gala)</option>
-                          <option value="02:00 AM">02:00 AM (Midnight Auspicious)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Placement Preference */}
-                    <div className="space-y-2">
-                      <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">
-                        Placement Destination
-                      </label>
-                      <select
-                        value={placementPreference}
-                        onChange={(e) => setPlacementPreference(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                      >
-                        <option value="Side-Stage Showcase Corner">
-                          Side-Stage Showcase Corner
-                        </option>
-                        <option value="Entrance Presentation Desk">
-                          Entrance Presentation Desk
-                        </option>
-                        <option value="Traditional Mandap Flanks">Traditional Mandap Flanks</option>
-                        <option value="Groom/Bride Seating Podiums">
-                          Groom/Bride Seating Podiums
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 3: Venue Location & Notes */}
-                {customizerStep === 3 && (
-                  <div className="space-y-4 pt-2">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="font-label text-[9px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
-                          Select Event Venue *
-                        </label>
-                        {venueDetails && (
-                          <span className="text-[10px] text-green-600 font-bold flex items-center gap-0.5 animate-pulse">
-                            <span className="material-symbols-outlined text-[12px]">
-                              check_circle
-                            </span>{' '}
-                            Verified
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsLocationModalOpen(true);
-                            setIsManualLocationInput(false);
-                          }}
-                          className="flex-1 bg-white hover:bg-stone-50 text-black border border-black/10 py-2.5 px-3 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm cursor-pointer"
-                        >
-                          <span className="material-symbols-outlined text-[16px] text-primary">
-                            map
-                          </span>
-                          <span>Choose on Map</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setIsManualLocationInput(!isManualLocationInput)}
-                          className={`flex-1 py-2.5 px-3 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${isManualLocationInput ? 'bg-primary text-black border-none shadow-sm' : 'bg-primary/10 text-primary border border-primary/20'}`}
-                        >
-                          <span className="material-symbols-outlined text-[16px]">edit_note</span>
-                          <span>Add Manually</span>
-                        </button>
-                      </div>
-
-                      {/* Manual Location Form */}
-                      {isManualLocationInput && (
-                        <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/20 space-y-3">
-                          <div className="space-y-1">
-                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
-                              Venue Name *
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="e.g. Grand Palace Hall, Temple Flanks"
-                              value={manualVenueName}
-                              onChange={(e) => {
-                                setManualVenueName(e.target.value);
-                                handleManualFieldChange('name', e.target.value);
-                              }}
-                              className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
-                              Full Address *
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="e.g. 123 Heritage Lane, Near Old Circle"
-                              value={manualAddress}
-                              onChange={(e) => {
-                                setManualAddress(e.target.value);
-                                handleManualFieldChange('address', e.target.value);
-                              }}
-                              className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-2">
-                            <div className="space-y-1">
-                              <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
-                                City *
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="e.g. Bengaluru"
-                                value={manualCity}
-                                onChange={(e) => {
-                                  setManualCity(e.target.value);
-                                  handleManualFieldChange('city', e.target.value);
-                                }}
-                                className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
-                                State *
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="e.g. Karnataka"
-                                value={manualState}
-                                onChange={(e) => {
-                                  setManualState(e.target.value);
-                                  handleManualFieldChange('state', e.target.value);
-                                }}
-                                className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block">
-                                Pincode *
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="e.g. 560001"
-                                value={manualPincode}
-                                onChange={(e) => {
-                                  setManualPincode(e.target.value);
-                                  handleManualFieldChange('pincode', e.target.value);
-                                }}
-                                className="w-full px-3 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Venue Detail Card Preview */}
-                      {venueDetails && !isManualLocationInput ? (
-                        <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/25 space-y-2 relative overflow-hidden">
-                          <div className="flex items-start justify-between gap-2 z-10 relative">
-                            <div className="space-y-0.5">
-                              <h4 className="text-xs font-bold text-black flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-primary text-[16px]">
-                                  storefront
-                                </span>
-                                {venueDetails.name}
-                              </h4>
-                              <p className="text-[11px] text-stone-600 leading-normal font-light">
-                                {venueDetails.address}
-                              </p>
-                              <div className="flex gap-x-2 text-[9px] text-stone-500 font-semibold font-mono pt-1">
-                                {venueDetails.city && <span>City: {venueDetails.city}</span>}
-                                {venueDetails.pincode && (
-                                  <span>Pincode: {venueDetails.pincode}</span>
-                                )}
-                              </div>
-                            </div>
-                            <a
-                              href={venueDetails.googleMapsLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-7 h-7 rounded-full bg-white border border-black/5 flex items-center justify-center text-primary hover:bg-stone-50 shrink-0 transition-colors shadow-sm"
-                              title="Open in Google Maps"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">
-                                directions
-                              </span>
-                            </a>
-                          </div>
-                        </div>
-                      ) : (
-                        !isManualLocationInput && (
-                          <div className="bg-stone-50 border border-dashed border-black/10 p-4 rounded-2xl text-center text-stone-400 font-light text-xs">
-                            No venue location specified yet. Tap "Choose on Map" to configure.
-                          </div>
-                        )
-                      )}
-                    </div>
-
-                    {/* Custom notes */}
-                    <div className="space-y-2">
-                      <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">
-                        Arrangement Notes
-                      </label>
-                      <textarea
-                        placeholder="Traditional naming, gift tray customize, placement dimensions..."
-                        value={customNote}
-                        onChange={(e) => setCustomNote(e.target.value)}
-                        className="w-full p-4 rounded-2xl border border-black/10 bg-stone-50/20 text-xs h-20 resize-none focus:border-primary outline-none font-medium"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 4: Review & Payment */}
-                {customizerStep === 4 && (
-                  <div className="space-y-4 pt-2">
-                    <div className="bg-stone-50 p-4 rounded-2xl border border-black/5 space-y-3">
-                      <span className="font-label text-[9px] uppercase tracking-widest text-black/40 font-bold block">
-                        Booking Summary
-                      </span>
-
-                      <div className="grid grid-cols-2 gap-y-2.5 gap-x-2 text-[11px] font-semibold text-stone-700">
-                        <div>
-                          <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
-                            Occasion
-                          </span>
-                          <span className="text-black capitalize truncate block">
-                            {eventType === 'other' ? customOccasion : eventType}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
-                            Ceremony Date
-                          </span>
-                          <span className="text-black">{bookingDate}</span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
-                            Rental Duration
-                          </span>
-                          <span className="text-black">
-                            {rentalDurationDays} Day{rentalDurationDays > 1 ? 's' : ''}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
-                            Environment
-                          </span>
-                          <span className="text-black">{isOutdoor ? 'Outdoor' : 'Indoor'}</span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
-                            Setup Start
-                          </span>
-                          <span className="text-black">{startTime}</span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
-                            Ceremony End
-                          </span>
-                          <span className="text-black">{endTime}</span>
-                        </div>
-                        <div className="col-span-2">
-                          <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
-                            Venue Location
-                          </span>
-                          <span className="text-black line-clamp-1">
-                            {isManualLocationInput
-                              ? `${manualVenueName}, ${manualAddress}`
-                              : venueDetails?.name || 'TBD'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Price Calculation breakdown */}
-                    <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/20 relative overflow-hidden space-y-3">
-                      {/* Floral Mandala Watermark */}
-                      <div className="absolute right-0 top-0 bottom-0 w-24 overflow-hidden pointer-events-none flex items-center justify-end z-0">
-                        <MandalaElement
-                          variant={3}
-                          size={120}
-                          opacity={0.05}
-                          rotate={true}
-                          duration={50}
-                          skipFade={true}
-                          className="translate-x-4 mix-blend-darken"
-                        />
-                      </div>
-
-                      <div className="relative z-10 space-y-2 text-xs">
-                        <div className="flex justify-between items-center text-stone-600">
-                          <span>Base Package Rental</span>
-                          <span>₹{(event.basePrice || 35000).toLocaleString('en-IN')}</span>
-                        </div>
-                        {rentalDurationDays > 1 && (
-                          <div className="flex justify-between items-center text-stone-600 text-[11px]">
-                            <span>Duration Multiplier ({rentalDurationDays} Days)</span>
-                            <span>
-                              x
-                              {rentalDurationDays === 2
-                                ? '1.5'
-                                : (1.5 + (rentalDurationDays - 2) * 0.4).toFixed(1)}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex justify-between items-center font-bold text-black border-t border-black/5 pt-2 text-[14px]">
-                          <span>Grand Total Price</span>
-                          <span>₹{calculateLivePrice().toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="flex justify-between items-center font-bold text-primary border-t border-dashed border-primary/20 pt-2 text-[14px] bg-primary/5 -mx-4 px-4 py-1.5 rounded-lg">
-                          <div className="flex flex-col">
-                            <span>50% Secure Deposit</span>
-                            <span className="text-[8px] font-normal text-stone-500 leading-none">
-                              Paid now to confirm booking
-                            </span>
-                          </div>
-                          <span>
-                            ₹{Math.round(calculateLivePrice() * 0.5).toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-stone-500 text-[10px]">
-                          <span>Remaining Balance</span>
-                          <span>
-                            ₹
-                            {(
-                              calculateLivePrice() - Math.round(calculateLivePrice() * 0.5)
-                            ).toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Stepper Navigation Footer */}
-              <div className="p-6 bg-[#FAF6F0] border-t border-black/5 space-y-3 shrink-0 rounded-b-[2.5rem]">
-                <div className="flex gap-2">
-                  {customizerStep > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setCustomizerStep((prev) => prev - 1)}
-                      className="w-1/3 bg-white hover:bg-stone-100 text-stone-700 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-1 active:scale-95 cursor-pointer border border-black/10"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">chevron_left</span>
-                      <span>Back</span>
-                    </button>
-                  )}
-                  {customizerStep < 4 ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (customizerStep === 1 && validateStep1()) {
-                          setCustomizerStep(2);
-                        } else if (customizerStep === 2) {
-                          setCustomizerStep(3);
-                        } else if (customizerStep === 3 && validateStep3()) {
-                          setCustomizerStep(4);
-                        }
-                      }}
-                      className={`${customizerStep === 1 ? 'w-full' : 'w-2/3'} bg-black hover:bg-[#C4A87C] hover:text-white text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-1 active:scale-95 cursor-pointer`}
-                    >
-                      <span>Continue</span>
-                      <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await handleBookRental();
-                        setIsDrawerOpen(false);
-                      }}
-                      className="w-2/3 bg-black text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-xl hover:bg-[#C4A87C] hover:text-white transition-all flex items-center justify-center gap-1.5 group active:scale-95 cursor-pointer"
-                    >
-                      <span>Pay Deposit & Reserve</span>
-                      <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                        trending_flat
-                      </span>
-                    </button>
-                  )}
-                </div>
-                {customizerStep === 4 && (
-                  <p className="text-center font-body text-[9px] text-black/35 italic">
-                    Secure payment powered by Razorpay.
-                  </p>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <EventCustomizerDrawer event={event} bookingForm={bookingForm} />
 
       <LocationSelectorModal
-        isOpen={isLocationModalOpen}
-        onClose={() => setIsLocationModalOpen(false)}
-        onLocationSelect={(details) => setVenueDetails(details)}
-        initialLocation={venueDetails}
+        isOpen={bookingState.isLocationModalOpen}
+        onClose={() => bookingActions.setIsLocationModalOpen(false)}
+        onSelect={(loc) => {
+          bookingActions.setVenueDetails(loc);
+          bookingActions.setIsLocationModalOpen(false);
+        }}
       />
-
-      {/* Fullscreen Swipeable Lightbox (Rendered at root to escape stacking context) */}
-      {typeof document !== 'undefined' &&
-        createPortal(
-          <AnimatePresence>
-            {isLightboxOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-[99999] bg-white flex items-center justify-center touch-none"
-                onClick={() => setIsLightboxOpen(false)}
-              >
-                <div
-                  className="w-full h-full flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Header Controls */}
-                  <div className="w-full flex justify-between items-center px-4 pt-2 shrink-0 z-10">
-                    <span className="text-black/40 font-label-sm text-[10px] md:text-[12px] uppercase tracking-[0.4em] font-bold">
-                      {activeGalleryIndex + 1} /{' '}
-                      {
-                        (event.gallery && event.gallery.length > 0 ? event.gallery : [event.image])
-                          .length
-                      }
-                    </span>
-                    <button
-                      onClick={() => setIsLightboxOpen(false)}
-                      className="w-10 h-10 min-h-0 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors"
-                      aria-label="Close lightbox"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Lightbox Swipeable Viewport */}
-                  <div
-                    ref={lightboxScrollRef}
-                    onScroll={(e) => {
-                      const width = e.currentTarget.clientWidth;
-                      if (!width) return;
-                      const currentSlide = Math.round(e.currentTarget.scrollLeft / width);
-                      const images =
-                        event.gallery && event.gallery.length > 0 ? event.gallery : [event.image];
-                      if (
-                        currentSlide !== activeGalleryIndex &&
-                        currentSlide >= 0 &&
-                        currentSlide < images.length
-                      ) {
-                        setActiveGalleryIndex(currentSlide);
-                      }
-                    }}
-                    className="flex-1 w-full flex overflow-x-auto snap-x snap-mandatory items-center my-3 overflow-hidden min-h-0"
-                    style={{ scrollbarWidth: 'none' }}
-                  >
-                    {(event.gallery && event.gallery.length > 0
-                      ? event.gallery
-                      : [event.image]
-                    ).map((img, idx) => (
-                      <div
-                        key={idx}
-                        className="w-full h-full shrink-0 snap-center flex items-center justify-center p-4 relative"
-                      >
-                        <OptimizedImage
-                          src={img}
-                          containerClassName="w-full h-full flex items-center justify-center"
-                          alt={`Lightbox view ${idx + 1}`}
-                          className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Lightbox Thumbnail Strip */}
-                  <div className="w-full pb-2 pt-2 px-4 flex gap-2.5 overflow-x-auto no-scrollbar justify-center items-center shrink-0 border-t border-black/5 mt-1 z-10">
-                    {(event.gallery && event.gallery.length > 0
-                      ? event.gallery
-                      : [event.image]
-                    ).map((img, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setActiveGalleryIndex(idx);
-                          if (lightboxScrollRef.current) {
-                            lightboxScrollRef.current.scrollTo({
-                              left: idx * lightboxScrollRef.current.clientWidth,
-                              behavior: 'smooth',
-                            });
-                          }
-                        }}
-                        className={`shrink-0 w-11 h-11 rounded-lg overflow-hidden transition-all duration-300 snap-center ${
-                          activeGalleryIndex === idx
-                            ? 'scale-105 shadow-md opacity-100'
-                            : 'opacity-50 hover:opacity-100'
-                        }`}
-                      >
-                        <OptimizedImage
-                          src={img}
-                          containerClassName="w-full h-full"
-                          alt={`Thumbnail ${idx + 1}`}
-                          className="w-full h-full object-cover pointer-events-none"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
-    </div>
+    </motion.div>
   );
 }
