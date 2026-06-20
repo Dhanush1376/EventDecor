@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Enable caching of dependency layers
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy codebase and compile optimized static assets
 COPY . .

@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 COPY . .
 RUN NODE_ENV=production npm run build
@@ -20,7 +20,7 @@ ENV NODE_OPTIONS="--max-old-space-size=768"
 
 COPY package*.json ./
 # --ignore-scripts prevents postinstall supply-chain attacks in production dependencies
-RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts --legacy-peer-deps && npm cache clean --force
 
 COPY --from=builder --chown=node:node /app/dist ./dist
 COPY --chown=node:node ecosystem.config.js ./
