@@ -6,6 +6,7 @@ import { CustomOrderWizard } from '../components/customOrders/CustomOrderWizard'
 import { CustomOrderTracker } from '../components/customOrders/CustomOrderTracker';
 import { useCustomOrderUploads } from '../hooks/useCustomOrderUploads';
 import { useCustomOrderSubmission } from '../hooks/useCustomOrderSubmission';
+import { useOrderSocketTracker } from '../hooks/useOrderSocketTracker';
 
 import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { useState, useEffect, useRef } from 'react';
@@ -438,65 +439,13 @@ export function CustomOrders() {
     }
   }, [selectedOrder?.messages]);
 
-  // ─── Socket Events for Tracker ───
-  useEffect(() => {
-    if (!socket || activeTab !== 'tracker') return;
-
-    const handleStatusChange = (payload) => {
-      try {
-        toast.success(`Order ${payload.orderId} status updated to ${payload.status}`);
-        loadWorkspaceData();
-        if (selectedOrder && selectedOrder.orderId === payload.orderId) {
-          customOrderService.getById(selectedOrder._id).then((res) => {
-            if (res.success) setSelectedOrder(res.data);
-          });
-        }
-      } catch (err) {
-        logger.error('Socket handleStatusChange error: ', err);
-      }
-    };
-
-    const handleNewMessage = (payload) => {
-      try {
-        loadWorkspaceData();
-        if (selectedOrder && selectedOrder.orderId === payload.orderId) {
-          customOrderService.getById(selectedOrder._id).then((res) => {
-            if (res.success) setSelectedOrder(res.data);
-          });
-        } else {
-          toast.success(`New message from ${payload.senderName} regarding ${payload.orderId}`);
-        }
-      } catch (err) {
-        logger.error('Socket handleNewMessage error: ', err);
-      }
-    };
-
-    const handleQuoteCreated = (payload) => {
-      try {
-        loadWorkspaceData();
-        toast.success(
-          `New quotation received for ${payload.orderId} (₹${payload.total.toLocaleString()})`,
-        );
-        if (selectedOrder && selectedOrder.orderId === payload.orderId) {
-          customOrderService.getById(selectedOrder._id).then((res) => {
-            if (res.success) setSelectedOrder(res.data);
-          });
-        }
-      } catch (err) {
-        logger.error('Socket handleQuoteCreated error: ', err);
-      }
-    };
-
-    socket.on('customOrder:statusChange', handleStatusChange);
-    socket.on('customOrder:newMessage', handleNewMessage);
-    socket.on('customOrder:quoteCreated', handleQuoteCreated);
-
-    return () => {
-      socket.off('customOrder:statusChange', handleStatusChange);
-      socket.off('customOrder:newMessage', handleNewMessage);
-      socket.off('customOrder:quoteCreated', handleQuoteCreated);
-    };
-  }, [socket, selectedOrder, activeTab]);
+  useOrderSocketTracker({
+    socket,
+    activeTab,
+    selectedOrder,
+    setSelectedOrder,
+    loadWorkspaceData,
+  });
 
   const { loading, isSubmittingRef, handleWizardSubmit } = useCustomOrderSubmission({
     user,
