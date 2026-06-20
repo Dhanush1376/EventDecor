@@ -40,7 +40,7 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
   const price = item.price || item.basePrice;
   const oldPrice = item.oldPrice;
   const score = item.score;
-  const source = item.source;
+  const _source = item.source;
   const targetType = item.targetType || item.type || 'product';
 
   const link =

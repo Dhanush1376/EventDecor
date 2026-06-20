@@ -28,7 +28,7 @@ export function CarouselWrapper({ children, className = '', gap = '14px' }) {
     };
   }, []);
 
-  const scroll = (direction) => {
+  const _scroll = (direction) => {
     const el = scrollRef.current;
     if (!el) return;
     const amount = el.clientWidth * 0.7;

@@ -3,7 +3,14 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
-import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  EmptyState,
+  FilterBar,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 export function AdminCustomers() {
   const navigate = useNavigate();
@@ -100,12 +107,20 @@ export function AdminCustomers() {
                   : 'When customers create accounts or place orders, they will appear here.'
               }
               action={
-                (searchQuery || segmentFilter !== 'All') && (
+                searchQuery || segmentFilter !== 'All' ? (
                   <button
                     onClick={() => setSegmentFilter('All')}
                     className="admin-btn admin-btn-outline"
                   >
                     Clear Filters
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="admin-btn admin-btn-outline"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">refresh</span>
+                    Refresh Page
                   </button>
                 )
               }

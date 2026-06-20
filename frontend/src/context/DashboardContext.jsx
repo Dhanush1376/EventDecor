@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useRef, Profiler } from 'react';
+import { logRenderMetrics } from '../utils/profilerLogger';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useWishlist } from './WishlistContext';
@@ -7,12 +8,11 @@ import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { userService } from '../services/domainServices';
 import toast from 'react-hot-toast';
-import logger from '../utils/logger';
 
 const DashboardContext = createContext(null);
 
 export function DashboardProvider({ children }) {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, logout, checkAuth, openAuthModal } = useAuth();
   const { items: wishlistItems, removeItem: removeFromWishlist } = useWishlist();
@@ -57,9 +57,7 @@ export function DashboardProvider({ children }) {
     }
   }, [searchParams]);
 
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [isPreferencesSaving, setIsPreferencesSaving] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedOrderItemIndex, setSelectedOrderItemIndex] = useState(0);
   const [isPriceDetailsOpen, setIsPriceDetailsOpen] = useState(true);
@@ -85,53 +83,19 @@ export function DashboardProvider({ children }) {
     refetch: refetchDashboardData,
   } = useDashboardData(userId);
 
-  // Profile forms
-  const [profileForm, setProfileForm] = useState({
-    name: '',
-    phone: '',
-    gender: '',
-    dateOfBirth: '',
-  });
-
-  // Preference forms
-  const [prefsForm, setPrefsForm] = useState({
-    email: true,
-    marketing: true,
-    theme: 'light',
-    language: 'en',
-  });
-
   // Address forms
   const [editingAddressId, setEditingAddressId] = useState(null);
-  const [addressFormData, setAddressFormData] = useState(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
   const [reviewingProduct, setReviewingProduct] = useState(null);
-  const [isAddressSaving, setIsAddressSaving] = useState(false);
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
-  const fetchOrdersList = () => refetchDashboardData();
+  const _fetchOrdersList = () => refetchDashboardData();
   const fetchAddressesList = () => refetchDashboardData();
 
-  // Sync profile data on mount and user change
+  // Sync user data on mount if needed
   useEffect(() => {
     if (user) {
-      const timer = setTimeout(() => {
-        setProfileForm({
-          name: user.name || '',
-          phone: user.phone || '',
-          gender: user.gender || '',
-          dateOfBirth: user.dateOfBirth || '',
-        });
-
-        setPrefsForm({
-          email: user.notificationPreferences?.email !== false,
-          marketing: user.notificationPreferences?.marketing !== false,
-          theme: user.accountPreferences?.theme || 'light',
-          language: user.accountPreferences?.language || 'en',
-        });
-      }, 0);
-      return () => clearTimeout(timer);
+      // Any remaining global sync if needed
     }
   }, [user]);
 
@@ -200,54 +164,6 @@ export function DashboardProvider({ children }) {
     }
   }, [orders, selectedOrderId, selectedOrder]);
 
-  // Profile Save
-  const handleProfileSave = async (e) => {
-    e.preventDefault();
-    if (!profileForm.name.trim()) {
-      toast.error('Full name cannot be blank');
-      return;
-    }
-    setIsUpdatingProfile(true);
-    try {
-      const res = await userService.updateProfile(profileForm);
-      if (res.success) {
-        toast.success('Profile information updated successfully!');
-        await checkAuth(); // Reload global user state
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update profile details');
-    } finally {
-      setIsUpdatingProfile(false);
-    }
-  };
-
-  // Profile Preferences Save
-  const handlePreferencesSave = async (e) => {
-    e.preventDefault();
-    setIsPreferencesSaving(true);
-    try {
-      const payload = {
-        notificationPreferences: {
-          email: prefsForm.email,
-          marketing: prefsForm.marketing,
-        },
-        accountPreferences: {
-          theme: prefsForm.theme,
-          language: prefsForm.language,
-        },
-      };
-      const res = await userService.updatePreferences(payload);
-      if (res.success) {
-        toast.success('Preferences saved successfully!');
-        await checkAuth();
-      }
-    } catch (err) {
-      toast.error('Failed to save preference settings');
-    } finally {
-      setIsPreferencesSaving(false);
-    }
-  };
-
   // Avatar Upload
   const handleAvatarClick = () => {
     if (fileInputRef.current) {
@@ -288,165 +204,9 @@ export function DashboardProvider({ children }) {
   };
 
   // Address Handlers
-  const handleUseCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser');
-      return;
-    }
-
-    setIsDetectingLocation(true);
-    const toastId = toast.loading('Accessing device GPS coordinates...');
-
-    const geoOptions = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0,
-    };
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          toast.loading('Resolving coordinates to address details...', { id: toastId });
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-            {
-              headers: {
-                'Accept-Language': 'en',
-              },
-            },
-          );
-
-          if (!res.ok) throw new Error('Reverse lookup failed');
-
-          const data = await res.json();
-          if (data && data.address) {
-            const addr = data.address;
-            const road = addr.road || addr.suburb || addr.neighbourhood || '';
-            const locality = addr.suburb || addr.neighbourhood || addr.city_district || '';
-            const city = addr.city || addr.town || addr.village || addr.county || '';
-            const state = addr.state || '';
-            const pincode = addr.postcode || '';
-
-            const streetParts = [addr.house_number, addr.building, addr.road].filter(Boolean);
-            const addressString =
-              streetParts.length > 0
-                ? streetParts.join(', ')
-                : data.display_name.split(',').slice(0, 3).join(',').trim();
-
-            setAddressFormData((prev) => ({
-              ...prev,
-              pincode: pincode.replace(/\s/g, ''),
-              locality: locality || road || 'Local Area',
-              addressString: addressString || data.display_name,
-              city: city,
-              state: state,
-              latitude,
-              longitude,
-            }));
-
-            toast.success('Location tracking successful! Parameters updated.', { id: toastId });
-          } else {
-            toast.error('Unable to parse address components from coordinates.', { id: toastId });
-          }
-        } catch (error) {
-          logger.error('Reverse geocoding failure:', error);
-          toast.error('Failed to map coordinates to a clean street address.', { id: toastId });
-        } finally {
-          setIsDetectingLocation(false);
-        }
-      },
-      (error) => {
-        setIsDetectingLocation(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            toast.error('Location access denied by your device.', { id: toastId });
-            break;
-          case error.POSITION_UNAVAILABLE:
-            toast.error('GPS position parameters unavailable.', { id: toastId });
-            break;
-          case error.TIMEOUT:
-            toast.error('Location tracking request timed out.', { id: toastId });
-            break;
-          default:
-            toast.error('An unknown geotracking error occurred.', { id: toastId });
-        }
-      },
-      geoOptions,
-    );
-  };
-
   const handleAddressEdit = (addr) => {
     setEditingAddressId(addr._id || addr.id);
-    setAddressFormData({
-      id: addr._id || addr.id,
-      name: addr.name || '',
-      phone: addr.phone || '',
-      alternatePhone: addr.alternatePhone || '',
-      email: addr.email || user?.email || '',
-      pincode: addr.pincode || '',
-      locality: addr.locality || '',
-      addressString: addr.addressString || '',
-      landmark: addr.landmark || '',
-      city: addr.city || '',
-      state: addr.state || '',
-      country: addr.country || 'India',
-      tag: addr.tag || 'Home',
-      deliveryInstructions: addr.deliveryInstructions || '',
-      latitude: addr.latitude || null,
-      longitude: addr.longitude || null,
-    });
     setIsAddressModalOpen(true);
-  };
-
-  const handleAddressSave = async (e) => {
-    e.preventDefault();
-
-    if (!addressFormData.phone || addressFormData.phone.length < 10) {
-      toast.error('Please enter a valid 10-digit mobile number');
-      return;
-    }
-    if (!addressFormData.pincode || addressFormData.pincode.length !== 6) {
-      toast.error('Please enter a valid 6-digit postal pincode');
-      return;
-    }
-
-    const payload = {
-      name: addressFormData.name,
-      phone: addressFormData.phone,
-      alternatePhone: addressFormData.alternatePhone || undefined,
-      email: addressFormData.email || user?.email || undefined,
-      pincode: addressFormData.pincode,
-      locality: addressFormData.locality,
-      addressString: addressFormData.addressString,
-      landmark: addressFormData.landmark || undefined,
-      city: addressFormData.city,
-      state: addressFormData.state,
-      country: addressFormData.country || 'India',
-      tag: addressFormData.tag,
-      deliveryInstructions: addressFormData.deliveryInstructions || undefined,
-      latitude: addressFormData.latitude,
-      longitude: addressFormData.longitude,
-    };
-
-    setIsAddressSaving(true);
-    try {
-      if (editingAddressId === 'new') {
-        await userService.addAddress(payload);
-        toast.success('New address added successfully!');
-      } else {
-        await userService.updateAddress(editingAddressId, payload);
-        toast.success('Address modified successfully!');
-      }
-      await fetchAddressesList();
-      setIsAddressModalOpen(false);
-      setEditingAddressId(null);
-      setAddressFormData(null);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to store address information');
-    } finally {
-      setIsAddressSaving(false);
-    }
   };
 
   const handleDeleteAddress = async (id) => {
@@ -456,7 +216,7 @@ export function DashboardProvider({ children }) {
       await userService.deleteAddress(id);
       toast.success('Address deleted successfully!', { id: toastId });
       await fetchAddressesList();
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to delete address', { id: toastId });
     }
   };
@@ -467,7 +227,7 @@ export function DashboardProvider({ children }) {
       await userService.setDefaultAddress(id);
       toast.success('Default delivery address set!', { id: toastId });
       await fetchAddressesList();
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to set default address', { id: toastId });
     }
   };
@@ -500,9 +260,9 @@ export function DashboardProvider({ children }) {
     setActiveTab,
     mobileShowContent,
     setMobileShowContent,
-    isUpdatingProfile,
+
     isUploadingAvatar,
-    isPreferencesSaving,
+
     selectedOrderId,
     setSelectedOrderId,
     selectedOrderItemIndex,
@@ -521,24 +281,17 @@ export function DashboardProvider({ children }) {
     isAddressesLoading,
     isLoadingRecentlyViewed,
     refetchDashboardData,
-    profileForm,
-    setProfileForm,
-    prefsForm,
-    setPrefsForm,
+
     editingAddressId,
     setEditingAddressId,
-    addressFormData,
-    setAddressFormData,
+
     isAddressModalOpen,
     setIsAddressModalOpen,
     selectedInvoiceOrder,
     setSelectedInvoiceOrder,
     reviewingProduct,
     setReviewingProduct,
-    isAddressSaving,
-    setIsAddressSaving,
-    isDetectingLocation,
-    setIsDetectingLocation,
+
     orderFilter,
     setOrderFilter,
     filteredOrders,
@@ -546,19 +299,22 @@ export function DashboardProvider({ children }) {
     orderItems,
     selectedOrder,
     selectedItem,
-    handleProfileSave,
-    handlePreferencesSave,
+
     handleAvatarClick,
     handleAvatarChange,
-    handleUseCurrentLocation,
+
     handleAddressEdit,
-    handleAddressSave,
+
     handleDeleteAddress,
     handleSetDefaultAddress,
     downloadInvoice,
   };
 
-  return <DashboardContext.Provider value={contextValue}>{children}</DashboardContext.Provider>;
+  return (
+    <Profiler id="DashboardContext" onRender={logRenderMetrics}>
+      <DashboardContext.Provider value={contextValue}>{children}</DashboardContext.Provider>
+    </Profiler>
+  );
 }
 
 export function useDashboard() {

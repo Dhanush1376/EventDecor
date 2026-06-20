@@ -348,7 +348,7 @@ export class LoyaltyService {
     rating: number,
     hasPhoto: boolean,
     hasVideo: boolean,
-    reviewId: string,
+    _reviewId: string,
   ) {
     const session = await mongoose.startSession();
     session.startTransaction();

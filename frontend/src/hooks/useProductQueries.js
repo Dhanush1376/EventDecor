@@ -57,7 +57,7 @@ export function useCategories(options = {}) {
     ...restOptions
   } = options;
   return useQuery({
-    queryKey: ['categories'],
+    queryKey: ['product_categories'],
     queryFn: async () => {
       const res = await productService.getCategories();
       return res.success ? res.data : res;

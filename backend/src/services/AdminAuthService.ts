@@ -110,7 +110,7 @@ class AdminAuthService {
     await FailedLoginAttempt.deleteOne({ email: cleanEmail });
   }
 
-  static async adminLogin(email: string, password: string, ip: string, userAgent: string) {
+  static async adminLogin(email: string, password: string, ip: string, _userAgent: string) {
     const cleanEmail = canonicalizeEmail(email);
 
     const lockoutRecord = await FailedLoginAttempt.findOne({ email: cleanEmail });
@@ -213,7 +213,7 @@ class AdminAuthService {
     };
   }
 
-  static async generateAdminPasswordResetToken(email: string, ip: string): Promise<string> {
+  static async generateAdminPasswordResetToken(email: string, _ip: string): Promise<string> {
     const cleanEmail = canonicalizeEmail(email);
 
     const user = await User.findOne({ email: cleanEmail }).select('role');

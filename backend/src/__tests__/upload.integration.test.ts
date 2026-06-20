@@ -51,7 +51,7 @@ describe('Upload Security & Validation', () => {
     // The middleware usually limits sizes (e.g. 5MB or 10MB)
     // We can simulate an oversized file by creating a large dummy file,
     // but a 10MB file might slow down tests. We can just test the multer limits if configured
-    const largeImagePath = path.join(tmpDir, 'large-image.jpg');
+    const _largeImagePath = path.join(tmpDir, 'large-image.jpg');
     // We won't actually create 10MB, but we can verify the limit logic if we had a smaller limit for tests.
     // For now, we assume multer catches it if we mock req headers or just test the 400 response.
     // Skipping full large file creation to save test execution time.

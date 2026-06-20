@@ -41,7 +41,6 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
     order.shippingAddress?.address || order.deliveryAddress?.addressString || order.address || '';
   let addressLine2 = '';
   let pin = '';
-  let landmark = '';
 
   if (order.shippingAddress || order.deliveryAddress) {
     const addrObj = order.shippingAddress || order.deliveryAddress;
@@ -53,7 +52,6 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
       addressLine2 = parts.join(', ');
     }
     pin = addrObj.pincode || '';
-    landmark = addrObj.landmark || '';
   }
 
   const items = order.items || [];

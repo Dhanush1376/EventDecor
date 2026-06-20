@@ -63,7 +63,7 @@ export function DynamicCustomOrderWizard({
         if (res.success && res.data?.types) {
           setConfig(res.data);
         }
-      } catch (err) {
+      } catch (_err) {
         toast.error('Failed to load custom order configuration');
       } finally {
         setLoadingConfig(false);
@@ -85,7 +85,7 @@ export function DynamicCustomOrderWizard({
           } else {
             localStorage.removeItem(draftKey);
           }
-        } catch (e) {}
+        } catch (_e) {}
       }
       setDraftRestored(true);
     }
@@ -168,7 +168,7 @@ export function DynamicCustomOrderWizard({
       } else {
         toast.error(res.message || 'Submission failed');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occurred during submission.');
     } finally {
       setIsSubmitting(false);

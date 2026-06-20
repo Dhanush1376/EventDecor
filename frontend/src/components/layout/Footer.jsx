@@ -8,8 +8,8 @@ export function Footer() {
   const { contact, footer, navigation } = useWebsiteContent();
   const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
   const logoWords = logoText.split(' ');
-  const firstWord = logoWords[0] || 'SIRI';
-  const restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
+  const _firstWord = logoWords[0] || 'SIRI';
+  const _restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
   const currentYear = new Date().getFullYear();
   const phone = contact?.phone || footer?.phone || '';
   const email = contact?.email || footer?.email || CONTACT_EMAIL;

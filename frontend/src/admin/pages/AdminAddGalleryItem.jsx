@@ -85,7 +85,7 @@ export function AdminAddGalleryItem() {
             navigate('/admin/gallery');
           }
         }
-      } catch (err) {
+      } catch (_err) {
         toast.error('Error loading data');
       } finally {
         setLoading(false);
@@ -153,7 +153,7 @@ export function AdminAddGalleryItem() {
           navigate('/admin/gallery');
         }
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error(isEditing ? 'Failed to update' : 'Failed to create');
     } finally {
       setSubmitting(false);

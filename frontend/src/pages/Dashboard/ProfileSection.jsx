@@ -1,9 +1,50 @@
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
+import { userService } from '../../services/domainServices';
+import toast from 'react-hot-toast';
 
 export function ProfileSection() {
-  const { user, profileForm, setProfileForm, handleProfileSave, isUpdatingProfile } =
-    useDashboard();
+  const { user, checkAuth } = useDashboard();
+
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    phone: '',
+    gender: '',
+    dateOfBirth: '',
+  });
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        name: user.name || '',
+        phone: user.phone || '',
+        gender: user.gender || '',
+        dateOfBirth: user.dateOfBirth || '',
+      });
+    }
+  }, [user]);
+
+  const handleProfileSave = async (e) => {
+    e.preventDefault();
+    if (!profileForm.name.trim()) {
+      toast.error('Full name cannot be blank');
+      return;
+    }
+    setIsUpdatingProfile(true);
+    try {
+      const res = await userService.updateProfile(profileForm);
+      if (res.success) {
+        toast.success('Profile information updated successfully!');
+        await checkAuth();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update profile details');
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
 
   return (
     <motion.div

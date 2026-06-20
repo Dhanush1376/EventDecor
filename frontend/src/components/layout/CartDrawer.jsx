@@ -5,7 +5,7 @@ import React, { useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import { prefetchManager } from '../../utils/prefetchManager';
 
-const EMPTY_CART_ILLU =
+const _EMPTY_CART_ILLU =
   'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129342/event_decor_ecommerce/assets/event_decor_empty_cart_illustration.jpg';
 
 export function CartDrawer({ isOpen, onClose }) {

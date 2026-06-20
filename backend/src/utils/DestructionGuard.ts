@@ -31,7 +31,7 @@ export const DestructionGuard = (schema: Schema) => {
             processId: process.pid,
             timestamp: new Date().toISOString(),
           });
-        } catch (e) {
+        } catch {
           // Ignore
         }
 

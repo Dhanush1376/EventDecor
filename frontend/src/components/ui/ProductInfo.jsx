@@ -5,14 +5,14 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
 
-export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
+export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
   const navigate = useNavigate();
   const { attemptAddToCart } = useCart();
   const { toggleItem, isWishlisted } = useWishlist();
   const { runProtectedAction } = useAuth();
-  const [quantity, setQuantity] = React.useState(1);
+  const [quantity, _setQuantity] = React.useState(1);
   const [added, setAdded] = React.useState(false);
-  const [startingChat, setStartingChat] = React.useState(false);
+  const [_startingChat, _setStartingChat] = React.useState(false);
 
   const handleWhatsAppChat = () => {
     if (!product) return;
@@ -355,11 +355,14 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
           {canPurchase && (
             <button
               ref={atcRef}
-              onClick={handleAddToCart}
-              className={`!py-3 rounded-full flex items-center justify-center gap-2 group cursor-pointer shadow-xl transition-all font-bold px-4 ${
-                added
-                  ? 'bg-[#e0d6b8] text-[#1a1c1a]'
-                  : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
+              onClick={product.stock <= 0 ? undefined : handleAddToCart}
+              disabled={product.stock <= 0}
+              className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-xl transition-all font-bold px-4 ${
+                product.stock <= 0
+                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                  : added
+                    ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-pointer'
+                    : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] cursor-pointer'
               }`}
             >
               {added ? (
@@ -370,22 +373,31 @@ export function ProductInfo({ product, atcRef, maxQuantity = 10 }) {
               ) : (
                 <>
                   <span className="material-symbols-outlined text-[16px] group-hover:rotate-12 transition-transform shrink-0">
-                    shopping_bag
+                    {product.stock <= 0 ? 'remove_shopping_cart' : 'shopping_bag'}
                   </span>
-                  <span className="text-[11px] uppercase tracking-widest">Bag</span>
+                  <span className="text-[11px] uppercase tracking-widest">
+                    {product.stock <= 0 ? 'Out of Stock' : 'Bag'}
+                  </span>
                 </>
               )}
             </button>
           )}
           {canRent && (
             <button
-              onClick={handleRentNow}
-              className={`!py-3 rounded-full flex items-center justify-center gap-2 group cursor-pointer shadow-xl transition-all font-bold px-4 bg-[#8c7335] text-white hover:bg-[#725c29]`}
+              onClick={product.rentalStock <= 0 ? undefined : handleRentNow}
+              disabled={product.rentalStock <= 0}
+              className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-xl transition-all font-bold px-4 ${
+                product.rentalStock <= 0
+                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                  : 'bg-[#8c7335] text-white hover:bg-[#725c29] cursor-pointer'
+              }`}
             >
               <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
-                event_available
+                {product.rentalStock <= 0 ? 'event_busy' : 'event_available'}
               </span>
-              <span className="text-[11px] uppercase tracking-widest">Rent</span>
+              <span className="text-[11px] uppercase tracking-widest">
+                {product.rentalStock <= 0 ? 'No Rental Stock' : 'Rent'}
+              </span>
             </button>
           )}
 

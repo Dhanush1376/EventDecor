@@ -108,7 +108,7 @@ class PerformanceMonitor {
       });
 
       observer.observe({ type: 'layout-shift', buffered: true });
-    } catch (e) {
+    } catch (_e) {
       // Browser doesn't support PerformanceObserver
     }
   }
@@ -125,7 +125,7 @@ class PerformanceMonitor {
         }
       });
       observer.observe({ type: 'largest-contentful-paint', buffered: true });
-    } catch (e) {
+    } catch (_e) {
       // Not supported
     }
   }
@@ -141,7 +141,7 @@ class PerformanceMonitor {
         }
       });
       observer.observe({ type: 'paint', buffered: true });
-    } catch (e) {
+    } catch (_e) {
       // Not supported
     }
   }
@@ -157,7 +157,7 @@ class PerformanceMonitor {
         }
       });
       observer.observe({ type: 'first-input', buffered: true });
-    } catch (e) {
+    } catch (_e) {
       // Not supported
     }
   }
@@ -176,7 +176,7 @@ class PerformanceMonitor {
         }
       });
       observer.observe({ type: 'event', durationThreshold: 40, buffered: true });
-    } catch (e) {
+    } catch (_e) {
       // Not supported
     }
   }

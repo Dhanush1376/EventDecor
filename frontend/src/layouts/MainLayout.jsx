@@ -13,10 +13,17 @@ import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { WhatsAppWidget } from '../components/ui/WhatsAppWidget';
 import { getRouteSkeletonVariant, RouteSkeleton } from '../components/ui/RouteSkeleton';
 import { AuthGate } from '../components/auth/AuthGate';
+import { ScrollToTopButton } from '../components/ui';
 
 export function MainLayout() {
   const { pathname } = useLocation();
-  const { isCartOpen, setIsCartOpen, purchaseCartCount = 0, rentalCartCount = 0, activeCartMode } = useCart();
+  const {
+    isCartOpen,
+    setIsCartOpen,
+    _purchaseCartCount = 0,
+    _rentalCartCount = 0,
+    _activeCartMode,
+  } = useCart();
 
   // Scroll to top on route change with a slight delay to allow exit animations if any
   useEffect(() => {
@@ -79,8 +86,9 @@ export function MainLayout() {
         </ErrorBoundary>
       </main>
       {pathname !== '/cart' && <Footer />}
-      {(pathname !== '/cart' || (activeCartMode === 'rental' ? rentalCartCount === 0 : purchaseCartCount === 0)) && <BottomNav />}
+      <BottomNav />
       <WhatsAppWidget />
+      <ScrollToTopButton />
       <ConsentPopup />
     </div>
   );

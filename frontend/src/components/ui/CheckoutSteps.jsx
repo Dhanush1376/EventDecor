@@ -12,6 +12,15 @@ export function CheckoutSteps({
         {/* Left: Brand/Title - Mobile Top Bar */}
         <div className="w-full md:w-auto flex items-center justify-between md:justify-start">
           <div className="flex items-center gap-2">
+            {currentStep > 0 && onStepClick && (
+              <button
+                onClick={() => onStepClick(currentStep - 1)}
+                className="w-10 h-10 min-h-0 rounded-full flex items-center justify-center bg-surface-container-low text-secondary hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer mr-1 -ml-2"
+                aria-label="Go back to previous step"
+              >
+                <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+              </button>
+            )}
             {orderType === 'rental' && (
               <span className="bg-primary/10 text-primary border border-primary/20 text-[9px] font-extrabold uppercase tracking-[0.2em] px-2 py-0.5 rounded-sm flex items-center gap-1">
                 Rental
@@ -37,7 +46,9 @@ export function CheckoutSteps({
                 <React.Fragment key={step}>
                   <div
                     onClick={() => onStepClick?.(index)}
-                    className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 z-10 transition-all duration-300 cursor-pointer hover:opacity-80 active:scale-95 group ${isActive || isCompleted ? 'text-on-surface' : 'text-secondary/70'}`}
+                    role="button"
+                    aria-label={`Go to ${step} step`}
+                    className={`flex flex-col sm:flex-row items-center justify-center p-2 min-w-[48px] min-h-[48px] gap-1 sm:gap-2 z-10 transition-all duration-300 cursor-pointer hover:opacity-80 active:scale-95 group ${isActive || isCompleted ? 'text-on-surface' : 'text-secondary/70'}`}
                   >
                     <motion.div
                       layout

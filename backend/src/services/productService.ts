@@ -530,7 +530,7 @@ class ProductService {
     return product;
   }
 
-  static async syncToGallery(product: any, actor?: any) {
+  static async syncToGallery(product: any, _actor?: any) {
     try {
       let galleryItem = await Gallery.findOne({ linkedProducts: product._id });
       if (galleryItem) {
@@ -596,3 +596,4 @@ class ProductService {
 }
 
 export default ProductService;
+// Triggered restart to clear in-memory categoryCache

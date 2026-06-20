@@ -139,7 +139,7 @@ class ExplorationEngine {
    * Interleave two arrays such that explore items are spread evenly
    * throughout the list (not clustered at the end).
    */
-  private interleave(exploit: any[], explore: any[], seed: number): any[] {
+  private interleave(exploit: any[], explore: any[], _seed: number): any[] {
     if (explore.length === 0) return exploit;
     if (exploit.length === 0) return explore;
 

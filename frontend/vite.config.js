@@ -34,12 +34,14 @@ export default defineConfig({
     cssMinify: 'lightningcss',
     sourcemap: process.env.NODE_ENV === 'production' ? false : 'inline',
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 300,
+    // Bundle Size Budget: Warn at 250KB per chunk to catch regressions early.
+    // Target: initial JS load < 500KB total (framework + state-networking + main).
+    chunkSizeWarningLimit: 250,
     reportCompressedSize: true,
     assetsInlineLimit: 4096,
     modulePreload: {
       polyfill: true,
-      resolveDependencies: (filename, deps, { hostId, hostType }) => {
+      resolveDependencies: (filename, deps, { hostId: _hostId, hostType: _hostType }) => {
         // Preload only react/router critical chunks for initial load
         return deps.filter(
           (dep) =>

@@ -6,7 +6,14 @@ import { handleImageError } from '../../utils/imageUtils';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  EmptyState,
+  AdminSkeleton,
+  FilterBar,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 export function AdminGallery() {
   const navigate = useNavigate();
@@ -15,7 +22,7 @@ export function AdminGallery() {
   const [filter, setFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
-  const [showUpload, setShowUpload] = useState(false);
+  const [_showUpload, setShowUpload] = useState(false);
   const [newItem, setNewItem] = useState({
     title: '',
     teluguTitle: '',
@@ -30,7 +37,7 @@ export function AdminGallery() {
     type: 'inspiration',
     linkedProducts: [],
   });
-  const [products, setProducts] = useState([]);
+  const [_products, setProducts] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const {
     searchQuery,
@@ -91,7 +98,7 @@ export function AdminGallery() {
     navigate(`/admin/gallery/edit/${item._id || item.id}`);
   };
 
-  const handleAiAutofill = () => {
+  const _handleAiAutofill = () => {
     if (!newItem.image) {
       toast.error('Please upload a photo first for AI Vision analysis!');
       return;
@@ -118,7 +125,7 @@ export function AdminGallery() {
     }, 1200);
   };
 
-  const handleUpload = async (e) => {
+  const _handleUpload = async (e) => {
     e.preventDefault();
     if (!newItem.image || !newItem.title || !newItem.category) {
       return toast.error('Please fill in title, category, and upload an image');
@@ -149,7 +156,7 @@ export function AdminGallery() {
           fetchData();
         }
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error(editingId ? 'Failed to update' : 'Failed to create');
     }
   };

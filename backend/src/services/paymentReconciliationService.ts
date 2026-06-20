@@ -96,7 +96,7 @@ export class PaymentReconciliationService {
           rzpStatus = payment.status;
           rzpAmount = payment.amount;
         }
-      } catch (err) {
+      } catch {
         // Ignore API errors during reconciliation
       }
 
@@ -400,7 +400,7 @@ export class PaymentReconciliationService {
             );
             return; // Successfully recovered
           }
-        } catch (apiErr) {
+        } catch {
           logger.warn(
             `[RECONCILE] Could not fetch Razorpay order ${entity.razorpayOrderId}, assuming abandoned.`,
           );

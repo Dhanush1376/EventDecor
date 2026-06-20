@@ -2,6 +2,7 @@ import { createClient } from 'redis';
 export type RedisClientType = ReturnType<typeof createClient>;
 import * as Sentry from '@sentry/node';
 import logger from '../config/logger';
+import { AlertingService } from '../services/AlertingService';
 
 const getRedisUrl = () => process.env.REDIS_URL?.trim();
 const isTlsRedis = () => {
@@ -39,6 +40,13 @@ const createRedisConfig = () => {
         logger.error('[REDIS] Max reconnect attempts reached in local dev. Stopping reconnection.');
         return new Error('Max reconnect attempts reached');
       }
+
+      if (isProduction && retries > 10 && retries % 10 === 0) {
+        AlertingService.databaseAlert('Redis Reconnection Loop', {
+          error: `Redis has been trying to reconnect for ${retries} attempts.`,
+        }).catch((e) => logger.error('Alert failed:', e));
+      }
+
       return delay;
     },
   };
@@ -79,12 +87,24 @@ export const initRedis = async (): Promise<void> => {
             logger.error(
               `[REDIS ${name}] Upstash Free Limit Exceeded. Gracefully disconnecting to prevent reconnect loops.`,
             );
+            if (process.env.NODE_ENV === 'production') {
+              AlertingService.databaseAlert('Redis Max Limit Exceeded', {
+                error: 'Upstash Free Limit Exceeded, disconnecting Redis.',
+              }).catch((e) => logger.error('Alert failed:', e));
+            }
             (global as any).upstashDisconnectLogged = true;
           }
           // Disconnect immediately so node-redis stops the infinite auto-reconnect cycle
           client.disconnect().catch(() => {});
         } else if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
           logger.warn(`[REDIS ${name}] Transient network issue (${err.code}).`);
+          if (process.env.NODE_ENV === 'production' && !(global as any).redisDisconnectAlerted) {
+            AlertingService.databaseAlert('Redis Disconnected', {
+              error: err.message,
+              code: err.code,
+            }).catch(() => {});
+            (global as any).redisDisconnectAlerted = true;
+          }
         } else if (
           err.message &&
           (err.message.includes('Connection is closed') || err.message.includes('closed'))
@@ -98,7 +118,10 @@ export const initRedis = async (): Promise<void> => {
           }
         }
       });
-      client.on('ready', () => logger.info(`[REDIS ${name}] ready`));
+      client.on('ready', () => {
+        logger.info(`[REDIS ${name}] ready`);
+        (global as any).redisDisconnectAlerted = false; // Reset alert so it can fire again if it goes down later
+      });
       client.on('reconnecting', () => logger.warn(`[REDIS ${name}] Reconnecting…`));
       client.on('end', () => logger.warn(`[REDIS ${name}] Connection closed`));
     };
@@ -123,6 +146,11 @@ export const initRedis = async (): Promise<void> => {
       process.exit(1);
     } else {
       logger.warn('Running without Redis fallback (local dev).');
+      if (isProduction) {
+        AlertingService.databaseAlert('Redis Fallback Mode', {
+          error: 'Redis initialization failed. Running in memory fallback mode.',
+        }).catch((e) => logger.error('Alert failed:', e));
+      }
       redisClient = null;
       pubClient = null;
       subClient = null;

@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { PageHeader, AdminSkeleton, StatusBadge, fadeUp, stagger } from '../components/AdminUIKit';
+import { PageHeader, StatusBadge, AdminSkeleton, fadeUp, stagger } from '../components/AdminUIKit';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { policyService } from '../../services/domainServices';

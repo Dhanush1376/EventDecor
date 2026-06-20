@@ -6,21 +6,20 @@ import { useCheckout } from './CheckoutProvider';
 
 export default function CheckoutPaymentStep() {
   const {
-    activeStep,
+    _activeStep,
     setActiveStep,
     activeSelectedAddress,
-    isAddingNewAddress,
+    _isAddingNewAddress,
     paymentOption,
     setPaymentOption,
-    codConfirmed,
+    _codConfirmed,
     setCodConfirmed,
     codOtpSent,
-    codOtpInput,
-    setCodOtpInput,
+
     codVerified,
     isSendingOtp,
     paymentError,
-    setPaymentError,
+    _setPaymentError,
     handleSendCodOtp,
     handleVerifyCodOtp,
     handleConfirmOrder,
@@ -30,7 +29,7 @@ export default function CheckoutPaymentStep() {
     totalsError,
     appliedCoupon,
     fetchBackendTotals,
-    settings,
+    _settings,
     user,
     hasRentalItems,
     rentalStartDate,
@@ -40,6 +39,7 @@ export default function CheckoutPaymentStep() {
   // References and state for 4-digit OTP grid
   const otpRefs = [React.useRef(null), React.useRef(null), React.useRef(null), React.useRef(null)];
   const [otpDigits, setOtpDigits] = React.useState(['', '', '', '']);
+  const [codOtpInput, setCodOtpInput] = React.useState('');
 
   // Sync internal digits state with global codOtpInput context state
   React.useEffect(() => {
@@ -141,7 +141,7 @@ export default function CheckoutPaymentStep() {
           toast.error('Please enter the 4-digit verification code');
           return;
         }
-        handleVerifyCodOtp();
+        handleVerifyCodOtp(codOtpInput);
       } else {
         handleConfirmOrder();
       }
@@ -195,18 +195,20 @@ export default function CheckoutPaymentStep() {
       )}
 
       {/* Payment Header */}
-      <div className="bg-surface-bright mb-4 p-4 text-[10px] font-label font-bold text-on-surface uppercase tracking-widest border border-outline-variant/40 rounded-lg shadow-xs">
-        Payment Options
+      <div className="p-4 sm:p-6 mb-2">
+        <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider">
+          Payment Options
+        </h2>
       </div>
 
-      <div className="bg-surface-bright p-5 shadow-xs border border-outline-variant/40 space-y-3 rounded-lg">
+      <div className="px-4 sm:px-6 flex flex-col gap-4 mb-4">
         {/* Option: Razorpay (Secure Online Payment) */}
         <div
           onClick={() => setPaymentOption('razorpay')}
-          className={`border rounded-lg p-4 transition-all duration-300 cursor-pointer ${
+          className={`relative p-5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${
             paymentOption === 'razorpay'
-              ? 'bg-primary/5 border-primary shadow-xs'
-              : 'border-outline-variant/40 hover:border-primary/30'
+              ? 'border-primary bg-primary/5 shadow-md'
+              : 'border-outline-variant/40 bg-surface-bright hover:border-primary/40 hover:shadow-sm'
           }`}
         >
           <div className="flex items-start gap-3.5 select-none">
@@ -246,13 +248,13 @@ export default function CheckoutPaymentStep() {
               setPaymentOption('cod');
             }
           }}
-          className={`border rounded-lg p-4 transition-all duration-300 ${
+          className={`relative p-5 rounded-xl border transition-all duration-300 overflow-hidden ${
             backendTotals.total > 50000
               ? 'opacity-45 cursor-not-allowed border-outline-variant/20 bg-gray-50/50'
               : 'cursor-pointer ' +
                 (paymentOption === 'cod'
-                  ? 'bg-primary/5 border-primary shadow-xs'
-                  : 'border-outline-variant/40 hover:border-primary/30')
+                  ? 'border-primary bg-primary/5 shadow-md'
+                  : 'border-outline-variant/40 bg-surface-bright hover:border-primary/40 hover:shadow-sm')
           }`}
         >
           <div className="flex items-start gap-3.5 select-none">

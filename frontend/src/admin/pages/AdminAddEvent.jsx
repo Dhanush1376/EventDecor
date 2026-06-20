@@ -96,7 +96,7 @@ export function AdminAddEvent() {
               navigate('/admin/events');
             }
           }
-        } catch (err) {
+        } catch (_err) {
           toast.error('Failed to load event details');
         } finally {
           setIsLoading(false);
@@ -164,7 +164,7 @@ export function AdminAddEvent() {
         if (refreshEvents) refreshEvents();
         navigate('/admin/events');
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to save event portfolio.');
     } finally {
       setIsSaving(false);

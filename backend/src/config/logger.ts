@@ -1,4 +1,5 @@
 import winston from 'winston';
+import { Syslog } from 'winston-syslog';
 import { requestContextStorage } from '../middleware/requestTracker';
 
 // Winston format to dynamically extract the active context and inject request metadata
@@ -10,7 +11,7 @@ const requestContextFormat = winston.format((info) => {
       if (store.userId) info.userId = store.userId;
       if (store.ip) info.ip = store.ip;
     }
-  } catch (err) {
+  } catch {
     // Fail silently to avoid interrupting application operations
   }
   return info;
@@ -153,6 +154,50 @@ const logger = winston.createLogger({
     }),
   ],
 });
+
+// Add external HTTP webhook log drain (e.g. Datadog, BetterStack)
+if (process.env.LOG_WEBHOOK_URL) {
+  try {
+    const url = new URL(process.env.LOG_WEBHOOK_URL);
+    logger.add(
+      new winston.transports.Http({
+        host: url.hostname,
+        path: url.pathname,
+        port: url.port ? parseInt(url.port, 10) : url.protocol === 'https:' ? 443 : 80,
+        ssl: url.protocol === 'https:',
+        headers: {
+          Authorization: `Bearer ${process.env.LOG_WEBHOOK_TOKEN || ''}`,
+          'Content-Type': 'application/json',
+        },
+        format: winston.format.combine(
+          requestContextFormat(),
+          secretMaskingFormat(),
+          winston.format.timestamp(),
+          winston.format.json(),
+        ),
+      }),
+    );
+  } catch (_e) {
+    logger.error('Invalid LOG_WEBHOOK_URL provided.');
+  }
+}
+
+// Add Papertrail / Syslog drain
+if (process.env.PAPERTRAIL_URL && process.env.PAPERTRAIL_PORT) {
+  logger.add(
+    new Syslog({
+      host: process.env.PAPERTRAIL_URL,
+      port: parseInt(process.env.PAPERTRAIL_PORT, 10),
+      app_name: 'siri-arts-backend',
+      localhost: 'production-env',
+      format: winston.format.combine(
+        requestContextFormat(),
+        secretMaskingFormat(),
+        winston.format.json(),
+      ),
+    }),
+  );
+}
 
 // Production: stdout JSON for Render/log drains (file transports are best-effort on ephemeral disks)
 logger.add(

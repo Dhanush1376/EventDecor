@@ -41,7 +41,7 @@ export function About() {
 
   const [cmsContent, setCmsContent] = useState(null);
   const [galleryPreview, setGalleryPreview] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
 
   const specScrollRef = useRef(null);
   const [isDraggingSpec, setIsDraggingSpec] = useState(false);

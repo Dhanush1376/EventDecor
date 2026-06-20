@@ -1,7 +1,7 @@
 import api from '../api';
 import { hasSessionMarker } from '../../utils/authStorage';
 
-const checkAuthLocal = () => hasSessionMarker();
+const _checkAuthLocal = () => hasSessionMarker();
 
 export const cmsService = {
   getPublished: async () => {

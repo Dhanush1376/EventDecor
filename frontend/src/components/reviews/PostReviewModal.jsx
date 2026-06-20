@@ -138,7 +138,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
       onClose();
       // reset
       setStep(1);
-    } catch (err) {
+    } catch (_err) {
       toast.error('Could not finalize review submission.');
     } finally {
       setIsSubmitting(false);

@@ -39,7 +39,8 @@ jest.mock('../utils/safetyLockCache', () => ({
 jest.mock('../middleware/csrfMiddleware', () => ({
   __esModule: true,
   validateCsrf: (req: any, res: any, next: any) => next(),
-  issueCsrfToken: (req: any, res: any) => res.status(200).json({ success: true, csrfToken: 'test-token' }),
+  issueCsrfToken: (req: any, res: any) =>
+    res.status(200).json({ success: true, csrfToken: 'test-token' }),
   clearCsrfCookie: jest.fn(),
   regenerateCsrfToken: jest.fn(() => 'test-token'),
 }));
@@ -68,38 +69,38 @@ const createMockQuery = (resolvedValue: any) => {
 
 describe('Admin Access Invitation & Approval System', () => {
   let superAdminToken: string;
-  let moderatorToken: string;
+  let _moderatorToken: string;
   let customerToken: string;
 
   beforeAll(() => {
     superAdminToken = jwt.sign(
       { id: 'super_admin_id', role: 'super_admin', email: 'super@siriartsandcrafts.com' },
       process.env.JWT_SECRET!,
-      { expiresIn: '15m' }
+      { expiresIn: '15m' },
     );
 
     moderatorToken = jwt.sign(
       { id: 'moderator_id', role: 'moderator', email: 'mod@siriartsandcrafts.com' },
       process.env.JWT_SECRET!,
-      { expiresIn: '15m' }
+      { expiresIn: '15m' },
     );
 
     customerToken = jwt.sign(
       { id: 'customer_id', role: 'customer', email: 'cust@example.com' },
       process.env.JWT_SECRET!,
-      { expiresIn: '15m' }
+      { expiresIn: '15m' },
     );
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default mock user resolve for auth checks
     mockUserFindById.mockImplementation((id) => {
       const roleMap: Record<string, string> = {
         super_admin_id: 'super_admin',
         moderator_id: 'moderator',
-        customer_id: 'customer'
+        customer_id: 'customer',
       };
       return createMockQuery({
         _id: id,
@@ -139,7 +140,7 @@ describe('Admin Access Invitation & Approval System', () => {
       mockUserFindOne.mockResolvedValue({
         _id: 'super_admin_id',
         email: 'super@siriartsandcrafts.com',
-        role: 'super_admin'
+        role: 'super_admin',
       });
 
       const res = await request(app)
@@ -156,7 +157,7 @@ describe('Admin Access Invitation & Approval System', () => {
       mockUserFindOne.mockResolvedValue({
         _id: 'target_id',
         email: 'target@example.com',
-        role: 'customer'
+        role: 'customer',
       });
 
       const res = await request(app)
@@ -173,14 +174,14 @@ describe('Admin Access Invitation & Approval System', () => {
       mockUserFindOne.mockResolvedValue({
         _id: 'target_id',
         email: 'target@example.com',
-        role: 'customer'
+        role: 'customer',
       });
       mockAdminInviteFindOne.mockResolvedValue(null);
       mockAdminInviteCreate.mockResolvedValue({
         _id: 'invite_id',
         email: 'target@example.com',
         roleAssigned: 'admin',
-        status: 'pending'
+        status: 'pending',
       });
 
       const res = await request(app)
@@ -202,7 +203,7 @@ describe('Admin Access Invitation & Approval System', () => {
         invitedUser: 'customer_id',
         roleAssigned: 'admin',
         status: 'pending',
-        save: jest.fn()
+        save: jest.fn(),
       };
       mockAdminInviteFindOne.mockResolvedValue(mockInvite);
 
@@ -214,14 +215,14 @@ describe('Admin Access Invitation & Approval System', () => {
             role: 'customer',
             email: 'cust@example.com',
             isVerified: true,
-            save: mockSaveUser
+            save: mockSaveUser,
           });
         }
         return createMockQuery({
           _id: id,
           role: 'customer',
           email: 'user@example.com',
-          isVerified: true
+          isVerified: true,
         });
       });
 
@@ -242,7 +243,7 @@ describe('Admin Access Invitation & Approval System', () => {
         invitedUser: 'customer_id',
         roleAssigned: 'admin',
         status: 'pending',
-        save: jest.fn()
+        save: jest.fn(),
       };
       mockAdminInviteFindOne.mockResolvedValue(mockInvite);
 

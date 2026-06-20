@@ -6,11 +6,6 @@ import { useAdmin } from '../context/AdminContext';
 import { handleImageError } from '../../utils/imageUtils';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import {
-  formatCurrency,
-  getRelativeTime,
-  fadeUp,
-  stagger,
-  CHART_COLORS,
   PageHeader,
   StatCard,
   ChartCard,
@@ -19,6 +14,11 @@ import {
   PeriodSelector,
   SkeletonDashboard,
   AdminToggle,
+  formatCurrency,
+  getRelativeTime,
+  fadeUp,
+  stagger,
+  CHART_COLORS,
 } from '../components/AdminUIKit';
 import {
   ResponsiveContainer,

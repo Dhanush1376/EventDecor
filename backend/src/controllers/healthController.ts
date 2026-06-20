@@ -37,7 +37,7 @@ export class HealthController {
       } else {
         checks.mongodb = { status: 'disconnected' };
       }
-    } catch (err: any) {
+    } catch {
       checks.mongodb = { status: 'error' };
     }
 
@@ -50,7 +50,7 @@ export class HealthController {
       } else {
         checks.redis = { status: 'not_configured' };
       }
-    } catch (err: any) {
+    } catch {
       checks.redis = { status: 'error' };
     }
 
@@ -128,7 +128,7 @@ export class HealthController {
             ? (usage.storage.usage / (1024 * 1024)).toFixed(2)
             : 0,
         };
-      } catch (e) {} // May fail if API rate limit exceeded
+      } catch {} // May fail if API rate limit exceeded
 
       checks.cloudinary = {
         status: pingResult.status === 'ok' ? 'connected' : 'error',
@@ -207,6 +207,19 @@ export class HealthController {
     try {
       const Product = require('../models/Product').default;
       const negativeStockCount = await Product.countDocuments({ stock: { $lt: 0 } });
+
+      if (negativeStockCount > 0) {
+        if (process.env.NODE_ENV === 'production' && !(global as any).negativeStockAlerted) {
+          const { AlertingService } = require('../services/AlertingService');
+          AlertingService.inventoryAnomaly('Negative Stock Detected during Health Check', {
+            count: negativeStockCount,
+          }).catch(() => {});
+          (global as any).negativeStockAlerted = true;
+        }
+      } else {
+        (global as any).negativeStockAlerted = false;
+      }
+
       checks.inventory = {
         status: negativeStockCount > 0 ? 'degraded' : 'healthy',
         negativeStockProducts: negativeStockCount,
@@ -231,6 +244,52 @@ export class HealthController {
       checks.refunds = { status: 'error', error: err.message };
     }
 
+    // Circuit Breakers
+    try {
+      const {
+        razorpayCircuitBreaker,
+        emailCircuitBreaker,
+        cloudinaryCircuitBreaker,
+        aiVisionCircuitBreaker,
+      } = require('../utils/CircuitBreaker');
+      checks.circuitBreakers = {
+        razorpay: razorpayCircuitBreaker.getStatus(),
+        email: emailCircuitBreaker.getStatus(),
+        cloudinary: cloudinaryCircuitBreaker.getStatus(),
+        aiVision: aiVisionCircuitBreaker.getStatus(),
+      };
+      const anyOpen = [
+        razorpayCircuitBreaker,
+        emailCircuitBreaker,
+        cloudinaryCircuitBreaker,
+        aiVisionCircuitBreaker,
+      ].some((cb: any) => cb.getState() === 'OPEN');
+      if (anyOpen) {
+        checks.circuitBreakers.status = 'degraded';
+      } else {
+        checks.circuitBreakers.status = 'healthy';
+      }
+    } catch (err: any) {
+      checks.circuitBreakers = { status: 'error', error: err.message };
+    }
+
+    // Webhook Dead-Letter Backlog
+    try {
+      const PaymentWebhookEvent = require('../models/PaymentWebhookEvent').default;
+      const deadLetterCount = await PaymentWebhookEvent.countDocuments({ status: 'dead_letter' });
+      const stuckProcessingCount = await PaymentWebhookEvent.countDocuments({
+        status: 'processing',
+        lastAttemptAt: { $lt: new Date(Date.now() - 30 * 60 * 1000) },
+      });
+      checks.webhookDeadLetter = {
+        status: deadLetterCount > 0 || stuckProcessingCount > 0 ? 'degraded' : 'healthy',
+        deadLetterCount,
+        stuckProcessingCount,
+      };
+    } catch (err: any) {
+      checks.webhookDeadLetter = { status: 'error', error: err.message };
+    }
+
     // System
     const memUsage = process.memoryUsage();
     checks.system = {
@@ -250,7 +309,9 @@ export class HealthController {
       checks.tempDisk?.status !== 'degraded' &&
       checks.outbox?.status !== 'degraded' &&
       checks.inventory?.status !== 'degraded' &&
-      checks.refunds?.status !== 'degraded';
+      checks.refunds?.status !== 'degraded' &&
+      checks.circuitBreakers?.status !== 'degraded' &&
+      checks.webhookDeadLetter?.status !== 'degraded';
 
     res.status(allHealthy ? 200 : 503).json({
       status: allHealthy ? 'healthy' : 'degraded',

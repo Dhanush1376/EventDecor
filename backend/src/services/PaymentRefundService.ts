@@ -1,10 +1,11 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import RefundRecord from '../models/RefundRecord';
 import logger from '../config/logger';
 import { RazorpayGateway } from '../utils/RazorpayGateway';
 import ApiError from '../utils/ApiError';
 import { refundQueue } from '../jobs/queues';
 import OutboxEvent from '../models/OutboxEvent';
+import { AlertingService } from './AlertingService';
 
 export class PaymentRefundService {
   /**
@@ -144,6 +145,16 @@ export class PaymentRefundService {
             payload: { refundRecordId: refundRecord._id.toString(), error: err.message },
           },
         ]);
+
+        // Alert payment team about permanently failed refund
+        await AlertingService.paymentFailure('Refund Exhausted All Retries', {
+          refundRecordId: refundRecord._id.toString(),
+          amount: refundRecord.amount,
+          entityType: refundRecord.entityType,
+          entityId: refundRecord.entityId?.toString(),
+          error: err.message,
+          retryCount: refundRecord.retryCount,
+        }).catch((e: any) => logger.error('AlertingService failed for refund:', e));
       } else {
         await RefundRecord.updateOne(
           { _id: refundRecord._id },

@@ -24,7 +24,7 @@ export function useRecommendationTracker({
   source = null,
 } = {}) {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { _isAuthenticated } = useAuth();
   const mountTimeRef = useRef(null);
   const maxScrollRef = useRef(0);
   const batchBufferRef = useRef([]);

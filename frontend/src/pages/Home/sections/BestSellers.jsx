@@ -13,7 +13,6 @@ export function BestSellers() {
   const cms = useWebsiteContent({ includeDefaults: false });
   const loading = cms?.loading;
   const config = cms?.featuredProducts || {};
-  if (config.isVisible === false) return null;
   const productIds = config.productIds || [];
 
   const { data, isPending, isError, refetch } = useProducts(
@@ -21,8 +20,10 @@ export function BestSellers() {
       ...(productIds.length > 0 ? { ids: productIds.join(',') } : { sort: 'newest' }),
       limit: config.maxDisplay || 10,
     },
-    { enabled: true },
+    { enabled: config.isVisible !== false },
   );
+
+  if (config.isVisible === false) return null;
 
   if (isPending || loading) {
     return (

@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { fadeUp, AdminToggle, SkeletonForm } from '../components/AdminUIKit';
+import { AdminToggle, fadeUp, SkeletonForm } from '../components/AdminUIKit';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
@@ -60,7 +60,7 @@ export function AdminAddCategory() {
               navigate('/admin/categories');
             }
           }
-        } catch (err) {
+        } catch (_err) {
           toast.error('Failed to load category details');
         } finally {
           setIsLoading(false);

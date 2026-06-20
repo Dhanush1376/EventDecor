@@ -7,12 +7,12 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
 import {
+  PageHeader,
+  SkeletonDashboard,
+  FilterBar,
+  CustomSelect,
   fadeUp,
   stagger,
-  PageHeader,
-  FilterBar,
-  SkeletonDashboard,
-  CustomSelect,
 } from '../components/AdminUIKit';
 
 const ROLE_WEIGHTS = {
@@ -47,8 +47,8 @@ export function AdminTeam() {
   const [submitting, setSubmitting] = useState(false);
 
   // Pagination states
-  const [page, setPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [_page, _setPage] = useState(1);
+  const [_totalCount, _setTotalCount] = useState(0);
 
   const fetchTeamData = async () => {
     try {

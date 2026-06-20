@@ -191,15 +191,23 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
               )}
               <h2
                 id="quickview-title"
-                className="font-headline text-[24px] md:text-headline-lg text-on-surface mb-4 md:mb-6 font-bold leading-tight"
+                className="font-headline text-[24px] md:text-headline-lg text-on-surface mb-4 md:mb-6 font-normal leading-tight"
               >
                 {product.title}
               </h2>
 
               <div className="flex items-baseline gap-4 mb-6 md:mb-10">
                 <span className="font-body font-bold text-[28px] md:text-[36px] text-on-surface">
-                  ₹{(product.itemType === 'event' ? (product.rentalPrice || product.price) : product.price)?.toLocaleString('en-IN') || '0'}
-                  {product.itemType === 'event' && <span className="font-label text-xs text-on-surface-variant/60 ml-1">/ day</span>}
+                  ₹
+                  {(product.itemType === 'event'
+                    ? product.rentalPrice || product.price
+                    : product.price
+                  )?.toLocaleString('en-IN') || '0'}
+                  {product.itemType === 'event' && (
+                    <span className="font-label text-xs text-on-surface-variant/60 ml-1">
+                      / day
+                    </span>
+                  )}
                 </span>
                 {product.itemType !== 'event' && product.oldPrice && (
                   <span className="font-body text-on-surface-variant/30 line-through text-[18px] md:text-[20px]">

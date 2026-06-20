@@ -75,7 +75,7 @@ export function GalleryDetail() {
   const [linkedProducts, setLinkedProducts] = useState([]);
   const [moreLikeThis, setMoreLikeThis] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState(null);
   const [pageUrl, setPageUrl] = useState('');
   const [isScrollingDown, setIsScrollingDown] = useState(false);
   const [imageHovered, setImageHovered] = useState(false);

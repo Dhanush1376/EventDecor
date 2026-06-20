@@ -29,7 +29,7 @@ export default function AdminServiceAreas() {
     try {
       const res = await rentalService.getServiceAreas();
       if (res.success) setAreas(res.data || []);
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to load service areas');
     } finally {
       setLoading(false);
@@ -73,7 +73,7 @@ export default function AdminServiceAreas() {
       await rentalService.deleteServiceArea(id);
       setAreas((prev) => prev.filter((a) => a._id !== id));
       toast.success('Service area deleted');
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to delete');
     }
   };

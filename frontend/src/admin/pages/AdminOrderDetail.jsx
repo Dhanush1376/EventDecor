@@ -8,7 +8,13 @@ import { useAdmin } from '../context/AdminContext';
 import { playSuccessBeep, playErrorBeep } from '../../utils/audioUtils';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  StatusBadge,
+  SkeletonDashboard,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 const allStatuses = [
   'Pending',

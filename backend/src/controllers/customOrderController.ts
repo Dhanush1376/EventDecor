@@ -249,7 +249,7 @@ export const submitCustomOrder = asyncHandler(async (req: any, res: Response) =>
       customerName: order.customerName,
       occasion: order.occasion,
     });
-  } catch (_) {
+  } catch {
     // Ignored
   }
 
@@ -406,7 +406,7 @@ export const submitProductCustomization = asyncHandler(async (req: any, res: Res
       customerName: order.customerName,
       productTitle: product.title,
     });
-  } catch (_) {
+  } catch {
     // Ignored
   }
 
@@ -700,7 +700,7 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
         previousStatus: prevStatus,
       });
     }
-  } catch (_) {}
+  } catch {}
 
   res.status(200).json(new ApiResponse(true, 'Order status updated', finalOrder));
 });
@@ -881,7 +881,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
           total: grandTotal,
         });
       }
-    } catch (_) {}
+    } catch {}
   }
 
   await order.save();
@@ -1034,7 +1034,7 @@ export const postMessage = asyncHandler(async (req: any, res: Response) => {
         customerName: order.customerName,
       });
     }
-  } catch (_) {}
+  } catch {}
 
   res.status(200).json(new ApiResponse(true, 'Message dispatched', order));
 });

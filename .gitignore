@@ -102,3 +102,7 @@ knip-report.json
 codebase_report.txt
 codebase_tree_report.txt
 
+# Temp Dev Artifacts
+frontend/eslint-results.json
+frontend/lint-errors.log
+frontend/errors.txt

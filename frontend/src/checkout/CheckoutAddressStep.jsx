@@ -92,14 +92,14 @@ export default function CheckoutAddressStep() {
     setSelectedAddressId,
     isAddingNewAddress,
     setIsAddingNewAddress,
-    isDetectingLocation,
+    _isDetectingLocation,
     newAddress,
     setNewAddress,
     addressError,
-    setAddressError,
+    _setAddressError,
     isProcessing,
     handleSaveNewAddress,
-    handleFetchCurrentLocation,
+    _handleFetchCurrentLocation,
     PINCODE_MAP,
     checkoutSteps,
   } = useCheckout();
@@ -155,7 +155,7 @@ export default function CheckoutAddressStep() {
       } else {
         toast.dismiss('geocoding');
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to auto-fill address from map', { id: 'geocoding' });
     }
   };
@@ -315,7 +315,9 @@ export default function CheckoutAddressStep() {
                           type="tel"
                           placeholder="Optional alternate number"
                           value={newAddress.alternatePhone}
-                          onChange={(e) => setNewAddress({ ...newAddress, alternatePhone: e.target.value })}
+                          onChange={(e) =>
+                            setNewAddress({ ...newAddress, alternatePhone: e.target.value })
+                          }
                           className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
                         />
                       </div>
@@ -364,7 +366,7 @@ export default function CheckoutAddressStep() {
                                   fetchAddressFromCoords(latitude, longitude);
                                   toast.success('Location found!', { id: 'gps' });
                                 },
-                                (err) => {
+                                (_err) => {
                                   toast.error('Could not access GPS', { id: 'gps' });
                                 },
                                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
@@ -559,7 +561,9 @@ export default function CheckoutAddressStep() {
                         id="deliveryInstructions"
                         placeholder="E.g. Leave with security, call before delivery"
                         value={newAddress.deliveryInstructions}
-                        onChange={(e) => setNewAddress({ ...newAddress, deliveryInstructions: e.target.value })}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, deliveryInstructions: e.target.value })
+                        }
                         className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all min-h-[70px] font-semibold"
                       />
                     </div>
@@ -568,7 +572,9 @@ export default function CheckoutAddressStep() {
                       <input
                         type="checkbox"
                         checked={newAddress.isDefault || false}
-                        onChange={(e) => setNewAddress({ ...newAddress, isDefault: e.target.checked })}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, isDefault: e.target.checked })
+                        }
                         className="w-4 h-4 rounded border-outline-variant/40 text-primary focus:ring-primary cursor-pointer"
                       />
                       <span className="text-[12px] text-on-surface">
@@ -611,67 +617,90 @@ export default function CheckoutAddressStep() {
   if (isSelectingList) {
     return (
       <>
-        <div className="bg-surface-bright pb-24">
-          <div className="p-4 max-w-2xl mx-auto flex items-center justify-between border-b border-outline-variant/15 mb-2">
-            <h2 className="font-semibold text-sm text-on-surface tracking-wide">Saved Addresses</h2>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+        <div className="bg-surface-container-low pb-24 -mt-2">
+          <div className="p-4 sm:p-6 max-w-2xl mx-auto flex items-center justify-between mb-2">
+            <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider">
+              Saved Addresses
+            </h2>
+            <button
               onClick={handleAddNew}
-              className="w-6 h-6 p-0 min-h-0 rounded-full border border-primary/50 text-primary bg-transparent flex items-center justify-center cursor-pointer hover:bg-primary hover:text-surface transition-all shrink-0"
-              title="Add New Address"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary/50 text-[10px] font-bold text-primary hover:bg-primary/5 transition-colors uppercase tracking-widest cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[12px] font-bold">add</span>
-            </motion.button>
+              <span className="material-symbols-outlined text-[14px]">add</span>
+              Add New
+            </button>
           </div>
 
-          <div className="divide-y divide-outline-variant/20">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 flex flex-col gap-4">
             {savedAddresses.map((addr) => {
               const addrId = addr._id || addr.id;
               const isSelected = selectedAddressId === addrId;
               return (
-                <div key={addrId} className="p-4">
-                  <div className="flex gap-3">
-                    <div
-                      className="pt-1 cursor-pointer"
-                      onClick={() => setSelectedAddressId(addrId)}
-                    >
+                <div
+                  key={addrId}
+                  onClick={() => setSelectedAddressId(addrId)}
+                  className={`relative p-5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${
+                    isSelected
+                      ? 'border-primary bg-primary/5 shadow-md'
+                      : 'border-outline-variant/40 bg-surface-bright hover:border-primary/40 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex gap-4">
+                    <div className="pt-1 shrink-0">
                       <div
-                        className={`w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center ${isSelected ? 'border-primary' : 'border-outline-variant'}`}
+                        className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${
+                          isSelected ? 'border-primary' : 'border-outline-variant'
+                        }`}
                       >
-                        {isSelected && <div className="w-2 h-2 rounded-full bg-primary"></div>}
+                        {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                       </div>
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[13px] font-bold text-on-surface">{addr.name}</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[14px] font-extrabold text-on-surface capitalize">
+                          {addr.name}
+                        </span>
                         {addr.tag && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border border-primary text-primary rounded-full">
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border border-primary text-primary rounded-full bg-primary/10">
                             {addr.tag}
                           </span>
                         )}
                       </div>
-                      <p className="text-[12px] text-secondary leading-relaxed mb-1">
+                      <p className="text-[13px] text-on-surface/85 leading-relaxed w-[90%] mb-2">
                         {addr.addressString || addr.address}, {addr.locality}, {addr.city},{' '}
                         {addr.state} {addr.pincode}
                       </p>
-                      <p className="text-[12px] text-secondary">
-                        Mobile: <span className="font-bold text-on-surface">{addr.phone}</span>
-                      </p>
+                      <div className="text-[12px] flex items-center gap-1.5 text-secondary">
+                        <span className="material-symbols-outlined text-[14px] text-primary">
+                          phone
+                        </span>
+                        <span>Mobile:</span>
+                        <span className="font-extrabold text-on-surface">{addr.phone}</span>
+                      </div>
 
-                      {isSelected && (
-                        <div className="flex gap-3 mt-4">
-                          <button className="px-6 py-2 border border-outline-variant rounded text-[11px] font-bold text-on-surface uppercase tracking-wider">
-                            Remove
-                          </button>
-                          <button
-                            onClick={() => handleEdit(addr)}
-                            className="px-6 py-2 border border-outline-variant rounded text-[11px] font-bold text-on-surface uppercase tracking-wider"
+                      <AnimatePresence>
+                        {isSelected && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                            animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                            className="flex gap-3 overflow-hidden"
                           >
-                            Edit
-                          </button>
-                        </div>
-                      )}
+                            <button className="px-5 py-2 border border-outline-variant/40 rounded-full text-[10px] font-bold text-on-surface uppercase tracking-widest hover:bg-surface-container transition-colors cursor-pointer bg-white">
+                              Remove
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(addr);
+                              }}
+                              className="px-5 py-2 border border-outline-variant/40 rounded-full text-[10px] font-bold text-on-surface uppercase tracking-widest hover:bg-surface-container transition-colors cursor-pointer bg-white"
+                            >
+                              Edit
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </div>

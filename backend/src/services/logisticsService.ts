@@ -25,9 +25,9 @@ export class LogisticsService {
 
       const order = await Order.findById(decoded.orderId);
       if (!order) throw new ApiError(404, 'Order not found');
-      
+
       return order;
-    } catch (err) {
+    } catch {
       throw new ApiError(403, 'Invalid or expired tracking credentials for this order');
     }
   }
@@ -65,9 +65,11 @@ export class LogisticsService {
         state: order.shippingAddress.state,
         // Mask phone: show only last 4 digits
         phone: order.shippingAddress.phone
-          ? order.shippingAddress.phone.replace(/./g, (c: string, i: number, str: string) => i < str.length - 4 ? '*' : c)
+          ? order.shippingAddress.phone.replace(/./g, (c: string, i: number, str: string) =>
+              i < str.length - 4 ? '*' : c,
+            )
           : '',
-      }
+      },
     };
   }
 }

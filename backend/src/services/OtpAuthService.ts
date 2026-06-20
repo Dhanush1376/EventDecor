@@ -451,7 +451,7 @@ class OtpAuthService {
     return session;
   }
 
-  static async generateCodOTP(email: string, ip: string = '127.0.0.1') {
+  static async generateCodOTP(email: string, _ip: string = '127.0.0.1') {
     if (!email || !email.includes('@')) {
       throw new ApiError(400, 'A valid email address is required');
     }

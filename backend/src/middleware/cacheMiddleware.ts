@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { getPublicCacheVersion } from '../utils/cacheVersion';
 
-export const cacheResponse = (durationSeconds: number) => {
+export const cacheResponse = (_durationSeconds: number) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== 'GET') {
       return next();

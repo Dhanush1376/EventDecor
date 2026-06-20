@@ -18,8 +18,11 @@ export const skipRateLimit = (req: Request) => {
   const path = (req.originalUrl || req.url || '').split('?')[0];
   return (
     path === '/api/health' ||
+    path === '/api/v1/health' ||
     path === '/api/readiness' ||
+    path === '/api/v1/readiness' ||
     path === '/api/version' ||
+    path === '/api/v1/version' ||
     path === '/favicon.ico' ||
     path === '/'
   );
@@ -137,26 +140,18 @@ export const createRateLimiter = (
 // ==========================================
 
 // Global limiter: 500 requests per 15 minutes per IP
-export const globalLimiter = createRateLimiter(
-  'globalLimiter',
-  {
-    windowMs: 15 * 60 * 1000,
-    limit: 500,
-    message: 'Too many requests from this IP, please try again after 15 minutes.',
-  },
-  true,
-); // forceMemory = true
+export const globalLimiter = createRateLimiter('globalLimiter', {
+  windowMs: 15 * 60 * 1000,
+  limit: 500,
+  message: 'Too many requests from this IP, please try again after 15 minutes.',
+});
 
 // API Flooding limiter: 50 requests per 10 seconds per IP
-export const apiFloodingLimiter = createRateLimiter(
-  'apiFloodingLimiter',
-  {
-    windowMs: 10 * 1000,
-    limit: 50,
-    message: 'API flooding detected. Please slow down your requests.',
-  },
-  true,
-); // forceMemory = true
+export const apiFloodingLimiter = createRateLimiter('apiFloodingLimiter', {
+  windowMs: 10 * 1000,
+  limit: 50,
+  message: 'API flooding detected. Please slow down your requests.',
+});
 
 // Auth limiter: 10 requests per 15 minutes per IP (protects login/register/admin-login)
 export const authLimiter = createRateLimiter('authLimiter', {
@@ -188,27 +183,19 @@ export const contactLimiter = createRateLimiter('contactLimiter', {
 });
 
 // Search limiter: 50 requests per 10 minutes per IP
-export const searchLimiter = createRateLimiter(
-  'searchLimiter',
-  {
-    windowMs: 10 * 60 * 1000,
-    limit: 50,
-    message: 'Too many search requests. Please try again after 10 minutes.',
-  },
-  true,
-); // forceMemory = true
+export const searchLimiter = createRateLimiter('searchLimiter', {
+  windowMs: 10 * 60 * 1000,
+  limit: 50,
+  message: 'Too many search requests. Please try again after 10 minutes.',
+});
 
 // Recommendation/Tracking limiter: 100 requests per 10 minutes per IP/User
-export const recommendationLimiter = createRateLimiter(
-  'recommendationLimiter',
-  {
-    windowMs: 10 * 60 * 1000,
-    limit: 100,
-    message: 'Too many recommendation or tracking requests. Please try again after 10 minutes.',
-    keyGenerator: accountKeyGenerator,
-  },
-  true,
-); // forceMemory = true
+export const recommendationLimiter = createRateLimiter('recommendationLimiter', {
+  windowMs: 10 * 60 * 1000,
+  limit: 100,
+  message: 'Too many recommendation or tracking requests. Please try again after 10 minutes.',
+  keyGenerator: accountKeyGenerator,
+});
 
 // Upload limiter: 20 requests per 15 minutes per IP/User (protects Cloudinary/Network bandwidth)
 export const uploadLimiter = createRateLimiter('uploadLimiter', {
@@ -243,12 +230,8 @@ export const chatMessageLimiter = createRateLimiter('chatMessageLimiter', {
 });
 
 // Visual Search Limiter: 10 image analyses per 5 minutes per IP (AI API calls are expensive)
-export const visualSearchLimiter = createRateLimiter(
-  'visualSearchLimiter',
-  {
-    windowMs: 5 * 60 * 1000,
-    limit: 10,
-    message: 'Too many visual search requests. Please try again after 5 minutes.',
-  },
-  true,
-); // forceMemory = true
+export const visualSearchLimiter = createRateLimiter('visualSearchLimiter', {
+  windowMs: 5 * 60 * 1000,
+  limit: 10,
+  message: 'Too many visual search requests. Please try again after 5 minutes.',
+});

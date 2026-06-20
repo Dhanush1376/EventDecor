@@ -69,11 +69,14 @@ export function EventShowcaseFilterPanel({
   mobileSubtitle = 'Refine Arrangements',
   totalCount = 0,
 }) {
-  const [activeSections, setActiveSections] = useState({
-    sort: true,
-    price: true,
-    setupTime: true,
-    accents: true,
+  const [activeSections, setActiveSections] = useState(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+    return {
+      sort: true,
+      price: !isMobile,
+      setupTime: !isMobile,
+      accents: !isMobile,
+    };
   });
 
   const [mounted, setMounted] = useState(false);
@@ -111,7 +114,7 @@ export function EventShowcaseFilterPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6 pb-3 border-b border-outline-variant/30">
         <div className="flex flex-col">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface font-normal">
             Showcase Filters
           </h2>
           {isOpen && (

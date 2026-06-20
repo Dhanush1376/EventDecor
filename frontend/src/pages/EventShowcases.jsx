@@ -87,7 +87,7 @@ export function EventShowcases() {
   const [uploadedReferenceUrl, setUploadedReferenceUrl] = useState('');
   const [customNote, setCustomNote] = useState('');
   const [bookingDate, setBookingDate] = useState('');
-  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [aiSuggestions, _setAiSuggestions] = useState([]);
 
   const {
     data: showcases = [],
@@ -316,7 +316,7 @@ export function EventShowcases() {
         setSelectedShowcase(null);
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch (_err) {
       toast.dismiss(loadId);
       toast.error('Failed to place rental inquiry.');
     }
@@ -407,13 +407,13 @@ export function EventShowcases() {
         >
           {/* Search Bar & Mobile Filter Toggle */}
           <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
-            <div className="flex-1 h-11 lg:h-9">
+            <div className="flex-1 lg:p-1.5 lg:bg-surface-container/60 lg:backdrop-blur-xl lg:border lg:border-outline-variant/20 rounded-full lg:shadow-inner">
               <SearchBar
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onCameraClick={() => navigate('/collections?visual=true')}
                 placeholder="Search event design packages..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+                className="w-full h-[44px] lg:h-[44px] !rounded-full bg-surface-bright shadow-[0_2px_8px_rgba(115,92,0,0.08)] border border-outline-variant/15 !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center outline-none focus:outline-none"
               />
             </div>
             <button
@@ -443,8 +443,8 @@ export function EventShowcases() {
                 }}
               />
             </div>
-            <div className="flex items-center shrink-0 lg:-mt-[6px]">
-              <div className="w-48 xl:w-52 h-11 lg:h-9">
+            <div className="flex items-center shrink-0">
+              <div className="w-48 xl:w-52 p-1.5 bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 rounded-full shadow-inner">
                 <CustomDropdown
                   options={[
                     { value: 'Popularity', label: 'Popularity' },
@@ -458,7 +458,7 @@ export function EventShowcases() {
                     setCurrentPage(1);
                   }}
                   className="w-full h-full"
-                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 lg:!px-4 text-[12px] lg:text-[11px]"
+                  buttonClassName="w-full h-[44px] lg:h-[44px] !rounded-full border !border-outline-variant/15 shadow-[0_2px_8px_rgba(115,92,0,0.08)] !bg-surface-bright !py-0 !px-5 lg:!px-4 text-[13px] lg:text-[12px]"
                 />
               </div>
             </div>
@@ -495,7 +495,7 @@ export function EventShowcases() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-6 md:mb-10">
               <div className="flex flex-col gap-1">
-                <h2 className="font-headline-md text-on-surface font-bold text-[24px] md:text-[32px]">
+                <h2 className="font-headline-md text-on-surface font-normal text-[24px] md:text-[32px]">
                   Event Design Packages
                 </h2>
               </div>
@@ -589,7 +589,7 @@ export function EventShowcases() {
                     filter_list_off
                   </span>
                 </div>
-                <h3 className="font-headline-sm text-on-surface mb-3 font-bold text-xl">
+                <h3 className="font-headline-sm text-on-surface mb-3 font-normal text-xl">
                   No traditional showcases found
                 </h3>
                 <p className="font-body-md text-on-surface-variant/60 font-light mb-10 max-w-md mx-auto text-sm">
@@ -816,7 +816,7 @@ export function EventShowcases() {
                           } else {
                             toast.error('Failed to upload image', { id: toastId });
                           }
-                        } catch (err) {
+                        } catch (_err) {
                           toast.error('Failed to upload image', { id: toastId });
                         }
                       }}

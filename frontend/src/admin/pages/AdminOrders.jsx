@@ -6,7 +6,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { playSuccessBeep, playErrorBeep } from '../../utils/audioUtils';
 import toast from 'react-hot-toast';
-import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  StatusBadge,
+  EmptyState,
+  SkeletonTable,
+  FilterBar,
+  SkeletonList,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
 
 const slideDrawer = {
@@ -413,12 +423,22 @@ export function AdminOrders() {
                               : "You haven't received any orders yet."
                           }
                           action={
-                            (searchQuery || filterStatus !== 'All') && (
+                            searchQuery || filterStatus !== 'All' ? (
                               <button
                                 onClick={() => setFilterStatus('All')}
                                 className="admin-btn admin-btn-outline"
                               >
                                 Clear Filters
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => window.location.reload()}
+                                className="admin-btn admin-btn-outline"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">
+                                  refresh
+                                </span>
+                                Refresh Page
                               </button>
                             )
                           }
@@ -560,12 +580,20 @@ export function AdminOrders() {
                         : "You haven't received any orders yet."
                     }
                     action={
-                      (searchQuery || filterStatus !== 'All') && (
+                      searchQuery || filterStatus !== 'All' ? (
                         <button
                           onClick={() => setFilterStatus('All')}
                           className="admin-btn admin-btn-outline"
                         >
                           Clear Filters
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => window.location.reload()}
+                          className="admin-btn admin-btn-outline"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">refresh</span>
+                          Refresh Page
                         </button>
                       )
                     }

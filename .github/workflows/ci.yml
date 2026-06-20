@@ -84,6 +84,10 @@ jobs:
         working-directory: backend
         run: npm run check-env
 
+      - name: Lint Backend
+        working-directory: backend
+        run: npm run lint
+
       - name: Check no stray console.* in src
         run: node scripts/check-no-console.mjs
 
@@ -114,33 +118,40 @@ jobs:
         working-directory: frontend
         run: npm run check-env
 
+      - name: Lint Frontend
+        working-directory: frontend
+        run: npm run lint
+
       - name: Test Frontend
         working-directory: frontend
         run: npm test
 
       - name: Build Frontend
         working-directory: frontend
-        run: npm run build
+        run: npm run build:report
 
   deploy:
-    name: Deploy to Render
+    name: Deploy to Railway
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Trigger Render Deploy Hook
+      - name: Trigger Railway Deploy Webhook
         id: deploy
         run: |
-          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
-            echo "RENDER_DEPLOY_HOOK_URL secret is not set, skipping automatic deployment."
+          if [ -z "${{ secrets.RAILWAY_WEBHOOK_URL }}" ]; then
+            echo "RAILWAY_WEBHOOK_URL secret is not set, skipping automatic deployment."
             exit 0
           fi
-          # We trigger the deploy and capture the output if possible, but standard webhooks just return a 200.
-          curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          curl -s -X POST "${{ secrets.RAILWAY_WEBHOOK_URL }}"
 
       - name: Wait for Zero-Downtime Deployment
         if: env.VITE_API_URL != ''
         run: |
+          if [ -z "${{ secrets.RAILWAY_WEBHOOK_URL }}" ]; then
+            echo "RAILWAY_WEBHOOK_URL secret is not set, skipping health check."
+            exit 0
+          fi
           echo "Waiting 60s for the deployment to start swapping..."
           sleep 60
           
@@ -162,14 +173,32 @@ jobs:
       - name: Automated Rollback on Failure
         if: failure()
         run: |
-          echo "Health check failed! Triggering automated rollback..."
-          if [ -n "${{ secrets.RENDER_ROLLBACK_HOOK_URL }}" ]; then
-             curl -s -X POST "${{ secrets.RENDER_ROLLBACK_HOOK_URL }}"
-             echo "Rollback webhook triggered."
-          elif [ -n "${{ secrets.RENDER_API_KEY }}" ]; then
-             echo "Executing explicit Render API rollback (Requires Service ID)"
-             # curl -X POST https://api.render.com/v1/services/srv-XXXX/deploys ...
-          else
-             echo "No rollback webhook or API key provided. Manual rollback required."
+          if [ -z "${{ secrets.RAILWAY_WEBHOOK_URL }}" ]; then
+            echo "RAILWAY_WEBHOOK_URL secret is not set, skipping automated rollback."
+            exit 1
           fi
+          echo "Health check failed! Manual rollback may be required on Railway if it didn't auto-revert."
+          # Railway automatically cancels bad deployments if the healthcheck fails on their end.
           exit 1
+
+      - name: Post-Deploy Smoke Tests
+        if: success()
+        run: |
+          if [ -z "${{ secrets.RAILWAY_WEBHOOK_URL }}" ]; then
+            echo "Skipping smoke tests — no deployment target."
+            exit 0
+          fi
+          echo "Running post-deployment smoke tests..."
+          
+          # Verify critical endpoints return expected status codes
+          HEALTH=$(curl -s -o /dev/null -w "%{http_code}" https://api.siriartsandcrafts.com/api/v1/health || echo "000")
+          READINESS=$(curl -s -o /dev/null -w "%{http_code}" https://api.siriartsandcrafts.com/api/readiness || echo "000")
+          CSRF=$(curl -s -o /dev/null -w "%{http_code}" https://api.siriartsandcrafts.com/api/v1/csrf-token || echo "000")
+          
+          echo "Health: $HEALTH | Readiness: $READINESS | CSRF: $CSRF"
+          
+          if [ "$HEALTH" != "200" ] || [ "$READINESS" != "200" ]; then
+            echo "SMOKE TEST FAILED: Critical endpoints are not responding correctly."
+            exit 1
+          fi
+          echo "All smoke tests passed."

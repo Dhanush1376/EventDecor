@@ -22,13 +22,17 @@ const router = Router();
 // ==========================================
 
 // Opt-in / GDPR consent updates
-router.post('/consent', (req, res, next) => {
-  // Allow anonymous visitors to save consent, but check auth if header is present
-  requireAuth(req, res, (err) => {
-    // Continue regardless of whether they are authenticated
-    next();
-  });
-}, saveConsentPreference);
+router.post(
+  '/consent',
+  (req, res, next) => {
+    // Allow anonymous visitors to save consent, but check auth if header is present
+    requireAuth(req, res, (_err) => {
+      // Continue regardless of whether they are authenticated
+      next();
+    });
+  },
+  saveConsentPreference,
+);
 
 router.get('/consent/:token', getConsentPreference);
 
@@ -40,7 +44,6 @@ router.get('/unsubscribe', unsubscribeRecipient);
 // ==========================================
 router.get('/track/open/:token', trackEmailOpen);
 router.get('/track/click/:token', trackEmailClick);
-
 
 // ==========================================
 // PROTECTED ADMIN NOTIFICATION CAMPAIGNS & ANALYTICS

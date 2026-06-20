@@ -12,9 +12,20 @@ import {
 import toast from 'react-hot-toast';
 import logger from '../../utils/logger';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  StatCard,
+  ChartCard,
+  StatusBadge,
+  SkeletonDashboard,
+  EmptyState,
+  FilterBar,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
-const EVENT_CATEGORIES = [
+const _EVENT_CATEGORIES = [
   'Wedding Ceremony',
   'Engagement Ceremony',
   'House Warming Ceremony',
@@ -23,13 +34,13 @@ const EVENT_CATEGORIES = [
   'Festival Decorations',
 ];
 
-const DECOR_STYLES = ['Traditional', 'Floral', 'Modern', 'Royal', 'Minimalist', 'Rustic'];
+const _DECOR_STYLES = ['Traditional', 'Floral', 'Modern', 'Royal', 'Minimalist', 'Rustic'];
 
 export function AdminEvents() {
   const navigate = useNavigate();
   const {
-    refreshEvents,
-    searchQuery,
+    _refreshEvents,
+    _searchQuery,
     customCategories,
     addCustomCategory,
     updateCustomCategory,
@@ -69,7 +80,7 @@ export function AdminEvents() {
   // Bookings States
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
-  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [_selectedBooking, _setSelectedBooking] = useState(null);
   // Replaced drawer Operations State with standalone AdminBookingDetail route
 
   // End of form data

@@ -35,7 +35,7 @@ export function AdminInquiries() {
 
   // ─── DYNAMIC FORM OPTIONS ───
   const [cmsConfig, setCmsConfig] = useState(null);
-  const [isSavingCMS, setIsSavingCMS] = useState(false);
+  const [_isSavingCMS, setIsSavingCMS] = useState(false);
 
   // ─── QUOTATION BUILDER STATES (Draft Enabled) ───
   const {
@@ -172,7 +172,7 @@ export function AdminInquiries() {
     }
   };
 
-  const handleSaveAdminNotes = async (id, notesVal) => {
+  const _handleSaveAdminNotes = async (id, notesVal) => {
     try {
       const res = await customOrderService.adminUpdateNotes(id, notesVal);
       if (res.success) {
@@ -266,7 +266,7 @@ export function AdminInquiries() {
     }
   };
 
-  const handleSaveCMSConfig = async () => {
+  const _handleSaveCMSConfig = async () => {
     if (!cmsConfig) return;
     setIsSavingCMS(true);
     try {

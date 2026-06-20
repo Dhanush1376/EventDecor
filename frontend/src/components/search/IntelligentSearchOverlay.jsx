@@ -5,6 +5,7 @@ import { SearchSuggestionsSkeleton, Skeleton } from '../ui/Skeleton';
 import { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import toast from 'react-hot-toast';
 import '../../styles/visual-search.css';
 import logger from '../../utils/logger';
 
@@ -105,7 +106,7 @@ export function IntelligentSearchOverlay({
   const recognitionRef = useRef(null);
 
   const [searchMode, setSearchMode] = useState('text'); // 'text' | 'visual'
-  const [isDragging, setIsDragging] = useState(false);
+  const [_isDragging, setIsDragging] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
   // Toggle voice search recording
@@ -119,7 +120,7 @@ export function IntelligentSearchOverlay({
     }
 
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert(
+      toast.error(
         "Your browser doesn't support voice search. Try a modern browser like Chrome or Safari.",
       );
       return;
@@ -162,12 +163,42 @@ export function IntelligentSearchOverlay({
     }
   }, [isRecording, setQuery]);
 
-  // Auto-focus input when opened
+  // Auto-focus input when opened and Focus Trap
   useEffect(() => {
+    let focusTimer;
     if (isOpen) {
       setSearchMode(initialMode);
-      if (initialMode === 'text' && inputRef.current)
-        setTimeout(() => inputRef.current?.focus(), 100);
+      if (initialMode === 'text') {
+        focusTimer = setTimeout(() => {
+          inputRef.current?.focus();
+        }, 100);
+      }
+
+      // Focus Trap
+      const overlayElement = document.querySelector('[role="dialog"][aria-label="Search Portal"]');
+      const handleTab = (e) => {
+        if (e.key === 'Tab' && overlayElement) {
+          const focusableElements = overlayElement.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          );
+          if (focusableElements.length) {
+            const first = focusableElements[0];
+            const last = focusableElements[focusableElements.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              last.focus();
+              e.preventDefault();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              first.focus();
+              e.preventDefault();
+            }
+          }
+        }
+      };
+      window.addEventListener('keydown', handleTab);
+      return () => {
+        clearTimeout(focusTimer);
+        window.removeEventListener('keydown', handleTab);
+      };
     }
   }, [isOpen, initialMode]);
 
@@ -223,7 +254,7 @@ export function IntelligentSearchOverlay({
 
   // We no longer mix static suggestions, we just use the discovery modules in empty state
   // This combinedSuggestions is preserved for mobile view empty state to map over trending if it exists
-  const combinedSuggestions = useMemo(() => {
+  const _combinedSuggestions = useMemo(() => {
     return Array.isArray(trendingSearches)
       ? trendingSearches.map((t) => (typeof t === 'string' ? t : t.query)).slice(0, 8)
       : [];
@@ -595,12 +626,20 @@ export function IntelligentSearchOverlay({
                     <span className="material-symbols-outlined text-[48px] text-stone-300 mb-3 block">
                       search_off
                     </span>
-                    <p className="text-[15px] text-stone-600 font-semibold">
-                      No search results available
+                    <p className="text-[17px] text-stone-800 font-bold font-display">
+                      No exact matches found for "{query}"
                     </p>
-                    <p className="text-[12px] text-stone-400 mt-1">
-                      Check spelling or try different keywords.
+                    <p className="text-[14px] text-stone-500 mt-2 max-w-sm mx-auto font-normal mb-6">
+                      Try checking for spelling errors, using more general terms, or exploring our
+                      curated categories below.
                     </p>
+                    <button
+                      onClick={() => setQuery('')}
+                      className="inline-flex items-center gap-2 bg-stone-100 text-stone-800 hover:bg-stone-200 px-6 py-2.5 rounded-full font-label text-[11px] uppercase tracking-widest transition-colors font-bold"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">clear</span>
+                      Clear Search
+                    </button>
                   </div>
                 )}
 
@@ -653,8 +692,6 @@ export function IntelligentSearchOverlay({
 
                     <div className="py-2">
                       {/* Discovery Engine Modules */}
-
-
 
                       {/* 1. Event Collections */}
                       {((discoveryData?.eventCollections &&
@@ -1205,11 +1242,12 @@ export function IntelligentSearchOverlay({
                           <span className="material-symbols-outlined text-[42px] text-stone-300 mb-2 block">
                             search_off
                           </span>
-                          <p className="text-[15px] text-stone-600 font-medium">
-                            No search results available
+                          <p className="text-[17px] text-stone-800 font-bold font-display">
+                            No exact matches found for "{query}"
                           </p>
-                          <p className="text-[12px] text-stone-400 max-w-xs mx-auto font-light">
-                            Try different spelling or keywords, or explore categories below.
+                          <p className="text-[14px] text-stone-500 max-w-sm mx-auto font-normal">
+                            Try checking for spelling errors, using more general terms, or exploring
+                            our curated categories below.
                           </p>
                         </div>
                       )}

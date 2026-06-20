@@ -48,7 +48,7 @@ export const ensureCsrfToken = async () => {
           const res = await api.get('/csrf-token', { _bypassOfflineQueue: true });
           csrfToken = res.data?.csrfToken || csrfToken;
           return csrfToken;
-        } catch (err) {
+        } catch (_err) {
           if (attempt < 2) {
             await new Promise((r) => setTimeout(r, 500));
           } else {
@@ -351,7 +351,7 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const isDatabaseDown =
       status === 503 &&
-      error.response?.data?.message?.includes('Database is currently starting up');
+      error.response?.data?.message?.includes('Database connection is temporarily unavailable');
 
     // Don't treat database readiness guard 503s as generic transient errors to avoid 2-minute UI hangs
     const isTransientError =
@@ -430,7 +430,7 @@ api.interceptors.response.use(
           }
           return api(originalRequest);
         }
-      } catch (e) {
+      } catch (_e) {
         logger.error('[API] Failed to refresh CSRF token on retry');
       }
     }
@@ -486,6 +486,22 @@ api.interceptors.response.use(
       logger.warn('[API] Rate limited:', originalRequest?.url);
     } else if (normalized.isNetwork && !isAuthRoute) {
       logger.warn('[API] Network failure:', originalRequest?.url, normalized.message);
+    }
+
+    // Enrich error with payment-specific classification for UI handling
+    if (isPaymentOrOrderMutation && error.response) {
+      error.isPaymentError = true;
+      error.paymentErrorType =
+        status === 504 || status === 502 || status === 503
+          ? 'gateway_timeout' // Payment may still have gone through — do NOT auto-retry
+          : status === 400 || status === 422
+            ? 'validation' // Definitive failure — safe to retry
+            : 'unknown';
+    }
+
+    // Detect circuit breaker errors from backend for UI-level awareness
+    if (status === 503 && error.response?.data?.message?.includes('circuit breaker')) {
+      error.isCircuitBreakerError = true;
     }
 
     return Promise.reject(error);
@@ -584,3 +600,4 @@ api.delete = function (url, config) {
 };
 
 export default api;
+// Trigger HMR to clear pendingGetRequests and apiCache

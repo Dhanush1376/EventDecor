@@ -3,7 +3,14 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  StatusBadge,
+  AdminToggle,
+  EmptyState,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 export function AdminLayouts() {
   const [layouts, setLayouts] = useState([]);

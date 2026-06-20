@@ -12,7 +12,6 @@ export function RecommendedGrid() {
   const cms = useWebsiteContent({ includeDefaults: false });
   const loading = cms?.loading;
   const config = cms?.recommendedProducts || {};
-  if (config.isVisible === false) return null;
 
   const productIds = config.productIds || [];
 
@@ -21,8 +20,10 @@ export function RecommendedGrid() {
       ...(productIds.length > 0 ? { ids: productIds.join(',') } : { featured: true }),
       limit: config.maxDisplay || 10,
     },
-    { enabled: true },
+    { enabled: config.isVisible !== false },
   );
+
+  if (config.isVisible === false) return null;
 
   if (isPending || loading) {
     return (

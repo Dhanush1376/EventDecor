@@ -89,7 +89,7 @@ const triggerEmergencyBackup = () => {
     if (!mongoUri) return;
 
     const command = `mongodump --uri="${mongoUri}" --archive="${backupFile}" --gzip`;
-    exec(command, (error, stdout, stderr) => {
+    exec(command, (error, _stdout, _stderr) => {
       if (error) {
         logger.error(`[HEALTH MONITOR] Emergency backup failed: ${error.message}`);
         return;

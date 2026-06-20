@@ -417,8 +417,8 @@ export function ProductReviews({ productId, productTitle }) {
   const [loading, setLoading] = useState(true);
   const [eligibility, setEligibility] = useState(null); // { canReview, alreadyReviewed, reason }
   const [showModal, setShowModal] = useState(false);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [_page, setPage] = useState(1);
+  const [_totalPages, setTotalPages] = useState(1);
 
   const scrollContainerRef = useRef(null);
 

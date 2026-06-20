@@ -19,7 +19,7 @@ export const VerifiedReviews = () => {
   const { reels, testimonials } = useWebsiteContent();
   const [reviewsList, setReviewsList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, _setActiveFilter] = useState('all');
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [lightboxData, setLightboxData] = useState({ isOpen: false, media: [], activeIndex: 0 });
   const [helpfulLiked, setHelpfulLiked] = useState({});
@@ -252,7 +252,7 @@ export const VerifiedReviews = () => {
   };
 
   // Extract all media for the Pinterest Gallery rack
-  const allGalleryMedia =
+  const _allGalleryMedia =
     reels?.items && reels.items.length > 0
       ? reels.items
           .filter((itm) => itm.isVisible)

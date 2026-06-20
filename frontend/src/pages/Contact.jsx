@@ -50,7 +50,7 @@ export function Contact() {
   };
 
   const contactMethods = contact?.contactMethods || [];
-  const studioHours = contact?.studioHours || [];
+  const _studioHours = contact?.studioHours || [];
 
   if (loading) return <ContactSkeleton />;
 

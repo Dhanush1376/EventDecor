@@ -28,3 +28,4 @@ export * from './OptimizedImage';
 export { default as CloudflareVerification } from './CloudflareVerification';
 export * from './PremiumRecommendationCard';
 export * from './RecommendationCarousel';
+export * from './ScrollToTopButton';

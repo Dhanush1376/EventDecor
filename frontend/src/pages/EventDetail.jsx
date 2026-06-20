@@ -29,7 +29,7 @@ export function EventDetail() {
   const { toggleItem, isWishlisted } = useWishlist();
 
   const [event, setEvent] = useState(null);
-  const [relatedEvents, setRelatedEvents] = useState([]);
+  const [_relatedEvents, setRelatedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState(null);
 

@@ -15,7 +15,7 @@ export class FilterService {
       if (appConfig && appConfig.value) {
         config = appConfig.value;
       }
-    } catch (e) {
+    } catch {
       /* ignore */
     }
 

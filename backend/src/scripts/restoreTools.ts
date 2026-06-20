@@ -10,7 +10,7 @@ import { connectDB } from '../config/db';
 
 /**
  * Script to restore a specific JSON backup file into a collection.
- * 
+ *
  * Usage:
  * ts-node src/scripts/restoreTools.ts <collectionName> <absolute_path_to_json>
  */
@@ -41,7 +41,9 @@ const runRestore = async () => {
   }
 
   if (process.env.I_KNOW_THIS_WIPES_DATA !== 'true') {
-    logger.error('❌ FATAL: Must set I_KNOW_THIS_WIPES_DATA=true to authorize mass data modification.');
+    logger.error(
+      '❌ FATAL: Must set I_KNOW_THIS_WIPES_DATA=true to authorize mass data modification.',
+    );
     process.exit(1);
   }
 
@@ -58,9 +60,9 @@ const runRestore = async () => {
     }
 
     const collection = mongoose.connection.collection(collectionName);
-    
+
     logger.info(`Preparing to restore ${data.length} documents...`);
-    
+
     // We iterate and insert to avoid huge payload limits
     let successCount = 0;
     let failCount = 0;
@@ -69,11 +71,11 @@ const runRestore = async () => {
       try {
         // Convert string _id back to ObjectId if needed
         if (doc._id && typeof doc._id === 'string' && mongoose.Types.ObjectId.isValid(doc._id)) {
-           doc._id = new mongoose.Types.ObjectId(doc._id);
+          doc._id = new mongoose.Types.ObjectId(doc._id);
         }
         await collection.replaceOne({ _id: doc._id }, doc, { upsert: true });
         successCount++;
-      } catch (e: any) {
+      } catch {
         failCount++;
       }
     }

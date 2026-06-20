@@ -38,6 +38,8 @@ export const ProductCard = React.memo(function ProductCard({
   securityDeposit,
   deposit,
   cartType = 'purchase',
+  stock,
+  rentalStock,
 }) {
   const navigate = useNavigate();
   const { isWishlisted } = useWishlistState();
@@ -91,7 +93,12 @@ export const ProductCard = React.memo(function ProductCard({
 
   const numericPrice = parseNumericPrice(price);
   const parsedOldPrice = oldPrice ? parseNumericPrice(oldPrice) : 0;
-  const numericOldPrice = parsedOldPrice > numericPrice ? parsedOldPrice : (numericPrice ? Math.round(numericPrice * 1.25) : 0);
+  const numericOldPrice =
+    parsedOldPrice > numericPrice
+      ? parsedOldPrice
+      : numericPrice
+        ? Math.round(numericPrice * 1.25)
+        : 0;
 
   const discount =
     numericOldPrice > numericPrice
@@ -105,9 +112,10 @@ export const ProductCard = React.memo(function ProductCard({
   const isRental = cartType === 'rental' || (!canPurchase && canRent);
   const resolvedCartType = isRental ? 'rental' : 'purchase';
   const resolvedPrice = isRental
-    ? (rentalPricing?.daily || rentalPricing?.weekly || rentalPricing?.monthly || price)
+    ? rentalPricing?.daily || rentalPricing?.weekly || rentalPricing?.monthly || price
     : price;
-  const resolvedDeposit = isRental ? (securityDeposit || deposit || 0) : 0;
+  const resolvedDeposit = isRental ? securityDeposit || deposit || 0 : 0;
+  const isOutOfStock = isRental ? rentalStock <= 0 : stock <= 0;
 
   const handleCardClick = (e) => {
     // If the user clicked a button or any interactive element inside a button, don't trigger the card link
@@ -119,7 +127,12 @@ export const ProductCard = React.memo(function ProductCard({
     e.preventDefault();
     e.stopPropagation();
     runProtectedAction(() => {
-      toggleItem({ id: productId, title, price: itemType === 'event' ? rentalPrice : price, imageSrc });
+      toggleItem({
+        id: productId,
+        title,
+        price: itemType === 'event' ? rentalPrice : price,
+        imageSrc,
+      });
     });
   };
 
@@ -180,7 +193,6 @@ export const ProductCard = React.memo(function ProductCard({
             sizes={sizes}
           />
         </Link>
-
         {/* Floating Utility Actions */}
         <div className="absolute top-2 right-3 md:top-3 md:right-4 z-20 flex flex-col gap-2">
           <button
@@ -201,7 +213,8 @@ export const ProductCard = React.memo(function ProductCard({
               favorite
             </motion.span>
           </button>
-        </div>        {/* Badges */}
+        </div>{' '}
+        {/* Badges */}
         <div className="absolute top-2 left-3 md:top-3 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
           {itemType === 'event' ? (
             <>
@@ -298,7 +311,6 @@ export const ProductCard = React.memo(function ProductCard({
             </>
           )}
         </div>
-
         {/* Immersive Hover Actions (Desktop Only) */}
         <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 lg:group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6 pointer-events-none lg:group-hover:pointer-events-auto">
           <div className="space-y-2 transform translate-y-4 lg:group-hover:translate-y-0 transition-transform duration-500">
@@ -351,11 +363,14 @@ export const ProductCard = React.memo(function ProductCard({
             ) : (
               <>
                 <button
-                  onClick={handleAddToCart}
+                  onClick={isOutOfStock ? undefined : handleAddToCart}
+                  disabled={isOutOfStock}
                   className={`w-full py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all duration-500 cursor-pointer flex items-center justify-center ${
-                    added
-                      ? 'bg-[#e0d6b8] text-[#1a1c1a]'
-                      : 'bg-white text-black hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
+                    isOutOfStock
+                      ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                      : added
+                        ? 'bg-[#e0d6b8] text-[#1a1c1a]'
+                        : 'bg-white text-black hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
                   }`}
                 >
                   <AnimatePresence mode="wait">
@@ -386,7 +401,7 @@ export const ProductCard = React.memo(function ProductCard({
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
                       >
-                        Add to Bag
+                        {isOutOfStock ? 'Out of Stock' : 'Add to Bag'}
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -417,7 +432,6 @@ export const ProductCard = React.memo(function ProductCard({
             )}
           </div>
         </div>
-
         {/* Mobile & Tablet Quick Add Button */}
         <div className="xl:hidden absolute bottom-3 right-3 z-20">
           {itemType === 'event' ? (
@@ -430,17 +444,22 @@ export const ProductCard = React.memo(function ProductCard({
               className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
               aria-label="Book setup"
             >
-              <span className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}>
+              <span
+                className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
+              >
                 event
               </span>
             </button>
           ) : (
             <button
-              onClick={handleAddToCart}
-              className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 cursor-pointer ${
-                added
-                  ? 'bg-[#e0d6b8] text-[#1a1c1a]'
-                  : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
+              onClick={isOutOfStock ? undefined : handleAddToCart}
+              disabled={isOutOfStock}
+              className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
+                isOutOfStock
+                  ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                  : added
+                    ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-pointer'
+                    : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] cursor-pointer'
               }`}
               aria-label="Add to bag"
             >
@@ -465,7 +484,7 @@ export const ProductCard = React.memo(function ProductCard({
                     transition={{ duration: 0.2 }}
                     className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
                   >
-                    add
+                    {isOutOfStock ? 'remove_shopping_cart' : 'add'}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -478,7 +497,9 @@ export const ProductCard = React.memo(function ProductCard({
         className={`${compact ? 'pt-1.5 pb-1 px-1.5' : 'pt-2.5 pb-2 px-3.5 md:px-4'} flex flex-col flex-1 transition-opacity duration-500 ${hideDetails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
         <div className={`flex items-center gap-1.5 ${compact ? 'mb-0.5' : 'mb-1.5 md:mb-2'}`}>
-          <span className={`text-black/60 font-label uppercase ${compact ? 'text-[7px] tracking-[0.1em]' : 'text-[8px] md:text-[9px] tracking-[0.15em] md:tracking-[0.2em]'} font-bold truncate flex-1 min-w-0`}>
+          <span
+            className={`text-black/60 font-label uppercase ${compact ? 'text-[7px] tracking-[0.1em]' : 'text-[8px] md:text-[9px] tracking-[0.15em] md:tracking-[0.2em]'} font-bold truncate flex-1 min-w-0`}
+          >
             {category}
           </span>
 
@@ -490,7 +511,9 @@ export const ProductCard = React.memo(function ProductCard({
             >
               star
             </span>
-            <span className={`font-label ${compact ? 'text-[8px] md:text-[9px]' : 'text-[9px] md:text-[10px]'} text-black/60 font-bold`}>
+            <span
+              className={`font-label ${compact ? 'text-[8px] md:text-[9px]' : 'text-[9px] md:text-[10px]'} text-black/60 font-bold`}
+            >
               {rating}
             </span>
           </div>
@@ -502,8 +525,8 @@ export const ProductCard = React.memo(function ProductCard({
         >
           <h3
             className={`text-black group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-1 ${
-              compact 
-                ? 'font-body text-[12px] md:text-[13px]' 
+              compact
+                ? 'font-body text-[12px] md:text-[13px]'
                 : 'font-display text-[13px] md:text-[15px]'
             }`}
             style={compact ? { fontFamily: 'var(--font-body)' } : undefined}
@@ -514,39 +537,52 @@ export const ProductCard = React.memo(function ProductCard({
 
         <div className="mt-auto flex flex-col justify-end">
           <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className={`font-display font-bold text-black leading-none ${compact ? 'text-[13px] md:text-[14px]' : 'text-[14px] md:text-[17px]'}`}>
+            <span
+              className={`font-display font-bold text-black leading-none ${compact ? 'text-[13px] md:text-[14px]' : 'text-[14px] md:text-[17px]'}`}
+            >
               ₹
               {formatPrice(
                 itemType === 'event'
-                  ? (rentalPrice || price)
-                  : (isRental
-                      ? (rentalPricing?.daily || rentalPricing?.weekly || rentalPricing?.monthly || price)
-                      : (canPurchase
-                          ? price
-                          : rentalPricing?.daily ||
-                               rentalPricing?.weekly ||
-                               rentalPricing?.monthly ||
-                               price))
+                  ? rentalPrice || price
+                  : isRental
+                    ? rentalPricing?.daily ||
+                      rentalPricing?.weekly ||
+                      rentalPricing?.monthly ||
+                      price
+                    : canPurchase
+                      ? price
+                      : rentalPricing?.daily ||
+                        rentalPricing?.weekly ||
+                        rentalPricing?.monthly ||
+                        price,
               )}
               {(isRental || itemType === 'event') && (
-                <span className={`font-label text-black/40 ml-0.5 normal-case font-bold ${compact ? 'text-[8px] md:text-[9px]' : 'text-[9px] md:text-[10px]'}`}>
+                <span
+                  className={`font-label text-black/40 ml-0.5 normal-case font-bold ${compact ? 'text-[8px] md:text-[9px]' : 'text-[9px] md:text-[10px]'}`}
+                >
                   / day
                 </span>
               )}
             </span>
             {itemType !== 'event' && !isRental && numericOldPrice > numericPrice && canPurchase && (
-              <span className={`font-display text-black/40 line-through ${compact ? 'text-[9px] md:text-[10px]' : 'text-[10px] md:text-[11px]'}`}>
+              <span
+                className={`font-display text-black/40 line-through ${compact ? 'text-[9px] md:text-[10px]' : 'text-[10px] md:text-[11px]'}`}
+              >
                 ₹{formatPrice(numericOldPrice)}
               </span>
             )}
           </div>
           {itemType !== 'event' && isRental && (
-            <span className={`text-black/50 font-bold uppercase tracking-widest mt-0.5 ${compact ? 'text-[8px]' : 'text-[9px] md:text-[10px]'}`}>
+            <span
+              className={`text-black/50 font-bold uppercase tracking-widest mt-0.5 ${compact ? 'text-[8px]' : 'text-[9px] md:text-[10px]'}`}
+            >
               Rental Price (Deposit: ₹{formatPrice(resolvedDeposit)})
             </span>
           )}
           {itemType !== 'event' && !isRental && canRent && !canPurchase && (
-            <span className={`text-black/50 font-bold uppercase tracking-widest mt-0.5 ${compact ? 'text-[8px]' : 'text-[9px] md:text-[10px]'}`}>
+            <span
+              className={`text-black/50 font-bold uppercase tracking-widest mt-0.5 ${compact ? 'text-[8px]' : 'text-[9px] md:text-[10px]'}`}
+            >
               Rental Price
             </span>
           )}

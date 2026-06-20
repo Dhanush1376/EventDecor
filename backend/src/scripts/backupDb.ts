@@ -47,7 +47,7 @@ export const runDbBackup = async () => {
     // Note: We use --gzip to save space
     const dumpCmd = `mongodump --uri="${MONGO_URI}" --archive="${ARCHIVE_PATH}" --gzip`;
 
-    const { stdout, stderr } = await execPromise(dumpCmd);
+    const { stdout: _stdout, stderr } = await execPromise(dumpCmd);
     if (stderr && !stderr.includes('done dumping')) {
       logger.warn(`[BACKUP] mongodump stderr: ${stderr}`);
     }

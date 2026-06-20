@@ -8,7 +8,7 @@ import { handleImageError } from '../utils/imageUtils';
 import { orderService, rentalService } from '../services/domainServices';
 import logger from '../utils/logger';
 
-const BarcodeSVG = ({ val }) => (
+const _BarcodeSVG = ({ _val }) => (
   <svg viewBox="0 0 200 40" className="w-full h-9" xmlns="http://www.w3.org/2000/svg">
     <rect width="200" height="40" fill="#fff" />
     <path

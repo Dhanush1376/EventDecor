@@ -24,7 +24,7 @@ export class AdminRefundApprovalService {
       isPartial?: boolean;
       reason?: string;
     },
-    requestedBy: string,
+    _requestedBy: string,
   ): Promise<{ status: 'queued_for_processing' | 'requires_approval'; refundId?: string }> {
     if (refundParams.amount >= REFUND_APPROVAL_THRESHOLD) {
       logger.info(`[REFUND APPROVAL] Refund of ₹${refundParams.amount} requires admin approval.`);

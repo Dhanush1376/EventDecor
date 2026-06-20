@@ -2,6 +2,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { OptimizedImage } from '../ui';
+import { useRazorpay } from '../../hooks/useRazorpay';
+import toast from 'react-hot-toast';
 
 const GPSMap = React.lazy(() => import('../../pages/GPSMapLazy'));
 
@@ -9,13 +11,15 @@ export function OrderDetail() {
   const {
     selectedOrder: order,
     selectedItem: item,
-    selectedOrderItemIndex,
+    _selectedOrderItemIndex,
     isPriceDetailsOpen,
     setIsPriceDetailsOpen,
     downloadInvoice,
     setReviewingProduct,
     user,
   } = useDashboard();
+  const { resumePayment } = useRazorpay();
+  const [isResuming, setIsResuming] = React.useState(false);
 
   if (!order || !item) return null;
 
@@ -532,6 +536,32 @@ export function OrderDetail() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Complete Payment Banner for Pending Orders */}
+        {order.paymentStatus === 'pending' && order.paymentMethod === 'razorpay' && (
+          <div className="bg-amber-50/80 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-amber-200/50">
+            <span className="text-[10px] text-amber-800 font-light font-body">
+              Your payment is pending. Complete it now to confirm your order.
+            </span>
+            <button
+              disabled={isResuming}
+              onClick={() => {
+                setIsResuming(true);
+                resumePayment(
+                  order,
+                  () => {
+                    toast.success('Payment completed successfully. Refreshing...');
+                    window.location.reload();
+                  },
+                  () => setIsResuming(false),
+                );
+              }}
+              className="group flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white transition-all duration-300 rounded-lg font-bold uppercase tracking-widest text-[10px] shadow-sm hover:shadow-md cursor-pointer active:scale-[0.98] whitespace-nowrap border-0 disabled:opacity-50"
+            >
+              {isResuming ? 'Processing...' : 'Complete Payment'}
+            </button>
+          </div>
+        )}
 
         {/* Download Invoice Action */}
         <div className="bg-surface-container-low/40 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-outline-variant/15">

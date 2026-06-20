@@ -3,7 +3,15 @@ import { useState, useEffect } from 'react';
 
 import api from '../../services/api';
 import logger from '../../utils/logger';
-import { stagger, CHART_COLORS } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  StatCard,
+  ChartCard,
+  ChartTooltip,
+  SkeletonDashboard,
+  stagger,
+  CHART_COLORS,
+} from '../components/AdminUIKit';
 
 export function AdminRecommendationAnalytics() {
   const [stats, setStats] = useState(null);

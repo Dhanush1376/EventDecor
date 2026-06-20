@@ -14,7 +14,7 @@ import {
 } from '../controllers/productController';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 import { createProductSchema, updateProductSchema } from '../validators/productValidator';
-import { validate } from '../middleware/validate';
+import { validateRequest } from '../middleware/zodValidationMiddleware';
 import { cacheResponse } from '../middleware/cacheMiddleware';
 import { dynamicResponseCache } from '../middleware/dynamicCacheMiddleware';
 
@@ -35,8 +35,8 @@ if (process.env.DISABLE_CACHE === 'true') {
   router.get('/:id', dynamicResponseCache(120, 'public'), cacheResponse(120), getProductById);
 }
 
-router.post('/', requireAuth, requireAdmin, validate(createProductSchema), createProduct);
-router.put('/:id', requireAuth, requireAdmin, validate(updateProductSchema), updateProduct);
+router.post('/', requireAuth, requireAdmin, validateRequest(createProductSchema), createProduct);
+router.put('/:id', requireAuth, requireAdmin, validateRequest(updateProductSchema), updateProduct);
 router.delete('/:id', requireAuth, requireAdmin, deleteProduct);
 router.patch('/:id/toggle-featured', requireAuth, requireAdmin, toggleFeatured);
 router.post('/ai-autofill', requireAuth, requireAdmin, aiAutofillProduct);

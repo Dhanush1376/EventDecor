@@ -1,8 +1,56 @@
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
+import { userService } from '../../services/domainServices';
+import toast from 'react-hot-toast';
 
 export function SettingsSection() {
-  const { prefsForm, setPrefsForm, isPreferencesSaving, handlePreferencesSave } = useDashboard();
+  const { user, checkAuth } = useDashboard();
+
+  const [prefsForm, setPrefsForm] = useState({
+    email: true,
+    marketing: true,
+    theme: 'light',
+    language: 'en',
+  });
+  const [isPreferencesSaving, setIsPreferencesSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setPrefsForm({
+        email: user.notificationPreferences?.email !== false,
+        marketing: user.notificationPreferences?.marketing !== false,
+        theme: user.accountPreferences?.theme || 'light',
+        language: user.accountPreferences?.language || 'en',
+      });
+    }
+  }, [user]);
+
+  const handlePreferencesSave = async (e) => {
+    e.preventDefault();
+    setIsPreferencesSaving(true);
+    try {
+      const payload = {
+        notificationPreferences: {
+          email: prefsForm.email,
+          marketing: prefsForm.marketing,
+        },
+        accountPreferences: {
+          theme: prefsForm.theme,
+          language: prefsForm.language,
+        },
+      };
+      const res = await userService.updatePreferences(payload);
+      if (res.success) {
+        toast.success('Preferences saved successfully!');
+        await checkAuth();
+      }
+    } catch (_err) {
+      toast.error('Failed to save preference settings');
+    } finally {
+      setIsPreferencesSaving(false);
+    }
+  };
 
   return (
     <motion.div

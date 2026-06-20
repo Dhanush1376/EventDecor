@@ -152,7 +152,7 @@ export function ProductAllReviews() {
           setTotalPages(data.totalPages || 1);
           setPage(p);
         }
-      } catch (err) {
+      } catch (_err) {
         toast.error('Failed to fetch reviews.');
       } finally {
         setLoading(false);

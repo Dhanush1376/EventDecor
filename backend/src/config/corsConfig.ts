@@ -27,7 +27,7 @@ const getDynamicOrigins = (): Set<string> => {
       // Use URL constructor to ensure it's a valid URI and to strip trailing slashes securely
       const url = new URL(origin.startsWith('http') ? origin : `https://${origin}`);
       origins.add(url.origin);
-    } catch (err) {
+    } catch {
       logger.error(`[CORS CONFIG] Invalid origin in FRONTEND_URLS: ${origin}`);
     }
   }
@@ -47,7 +47,7 @@ export const isOriginAllowed = (origin: string): boolean => {
   try {
     const parsedUrl = new URL(origin);
     const parsedOrigin = parsedUrl.origin;
-    const hostname = parsedUrl.hostname;
+    const _hostname = parsedUrl.hostname;
 
     // Allow all origins for mobile testing in development
     if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
@@ -64,7 +64,7 @@ export const isOriginAllowed = (origin: string): boolean => {
     }
 
     return false;
-  } catch (err) {
+  } catch {
     return false;
   }
 };

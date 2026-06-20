@@ -6,10 +6,10 @@ import rentalService from '../../services/rentalService';
 
 export function AdminRentalCalendar() {
   const [calendarData, setCalendarData] = useState([]);
-  const [dataLoading, setDataLoading] = useState(false);
+  const [_dataLoading, setDataLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [productId, setProductId] = useState(''); // Optionally filter by product
+  const [productId, _setProductId] = useState(''); // Optionally filter by product
 
   useEffect(() => {
     fetchCalendar();
@@ -22,7 +22,7 @@ export function AdminRentalCalendar() {
       if (res.success) {
         setCalendarData(res.data);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to load rental calendar');
     } finally {
       setDataLoading(false);

@@ -3,7 +3,15 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import rentalService from '../../services/rentalService';
-import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  EmptyState,
+  SkeletonTable,
+  FilterBar,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 const slideDrawer = {
   hidden: { x: '100%', opacity: 0 },
@@ -21,7 +29,7 @@ const allStatuses = [
 ];
 
 export function AdminRentalOrders() {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [rentals, setRentals] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,7 +52,7 @@ export function AdminRentalOrders() {
       } else {
         toast.error('Failed to load rental orders');
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Error loading rentals');
     } finally {
       setDataLoading(false);

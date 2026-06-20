@@ -14,4 +14,9 @@ router.get('/deep', requireAuth, requireAdmin, HealthController.deepHealth);
 // Prometheus Metrics
 router.get('/metrics', HealthController.metrics);
 
+// Sentry Debug
+router.get('/sentry-debug', requireAuth, requireAdmin, (_req, _res) => {
+  throw new Error('Sentry Debug Exception from EventDecor Backend');
+});
+
 export default router;

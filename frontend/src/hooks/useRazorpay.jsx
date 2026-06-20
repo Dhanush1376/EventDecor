@@ -206,5 +206,96 @@ export const useRazorpay = () => {
     }
   }, []);
 
-  return { processPayment };
+  const resumePayment = useCallback(async (order, onSuccess, onError) => {
+    if (paymentInProgress.current) {
+      logger.warn('Payment already in progress, ignoring duplicate request');
+      return;
+    }
+
+    if (!order.razorpayOrderId) {
+      showPremiumToast('This order cannot be resumed (No Razorpay ID)', 'error');
+      return;
+    }
+
+    paymentInProgress.current = true;
+
+    const finalize = () => {
+      paymentInProgress.current = false;
+    };
+
+    try {
+      const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+
+      if (!res) {
+        showPremiumToast('Razorpay SDK failed to load. Are you online?', 'error');
+        onError?.(new Error('Razorpay SDK failed to load'));
+        return finalize();
+      }
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: Math.round(order.total * 100),
+        currency: 'INR',
+        name: 'Siri Arts & Crafts',
+        description: 'Complete Payment for Order',
+        image:
+          import.meta.env.VITE_LOGO_URL ||
+          'https://res.cloudinary.com/siriartscrafts/image/upload/v1/SiriLogo.webp',
+        order_id: order.razorpayOrderId,
+        handler: async (response) => {
+          try {
+            const verifyRes = await orderService.verifyPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+
+            if (verifyRes.success) {
+              showPremiumToast('Payment successful!', 'success');
+              onSuccess?.(verifyRes.data);
+            } else {
+              showPremiumToast('Payment verification failed', 'error');
+              onError?.(verifyRes);
+            }
+          } catch (err) {
+            logger.error('Payment verification error:', err);
+            showPremiumToast(
+              err.response?.data?.message || err.message || 'Error verifying payment',
+              'error',
+            );
+            onError?.(err);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            onError?.(new Error('Payment modal dismissed'));
+            finalize();
+          },
+        },
+        prefill: {
+          name: order.shippingAddress?.name || '',
+          contact: order.shippingAddress?.phone || '',
+        },
+        theme: {
+          color: '#d4af37',
+        },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+
+      paymentObject.on('payment.failed', function (response) {
+        logger.error('Payment failed event:', response.error);
+        finalize();
+      });
+
+      paymentObject.open();
+    } catch (err) {
+      logger.error('Resume payment error:', err);
+      showPremiumToast('Payment initiation failed', 'error');
+      onError?.(err);
+      finalize();
+    }
+  }, []);
+
+  return { processPayment, resumePayment };
 };

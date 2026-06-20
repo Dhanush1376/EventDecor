@@ -2,7 +2,16 @@ import { m as motion } from 'framer-motion';
 import { useMemo, useEffect, useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
 
-import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  StatCard,
+  ChartCard,
+  ChartTooltip,
+  SkeletonDashboard,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 export function AdminAnalytics() {

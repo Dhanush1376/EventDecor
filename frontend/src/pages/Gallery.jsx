@@ -24,12 +24,12 @@ export function GalleryInner() {
   const [filters, setFilters] = useState({});
   const [searchQuery, setSearchQuery] = useState(searchParam);
   const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [_selectedProduct, _setSelectedProduct] = useState(null);
   const [filterType, setFilterType] = useState('all'); // all, inspiration, product
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isGalleryMode, setIsGalleryMode] = useState(false);
   const [slideshowIndex, setSlideshowIndex] = useState(-1);
-  const [showFloatingExit, setShowFloatingExit] = useState(false);
+  const [_showFloatingExit, setShowFloatingExit] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
   const navRef = React.useRef(null);
@@ -90,7 +90,7 @@ export function GalleryInner() {
     items: filteredItems,
     fetchNextPage,
     hasNextPage,
-    isFetching,
+    _isFetching,
     isFetchingNextPage,
     isLoading: isGalleryLoading,
     isError: isGalleryError,
@@ -310,7 +310,7 @@ export function GalleryInner() {
         >
           {/* Search Bar & Mobile / Tablet Actions */}
           <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
-            <div className="flex-1 h-11 lg:h-9">
+            <div className="flex-1 lg:p-1.5 lg:bg-surface-container/60 lg:backdrop-blur-xl lg:border lg:border-outline-variant/20 rounded-full lg:shadow-inner">
               <SearchBar
                 value={searchQuery}
                 onChange={(e) => {
@@ -321,15 +321,8 @@ export function GalleryInner() {
                     new CustomEvent('open-global-search', { detail: { mode: 'visual' } }),
                   );
                 }}
-                onClick={() => {
-                  window.dispatchEvent(
-                    new CustomEvent('open-global-search', {
-                      detail: { mode: 'text', query: searchQuery },
-                    }),
-                  );
-                }}
                 placeholder="Search themes, colors..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+                className="w-full h-[44px] lg:h-[44px] !rounded-full bg-surface-bright shadow-[0_2px_8px_rgba(115,92,0,0.08)] border border-outline-variant/15 !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center outline-none focus:outline-none"
               />
             </div>
 
@@ -374,9 +367,9 @@ export function GalleryInner() {
               />
             </div>
 
-            <div className="flex items-center gap-3 shrink-0 lg:-mt-[6px]">
+            <div className="flex items-center gap-3 shrink-0">
               {/* Type Switcher Dropdown */}
-              <div className="w-48 xl:w-52 h-11 lg:h-9">
+              <div className="w-48 xl:w-52 p-1.5 bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 rounded-full shadow-inner">
                 <CustomDropdown
                   options={[
                     { value: 'all', label: 'All Formats' },
@@ -386,30 +379,32 @@ export function GalleryInner() {
                   value={filterType}
                   onChange={setFilterType}
                   className="w-full h-full"
-                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 lg:!px-4 text-[12px] lg:text-[11px]"
+                  buttonClassName="w-full h-[44px] lg:h-[44px] !rounded-full border !border-outline-variant/15 shadow-[0_2px_8px_rgba(115,92,0,0.08)] !bg-surface-bright !py-0 !px-5 lg:!px-4 text-[13px] lg:text-[12px]"
                 />
               </div>
 
               {/* Gallery Mode Toggle */}
-              <button
-                onClick={() => {
-                  const newMode = !isGalleryMode;
-                  setIsGalleryMode(newMode);
-                  if (newMode && filteredItems.length > 0) {
-                    setSlideshowIndex(0);
-                  }
-                }}
-                className={`flex shrink-0 items-center gap-2 h-11 lg:h-9 px-5 rounded-full border transition-all duration-300 font-bold text-[10px] uppercase tracking-widest outline-none focus:outline-none focus-visible:outline-none ${
-                  isGalleryMode
-                    ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                    : 'bg-white text-black/60 border-black/10 hover:border-black/30 shadow-sm'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  {isGalleryMode ? 'grid_view' : 'photo_library'}
-                </span>
-                {isGalleryMode ? 'Exit Gallery' : 'Gallery Mode'}
-              </button>
+              <div className="p-1.5 bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 rounded-full shadow-inner">
+                <button
+                  onClick={() => {
+                    const newMode = !isGalleryMode;
+                    setIsGalleryMode(newMode);
+                    if (newMode && filteredItems.length > 0) {
+                      setSlideshowIndex(0);
+                    }
+                  }}
+                  className={`flex shrink-0 items-center gap-2 h-[44px] lg:h-[44px] px-5 rounded-full border transition-all duration-300 font-bold text-[10px] uppercase tracking-widest outline-none focus:outline-none focus-visible:outline-none ${
+                    isGalleryMode
+                      ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                      : 'bg-surface-bright text-on-surface/80 border-outline-variant/15 shadow-[0_2px_8px_rgba(115,92,0,0.08)] hover:border-outline-variant/30'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {isGalleryMode ? 'grid_view' : 'photo_library'}
+                  </span>
+                  {isGalleryMode ? 'Exit Gallery' : 'Gallery Mode'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

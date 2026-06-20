@@ -16,9 +16,7 @@ export const TrendingProducts = React.memo(function TrendingProducts() {
   const cms = useWebsiteContent({ includeDefaults: false });
   const loading = cms?.loading;
   const config = cms?.trendingProducts || {};
-  if (config.isVisible === false) return null;
-
-  const productIds = config.productIds || [];
+  const _productIds = config.productIds || [];
 
   const {
     data: trendingData,
@@ -30,8 +28,10 @@ export const TrendingProducts = React.memo(function TrendingProducts() {
       feed: 'trendingNow',
       limit: config.maxDisplay || 10,
     },
-    { enabled: true },
+    { enabled: config.isVisible !== false },
   );
+
+  if (config.isVisible === false) return null;
 
   const products = trendingData?.items || trendingData || [];
 

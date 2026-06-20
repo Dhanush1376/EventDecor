@@ -28,7 +28,10 @@ import { CustomOrderMailService } from '../services/customOrderMailService';
 export const processOutboxEvents = async () => {
   await withCronLock('outbox-processor', 20, async () => {
     // Process up to 50 pending events
-    const events = await OutboxEvent.find({ status: 'PENDING' }).sort({ createdAt: 1 }).limit(50);
+    const events = await OutboxEvent.find({ status: 'PENDING' })
+      .sort({ createdAt: 1 })
+      .limit(50)
+      .maxTimeMS(10000);
 
     if (events.length === 0) return;
 

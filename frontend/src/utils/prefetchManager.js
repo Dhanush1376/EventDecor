@@ -1,6 +1,7 @@
 import api from '../services/api';
 import { productService, orderService, userService } from '../services/domainServices';
 import logger from './logger';
+import { getOptimizedUrl } from './imageUtils';
 import { hasSessionMarker } from './authStorage';
 
 /**
@@ -123,7 +124,7 @@ class PrefetchManager {
     return route.split('?')[0];
   }
 
-  async prefetchRouteModule(route, opts = {}) {
+  async prefetchRouteModule(route, _opts = {}) {
     const key = this.normalizeRoute(route);
     if (this.prefetchedModules.has(key)) return;
 
@@ -208,26 +209,35 @@ class PrefetchManager {
    * Preload critical images so they are in browser cache
    */
   preloadImage(url) {
-    if (!url || this.prefetchedImages.has(url)) return;
+    if (!url) return;
 
-    this.prefetchedImages.add(url);
+    // Optimize the URL so it perfectly matches what CloudinaryImage will request.
+    // If we preload the unoptimized URL, it's a wasted request and Chrome will complain.
+    const optimizedUrl = getOptimizedUrl(url);
+
+    if (this.prefetchedImages.has(optimizedUrl)) return;
+    this.prefetchedImages.add(optimizedUrl);
 
     // Use link preload for higher priority caching
     if (document && document.head) {
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
-      link.href = url;
+      link.href = optimizedUrl;
 
-      // Cleanup after load or error to prevent DOM bloat
-      link.onload = () => link.remove();
-      link.onerror = () => link.remove();
+      // Keep it in the DOM slightly longer so the browser has time to match it to the rendered <img>
+      const cleanup = () => {
+        setTimeout(() => link.remove(), 5000);
+      };
+
+      link.onload = cleanup;
+      link.onerror = cleanup;
 
       document.head.appendChild(link);
     } else {
       // Fallback
       const img = new Image();
-      img.src = url;
+      img.src = optimizedUrl;
     }
   }
 

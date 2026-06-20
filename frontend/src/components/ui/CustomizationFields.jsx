@@ -167,7 +167,7 @@ export function FileUploadZone({
         onUpload(uploaded);
         toast.success(`${uploaded.length} file${uploaded.length > 1 ? 's' : ''} uploaded`);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Upload failed. Please try again.');
     } finally {
       clearInterval(interval);
@@ -437,7 +437,7 @@ const ADDON_OPTIONS = [
   { id: 'rangoli', label: 'Rangoli Base', icon: 'palette' },
 ];
 
-export function ProductCustomizationSection({ customization, onChange, product }) {
+export function ProductCustomizationSection({ customization, onChange, _product }) {
   const update = (field, value) => {
     onChange({ ...customization, [field]: value });
   };

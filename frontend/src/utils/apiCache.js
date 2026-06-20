@@ -10,7 +10,7 @@ const DEFAULT_TTL_MS = 60 * 1000;
 /** Path-prefix → TTL (ms). Longer TTL for rarely-changing public data. */
 const TTL_BY_PREFIX = [
   ['/cms', 5 * 60 * 1000],
-  ['/products/categories', 10 * 60 * 1000],
+  ['/products/categories', 1 * 60 * 1000], // Reduced from 10 mins to 1 min to prevent stale empty states
   ['/products', 2 * 60 * 1000],
   ['/gallery/categories', 10 * 60 * 1000],
   ['/gallery', 5 * 60 * 1000],

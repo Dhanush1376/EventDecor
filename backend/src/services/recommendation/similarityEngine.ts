@@ -272,7 +272,7 @@ export async function getUsersAlsoViewed(
       { $limit: limit },
     ]);
 
-    return coViewed.map((item, idx) => ({
+    return coViewed.map((item, _idx) => ({
       targetId: item._id.targetId.toString(),
       targetType: item._id.targetType,
       similarityScore: Math.round((item.sessionCount / Math.max(viewers.length, 1)) * 100) / 100,

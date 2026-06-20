@@ -6,7 +6,14 @@ import { productService } from '../../services/api/productService';
 import { refreshWebsiteContent } from '../../hooks/useWebsiteContent';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  StatCard,
+  StatusBadge,
+  SkeletonDashboard,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 export function AdminInventory() {
   const { products, setProducts, refreshProducts, dataLoading } = useAdmin();

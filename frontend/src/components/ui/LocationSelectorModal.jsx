@@ -16,7 +16,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isMapLoading, setIsMapLoading] = useState(true);
-  const [isDetectingGPS, setIsDetectingGPS] = useState(false);
+  const [_isDetectingGPS, setIsDetectingGPS] = useState(false);
 
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
@@ -340,7 +340,7 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
   };
 
   // Fetch Device Current Location
-  const handleUseCurrentLocation = () => {
+  const _handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast.error('GPS tracking is not supported by your browser.');
       return;

@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { AdminToggle, SkeletonDashboard, fadeUp } from '../components/AdminUIKit';
+import { SkeletonDashboard, AdminToggle, fadeUp } from '../components/AdminUIKit';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
@@ -47,7 +47,7 @@ export function AdminCreateCoupon() {
     formData,
     setFormData,
     pageState,
-    setPageState,
+    _setPageState,
     draftStatus,
     showRestoreModal,
     restoreDraft,

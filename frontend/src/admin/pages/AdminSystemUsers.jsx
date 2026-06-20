@@ -1,6 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, ShieldCheck, UserPlus, Trash2, Edit2 } from 'lucide-react';
-import { SkeletonTable, PageHeader } from '../components/AdminUIKit';
+import { PageHeader, SkeletonTable } from '../components/AdminUIKit';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
@@ -27,7 +27,7 @@ export const AdminSystemUsers = () => {
     formData: systemUserDraft,
     setFormData: setSystemUserDraft,
     deleteDraft,
-    hasDraft,
+    _hasDraft,
     restoreDraft,
     discardDraft,
     resetData,

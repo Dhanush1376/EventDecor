@@ -989,7 +989,7 @@ export function EventBookingWizard() {
                                 Estimated Rental Inclusions
                               </span>
                               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-1">
-                                {aiAnalysisResult.suggestedProps.map((prop, i) => (
+                                {aiAnalysisResult.suggestedProps.map((prop, _i) => (
                                   <li
                                     key={prop}
                                     className="flex items-center gap-1 text-[10px] text-stone-700 font-medium"

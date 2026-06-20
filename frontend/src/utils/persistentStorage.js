@@ -56,7 +56,7 @@ const isStorageAvailable = (type) => {
     storage.setItem(testKey, 'test');
     storage.removeItem(testKey);
     return true;
-  } catch (e) {
+  } catch (_e) {
     return false;
   }
 };
@@ -85,7 +85,7 @@ const sweepExpiredKeys = (storageType) => {
               keysToRemove.push(key);
             }
           }
-        } catch (_) {
+        } catch (__) {
           // Keep corrupted keys for general read-time cleaning
         }
       }
@@ -246,10 +246,10 @@ export const persistentStorage = {
       // Parse and return inner value
       try {
         return JSON.parse(decryptedValue);
-      } catch (_) {
+      } catch (__) {
         return decryptedValue;
       }
-    } catch (error) {
+    } catch (_error) {
       // If parsing failed, it is a legacy raw string. Return it directly.
       return raw;
     }
@@ -286,7 +286,7 @@ export const persistentStorage = {
       if (hasLocalStorage) {
         try {
           window.localStorage.clear();
-        } catch (_) {}
+        } catch (__) {}
       }
     }
 
@@ -295,7 +295,7 @@ export const persistentStorage = {
       if (hasSessionStorage) {
         try {
           window.sessionStorage.clear();
-        } catch (_) {}
+        } catch (__) {}
       }
     }
   },

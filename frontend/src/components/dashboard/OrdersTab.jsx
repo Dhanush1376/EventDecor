@@ -11,7 +11,7 @@ export default function OrdersTab({
   setReviewingProduct,
   downloadInvoice,
 }) {
-  const handleImageError = (e) => {
+  const _handleImageError = (e) => {
     e.target.src = 'https://via.placeholder.com/150?text=No+Image';
   };
 

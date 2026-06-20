@@ -1,5 +1,5 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { fadeUp, stagger, SkeletonDashboard, PageHeader } from '../components/AdminUIKit';
+import { PageHeader, SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
@@ -261,7 +261,7 @@ export function AdminSettings() {
       } catch {
         // silent fallback to default initial settings
       }
-    } catch (err) {
+    } catch (_err) {
       logger.warn('Could not sync remote settings, using local configuration.');
     } finally {
       setLoading(false);

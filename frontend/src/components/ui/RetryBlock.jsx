@@ -16,7 +16,7 @@ export class RetryBlock extends Component {
     // Silently handle error to pass no-console checks, or use a proper logger if available
   }
 
-  componentDidCatch(error, errorInfo) {}
+  componentDidCatch(_error, _errorInfo) {}
 
   handleRetry = () => {
     this.setState((prev) => ({

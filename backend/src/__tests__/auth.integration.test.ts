@@ -112,7 +112,7 @@ describe('Auth Services Integration Tests', () => {
 
     it('should enforce OTP max attempts', async () => {
       const email = 'testauth@example.com';
-      const otp = await OtpAuthService.generateOTP(email, '127.0.0.1');
+      const _otp = await OtpAuthService.generateOTP(email, '127.0.0.1');
 
       for (let i = 0; i < 4; i++) {
         await expect(OtpAuthService.verifyOTP(email, '000000', '127.0.0.1')).rejects.toThrow(

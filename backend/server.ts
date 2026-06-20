@@ -1,13 +1,11 @@
 import './src/config/loadEnv'; // Load & validate environment variables before any other imports resolve!
 
-// ──── Early diagnostic output (bypasses winston, always visible in Railway logs) ────
-console.log(`[BOOT DIAGNOSTIC] NODE_ENV=${process.env.NODE_ENV}`);
-console.log(`[BOOT DIAGNOSTIC] PORT=${process.env.PORT || '(not set, defaulting to 5000)'}`);
-console.log(
-  `[BOOT DIAGNOSTIC] MONGO_URI=${process.env.MONGO_URI ? 'SET (length=' + process.env.MONGO_URI.length + ')' : 'NOT SET'}`,
-);
-console.log(`[BOOT DIAGNOSTIC] FRONTEND_URLS=${process.env.FRONTEND_URLS || '(not set)'}`);
-console.log(`[BOOT DIAGNOSTIC] LOG_LEVEL=${process.env.LOG_LEVEL || '(not set)'}`);
+import logger from './src/config/logger';
+
+// ──── Early diagnostic output (secure) ────
+logger.info(`[BOOT DIAGNOSTIC] NODE_ENV=${process.env.NODE_ENV}`);
+logger.info(`[BOOT DIAGNOSTIC] PORT=${process.env.PORT || '(not set, defaulting to 5000)'}`);
+logger.info(`[BOOT DIAGNOSTIC] MONGO_URI=${process.env.MONGO_URI ? 'SET' : 'NOT SET'}`);
 // ──── End diagnostic output ────
 
 import { auditEnvOnStartup } from './src/config/secretAudit';
@@ -17,7 +15,6 @@ runStartupValidation();
 import app from './src/app';
 import connectDB from './src/config/db';
 import { ensureIndexes } from './src/config/ensureIndexes';
-import logger from './src/config/logger';
 import { generateSitemap } from './src/utils/sitemapGenerator';
 import { initSocket, getIO } from './src/socket';
 import { initJobs } from './src/jobs/cronJobs';
@@ -64,10 +61,19 @@ const handleFatalError = async (error: Error, source: string) => {
     logger.error('Failed to close MongoDB during critical crash:', err);
   }
 
-  // Allow log buffers and sentry traces 1 second to flush, then exit
+  // Allow sentry traces up to 2 seconds to flush, then exit
+  try {
+    if (process.env.SENTRY_DSN) {
+      await Sentry.flush(2000);
+    }
+  } catch (err) {
+    // Ignore flush errors
+  }
+
+  // Allow log buffers a brief moment, then exit
   setTimeout(() => {
     process.exit(1);
-  }, 1000);
+  }, 500);
 };
 
 process.on('uncaughtException', (err) => {
@@ -205,6 +211,7 @@ const startServer = async () => {
     // Ensure timeout is slightly higher than the load balancer's timeout (Render has 100s default, but 65s is safe for internal)
     server.keepAliveTimeout = 65000; // 65 seconds
     server.headersTimeout = 66000; // 66 seconds
+    server.requestTimeout = 120000; // 120 seconds — hard cap on entire request lifecycle (defense-in-depth)
     server.maxConnections = parseInt(process.env.MAX_CONNECTIONS || '10000', 10); // Prevent FD exhaustion
     // 5. Graceful Shutdown Handling
     const shutdown = async (signal: string) => {

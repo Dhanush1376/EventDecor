@@ -30,7 +30,7 @@ export interface TrendingResult {
  */
 export async function calculateTrending(
   targetType: string,
-  options: { limit?: number; seasonalContext?: string } = {}
+  options: { limit?: number; seasonalContext?: string } = {},
 ): Promise<TrendingItem[]> {
   const limit = options.limit || 20;
   const now = new Date();
@@ -44,15 +44,50 @@ export async function calculateTrending(
         $match: {
           targetType,
           timestamp: { $gte: last24h },
-          eventType: { $in: ['product_view', 'product_click', 'event_view', 'event_click', 'gallery_view', 'gallery_click', 'showcase_view', 'wishlist_add', 'cart_add', 'purchase', 'booking'] },
+          eventType: {
+            $in: [
+              'product_view',
+              'product_click',
+              'event_view',
+              'event_click',
+              'gallery_view',
+              'gallery_click',
+              'showcase_view',
+              'wishlist_add',
+              'cart_add',
+              'purchase',
+              'booking',
+            ],
+          },
         },
       },
       {
         $group: {
           _id: '$targetId',
           totalInteractions: { $sum: 1 },
-          clicks: { $sum: { $cond: [{ $in: ['$eventType', ['product_click', 'event_click', 'gallery_click']] }, 1, 0] } },
-          views: { $sum: { $cond: [{ $in: ['$eventType', ['product_view', 'event_view', 'gallery_view', 'showcase_view']] }, 1, 0] } },
+          clicks: {
+            $sum: {
+              $cond: [
+                { $in: ['$eventType', ['product_click', 'event_click', 'gallery_click']] },
+                1,
+                0,
+              ],
+            },
+          },
+          views: {
+            $sum: {
+              $cond: [
+                {
+                  $in: [
+                    '$eventType',
+                    ['product_view', 'event_view', 'gallery_view', 'showcase_view'],
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
           wishlists: { $sum: { $cond: [{ $eq: ['$eventType', 'wishlist_add'] }, 1, 0] } },
           bookings: { $sum: { $cond: [{ $in: ['$eventType', ['purchase', 'booking']] }, 1, 0] } },
         },
@@ -81,18 +116,14 @@ export async function calculateTrending(
     const prevMap = new Map(previousCounts.map((p) => [p._id.toString(), p.totalInteractions]));
 
     // Calculate velocity and score
-    const trendingItems: TrendingItem[] = recentCounts.map((item, index) => {
+    const trendingItems: TrendingItem[] = recentCounts.map((item, _index) => {
       const targetIdStr = item._id.toString();
       const previousTotal = prevMap.get(targetIdStr) || 0;
       const velocity = (item.totalInteractions - previousTotal) / Math.max(previousTotal, 1);
 
       // Combined score: weighted interaction count + velocity bonus
       const score =
-        item.clicks * 3 +
-        item.views * 1 +
-        item.wishlists * 5 +
-        item.bookings * 10 +
-        velocity * 10;
+        item.clicks * 3 + item.views * 1 + item.wishlists * 5 + item.bookings * 10 + velocity * 10;
 
       return {
         targetId: targetIdStr,
@@ -147,7 +178,16 @@ export async function getTrendingFeeds(seasonalContext?: string): Promise<Trendi
       {
         $match: {
           timestamp: { $gte: thirtyDaysAgo },
-          eventType: { $in: ['product_view', 'event_view', 'gallery_view', 'purchase', 'booking', 'wishlist_add'] },
+          eventType: {
+            $in: [
+              'product_view',
+              'event_view',
+              'gallery_view',
+              'purchase',
+              'booking',
+              'wishlist_add',
+            ],
+          },
         },
       },
       {
@@ -174,8 +214,8 @@ export async function getTrendingFeeds(seasonalContext?: string): Promise<Trendi
 
     // Luxury trending: items with high wishlist + booking scores (correlates with premium items)
     const luxuryTrending = [...products]
-      .filter((p) => (p.wishlistCount + p.bookingCount) > 0)
-      .sort((a, b) => (b.wishlistCount + b.bookingCount * 3) - (a.wishlistCount + a.bookingCount * 3))
+      .filter((p) => p.wishlistCount + p.bookingCount > 0)
+      .sort((a, b) => b.wishlistCount + b.bookingCount * 3 - (a.wishlistCount + a.bookingCount * 3))
       .slice(0, 10);
 
     const result: TrendingResult = {
@@ -190,7 +230,13 @@ export async function getTrendingFeeds(seasonalContext?: string): Promise<Trendi
     return result;
   } catch (err: any) {
     logger.error(`[TRENDING ENGINE] Error getting trending feeds: ${err.message}`);
-    return { trendingNow: [], mostBooked: [], popularThisSeason: [], topRated: [], luxuryTrending: [] };
+    return {
+      trendingNow: [],
+      mostBooked: [],
+      popularThisSeason: [],
+      topRated: [],
+      luxuryTrending: [],
+    };
   }
 }
 
@@ -200,7 +246,7 @@ export async function getTrendingFeeds(seasonalContext?: string): Promise<Trendi
 export async function saveTrendingSnapshot(
   period: 'hourly' | 'daily' | 'weekly',
   targetType: string,
-  seasonalContext: string
+  seasonalContext: string,
 ): Promise<void> {
   try {
     const items = await calculateTrending(targetType, { limit: 50 });
@@ -223,7 +269,9 @@ export async function saveTrendingSnapshot(
       snapshotDate: new Date(),
     });
 
-    logger.info(`[TRENDING ENGINE] Saved ${period} snapshot for ${targetType} (${items.length} items)`);
+    logger.info(
+      `[TRENDING ENGINE] Saved ${period} snapshot for ${targetType} (${items.length} items)`,
+    );
   } catch (err: any) {
     logger.error(`[TRENDING ENGINE] Error saving snapshot: ${err.message}`);
   }

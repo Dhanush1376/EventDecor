@@ -737,7 +737,7 @@ export function FrontendPreview({ label, children, className = '' }) {
 // ═══════════════════════════════════════════════════════════════
 // PUBLISH BAR — floating action bar
 // ═══════════════════════════════════════════════════════════════
-export function PublishBar({ hasChanges, onPublish, onReset, lastSaved }) {
+export function PublishBar({ hasChanges, onPublish, onReset, _lastSaved }) {
   return (
     <AnimatePresence>
       {hasChanges && (

@@ -9,12 +9,14 @@ export const auditEnvOnStartup = () => {
   if (env.NODE_ENV !== 'production') return;
 
   const sandboxPrefixes = ['test_', 'sandbox_', 'sk_test_', 'rzp_test_'];
-  
+
   for (const [key, value] of Object.entries(process.env)) {
     if (typeof value === 'string') {
       const lowerVal = value.toLowerCase();
-      if (sandboxPrefixes.some(prefix => lowerVal.startsWith(prefix))) {
-        logger.warn(`[SECURITY AUDIT] Environment variable ${key} appears to contain a sandbox/test credential in production!`);
+      if (sandboxPrefixes.some((prefix) => lowerVal.startsWith(prefix))) {
+        logger.warn(
+          `[SECURITY AUDIT] Environment variable ${key} appears to contain a sandbox/test credential in production!`,
+        );
       }
     }
   }
@@ -23,7 +25,9 @@ export const auditEnvOnStartup = () => {
   if (env.SECRET_ROTATION_REMINDER) {
     const rotationDate = new Date(env.SECRET_ROTATION_REMINDER);
     if (!isNaN(rotationDate.getTime()) && new Date() > rotationDate) {
-      logger.error(`[SECURITY AUDIT] 🚨 CRITICAL: Secret rotation date (${env.SECRET_ROTATION_REMINDER}) has passed! Rotate JWT_SECRET and FIELD_ENCRYPTION_KEY immediately.`);
+      logger.error(
+        `[SECURITY AUDIT] 🚨 CRITICAL: Secret rotation date (${env.SECRET_ROTATION_REMINDER}) has passed! Rotate JWT_SECRET and FIELD_ENCRYPTION_KEY immediately.`,
+      );
     }
   }
 };
@@ -38,13 +42,13 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
   }
 
   const originalJson = res.json;
-  
-  res.json = function(body: any) {
+
+  res.json = function (body: any) {
     // Only scan if body is an object or string
     if (body) {
       try {
         const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
-        
+
         // Patterns to look for in response payload
         const suspiciousPatterns = [
           /mongodb(\+srv)?:\/\//i, // MongoDB URI
@@ -54,31 +58,34 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
         ];
 
         // We allow JWTs on auth routes
-        const isAuthRoute = req.originalUrl.includes('/api/auth') || req.originalUrl.includes('/api/v1/auth');
-        
+        const isAuthRoute =
+          req.originalUrl.includes('/api/auth') || req.originalUrl.includes('/api/v1/auth');
+
         for (const pattern of suspiciousPatterns) {
           // If it's a JWT pattern and we are on an auth route, skip
           if (isAuthRoute && pattern.source.includes('eyJ')) {
             continue;
           }
-          
+
           if (pattern.test(bodyStr)) {
-            logger.error(`[SECURITY AUDIT] 🚨 POTENTIAL SECRET LEAK PREVENTED on ${req.method} ${req.originalUrl}`);
-            
+            logger.error(
+              `[SECURITY AUDIT] 🚨 POTENTIAL SECRET LEAK PREVENTED on ${req.method} ${req.originalUrl}`,
+            );
+
             // Redact the response to prevent leak
             return originalJson.call(this, {
               success: false,
-              message: 'Internal server error (Response redacted by security interceptor)'
+              message: 'Internal server error (Response redacted by security interceptor)',
             });
           }
         }
-      } catch (e) {
+      } catch {
         // Ignore JSON stringify errors
       }
     }
-    
+
     return originalJson.call(this, body);
   };
-  
+
   next();
 };

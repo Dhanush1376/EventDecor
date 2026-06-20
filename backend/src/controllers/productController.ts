@@ -286,9 +286,7 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
       body: JSON.stringify({
         model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages,
-        response_format: {
-          type: 'json_object',
-        },
+
         temperature: 0.2,
       }),
     });
@@ -315,11 +313,13 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
   }
 
   try {
-    const parsedData = JSON.parse(textResponse.trim());
+    const extractedJson = textResponse.match(/\{[\s\S]*\}/);
+    if (!extractedJson) throw new Error('No JSON object found in response');
+    const parsedData = JSON.parse(extractedJson[0]);
     res
       .status(200)
       .json(new ApiResponse(true, 'AI specifications generated successfully', parsedData));
-  } catch (err) {
+  } catch {
     logger.error('Failed to parse Groq JSON:', textResponse);
     throw new ApiError(500, 'AI response could not be parsed as clean JSON.');
   }
@@ -366,7 +366,7 @@ export const refineAiProduct = asyncHandler(async (req: Request, res: Response) 
       },
       signal: groqController.signal,
       body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        model: 'llama3-8b-8192',
         messages,
         response_format: { type: 'json_object' },
         temperature: 0.2,
@@ -399,7 +399,7 @@ export const refineAiProduct = asyncHandler(async (req: Request, res: Response) 
     res
       .status(200)
       .json(new ApiResponse(true, 'AI specifications refined successfully', parsedData));
-  } catch (err) {
+  } catch {
     logger.error('Failed to parse Groq JSON:', textResponse);
     throw new ApiError(500, 'AI response could not be parsed as clean JSON.');
   }

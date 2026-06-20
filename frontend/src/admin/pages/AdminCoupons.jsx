@@ -4,7 +4,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
 import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';
-import { fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  StatusBadge,
+  AdminToggle,
+  EmptyState,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 export function AdminCoupons() {
   const navigate = useNavigate();

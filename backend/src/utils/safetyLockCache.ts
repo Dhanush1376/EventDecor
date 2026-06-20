@@ -14,7 +14,7 @@ export const getSafetyLockDocument = async (): Promise<SafetyLockDoc> => {
       if (cached) {
         return JSON.parse(cached) as SafetyLockDoc;
       }
-    } catch (err) {
+    } catch {
       // fall through to DB
     }
   }
@@ -23,7 +23,7 @@ export const getSafetyLockDocument = async (): Promise<SafetyLockDoc> => {
     return memorySafetyLockCache.getOrSet(
       'admin_safety_lock',
       async () => ContentSection.findOne({ sectionKey: 'admin_safety_lock' }).lean(),
-      TTL_SECONDS * 1000
+      TTL_SECONDS * 1000,
     );
   }
 

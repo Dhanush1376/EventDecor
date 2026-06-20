@@ -8,7 +8,7 @@ export function ShowcaseCard({
   _id,
   title,
   subtitle,
-  description,
+  _description,
   rentalPrice = 15000,
   setupTimeHours = 2,
   image,
@@ -21,7 +21,7 @@ export function ShowcaseCard({
   const { toggleItem } = useWishlistDispatch();
   const { runProtectedAction } = useAuth();
 
-  const [hovered, setHovered] = useState(false);
+  const [_hovered, setHovered] = useState(false);
 
   const showcaseId = id || _id;
   const wishlisted = isWishlisted(showcaseId);

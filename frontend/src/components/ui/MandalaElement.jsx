@@ -20,7 +20,7 @@ export const MandalaElement = React.memo(function MandalaElement({
   className = '',
   size = 400,
   opacity = 0.12,
-  color, // accepted but ignored (images have their own color)
+  _color, // accepted but ignored (images have their own color)
   rotate = true,
   duration = 60,
   variant = 1,

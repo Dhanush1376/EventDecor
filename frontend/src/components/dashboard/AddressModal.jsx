@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
+import { userService } from '../../services/domainServices';
 import { MandalaElement } from '../ui/MandalaElement';
 import toast from 'react-hot-toast';
 
@@ -83,15 +84,114 @@ function LocationMarker({ position, setPosition, fetchAddressFromCoords }) {
 
 export function AddressModal() {
   const {
+    user,
     isAddressModalOpen,
     setIsAddressModalOpen,
     editingAddressId,
-    addressFormData,
-    setAddressFormData,
-    isAddressSaving,
-    isDetectingLocation,
-    handleAddressSave,
+    addresses,
+    refetchDashboardData,
   } = useDashboard();
+
+  const [addressFormData, setAddressFormData] = useState(null);
+  const [isAddressSaving, setIsAddressSaving] = useState(false);
+  const [isDetectingLocation, _setIsDetectingLocation] = useState(false);
+
+  useEffect(() => {
+    if (isAddressModalOpen) {
+      if (editingAddressId === 'new') {
+        setAddressFormData({
+          id: 'new',
+          name: '',
+          phone: '',
+          alternatePhone: '',
+          email: user?.email || '',
+          pincode: '',
+          locality: '',
+          addressString: '',
+          landmark: '',
+          city: '',
+          state: '',
+          country: 'India',
+          tag: 'Home',
+          deliveryInstructions: '',
+          latitude: null,
+          longitude: null,
+        });
+      } else if (addresses) {
+        const addr = addresses.find((a) => (a._id || a.id) === editingAddressId);
+        if (addr) {
+          setAddressFormData({
+            id: addr._id || addr.id,
+            name: addr.name || '',
+            phone: addr.phone || '',
+            alternatePhone: addr.alternatePhone || '',
+            email: addr.email || user?.email || '',
+            pincode: addr.pincode || '',
+            locality: addr.locality || '',
+            addressString: addr.addressString || '',
+            landmark: addr.landmark || '',
+            city: addr.city || '',
+            state: addr.state || '',
+            country: addr.country || 'India',
+            tag: addr.tag || 'Home',
+            deliveryInstructions: addr.deliveryInstructions || '',
+            latitude: addr.latitude || null,
+            longitude: addr.longitude || null,
+          });
+        }
+      }
+    } else {
+      setAddressFormData(null);
+    }
+  }, [isAddressModalOpen, editingAddressId, addresses, user]);
+
+  const handleAddressSave = async (e) => {
+    e.preventDefault();
+
+    if (!addressFormData.phone || addressFormData.phone.length < 10) {
+      toast.error('Please enter a valid 10-digit mobile number');
+      return;
+    }
+    if (!addressFormData.pincode || addressFormData.pincode.length !== 6) {
+      toast.error('Please enter a valid 6-digit postal pincode');
+      return;
+    }
+
+    const payload = {
+      name: addressFormData.name,
+      phone: addressFormData.phone,
+      alternatePhone: addressFormData.alternatePhone || undefined,
+      email: addressFormData.email || user?.email || undefined,
+      pincode: addressFormData.pincode,
+      locality: addressFormData.locality,
+      addressString: addressFormData.addressString,
+      landmark: addressFormData.landmark || undefined,
+      city: addressFormData.city,
+      state: addressFormData.state,
+      country: addressFormData.country || 'India',
+      tag: addressFormData.tag,
+      deliveryInstructions: addressFormData.deliveryInstructions || undefined,
+      latitude: addressFormData.latitude,
+      longitude: addressFormData.longitude,
+    };
+
+    setIsAddressSaving(true);
+    try {
+      if (editingAddressId === 'new') {
+        await userService.addAddress(payload);
+        toast.success('New address added successfully!');
+      } else {
+        await userService.updateAddress(editingAddressId, payload);
+        toast.success('Address modified successfully!');
+      }
+      await refetchDashboardData();
+      setIsAddressModalOpen(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to store address information');
+    } finally {
+      setIsAddressSaving(false);
+    }
+  };
 
   const [mapPosition, setMapPosition] = useState({ lat: 20.5937, lng: 78.9629 }); // Default India
 
@@ -153,7 +253,7 @@ export function AddressModal() {
       } else {
         toast.dismiss('geocoding-dashboard');
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to auto-fill address from map', { id: 'geocoding-dashboard' });
     }
   };
@@ -172,10 +272,10 @@ export function AddressModal() {
         fetchAddressFromCoords(latitude, longitude);
         toast.success('Location found!', { id: 'gps-dashboard' });
       },
-      (err) => {
+      (_err) => {
         toast.error('Could not access GPS', { id: 'gps-dashboard' });
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   };
 

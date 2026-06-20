@@ -47,7 +47,7 @@ export function ProductReviewImages() {
           const list = res.data.items || res.data.data || res.data || [];
           setReviews(list);
         }
-      } catch (err) {
+      } catch (_err) {
         // silently handle
       } finally {
         setLoading(false);

@@ -809,7 +809,7 @@ const seed = async () => {
     logger.info(`${createdEvents.length} Events created`);
 
     // 4. Create Gallery Items
-    const galleryItemsWithRefs = galleryInspirations.map((item, index) => {
+    const galleryItemsWithRefs = galleryInspirations.map((item, _index) => {
       // Map some products to gallery items for demonstration
       const linkedProductIds = createdProducts.slice(0, 2).map((p) => p._id);
       return {

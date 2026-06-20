@@ -45,7 +45,7 @@ export function AdminInviteModal() {
   const handleResponse = async (action) => {
     if (!invite || submitting) return;
     setSubmitting(true);
-    const actionText = action === 'accept' ? 'accepting' : 'rejecting';
+    const _actionText = action === 'accept' ? 'accepting' : 'rejecting';
     const loadingToast = toast.loading(`Processing invitation...`);
 
     try {

@@ -17,7 +17,7 @@ export function AdminCampaigns() {
   const [analytics, setAnalytics] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_isSubmitting, _setIsSubmitting] = useState(false);
 
   // Drawer state replaced with routing
   // Selected Template Preview state (can be removed if no longer needed, but we keep activeTab logic)

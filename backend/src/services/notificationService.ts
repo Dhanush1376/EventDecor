@@ -53,7 +53,7 @@ const appendTrackingPixel = (html: string, token: string): string => {
   return html + pixel;
 };
 
-const formatShippingAddress = (addr: any): string => {
+const _formatShippingAddress = (addr: any): string => {
   if (!addr) return '';
   if (typeof addr === 'string') return addr;
 

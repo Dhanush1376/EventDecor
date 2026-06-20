@@ -39,7 +39,7 @@ export const validateRequest = (schema: ZodSchema) => {
         if (parsed.query !== undefined) {
           try {
             req.query = parsed.query;
-          } catch (e) {
+          } catch {
             // Fallback: Mutate query object if it has only a getter
             for (const key of Object.keys(req.query)) {
               delete req.query[key];
@@ -51,7 +51,7 @@ export const validateRequest = (schema: ZodSchema) => {
         if (parsed.params !== undefined) {
           try {
             req.params = parsed.params;
-          } catch (e) {
+          } catch {
             // Fallback: Mutate params object if it has only a getter
             for (const key of Object.keys(req.params)) {
               delete req.params[key];

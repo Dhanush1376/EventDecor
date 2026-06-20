@@ -165,7 +165,7 @@ export async function validateProviderCredentials(
  */
 export async function processImage(
   buffer: Buffer,
-  mimeType: string,
+  _mimeType: string,
 ): Promise<{ base64: string; mimeType: string; hash: string }> {
   // Compute hash of original for caching
   const hash = crypto.createHash('sha256').update(buffer).digest('hex');

@@ -2,21 +2,17 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useMemo, useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
-import { formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
-
-function ChartTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] shadow-[var(--admin-shadow-lg)] border border-[var(--admin-border-subtle)] px-4 py-3">
-      <p className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider">
-        {label}
-      </p>
-      <p className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">
-        {formatCurrency(payload[0].value)}
-      </p>
-    </div>
-  );
-}
+import {
+  PageHeader,
+  StatCard,
+  ChartCard,
+  ChartTooltip,
+  StatusBadge,
+  SkeletonDashboard,
+  formatCurrency,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 export function AdminPayments() {
   const { orders, dataLoading, searchQuery, refreshOrders } = useAdmin();

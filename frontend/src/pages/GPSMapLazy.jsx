@@ -1,24 +1,63 @@
 import { useState, useEffect, useRef } from 'react';
-import L from 'leaflet';
 import logger from '../utils/logger';
-import 'leaflet/dist/leaflet.css';
 
-// Fix Leaflet default marker icon resolution in Vite builds
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
-
-// Dynamic GPS Map Component using Leaflet
+// Dynamic GPS Map Component using Leaflet (Lazy Loaded on Viewport Intersect)
 const GPSMap = ({ address }) => {
+  const wrapperRef = useRef(null);
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const leafletRef = useRef(null);
+
   const [coords, setCoords] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [inView, setInView] = useState(false);
+  const [leafletLoaded, setLeafletLoaded] = useState(false);
 
+  // 1. Intersection Observer to trigger loading
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    if (wrapperRef.current) observer.observe(wrapperRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // 2. Dynamic Import of Leaflet when in view
+  useEffect(() => {
+    if (inView && !leafletLoaded) {
+      Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')])
+        .then(([leafletModule]) => {
+          const L = leafletModule.default || leafletModule;
+
+          // Fix Leaflet default marker icon resolution in Vite builds
+          delete L.Icon.Default.prototype._getIconUrl;
+          L.Icon.Default.mergeOptions({
+            iconRetinaUrl:
+              'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+            shadowUrl:
+              'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+          });
+
+          leafletRef.current = L;
+          setLeafletLoaded(true);
+        })
+        .catch((err) => {
+          logger.error('Failed to dynamically load leaflet: ', err);
+        });
+    }
+  }, [inView, leafletLoaded]);
+
+  // 3. Resolve Coordinates (Only need to do this when we start loading or inView, but doing it inView is better)
+  useEffect(() => {
+    if (!inView) return;
+
     let isMounted = true;
     setIsLoading(true);
 
@@ -103,10 +142,14 @@ const GPSMap = ({ address }) => {
     return () => {
       isMounted = false;
     };
-  }, [address]);
+  }, [address, inView]);
 
+  // 4. Initialize Map when leaflet and coords are ready
   useEffect(() => {
-    if (isLoading || !coords || !mapContainerRef.current) return;
+    if (isLoading || !coords || !leafletLoaded || !mapContainerRef.current) return;
+
+    const L = leafletRef.current;
+    if (!L) return;
 
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
@@ -152,22 +195,26 @@ const GPSMap = ({ address }) => {
         mapInstanceRef.current = null;
       }
     };
-  }, [isLoading, coords]);
+  }, [isLoading, coords, leafletLoaded]);
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full bg-slate-50 flex items-center justify-center rounded-lg">
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-6 h-6 border-2 border-[#8c7335] border-t-transparent rounded-full animate-spin" />
-          <span className="text-[9px] text-[#8c7335] font-bold uppercase tracking-wider">
-            Syncing GPS...
-          </span>
+  return (
+    <div
+      ref={wrapperRef}
+      className="w-full h-full z-0 rounded-lg overflow-hidden min-h-[200px] relative"
+    >
+      {(!inView || isLoading || !leafletLoaded) && (
+        <div className="absolute inset-0 bg-slate-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-6 h-6 border-2 border-[#8c7335] border-t-transparent rounded-full animate-spin" />
+            <span className="text-[9px] text-[#8c7335] font-bold uppercase tracking-wider">
+              {inView && !leafletLoaded ? 'Loading Map Engine...' : 'Syncing GPS...'}
+            </span>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  return <div ref={mapContainerRef} className="w-full h-full z-0 rounded-lg overflow-hidden" />;
+      )}
+      <div ref={mapContainerRef} className="w-full h-full" />
+    </div>
+  );
 };
 
 export default GPSMap;

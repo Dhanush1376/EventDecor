@@ -14,7 +14,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const metrics = await MetricsService.reportHourlyMetrics();
     res.status(200).json(metrics);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to generate metrics' });
   }
 });

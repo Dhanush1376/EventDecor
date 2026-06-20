@@ -2,7 +2,7 @@
  * A clean builder pattern for constructing complex Mongoose search queries
  * safely and efficiently, avoiding raw inline aggregation/regex explosion.
  */
-export class MongoQueryBuilder<T> {
+export class MongoQueryBuilder<_T> {
   private query: any = { isActive: true };
 
   /**

@@ -83,6 +83,19 @@ export class PaymentWebhookService {
     logger.info(`[PAYMENT WEBHOOK CORE] Processing Razorpay event: ${event}`);
 
     if (eventId) {
+      // Absolute cap: prevent infinite retry loops on permanently corrupt events
+      const existingEvent = await PaymentWebhookEvent.findOne({ razorpayEventId: eventId });
+      if (existingEvent && existingEvent.processingAttempts >= 10) {
+        logger.error(
+          `[PAYMENT WEBHOOK] Event ${eventId} exceeded max processing attempts (10). Marking as dead_letter.`,
+        );
+        await PaymentWebhookEvent.updateOne(
+          { razorpayEventId: eventId },
+          { $set: { status: 'dead_letter', updatedAt: new Date() } },
+        );
+        return { status: 200, message: 'Event exceeded max retry attempts — dead-lettered' };
+      }
+
       const claimedEvent = await PaymentWebhookEvent.findOneAndUpdate(
         { razorpayEventId: eventId, status: { $in: ['pending', 'failed'] } },
         {
@@ -234,12 +247,31 @@ export class PaymentWebhookService {
           }
         } else {
           // Fallback for older orders
+          const InventoryLog = require('../models/InventoryLog').default;
           for (const item of order.items) {
-            await Product.findByIdAndUpdate(
+            const prod = await Product.findByIdAndUpdate(
               item.productId,
               { $inc: { stock: -item.quantity, reservedStock: -item.quantity } },
-              { session },
+              { session, returnDocument: 'after' },
             );
+            if (prod) {
+              await InventoryLog.create(
+                [
+                  {
+                    product: item.productId,
+                    previousStock: prod.stock + item.quantity,
+                    newStock: prod.stock,
+                    delta: -item.quantity,
+                    reason: 'order_placed',
+                    orderId: order._id,
+                    referenceType: 'Order',
+                    performedBy: 'system',
+                    note: `Stock deducted via webhook fallback. Stock: ${prod.stock + item.quantity} -> ${prod.stock}`,
+                  },
+                ],
+                { session },
+              );
+            }
           }
         }
 
@@ -263,7 +295,7 @@ export class PaymentWebhookService {
               payload: {
                 orderId: order._id.toString(),
                 userId: order.user,
-                type: 'online',
+                type: 'email',
                 amount: order.total,
               },
             },
@@ -329,6 +361,21 @@ export class PaymentWebhookService {
             { $set: { status: 'processed', updatedAt: new Date() } },
           ).session(session);
 
+          const order = await Order.findOneAndUpdate(
+            { razorpayOrderId: razorpay_order_id, paymentStatus: 'pending' },
+            { $set: { paymentStatus: 'failed' } },
+            { session, returnDocument: 'after' },
+          );
+
+          if (order) {
+            PaymentStateMachine.transition(
+              order,
+              'failed',
+              `Payment failed webhook received. Error: ${paymentEntity.error_description || 'Unknown'}`,
+            );
+            await order.save({ session });
+          }
+
           await session.commitTransaction();
         } catch (err) {
           await session.abortTransaction();
@@ -338,7 +385,7 @@ export class PaymentWebhookService {
         }
         return {
           status: 200,
-          message: 'Payment failed webhook processed. Order remains pending until TTL expiry.',
+          message: 'Payment failed webhook processed. Order marked as failed.',
         };
       }
     }
@@ -403,6 +450,78 @@ export class PaymentWebhookService {
           session.endSession();
         }
       }
+    }
+
+    if (event === 'refund.processed' || event === 'refund.failed') {
+      const refundEntity = body.payload?.refund?.entity;
+      const razorpay_payment_id = refundEntity?.payment_id;
+      if (razorpay_payment_id) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        try {
+          const order = await Order.findOne({ razorpayPaymentId: razorpay_payment_id }).session(
+            session,
+          );
+          if (order) {
+            await PaymentAudit.create(
+              [
+                {
+                  orderId: order._id,
+                  userId: order.user,
+                  razorpayOrderId: order.razorpayOrderId,
+                  razorpayPaymentId: razorpay_payment_id,
+                  eventType: 'webhook_received',
+                  status: event === 'refund.processed' ? 'success' : 'failed',
+                  notes: `Refund ${event}: ${refundEntity?.id}`,
+                  rawPayload: JSON.stringify(refundEntity),
+                },
+              ],
+              { session },
+            );
+
+            if (event === 'refund.processed') {
+              if (PaymentStateMachine.canTransition(order.paymentStatus as any, 'refunded')) {
+                PaymentStateMachine.transition(order, 'refunded', `Razorpay webhook: ${event}`);
+                await order.save({ session });
+              }
+            }
+          }
+
+          await PaymentWebhookEvent.updateOne(
+            { razorpayEventId: eventId },
+            { $set: { status: 'processed', updatedAt: new Date() } },
+          ).session(session);
+
+          await session.commitTransaction();
+        } catch (err) {
+          await session.abortTransaction();
+          throw err;
+        } finally {
+          session.endSession();
+        }
+      }
+      return { status: 200, message: `Webhook processed: ${event}` };
+    }
+
+    if (event === 'order.expired') {
+      const orderEntity = body.payload?.order?.entity;
+      if (orderEntity?.id) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        try {
+          await PaymentWebhookEvent.updateOne(
+            { razorpayEventId: eventId },
+            { $set: { status: 'processed', updatedAt: new Date() } },
+          ).session(session);
+          await session.commitTransaction();
+        } catch (err) {
+          await session.abortTransaction();
+          throw err;
+        } finally {
+          session.endSession();
+        }
+      }
+      return { status: 200, message: `Webhook processed: ${event}` };
     }
 
     return { status: 200, message: 'Webhook event received and processed' };

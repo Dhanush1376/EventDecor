@@ -2,7 +2,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-const FilterSection = ({ title, id, isOpen, onToggle, children }) => (
+const FilterSection = ({ title, _id, isOpen, onToggle, children }) => (
   <div className="mb-5 border-b border-outline-variant/10 pb-4 last:border-0 last:pb-0">
     <button
       onClick={onToggle}
@@ -31,7 +31,7 @@ const FilterSection = ({ title, id, isOpen, onToggle, children }) => (
   </div>
 );
 
-const Checkbox = ({ label, count, type, isChecked, onChange }) => {
+const Checkbox = ({ label, count, _type, isChecked, onChange }) => {
   return (
     <label className="flex items-center justify-between cursor-pointer group">
       <div className="flex items-center gap-3">
@@ -70,11 +70,14 @@ export function EventFilterPanel({
   categories = [],
   styles = [],
 }) {
-  const [activeSections, setActiveSections] = useState({
-    sort: true,
-    price: true,
-    occasion: true,
-    style: true,
+  const [activeSections, setActiveSections] = useState(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+    return {
+      sort: true,
+      price: !isMobile,
+      occasion: !isMobile,
+      style: !isMobile,
+    };
   });
 
   const [mounted, setMounted] = useState(false);
@@ -102,7 +105,7 @@ export function EventFilterPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6 pb-3 border-b border-outline-variant/30">
         <div className="flex flex-col">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">Filters</h2>
+          <h2 className="font-headline-sm text-headline-sm text-on-surface font-normal">Filters</h2>
           {isOpen && (
             <span className="font-label text-[10px] text-primary uppercase tracking-[0.3em] mt-1">
               {mobileSubtitle}

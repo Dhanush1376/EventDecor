@@ -187,7 +187,7 @@ export async function getPersonalizedRecommendations(
       const itemCategory = item.category || '';
       const itemStyle = (item as any).style || '';
       const itemTags = (item as any).tags || [];
-      const itemPrice = (item as any).price || (item as any).basePrice || 0;
+      const _itemPrice = (item as any).price || (item as any).basePrice || 0;
       const targetType = (item as any).__targetType || 'product';
 
       // 1. Behavioral score (normalized 0-1)
@@ -316,7 +316,7 @@ export async function getPersonalizedRecommendations(
     consecutiveFailures = 0;
 
     return {
-      items: paginated.map(({ rawScore, ...rest }) => rest),
+      items: paginated.map(({ _rawScore, ...rest }) => rest),
       source: isColdStart ? 'cold-start-hybrid' : 'personalized',
       seasonal,
     };
@@ -372,7 +372,9 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
       // Default: mix of products, events, and galleries (exclude galleries on homepage per request)
       const [products, events, galleries] = await Promise.all([
         Product.find({ isActive: true })
-          .select('_id title imageSrc category price rating reviews tags slug featured createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+          .select(
+            '_id title imageSrc category price rating reviews tags slug featured createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          )
           .sort({ createdAt: -1 })
           .limit(Math.floor(limit * 0.6))
           .lean(),
@@ -406,7 +408,9 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
           $in: userProfile.topCategories.map((c: string) => new RegExp(escapeRegex(c), 'i')),
         },
       })
-        .select('_id title imageSrc category price rating reviews tags slug createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+        .select(
+          '_id title imageSrc category price rating reviews tags slug createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+        )
         .limit(15)
         .lean();
 
@@ -493,7 +497,9 @@ export async function getSimilarRecommendations(
 
     if (targetType === 'product') {
       fullItems = await Product.find({ _id: { $in: ids }, isActive: true })
-        .select('_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+        .select(
+          '_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+        )
         .lean();
     } else if (targetType === 'event') {
       fullItems = await Event.find({ _id: { $in: ids }, isActive: true })
@@ -550,7 +556,9 @@ export async function enrichScoredItems(
   const [products, events] = await Promise.all([
     productIds.length > 0
       ? Product.find({ _id: { $in: productIds }, isActive: true })
-          .select('_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+          .select(
+            '_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          )
           .lean()
       : Promise.resolve([]),
     eventIds.length > 0
@@ -619,7 +627,9 @@ export async function precomputeCatalogRecommendations(): Promise<void> {
       const compItems = await getComplementaryItems(p.category || '', [productId], { limit: 8 });
       const productIds = compItems.map((i) => i.targetId);
       const fullProducts = await Product.find({ _id: { $in: productIds }, isActive: true })
-        .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+        .select(
+          '_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+        )
         .lean();
 
       const enrichedComp = compItems

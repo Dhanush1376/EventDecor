@@ -38,7 +38,7 @@ export function AdminCustomOrderConfig() {
         setConfig({ types: defaultTypes, status: 'draft' });
         setActiveTypeTab('product');
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to load dynamic configuration.');
     } finally {
       setLoading(false);

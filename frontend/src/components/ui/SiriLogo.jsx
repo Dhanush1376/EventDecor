@@ -1,7 +1,7 @@
 export function SiriLogo({
   className = '',
   size = '36px',
-  showSubtitle = false,
+  _showSubtitle = false,
   variant = 'default',
 }) {
   // Parse the size to a number to scale it up

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNetwork } from '../../context/NetworkContext';
 
 export function NoInternetOverlay() {
-  const { networkState, connectionQuality, latency, pendingQueue, isSyncing, checkConnection } =
+  const { networkState, _connectionQuality, _latency, pendingQueue, _isSyncing, checkConnection } =
     useNetwork();
 
   const [isVerifying, setIsVerifying] = useState(false);
@@ -37,7 +37,7 @@ export function NoInternetOverlay() {
     setIsVerifying(true);
 
     // Simulate interactive premium verification speed
-    const checkResult = await Promise.all([
+    const _checkResult = await Promise.all([
       checkConnection(),
       new Promise((resolve) => setTimeout(resolve, 1200)),
     ]);

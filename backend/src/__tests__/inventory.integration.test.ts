@@ -69,7 +69,7 @@ describe('Inventory Integration', () => {
       // Simulate 20 concurrent reservation requests for 1 item
       const promises = Array(20)
         .fill(0)
-        .map((_, index) => {
+        .map((_, _index) => {
           return InventoryService.reserveInventory(
             testProductId,
             1,

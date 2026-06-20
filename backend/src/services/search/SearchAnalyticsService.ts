@@ -278,7 +278,7 @@ export async function getNewArrivals(limit: number = 8) {
 /**
  * Normalizes category names to avoid duplicates like "Engagement decoration" and "Engagement".
  */
-function normalizeCategoryName(name: string): string {
+function _normalizeCategoryName(name: string): string {
   const clean = name.trim();
   const lower = clean.toLowerCase();
 
@@ -479,7 +479,7 @@ export async function learnSearchPatterns(): Promise<void> {
 
     const searchProductPairs: Record<string, Record<string, number>> = {};
 
-    for (const [sessionId, list] of Object.entries(sessions)) {
+    for (const [_sessionId, list] of Object.entries(sessions)) {
       for (let i = 0; i < list.length; i++) {
         const item = list[i];
         if (item.eventType === 'search' && item.metadata?.searchQuery) {

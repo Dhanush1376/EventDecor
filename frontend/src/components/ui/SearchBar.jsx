@@ -51,7 +51,7 @@ export function SearchBar({
           onClick();
         }
       }}
-      className={`relative group w-full md:flex-1 bg-surface-bright/90 backdrop-blur-md border-none rounded-full transition-all duration-300 overflow-hidden ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`relative group w-full md:flex-1 bg-surface-bright/90 backdrop-blur-md border-none rounded-full transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
       <span className="material-symbols-outlined absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 transition-colors select-none pointer-events-none font-bold">
         search
@@ -86,7 +86,7 @@ export function SearchBar({
               e.stopPropagation();
               onCameraClick();
             }}
-            className="text-on-surface-variant/60 hover:text-primary hover:scale-110 transition-all w-7 h-7 min-h-0 flex items-center justify-center rounded-full hover:bg-primary/5 cursor-pointer flex-shrink-0"
+            className="text-on-surface-variant/60 hover:text-primary hover:scale-105 transition-all w-8 h-8 lg:w-9 lg:h-9 !min-h-0 aspect-square flex items-center justify-center rounded-full hover:bg-primary/5 cursor-pointer shrink-0"
             aria-label="Search by image"
           >
             <span className="material-symbols-outlined text-[18px]">photo_camera</span>
@@ -98,7 +98,7 @@ export function SearchBar({
               e.stopPropagation();
               handleClear();
             }}
-            className="text-on-surface-variant/60 hover:text-primary transition-colors w-7 h-7 min-h-0 flex items-center justify-center rounded-full hover:bg-primary/5 cursor-pointer flex-shrink-0"
+            className="text-on-surface-variant/60 hover:text-primary transition-colors w-8 h-8 lg:w-9 lg:h-9 !min-h-0 aspect-square flex items-center justify-center rounded-full hover:bg-primary/5 cursor-pointer shrink-0"
             aria-label="Clear search"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>

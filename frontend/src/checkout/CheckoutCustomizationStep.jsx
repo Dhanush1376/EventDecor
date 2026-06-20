@@ -6,7 +6,7 @@ export function CheckoutCustomizationStep({ onNext }) {
   const {
     activeStep,
     checkoutSteps,
-    hasCustomizableItems,
+    _hasCustomizableItems,
     customizationNotes,
     setCustomizationNotes,
   } = useCheckout();

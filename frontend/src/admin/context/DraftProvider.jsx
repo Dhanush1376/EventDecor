@@ -22,7 +22,7 @@ export function DraftProvider({ children }) {
           const freshStats = await getStorageStats();
           setStats(freshStats);
         }
-      } catch (error) {
+      } catch (_error) {
         toast.error('Failed to initialize drafts storage');
       } finally {
         if (mounted) {
@@ -42,7 +42,7 @@ export function DraftProvider({ children }) {
     try {
       const freshStats = await getStorageStats();
       setStats(freshStats);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to refresh stats');
     }
   }, []);

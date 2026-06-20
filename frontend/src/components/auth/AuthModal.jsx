@@ -17,6 +17,7 @@ export function AuthModal() {
   const [timer, setTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
   const otpRefs = useRef([]);
@@ -36,7 +37,7 @@ export function AuthModal() {
     setIsLoading(true);
 
     try {
-      const response = await authService.sendOTP(email);
+      const _response = await authService.sendOTP(email);
       toast.success('Verification code sent to your email!');
       setStep('otp');
       setTimer(60);
@@ -78,11 +79,14 @@ export function AuthModal() {
       }
     } catch (err) {
       setError(true);
+      const msg = err.response?.data?.message || 'Invalid or expired code';
+      setErrorMsg(msg);
       lastAutoSubmittedOtp.current = '';
-      toast.error(err.response?.data?.message || 'Invalid or expired code');
+      toast.error(msg);
       setOtp(['', '', '', '', '', '']);
       setTimeout(() => {
         setError(false);
+        setErrorMsg('');
         if (otpRefs.current[0]) otpRefs.current[0].focus();
       }, 600);
     } finally {
@@ -139,6 +143,7 @@ export function AuthModal() {
         setOtp(['', '', '', '', '', '']);
         setTimer(0);
         setError(false);
+        setErrorMsg('');
         setTotpCode('');
         setPending2faUserId(null);
       }, 400);
@@ -152,7 +157,7 @@ export function AuthModal() {
     if (otpString.length === 6 && step === 'otp' && isAuthModalOpen) {
       const timer = setTimeout(() => {
         submitOTP(otpString);
-      }, 0);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [otp]);
@@ -552,6 +557,15 @@ export function AuthModal() {
                                 />
                               ))}
                             </motion.div>
+
+                            {/* Aria-live inline error message */}
+                            <div aria-live="polite" className="h-4 text-center">
+                              {errorMsg && (
+                                <span className="text-error text-[11px] font-bold tracking-wide">
+                                  {errorMsg}
+                                </span>
+                              )}
+                            </div>
 
                             <div className="space-y-4 pt-1">
                               <button

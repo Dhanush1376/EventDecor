@@ -55,7 +55,7 @@ export function AdminTopBar() {
     payment: 'payments',
   };
 
-  const notifBadge = {
+  const _notifBadge = {
     order: 'admin-badge-neutral',
     booking: 'admin-badge-info',
     stock: 'admin-badge-error',

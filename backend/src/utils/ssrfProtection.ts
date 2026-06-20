@@ -35,7 +35,7 @@ export const isSafeUrl = async (urlString: string): Promise<boolean> => {
     const { address } = await lookup(url.hostname);
 
     return !isReservedIp(address);
-  } catch (err) {
+  } catch {
     // If it can't be parsed or resolved, it's not safe
     return false;
   }

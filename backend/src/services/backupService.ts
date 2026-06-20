@@ -1,9 +1,11 @@
 import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { exec } from 'child_process';
 import util from 'util';
 import logger from '../config/logger';
+import { AlertingService } from './AlertingService';
 
 const execPromise = util.promisify(exec);
 
@@ -55,20 +57,51 @@ export class BackupService {
       'categories',
       'reviews',
       'customorders',
+      'wallettransactions',
+      'paymentaudits',
     ];
+
+    const backupManifest: Record<string, { count: number; sizeBytes: number; sha256: string }> = {};
 
     for (const collectionName of collectionsToBackup) {
       try {
         const collection = mongoose.connection.collection(collectionName);
         const data = await collection.find({}).toArray();
         const filePath = path.join(targetDir, `${collectionName}.json`);
+        const content = JSON.stringify(data, null, 2);
 
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+        fs.writeFileSync(filePath, content);
+
+        // Generate checksum for integrity verification
+        const hash = crypto.createHash('sha256').update(content).digest('hex');
+        backupManifest[collectionName] = {
+          count: data.length,
+          sizeBytes: Buffer.byteLength(content),
+          sha256: hash,
+        };
+
         logger.info(`[BackupService] JSON exported ${data.length} records for ${collectionName}`);
       } catch (err: any) {
         logger.error(`[BackupService] Failed to export JSON for ${collectionName}: ${err.message}`);
       }
     }
+
+    // Write backup manifest with checksums
+    const manifestPath = path.join(targetDir, '_backup_manifest.json');
+    fs.writeFileSync(
+      manifestPath,
+      JSON.stringify(
+        {
+          type,
+          timestamp: new Date().toISOString(),
+          collections: backupManifest,
+          totalCollections: Object.keys(backupManifest).length,
+          totalRecords: Object.values(backupManifest).reduce((sum, c) => sum + c.count, 0),
+        },
+        null,
+        2,
+      ),
+    );
 
     logger.info(`[BackupService] ${type} JSON backup completed at ${targetDir}`);
 
@@ -88,9 +121,15 @@ export class BackupService {
     const token = process.env.GITHUB_BACKUP_TOKEN;
 
     if (!owner || !repo || !token) {
-      logger.warn(
-        '[BackupService] GITHUB_BACKUP_OWNER, REPO, or TOKEN missing. Skipping GitHub offsite backup.',
-      );
+      const msg =
+        '[BackupService] GITHUB_BACKUP_OWNER, REPO, or TOKEN missing. Skipping GitHub offsite backup.';
+      logger.warn(msg);
+      // Trigger a high priority alert for missing backup configuration in production
+      if (process.env.NODE_ENV === 'production') {
+        AlertingService.backupAlert('GitHub Offsite Backup Config Missing', {
+          error: 'Missing environment variables',
+        }).catch((e) => logger.error('Alert failed:', e));
+      }
       return;
     }
 
@@ -134,6 +173,13 @@ export class BackupService {
       logger.info(`[BackupService] All JSON files pushed to GitHub offsite repository.`);
     } catch (err: any) {
       logger.error(`[BackupService] Failed to push to GitHub: ${err.message}`);
+      if (process.env.NODE_ENV === 'production') {
+        AlertingService.backupAlert('GitHub Offsite Backup Failed', {
+          error: err.message,
+          type,
+          dateStr: path.basename(backupDir),
+        }).catch((e) => logger.error('Alert failed:', e));
+      }
     }
   }
 
@@ -144,6 +190,11 @@ export class BackupService {
     const uri = process.env.MONGO_URI;
     if (!uri) {
       logger.warn('[BackupService] MONGO_URI missing, skipping mongodump.');
+      if (process.env.NODE_ENV === 'production') {
+        AlertingService.backupAlert('MongoDump Skipped', { error: 'MONGO_URI missing' }).catch(
+          (e) => logger.error('Alert failed:', e),
+        );
+      }
       return;
     }
 
@@ -164,10 +215,28 @@ export class BackupService {
         await execPromise(`mongodump --uri="${uri}" --collection=${coll} --out="${targetDir}"`);
       }
       logger.info(`[BackupService] mongodump completed successfully.`);
+
+      // Attempt to archive the dump
+      try {
+        const zipFile = path.join(this.backupRoot, type, dateStr, `mongodump-${dateStr}.tar.gz`);
+        await execPromise(`tar -czf "${zipFile}" -C "${targetDir}" .`);
+        logger.info(`[BackupService] mongodump archived to ${zipFile}`);
+        // Optionally upload zipFile to Cloudinary / S3 / GitHub here
+
+        // Clean up raw BSON files
+        fs.rmSync(targetDir, { recursive: true, force: true });
+      } catch (archiveErr: any) {
+        logger.warn(`[BackupService] Failed to archive mongodump: ${archiveErr.message}`);
+      }
     } catch (err: any) {
       logger.warn(
         `[BackupService] mongodump failed: ${err.message}. Ensure MongoDB Database Tools are installed.`,
       );
+      if (process.env.NODE_ENV === 'production') {
+        AlertingService.backupAlert('MongoDump Failed', { error: err.message, type }).catch((e) =>
+          logger.error('Alert failed:', e),
+        );
+      }
     }
   }
 

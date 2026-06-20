@@ -9,6 +9,7 @@ import {
   buildSameAsLinks,
   TWITTER_HANDLE,
 } from '../../constants/brandEnv';
+import { getOptimizedUrl } from '../../utils/imageUtils';
 
 const DEFAULT_DESCRIPTION =
   'Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor.';
@@ -150,12 +151,20 @@ export function SEO({
           priceCurrency: 'INR',
           price: product.price,
           priceValidUntil: priceValidUntil,
+          itemCondition: 'https://schema.org/NewCondition',
           availability: product.inStock
             ? 'https://schema.org/InStock'
             : 'https://schema.org/OutOfStock',
           seller: {
             '@type': 'Organization',
             name: siteName,
+          },
+          shippingDetails: {
+            '@type': 'OfferShippingDetails',
+            shippingDestination: {
+              '@type': 'DefinedRegion',
+              addressCountry: 'IN',
+            },
           },
         },
         ...(product.rating && {
@@ -260,7 +269,7 @@ export function SEO({
 
       {currentUrl && <link rel="alternate" hrefLang="en-in" href={currentUrl} />}
       {currentUrl && <link rel="alternate" hrefLang="x-default" href={currentUrl} />}
-      {preloadImage && <link rel="preload" as="image" href={preloadImage} />}
+      {preloadImage && <link rel="preload" as="image" href={getOptimizedUrl(preloadImage)} />}
 
       <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
       <script type="application/ld+json">{JSON.stringify(websiteSchema)}</script>

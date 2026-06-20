@@ -267,7 +267,7 @@ export const optionalAuth = asyncHandler(
 
           try {
             return await Promise.race([mongoQuery, timeout]);
-          } catch (dbErr: any) {
+          } catch {
             // Ignored: auth is optional
             return null;
           }
@@ -294,7 +294,7 @@ export const optionalAuth = asyncHandler(
           updateRequestContext({ userId: decoded.id });
         }
       }
-    } catch (err) {
+    } catch {
       // Ignored: auth is optional
     }
     next();
@@ -336,7 +336,7 @@ export const publicTrackingAuth = asyncHandler(
           isAuthorized = true;
           isLogisticsToken = true;
         }
-      } catch (err) {
+      } catch {
         // Token invalid or expired
       }
     }

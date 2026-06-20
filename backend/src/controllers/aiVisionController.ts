@@ -73,7 +73,6 @@ Do NOT include any extra text before or after the JSON.`;
         ],
         temperature: 0.2,
         max_tokens: 800,
-        response_format: { type: 'json_object' },
       }),
       signal: controller.signal,
     });
@@ -94,8 +93,10 @@ Do NOT include any extra text before or after the JSON.`;
 
     let parsedPayload;
     try {
-      parsedPayload = JSON.parse(generatedText);
-    } catch (e) {
+      const extractedJson = generatedText.match(/\{[\s\S]*\}/);
+      if (!extractedJson) throw new Error('No JSON object found in response');
+      parsedPayload = JSON.parse(extractedJson[0]);
+    } catch {
       logger.error('Failed to parse Groq response: ' + generatedText);
       throw new ApiError(500, 'AI returned malformed JSON');
     }
@@ -178,11 +179,10 @@ Output ONLY a valid, raw JSON object (without markdown code blocks) representing
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages: [{ role: 'user', content: systemPrompt }],
         temperature: 0.3,
         max_tokens: 800,
-        response_format: { type: 'json_object' },
       }),
       signal: controller.signal,
     });
@@ -203,8 +203,10 @@ Output ONLY a valid, raw JSON object (without markdown code blocks) representing
 
     let parsedPayload;
     try {
-      parsedPayload = JSON.parse(generatedText);
-    } catch (e) {
+      const extractedJson = generatedText.match(/\{[\s\S]*\}/);
+      if (!extractedJson) throw new Error('No JSON object found in response');
+      parsedPayload = JSON.parse(extractedJson[0]);
+    } catch {
       throw new ApiError(500, 'AI returned malformed JSON');
     }
 

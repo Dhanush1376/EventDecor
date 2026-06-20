@@ -46,7 +46,49 @@ export class PrometheusService {
     registers: [this.register],
   });
 
+  public static circuitBreakerState = new client.Gauge({
+    name: 'circuit_breaker_state',
+    help: 'Circuit breaker state (0=CLOSED, 1=HALF_OPEN, 2=OPEN)',
+    labelNames: ['service'],
+    registers: [this.register],
+  });
+
+  public static activeConnections = new client.Gauge({
+    name: 'active_websocket_connections',
+    help: 'Number of active WebSocket connections',
+    registers: [this.register],
+  });
+
+  public static backupLastSuccess = new client.Gauge({
+    name: 'backup_last_success_timestamp',
+    help: 'Unix timestamp of the last successful backup',
+    registers: [this.register],
+  });
+
   public static getMetrics = async () => {
+    // Update circuit breaker states before collecting
+    try {
+      const {
+        razorpayCircuitBreaker,
+        emailCircuitBreaker,
+        cloudinaryCircuitBreaker,
+        aiVisionCircuitBreaker,
+      } = require('../utils/CircuitBreaker');
+      const stateMap: Record<string, number> = { CLOSED: 0, HALF_OPEN: 1, OPEN: 2 };
+      this.circuitBreakerState
+        .labels('razorpay')
+        .set(stateMap[razorpayCircuitBreaker.getState()] ?? 0);
+      this.circuitBreakerState.labels('email').set(stateMap[emailCircuitBreaker.getState()] ?? 0);
+      this.circuitBreakerState
+        .labels('cloudinary')
+        .set(stateMap[cloudinaryCircuitBreaker.getState()] ?? 0);
+      this.circuitBreakerState
+        .labels('ai_vision')
+        .set(stateMap[aiVisionCircuitBreaker.getState()] ?? 0);
+    } catch {
+      // Circuit breaker module may not be loaded yet
+    }
+
     return await this.register.metrics();
   };
 

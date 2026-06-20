@@ -28,7 +28,7 @@ export const getFeed = async (req: Request, res: Response) => {
     const page = (req.query.page as string) || 'homepage';
     const limit = Math.min(parseInt(req.query.limit as string, 10) || 12, 30);
     const offset = parseInt(req.query.offset as string, 10) || 0;
-    const targetType = (req.query.targetType as string) || undefined;
+    const _targetType = (req.query.targetType as string) || undefined;
 
     // Check personal feed cache
     if (userId) {
@@ -142,7 +142,9 @@ export const getSimilar = async (req: Request, res: Response) => {
           _id: { $ne: targetId },
           isActive: true,
         })
-          .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+          .select(
+            '_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          )
           .limit(limit)
           .lean();
         fallbackItems = products.map((p) => ({
@@ -312,7 +314,9 @@ export const getSeasonal = async (req: Request, res: Response) => {
         { tags: { $in: boostedCategories.map((c) => new RegExp(escapeRegex(c), 'i')) } },
       ],
     })
-      .select('_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+      .select(
+        '_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+      )
       .sort({ rating: -1, reviews: -1 })
       .limit(limit)
       .lean();
@@ -444,7 +448,9 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
         _id: { $ne: targetId },
         isActive: true,
       })
-        .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+        .select(
+          '_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+        )
         .limit(limit)
         .lean();
 
@@ -540,7 +546,9 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
           _id: { $ne: targetId },
           isActive: true,
         })
-          .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+          .select(
+            '_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          )
           .limit(limit)
           .lean();
         fallbackItems = products.map((p) => ({
@@ -618,7 +626,9 @@ async function enrichTrendingItems(items: any[]): Promise<any[]> {
   const [products, events] = await Promise.all([
     productIds.length > 0
       ? Product.find({ _id: { $in: productIds }, isActive: true })
-          .select('_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+          .select(
+            '_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          )
           .lean()
       : Promise.resolve([]),
     eventIds.length > 0

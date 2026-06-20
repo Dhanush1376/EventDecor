@@ -10,10 +10,10 @@ export default function CheckoutOrderSummaryStep() {
     setActiveStep,
     activeSelectedAddress,
     activeItems,
-    needByDate,
-    setNeedByDate,
+    _needByDate,
+    _setNeedByDate,
     isAddingNewAddress,
-    settings,
+    _settings,
     sendUpdatesToWhatsApp,
     setSendUpdatesToWhatsApp,
   } = useCheckout();

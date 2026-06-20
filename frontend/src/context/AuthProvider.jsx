@@ -61,7 +61,7 @@ export function AuthProvider({ children }) {
       queryClient.clear();
       try {
         localStorage.removeItem('siri_query_cache_v1');
-      } catch (_) {}
+      } catch (__) {}
 
       setAccessToken(null);
       clearCachedProfile();

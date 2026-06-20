@@ -65,13 +65,13 @@ export const compressImage = async (file, maxDimension = 1600) => {
         );
       };
 
-      img.onerror = (err) => {
+      img.onerror = (_err) => {
         // Use console.error instead of throwing to prevent crashing the upload flow
         resolve(file); // Safe fallback
       };
     };
 
-    reader.onerror = (err) => {
+    reader.onerror = (_err) => {
       resolve(file); // Safe fallback
     };
   });

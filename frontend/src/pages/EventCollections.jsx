@@ -181,7 +181,7 @@ export function EventCollections() {
     navigator.clipboard.writeText(code);
     setClaimedCoupon(code);
     toast.success(
-      (t) => (
+      (_t) => (
         <div className="flex flex-col gap-1 p-1">
           <span className="font-bold text-xs text-on-surface flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[16px] text-green-700">
@@ -394,7 +394,7 @@ export function EventCollections() {
     }, 50);
   };
 
-  const styleOptions = useMemo(() => styles.map((s) => ({ value: s, label: s })), [styles]);
+  const _styleOptions = useMemo(() => styles.map((s) => ({ value: s, label: s })), [styles]);
 
   return (
     <div className="bg-surface min-h-screen text-on-surface">
@@ -482,7 +482,7 @@ export function EventCollections() {
         >
           {/* Search Bar & Mobile Filter Toggle */}
           <div className="w-full lg:w-72 xl:w-80 flex items-center gap-2 shrink-0">
-            <div className="flex-1 h-11 lg:h-9">
+            <div className="flex-1 lg:p-1.5 lg:bg-surface-container/60 lg:backdrop-blur-xl lg:border lg:border-outline-variant/20 rounded-full lg:shadow-inner">
               <SearchBar
                 value={searchQuery}
                 onChange={(e) => {
@@ -494,15 +494,8 @@ export function EventCollections() {
                     new CustomEvent('open-global-search', { detail: { mode: 'visual' } }),
                   );
                 }}
-                onClick={() => {
-                  window.dispatchEvent(
-                    new CustomEvent('open-global-search', {
-                      detail: { mode: 'text', query: searchQuery },
-                    }),
-                  );
-                }}
                 placeholder="Search masteries..."
-                className="w-full !h-full !rounded-full bg-surface-bright/90 backdrop-blur-md shadow-sm !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center border border-outline-variant/30 outline-none focus:outline-none"
+                className="w-full h-[44px] lg:h-[44px] !rounded-full bg-surface-bright shadow-[0_2px_8px_rgba(115,92,0,0.08)] border border-outline-variant/15 !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center outline-none focus:outline-none"
               />
             </div>
             {/* Mobile/Tablet Filter Toggle */}
@@ -524,8 +517,8 @@ export function EventCollections() {
               />
             </div>
 
-            <div className="flex items-center shrink-0 lg:-mt-[6px]">
-              <div className="w-48 xl:w-52 h-11 lg:h-9">
+            <div className="flex items-center shrink-0">
+              <div className="w-48 xl:w-52 p-1.5 bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 rounded-full shadow-inner">
                 <CustomDropdown
                   options={[
                     { value: 'Popularity', label: 'Popularity' },
@@ -541,7 +534,7 @@ export function EventCollections() {
                   value={sortBy}
                   onChange={setSortBy}
                   className="w-full h-full"
-                  buttonClassName="w-full h-full !rounded-full border !border-outline-variant/30 shadow-sm !bg-surface-bright/90 backdrop-blur-md !py-0 !px-5 lg:!px-4 text-[12px] lg:text-[11px]"
+                  buttonClassName="w-full h-[44px] lg:h-[44px] !rounded-full border !border-outline-variant/15 shadow-[0_2px_8px_rgba(115,92,0,0.08)] !bg-surface-bright !py-0 !px-5 lg:!px-4 text-[13px] lg:text-[12px]"
                 />
               </div>
             </div>
@@ -630,7 +623,7 @@ export function EventCollections() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-10">
               <div className="flex flex-col gap-1">
-                <h2 className="font-headline-md text-on-surface font-bold text-[24px] md:text-[32px]">
+                <h2 className="font-headline-md text-on-surface font-normal text-[24px] md:text-[32px]">
                   Luxury Scapes
                 </h2>
                 <p className="font-body-md text-on-surface-variant/60 font-medium">

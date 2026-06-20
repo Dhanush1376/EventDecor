@@ -1,34 +1,20 @@
+import React, { useState, useEffect } from 'react';
 import { m as motion } from 'framer-motion';
-import { fadeUp, stagger, PageHeader, SkeletonDashboard } from '../components/AdminUIKit';
-import { Line, Bar } from 'react-chartjs-2';
-import { useState, useEffect } from 'react';
-import { useAdmin } from '../context/AdminContext';
-import visualSearchService from '../../services/visualSearchService';
 import toast from 'react-hot-toast';
+import { useAdmin } from '../context/AdminContext';
+import { visualSearchService } from '../../services/domainServices';
+import { PageHeader, SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-);
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  AreaChart,
+  Area,
+} from 'recharts';
 
 export function AdminVisualSearch() {
   const { activeRole, logAdminAction } = useAdmin();
@@ -84,7 +70,7 @@ export function AdminVisualSearch() {
       if (res.success && res.data) {
         setConfig(res.data);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to load visual search configuration');
     } finally {
       setLoading(false);
@@ -98,7 +84,7 @@ export function AdminVisualSearch() {
       if (res.success && res.data) {
         setAnalytics(res.data);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to load analytics data');
     } finally {
       setAnalyticsLoading(false);
@@ -708,27 +694,43 @@ export function AdminVisualSearch() {
                     </h3>
                     <div className="h-64">
                       {analytics.dailyUsage.length > 0 ? (
-                        <Line
-                          data={{
-                            labels: analytics.dailyUsage.map((d) => d.date),
-                            datasets: [
-                              {
-                                label: 'Searches',
-                                data: analytics.dailyUsage.map((d) => d.count),
-                                borderColor: '#334155',
-                                backgroundColor: 'rgba(51, 65, 85, 0.1)',
-                                fill: true,
-                                tension: 0.4,
-                              },
-                            ],
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: { y: { beginAtZero: true } },
-                          }}
-                        />
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={analytics.dailyUsage}>
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              vertical={false}
+                              stroke="#e2e8f0"
+                            />
+                            <XAxis
+                              dataKey="date"
+                              tickLine={false}
+                              axisLine={false}
+                              tick={{ fontSize: 10, fill: '#94a3b8' }}
+                              dy={10}
+                            />
+                            <YAxis
+                              tickLine={false}
+                              axisLine={false}
+                              tick={{ fontSize: 10, fill: '#94a3b8' }}
+                              dx={-10}
+                            />
+                            <RechartsTooltip
+                              contentStyle={{
+                                borderRadius: '8px',
+                                border: 'none',
+                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                              }}
+                              itemStyle={{ color: '#0f172a', fontWeight: 'bold' }}
+                            />
+                            <Area
+                              type="monotone"
+                              dataKey="count"
+                              stroke="#334155"
+                              fill="rgba(51, 65, 85, 0.1)"
+                              strokeWidth={2}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
                       ) : (
                         <div className="h-full flex items-center justify-center text-stone-400 text-[12px]">
                           No data available
@@ -743,24 +745,42 @@ export function AdminVisualSearch() {
                     </h3>
                     <div className="h-64">
                       {analytics.topCategories.length > 0 ? (
-                        <Bar
-                          data={{
-                            labels: analytics.topCategories.map((c) => c.category),
-                            datasets: [
-                              {
-                                label: 'Count',
-                                data: analytics.topCategories.map((c) => c.count),
-                                backgroundColor: '#334155',
-                                borderRadius: 4,
-                              },
-                            ],
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                          }}
-                        />
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={analytics.topCategories}>
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              vertical={false}
+                              stroke="#e2e8f0"
+                            />
+                            <XAxis
+                              dataKey="category"
+                              tickLine={false}
+                              axisLine={false}
+                              tick={{ fontSize: 10, fill: '#94a3b8' }}
+                              dy={10}
+                            />
+                            <YAxis
+                              tickLine={false}
+                              axisLine={false}
+                              tick={{ fontSize: 10, fill: '#94a3b8' }}
+                              dx={-10}
+                            />
+                            <RechartsTooltip
+                              contentStyle={{
+                                borderRadius: '8px',
+                                border: 'none',
+                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                              }}
+                              cursor={{ fill: '#f1f5f9' }}
+                            />
+                            <Bar
+                              dataKey="count"
+                              fill="#334155"
+                              radius={[4, 4, 0, 0]}
+                              barSize={32}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
                       ) : (
                         <div className="h-full flex items-center justify-center text-stone-400 text-[12px]">
                           No data available

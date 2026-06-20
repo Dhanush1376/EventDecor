@@ -70,7 +70,6 @@ const envSchema = z
     BYPASS_OTP_CODE: z.string().optional(),
     SECRET_ROTATION_REMINDER: z.string().optional(),
   })
-  // Production refinements
   .refine(
     (data) => {
       if (data.NODE_ENV === 'production') {
@@ -96,13 +95,29 @@ const envSchema = z
         if (data.BYPASS_OTP_CODE) return false;
         if (data.SKIP_INDEX_BUILD === 'true') return false;
         if (data.TEST_RATE_LIMIT === 'true') return false;
+
+        // Enforce strong admin password in production (12+ characters)
+        if (data.ADMIN_PASSWORD.length < 12) return false;
       }
       return true;
     },
     {
       message:
-        "Production security checks failed. Ensure no 'change_me' secrets, use MongoDB Atlas (no localhost), strong webhook secrets, secure Redis, and disabled dev-only flags.",
+        "Production security checks failed. Ensure no 'change_me' secrets, use MongoDB Atlas (no localhost), strong webhook secrets, secure Redis, admin password 12+ chars, and disabled dev-only flags.",
     },
+  )
+  .refine(
+    (data) => {
+      // Warn-level: SENTRY_DSN should be set in production for observability
+      if (data.NODE_ENV === 'production' && !data.SENTRY_DSN) {
+        // Use process.stderr instead of returning false — we want a warning, not a hard failure
+        process.stderr.write(
+          '⚠️  WARNING: SENTRY_DSN is not set in production. Error tracking will be disabled.\n',
+        );
+      }
+      return true;
+    },
+    { message: '' },
   );
 
 /**

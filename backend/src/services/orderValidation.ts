@@ -198,7 +198,7 @@ export class OrderValidationService {
         } else {
           codFee = 90;
         }
-      } catch (err) {
+      } catch {
         codFee = 90;
       }
     }

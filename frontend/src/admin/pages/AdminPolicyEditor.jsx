@@ -22,7 +22,7 @@ export function AdminPolicyEditor() {
   const {
     formData,
     setFormData,
-    draftStatus,
+    _draftStatus,
     showRestoreModal,
     restoreDraft,
     discardDraft,

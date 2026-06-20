@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
-import { cmsService } from "../services/domainServices";
-import { emptyWebsiteContent } from "../constants/emptyWebsiteContent";
-import { initialWebsiteContent } from "../admin/data/websiteContentData";
-import { invalidateApiCache } from "../utils/apiCache";
-import { isPrerendering } from "../utils/prerender";
+import { useState, useEffect } from 'react';
+import { cmsService } from '../services/domainServices';
+import { emptyWebsiteContent } from '../constants/emptyWebsiteContent';
+import { initialWebsiteContent } from '../admin/data/websiteContentData';
+import { invalidateApiCache } from '../utils/apiCache';
+import { isPrerendering } from '../utils/prerender';
 
 import logger from '../utils/logger';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — stale-while-revalidate in background
 const STALE_REFRESH_MS = 60 * 1000; // revalidate at most once per minute when stale
-const LOCAL_STORAGE_KEY = "siri_arts_website_content";
+const LOCAL_STORAGE_KEY = 'siri_arts_website_content';
 
 // Global shared state for singleton caching and request de-duplication
 let globalCache = null;
@@ -23,7 +23,7 @@ try {
     globalCache = JSON.parse(cached);
   }
 } catch (e) {
-  logger.warn("Failed to load cached website content from localStorage", e);
+  logger.warn('Failed to load cached website content from localStorage', e);
 }
 
 // Start with empty cache if not found, to trigger skeletons
@@ -31,14 +31,14 @@ try {
 
 const updateGlobalCache = (newContent) => {
   globalCache = newContent;
-  listeners.forEach(listener => listener(newContent));
+  listeners.forEach((listener) => listener(newContent));
 };
 
 export const refreshWebsiteContent = async () => {
   lastFetchedTime = 0;
   globalPromise = null;
   invalidateApiCache('/cms');
-  
+
   try {
     const response = await cmsService.getPublished();
     lastFetchedTime = Date.now();
@@ -53,22 +53,22 @@ export const refreshWebsiteContent = async () => {
           ...response.data.eventsPage,
           hero: {
             ...initialWebsiteContent.eventsPage.hero,
-            ...(response.data.eventsPage.hero || {})
+            ...(response.data.eventsPage.hero || {}),
           },
           promo: {
             ...initialWebsiteContent.eventsPage.promo,
-            ...(response.data.eventsPage.promo || {})
-          }
+            ...(response.data.eventsPage.promo || {}),
+          },
         };
       }
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mergedContent));
-      } catch (e) {}
+      } catch (_e) {}
       updateGlobalCache(mergedContent);
       return mergedContent;
     }
   } catch (err) {
-    logger.warn("Force CMS API refresh failed, keeping current/stale cache", err);
+    logger.warn('Force CMS API refresh failed, keeping current/stale cache', err);
   }
   return null;
 };
@@ -76,7 +76,9 @@ export const refreshWebsiteContent = async () => {
 export function useWebsiteContent() {
   const isPrerender = isPrerendering();
   const [content, setContent] = useState(() => globalCache);
-  const [loading, setLoading] = useState(isPrerender ? false : (!globalCache || globalCache === emptyWebsiteContent));
+  const [loading, setLoading] = useState(
+    isPrerender ? false : !globalCache || globalCache === emptyWebsiteContent,
+  );
 
   useEffect(() => {
     if (isPrerender) return;
@@ -102,7 +104,7 @@ export function useWebsiteContent() {
           const res = await globalPromise;
           if (res) handleUpdate(res);
         } catch (err) {
-          logger.warn("Concurrent website content fetch error:", err);
+          logger.warn('Concurrent website content fetch error:', err);
         }
         return;
       }
@@ -122,23 +124,23 @@ export function useWebsiteContent() {
                 ...response.data.eventsPage,
                 hero: {
                   ...initialWebsiteContent.eventsPage.hero,
-                  ...(response.data.eventsPage.hero || {})
+                  ...(response.data.eventsPage.hero || {}),
                 },
                 promo: {
                   ...initialWebsiteContent.eventsPage.promo,
-                  ...(response.data.eventsPage.promo || {})
-                }
+                  ...(response.data.eventsPage.promo || {}),
+                },
               };
             }
             try {
               localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(mergedContent));
-            } catch (e) {}
+            } catch (_e) {}
             updateGlobalCache(mergedContent);
             return mergedContent;
           }
         } catch (err) {
           lastFetchedTime = Date.now(); // Throttles requests even on failure/network errors
-          logger.warn("CMS API unavailable, using cached/default content", err);
+          logger.warn('CMS API unavailable, using cached/default content', err);
         } finally {
           globalPromise = null;
         }
@@ -155,7 +157,7 @@ export function useWebsiteContent() {
     };
 
     fetchContent();
-    
+
     return () => {
       listeners.delete(handleUpdate);
     };

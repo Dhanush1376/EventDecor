@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
@@ -12,18 +12,18 @@ import { WishlistPageSkeleton } from '../ui/Skeleton';
 import { useUserProfile, useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';
 
 export function WishlistView({ isEmbedded = false }) {
-  const { items, removeItem, toggleItem, loading: wishlistLoading } = useWishlist();
-  const { addItem: addToCart } = useCart();
+  const { items, _removeItem, _toggleItem, loading: wishlistLoading } = useWishlist();
+  const { addItem: _addToCart } = useCart();
   const { data: addresses = [] } = useUserAddresses();
-  const { data: profile } = useUserProfile();
+  const { data: _profile } = useUserProfile();
   const { setDefaultAddress } = useAddressMutations();
 
-  const [sortBy, setSortBy] = useState('latest');
+  const [sortBy, _setSortBy] = useState('latest');
   const [itemTypeFilter, setItemTypeFilter] = useState('product'); // 'product', 'event'
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [notification, setNotification] = useState('');
-  
+
   const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
 
   // Track wishlist view
@@ -43,8 +43,7 @@ export function WishlistView({ isEmbedded = false }) {
     trendingData?.items ||
     (Array.isArray(trendingData) ? trendingData : []);
 
-
-  const triggerNotification = (msg) => {
+  const _triggerNotification = (msg) => {
     setNotification(msg);
     setTimeout(() => setNotification(''), 3000);
   };
@@ -79,9 +78,10 @@ export function WishlistView({ isEmbedded = false }) {
 
   // Dynamic category list from items matching type filter
   const categoriesList = useMemo(() => {
-    const itemsForCategories = itemTypeFilter === 'all'
-      ? enhancedItems
-      : enhancedItems.filter((item) => item.itemType === itemTypeFilter);
+    const itemsForCategories =
+      itemTypeFilter === 'all'
+        ? enhancedItems
+        : enhancedItems.filter((item) => item.itemType === itemTypeFilter);
 
     const map = new Map();
     itemsForCategories.forEach((item) => {
@@ -153,20 +153,22 @@ export function WishlistView({ isEmbedded = false }) {
 
       {/* Address Bar - Attached perfectly below topnav */}
       {enhancedItems.length > 0 && !isEmbedded && (
-        <div className={`w-full bg-[#fbf9f6] border-b border-black/10 relative -mt-6 mb-6 hover:bg-[#f6f2ea] transition-colors ${isAddressDropdownOpen ? 'z-50' : 'z-30'}`}>
+        <div
+          className={`w-full bg-[#fbf9f6] border-b border-black/10 relative -mt-6 mb-6 hover:bg-[#f6f2ea] transition-colors ${isAddressDropdownOpen ? 'z-50' : 'z-30'}`}
+        >
           <div className="max-w-[1440px] mx-auto px-4 sm:px-8 relative">
-            <div 
+            <div
               onClick={() => setIsAddressDropdownOpen(!isAddressDropdownOpen)}
               className="flex items-center justify-between py-3 cursor-pointer select-none"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="material-symbols-outlined text-[18px] text-primary">location_on</span>
+                <span className="material-symbols-outlined text-[18px] text-primary">
+                  location_on
+                </span>
                 <span className="text-[11px] md:text-xs text-[#1a1817] font-semibold truncate leading-none">
-                  {activeAddress ? (
-                    `${activeAddress.name} - ${activeAddress.addressString || activeAddress.address}, ${activeAddress.locality || ''}, ${activeAddress.city}`
-                  ) : (
-                    "Dhanush Atmakuri - Block- 15 (Uni mall)-shop-404 - Nellore"
-                  )}
+                  {activeAddress
+                    ? `${activeAddress.name} - ${activeAddress.addressString || activeAddress.address}, ${activeAddress.locality || ''}, ${activeAddress.city}`
+                    : 'Dhanush Atmakuri - Block- 15 (Uni mall)-shop-404 - Nellore'}
                 </span>
               </div>
               <span className="material-symbols-outlined text-[18px] text-black/40">
@@ -177,7 +179,7 @@ export function WishlistView({ isEmbedded = false }) {
             {/* Address Switcher Dropdown */}
             <AnimatePresence>
               {isAddressDropdownOpen && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -187,7 +189,7 @@ export function WishlistView({ isEmbedded = false }) {
                     Select Destination
                   </div>
                   {addresses && addresses.length > 0 ? (
-                    addresses.map(addr => (
+                    addresses.map((addr) => (
                       <div
                         key={addr._id || addr.id}
                         onClick={() => {
@@ -200,7 +202,9 @@ export function WishlistView({ isEmbedded = false }) {
                           {addr.isDefault ? 'radio_button_checked' : 'radio_button_unchecked'}
                         </span>
                         <div className="min-w-0">
-                          <div className="font-bold">{addr.name} ({addr.tag})</div>
+                          <div className="font-bold">
+                            {addr.name} ({addr.tag})
+                          </div>
                           <div className="truncate text-black/50 text-[10px]">
                             {addr.addressString || addr.address}, {addr.locality}, {addr.city}
                           </div>
@@ -213,7 +217,7 @@ export function WishlistView({ isEmbedded = false }) {
                     </div>
                   )}
                   <div className="mt-2 pt-2 border-t border-black/5 flex justify-end">
-                    <Link 
+                    <Link
                       to="/dashboard?tab=addresses"
                       className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
                     >
@@ -282,9 +286,7 @@ export function WishlistView({ isEmbedded = false }) {
                         {/* Top-Right Overlapping Badge */}
                         <span
                           className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold border border-white shadow-sm transition-colors z-20 ${
-                            isActive
-                              ? 'bg-[#8c7335] text-white'
-                              : 'bg-[#e8e3d9] text-[#685c57]'
+                            isActive ? 'bg-[#8c7335] text-white' : 'bg-[#e8e3d9] text-[#685c57]'
                           }`}
                         >
                           {opt.count}
@@ -304,24 +306,30 @@ export function WishlistView({ isEmbedded = false }) {
                       onClick={() => setSelectedCategory(null)}
                       className="flex flex-col items-center cursor-pointer shrink-0 group w-[72px] md:w-[88px]"
                     >
-                      <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square bg-gradient-to-tr from-[#c5a059] via-[#e0c287] to-[#f3dfb6] shadow-inner ${
-                        !selectedCategory
-                          ? 'border-2 border-[#8c7335] ring-4 ring-[#8c7335]/15 scale-105 shadow-md'
-                          : 'border border-outline-variant/10 shadow-xs hover:border-black/25 group-hover:scale-105'
-                      }`}>
+                      <div
+                        className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square bg-gradient-to-tr from-[#c5a059] via-[#e0c287] to-[#f3dfb6] shadow-inner ${
+                          !selectedCategory
+                            ? 'border-2 border-[#8c7335] ring-4 ring-[#8c7335]/15 scale-105 shadow-md'
+                            : 'border border-outline-variant/10 shadow-xs hover:border-black/25 group-hover:scale-105'
+                        }`}
+                      >
                         <span className="material-symbols-outlined text-white text-[24px] md:text-[28px] font-light tracking-widest drop-shadow-sm select-none">
                           border_all
                         </span>
                       </div>
-                      <span className={`text-[9.5px] md:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
-                        !selectedCategory ? 'text-[#8c7335]' : 'text-black/50 group-hover:text-black'
-                      }`}>
+                      <span
+                        className={`text-[9.5px] md:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
+                          !selectedCategory
+                            ? 'text-[#8c7335]'
+                            : 'text-black/50 group-hover:text-black'
+                        }`}
+                      >
                         All
                       </span>
                     </div>
- 
+
                     {/* Extracted Dynamic Categories */}
-                    {categoriesList.map(cat => {
+                    {categoriesList.map((cat) => {
                       const isActive = selectedCategory === cat.name;
                       return (
                         <div
@@ -329,20 +337,24 @@ export function WishlistView({ isEmbedded = false }) {
                           onClick={() => setSelectedCategory(isActive ? null : cat.name)}
                           className="flex flex-col items-center cursor-pointer shrink-0 group w-[72px] md:w-[88px]"
                         >
-                          <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square ${
-                            isActive
-                              ? 'border-2 border-[#8c7335] ring-4 ring-[#8c7335]/15 scale-105 shadow-md'
-                              : 'border border-outline-variant/10 shadow-xs hover:border-black/25 group-hover:scale-105'
-                          }`}>
+                          <div
+                            className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square ${
+                              isActive
+                                ? 'border-2 border-[#8c7335] ring-4 ring-[#8c7335]/15 scale-105 shadow-md'
+                                : 'border border-outline-variant/10 shadow-xs hover:border-black/25 group-hover:scale-105'
+                            }`}
+                          >
                             <img
                               src={cat.image}
                               alt={cat.name}
                               className="object-cover w-full h-full"
                             />
                           </div>
-                          <span className={`text-[9.5px] md:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
-                            isActive ? 'text-[#8c7335]' : 'text-black/50 group-hover:text-black'
-                          }`}>
+                          <span
+                            className={`text-[9.5px] md:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
+                              isActive ? 'text-[#8c7335]' : 'text-black/50 group-hover:text-black'
+                            }`}
+                          >
                             {cat.name}
                           </span>
                         </div>
@@ -354,107 +366,113 @@ export function WishlistView({ isEmbedded = false }) {
             </>
           )}
 
-        {/* Empty State */}
-        {enhancedItems.length === 0 ? (
-          <div className="space-y-20">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-center max-w-2xl mx-auto py-16 md:py-24"
-            >
-              {/* Minimalist Premium Icon Container */}
-              <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 mx-auto relative">
-                <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
-                <span className="material-symbols-outlined text-primary text-[30px] relative z-10">
-                  favorite
-                </span>
-              </div>
-
-              <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
-                Your wishlist is empty.
-              </h2>
-              <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-8">
-                Explore our collections and save your favorite items here.
-              </p>
-
-              <div className="flex justify-center">
-                <Link
-                  to="/collections"
-                  className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
-                >
-                  <span>Explore Collections</span>
-                  <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                    arrow_forward
+          {/* Empty State */}
+          {enhancedItems.length === 0 ? (
+            <div className="space-y-20">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="text-center max-w-2xl mx-auto py-16 md:py-24"
+              >
+                {/* Minimalist Premium Icon Container */}
+                <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 mx-auto relative">
+                  <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
+                  <span className="material-symbols-outlined text-primary text-[30px] relative z-10">
+                    favorite
                   </span>
-                </Link>
-              </div>
-            </motion.div>
+                </div>
 
-            {/* Recommendations */}
-            <div className="pt-12 border-t border-outline-variant/20">
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="font-display text-xl md:text-2xl font-bold text-on-surface">
-                  Trending Masterpieces
-                </h3>
-                <Link
-                  to="/collections"
-                  className="text-[11px] font-bold text-primary uppercase tracking-widest hover:underline"
-                >
-                  View All
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {trendingLoading
-                  ? [...Array(4)].map((_, i) => <ProductCard key={i} loading={true} />)
-                  : trendingProducts.map((prod) => (
-                      <ProductCard
-                        key={prod._id || prod.id}
-                        {...prod}
-                        onQuickView={(e) => {
-                          e.preventDefault();
-                          setQuickViewProduct(prod);
-                        }}
-                      />
-                    ))}
+                <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
+                  Your wishlist is empty.
+                </h2>
+                <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-8">
+                  Explore our collections and save your favorite items here.
+                </p>
+
+                <div className="flex justify-center">
+                  <Link
+                    to="/collections"
+                    className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
+                  >
+                    <span>Explore Collections</span>
+                    <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
+                      arrow_forward
+                    </span>
+                  </Link>
+                </div>
+              </motion.div>
+
+              {/* Recommendations */}
+              <div className="pt-12 border-t border-outline-variant/20">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="font-display text-xl md:text-2xl font-bold text-on-surface">
+                    Trending Masterpieces
+                  </h3>
+                  <Link
+                    to="/collections"
+                    className="text-[11px] font-bold text-primary uppercase tracking-widest hover:underline"
+                  >
+                    View All
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {trendingLoading
+                    ? [...Array(4)].map((_, i) => <ProductCard key={i} loading={true} />)
+                    : trendingProducts.map((prod) => (
+                        <ProductCard
+                          key={prod._id || prod.id}
+                          {...prod}
+                          onQuickView={(e) => {
+                            e.preventDefault();
+                            setQuickViewProduct(prod);
+                          }}
+                        />
+                      ))}
+                </div>
               </div>
             </div>
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 md:py-24 text-[#685c57]/60 text-sm"
-          >
-            <span className="material-symbols-outlined text-[32px] text-[#685c57]/30 mb-2 block">
-              info
-            </span>
-            No {itemTypeFilter === 'product' ? 'products' : itemTypeFilter === 'event' ? 'events' : 'items'} match the active filters.
-          </motion.div>
-        ) : (
-          /* Grid Layout matching retail platforms with smooth staggered micro-animations */
-          <motion.div
-            layout
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
-          >
-            <AnimatePresence>
-              {filteredItems.map((item, index) => (
-                <ProductCard
-                  key={`wishlist-item-${item.id}`}
-                  {...item}
-                  layoutMode="wishlist"
-                  onQuickView={(e) => {
-                    if (window.innerWidth >= 768) {
-                      e.preventDefault();
-                      setQuickViewProduct(item);
-                    }
-                  }}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        )}
-      </div>
+          ) : filteredItems.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-16 md:py-24 text-[#685c57]/60 text-sm"
+            >
+              <span className="material-symbols-outlined text-[32px] text-[#685c57]/30 mb-2 block">
+                info
+              </span>
+              No{' '}
+              {itemTypeFilter === 'product'
+                ? 'products'
+                : itemTypeFilter === 'event'
+                  ? 'events'
+                  : 'items'}{' '}
+              match the active filters.
+            </motion.div>
+          ) : (
+            /* Grid Layout matching retail platforms with smooth staggered micro-animations */
+            <motion.div
+              layout
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+            >
+              <AnimatePresence>
+                {filteredItems.map((item, _index) => (
+                  <ProductCard
+                    key={`wishlist-item-${item.id}`}
+                    {...item}
+                    layoutMode="wishlist"
+                    onQuickView={(e) => {
+                      if (window.innerWidth >= 768) {
+                        e.preventDefault();
+                        setQuickViewProduct(item);
+                      }
+                    }}
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </div>
       </div>
 
       {/* Quick View Modal */}

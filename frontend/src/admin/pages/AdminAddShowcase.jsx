@@ -12,7 +12,7 @@ import { compressImage, formatBytes } from '../../utils/imageCompressor';
 import { useDraft } from '../hooks/useDraft';
 import logger from '../../utils/logger';
 
-const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
+const _fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideIn = {
   hidden: { opacity: 0, x: 20 },
   show: { opacity: 1, x: 0 },
@@ -38,7 +38,7 @@ export function AdminAddShowcase() {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [categories, setCategories] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [lastDraftSaved, setLastDraftSaved] = useState(null);
+  const [_lastDraftSaved, _setLastDraftSaved] = useState(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionProgress, setCompressionProgress] = useState(0);
   const [compressionStats, setCompressionStats] = useState([]);
@@ -47,7 +47,7 @@ export function AdminAddShowcase() {
   const [showAIHUD, setShowAIHUD] = useState(false);
   const [aiChatInput, setAiChatInput] = useState('');
   const [isAILearning, setIsAILearning] = useState(false);
-  const [isApplyingFields, setIsApplyingFields] = useState(false);
+  const [_isApplyingFields, setIsApplyingFields] = useState(false);
   const [focusedField, setFocusedField] = useState('');
 
   const {
@@ -123,7 +123,7 @@ export function AdminAddShowcase() {
             toast.error('Showcase design not found');
             navigate('/admin/events');
           }
-        } catch (err) {
+        } catch (_err) {
           toast.error('Failed to load design details');
           navigate('/admin/events');
         } finally {

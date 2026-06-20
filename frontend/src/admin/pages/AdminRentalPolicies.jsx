@@ -23,7 +23,7 @@ export default function AdminRentalPolicies() {
       try {
         const res = await rentalService.getPolicy();
         if (res.success) setPolicy(res.data);
-      } catch (err) {
+      } catch (_err) {
         toast.error('Failed to load rental policy');
       } finally {
         setLoading(false);

@@ -3,7 +3,14 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/errorHelpers';
-import { fadeUp, stagger } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  AdminToggle,
+  EmptyState,
+  SkeletonTable,
+  fadeUp,
+  stagger,
+} from '../components/AdminUIKit';
 
 export function AdminConfig() {
   const [configs, setConfigs] = useState([]);

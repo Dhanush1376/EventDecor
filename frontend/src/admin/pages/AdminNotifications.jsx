@@ -57,7 +57,7 @@ export function AdminNotifications() {
     markAllNotificationsRead();
   };
 
-  const handleClearRead = () => {
+  const _handleClearRead = () => {
     toast.success('Read logs cleared for fresh intake sync!');
   };
 

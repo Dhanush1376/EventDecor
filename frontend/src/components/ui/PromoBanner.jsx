@@ -7,7 +7,7 @@ export function PromoBanner({
   statusText,
   title,
   highlightText,
-  description,
+  _description,
   ctaText,
   onCtaClick,
   timer = null,

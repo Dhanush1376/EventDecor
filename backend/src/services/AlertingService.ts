@@ -44,6 +44,10 @@ export class AlertingService {
   private static readonly RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
   private static readonly RATE_LIMIT_MAX = 10;
 
+  // Deduplication: suppress identical alerts within the dedup window
+  private static recentAlertFingerprints = new Map<string, number>();
+  private static readonly DEDUP_WINDOW_MS = 5 * 60 * 1000;
+
   static async fire(payload: AlertPayload): Promise<void> {
     const { title, message, severity, category, metadata } = payload;
     const channels = payload.channels || this.DEFAULT_CHANNELS[severity];
@@ -67,6 +71,23 @@ export class AlertingService {
       }
     } else {
       this.alertCounts.set(rateLimitKey, { count: 1, resetAt: now + this.RATE_LIMIT_WINDOW_MS });
+    }
+
+    // Deduplication: suppress identical alerts within the window
+    const fingerprint = `${category}:${title}`;
+    const lastSent = this.recentAlertFingerprints.get(fingerprint);
+    if (lastSent && now - lastSent < this.DEDUP_WINDOW_MS) {
+      logger.debug(`[ALERTING] Suppressing duplicate alert: ${title}`);
+      return;
+    }
+    this.recentAlertFingerprints.set(fingerprint, now);
+
+    // Periodic cleanup of old fingerprints to prevent memory leak
+    if (this.recentAlertFingerprints.size > 200) {
+      const cutoff = now - this.DEDUP_WINDOW_MS;
+      for (const [key, ts] of this.recentAlertFingerprints) {
+        if (ts < cutoff) this.recentAlertFingerprints.delete(key);
+      }
     }
 
     // Always log
@@ -288,6 +309,16 @@ export class AlertingService {
       message: `Backup system alert`,
       severity: 'high',
       category: 'backup',
+      metadata: details,
+    });
+  }
+
+  static async systemAlert(title: string, details: Record<string, any>): Promise<void> {
+    await this.fire({
+      title,
+      message: details.message || 'System event detected',
+      severity: (details.severity as AlertSeverity) || 'medium',
+      category: 'system',
       metadata: details,
     });
   }

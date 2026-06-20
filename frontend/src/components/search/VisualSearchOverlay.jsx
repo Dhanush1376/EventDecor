@@ -17,8 +17,8 @@ export function VisualSearchOverlay({
   results,
   error,
   scanProgress,
-  scanStatus,
-  config,
+  _scanStatus,
+  _config,
   onClose,
   onImageSelect,
   onRetry,
@@ -30,10 +30,10 @@ export function VisualSearchOverlay({
   const [isDragging, setIsDragging] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
-  const [sheetState, setSheetState] = useState('half'); // 'expanded', 'half', 'collapsed'
+  const [_sheetState, _setSheetState] = useState('half'); // 'expanded', 'half', 'collapsed'
   const [isSheetHidden, setIsSheetHidden] = useState(false);
   const videoRef = useRef(null);
-  const dragControls = useDragControls();
+  const _dragControls = useDragControls();
   const scrollContainerRef = useRef(null);
 
   const { scrollY } = useScroll({
@@ -614,19 +614,20 @@ export function VisualSearchOverlay({
                             search_off
                           </span>
                           <p className="text-on-surface-variant font-display text-[24px] font-bold mb-2">
-                            No matches found
+                            No Exact Matches Found
                           </p>
-                          <p className="text-on-surface-variant/50 text-[14px] max-w-sm text-center mb-8">
-                            Try uploading a clearer image, ensuring the product is well-lit, or
-                            search with a different photo.
+                          <p className="text-on-surface-variant/50 text-[14px] max-w-md text-center mb-8">
+                            We couldn't find an exact visual match for your image. For best results,
+                            try a clearer image with good lighting, or explore our curated
+                            collections to find similar styles.
                           </p>
                           <div className="flex gap-4">
                             <button onClick={onReset} className="btn-outline px-6">
                               Try Another Image
                             </button>
                             {/* UX Improvement: Empty State Continuation */}
-                            <Link to="/shop" onClick={onClose} className="btn-gold px-6">
-                              Browse Shop
+                            <Link to="/collections" onClick={onClose} className="btn-gold px-6">
+                              Explore Collections
                             </Link>
                           </div>
                         </div>

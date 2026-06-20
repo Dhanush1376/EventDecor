@@ -27,7 +27,7 @@ export function useDraft({
   onRestored,
 }) {
   const location = useLocation();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
 
   // State
   const [formData, setFormDataInternal] = useState(initialData);

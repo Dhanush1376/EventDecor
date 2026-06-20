@@ -211,6 +211,70 @@ export function CartProvider({ children }) {
       if (isAuthenticated) {
         const action = async () => {
           setIsCartOpen(true);
+          const previousCart = queryClient.getQueryData(['cart']);
+          let rollbackCart = previousCart;
+
+          if (previousCart) {
+            let targetCartKey = itemType === 'purchase' ? 'purchaseCart' : 'rentalCart';
+            const prevItems = previousCart[targetCartKey]?.items || [];
+
+            const existingIndex = prevItems.findIndex(
+              (item) => (item.product?._id || item.product?.id || item._id || item.id) === itemKey,
+            );
+            let updatedItems;
+
+            if (existingIndex >= 0) {
+              updatedItems = [...prevItems];
+              updatedItems[existingIndex] = {
+                ...updatedItems[existingIndex],
+                quantity: updatedItems[existingIndex].quantity + qty,
+              };
+            } else {
+              updatedItems = [
+                ...prevItems,
+                {
+                  id: itemKey,
+                  _id: itemKey,
+                  quantity: qty,
+                  type: itemType,
+                  product: product,
+                  rentalInfo: product.rentalInfo,
+                  deposit: product.deposit || 0,
+                },
+              ];
+            }
+
+            const subtotal = updatedItems.reduce(
+              (sum, item) => sum + (item.product?.price || item.price || 0) * item.quantity,
+              0,
+            );
+            const depositTotal =
+              itemType === 'rental'
+                ? updatedItems.reduce(
+                    (sum, item) =>
+                      sum + (item.product?.deposit || item.deposit || 0) * item.quantity,
+                    0,
+                  )
+                : 0;
+
+            queryClient.setQueryData(['cart'], {
+              ...previousCart,
+              [targetCartKey]: {
+                ...previousCart[targetCartKey],
+                items: updatedItems,
+                summary: {
+                  ...(previousCart[targetCartKey]?.summary || emptySummary),
+                  subtotal,
+                  depositTotal,
+                  total:
+                    subtotal +
+                    depositTotal +
+                    (previousCart[targetCartKey]?.summary?.shippingFee || 0),
+                },
+              },
+            });
+          }
+
           try {
             await addToCart({
               productId: itemKey,
@@ -222,6 +286,7 @@ export function CartProvider({ children }) {
           } catch (err) {
             logger.error('Failed to add item to database cart:', err);
             toast.error(getErrorMessage(err, 'Unable to add item to bag'));
+            if (rollbackCart) queryClient.setQueryData(['cart'], rollbackCart);
           }
         };
         runProtectedAction(action);
@@ -290,14 +355,56 @@ export function CartProvider({ children }) {
   );
 
   const removeItem = useCallback(
-    async (id, variant) => {
+    async (id, _variant) => {
       if (isAuthenticated) {
         const action = async () => {
+          const previousCart = queryClient.getQueryData(['cart']);
+          let rollbackCart = previousCart;
+
+          if (previousCart) {
+            let targetCartKey = activeCartMode === 'purchase' ? 'purchaseCart' : 'rentalCart';
+            const prevItems = previousCart[targetCartKey]?.items || [];
+            const updatedItems = prevItems.filter(
+              (item) => (item.product?._id || item.product?.id || item._id || item.id) !== id,
+            );
+
+            const subtotal = updatedItems.reduce(
+              (sum, item) => sum + (item.product?.price || item.price || 0) * item.quantity,
+              0,
+            );
+            const depositTotal =
+              activeCartMode === 'rental'
+                ? updatedItems.reduce(
+                    (sum, item) =>
+                      sum + (item.product?.deposit || item.deposit || 0) * item.quantity,
+                    0,
+                  )
+                : 0;
+
+            queryClient.setQueryData(['cart'], {
+              ...previousCart,
+              [targetCartKey]: {
+                ...previousCart[targetCartKey],
+                items: updatedItems,
+                summary: {
+                  ...(previousCart[targetCartKey]?.summary || emptySummary),
+                  subtotal,
+                  depositTotal,
+                  total:
+                    subtotal +
+                    depositTotal +
+                    (previousCart[targetCartKey]?.summary?.shippingFee || 0),
+                },
+              },
+            });
+          }
+
           try {
             await removeFromCart({ productId: id });
           } catch (err) {
             logger.error('Failed to remove item from database cart:', err);
             toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
+            if (rollbackCart) queryClient.setQueryData(['cart'], rollbackCart);
           }
         };
         runProtectedAction(action);

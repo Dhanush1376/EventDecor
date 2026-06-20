@@ -84,7 +84,7 @@ export const extractPublicId = (url: string): string | null => {
       return publicIdWithExt.substring(0, dotIndex);
     }
     return publicIdWithExt;
-  } catch (error) {
+  } catch {
     return null;
   }
 };

@@ -3,7 +3,7 @@ import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { requestContextStorage } from './requestTracker';
 
-const errorMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
+const errorMiddleware = (err: any, req: Request, res: Response, _next: NextFunction) => {
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
   let errors = err.errors || undefined;
@@ -29,7 +29,9 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
     err.name === 'MongooseServerSelectionError' ||
     err.message?.includes('not connected') ||
     err.message?.includes('topology destroyed') ||
-    err.message?.includes('ECONNREFUSED')
+    err.message?.includes('ECONNREFUSED') ||
+    err.message?.includes('buffering timed out') ||
+    (err.name === 'MongooseError' && err.message?.includes('timed out'))
   ) {
     statusCode = 503;
     message = 'Database connection is temporarily unavailable. Please try again in a few seconds.';
@@ -97,6 +99,26 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
   ) {
     statusCode = 504;
     message = 'The upstream service took too long to respond. Please try again.';
+  }
+
+  // Handle Redis connection errors (cache/queue dependency failures)
+  else if (
+    (err.message?.includes('ECONNREFUSED') && err.message?.includes('6379')) ||
+    (err.message?.includes('Redis') && err.message?.includes('not ready')) ||
+    err.name === 'MaxRetriesPerRequestError' ||
+    err.message?.includes('Connection is closed')
+  ) {
+    statusCode = 503;
+    message = 'A background service is temporarily unavailable. Please try again shortly.';
+  }
+
+  // Handle BullMQ / Queue job failures surfaced to API layer
+  else if (
+    (err.message?.includes('Queue') && err.message?.includes('unavailable')) ||
+    err.name === 'CircuitBreakerError'
+  ) {
+    statusCode = 503;
+    message = 'Service temporarily unavailable due to high demand. Please try again shortly.';
   }
 
   // Handle custom ApiError instances

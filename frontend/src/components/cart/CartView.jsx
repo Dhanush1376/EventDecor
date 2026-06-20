@@ -1,10 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Profiler } from 'react';
+import { logRenderMetrics } from '../../utils/profilerLogger';
 import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
-import { handleImageError } from '../../utils/imageUtils';
 import { couponService, cmsService } from '../../services/domainServices';
 import { useAuth } from '../../context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -13,8 +13,8 @@ import { persistentStorage } from '../../utils/persistentStorage';
 import { Skeleton, CartSkeleton } from '../ui';
 import { SEO } from '../seo/SEO';
 import { CheckoutSteps } from '../ui/CheckoutSteps';
-import { useUserProfile, useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';
-
+import { useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';
+import { CartItemRow } from './CartItemRow';
 const RecommendationSystem = React.lazy(() =>
   import('../../components/sections/RecommendationSystem').then((m) => ({
     default: m.RecommendationSystem,
@@ -27,11 +27,11 @@ export function CartView({ isEmbedded = false }) {
     removeItem,
     updateQuantity,
     cartCount,
-    addItem,
+    _addItem,
     summary,
     totalMRP,
     loading,
-    claimedCoupon,
+    _claimedCoupon,
     setClaimedCoupon,
     activeCartMode,
     setActiveCartMode,
@@ -45,6 +45,7 @@ export function CartView({ isEmbedded = false }) {
   const { data: addresses = [] } = useUserAddresses();
   const { setDefaultAddress } = useAddressMutations();
   const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
+  const [isClearCartDialogOpen, setIsClearCartDialogOpen] = useState(false);
 
   // Address lookup
   const activeAddress = React.useMemo(() => {
@@ -73,7 +74,7 @@ export function CartView({ isEmbedded = false }) {
   useEffect(() => {
     try {
       sessionStorage.removeItem('siri_checkout_step');
-    } catch (e) {}
+    } catch (_e) {}
   }, []);
 
   // Standard eCommerce features: Coupon input
@@ -210,12 +211,17 @@ export function CartView({ isEmbedded = false }) {
     triggerNotification(`Moved all items to Wishlist`);
   };
 
-  // Clear all items
+  // Clear all items dialog trigger
   const handleClearCart = () => {
+    setIsClearCartDialogOpen(true);
+  };
+
+  const confirmClearCart = () => {
     items.forEach((item) => {
       removeItem(item.id || item._id, item.variant, item.type);
     });
     triggerNotification(`Bag cleared`);
+    setIsClearCartDialogOpen(false);
   };
 
   const deliveryTimelineDays = settings.deliveryTimelineDays || 5;
@@ -251,24 +257,68 @@ export function CartView({ isEmbedded = false }) {
             {notification}
           </motion.div>
         )}
+
+        {/* Clear Cart Confirmation Dialog */}
+        {isClearCartDialogOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="bg-surface-bright rounded-2xl p-6 max-w-[320px] w-full shadow-2xl border border-outline-variant/20 text-center"
+            >
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+                <span className="material-symbols-outlined text-[24px]">delete</span>
+              </div>
+              <h3 className="text-[18px] font-bold text-on-surface mb-2 font-display">
+                Clear entire bag?
+              </h3>
+              <p className="text-[13px] text-secondary/80 mb-6">
+                Are you sure you want to remove all items from your bag? This action cannot be
+                undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsClearCartDialogOpen(false)}
+                  className="flex-1 py-2.5 rounded-full border border-outline-variant/40 text-secondary font-bold text-[12px] uppercase tracking-wider hover:bg-surface-container-low transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmClearCart}
+                  className="flex-1 py-2.5 rounded-full bg-red-600 text-white font-bold text-[12px] uppercase tracking-wider hover:bg-red-700 transition-colors shadow-sm"
+                >
+                  Clear Bag
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Address Bar - Attached perfectly below topnav */}
       {!isEmbedded && (
-        <div className={`w-full bg-[#fbf9f6] border-b border-black/10 relative hover:bg-[#f6f2ea] transition-colors ${isAddressDropdownOpen ? 'z-50' : 'z-30'}`}>
+        <div
+          className={`w-full bg-[#fbf9f6] border-b border-black/10 relative hover:bg-[#f6f2ea] transition-colors ${isAddressDropdownOpen ? 'z-50' : 'z-30'}`}
+        >
           <div className="max-w-[1240px] mx-auto px-4 sm:px-8 relative">
-            <div 
+            <div
               onClick={() => setIsAddressDropdownOpen(!isAddressDropdownOpen)}
               className="flex items-center justify-between py-3 cursor-pointer select-none"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="material-symbols-outlined text-[18px] text-primary">location_on</span>
+                <span className="material-symbols-outlined text-[18px] text-primary">
+                  location_on
+                </span>
                 <span className="text-[11px] md:text-xs text-[#1a1817] font-semibold truncate leading-none">
-                  {activeAddress ? (
-                    `${activeAddress.name} - ${activeAddress.addressString || activeAddress.address}, ${activeAddress.locality || ''}, ${activeAddress.city}`
-                  ) : (
-                    "Dhanush Atmakuri - Block- 15 (Uni mall)-shop-404 - Nellore"
-                  )}
+                  {activeAddress
+                    ? `${activeAddress.name} - ${activeAddress.addressString || activeAddress.address}, ${activeAddress.locality || ''}, ${activeAddress.city}`
+                    : 'Add a delivery address'}
                 </span>
               </div>
               <span className="material-symbols-outlined text-[18px] text-black/40">
@@ -279,7 +329,7 @@ export function CartView({ isEmbedded = false }) {
             {/* Address Switcher Dropdown */}
             <AnimatePresence>
               {isAddressDropdownOpen && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -289,7 +339,7 @@ export function CartView({ isEmbedded = false }) {
                     Select Destination
                   </div>
                   {addresses && addresses.length > 0 ? (
-                    addresses.map(addr => (
+                    addresses.map((addr) => (
                       <div
                         key={addr._id || addr.id}
                         onClick={() => {
@@ -302,7 +352,9 @@ export function CartView({ isEmbedded = false }) {
                           {addr.isDefault ? 'radio_button_checked' : 'radio_button_unchecked'}
                         </span>
                         <div className="min-w-0">
-                          <div className="font-bold">{addr.name} ({addr.tag})</div>
+                          <div className="font-bold">
+                            {addr.name} ({addr.tag})
+                          </div>
                           <div className="truncate text-black/50 text-[10px]">
                             {addr.addressString || addr.address}, {addr.locality}, {addr.city}
                           </div>
@@ -315,7 +367,7 @@ export function CartView({ isEmbedded = false }) {
                     </div>
                   )}
                   <div className="mt-2 pt-2 border-t border-black/5 flex justify-end">
-                    <Link 
+                    <Link
                       to="/dashboard?tab=addresses"
                       className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
                     >
@@ -526,248 +578,18 @@ export function CartView({ isEmbedded = false }) {
                 <AnimatePresence>
                   {items.map((item) => {
                     const uniqueKey = `${item.id || item._id}-${item.variant}`;
-                    const itemOldPrice = item.oldPrice || item.price;
-                    const savingsPct =
-                      itemOldPrice > item.price
-                        ? Math.round(((itemOldPrice - item.price) / itemOldPrice) * 100)
-                        : 0;
-
                     return (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, x: -50, scale: 0.9 }}
-                        transition={{ duration: 0.25 }}
+                      <CartItemRow
                         key={uniqueKey}
-                        className={`bg-surface-bright rounded-lg shadow-xs p-3.5 relative group border transition-all duration-300 ${item.stock === 0 ? 'border-red-200' : 'border-outline-variant/40 hover:border-primary/20'}`}
-                      >
-                        {/* Top Right Close Icon */}
-                        <button
-                          onClick={() => {
-                            removeItem(item.id || item._id, item.variant, item.type);
-                            triggerNotification(`Removed "${item.title}"`);
-                          }}
-                          className="absolute top-3 right-3 text-secondary/60 hover:text-on-surface transition-colors cursor-pointer w-7 h-7 min-h-0 flex items-center justify-center rounded-full hover:bg-surface-container z-10"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">close</span>
-                        </button>
-
-                        <div className="flex gap-3 sm:gap-4">
-                          {/* Left Column: Image */}
-                          <div className="relative w-[85px] h-[115px] sm:w-[100px] sm:h-[130px] bg-surface-container rounded-md overflow-hidden flex-shrink-0 border border-outline-variant/20">
-                            {item.stock === 0 && (
-                              <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-center justify-center">
-                                <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
-                                  Out of Stock
-                                </span>
-                              </div>
-                            )}
-                            <Link
-                              to={`/product/${item.id || item._id}`}
-                              className="w-full h-full block"
-                            >
-                              <motion.img
-                                onError={handleImageError}
-                                whileHover={{ scale: 1.05 }}
-                                src={item.imageSrc}
-                                alt={item.title}
-                                className={`w-full h-full object-cover transition-transform ${item.stock === 0 ? 'grayscale' : ''}`}
-                              />
-                            </Link>
-                          </div>
-
-                          {/* Right Details */}
-                          <div className="flex-1 min-w-0 pr-8 py-1">
-                            {activeCartMode === 'rental' && (
-                              <span className="inline-block bg-primary/10 text-primary text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-[3px] mb-2 border border-primary/20">
-                                🏷 Rental Item
-                              </span>
-                            )}
-                            <Link to={`/product/${item.id || item._id}`}>
-                              <h3 className="font-display font-medium text-[13px] sm:text-[14px] text-on-surface line-clamp-2 leading-tight">
-                                {item.title}
-                              </h3>
-                            </Link>
-
-                            {/* Size & Qty controls */}
-                            <div className="flex items-center gap-3 mt-4">
-                              {item.variant && item.variant !== 'Default' && (
-                                <div className="bg-surface-container-lowest border border-outline-variant/60 rounded px-2.5 py-1 text-[12px] font-bold text-on-surface flex items-center gap-1">
-                                  <span className="text-secondary/70 font-medium">Size:</span>{' '}
-                                  {item.variant}
-                                </div>
-                              )}
-
-                              <div
-                                className={`flex items-center border border-outline-variant/60 rounded overflow-hidden bg-surface-container-lowest h-[24px] mt-1 ${item.stock === 0 ? 'opacity-50 pointer-events-none' : ''}`}
-                              >
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    updateQuantity(
-                                      item.id || item._id,
-                                      item.variant,
-                                      item.quantity - 1,
-                                    );
-                                  }}
-                                  className="w-7 h-full flex items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
-                                  aria-label="Decrease quantity"
-                                >
-                                  <span className="material-symbols-outlined text-[14px]">
-                                    remove
-                                  </span>
-                                </button>
-                                <div className="w-7 h-full flex items-center justify-center text-[11px] font-bold text-on-surface border-x border-outline-variant/30 bg-surface-bright">
-                                  {item.quantity}
-                                </div>
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    updateQuantity(
-                                      item.id || item._id,
-                                      item.variant,
-                                      item.quantity + 1,
-                                    );
-                                  }}
-                                  disabled={item.quantity >= item.stock}
-                                  className={`w-7 h-full flex items-center justify-center transition-colors ${item.quantity >= item.stock ? 'text-secondary/30 cursor-not-allowed bg-surface-container-low' : 'text-secondary hover:text-on-surface hover:bg-surface-container cursor-pointer'}`}
-                                  aria-label="Increase quantity"
-                                >
-                                  <span className="material-symbols-outlined text-[14px]">add</span>
-                                </button>
-                              </div>
-                            </div>
-
-                            {item.quantity >= item.stock && item.stock > 0 && (
-                              <span className="text-[10px] text-red-500 font-medium block mt-1">
-                                Maximum stock reached
-                              </span>
-                            )}
-
-                            {/* Pricing & Policy below Quantity (only for purchase) */}
-                            {activeCartMode === 'purchase' && (
-                              <div className="mt-3 flex flex-col gap-2 w-full">
-                                {/* Pricing Row */}
-                                <div className="flex items-baseline gap-1.5 flex-wrap">
-                                  <span className="text-[13px] font-extrabold text-on-surface">
-                                    ₹{item.price.toLocaleString()}
-                                  </span>
-                                  {itemOldPrice > item.price && (
-                                    <span className="text-[10px] text-secondary line-through">
-                                      ₹{itemOldPrice.toLocaleString()}
-                                    </span>
-                                  )}
-                                  {savingsPct > 0 && (
-                                    <span className="text-[10px] font-bold text-primary">
-                                      {savingsPct}% Off
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Return policy & delivery forecast strip */}
-                                <div className="text-[11px] text-secondary w-full">
-                                  <div className="flex flex-col gap-1.5 mt-1">
-                                    {item.isNonRefundable ? (
-                                      <div className="flex items-center gap-1.5 text-[#d97706] font-bold whitespace-nowrap text-[10px]">
-                                        <span className="material-symbols-outlined text-[13px]">
-                                          block
-                                        </span>
-                                        Non-Refundable
-                                      </div>
-                                    ) : (
-                                      <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-                                        <span className="material-symbols-outlined text-[13px]">
-                                          keyboard_return
-                                        </span>
-                                        <span>
-                                          <span className="font-bold text-on-surface">
-                                            {settings.returnPolicyDays || 14} days
-                                          </span>{' '}
-                                          return available
-                                        </span>
-                                      </div>
-                                    )}
-                                    <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-                                      <span className="material-symbols-outlined text-[13px]">
-                                        local_shipping
-                                      </span>
-                                      <span>
-                                        Delivery by{' '}
-                                        <span className="text-on-surface font-bold">
-                                          {deliveryDateStr}
-                                        </span>
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Rental pricing & policy details (displayed below the photo with premium styling) */}
-                        {activeCartMode === 'rental' && (
-                          <div className="mt-3 pt-3 border-t border-outline-variant/10 flex flex-col gap-2.5 w-full text-[11px] text-secondary">
-                            {/* Total Due Row */}
-                            <div className="flex items-baseline gap-2 flex-wrap">
-                              <span className="text-[14px] font-black text-on-surface">
-                                ₹
-                                {(
-                                  (item.price + (item.deposit || 0)) *
-                                  item.quantity
-                                ).toLocaleString()}
-                              </span>
-                              <span className="text-[9px] font-bold text-secondary uppercase tracking-widest">
-                                Total Due
-                              </span>
-                              <span className="text-secondary/25 mx-1 font-light">|</span>
-                              <span className="text-[10px]">Fee: ₹{item.price.toLocaleString()}</span>
-                              <span className="text-secondary/25 font-light">•</span>
-                              <span className="text-[10px] text-primary font-bold">Deposit: ₹{item.deposit?.toLocaleString() || 0}</span>
-                            </div>
-
-                            {/* Duration & Deposit details */}
-                            <div className="flex flex-col gap-2 mt-0.5">
-                              <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[15px] text-primary shrink-0">
-                                  calendar_month
-                                </span>
-                                <span>
-                                  Duration:{' '}
-                                  <span className="font-extrabold text-primary uppercase text-[9.5px] tracking-wider ml-1">
-                                    Select at checkout ➝
-                                  </span>
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[15px] text-[#8c7335] shrink-0">
-                                  lock
-                                </span>
-                                <span>
-                                  Refundable Deposit:{' '}
-                                  <span className="font-extrabold text-on-surface text-[9.5px] ml-1">
-                                    ₹{item.deposit?.toLocaleString() || 0}
-                                  </span>
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Wishlist Button inside Card */}
-                        <div className="border-t border-outline-variant/30 mt-2 pt-2 text-center">
-                          <button
-                            onClick={() => handleMoveToWishlist(item)}
-                            className="text-[9px] font-bold text-primary uppercase tracking-widest hover:opacity-80 transition-opacity flex items-center justify-center w-full gap-1.5 cursor-pointer"
-                          >
-                            <span className="material-symbols-outlined text-[11px]">
-                              favorite_border
-                            </span>
-                            Move to Wishlist
-                          </button>
-                        </div>
-                      </motion.div>
+                        item={item}
+                        activeCartMode={activeCartMode}
+                        settings={settings}
+                        deliveryDateStr={deliveryDateStr}
+                        removeItem={removeItem}
+                        updateQuantity={updateQuantity}
+                        handleMoveToWishlist={handleMoveToWishlist}
+                        triggerNotification={triggerNotification}
+                      />
                     );
                   })}
                 </AnimatePresence>
@@ -1068,13 +890,20 @@ export function CartView({ isEmbedded = false }) {
                       <span>
                         {activeCartMode === 'rental' ? 'Grand Total Due Today' : 'Total Amount'}
                       </span>
-                      <motion.span
-                        key={finalPayableAmount}
-                        initial={{ scale: 0.95 }}
-                        animate={{ scale: 1 }}
-                      >
-                        ₹{finalPayableAmount.toLocaleString()}
-                      </motion.span>
+                      <div className="flex items-center gap-2">
+                        {appliedCoupon && (
+                          <span className="bg-green-100 text-green-800 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase border border-green-200 tracking-wider">
+                            {appliedCoupon.code}
+                          </span>
+                        )}
+                        <motion.span
+                          key={finalPayableAmount}
+                          initial={{ scale: 0.95 }}
+                          animate={{ scale: 1 }}
+                        >
+                          ₹{finalPayableAmount.toLocaleString()}
+                        </motion.span>
+                      </div>
                     </div>
 
                     {/* Expected Refund Block for Rentals */}
@@ -1148,225 +977,234 @@ export function CartView({ isEmbedded = false }) {
   );
 
   return (
-    <>
-      {isEmbedded ? (
-        <div className="w-full text-on-surface">{innerContent}</div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-          className="bg-surface-container-low min-h-screen pt-[72px] md:pt-[88px] pb-24 md:pb-28 font-body text-on-surface"
-        >
-          {innerContent}
-        </motion.div>
-      )}
-
-      {/* Sticky Footer for Mobile - Place Order */}
-      {items.length > 0 &&
-        createPortal(
+    <Profiler id="CartView" onRender={logRenderMetrics}>
+      <>
+        {isEmbedded ? (
+          <div className="w-full text-on-surface">{innerContent}</div>
+        ) : (
           <motion.div
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/40 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] px-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-[90] lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className="bg-surface-container-low min-h-screen pt-[72px] md:pt-[88px] pb-[160px] md:pb-28 font-body text-on-surface"
           >
-            <div className="max-w-[1240px] mx-auto flex items-center justify-between sm:px-6">
-              <div className="flex flex-col justify-center">
-                <span className="text-[10px] text-secondary/90 font-extrabold uppercase tracking-widest mb-0.5">
-                  {cartCount} ITEM{cartCount !== 1 ? 'S' : ''} IN BAG
-                </span>
-                <span className="text-[18px] font-extrabold text-on-surface leading-tight">
-                  ₹{finalPayableAmount.toLocaleString()}
-                </span>
-              </div>
-              <button
-                onClick={() =>
-                  runProtectedAction(() => {
-                    sessionStorage.removeItem('siri_checkout_step');
-                    navigate('/checkout', {
-                      state: { checkoutMode: activeCartMode, couponCode: appliedCoupon?.code },
-                    });
-                  })
-                }
-                className="bg-black text-white hover:bg-[#8c7335] hover:text-white px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-md transition-all text-center block cursor-pointer active:scale-[0.98]"
-              >
-                {activeCartMode === 'rental' ? 'Rent Now' : 'Checkout'}
-              </button>
-            </div>
-          </motion.div>,
-          document.body,
+            {innerContent}
+          </motion.div>
         )}
 
-      {/* Premium Coupon Selector Modal */}
-      {typeof document !== 'undefined' &&
-        createPortal(
-          <AnimatePresence>
-            {isCouponModalOpen && (
-              <div className="fixed inset-0 z-[1000] flex items-end justify-center sm:items-center sm:p-4">
-                {/* Backdrop blur */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setIsCouponModalOpen(false)}
-                  className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                />
-
-                {/* Bottom Sheet Card */}
-                <motion.div
-                  initial={{ y: '100%' }}
-                  animate={{ y: 0 }}
-                  exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="relative bg-surface-bright w-full max-w-[500px] rounded-t-[24px] sm:rounded-[24px] p-6 sm:p-8 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col z-[1001]"
-                >
-                  {/* Pull Indicator for Mobile */}
-                  <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto mb-6 sm:hidden" />
-
-                  {/* Close Button */}
-                  <button
-                    onClick={() => setIsCouponModalOpen(false)}
-                    className="absolute top-6 right-6 w-8 h-8 min-h-0 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
-
-                  {/* Content Container */}
-                  <div className="relative z-10 flex flex-col h-full max-h-[75vh]">
-                    {/* Header */}
-                    <div className="mb-6">
-                      <h2 className="text-[20px] font-bold text-on-surface leading-tight mb-1">
-                        Coupons & Offers
-                      </h2>
-                      <p className="text-secondary text-[12px]">
-                        Enter a promo code or select an offer below
-                      </p>
-                    </div>
-
-                    {/* Manual Input Form */}
-                    <form onSubmit={(e) => handleApplyCoupon(e)} className="flex gap-2 mb-6">
-                      <div className="relative flex-1">
-                        <input
-                          type="text"
-                          placeholder="ENTER PROMO CODE"
-                          value={couponInput}
-                          onChange={(e) => {
-                            setCouponInput(e.target.value.toUpperCase());
-                            if (couponError) setCouponError('');
-                          }}
-                          className="w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-4 py-3 text-[13px] outline-none focus:border-primary text-on-surface font-bold uppercase transition-all tracking-wider"
-                        />
-                        {couponError && (
-                          <span className="absolute -bottom-5 left-1 text-red-500 text-[10px] font-medium">
-                            {couponError}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={!couponInput.trim()}
-                        className="bg-on-surface text-surface disabled:opacity-30 disabled:cursor-not-allowed px-6 rounded-xl text-[12px] font-bold uppercase tracking-wider transition-all cursor-pointer hover:bg-on-surface/90"
-                      >
-                        Apply
-                      </button>
-                    </form>
-
-                    {/* Scrollable Coupons List */}
-                    <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin">
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-secondary block">
-                        Available Offers
+        {/* Sticky Footer for Mobile - Place Order */}
+        {items.length > 0 &&
+          createPortal(
+            <motion.div
+              initial={{ y: 100 }}
+              animate={{ y: 0 }}
+              className="fixed bottom-[72px] left-2 right-2 bg-surface-bright border border-outline-variant/40 pt-3 pb-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-[90] lg:hidden rounded-2xl"
+            >
+              <div className="max-w-[1240px] mx-auto flex items-center justify-between sm:px-6">
+                <div className="flex flex-col justify-center">
+                  <span className="text-[10px] text-secondary/90 font-extrabold uppercase tracking-widest mb-0.5">
+                    {cartCount} ITEM{cartCount !== 1 ? 'S' : ''} IN BAG
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[18px] font-extrabold text-on-surface leading-tight">
+                      ₹{finalPayableAmount.toLocaleString()}
+                    </span>
+                    {appliedCoupon && (
+                      <span className="bg-green-100 text-green-800 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase border border-green-200 tracking-wider">
+                        {appliedCoupon.code}
                       </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() =>
+                    runProtectedAction(() => {
+                      sessionStorage.removeItem('siri_checkout_step');
+                      navigate('/checkout', {
+                        state: { checkoutMode: activeCartMode, couponCode: appliedCoupon?.code },
+                      });
+                    })
+                  }
+                  className="bg-black text-white hover:bg-[#8c7335] hover:text-white px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-md transition-all text-center block cursor-pointer active:scale-[0.98]"
+                >
+                  {activeCartMode === 'rental' ? 'Rent Now' : 'Checkout'}
+                </button>
+              </div>
+            </motion.div>,
+            document.body,
+          )}
 
-                      {activeCoupons.length === 0 ? (
-                        <div className="text-center py-10 space-y-2">
-                          <span className="material-symbols-outlined text-secondary/40 text-4xl">
-                            local_activity
-                          </span>
-                          <p className="text-xs font-semibold text-secondary/70">
-                            No coupons available right now.
-                          </p>
+        {/* Premium Coupon Selector Modal */}
+        {typeof document !== 'undefined' &&
+          createPortal(
+            <AnimatePresence>
+              {isCouponModalOpen && (
+                <div className="fixed inset-0 z-[1000] flex items-end justify-center sm:items-center sm:p-4">
+                  {/* Backdrop blur */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsCouponModalOpen(false)}
+                    className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                  />
+
+                  {/* Bottom Sheet Card */}
+                  <motion.div
+                    initial={{ y: '100%' }}
+                    animate={{ y: 0 }}
+                    exit={{ y: '100%' }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    className="relative bg-surface-bright w-full max-w-[500px] rounded-t-[24px] sm:rounded-[24px] p-6 sm:p-8 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col z-[1001]"
+                  >
+                    {/* Pull Indicator for Mobile */}
+                    <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto mb-6 sm:hidden" />
+
+                    {/* Close Button */}
+                    <button
+                      onClick={() => setIsCouponModalOpen(false)}
+                      className="absolute top-6 right-6 w-8 h-8 min-h-0 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">close</span>
+                    </button>
+
+                    {/* Content Container */}
+                    <div className="relative z-10 flex flex-col h-full max-h-[75vh]">
+                      {/* Header */}
+                      <div className="mb-6">
+                        <h2 className="text-[20px] font-bold text-on-surface leading-tight mb-1">
+                          Coupons & Offers
+                        </h2>
+                        <p className="text-secondary text-[12px]">
+                          Enter a promo code or select an offer below
+                        </p>
+                      </div>
+
+                      {/* Manual Input Form */}
+                      <form onSubmit={(e) => handleApplyCoupon(e)} className="flex gap-2 mb-6">
+                        <div className="relative flex-1">
+                          <input
+                            type="text"
+                            placeholder="ENTER PROMO CODE"
+                            value={couponInput}
+                            onChange={(e) => {
+                              setCouponInput(e.target.value.toUpperCase());
+                              if (couponError) setCouponError('');
+                            }}
+                            className="w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-4 py-3 text-[13px] outline-none focus:border-primary text-on-surface font-bold uppercase transition-all tracking-wider"
+                          />
+                          {couponError && (
+                            <span className="absolute -bottom-5 left-1 text-red-500 text-[10px] font-medium">
+                              {couponError}
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {activeCoupons.map((c) => {
-                            const isUnlocked = actualSubtotal >= c.minOrderAmount;
-                            const needMore = c.minOrderAmount - actualSubtotal;
+                        <button
+                          type="submit"
+                          disabled={!couponInput.trim()}
+                          className="bg-on-surface text-surface disabled:opacity-30 disabled:cursor-not-allowed px-6 rounded-xl text-[12px] font-bold uppercase tracking-wider transition-all cursor-pointer hover:bg-on-surface/90"
+                        >
+                          Apply
+                        </button>
+                      </form>
 
-                            return (
-                              <div
-                                key={c._id || c.id}
-                                className={`bg-surface-container-lowest border rounded-2xl p-4 transition-all duration-300 flex flex-col gap-3 ${
-                                  isUnlocked
-                                    ? 'border-outline-variant/60 hover:border-on-surface/30'
-                                    : 'border-outline-variant/30 opacity-70'
-                                }`}
-                              >
-                                <div className="flex justify-between items-start gap-4">
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-mono font-bold text-on-surface text-[12px] uppercase tracking-wider">
-                                        {c.code}
-                                      </span>
+                      {/* Scrollable Coupons List */}
+                      <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-secondary block">
+                          Available Offers
+                        </span>
+
+                        {activeCoupons.length === 0 ? (
+                          <div className="text-center py-10 space-y-2">
+                            <span className="material-symbols-outlined text-secondary/40 text-4xl">
+                              local_activity
+                            </span>
+                            <p className="text-xs font-semibold text-secondary/70">
+                              No coupons available right now.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {activeCoupons.map((c) => {
+                              const isUnlocked = actualSubtotal >= c.minOrderAmount;
+                              const needMore = c.minOrderAmount - actualSubtotal;
+
+                              return (
+                                <div
+                                  key={c._id || c.id}
+                                  className={`bg-surface-container-lowest border rounded-2xl p-4 transition-all duration-300 flex flex-col gap-3 ${
+                                    isUnlocked
+                                      ? 'border-outline-variant/60 hover:border-on-surface/30'
+                                      : 'border-outline-variant/30 opacity-70'
+                                  }`}
+                                >
+                                  <div className="flex justify-between items-start gap-4">
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-mono font-bold text-on-surface text-[12px] uppercase tracking-wider">
+                                          {c.code}
+                                        </span>
+                                      </div>
+                                      <p className="text-[13px] font-bold text-on-surface leading-snug">
+                                        {c.discountType === 'percentage'
+                                          ? `${c.discountValue}% off`
+                                          : `₹${c.discountValue} off`}
+                                        {c.maxDiscount ? ` up to ₹${c.maxDiscount}` : ''}
+                                      </p>
+                                      <p className="text-[11px] text-secondary">
+                                        On minimum purchase of ₹{c.minOrderAmount}
+                                      </p>
                                     </div>
-                                    <p className="text-[13px] font-bold text-on-surface leading-snug">
-                                      {c.discountType === 'percentage'
-                                        ? `${c.discountValue}% off`
-                                        : `₹${c.discountValue} off`}
-                                      {c.maxDiscount ? ` up to ₹${c.maxDiscount}` : ''}
-                                    </p>
-                                    <p className="text-[11px] text-secondary">
-                                      On minimum purchase of ₹{c.minOrderAmount}
+                                    <button
+                                      type="button"
+                                      disabled={!isUnlocked}
+                                      onClick={(e) => handleApplyCoupon(e, c.code)}
+                                      className={`text-[11px] font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-all cursor-pointer ${
+                                        isUnlocked
+                                          ? 'text-primary bg-primary/10 hover:bg-primary/20'
+                                          : 'text-secondary/50 bg-surface-container cursor-not-allowed'
+                                      }`}
+                                    >
+                                      {isUnlocked ? 'Apply' : 'Locked'}
+                                    </button>
+                                  </div>
+
+                                  {/* Progress / Expiry Footer */}
+                                  <div className="flex items-center justify-between border-t border-outline-variant/30 pt-3 mt-1">
+                                    {!isUnlocked ? (
+                                      <p className="text-[10px] text-red-500 font-medium">
+                                        Add ₹{needMore.toLocaleString()} more to unlock
+                                      </p>
+                                    ) : (
+                                      <p className="text-[10px] text-green-600 font-medium flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[12px]">
+                                          check_circle
+                                        </span>
+                                        Unlocked
+                                      </p>
+                                    )}
+                                    <p className="text-[10px] text-secondary">
+                                      Valid till{' '}
+                                      {new Date(c.expiryDate).toLocaleDateString('en-IN', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                      })}
                                     </p>
                                   </div>
-                                  <button
-                                    type="button"
-                                    disabled={!isUnlocked}
-                                    onClick={(e) => handleApplyCoupon(e, c.code)}
-                                    className={`text-[11px] font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-all cursor-pointer ${
-                                      isUnlocked
-                                        ? 'text-primary bg-primary/10 hover:bg-primary/20'
-                                        : 'text-secondary/50 bg-surface-container cursor-not-allowed'
-                                    }`}
-                                  >
-                                    {isUnlocked ? 'Apply' : 'Locked'}
-                                  </button>
                                 </div>
-
-                                {/* Progress / Expiry Footer */}
-                                <div className="flex items-center justify-between border-t border-outline-variant/30 pt-3 mt-1">
-                                  {!isUnlocked ? (
-                                    <p className="text-[10px] text-red-500 font-medium">
-                                      Add ₹{needMore.toLocaleString()} more to unlock
-                                    </p>
-                                  ) : (
-                                    <p className="text-[10px] text-green-600 font-medium flex items-center gap-1">
-                                      <span className="material-symbols-outlined text-[12px]">
-                                        check_circle
-                                      </span>
-                                      Unlocked
-                                    </p>
-                                  )}
-                                  <p className="text-[10px] text-secondary">
-                                    Valid till{' '}
-                                    {new Date(c.expiryDate).toLocaleDateString('en-IN', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                    })}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
-    </>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>,
+            document.body,
+          )}
+      </>
+    </Profiler>
   );
 }

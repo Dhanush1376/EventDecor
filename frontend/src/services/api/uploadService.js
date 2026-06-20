@@ -2,7 +2,7 @@ import api from '../api';
 import { hasSessionMarker } from '../../utils/authStorage';
 import { uploadWithRetry, uploadDirectToCloudinary } from './_shared';
 
-const checkAuthLocal = () => hasSessionMarker();
+const _checkAuthLocal = () => hasSessionMarker();
 
 export const uploadService = {
   uploadImages: async (formData, folder = 'siri-arts-crafts/direct-uploads', onProgress = null) => {

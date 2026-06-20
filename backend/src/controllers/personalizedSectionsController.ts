@@ -7,32 +7,39 @@ import { getColdStartFeed } from '../services/recommendation/coldStartHandler';
 import logger from '../config/logger';
 
 export const getHomepageSections = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?._id?.toString() || req.query.userId as string;
-  const sessionId = req.headers['x-session-id'] as string || req.query.sessionId as string || 'anonymous-session';
-  
+  const userId = (req as any).user?._id?.toString() || (req.query.userId as string);
+  const _sessionId =
+    (req.headers['x-session-id'] as string) ||
+    (req.query.sessionId as string) ||
+    'anonymous-session';
+
   const { recommendationQueue, isQueuesReady } = require('../jobs/queues');
-  
+
   // 1. Handpicked For You (homepage)
   let curatedItems: any[] = [];
-  let curatedSource = 'trending';
+  // curatedSource is unused
   let curatedFromCache = false;
-  
+
   if (userId) {
     const cached = await RecommendationCache.getPersonalFeed(userId, 'homepage');
     if (cached) {
       curatedItems = cached.items || cached;
-      curatedSource = cached.source || 'personalized';
+      // _curatedSource = cached.source || 'personalized';
       curatedFromCache = true;
     } else {
       // Trigger background job
       if (isQueuesReady()) {
-        recommendationQueue.add('rebuild-user-feed', { userId, page: 'homepage' }, { priority: 2 }).catch((err: any) => {
-          logger.error(`[SECTION API] Failed to enqueue rebuild-user-feed homepage: ${err.message}`);
-        });
+        recommendationQueue
+          .add('rebuild-user-feed', { userId, page: 'homepage' }, { priority: 2 })
+          .catch((err: any) => {
+            logger.error(
+              `[SECTION API] Failed to enqueue rebuild-user-feed homepage: ${err.message}`,
+            );
+          });
       }
     }
   }
-  
+
   // Fallback for curated
   if (curatedItems.length === 0) {
     const trending = await getTrendingFeeds().catch(() => null);
@@ -44,7 +51,11 @@ export const getHomepageSections = asyncHandler(async (req: Request, res: Respon
     // Enrich fallback items
     const { enrichScoredItems } = require('../services/recommendation/recommendationEngine');
     curatedItems = await enrichScoredItems(
-      curatedItems.map(i => ({ targetId: i.targetId || i._id, targetType: i.targetType, score: i.score }))
+      curatedItems.map((i) => ({
+        targetId: i.targetId || i._id,
+        targetType: i.targetType,
+        score: i.score,
+      })),
     );
   }
 
@@ -54,14 +65,16 @@ export const getHomepageSections = asyncHandler(async (req: Request, res: Respon
   if (trendingFeeds && trendingFeeds.trendingNow) {
     const { enrichScoredItems } = require('../services/recommendation/recommendationEngine');
     trendingItems = await enrichScoredItems(
-      trendingFeeds.trendingNow.slice(0, 8).map(i => ({ targetId: i.targetId, targetType: i.targetType, score: i.score }))
+      trendingFeeds.trendingNow
+        .slice(0, 8)
+        .map((i) => ({ targetId: i.targetId, targetType: i.targetType, score: i.score })),
     );
   }
 
   // 3. Inspired By Your Style
   let styleItems: any[] = [];
   let styleFromCache = false;
-  
+
   if (userId) {
     const cached = await RecommendationCache.getPersonalFeed(userId, 'style');
     if (cached) {
@@ -70,9 +83,11 @@ export const getHomepageSections = asyncHandler(async (req: Request, res: Respon
     } else {
       // Trigger background job
       if (isQueuesReady()) {
-        recommendationQueue.add('rebuild-user-feed', { userId, page: 'style' }, { priority: 2 }).catch((err: any) => {
-          logger.error(`[SECTION API] Failed to enqueue rebuild-user-feed style: ${err.message}`);
-        });
+        recommendationQueue
+          .add('rebuild-user-feed', { userId, page: 'style' }, { priority: 2 })
+          .catch((err: any) => {
+            logger.error(`[SECTION API] Failed to enqueue rebuild-user-feed style: ${err.message}`);
+          });
       }
     }
   }
@@ -85,7 +100,7 @@ export const getHomepageSections = asyncHandler(async (req: Request, res: Respon
       title: 'Handpicked For You',
       badge: 'Personalized',
       items: curatedItems,
-      fromCache: curatedFromCache
+      fromCache: curatedFromCache,
     });
   }
 
@@ -94,7 +109,7 @@ export const getHomepageSections = asyncHandler(async (req: Request, res: Respon
       key: 'trending',
       title: 'Trending This Season',
       badge: 'Hot',
-      items: trendingItems
+      items: trendingItems,
     });
   }
 
@@ -104,7 +119,7 @@ export const getHomepageSections = asyncHandler(async (req: Request, res: Respon
       title: 'Inspired By Your Style',
       badge: 'Style Match',
       items: styleItems,
-      fromCache: styleFromCache
+      fromCache: styleFromCache,
     });
   }
 

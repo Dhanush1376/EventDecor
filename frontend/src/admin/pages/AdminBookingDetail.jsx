@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { fadeUp, stagger, SkeletonDashboard } from '../components/AdminUIKit';
+import { SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { bookingService, userService } from '../../services/domainServices';
@@ -81,7 +81,7 @@ export function AdminBookingDetail() {
             contact: member.phone || member.email || 'Not provided',
           }));
         setTeamMembers(staff);
-      } catch (err) {
+      } catch (_err) {
         toast.error('Failed to load booking details');
       } finally {
         setDataLoading(false);

@@ -22,20 +22,20 @@ export function TopNavbar() {
   const { navigation } = useWebsiteContent();
   const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
   const logoWords = logoText.split(' ');
-  const firstWord = logoWords[0] || 'SIRI';
-  const restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
+  const _firstWord = logoWords[0] || 'SIRI';
+  const _restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
 
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [_scrolled, _setScrolled] = useState(false);
   const location = useLocation();
-  const { cartCount, setIsCartOpen, purchaseCartCount, rentalCartCount, setActiveCartMode } =
+  const { cartCount, setIsCartOpen, _purchaseCartCount, _rentalCartCount, _setActiveCartMode } =
     useCart();
   const { user, isAuthenticated, logout, openAuthModal } = useAuth();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 767px)');
   const isMobileOrTablet = useMediaQuery('(max-width: 1023px)');
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [_isMoreOpen, setIsMoreOpen] = useState(false);
   const [hasPendingInvite, setHasPendingInvite] = useState(false);
 
   const { scrollDirection, isAtTop } = useScrollDirection();
@@ -120,6 +120,14 @@ export function TopNavbar() {
 
   // Handle mobile menu focus trap and escape key
   useEffect(() => {
+    const handleGlobalEscape = (e) => {
+      if (e.key === 'Escape') {
+        setIsMoreOpen(false);
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalEscape);
+
     if (isOpen && isMobile) {
       mobileTriggerRef.current = document.activeElement;
       document.body.style.overflow = 'hidden';
@@ -148,12 +156,17 @@ export function TopNavbar() {
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keydown', handleGlobalEscape);
         document.body.style.overflow = '';
         if (mobileTriggerRef.current) {
           mobileTriggerRef.current.focus();
         }
       };
     }
+
+    return () => {
+      window.removeEventListener('keydown', handleGlobalEscape);
+    };
   }, [isOpen, isMobile]);
 
   // Purely dynamic, CMS-driven links. No hardcoded fallbacks.
@@ -252,88 +265,6 @@ export function TopNavbar() {
               </ul>
             </div>
 
-            {/* Tablet Navigation (Condensed with More) */}
-            <div className="hidden md:flex lg:hidden flex-grow justify-center items-center space-x-2">
-              {navLinks
-                .filter((l) => !l.mobileOnly)
-                .slice(0, 3)
-                .map((link, idx) => {
-                  const active = isActive(link.href);
-                  return (
-                    <Link
-                      key={idx}
-                      className={`relative font-label-sm text-[10px] uppercase tracking-[0.15em] px-2.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold whitespace-nowrap ${
-                        active
-                          ? isTransparent
-                            ? 'text-white bg-white/20'
-                            : 'text-primary bg-primary-container/10'
-                          : isTransparent
-                            ? 'text-white hover:bg-white/10'
-                            : 'text-on-surface hover:text-primary'
-                      }`}
-                      to={link.href}
-                    >
-                      {link.label}
-                    </Link>
-                  );
-                })}
-
-              <div className="relative">
-                {(() => {
-                  const isMoreActive = navLinks
-                    .filter((l) => !l.mobileOnly)
-                    .slice(3)
-                    .some((link) => isActive(link.href));
-                  return (
-                    <button
-                      onClick={() => setIsMoreOpen(!isMoreOpen)}
-                      className={`font-label-sm text-[10px] uppercase tracking-[0.15em] px-2.5 py-2 rounded-full transition-all duration-300 flex items-center font-bold cursor-pointer ${
-                        isMoreActive
-                          ? isTransparent
-                            ? 'text-white bg-white/20'
-                            : 'text-primary bg-primary-container/10'
-                          : isTransparent
-                            ? 'text-white hover:bg-white/10'
-                            : 'text-on-surface hover:text-primary'
-                      }`}
-                    >
-                      More
-                      <span
-                        className={`material-symbols-outlined text-[18px] transition-transform duration-300 ${isMoreOpen ? 'rotate-180' : ''}`}
-                      >
-                        expand_more
-                      </span>
-                    </button>
-                  );
-                })()}
-
-                <AnimatePresence>
-                  {isMoreOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full right-0 mt-2 w-48 bg-surface-bright border border-outline-variant/20 rounded-2xl shadow-xl py-2 z-[60]"
-                    >
-                      {navLinks
-                        .filter((l) => !l.mobileOnly)
-                        .slice(3)
-                        .map((link, idx) => (
-                          <Link
-                            key={idx}
-                            to={link.href}
-                            onClick={() => setIsMoreOpen(false)}
-                            className="flex items-center px-4 py-2 text-[11px] uppercase tracking-[0.15em] text-on-surface hover:bg-primary-container/10 hover:text-primary transition-colors font-bold"
-                          >
-                            {link.label}
-                          </Link>
-                        ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
             {/* Right side actions group */}
             <div className="flex-shrink-0 flex items-center justify-end gap-1 md:gap-2">
               {/* Trailing Luxury Icons */}
@@ -341,7 +272,7 @@ export function TopNavbar() {
                 {/* Unified Search Bar (Tablet/Desktop) */}
                 <div
                   onClick={search.handleOpen}
-                  className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full cursor-pointer transition-all duration-300 border backdrop-blur-md w-[200px] lg:w-[240px] group ${
+                  className={`hidden md:flex items-center gap-2.5 px-4 h-10 rounded-full cursor-pointer transition-all duration-300 border backdrop-blur-md w-[200px] lg:w-[260px] group ${
                     isTransparent
                       ? 'bg-white/10 border-white/20 hover:bg-white/20 text-white'
                       : 'bg-surface-container-low border-outline-variant/30 hover:border-primary/30 text-on-surface hover:shadow-sm'
@@ -349,11 +280,12 @@ export function TopNavbar() {
                 >
                   <span
                     className={`material-symbols-outlined text-[18px] transition-colors ${isTransparent ? 'opacity-70 group-hover:opacity-100' : 'text-on-surface-variant group-hover:text-primary'}`}
+                    style={{ fontVariationSettings: "'wght' 200" }}
                   >
                     search
                   </span>
                   <span
-                    className={`flex-1 text-[12px] font-medium truncate select-none ${isTransparent ? 'opacity-70' : 'text-on-surface-variant/70'}`}
+                    className={`flex-1 text-[13px] font-medium truncate select-none ${isTransparent ? 'opacity-70' : 'text-on-surface-variant/70'}`}
                   >
                     Search products...
                   </span>
@@ -364,14 +296,19 @@ export function TopNavbar() {
                         e.stopPropagation();
                         visualSearch.open();
                       }}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 ${
+                      className={`flex items-center justify-center w-8 h-8 rounded-full relative flex-shrink-0 transition-all duration-300 hover:scale-110 ${
                         isTransparent
-                          ? 'hover:bg-white/20 text-white/90'
-                          : 'hover:bg-primary/10 text-[#d4af37]'
+                          ? 'text-white hover:bg-white/20'
+                          : 'text-on-surface hover:bg-black/5'
                       }`}
                       aria-label="Visual Search"
                     >
-                      <span className="material-symbols-outlined text-[16px]">photo_camera</span>
+                      <span
+                        className="material-symbols-outlined text-[18px]"
+                        style={{ fontVariationSettings: "'wght' 200" }}
+                      >
+                        photo_camera
+                      </span>
                     </button>
                   )}
                 </div>
@@ -379,11 +316,11 @@ export function TopNavbar() {
                 {/* Mobile Unified Search Icon */}
                 <button
                   onClick={search.handleOpen}
-                  className={`md:hidden ${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
+                  className={`md:hidden ${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                   aria-label="Search Catalog"
                 >
                   <span
-                    className="material-symbols-outlined text-[18px]"
+                    className="material-symbols-outlined text-[22px]"
                     style={{ fontVariationSettings: "'wght' 200" }}
                   >
                     search
@@ -392,11 +329,11 @@ export function TopNavbar() {
 
                 <Link
                   to="/wishlist"
-                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full relative group icon-button-touch-target`}
+                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-10 h-10 rounded-full relative group icon-button-touch-target`}
                   aria-label="View Wishlist"
                 >
                   <span
-                    className="material-symbols-outlined text-[18px]"
+                    className="material-symbols-outlined text-[22px]"
                     aria-hidden="true"
                     style={{ fontVariationSettings: "'wght' 200" }}
                   >
@@ -410,11 +347,11 @@ export function TopNavbar() {
                   onClick={() => {
                     navigate('/cart');
                   }}
-                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-[#d4af37] hover:bg-[#d4af37]/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-9 h-9 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
+                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-[#d4af37] hover:bg-[#d4af37]/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                   aria-label="View Bag"
                 >
                   <span
-                    className="material-symbols-outlined text-[20px]"
+                    className="material-symbols-outlined text-[22px]"
                     aria-hidden="true"
                     style={{ fontVariationSettings: "'wght' 200" }}
                   >
@@ -434,11 +371,11 @@ export function TopNavbar() {
                 {!isAuthenticated ? (
                   <button
                     onClick={openAuthModal}
-                    className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-9 h-9 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
+                    className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                     aria-label="User Account"
                   >
                     <span
-                      className="material-symbols-outlined text-[18px]"
+                      className="material-symbols-outlined text-[22px]"
                       style={{ fontVariationSettings: "'wght' 200" }}
                     >
                       login
@@ -448,19 +385,21 @@ export function TopNavbar() {
                   <div className="relative hidden md:block">
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                      aria-expanded={isProfileDropdownOpen}
+                      aria-haspopup="true"
                       onMouseEnter={() =>
                         prefetchManager.prefetchRoute('/dashboard', { kind: 'hover' })
                       }
-                      className={`w-8 h-8 rounded-full border flex items-center justify-center cursor-pointer transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square min-h-0 ${isTransparent ? 'bg-white/20 border-white/30 hover:bg-white/30 text-white' : 'bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary'}`}
+                      className={`w-[36px] h-[36px] rounded-full border flex items-center justify-center cursor-pointer transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square min-h-0 ${isTransparent ? 'bg-white/20 border-white/30 hover:bg-white/30 text-white' : 'bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary'}`}
                       aria-label="User Dropdown"
                     >
                       <span
-                        className={`text-[10px] uppercase font-bold tracking-wider ${isTransparent ? 'text-white' : 'text-primary'}`}
+                        className={`text-[11px] uppercase font-bold tracking-wider ${isTransparent ? 'text-white' : 'text-primary'}`}
                       >
                         {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || 'U'}
                       </span>
                       {hasPendingInvite && (
-                        <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm" />
+                        <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm" />
                       )}
                     </button>
 
@@ -560,14 +499,14 @@ export function TopNavbar() {
                   prefetchManager.prefetchRoute('/collections', { kind: 'hover' })
                 }
                 onClick={() => setIsOpen(true)}
-                className={`md:hidden flex flex-col items-center justify-center gap-[4.5px] w-9 h-9 rounded-full transition-all duration-300 hover:scale-110 cursor-pointer min-h-0 icon-button-touch-target ${isTransparent ? 'text-white hover:bg-white/10' : 'hover:bg-primary-container/10 hover:text-primary text-on-surface'}`}
+                className={`lg:hidden flex flex-col items-center justify-center gap-[5px] w-10 h-10 rounded-full transition-all duration-300 hover:scale-110 cursor-pointer min-h-0 icon-button-touch-target ${isTransparent ? 'text-white hover:bg-white/10' : 'hover:bg-primary-container/10 hover:text-primary text-on-surface'}`}
                 aria-label="Open navigation menu"
                 aria-expanded={isOpen}
                 aria-controls="mobile-menu-drawer"
               >
-                <span className="w-5 h-[1.2px] bg-current" />
-                <span className="w-5 h-[1.2px] bg-current" />
-                <span className="w-5 h-[1.2px] bg-current" />
+                <span className="w-[22px] h-[1.5px] bg-current" />
+                <span className="w-[22px] h-[1.5px] bg-current" />
+                <span className="w-[22px] h-[1.5px] bg-current" />
               </button>
             </div>
           </div>
@@ -662,7 +601,7 @@ export function TopNavbar() {
                   <Link
                     to="/wishlist"
                     onClick={() => setIsOpen(false)}
-                    className="text-on-surface hover:text-primary transition-colors"
+                    className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
                   >
                     <span
                       className="material-symbols-outlined text-[24px] font-light"
@@ -670,31 +609,35 @@ export function TopNavbar() {
                     >
                       favorite
                     </span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider">Wishlist</span>
                   </Link>
                   <button
                     onClick={() => {
                       setIsOpen(false);
                       setIsCartOpen(true);
                     }}
-                    className="text-on-surface hover:text-primary transition-colors relative cursor-pointer"
+                    className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors relative cursor-pointer"
                   >
-                    <span
-                      className="material-symbols-outlined text-[24px] font-light"
-                      style={{ fontVariationSettings: "'wght' 200" }}
-                    >
-                      shopping_bag
-                    </span>
-                    {cartCount > 0 && (
-                      <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-primary-container text-on-primary-container text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
-                        {cartCount}
+                    <div className="relative">
+                      <span
+                        className="material-symbols-outlined text-[24px] font-light"
+                        style={{ fontVariationSettings: "'wght' 200" }}
+                      >
+                        shopping_bag
                       </span>
-                    )}
+                      {cartCount > 0 && (
+                        <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-primary-container text-on-primary-container text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                          {cartCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-wider">Bag</span>
                   </button>
                   {isAuthenticated && (
                     <Link
                       to="/dashboard"
                       onClick={() => setIsOpen(false)}
-                      className="text-on-surface hover:text-primary transition-colors"
+                      className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
                     >
                       <span
                         className="material-symbols-outlined text-[24px] font-light"
@@ -702,13 +645,14 @@ export function TopNavbar() {
                       >
                         person
                       </span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider">Profile</span>
                     </Link>
                   )}
                   {isAuthenticated && adminRoles.includes(user?.role) && (
                     <Link
                       to="/admin"
                       onClick={() => setIsOpen(false)}
-                      className="text-primary hover:text-primary/70 transition-colors"
+                      className="flex flex-col items-center gap-1 text-primary hover:text-primary/70 transition-colors"
                       aria-label="Admin Portal"
                     >
                       <span
@@ -717,6 +661,7 @@ export function TopNavbar() {
                       >
                         settings
                       </span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider">Admin</span>
                     </Link>
                   )}
                 </div>

@@ -5,7 +5,7 @@ import { corsMiddleware, corsHandler } from './middleware/corsMiddleware';
 import { securityHeadersMiddleware } from './middleware/helmetMiddleware';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
-const xss = require('xss-clean');
+import { xssSanitize } from './utils/xssSanitizer';
 
 import cookieParser from 'cookie-parser';
 import { globalLimiter, apiFloodingLimiter } from './middleware/rateLimiter';
@@ -34,8 +34,7 @@ import { requestTimeout } from './middleware/queryTimeout';
 import { getDbMetrics } from './config/db';
 import { cacheHeadersMiddleware } from './middleware/cacheHeaders';
 
-// Use require for the inner xss-clean function
-const { clean: xssClean } = require('xss-clean/lib/xss');
+// Removed xss-clean inner requirement
 
 const app: Application = express();
 
@@ -44,8 +43,9 @@ app.disable('x-powered-by');
 
 // Trust proxy hops — enforced to 1 for Railway/Render.
 // If moving to Cloudflare + Railway, this should be updated to 2.
-app.set('trust proxy', 1);
-logger.info(`[STARTUP] Express trust proxy hops: 1`);
+const trustProxy = process.env.TRUST_PROXY ? parseInt(process.env.TRUST_PROXY, 10) : 1;
+app.set('trust proxy', trustProxy);
+logger.info(`[STARTUP] Express trust proxy hops: ${trustProxy}`);
 
 // Initialize Prometheus Metrics
 PrometheusService.initialize();
@@ -89,7 +89,7 @@ app.post(
     }
     next();
   },
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: 'application/json', limit: '1mb' }),
   (req: Request, res: Response, next) => {
     const raw = req.body as Buffer;
     if (!raw?.length) {
@@ -161,11 +161,11 @@ app.use((req, res, next) => {
   }
   if (req.body) {
     mongoSanitize.sanitize(req.body);
-    req.body = xssClean(req.body);
+    req.body = xssSanitize(req.body);
   }
   if (req.query) {
     mongoSanitize.sanitize(req.query);
-    const cleaned = xssClean(req.query);
+    const cleaned = xssSanitize(req.query);
     for (const key in req.query) {
       delete req.query[key];
     }
@@ -175,7 +175,7 @@ app.use((req, res, next) => {
   }
   if (req.params) {
     mongoSanitize.sanitize(req.params);
-    const cleaned = xssClean(req.params);
+    const cleaned = xssSanitize(req.params);
     for (const key in req.params) {
       delete req.params[key];
     }
@@ -210,7 +210,7 @@ app.get('/metrics', async (req: Request, res: Response) => {
     res.set('Content-Type', PrometheusService.getContentType());
     const metrics = await PrometheusService.getMetrics();
     res.send(metrics);
-  } catch (err) {
+  } catch {
     res.status(500).send('Error gathering metrics');
   }
 });
@@ -327,3 +327,5 @@ app.use(errorMiddleware);
 
 // Trigger reload for .env change
 export default app;
+
+// trigger restart

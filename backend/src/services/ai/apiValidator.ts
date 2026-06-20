@@ -213,7 +213,7 @@ async function executeOpenAIValidation(
  */
 async function executeGeminiValidation(
   apiKey: string,
-  model: string,
+  _model: string,
 ): Promise<{ ok: boolean; status: number; error: string }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);

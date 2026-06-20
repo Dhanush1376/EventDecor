@@ -1,9 +1,10 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { prefetchManager } from '../../utils/prefetchManager';
 import { preloadRazorpay } from '../../hooks/useRazorpay';
 
-const PRIORITY_ROUTES = ['/cart', '/checkout', '/dashboard', '/collections'];
+const _PRIORITY_ROUTES = ['/cart', '/checkout', '/dashboard', '/collections'];
 
 function shouldPrefetchAnchor(anchor) {
   if (!anchor) return false;
@@ -96,5 +97,17 @@ export function NavigationOrchestrator() {
     }
   }, [location.pathname]);
 
-  return null;
+  return (
+    <AnimatePresence>
+      {loadingRoute && (
+        <motion.div
+          initial={{ scaleX: 0, opacity: 1, transformOrigin: '0% 50%' }}
+          animate={{ scaleX: [0, 0.4, 0.8, 0.95] }}
+          transition={{ duration: 2, ease: 'easeOut' }}
+          exit={{ scaleX: 1, opacity: 0, transition: { duration: 0.3 } }}
+          className="fixed top-0 left-0 w-full h-[3px] bg-primary z-[10000] pointer-events-none shadow-[0_0_10px_rgba(212,175,55,0.5)]"
+        />
+      )}
+    </AnimatePresence>
+  );
 }

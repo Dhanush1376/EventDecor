@@ -12,7 +12,7 @@ import { useRecentlyViewed } from '../../hooks/useUserQueries';
 import { useAuth } from '../../context/AuthContext';
 
 export function RecommendationSystem({
-  category,
+  _category,
   currentProductId,
   targetType = 'product',
   hideHeader = false,
@@ -34,12 +34,16 @@ export function RecommendationSystem({
   const similarQuery = useSimilarRecommendations(targetType, currentProductId, 8, {
     enabled: shouldFetch && !!currentProductId,
   });
-  const completeQuery = useCompleteSetup(currentProductId, targetType, 8, { enabled: shouldFetch && !!currentProductId });
-  const alsoViewedQuery = useAlsoViewed(currentProductId, targetType, 8, { enabled: shouldFetch && !!currentProductId });
+  const completeQuery = useCompleteSetup(currentProductId, targetType, 8, {
+    enabled: shouldFetch && !!currentProductId,
+  });
+  const alsoViewedQuery = useAlsoViewed(currentProductId, targetType, 8, {
+    enabled: shouldFetch && !!currentProductId,
+  });
   const recentlyViewedQuery = useRecentlyViewed();
   const trendingQuery = useTrendingRecommendations(
     { limit: 12 },
-    { enabled: shouldFetch && !currentProductId }
+    { enabled: shouldFetch && !currentProductId },
   );
 
   const similarList = similarQuery.data?.items || similarQuery.data || [];
@@ -83,7 +87,7 @@ export function RecommendationSystem({
       ? (similarQuery.isPending && similarList.length === 0) ||
         (completeQuery.isPending && completeSetupList.length === 0) ||
         (alsoViewedQuery.isPending && alsoViewedList.length === 0)
-      : (trendingQuery.isPending && trendingList.length === 0));
+      : trendingQuery.isPending && trendingList.length === 0);
 
   const getActiveList = () => {
     const combined = [
@@ -123,7 +127,7 @@ export function RecommendationSystem({
         (item) =>
           item.targetType !== 'event' &&
           item.availabilityMode !== 'rental' &&
-          item.availabilityMode !== 'rent_only'
+          item.availabilityMode !== 'rent_only',
       );
     }
 

@@ -1,8 +1,9 @@
-﻿import PaymentWebhookEvent from '../models/PaymentWebhookEvent';
+import PaymentWebhookEvent from '../models/PaymentWebhookEvent';
 import { UnifiedWebhookRouter } from './payments/UnifiedWebhookRouter';
 import logger from '../config/logger';
 import * as Sentry from '@sentry/node';
 import { createAdminNotification } from './notificationService';
+import { AlertingService } from './AlertingService';
 
 /**
  * WebhookDeadLetterService â€” Recovers failed or stuck webhook events.
@@ -141,11 +142,19 @@ export class WebhookDeadLetterService {
 
     // Admin notification
     await createAdminNotification({
-      title: 'âš ï¸ Webhook Dead Letter',
+      title: '⚠️ Webhook Dead Letter',
       message: `Payment webhook ${event.razorpayEventId} (${event.eventType}) failed after ${event.processingAttempts} attempts and has been moved to dead letter. Manual investigation required.`,
       type: 'payment',
       actionLink: `/admin/payments/webhooks?status=dead_letter`,
     }).catch((e: any) => logger.error('Failed to create dead letter admin notification:', e));
+
+    // Multi-channel alerting (email, Sentry, webhook)
+    await AlertingService.paymentFailure('Webhook Dead-Lettered', {
+      eventId: event.razorpayEventId,
+      eventType: event.eventType,
+      attempts: event.processingAttempts,
+      error: event.errorLog || 'Max retries exhausted',
+    }).catch((e: any) => logger.error('AlertingService failed for dead letter:', e));
   }
 
   /**

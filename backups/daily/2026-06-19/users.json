@@ -1,0 +1,513 @@
+[
+  {
+    "_id": "6a23f0b8919ff27d2f702701",
+    "name": "Dhanush1376",
+    "email": "dhanush1376@gmail.com",
+    "role": "admin",
+    "avatar": "https://www.gravatar.com/avatar/33026ca28da9b30c1d191e421f29b1cc?d=identicon&s=200",
+    "gender": "",
+    "dateOfBirth": "",
+    "wishlist": [
+      "6a0c75c89b8633afb920de8f",
+      "6a0c764b9b8633afb920deb4",
+      "6a19cb169875c9a89386d920",
+      "6a09fbe0394672b320fa3eb4",
+      "6a1c3fd6d5e8db93a79944bc"
+    ],
+    "cart": [
+      {
+        "product": "6a272dcf1dd5c8cd06962659",
+        "quantity": 1,
+        "variant": "Default",
+        "type": "purchase",
+        "_id": "6a276892dccad738269ad3ac"
+      }
+    ],
+    "recentlyViewed": [
+      {
+        "product": "6a1982f6594e9ef6fa074f28",
+        "viewedAt": "2026-06-17T11:17:32.411Z",
+        "_id": "6a32824cb9c96baeee4fe934"
+      },
+      {
+        "product": "6a0c75c89b8633afb920de8f",
+        "viewedAt": "2026-06-15T16:28:06.503Z",
+        "_id": "6a302816154ef3ac44a6cb2e"
+      },
+      {
+        "product": "6a0c764b9b8633afb920deb4",
+        "viewedAt": "2026-06-13T09:58:58.099Z",
+        "_id": "6a2d29e25a09de2c206c4e2f"
+      },
+      {
+        "product": "6a0c74fa9b8633afb920de7b",
+        "viewedAt": "2026-06-09T18:35:22.220Z",
+        "_id": "6a285ceaeb42ae66931df9cc"
+      },
+      {
+        "product": "6a275711dccad738269ad33e",
+        "viewedAt": "2026-06-09T06:38:49.628Z",
+        "_id": "6a27b4f9b0438da40ce89e35"
+      },
+      {
+        "product": "6a19cb169875c9a89386d920",
+        "viewedAt": "2026-06-09T06:35:30.257Z",
+        "_id": "6a27b432cb1059847bb2546b"
+      },
+      {
+        "product": "6a0d5c8ec725a13dd9a95618",
+        "viewedAt": "2026-06-09T01:19:06.025Z",
+        "_id": "6a276a0adccad738269ad43e"
+      },
+      {
+        "product": "6a0c781bb048b5d5827cdf89",
+        "viewedAt": "2026-06-07T14:56:53.709Z",
+        "_id": "6a2586b59d0b31e0519e4a9c"
+      },
+      {
+        "product": "6a11579708fa7569dfc015a0",
+        "viewedAt": "2026-06-07T14:55:27.811Z",
+        "_id": "6a25865f9d0b31e0519e4a0d"
+      }
+    ],
+    "notificationPreferences": {
+      "email": true,
+      "marketing": true
+    },
+    "accountPreferences": {
+      "theme": "light",
+      "language": "en"
+    },
+    "isVerified": true,
+    "lastLogin": "2026-06-17T09:06:51.411Z",
+    "twoFactorEnabled": false,
+    "failedLoginAttempts": 0,
+    "isLocked": false,
+    "walletBalance": 100,
+    "siriCoins": 0,
+    "loyaltyTier": "Bronze",
+    "referralCode": "SIRI-DHA-7788",
+    "referralsCount": 0,
+    "createdAt": "2026-06-06T10:04:40.104Z",
+    "updatedAt": "2026-06-17T11:17:32.416Z",
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "__v": 44
+  },
+  {
+    "_id": "6a230a3a67db29f93067d886",
+    "name": "Test Auth User",
+    "email": "testauth@example.com",
+    "role": "customer",
+    "avatar": "",
+    "gender": "",
+    "dateOfBirth": "",
+    "wishlist": [],
+    "cart": [
+      {
+        "product": "6a0c74fa9b8633afb920de7b",
+        "quantity": 2,
+        "variant": "Default",
+        "type": "purchase",
+        "_id": "6a32ea03ceef2af106e09785"
+      },
+      {
+        "product": "6a0c764b9b8633afb920deb4",
+        "quantity": 1,
+        "variant": "Default",
+        "type": "purchase",
+        "_id": "6a32f18dceef2af106e097b7"
+      }
+    ],
+    "recentlyViewed": [
+      {
+        "product": "6a0c764b9b8633afb920deb4",
+        "viewedAt": "2026-06-17T12:21:22.248Z",
+        "_id": "6a329142954ef85c86bcbc4c"
+      },
+      {
+        "product": "6a0c74fa9b8633afb920de7b",
+        "viewedAt": "2026-06-17T12:10:40.233Z",
+        "_id": "6a328ec0954ef85c86bcbbfc"
+      }
+    ],
+    "notificationPreferences": {
+      "email": true,
+      "marketing": true
+    },
+    "accountPreferences": {
+      "theme": "light",
+      "language": "en"
+    },
+    "isVerified": true,
+    "twoFactorEnabled": false,
+    "failedLoginAttempts": 0,
+    "isLocked": false,
+    "walletBalance": 0,
+    "siriCoins": 0,
+    "loyaltyTier": "Bronze",
+    "referralsCount": 0,
+    "createdAt": "2026-06-05T17:41:14.734Z",
+    "updatedAt": "2026-06-17T19:12:13.624Z",
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "__v": 3,
+    "lastLogin": "2026-06-17T12:08:21.452Z"
+  },
+  {
+    "_id": "6a23f105919ff27d2f70270e",
+    "name": "Sirisha.atmakuri",
+    "email": "sirisha.atmakuri@gmail.com",
+    "role": "admin",
+    "avatar": "https://www.gravatar.com/avatar/08290b0bb6127dc693734956d7fd5539?d=identicon&s=200",
+    "gender": "",
+    "dateOfBirth": "",
+    "wishlist": [
+      "6a0c74fa9b8633afb920de7b",
+      "6a0c75c89b8633afb920de8f",
+      "6a19cb169875c9a89386d920",
+      "6a0c764b9b8633afb920deb4"
+    ],
+    "cart": [
+      {
+        "product": "6a0c74fa9b8633afb920de7b",
+        "quantity": 1,
+        "variant": "Default",
+        "type": "rental",
+        "_id": "6a32ca5a1aaad15ac7ecf353"
+      },
+      {
+        "product": "6a0c74fa9b8633afb920de7b",
+        "quantity": 1,
+        "variant": "Default",
+        "type": "purchase",
+        "_id": "6a32cb2e1aaad15ac7ecf360"
+      }
+    ],
+    "recentlyViewed": [
+      {
+        "product": "6a272dcf1dd5c8cd06962659",
+        "viewedAt": "2026-06-18T19:38:19.383Z",
+        "_id": "6a34492bba8ee21ddf7fc9c0"
+      },
+      {
+        "product": "6a275711dccad738269ad33e",
+        "viewedAt": "2026-06-18T17:42:34.790Z",
+        "_id": "6a342e0a1cbd9c9abdeb8818"
+      },
+      {
+        "product": "6a341c3615693d6710e78f7a",
+        "viewedAt": "2026-06-18T17:42:27.317Z",
+        "_id": "6a342e031cbd9c9abdeb880b"
+      },
+      {
+        "product": "6a0c764b9b8633afb920deb4",
+        "viewedAt": "2026-06-17T16:31:18.669Z",
+        "_id": "6a32cbd61aaad15ac7ecf393"
+      },
+      {
+        "product": "6a0c74fa9b8633afb920de7b",
+        "viewedAt": "2026-06-17T15:35:03.521Z",
+        "_id": "6a32bea71aaad15ac7ecf2e8"
+      },
+      {
+        "product": "6a19cb169875c9a89386d920",
+        "viewedAt": "2026-06-11T19:35:26.709Z",
+        "_id": "6a2b0dfe2fbeef0bb0a1e42b"
+      },
+      {
+        "product": "6a1c3fd6d5e8db93a79944bc",
+        "viewedAt": "2026-06-11T15:38:31.973Z",
+        "_id": "6a2ad677701e55d85e752903"
+      }
+    ],
+    "notificationPreferences": {
+      "email": true,
+      "marketing": true
+    },
+    "accountPreferences": {
+      "theme": "light",
+      "language": "en"
+    },
+    "isVerified": true,
+    "lastLogin": "2026-06-18T17:23:57.556Z",
+    "twoFactorEnabled": false,
+    "failedLoginAttempts": 0,
+    "isLocked": false,
+    "walletBalance": 100,
+    "siriCoins": 0,
+    "loyaltyTier": "Bronze",
+    "referralCode": "SIRI-SIR-7402",
+    "referralsCount": 0,
+    "createdAt": "2026-06-06T10:05:57.518Z",
+    "updatedAt": "2026-06-18T19:38:19.390Z",
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "__v": 26
+  },
+  {
+    "_id": "6a256921dd63c29cf3efbb15",
+    "name": "Sakhisoaps",
+    "email": "sakhisoaps@gmail.com",
+    "role": "customer",
+    "avatar": "https://www.gravatar.com/avatar/f259613eb280a091d854c6c601c73b71?d=identicon&s=200",
+    "gender": "",
+    "dateOfBirth": "",
+    "wishlist": ["6a0c76cc9b8633afb920dec8"],
+    "cart": [
+      {
+        "product": "6a0c781bb048b5d5827cdf89",
+        "quantity": 1,
+        "variant": "Default",
+        "type": "purchase",
+        "_id": "6a256a13dd63c29cf3efbb38"
+      }
+    ],
+    "recentlyViewed": [
+      {
+        "product": "6a0c76cc9b8633afb920dec8",
+        "viewedAt": "2026-06-07T12:51:22.919Z",
+        "_id": "6a25694add63c29cf3efbb1e"
+      }
+    ],
+    "notificationPreferences": {
+      "email": true,
+      "marketing": true
+    },
+    "accountPreferences": {
+      "theme": "light",
+      "language": "en"
+    },
+    "isVerified": true,
+    "twoFactorEnabled": false,
+    "failedLoginAttempts": 0,
+    "isLocked": false,
+    "walletBalance": 100,
+    "siriCoins": 0,
+    "loyaltyTier": "Bronze",
+    "referralsCount": 0,
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "lastLogin": "2026-06-07T12:50:41.760Z",
+    "createdAt": "2026-06-07T12:50:41.764Z",
+    "updatedAt": "2026-06-09T19:07:35.741Z",
+    "__v": 2,
+    "referralCode": "SIRI-SAK-4985"
+  },
+  {
+    "_id": "6a2569efdd63c29cf3efbb29",
+    "name": "Test",
+    "email": "test@example.com",
+    "role": "customer",
+    "avatar": "https://www.gravatar.com/avatar/55502f40dc8b7c769880b10874abc9d0?d=identicon&s=200",
+    "gender": "",
+    "dateOfBirth": "",
+    "wishlist": [],
+    "cart": [
+      {
+        "product": "6a272dcf1dd5c8cd06962659",
+        "quantity": 1,
+        "variant": "Default",
+        "type": "purchase",
+        "_id": "6a325db0b9c96baeee4fe78d"
+      }
+    ],
+    "recentlyViewed": [
+      {
+        "product": "6a0c764b9b8633afb920deb4",
+        "viewedAt": "2026-06-17T08:51:49.748Z",
+        "_id": "6a326025b9c96baeee4fe79b"
+      },
+      {
+        "product": "6a0c75c89b8633afb920de8f",
+        "viewedAt": "2026-06-15T15:08:39.813Z",
+        "_id": "6a301577154ef3ac44a6ca59"
+      },
+      {
+        "product": "6a0c74fa9b8633afb920de7b",
+        "viewedAt": "2026-06-11T11:33:52.047Z",
+        "_id": "6a2a9d20e68be283b24cc1c2"
+      },
+      {
+        "product": "6a19cb169875c9a89386d920",
+        "viewedAt": "2026-06-11T11:10:06.322Z",
+        "_id": "6a2a978ee68be283b24cc115"
+      }
+    ],
+    "notificationPreferences": {
+      "email": true,
+      "marketing": true
+    },
+    "accountPreferences": {
+      "theme": "light",
+      "language": "en"
+    },
+    "isVerified": true,
+    "twoFactorEnabled": false,
+    "failedLoginAttempts": 0,
+    "isLocked": false,
+    "walletBalance": 100,
+    "siriCoins": 0,
+    "loyaltyTier": "Bronze",
+    "referralsCount": 0,
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "lastLogin": "2026-06-17T08:41:11.141Z",
+    "createdAt": "2026-06-07T12:54:07.574Z",
+    "updatedAt": "2026-06-17T08:51:49.754Z",
+    "__v": 4,
+    "referralCode": "SIRI-TES-8359"
+  },
+  {
+    "_id": "6a27bf2ab0438da40ce89e4f",
+    "name": "Praneethperumalla",
+    "email": "praneethperumalla@gmail.com",
+    "role": "customer",
+    "avatar": "https://www.gravatar.com/avatar/ab7a1bcd03aab59ecc3562fb34668732?d=identicon&s=200",
+    "gender": "",
+    "dateOfBirth": "",
+    "wishlist": [],
+    "cart": [],
+    "recentlyViewed": [
+      {
+        "product": "6a0c764b9b8633afb920deb4",
+        "viewedAt": "2026-06-09T07:24:23.002Z",
+        "_id": "6a27bfa7b0438da40ce89e68"
+      }
+    ],
+    "notificationPreferences": {
+      "email": true,
+      "marketing": true
+    },
+    "accountPreferences": {
+      "theme": "light",
+      "language": "en"
+    },
+    "isVerified": true,
+    "twoFactorEnabled": false,
+    "failedLoginAttempts": 0,
+    "isLocked": false,
+    "walletBalance": 100,
+    "siriCoins": 0,
+    "loyaltyTier": "Bronze",
+    "referralsCount": 0,
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "lastLogin": "2026-06-09T07:22:18.321Z",
+    "createdAt": "2026-06-09T07:22:18.330Z",
+    "updatedAt": "2026-06-09T19:07:35.741Z",
+    "__v": 2,
+    "referralCode": "SIRI-PRA-1915"
+  },
+  {
+    "_id": "6a0c39485589cc25ca717deb",
+    "name": "Radha Krishnan",
+    "email": "customer@siriartsandcrafts.com",
+    "role": "customer",
+    "isVerified": true,
+    "avatar": "https://www.gravatar.com/avatar/2d7a2f58e4539efcfefb19d5de4bdc0e?d=identicon&s=200",
+    "wishlist": [],
+    "cart": [],
+    "recentlyViewed": [],
+    "notificationPreferences": {
+      "email": true,
+      "marketing": true
+    },
+    "accountPreferences": {
+      "theme": "light",
+      "language": "en"
+    },
+    "walletBalance": 0,
+    "siriCoins": 0,
+    "loyaltyTier": "Bronze",
+    "referralsCount": 0,
+    "createdAt": "2026-06-16T00:15:19.076Z",
+    "updatedAt": "2026-06-16T00:15:19.076Z"
+  },
+  {
+    "_id": "6a35650062a4d25fc2189b15",
+    "name": "DR Test User",
+    "email": "dr_test_1781884160738@example.com",
+    "role": "customer",
+    "avatar": "",
+    "gender": "",
+    "dateOfBirth": "",
+    "wishlist": [],
+    "notificationPreferences": {
+      "email": true,
+      "marketing": true
+    },
+    "accountPreferences": {
+      "theme": "light",
+      "language": "en"
+    },
+    "isVerified": false,
+    "passwordHash": "dummy",
+    "twoFactorEnabled": false,
+    "twoFactorSecret": "enc:v1:2FBHpWbiKBE3bvEU.KaqcQtpy-Z3qS_94Bh2X8w.gwmm3SDEv_H8sIrO_NQZjFw_CLg",
+    "failedLoginAttempts": 0,
+    "isLocked": false,
+    "walletBalance": 0,
+    "siriCoins": 0,
+    "loyaltyTier": "Bronze",
+    "referralsCount": 0,
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "cart": [],
+    "recentlyViewed": [],
+    "createdAt": "2026-06-19T15:49:20.770Z",
+    "updatedAt": "2026-06-19T15:49:20.770Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a35655ca003c07055559187",
+    "name": "DR Test User",
+    "email": "dr_test_1781884252507@example.com",
+    "role": "customer",
+    "avatar": "",
+    "gender": "",
+    "dateOfBirth": "",
+    "wishlist": [],
+    "notificationPreferences": {
+      "email": true,
+      "marketing": true
+    },
+    "accountPreferences": {
+      "theme": "light",
+      "language": "en"
+    },
+    "isVerified": false,
+    "passwordHash": "dummy",
+    "twoFactorEnabled": false,
+    "twoFactorSecret": "enc:v1:yhyuodmpRkWYPeiD._mkwCV8flDSeTQB366daZQ.ClChhDJ7juJYsDC-O8FCPnof-O0",
+    "failedLoginAttempts": 0,
+    "isLocked": false,
+    "walletBalance": 0,
+    "siriCoins": 0,
+    "loyaltyTier": "Bronze",
+    "referralsCount": 0,
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "cart": [],
+    "recentlyViewed": [],
+    "createdAt": "2026-06-19T15:50:52.545Z",
+    "updatedAt": "2026-06-19T15:50:52.545Z",
+    "__v": 0
+  }
+]

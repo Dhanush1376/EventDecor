@@ -82,9 +82,10 @@ export function FilterPanel({
     if (filterGroups && filterGroups.length > 0) {
       setActiveSections((prev) => {
         const next = { ...prev };
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
         filterGroups.forEach((group) => {
           if (next[group.id] === undefined) {
-            next[group.id] = true;
+            next[group.id] = !isMobile;
           }
         });
         return next;
@@ -162,7 +163,7 @@ export function FilterPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6 pb-3 border-b border-outline-variant/30">
         <div className="flex flex-col">
-          <h2 className="font-label font-headline-md text-on-surface font-bold">Filters</h2>
+          <h2 className="font-label font-headline-md text-on-surface font-normal">Filters</h2>
           {isOpen && (
             <span className="font-label text-[10px] text-primary uppercase tracking-[0.3em] mt-1">
               {mobileSubtitle}

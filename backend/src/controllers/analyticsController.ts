@@ -32,7 +32,7 @@ export const getAuditLogs = asyncHandler(async (req: Request, res: Response) => 
 });
 
 export const createAuditLog = asyncHandler(async (req: Request, res: Response) => {
-  const { action, details, status } = req.body;
+  const { action, _details, status } = req.body;
   const newLog = await AdminAuditLog.create({
     actorId: req.user?.id,
     actorEmail: req.user?.email,
