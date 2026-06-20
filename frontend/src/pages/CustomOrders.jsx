@@ -5,6 +5,7 @@ import { DynamicCustomOrderWizard } from '../components/ui/DynamicCustomOrderWiz
 import { CustomOrderWizard } from '../components/customOrders/CustomOrderWizard';
 import { CustomOrderTracker } from '../components/customOrders/CustomOrderTracker';
 import { useCustomOrderUploads } from '../hooks/useCustomOrderUploads';
+import { useCustomOrderSubmission } from '../hooks/useCustomOrderSubmission';
 
 import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { useState, useEffect, useRef } from 'react';
@@ -72,7 +73,6 @@ export function CustomOrders() {
   // Workspace tabs: 'wizard' (Submit Custom Request) vs 'tracker' (Track My Custom Orders)
   const [activeTab, setActiveTab] = useState('wizard');
   const [mobileSubTab, setMobileSubTab] = useState('chat');
-  const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState(null);
 
   // ─── TRACKER PORTAL STATES ───
@@ -82,7 +82,6 @@ export function CustomOrders() {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const chatEndRef = useRef(null);
 
-  const isSubmittingRef = useRef(false);
   const isSendingMessageRef = useRef(false);
   const socket = useUserSocket();
 
@@ -499,95 +498,21 @@ export function CustomOrders() {
     };
   }, [socket, selectedOrder, activeTab]);
 
-  // ─── SUBMISSION FLOW ───
-  const handleWizardSubmit = async () => {
-    if (isSubmittingRef.current) return;
-    runProtectedAction(async () => {
-      // Validation checks
-      if (!wizardDraft.occasion || wizardDraft.occasion === 'Other')
-        return toast.error('Please select or specify your occasion');
-      if (!wizardDraft.productType || wizardDraft.productType === 'Other')
-        return toast.error('Please select or specify your product category');
-      if (!wizardDraft.customerName) return toast.error('Please fill in your contact name');
-      if (!wizardDraft.customerPhone)
-        return toast.error('Please fill in your contact phone number');
-
-      isSubmittingRef.current = true;
-      setLoading(true);
-      try {
-        const payload = {
-          ...wizardDraft,
-          budget: Number(wizardDraft.budget.replace(/[^0-9]/g, '')) || undefined,
-        };
-
-        // If the user context is stale due to a fresh login modal, the backend automatically
-        // resolves the email from token claims, but let's pass it if available.
-        if (user?.email) {
-          payload.customerEmail = user.email;
-        }
-
-        if (linkedProduct) {
-          payload.productId = linkedProduct._id || linkedProduct.id;
-          payload.productSnapshot = {
-            productId: linkedProduct._id || linkedProduct.id,
-            title: linkedProduct.title,
-            imageSrc: linkedProduct.imageSrc,
-            category: linkedProduct.category,
-            price: linkedProduct.price,
-            description: linkedProduct.description,
-          };
-          payload.customizationData = Object.entries(customizationFields).map(([key, value]) => {
-            let fieldType = 'text';
-            if (key.toLowerCase().includes('color')) {
-              fieldType = 'color';
-            } else if (Array.isArray(value)) {
-              fieldType = 'multiselect';
-            } else if (typeof value === 'number') {
-              fieldType = 'number';
-            }
-            return {
-              fieldName: key,
-              fieldType,
-              value: value,
-            };
-          });
-        }
-
-        const res = await customOrderService.create(payload);
-        if (res.success) {
-          toast.success('Your custom order request has been submitted successfully!');
-          setWizardDraft({
-            occasion: '',
-            productType: '',
-            inspirationImages: [],
-            customRequirements: '',
-            budget: '',
-            quantity: 1,
-            eventDate: '',
-            city: '',
-            bookingType: 'Video Meet',
-            customerName: '',
-            customerPhone: '',
-            customerEmail: '',
-          });
-          setCustomOccasionText('');
-          setCustomProductTypeText('');
-          setPastedLink('');
-          setCustomizationFields({});
-          setCurrentStep(1);
-          loadWorkspaceData();
-          setActiveTab('tracker');
-        } else {
-          toast.error(res.message || 'Failed to submit request');
-        }
-      } catch (err) {
-        toast.error('Failed to submit custom order request');
-      } finally {
-        isSubmittingRef.current = false;
-        setLoading(false);
-      }
-    });
-  };
+  const { loading, isSubmittingRef, handleWizardSubmit } = useCustomOrderSubmission({
+    user,
+    runProtectedAction,
+    wizardDraft,
+    linkedProduct,
+    customizationFields,
+    setWizardDraft,
+    setCustomOccasionText,
+    setCustomProductTypeText,
+    setPastedLink: () => {}, // mock since it might not be defined
+    setCustomizationFields,
+    setCurrentStep,
+    loadWorkspaceData,
+    setActiveTab,
+  });
 
   // ─── CLIENT CHAT DISPATCH ───
   const handleSendChatMessage = async (e) => {
