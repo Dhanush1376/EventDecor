@@ -1,6 +1,6 @@
 import React from 'react';
-import { ProductSummaryCard } from '../product/ProductSummaryCard';
-import DynamicCustomOrderWizard from './Wizard/DynamicCustomOrderWizard';
+import { ProductSummaryCard } from '../ui/CustomizationFields';
+import { DynamicCustomOrderWizard } from '../ui/DynamicCustomOrderWizard';
 
 export function CustomOrderWizard({
   isAuthenticated,
