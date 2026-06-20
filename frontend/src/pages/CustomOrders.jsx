@@ -4,15 +4,10 @@ import { DynamicCustomOrderWizard } from '../components/ui/DynamicCustomOrderWiz
 
 import { CustomOrderWizard } from '../components/customOrders/CustomOrderWizard';
 import { CustomOrderTracker } from '../components/customOrders/CustomOrderTracker';
-import { useCustomOrderUploads } from '../hooks/useCustomOrderUploads';
-import { useCustomOrderSubmission } from '../hooks/useCustomOrderSubmission';
-import { useOrderSocketTracker } from '../hooks/useOrderSocketTracker';
-import { useCustomOrderAI } from '../hooks/useCustomOrderAI';
+import { useCustomOrderWorkspace } from '../hooks/useCustomOrderWorkspace';
 
-import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { customOrderService, uploadService } from '../services/domainServices';
 import { useProduct } from '../hooks/useProductQueries';
 
 import { useAuth } from '../context/AuthContext';
@@ -68,10 +63,6 @@ export function CustomOrders() {
     }
   }, [productData]);
 
-  // Custom states to prevent "Other" text fields from disappearing
-  const [showCustomOccasion, setShowCustomOccasion] = useState(false);
-  const [showCustomProductType, setShowCustomProductType] = useState(false);
-
   // Workspace tabs: 'wizard' (Submit Custom Request) vs 'tracker' (Track My Custom Orders)
   const [activeTab, setActiveTab] = useState('wizard');
   const [mobileSubTab, setMobileSubTab] = useState('chat');
@@ -87,43 +78,11 @@ export function CustomOrders() {
   const isSendingMessageRef = useRef(false);
   const socket = useUserSocket();
 
-  // ─── WIZARD FORM STATES ───
-  const [currentStep, setCurrentStep] = useState(1);
-  const [wizardDraft, setWizardDraft] = useState({
-    occasion: '',
-    productType: '',
-    inspirationImages: [],
-    customRequirements: '',
-    budget: '',
-    quantity: 1,
-    eventDate: '',
-    city: '',
-    bookingType: 'Video Meet',
-    customerName: '',
-    customerPhone: '',
-    customerEmail: '',
-  });
-
   const handleWhatsAppConsult = () => {
     const phone = '919866006648';
     const baseUrl = window.location.origin;
     let msg = `Namaste Siri Arts & Crafts! I am interested in consulting with your master artisans for a custom event decor.\n\n`;
-    if (activeTab === 'wizard') {
-      msg += `*Occasion:* ${wizardDraft.occasion || 'TBD'}\n`;
-      msg += `*Category:* ${wizardDraft.productType || 'TBD'}\n`;
-      msg += `*Setups:* ${wizardDraft.quantity}\n`;
-      msg += `*Event Date:* ${wizardDraft.eventDate || 'TBD'}\n`;
-      msg += `*Location:* ${wizardDraft.city || 'TBD'}\n`;
-      if (linkedProduct) {
-        msg += `*Target Product:* ${baseUrl}/product/${linkedProduct.slug || linkedProduct._id}\n`;
-      }
-      if (wizardDraft.customRequirements) {
-        msg += `*My Requirements:* ${wizardDraft.customRequirements}\n`;
-      }
-      if (wizardDraft.budget) {
-        msg += `*Estimated Budget:* ${wizardDraft.budget}\n`;
-      }
-    } else if (selectedOrder) {
+    if (selectedOrder) {
       msg += `*Order Reference:* ${selectedOrder._id}\n`;
       msg += `*Order Link:* ${baseUrl}/custom-order?orderId=${selectedOrder._id}\n`;
       if (selectedOrder.productSnapshot?.productId) {
@@ -139,33 +98,18 @@ export function CustomOrders() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // Custom text states for "Other / Custom" specifications
-  const [customOccasionText, setCustomOccasionText] = useState('');
-  const [customProductTypeText, setCustomProductTypeText] = useState('');
-  const [pastedLink, setPastedLink] = useState('');
-
-  const { isUploading, uploadProgress, handleMoodUpload } = useCustomOrderUploads(
-    wizardDraft,
-    (updates) => setWizardDraft((prev) => ({ ...prev, ...updates })),
-  );
-  const fileInputRef = useRef(null);
-
-  const {
-    isAnalyzing,
-    aiAnalysisResult,
-    aiStep,
-    isAiPanelOpen,
-    setIsAiPanelOpen,
-    aiMessages,
-    aiUserQuery,
-    setAiUserQuery,
-    handleAIAnalysis,
-    handleApplyAiSuggestions,
-    handleAiChatSubmit,
-  } = useCustomOrderAI({
-    wizardDraft,
-    updateDraft: (updates) => setWizardDraft((prev) => ({ ...prev, ...updates })),
-  });
+  const { loading, loadWorkspaceData, handleSendChatMessage, handleQuotationDecision } =
+    useCustomOrderWorkspace({
+      user,
+      setConfig,
+      setMyOrders,
+      selectedOrder,
+      setSelectedOrder,
+      chatMessage,
+      setChatMessage,
+      isSendingMessageRef,
+      setIsSendingMessage,
+    });
 
   return (
     <div className="relative selection:bg-primary/20 bg-[var(--color-surface-ivory)] min-h-screen text-[var(--color-on-surface)] font-body pt-20 md:pt-32">
