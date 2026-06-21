@@ -63,6 +63,16 @@ export const isOriginAllowed = (origin: string): boolean => {
       return true;
     }
 
+    // Dynamically support Vercel preview deployments for our projects while preventing phishing
+    if (
+      parsedUrl.hostname.endsWith('.vercel.app') &&
+      (parsedUrl.hostname.startsWith('siriarts-n-crafts-') ||
+        parsedUrl.hostname.startsWith('siri-artsandcrafts-') ||
+        parsedUrl.hostname.startsWith('siri-arts-n-crafts-'))
+    ) {
+      return true;
+    }
+
     return false;
   } catch {
     return false;
