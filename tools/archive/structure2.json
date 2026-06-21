@@ -1,0 +1,370 @@
+[
+  {
+    "line": 94,
+    "text": "// Draft System Integration"
+  },
+  {
+    "line": 170,
+    "text": "// If fileObj is a React synthetic event, ignore it"
+  },
+  {
+    "line": 265,
+    "text": "// Jump straight to details step (Step 2) to show the animation visually!"
+  },
+  {
+    "line": 279,
+    "text": "// Navigate/Scroll to different steps if they are on a different page for visual polish!"
+  },
+  {
+    "line": 281,
+    "text": "setCurrentStep(2); // Attributes step (new index 2)"
+  },
+  {
+    "line": 283,
+    "text": "setCurrentStep(3); // SEO step (new index 3)"
+  },
+  {
+    "line": 285,
+    "text": "setCurrentStep(4); // Pricing & Stock step"
+  },
+  {
+    "line": 290,
+    "text": "// Dynamic dynamic categories aggregator"
+  },
+  {
+    "line": 320,
+    "text": "}, 550); // Beautiful, smooth sequential populating delay!"
+  },
+  {
+    "line": 323,
+    "text": "// Variant input local state"
+  },
+  {
+    "line": 326,
+    "text": "// Load dynamic categories from database"
+  },
+  {
+    "line": 345,
+    "text": "// Restoration and Fetching"
+  },
+  {
+    "line": 380,
+    "text": "// Rental fields"
+  },
+  {
+    "line": 444,
+    "text": "// Rental fields"
+  },
+  {
+    "line": 481,
+    "text": "// Auto-save status tracking (in-memory only)"
+  },
+  {
+    "line": 484,
+    "text": "// Local Autosave (in-memory only)"
+  },
+  {
+    "line": 494,
+    "text": "// Smart Rental Pricing Auto-calculation"
+  },
+  {
+    "line": 500,
+    "text": "// Check if it's already the same to avoid unnecessary re-renders"
+  },
+  {
+    "line": 524,
+    "text": "// Form Validation per step"
+  },
+  {
+    "line": 528,
+    "text": "// Check if we have any images in the array or as a primary image string"
+  },
+  {
+    "line": 573,
+    "text": "// Keyboard Navigation: Alt + ArrowRight/Left, Ctrl+S to save, Escape to go back"
+  },
+  {
+    "line": 584,
+    "text": "// Ctrl+S / Cmd+S to save draft"
+  },
+  {
+    "line": 590,
+    "text": "// Escape to go back"
+  },
+  {
+    "line": 599,
+    "text": "// Image Helper Actions"
+  },
+  {
+    "line": 616,
+    "text": "// Add Variants"
+  },
+  {
+    "line": 636,
+    "text": "// Submit Handler"
+  },
+  {
+    "line": 641,
+    "text": "formData.imageSrc = formData.images[0]; // also set locally for the check below"
+  },
+  {
+    "line": 689,
+    "text": "// Rental fields"
+  },
+  {
+    "line": 720,
+    "text": "await deleteDraft(); // Delete draft on success"
+  },
+  {
+    "line": 740,
+    "text": "// Category Suggesters"
+  },
+  {
+    "line": 756,
+    "text": "Header"
+  },
+  {
+    "line": 777,
+    "text": "Keyboard Shortcut Banner + Auto-save"
+  },
+  {
+    "line": 801,
+    "text": "Guided Progress Bar (Desktop & Mobile Responsive)"
+  },
+  {
+    "line": 868,
+    "text": "Guided Progress Bar (Mobile)"
+  },
+  {
+    "line": 893,
+    "text": "Mobile Form/Preview Tab Switcher"
+  },
+  {
+    "line": 919,
+    "text": "Main Grid: Form wizard on left, real-time preview on right"
+  },
+  {
+    "line": 921,
+    "text": "Form Wizard Frame"
+  },
+  {
+    "line": 925,
+    "text": "Compression / Upload Overlay"
+  },
+  {
+    "line": 979,
+    "text": "Active Step Content"
+  },
+  {
+    "line": 991,
+    "text": "STEP 1: MEDIA"
+  },
+  {
+    "line": 1004,
+    "text": "URL Paste Box"
+  },
+  {
+    "line": 1061,
+    "text": "Multi Upload Box"
+  },
+  {
+    "line": 1152,
+    "text": "Gallery Grid"
+  },
+  {
+    "line": 1257,
+    "text": "STEP 2: CORE DETAILS"
+  },
+  {
+    "line": 1418,
+    "text": "Product Personalization Settings"
+  },
+  {
+    "line": 1562,
+    "text": "STEP 4: VARIANTS & BADGES"
+  },
+  {
+    "line": 1591,
+    "text": "Badge Pill Inputs"
+  },
+  {
+    "line": 1624,
+    "text": "Dynamic Variant Constructor"
+  },
+  {
+    "line": 1661,
+    "text": "Rendered variants list"
+  },
+  {
+    "line": 1693,
+    "text": "STEP 5: SEO METADATA"
+  },
+  {
+    "line": 1742,
+    "text": "Google Search Snippet Live Preview"
+  },
+  {
+    "line": 1767,
+    "text": "STEP 5: PRICING & STOCK"
+  },
+  {
+    "line": 1851,
+    "text": "═══ RENTAL SETTINGS SECTION ═══"
+  },
+  {
+    "line": 1903,
+    "text": "Enable Rental Toggle"
+  },
+  {
+    "line": 1929,
+    "text": "Availability Mode"
+  },
+  {
+    "line": 1974,
+    "text": "Enable Smart Pricing Toggle"
+  },
+  {
+    "line": 2034,
+    "text": "Rental Pricing"
+  },
+  {
+    "line": 2115,
+    "text": "Security Deposit + Refundable"
+  },
+  {
+    "line": 2201,
+    "text": "Rental Inventory + Duration Limits"
+  },
+  {
+    "line": 2265,
+    "text": "Smart Recommendation Panel"
+  },
+  {
+    "line": 2268,
+    "text": "Decorative blur elements"
+  },
+  {
+    "line": 2356,
+    "text": "STEP 6: REVIEW & PUBLISH"
+  },
+  {
+    "line": 2369,
+    "text": "Visibility Status Toggle"
+  },
+  {
+    "line": 2391,
+    "text": "Curation Highlight Toggle"
+  },
+  {
+    "line": 2409,
+    "text": "Show in Gallery Toggle"
+  },
+  {
+    "line": 2427,
+    "text": "Non-Refundable Item Toggle"
+  },
+  {
+    "line": 2446,
+    "text": "Summary Data Review list"
+  },
+  {
+    "line": 2529,
+    "text": "Footer Controls: Back & Next / Save"
+  },
+  {
+    "line": 2574,
+    "text": "Live Catalog Preview Card"
+  },
+  {
+    "line": 2587,
+    "text": "Luxury Card Rendering"
+  },
+  {
+    "line": 2589,
+    "text": "Badges Overlay"
+  },
+  {
+    "line": 2612,
+    "text": "Availability Badges Overlay"
+  },
+  {
+    "line": 2625,
+    "text": "Card Thumbnail"
+  },
+  {
+    "line": 2643,
+    "text": "Thumbnail Gallery Indicators (Tiny previews)"
+  },
+  {
+    "line": 2661,
+    "text": "Product Body"
+  },
+  {
+    "line": 2687,
+    "text": "Price Tag Row"
+  },
+  {
+    "line": 2717,
+    "text": "SaaS AI Curation HUD Overlay Modal"
+  },
+  {
+    "line": 2721,
+    "text": "Luxury Header"
+  },
+  {
+    "line": 2745,
+    "text": "Scrollable Dashboard Panel"
+  },
+  {
+    "line": 2747,
+    "text": "Top Classification Row: Object + Confidence Score"
+  },
+  {
+    "line": 2761,
+    "text": "Confidence circular indicator"
+  },
+  {
+    "line": 2774,
+    "text": "Titles Block"
+  },
+  {
+    "line": 2794,
+    "text": "Attribute Grid"
+  },
+  {
+    "line": 2796,
+    "text": "Category"
+  },
+  {
+    "line": 2809,
+    "text": "Occasion / Style"
+  },
+  {
+    "line": 2819,
+    "text": "Materials Chips"
+  },
+  {
+    "line": 2837,
+    "text": "Color Palette"
+  },
+  {
+    "line": 2875,
+    "text": "Customization Note"
+  },
+  {
+    "line": 2896,
+    "text": "Tags Generation"
+  },
+  {
+    "line": 2913,
+    "text": "Description"
+  },
+  {
+    "line": 2925,
+    "text": "Chat Box for AI Refinement"
+  },
+  {
+    "line": 2955,
+    "text": "Footer Actions"
+  }
+]

@@ -1,0 +1,110 @@
+[
+  {
+    "line": 25,
+    "text": "const calculateRentalPricing = (price, category) ="
+  },
+  {
+    "line": 61,
+    "text": "const WIZARD_STEPS = ["
+  },
+  {
+    "line": 70,
+    "text": "export function AdminAddProduct({ editId }) {"
+  },
+  {
+    "line": 94,
+    "text": "// Draft System Integration"
+  },
+  {
+    "line": 170,
+    "text": "// If fileObj is a React synthetic event, ignore it"
+  },
+  {
+    "line": 265,
+    "text": "// Jump straight to details step (Step 2) to show the animation visually!"
+  },
+  {
+    "line": 279,
+    "text": "// Navigate/Scroll to different steps if they are on a different page for visual polish!"
+  },
+  {
+    "line": 290,
+    "text": "// Dynamic dynamic categories aggregator"
+  },
+  {
+    "line": 323,
+    "text": "// Variant input local state"
+  },
+  {
+    "line": 326,
+    "text": "// Load dynamic categories from database"
+  },
+  {
+    "line": 345,
+    "text": "// Restoration and Fetching"
+  },
+  {
+    "line": 380,
+    "text": "// Rental fields"
+  },
+  {
+    "line": 444,
+    "text": "// Rental fields"
+  },
+  {
+    "line": 481,
+    "text": "// Auto-save status tracking (in-memory only)"
+  },
+  {
+    "line": 484,
+    "text": "// Local Autosave (in-memory only)"
+  },
+  {
+    "line": 494,
+    "text": "// Smart Rental Pricing Auto-calculation"
+  },
+  {
+    "line": 500,
+    "text": "// Check if it's already the same to avoid unnecessary re-renders"
+  },
+  {
+    "line": 524,
+    "text": "// Form Validation per step"
+  },
+  {
+    "line": 528,
+    "text": "// Check if we have any images in the array or as a primary image string"
+  },
+  {
+    "line": 573,
+    "text": "// Keyboard Navigation: Alt + ArrowRight/Left, Ctrl+S to save, Escape to go back"
+  },
+  {
+    "line": 584,
+    "text": "// Ctrl+S / Cmd+S to save draft"
+  },
+  {
+    "line": 590,
+    "text": "// Escape to go back"
+  },
+  {
+    "line": 599,
+    "text": "// Image Helper Actions"
+  },
+  {
+    "line": 616,
+    "text": "// Add Variants"
+  },
+  {
+    "line": 636,
+    "text": "// Submit Handler"
+  },
+  {
+    "line": 689,
+    "text": "// Rental fields"
+  },
+  {
+    "line": 740,
+    "text": "// Category Suggesters"
+  }
+]
