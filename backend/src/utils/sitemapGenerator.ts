@@ -3,7 +3,8 @@ import path from 'path';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
 
-const SITE_URL = process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'https://siriartsandcrafts.com';
+const SITE_URL =
+  process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'https://siriartsandcrafts.com';
 
 /**
  * Enterprise dynamic sitemap generator.
@@ -62,10 +63,10 @@ export async function generateSitemap(): Promise<string> {
 
     // 2. Fetch Active Products
     if (Product) {
-      const products = await Product.find({ isActive: true })
+      const products = (await Product.find({ isActive: true })
         .select('_id updatedAt imageSrc title')
-        .lean() as any[];
-        
+        .lean()) as any[];
+
       for (const prod of products) {
         const prodDate = new Date(prod.updatedAt || new Date()).toISOString().split('T')[0];
         xml += `  <url>\n`;
@@ -85,10 +86,10 @@ export async function generateSitemap(): Promise<string> {
 
     // 3. Fetch Active Gallery Items
     if (Gallery) {
-      const galleries = await Gallery.find({ isActive: true })
+      const galleries = (await Gallery.find({ isActive: true })
         .select('_id updatedAt image title')
-        .lean() as any[];
-        
+        .lean()) as any[];
+
       for (const item of galleries) {
         const itemDate = new Date(item.updatedAt || new Date()).toISOString().split('T')[0];
         xml += `  <url>\n`;
@@ -108,10 +109,10 @@ export async function generateSitemap(): Promise<string> {
 
     // 4. Fetch Active Events
     if (Event) {
-      const events = await Event.find({ isActive: true })
+      const events = (await Event.find({ isActive: true })
         .select('_id updatedAt image title')
-        .lean() as any[];
-        
+        .lean()) as any[];
+
       for (const ev of events) {
         const evDate = new Date(ev.updatedAt || new Date()).toISOString().split('T')[0];
         xml += `  <url>\n`;
@@ -143,10 +144,14 @@ export async function generateSitemap(): Promise<string> {
         fs.writeFileSync(frontendPublicPath, xml, 'utf8');
         logger.info(`[SITEMAP] Static sitemap successfully written to ${frontendPublicPath}`);
       } catch (fsErr: any) {
-        logger.warn(`[SITEMAP] Could not write sitemap file to frontend public folder: ${fsErr.message}`);
+        logger.warn(
+          `[SITEMAP] Could not write sitemap file to frontend public folder: ${fsErr.message}`,
+        );
       }
     } else {
-      logger.info(`[SITEMAP] Frontend public folder not found at ${frontendPublicDir}. Skipping static sitemap write.`);
+      logger.info(
+        `[SITEMAP] Frontend public folder not found at ${frontendPublicDir}. Skipping static sitemap write.`,
+      );
     }
 
     return xml;
@@ -162,12 +167,18 @@ export async function generateSitemap(): Promise<string> {
 function escapeXml(unsafe: string): string {
   return unsafe.replace(/[<>&'"]/g, (c) => {
     switch (c) {
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '&': return '&amp;';
-      case '\'': return '&apos;';
-      case '"': return '&quot;';
-      default: return c;
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '&':
+        return '&amp;';
+      case "'":
+        return '&apos;';
+      case '"':
+        return '&quot;';
+      default:
+        return c;
     }
   });
 }
@@ -180,10 +191,14 @@ let sitemapTimeout: any = null;
  * Delays sitemap regeneration to avoid overhead on bulk modifications.
  */
 export function triggerSitemapUpdate(): void {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+
   if (sitemapTimeout) {
     (globalThis as any).clearTimeout(sitemapTimeout);
   }
-  
+
   sitemapTimeout = (globalThis as any).setTimeout(async () => {
     try {
       await generateSitemap();
@@ -192,4 +207,3 @@ export function triggerSitemapUpdate(): void {
     }
   }, 5000); // 5 seconds debounce
 }
-
