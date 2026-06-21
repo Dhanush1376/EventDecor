@@ -547,16 +547,6 @@ exports[`Search Endpoints - Exact Ranking & Snapshot Validation GET /api/v1/sear
           "type": "product",
         },
         {
-          "id": "6a11579708fa7569dfc015a0",
-          "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024555/eventdecor_migration/sxglj11lgi99fwxij9bp.jpg",
-          "matchSource": "fallback_popular",
-          "price": 900,
-          "score": 1,
-          "slug": "beaded-coconut-decor",
-          "title": "Beaded Coconut Decor",
-          "type": "product",
-        },
-        {
           "id": "6a19cb169875c9a89386d920",
           "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024558/eventdecor_migration/hgvuv234fqdoa2b05mul.jpg",
           "matchSource": "fallback_popular",
@@ -564,6 +554,16 @@ exports[`Search Endpoints - Exact Ranking & Snapshot Validation GET /api/v1/sear
           "score": 1,
           "slug": "wooden-wedding-ring-tray",
           "title": "Wooden Wedding Ring Tray",
+          "type": "product",
+        },
+        {
+          "id": "6a11579708fa7569dfc015a0",
+          "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024555/eventdecor_migration/sxglj11lgi99fwxij9bp.jpg",
+          "matchSource": "fallback_popular",
+          "price": 900,
+          "score": 1,
+          "slug": "beaded-coconut-decor",
+          "title": "Beaded Coconut Decor",
           "type": "product",
         },
         {
