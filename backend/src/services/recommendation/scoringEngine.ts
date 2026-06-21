@@ -180,7 +180,7 @@ export async function scoreItemsForSession(
     return Array.from(scoreMap.values())
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        return (a.slug || a.id).localeCompare(b.slug || b.id);
+        return a.targetId.localeCompare(b.targetId);
       })
       .slice(0, limit);
   } catch (err: any) {
