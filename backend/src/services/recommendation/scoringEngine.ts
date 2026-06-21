@@ -178,7 +178,10 @@ export async function scoreItemsForSession(
     }
 
     return Array.from(scoreMap.values())
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return (a.slug || a.id).localeCompare(b.slug || b.id);
+      })
       .slice(0, limit);
   } catch (err: any) {
     logger.error(`[SCORING ENGINE] Error scoring items for session ${sessionId}: ${err.message}`);

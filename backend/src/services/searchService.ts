@@ -280,7 +280,9 @@ export async function getAutocomplete(
           return (pA ?? Infinity) - (pB ?? Infinity);
         }
       }
-      return b.score - a.score;
+
+      if (b.score !== a.score) return b.score - a.score;
+      return (a.slug || a.id).localeCompare(b.slug || b.id);
     });
     const final = suggestions.slice(0, limit);
 
@@ -681,7 +683,10 @@ export async function searchAll(
         } else if (activeSort === 'rating') {
           arr.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
         } else {
-          arr.sort((a, b) => b.score - a.score);
+          arr.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return (a.slug || a.id).localeCompare(b.slug || b.id);
+          });
         }
         return arr;
       }
@@ -702,7 +707,10 @@ export async function searchAll(
       } else if (activeSort === 'rating') {
         inBudget.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
       } else {
-        inBudget.sort((a, b) => b.score - a.score);
+        inBudget.sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return (a.slug || a.id).localeCompare(b.slug || b.id);
+        });
       }
 
       // Sort out-of-budget strictly in ascending order of price (proximity to budget)
