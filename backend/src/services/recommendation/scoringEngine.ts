@@ -110,7 +110,10 @@ export async function scoreItemsForUser(
     }
 
     return Array.from(scoreMap.values())
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.targetId.localeCompare(b.targetId);
+      })
       .slice(0, limit);
   } catch (err: any) {
     logger.error(`[SCORING ENGINE] Error scoring items for user ${userId}: ${err.message}`);
