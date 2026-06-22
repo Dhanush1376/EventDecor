@@ -1,4 +1,3 @@
-/* eslint-disable no-constant-binary-expression */
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { SearchSuggestionsSkeleton, Skeleton } from '../ui/Skeleton';
@@ -53,43 +52,6 @@ export function IntelligentSearchOverlay({
     { title: 'Engagement Trays', icon: 'diamond' },
     { title: 'House Warming', icon: 'home' },
   ];
-
-  const dynamicTrending = useMemo(() => {
-    if (discoveryData?.trending && discoveryData.trending.length > 0) {
-      return discoveryData.trending;
-    }
-    const terms = new Set();
-
-    if (discoveryData?.eventCollections && discoveryData.eventCollections.length > 0) {
-      discoveryData.eventCollections.forEach((c) => {
-        if (c.title) terms.add(c.title);
-      });
-    }
-
-    if (discoveryData?.popularProducts && discoveryData.popularProducts.length > 0) {
-      discoveryData.popularProducts.forEach((p) => {
-        if (p.title) {
-          const words = p.title.trim().split(/\s+/);
-          if (words.length <= 2) {
-            terms.add(p.title);
-          } else {
-            terms.add(words.slice(0, 2).join(' '));
-          }
-        }
-      });
-    }
-
-    const defaults = [
-      'Marigold Garland',
-      'Brass Diya',
-      'Stage Backdrop',
-      'Coconut Decor',
-      'Banana Leaf Stage',
-    ];
-    defaults.forEach((d) => terms.add(d));
-
-    return Array.from(terms).map((t) => ({ query: t }));
-  }, [discoveryData]);
 
   const handleVisualImageSelectAndRedirect = useCallback(
     (file) => {
@@ -751,8 +713,8 @@ export function IntelligentSearchOverlay({
                         </div>
                       )}
 
-                      {/* 2. Trending Searches (Pill Chips) */}
-                      {((discoveryData?.trending && discoveryData.trending.length > 0) || true) && (
+                      {/* 2. Trending Now (Products Grid) */}
+                      {discoveryData?.popularProducts?.length > 0 && (
                         <div className="mb-4">
                           <div className="px-5 mb-2.5">
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 flex items-center gap-1.5">
@@ -760,34 +722,6 @@ export function IntelligentSearchOverlay({
                                 local_fire_department
                               </span>
                               Trending Now
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-2 px-5">
-                            {dynamicTrending.slice(0, 5).map((term, idx) => {
-                              const queryStr = typeof term === 'string' ? term : term.query;
-                              return (
-                                <button
-                                  key={idx}
-                                  onClick={() => {
-                                    setQuery(queryStr);
-                                    onExecuteSearch(queryStr);
-                                  }}
-                                  className="px-3.5 py-1.5 bg-stone-100/80 hover:bg-stone-200 border border-stone-200/60 rounded-full text-[12.5px] text-stone-700 font-medium transition-colors cursor-pointer"
-                                >
-                                  {queryStr}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 3. Popular Products */}
-                      {discoveryData?.popularProducts?.length > 0 && (
-                        <div className="mb-2">
-                          <div className="px-5 mb-2.5">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">
-                              Popular Items
                             </span>
                           </div>
                           <div className="grid grid-cols-2 gap-3 px-5">
@@ -816,7 +750,7 @@ export function IntelligentSearchOverlay({
                                     {product.title}
                                   </p>
                                   {product.price > 0 && (
-                                    <p className="text-[11px] font-bold text-primary mt-0.5">
+                                    <p className="text-[11.5px] font-bold text-primary mt-0.5 font-display">
                                       {formatPrice(product.price)}
                                     </p>
                                   )}
@@ -1306,11 +1240,10 @@ export function IntelligentSearchOverlay({
                             className={`pt-4 pb-2 ${recentSearches.length > 0 ? 'border-t border-stone-200/30 mt-3' : ''}`}
                           >
                             <div className="grid grid-cols-12 gap-8 px-6 md:px-8.5">
-                              {/* Left Column: Trending & Collections */}
+                              {/* Left Column: Trending Now Products */}
                               <div className="col-span-12 md:col-span-5 flex flex-col gap-6">
-                                {/* 1. Trending Searches */}
-                                {((discoveryData?.trending && discoveryData.trending.length > 0) ||
-                                  true) && (
+                                {/* 1. Trending Now (Products List) */}
+                                {discoveryData?.popularProducts?.length > 0 && (
                                   <div>
                                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-3 block flex items-center gap-1.5">
                                       <span className="material-symbols-outlined text-[14px] text-orange-500">
@@ -1318,131 +1251,104 @@ export function IntelligentSearchOverlay({
                                       </span>
                                       Trending Now
                                     </span>
-                                    <div className="flex flex-wrap gap-2.5">
-                                      {dynamicTrending.slice(0, 6).map((term, idx) => {
-                                        const queryStr =
-                                          typeof term === 'string' ? term : term.query;
-                                        return (
-                                          <button
-                                            key={idx}
-                                            onClick={() => {
-                                              setQuery(queryStr);
-                                              onExecuteSearch(queryStr);
-                                            }}
-                                            className="px-3.5 py-1.5 bg-stone-100/80 hover:bg-primary/10 hover:text-primary border border-stone-200/60 hover:border-primary/20 rounded-full text-[13px] text-stone-600 font-medium transition-colors cursor-pointer"
-                                          >
-                                            {queryStr}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* 2. Event Collections */}
-                                {((discoveryData?.eventCollections &&
-                                  discoveryData.eventCollections.length > 0) ||
-                                  true) && (
-                                  <div>
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-3 block">
-                                      Explore Collections
-                                    </span>
-                                    <div className="flex flex-col gap-1.5">
-                                      {(discoveryData?.eventCollections?.length > 0
-                                        ? discoveryData.eventCollections
-                                        : fallbackCollections
-                                      )
-                                        .slice(0, 6)
-                                        .map((col, idx) => (
-                                          <button
-                                            key={col.title || idx}
-                                            onClick={() => {
-                                              handleClose();
-                                              navigate(
-                                                `/collections?category=${encodeURIComponent(col.title)}`,
-                                              );
-                                            }}
-                                            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-stone-50 transition-colors group border border-transparent hover:border-stone-200 text-left"
-                                          >
-                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                              <span className="material-symbols-outlined text-[16px]">
-                                                {col.icon ||
-                                                  (col.title.includes('Wedding')
-                                                    ? 'favorite'
-                                                    : col.title.includes('Birthday')
-                                                      ? 'cake'
-                                                      : col.title.includes('Pooja')
-                                                        ? 'self_improvement'
-                                                        : col.title.includes('Engagement')
-                                                          ? 'diamond'
-                                                          : col.title.includes('Baby')
-                                                            ? 'child_care'
-                                                            : col.title.includes('House')
-                                                              ? 'home'
-                                                              : col.title.includes('Haldi') ||
-                                                                  col.title.includes('Mehendi')
-                                                                ? 'spa'
-                                                                : col.title.includes('Reception') ||
-                                                                    col.title.includes('Sangeet')
-                                                                  ? 'celebration'
-                                                                  : 'category')}
-                                              </span>
-                                            </div>
-                                            <span className="text-[13px] text-stone-700 font-medium group-hover:text-primary transition-colors">
-                                              {col.title}
-                                            </span>
-                                          </button>
-                                        ))}
+                                    <div className="flex flex-col gap-3">
+                                      {discoveryData.popularProducts.slice(0, 4).map((product) => (
+                                        <button
+                                          key={product.id}
+                                          onClick={() => {
+                                            handleClose();
+                                            navigate(`/product/${product.slug || product.id}`);
+                                          }}
+                                          className="flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-stone-50 transition-colors text-left group"
+                                        >
+                                          <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 border border-stone-200/50">
+                                            {product.image && (
+                                              <CloudinaryImage
+                                                src={product.image}
+                                                alt={product.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                width={50}
+                                                height={50}
+                                              />
+                                            )}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-[13px] font-medium text-stone-800 line-clamp-1 leading-snug group-hover:text-primary transition-colors">
+                                              {product.title}
+                                            </p>
+                                            {product.price > 0 && (
+                                              <p className="text-[11.5px] font-bold text-primary mt-0.5 font-display">
+                                                {formatPrice(product.price)}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </button>
+                                      ))}
                                     </div>
                                   </div>
                                 )}
                               </div>
 
-                              {/* Right Column: Popular Products & Visual Search */}
+                              {/* Right Column: Explore Collections & New Arrivals */}
                               <div className="col-span-12 md:col-span-7 flex flex-col gap-6 relative">
                                 {/* Divider on desktop */}
                                 <div className="hidden md:block absolute left-[-16px] top-0 bottom-0 w-px bg-stone-200/40"></div>
 
                                 <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-                                  {/* 3. Popular Products */}
-                                  {discoveryData?.popularProducts?.length > 0 && (
+                                  {/* 3. Event Collections (Explore Collections) */}
+                                  {((discoveryData?.eventCollections &&
+                                    discoveryData.eventCollections.length > 0) ||
+                                    true) && (
                                     <div className="col-span-2 sm:col-span-1">
                                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-3 block">
-                                        Popular Items
+                                        Explore Collections
                                       </span>
-                                      <div className="flex flex-col gap-3">
-                                        {discoveryData.popularProducts
-                                          .slice(0, 3)
-                                          .map((product) => (
+                                      <div className="flex flex-col gap-1.5">
+                                        {(discoveryData?.eventCollections?.length > 0
+                                          ? discoveryData.eventCollections
+                                          : fallbackCollections
+                                        )
+                                          .slice(0, 6)
+                                          .map((col, idx) => (
                                             <button
-                                              key={product.id}
+                                              key={col.title || idx}
                                               onClick={() => {
                                                 handleClose();
-                                                navigate(`/product/${product.slug || product.id}`);
+                                                navigate(
+                                                  `/collections?category=${encodeURIComponent(col.title)}`,
+                                                );
                                               }}
-                                              className="flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-stone-50 transition-colors text-left group"
+                                              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-stone-50 transition-colors group border border-transparent hover:border-stone-200 text-left"
                                             >
-                                              <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-stone-200/50">
-                                                {product.image && (
-                                                  <CloudinaryImage
-                                                    src={product.image}
-                                                    alt={product.title}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                    width={60}
-                                                    height={60}
-                                                  />
-                                                )}
+                                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                                <span className="material-symbols-outlined text-[16px]">
+                                                  {col.icon ||
+                                                    (col.title.includes('Wedding')
+                                                      ? 'favorite'
+                                                      : col.title.includes('Birthday')
+                                                        ? 'cake'
+                                                        : col.title.includes('Pooja')
+                                                          ? 'self_improvement'
+                                                          : col.title.includes('Engagement')
+                                                            ? 'diamond'
+                                                            : col.title.includes('Baby')
+                                                              ? 'child_care'
+                                                              : col.title.includes('House')
+                                                                ? 'home'
+                                                                : col.title.includes('Haldi') ||
+                                                                    col.title.includes('Mehendi')
+                                                                  ? 'spa'
+                                                                  : col.title.includes(
+                                                                        'Reception',
+                                                                      ) ||
+                                                                      col.title.includes('Sangeet')
+                                                                    ? 'celebration'
+                                                                    : 'category')}
+                                                </span>
                                               </div>
-                                              <div className="flex-1 min-w-0">
-                                                <p className="text-[13px] font-medium text-stone-800 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-                                                  {product.title}
-                                                </p>
-                                                {product.price > 0 && (
-                                                  <p className="text-[11.5px] font-bold text-primary mt-0.5">
-                                                    {formatPrice(product.price)}
-                                                  </p>
-                                                )}
-                                              </div>
+                                              <span className="text-[13px] text-stone-700 font-medium group-hover:text-primary transition-colors">
+                                                {col.title}
+                                              </span>
                                             </button>
                                           ))}
                                       </div>

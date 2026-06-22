@@ -235,6 +235,30 @@ export async function getPopularProducts(limit: number = 8) {
       type: 'product',
     }));
 
+    if (finalProducts.length < limit) {
+      const remainingLimit = limit - finalProducts.length;
+      const excludedIds = finalProducts.map((p) => p.id);
+      const fallbackProducts = await Product.find({
+        _id: { $nin: excludedIds },
+        isActive: true,
+      })
+        .sort({ views: -1, rating: -1 })
+        .limit(remainingLimit)
+        .select('_id title imageSrc price slug')
+        .lean();
+
+      fallbackProducts.forEach((p) => {
+        finalProducts.push({
+          id: (p._id as any).toString(),
+          title: p.title,
+          image: p.imageSrc,
+          price: p.price,
+          slug: p.slug,
+          type: 'product',
+        });
+      });
+    }
+
     await setSearchCache('trending', cacheKey, finalProducts, 30 * 60 * 1000);
     return finalProducts;
   } catch (err: any) {

@@ -197,7 +197,7 @@ export const ProductCard = React.memo(function ProductCard({
         <div className="absolute top-2 right-3 md:top-3 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]`}
+            className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]`}
             aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <motion.span
@@ -208,7 +208,7 @@ export const ProductCard = React.memo(function ProductCard({
               }}
               whileTap={{ scale: 0.8 }}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className={`material-symbols-outlined ${compact ? 'text-[10px] md:text-[12px]' : 'text-[12px] md:text-[14px]'}`}
+              className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
             >
               favorite
             </motion.span>
@@ -441,11 +441,11 @@ export const ProductCard = React.memo(function ProductCard({
                 e.stopPropagation();
                 navigate(`/events/${productId}`);
               }}
-              className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
+              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
               aria-label="Book setup"
             >
               <span
-                className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
+                className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
               >
                 event
               </span>
@@ -454,7 +454,7 @@ export const ProductCard = React.memo(function ProductCard({
             <button
               onClick={isOutOfStock ? undefined : handleAddToCart}
               disabled={isOutOfStock}
-              className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
+              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
                 isOutOfStock
                   ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
                   : added
@@ -471,7 +471,7 @@ export const ProductCard = React.memo(function ProductCard({
                     animate={{ opacity: 1, scale: 1, rotate: 0 }}
                     exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                    className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
+                    className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
                   >
                     check
                   </motion.span>
@@ -482,7 +482,7 @@ export const ProductCard = React.memo(function ProductCard({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.5 }}
                     transition={{ duration: 0.2 }}
-                    className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
+                    className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
                   >
                     {isOutOfStock ? 'remove_shopping_cart' : 'add'}
                   </motion.span>

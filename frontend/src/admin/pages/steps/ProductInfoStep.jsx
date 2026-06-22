@@ -1,3 +1,4 @@
+const currentStep = 1;
 import React from 'react';
 import { AdminToggle } from '../../components/AdminUIKit';
 

@@ -600,4 +600,16 @@ api.delete = function (url, config) {
 };
 
 export default api;
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    // Suppress specific harmless third-party or network errors from polluting logs
+    const reason = event.reason;
+    if (reason && reason.isNetwork) {
+      logger.dev('[API] Suppressing unhandled network rejection:', reason.message);
+      event.preventDefault();
+    }
+  });
+}
+
 // Trigger HMR to clear pendingGetRequests and apiCache

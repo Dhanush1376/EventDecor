@@ -4,15 +4,38 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
+import { ProductCoupons } from './ProductCoupons';
+import { useQuery } from '@tanstack/react-query';
+import { couponService } from '../../services/domainServices';
 
 export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
   const navigate = useNavigate();
-  const { attemptAddToCart } = useCart();
+  const { attemptAddToCart, claimedCoupon } = useCart();
   const { toggleItem, isWishlisted } = useWishlist();
   const { runProtectedAction } = useAuth();
   const [quantity, _setQuantity] = React.useState(1);
   const [added, setAdded] = React.useState(false);
   const [_startingChat, _setStartingChat] = React.useState(false);
+
+  const productId = product?._id || product?.id;
+  const { data: couponsData } = useQuery({
+    queryKey: ['product-coupons', productId],
+    queryFn: () => couponService.getProductCoupons(productId),
+    enabled: !!productId,
+  });
+
+  const allCoupons = couponsData?.data?.all || [];
+  const activeCoupon = allCoupons.find((c) => c.code === claimedCoupon);
+
+  let discountedPrice = product?.price || 0;
+  if (activeCoupon && product?.price) {
+    const isPercentage = activeCoupon.discountType === 'percentage';
+    if (isPercentage) {
+      discountedPrice = product.price * (1 - activeCoupon.discountValue / 100);
+    } else {
+      discountedPrice = Math.max(0, product.price - activeCoupon.discountValue);
+    }
+  }
 
   const handleWhatsAppChat = () => {
     if (!product) return;
@@ -182,18 +205,32 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
         </div>
       </div>
 
+      {/* Available Coupons & Savings Section */}
+      <ProductCoupons product={product} />
+
       {/* Pricing & Shipping */}
       <div className="py-2 border-b border-outline-variant/10">
         <div className="flex flex-wrap items-baseline gap-3 mb-4">
-          <span className="font-body text-[24px] sm:text-[32px] text-on-surface font-medium">
-            Rs. {product.price?.toLocaleString()}
-          </span>
-          {oldPrice > 0 && (
-            <span className="font-body-sm text-on-surface/40 font-medium line-through text-[13px] sm:text-[15px]">
+          {activeCoupon ? (
+            <>
+              <span className="font-display text-[24px] sm:text-[32px] text-green-700 font-medium">
+                Rs. {discountedPrice?.toLocaleString()}
+              </span>
+              <span className="font-display text-on-surface/45 font-light line-through text-[16px] sm:text-[18px]">
+                Rs. {product.price?.toLocaleString()}
+              </span>
+            </>
+          ) : (
+            <span className="font-display text-[24px] sm:text-[32px] text-on-surface font-light">
+              Rs. {product.price?.toLocaleString()}
+            </span>
+          )}
+          {oldPrice > 0 && !activeCoupon && (
+            <span className="font-display text-on-surface/40 font-light line-through text-[13px] sm:text-[15px]">
               Rs. {oldPrice.toLocaleString()}
             </span>
           )}
-          {discount > 0 && (
+          {discount > 0 && !activeCoupon && (
             <span className="text-primary font-label-sm text-[11px] sm:text-[12px] font-bold">
               ({discount}% off)
             </span>
@@ -214,7 +251,8 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
               event_available
             </span>
             <span className="font-body-sm text-[13px] sm:text-[14px] font-medium italic">
-              Delivered nationwide in 3-5 working days
+              Delivered nationwide in{' '}
+              <span className="font-display font-semibold not-italic">3-5</span> working days
             </span>
           </div>
           {product.isNonRefundable && (
@@ -255,7 +293,7 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
               <div className="grid grid-cols-3 gap-3 mb-4">
                 {product.rentalPricing.daily > 0 && (
                   <div className="px-3 py-3 bg-white rounded-xl border border-[#e0d6b8]/50 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                    <span className="block text-[15px] sm:text-[17px] font-bold text-[#2a2c2a]">
+                    <span className="block text-[15px] sm:text-[17px] font-display font-bold text-[#2a2c2a]">
                       ₹{product.rentalPricing.daily.toLocaleString()}
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-[#5a5c5a] uppercase tracking-widest font-bold mt-0.5 block">
@@ -265,7 +303,7 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
                 )}
                 {product.rentalPricing.weekly > 0 && (
                   <div className="px-3 py-3 bg-white rounded-xl border border-[#e0d6b8]/50 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                    <span className="block text-[15px] sm:text-[17px] font-bold text-[#2a2c2a]">
+                    <span className="block text-[15px] sm:text-[17px] font-display font-bold text-[#2a2c2a]">
                       ₹{product.rentalPricing.weekly.toLocaleString()}
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-[#5a5c5a] uppercase tracking-widest font-bold mt-0.5 block">
@@ -275,7 +313,7 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
                 )}
                 {product.rentalPricing.monthly > 0 && (
                   <div className="px-3 py-3 bg-white rounded-xl border border-[#e0d6b8]/50 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                    <span className="block text-[15px] sm:text-[17px] font-bold text-[#2a2c2a]">
+                    <span className="block text-[15px] sm:text-[17px] font-display font-bold text-[#2a2c2a]">
                       ₹{product.rentalPricing.monthly.toLocaleString()}
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-[#5a5c5a] uppercase tracking-widest font-bold mt-0.5 block">
@@ -296,7 +334,7 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[14px] font-bold text-[#2a2c2a]">
+                    <span className="text-[14px] font-display font-bold text-[#2a2c2a]">
                       ₹{product.securityDeposit.toLocaleString()}
                     </span>
                     {product.isDepositRefundable && (
@@ -382,25 +420,6 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
               )}
             </button>
           )}
-          {canRent && (
-            <button
-              onClick={product.rentalStock <= 0 ? undefined : handleRentNow}
-              disabled={product.rentalStock <= 0}
-              className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-xl transition-all font-bold px-4 ${
-                product.rentalStock <= 0
-                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                  : 'bg-[#8c7335] text-white hover:bg-[#725c29] cursor-pointer'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
-                {product.rentalStock <= 0 ? 'event_busy' : 'event_available'}
-              </span>
-              <span className="text-[11px] uppercase tracking-widest">
-                {product.rentalStock <= 0 ? 'No Rental Stock' : 'Rent'}
-              </span>
-            </button>
-          )}
-
           <button
             onClick={handleWishlist}
             className="bg-white text-black border border-black/10 !py-3 rounded-full flex items-center justify-center gap-2 group cursor-pointer font-bold px-4 hover:border-black/30 transition-all shadow-sm"
@@ -423,6 +442,25 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
               {wishlisted ? 'Saved' : 'Save'}
             </span>
           </button>
+
+          {canRent && (
+            <button
+              onClick={product.rentalStock <= 0 ? undefined : handleRentNow}
+              disabled={product.rentalStock <= 0}
+              className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-xl transition-all font-bold px-4 ${
+                product.rentalStock <= 0
+                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                  : 'bg-[#8c7335] text-white hover:bg-[#725c29] cursor-pointer'
+              } ${canPurchase && canRent ? 'col-span-2' : ''}`}
+            >
+              <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
+                {product.rentalStock <= 0 ? 'event_busy' : 'event_available'}
+              </span>
+              <span className="text-[11px] uppercase tracking-widest">
+                {product.rentalStock <= 0 ? 'No Rental Stock' : 'Rent'}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Custom Design Consultation Card */}

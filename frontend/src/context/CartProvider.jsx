@@ -6,8 +6,31 @@ import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import logger from '../utils/logger';
 import { persistentStorage } from '../utils/persistentStorage';
-import { userService } from '../services/domainServices';
+import { userService, couponService } from '../services/domainServices';
 import { getErrorMessage } from '../utils/errorHelpers';
+
+function cleanRentalInfo(rentalInfo) {
+  if (!rentalInfo) return undefined;
+  const { startDate, endDate } = rentalInfo;
+  if (!startDate || !endDate) return undefined;
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return undefined;
+  }
+
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+  const duration = Number(rentalInfo.duration) || diffDays;
+
+  return {
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+    duration,
+  };
+}
 
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction } = useAuth();
@@ -40,8 +63,16 @@ export function CartProvider({ children }) {
     () => initialCache.rentalCart || { items: [], summary: { ...emptySummary, depositTotal: 0 } },
   );
 
-  const [claimedCoupon, setClaimedCoupon] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState('');
+  const [claimedCoupon, setClaimedCouponState] = useState(() => {
+    return persistentStorage.getItem('siri_claimed_coupon', { fallback: '' });
+  });
+
+  const setClaimedCoupon = useCallback((code) => {
+    setClaimedCouponState(code);
+    persistentStorage.setItem('siri_claimed_coupon', code);
+  }, []);
+
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const { data: cartData, isLoading: cartLoading } = useCartQuery();
@@ -65,7 +96,7 @@ export function CartProvider({ children }) {
         quantity: item.quantity,
         variant: item.variant || 'Default',
         type: item.type || 'purchase',
-        rentalInfo: item.rentalInfo,
+        rentalInfo: cleanRentalInfo(item.rentalInfo),
         deposit: item.deposit || 0,
         isNonRefundable: item.product.isNonRefundable,
         customizationConfig: item.product.customizationConfig,
@@ -144,7 +175,7 @@ export function CartProvider({ children }) {
                     product: pId,
                     quantity: item.quantity,
                     type: item.type || 'purchase',
-                    rentalInfo: item.rentalInfo,
+                    rentalInfo: cleanRentalInfo(item.rentalInfo),
                     deposit: item.deposit,
                   });
                 }
@@ -152,16 +183,12 @@ export function CartProvider({ children }) {
             });
 
             const syncPayload = Array.from(mergedPayloadMap.values()).map((item) => {
-              const rInfo =
-                item.rentalInfo && Object.keys(item.rentalInfo).length > 0
-                  ? item.rentalInfo
-                  : undefined;
               return {
                 product:
                   item.product?._id || item.product?.id || item._id || item.id || item.product,
                 quantity: item.quantity,
                 type: item.type || 'purchase',
-                rentalInfo: rInfo,
+                rentalInfo: cleanRentalInfo(item.rentalInfo),
                 deposit: item.deposit,
               };
             });
@@ -238,7 +265,7 @@ export function CartProvider({ children }) {
                   quantity: qty,
                   type: itemType,
                   product: product,
-                  rentalInfo: product.rentalInfo,
+                  rentalInfo: cleanRentalInfo(product.rentalInfo),
                   deposit: product.deposit || 0,
                 },
               ];
@@ -280,7 +307,7 @@ export function CartProvider({ children }) {
               productId: itemKey,
               quantity: qty,
               type: itemType,
-              rentalInfo: product.rentalInfo,
+              rentalInfo: cleanRentalInfo(product.rentalInfo),
               productInfo: product,
             });
           } catch (err) {
@@ -321,7 +348,7 @@ export function CartProvider({ children }) {
                 variant: 'Default',
                 type: itemType,
                 deposit: product.deposit || 0,
-                rentalInfo: product.rentalInfo,
+                rentalInfo: cleanRentalInfo(product.rentalInfo),
                 isNonRefundable: product.isNonRefundable || false,
                 customizationConfig: product.customizationConfig,
                 product: product,
@@ -503,16 +530,12 @@ export function CartProvider({ children }) {
             ];
 
             const payload = allItems.map((item) => {
-              const rInfo =
-                item.rentalInfo && Object.keys(item.rentalInfo).length > 0
-                  ? item.rentalInfo
-                  : undefined;
               return {
                 product:
                   item.product?._id || item.product?.id || item._id || item.id || item.product,
                 quantity: item.quantity,
                 type: item.type || 'purchase',
-                rentalInfo: rInfo,
+                rentalInfo: cleanRentalInfo(item.rentalInfo),
                 deposit: item.deposit,
               };
             });
@@ -566,15 +589,11 @@ export function CartProvider({ children }) {
           const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart';
           const otherItems = currentCart?.[otherCartKey]?.items || [];
           const payload = otherItems.map((item) => {
-            const rInfo =
-              item.rentalInfo && Object.keys(item.rentalInfo).length > 0
-                ? item.rentalInfo
-                : undefined;
             return {
               product: item.product?._id || item.product?.id || item._id || item.id || item.product,
               quantity: item.quantity,
               type: item.type || 'purchase',
-              rentalInfo: rInfo,
+              rentalInfo: cleanRentalInfo(item.rentalInfo),
               deposit: item.deposit,
             };
           });
@@ -689,6 +708,35 @@ export function CartProvider({ children }) {
       setAppliedCoupon,
     ],
   );
+
+  // Automatically validate and apply claimedCoupon whenever it or subtotal changes
+  useEffect(() => {
+    if (!claimedCoupon) {
+      setAppliedCoupon(null);
+      return;
+    }
+
+    if (subtotal === 0) {
+      setAppliedCoupon(null);
+      return;
+    }
+
+    const applyClaimedCoupon = async () => {
+      try {
+        const res = await couponService.apply(claimedCoupon, subtotal);
+        if (res.success) {
+          setAppliedCoupon(res.data);
+        } else {
+          setAppliedCoupon(null);
+        }
+      } catch (err) {
+        logger.error('[CartProvider] Failed to auto-apply claimed coupon:', err);
+        setAppliedCoupon(null);
+      }
+    };
+
+    applyClaimedCoupon();
+  }, [claimedCoupon, subtotal]);
 
   return (
     <CartStateContext.Provider value={stateValue}>

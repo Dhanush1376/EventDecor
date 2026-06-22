@@ -79,7 +79,7 @@ describe('Admin Access Invitation & Approval System', () => {
       { expiresIn: '15m' },
     );
 
-    moderatorToken = jwt.sign(
+    _moderatorToken = jwt.sign(
       { id: 'moderator_id', role: 'moderator', email: 'mod@siriartsandcrafts.com' },
       process.env.JWT_SECRET!,
       { expiresIn: '15m' },

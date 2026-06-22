@@ -1119,9 +1119,9 @@ export function AdminAddProduct({ editId }) {
             )}
           </div>
         </div>
-      </div>
 
-      <LivePreviewCard formData={formData} mobileTab={mobileTab} />
+        <LivePreviewCard formData={formData} mobileTab={mobileTab} />
+      </div>
 
       <AiCurationOverlay
         showAIHUD={showAIHUD}

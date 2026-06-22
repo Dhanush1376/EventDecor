@@ -1,7 +1,17 @@
 import { CookieOptions } from 'express';
+import logger from './logger';
 
 const isProd = process.env.NODE_ENV === 'production';
 const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+
+if (isProd && cookieDomain) {
+  logger.info(`[COOKIE CONFIG] Using explicit cookie domain: ${cookieDomain}`);
+  logger.warn(
+    '[COOKIE CONFIG] Cross-origin cookies with SameSite=None are used. Be aware that Safari ITP may block these cookies if the user has not interacted with the backend domain as a first-party.',
+  );
+} else if (isProd) {
+  logger.info('[COOKIE CONFIG] COOKIE_DOMAIN not set; cookies will default to the request host.');
+}
 
 /**
  * Generate a production-safe cookie name with __Secure- prefix.

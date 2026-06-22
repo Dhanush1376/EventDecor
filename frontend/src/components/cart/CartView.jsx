@@ -31,8 +31,10 @@ export function CartView({ isEmbedded = false }) {
     summary,
     totalMRP,
     loading,
-    _claimedCoupon,
+    claimedCoupon,
     setClaimedCoupon,
+    appliedCoupon,
+    setAppliedCoupon,
     activeCartMode,
     setActiveCartMode,
     purchaseCartCount,
@@ -79,7 +81,6 @@ export function CartView({ isEmbedded = false }) {
 
   // Standard eCommerce features: Coupon input
   const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discountPercent, calculatedDiscount }
   const [couponError, setCouponError] = useState('');
   const [notification, setNotification] = useState('');
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
@@ -998,7 +999,7 @@ export function CartView({ isEmbedded = false }) {
             <motion.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
-              className="fixed bottom-[72px] left-2 right-2 bg-surface-bright border border-outline-variant/40 pt-3 pb-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-[90] lg:hidden rounded-2xl"
+              className="fixed bottom-2 left-2 right-2 bg-surface-bright border border-outline-variant/40 py-3.5 px-5 shadow-[0_-10px_40px_rgba(0,0,0,0.12)] z-[100] lg:hidden rounded-2xl"
             >
               <div className="max-w-[1240px] mx-auto flex items-center justify-between sm:px-6">
                 <div className="flex flex-col justify-center">
@@ -1025,7 +1026,7 @@ export function CartView({ isEmbedded = false }) {
                       });
                     })
                   }
-                  className="bg-black text-white hover:bg-[#8c7335] hover:text-white px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-md transition-all text-center block cursor-pointer active:scale-[0.98]"
+                  className="bg-black text-white hover:bg-[#8c7335] hover:text-white px-10 py-3.5 rounded-full text-[11px] font-extrabold uppercase tracking-widest shadow-lg transition-all text-center block cursor-pointer active:scale-[0.96]"
                 >
                   {activeCartMode === 'rental' ? 'Rent Now' : 'Checkout'}
                 </button>

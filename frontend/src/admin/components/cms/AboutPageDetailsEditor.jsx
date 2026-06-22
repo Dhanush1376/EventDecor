@@ -1,3 +1,4 @@
+const DEFAULT_FEATURES = [];
 import React, { useState, useEffect } from 'react';
 import { SectionHeader, AdminField, AdminInput, AdminTextarea } from '../AdminUIKit';
 import { ImageUpload } from '../ImageUpload';

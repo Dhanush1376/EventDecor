@@ -11,6 +11,7 @@ import FailedLoginAttempt from '../models/FailedLoginAttempt';
 import { cacheOtpSession, getCachedOtpSession } from '../utils/otpVerifyCache';
 import { recordOtpVerifyFailure } from '../utils/otpRateLimit';
 import SessionAuthService from './SessionAuthService';
+import { getFrontendUrl } from '../utils/getFrontendUrl';
 
 class OtpAuthService {
   static normalizeOtpInput(otp: string): string {
@@ -395,7 +396,7 @@ class OtpAuthService {
 
       try {
         const { sendDirectEmail } = require('./notificationService');
-        const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:3000';
+        const frontendUrl = getFrontendUrl();
         sendDirectEmail({
           email: user.email,
           subject: `Welcome to Siri Arts & Crafts, ${user.name} ✦ Discover Timeless Decor`,

@@ -170,12 +170,15 @@ export function RecommendationSystem({
 
         {!hideHeader && (
           <div className={`${compact ? 'mb-3' : 'mb-6'} w-full text-left`}>
-            <div
-              className={`${compact ? 'text-[11px] uppercase tracking-widest font-bold text-on-surface/80' : 'text-[18px] md:text-[22px] font-bold text-on-surface'} font-label leading-tight`}
-              style={{ fontFamily: 'var(--font-label)' }}
+            <h2
+              className={`${
+                compact
+                  ? 'text-[11px] uppercase tracking-widest font-bold text-on-surface/80 font-label'
+                  : 'text-xl md:text-2xl font-light tracking-tight text-on-surface font-display'
+              } leading-tight`}
             >
               {rentalOnly ? 'Rental Masterpieces' : 'You May Also Like'}
-            </div>
+            </h2>
           </div>
         )}
 

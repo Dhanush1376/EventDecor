@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SkeletonForm } from '../components/AdminUIKit';
+import { ProductCard } from '../../components/ui/ProductCard';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
@@ -1232,81 +1233,26 @@ export function AdminAddShowcase() {
             </p>
           </div>
 
-          {/* Luxury Card Rendering */}
-          <div className="bg-[var(--admin-surface)] rounded-3xl overflow-hidden border border-[var(--admin-border)]/60 shadow-[var(--admin-shadow-sm)] group relative">
-            {/* Badges Overlay */}
-            <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] font-bold uppercase tracking-widest bg-[var(--admin-accent)] text-white shadow-sm flex items-center gap-0.5">
-                <span className="material-symbols-outlined text-[11px] fill-current">star</span>
-                Showcase
-              </span>
-            </div>
-
-            {/* Card Thumbnail */}
-            <div className="aspect-[4/3] bg-[var(--admin-bg-subtle)] relative overflow-hidden">
-              {formData.image ? (
-                <img
-                  src={formData.image}
-                  alt={formData.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--admin-text-secondary)]/40">
-                  <span className="material-symbols-outlined text-[36px] mb-2">add_a_photo</span>
-                  <span className="text-[11px] sm:text-[11px] font-bold uppercase tracking-widest">
-                    Image Preview Canvas
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Product Body */}
-            <div className="p-4 space-y-2">
-              <span className="text-[11px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--admin-accent)]">
-                {formData.category?.replace('_', ' ') || 'Category Unassigned'}
-              </span>
-
-              <div>
-                <h3 className="text-[14.5px] font-bold text-[var(--admin-text-primary)] truncate">
-                  {formData.title || 'Traditional Sanskriti Masterpiece'}
-                </h3>
-                {formData.subtitle && (
-                  <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]/90 italic mt-0.5 truncate">
-                    {formData.subtitle}
-                  </p>
-                )}
-              </div>
-
-              {colors.length > 0 && (
-                <div className="flex items-center gap-1 mt-2">
-                  {colors.slice(0, 4).map((c, idx) => (
-                    <span
-                      key={idx}
-                      className="w-4 h-4 rounded-full border border-[var(--admin-border)] shadow-sm shrink-0"
-                      style={{ backgroundColor: c }}
-                      title={c}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Price Tag Row */}
-              <div className="flex items-center justify-between pt-2 border-t border-[var(--admin-border)]/40 mt-3">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-[16px] font-extrabold text-[var(--admin-text-primary)]">
-                    ₹{Number(formData.rentalPrice || 0).toLocaleString()}
-                  </span>
-                  <span className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]/80">
-                    / event
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-0.5 text-[var(--admin-text-secondary)] text-[11px] font-medium">
-                  <span className="material-symbols-outlined text-[13px]">schedule</span>
-                  {formData.setupTimeHours}h Setup
-                </div>
-              </div>
-            </div>
+          {/* Luxury Card Rendering using real ProductCard */}
+          <div className="w-full max-w-[340px] mx-auto bg-white rounded-2xl shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border)]/60 p-2">
+            <ProductCard
+              title={formData.title || 'Traditional Sanskriti Masterpiece'}
+              rentalPrice={Number(formData.rentalPrice || 0)}
+              imageSrc={formData.image}
+              category={formData.category?.replace('_', ' ') || 'Category Unassigned'}
+              setupTimeHours={Number(formData.setupTimeHours || 2)}
+              inclusions={
+                formData.inclusionsText
+                  ? formData.inclusionsText
+                      .split(',')
+                      .map((i) => i.trim())
+                      .filter(Boolean)
+                  : []
+              }
+              itemType="event"
+              rating={4.9}
+              onQuickView={(e) => e.preventDefault()}
+            />
           </div>
         </div>
       </div>

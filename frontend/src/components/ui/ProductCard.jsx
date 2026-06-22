@@ -200,7 +200,7 @@ export const ProductCard = React.memo(function ProductCard({
         <div className="absolute top-2 right-3 md:top-3 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className={`relative overflow-hidden ${compact ? 'w-10 h-10 md:w-8 md:h-8' : 'w-10 h-10 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]`}
+            className={`relative overflow-hidden ${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]`}
             aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <AnimatePresence>
@@ -221,7 +221,7 @@ export const ProductCard = React.memo(function ProductCard({
               }}
               whileTap={{ scale: 0.8 }}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className={`material-symbols-outlined z-10 relative ${compact ? 'text-[12px]' : 'text-[14px]'}`}
+              className={`material-symbols-outlined z-10 relative ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
             >
               favorite
             </motion.span>
@@ -438,11 +438,11 @@ export const ProductCard = React.memo(function ProductCard({
                 e.stopPropagation();
                 navigate(`/events/${productId}`);
               }}
-              className={`${compact ? 'w-10 h-10 md:w-8 md:h-8' : 'w-10 h-10 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
+              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
               aria-label="Book setup"
             >
               <span
-                className={`material-symbols-outlined ${compact ? 'text-[14px]' : 'text-[16px]'}`}
+                className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
               >
                 event
               </span>
@@ -451,7 +451,7 @@ export const ProductCard = React.memo(function ProductCard({
             <button
               onClick={stock <= 0 && resolvedCartType !== 'rental' ? undefined : handleAddToCart}
               disabled={stock <= 0 && resolvedCartType !== 'rental'}
-              className={`${compact ? 'w-10 h-10 md:w-8 md:h-8' : 'w-10 h-10 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
+              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
                 stock <= 0 && resolvedCartType !== 'rental'
                   ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
                   : added
@@ -468,7 +468,7 @@ export const ProductCard = React.memo(function ProductCard({
                     animate={{ opacity: 1, scale: 1, rotate: 0 }}
                     exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                    className={`material-symbols-outlined ${compact ? 'text-[14px]' : 'text-[16px]'}`}
+                    className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
                   >
                     check
                   </motion.span>
@@ -479,7 +479,7 @@ export const ProductCard = React.memo(function ProductCard({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.5 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                    className={`material-symbols-outlined ${compact ? 'text-[14px]' : 'text-[16px]'}`}
+                    className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
                   >
                     {stock <= 0 && resolvedCartType !== 'rental'
                       ? 'remove_shopping_cart'

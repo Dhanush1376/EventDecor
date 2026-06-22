@@ -6,14 +6,16 @@ import {
   updateCoupon,
   deleteCoupon,
   applyCoupon,
+  getProductCoupons,
 } from '../controllers/couponController';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
+import { requireAuth, requireAdmin, optionalAuth } from '../middleware/authMiddleware';
 
 const router = Router();
 
 // Public/Auth Routes
 router.get('/validate/:code', getCouponByCode);
 router.post('/apply', requireAuth, applyCoupon);
+router.get('/product/:productId', optionalAuth, getProductCoupons);
 
 // Admin & Authenticated Routes
 router.get('/', requireAuth, getCoupons);

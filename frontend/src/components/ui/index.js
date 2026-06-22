@@ -2,6 +2,7 @@ export * from './Button';
 export * from './ProductCard';
 export * from './ProductGallery';
 export * from './ProductInfo';
+export * from './ProductCoupons';
 export * from './StickyMobileATC';
 export * from './Skeleton';
 export * from './FeedbackStates';

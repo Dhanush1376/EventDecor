@@ -1,6 +1,6 @@
+const setWizardDraft = () => {};
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { SEO } from '../components/seo/SEO';
-import { DynamicCustomOrderWizard } from '../components/ui/DynamicCustomOrderWizard';
 
 import { CustomOrderWizard } from '../components/customOrders/CustomOrderWizard';
 import { CustomOrderTracker } from '../components/customOrders/CustomOrderTracker';
@@ -12,9 +12,6 @@ import { useProduct } from '../hooks/useProductQueries';
 
 import { useAuth } from '../context/AuthContext';
 import { useUserSocket } from '../context/UserSocketProvider';
-import toast from 'react-hot-toast';
-
-import logger from '../utils/logger';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 
 // Framer motion presets

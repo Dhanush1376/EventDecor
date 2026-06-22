@@ -1,12 +1,6 @@
 import { CorsOptions } from 'cors';
 import logger from './logger';
 
-const ALLOWED_VERCEL_PREVIEWS = new Set([
-  'https://siriarts-n-crafts.vercel.app',
-  'https://siri-artsandcrafts.vercel.app',
-  'https://siri-arts-n-crafts.vercel.app',
-]);
-
 const getDynamicOrigins = (): Set<string> => {
   const origins = new Set<string>();
 
@@ -35,6 +29,7 @@ const getDynamicOrigins = (): Set<string> => {
   // Explicit hardcoded production domains as backup
   origins.add('https://siriartsandcrafts.com');
   origins.add('https://www.siriartsandcrafts.com');
+  origins.add('https://eventdecor-production-1647.up.railway.app');
 
   return origins;
 };
@@ -55,21 +50,6 @@ export const isOriginAllowed = (origin: string): boolean => {
     }
 
     if (allowedOrigins.has(parsedOrigin)) {
-      return true;
-    }
-
-    // Support explicitly-listed Vercel preview deployments (no wildcard)
-    if (ALLOWED_VERCEL_PREVIEWS.has(parsedOrigin)) {
-      return true;
-    }
-
-    // Dynamically support Vercel preview deployments for our projects while preventing phishing
-    if (
-      parsedUrl.hostname.endsWith('.vercel.app') &&
-      (parsedUrl.hostname.startsWith('siriarts-n-crafts-') ||
-        parsedUrl.hostname.startsWith('siri-artsandcrafts-') ||
-        parsedUrl.hostname.startsWith('siri-arts-n-crafts-'))
-    ) {
       return true;
     }
 

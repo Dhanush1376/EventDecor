@@ -10,6 +10,7 @@ import logger from '../config/logger';
 import { sendEmail as smartSendEmail } from './emailProvider';
 import AdminNotification from '../models/AdminNotification';
 import { emitAdminNotification } from '../socket';
+import { getBackendUrl } from '../utils/getBackendUrl';
 
 // Initialize handlebars helpers
 handlebars.registerHelper('formatCurrency', function (value) {
@@ -26,7 +27,7 @@ handlebars.registerHelper('formatDate', function (dateString) {
 
 // Rewrite links in HTML to include click tracking
 const rewriteLinks = (html: string, token: string): string => {
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+  const backendUrl = getBackendUrl();
   // Match href="url", ensuring we do not rewrite mailto:, anchors, unsubscribe, or tracking URLs
   return html.replace(/href="([^"]+)"/gi, (match, url) => {
     if (
@@ -43,7 +44,7 @@ const rewriteLinks = (html: string, token: string): string => {
 
 // Append 1x1 tracking pixel to HTML body
 const appendTrackingPixel = (html: string, token: string): string => {
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+  const backendUrl = getBackendUrl();
   const pixelUrl = `${backendUrl}/api/notifications/track/open/${token}`;
   const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none !important; visibility:hidden; width:1px; height:1px;" alt="" />`;
 
@@ -215,7 +216,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     bodyHtml = replacePlaceholders(bodyHtml, templateDataVal);
 
     // Add Unsubscribe link to marketing emails
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+    const backendUrl = getBackendUrl();
     const unsubscribeLink = `${backendUrl}/api/notifications/unsubscribe?email=${encodeURIComponent(emailVal)}`;
     bodyHtml = replacePlaceholders(bodyHtml, { unsubscribe_link: unsubscribeLink });
 

@@ -43,7 +43,7 @@ app.disable('x-powered-by');
 
 // Trust proxy hops — enforced to 1 for Railway/Render.
 // If moving to Cloudflare + Railway, this should be updated to 2.
-const trustProxy = process.env.TRUST_PROXY ? parseInt(process.env.TRUST_PROXY, 10) : 1;
+const trustProxy = process.env.TRUST_PROXY_HOPS ? parseInt(process.env.TRUST_PROXY_HOPS, 10) : 1;
 app.set('trust proxy', trustProxy);
 logger.info(`[STARTUP] Express trust proxy hops: ${trustProxy}`);
 

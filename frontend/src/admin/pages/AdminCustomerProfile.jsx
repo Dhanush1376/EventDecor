@@ -1,3 +1,6 @@
+const SkeletonProfile = () => (
+  <div className="animate-pulse bg-gray-200 h-24 w-24 rounded-full"></div>
+);
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';

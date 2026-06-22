@@ -1,3 +1,4 @@
+const currentStep = 1;
 import React from 'react';
 import { uploadService } from '../../../services/domainServices';
 import { compressImage, formatBytes } from '../../../utils/imageCompressor';

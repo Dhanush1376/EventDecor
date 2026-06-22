@@ -1,5 +1,6 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import Coupon from '../models/Coupon';
+import Product from '../models/Product';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
@@ -133,6 +134,120 @@ export const applyCoupon = asyncHandler(async (req: Request, res: Response) => {
       discountValue: coupon.discountValue,
       calculatedDiscount: Math.round(discount),
       finalAmount: Math.round(orderAmount - discount),
+    }),
+  );
+});
+
+export const getProductCoupons = asyncHandler(async (req: Request, res: Response) => {
+  const { productId } = req.params;
+  const user = (req as any).user;
+
+  const product = await Product.findById(productId).lean();
+  if (!product) {
+    throw new ApiError(404, 'Product not found');
+  }
+
+  const now = new Date();
+  const query: any = {
+    isActive: true,
+    expiryDate: { $gt: now },
+    startDate: { $lte: now },
+  };
+
+  const allCoupons = await Coupon.find(query).lean();
+
+  const activeCoupons = allCoupons.filter((coupon) => {
+    if (coupon.usageLimit !== undefined && coupon.usageLimit !== null) {
+      if (coupon.usedCount >= coupon.usageLimit) {
+        return false;
+      }
+    }
+    if (user && coupon.usedBy) {
+      const alreadyUsed = coupon.usedBy.some((u) => String(u.userId) === String(user.id));
+      if (alreadyUsed) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  const tier1: any[] = [];
+  const tier2: any[] = [];
+  const tier3: any[] = [];
+
+  for (const coupon of activeCoupons) {
+    if (coupon.targetType === 'products') {
+      const isTargetProduct = coupon.targetProductIds?.some(
+        (id) => String(id) === String(product._id),
+      );
+      if (isTargetProduct) {
+        tier1.push(coupon);
+      }
+    } else if (coupon.targetType === 'categories') {
+      const isTargetCategory = coupon.targetCategories?.some(
+        (cat) => cat.toLowerCase() === product.category.toLowerCase(),
+      );
+      if (isTargetCategory) {
+        tier1.push(coupon);
+      }
+    } else if (coupon.targetType === 'tiers') {
+      if (user && user.loyaltyTier) {
+        const isTargetTier = coupon.targetUserTiers?.some(
+          (tier) => tier.toLowerCase() === user.loyaltyTier.toLowerCase(),
+        );
+        if (isTargetTier) {
+          tier1.push(coupon);
+        }
+      }
+    } else if (coupon.targetType === 'all') {
+      if (coupon.minOrderAmount > 0) {
+        tier2.push(coupon);
+      } else {
+        tier3.push(coupon);
+      }
+    }
+  }
+
+  // Sort Tier 1:
+  // 1. Highest discount value (discountValue descending)
+  // 2. Percentage over fixed (percentage first)
+  // 3. Coupon Priority (priority descending)
+  tier1.sort((a, b) => {
+    if (b.discountValue !== a.discountValue) {
+      return b.discountValue - a.discountValue;
+    }
+    if (a.discountType !== b.discountType) {
+      return a.discountType === 'percentage' ? -1 : 1;
+    }
+    return (b.priority || 0) - (a.priority || 0);
+  });
+
+  // Sort Tier 2:
+  // 1. Lower minimum purchase requirement first (minOrderAmount ascending)
+  // 2. If equal, highest discount value (discountValue descending)
+  tier2.sort((a, b) => {
+    if (a.minOrderAmount !== b.minOrderAmount) {
+      return a.minOrderAmount - b.minOrderAmount;
+    }
+    return b.discountValue - a.discountValue;
+  });
+
+  // Sort Tier 3:
+  // 1. Highest discount value (discountValue descending)
+  // 2. Coupon Priority (priority descending)
+  tier3.sort((a, b) => {
+    if (b.discountValue !== a.discountValue) {
+      return b.discountValue - a.discountValue;
+    }
+    return (b.priority || 0) - (a.priority || 0);
+  });
+
+  res.status(200).json(
+    new ApiResponse(true, 'Product coupons fetched and prioritized successfully', {
+      tier1,
+      tier2,
+      tier3,
+      all: [...tier1, ...tier2, ...tier3],
     }),
   );
 });

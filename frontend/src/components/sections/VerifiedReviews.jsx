@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { m as motion } from 'framer-motion';
 import { ReviewsSkeleton } from '../ui/Skeleton';
 import { OptimizedImage } from '../ui/OptimizedImage';

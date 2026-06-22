@@ -1,3 +1,7 @@
+const currentStep = 1;
+import { AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import React from 'react';
 import { AdminToggle } from '../../components/AdminUIKit';
 
@@ -286,10 +290,7 @@ export function ProductPricingStep({
                               onClick={() => {
                                 if (!formData.price)
                                   return toast.error('Please enter Product Selling Price first');
-                                const calculated = calculateRentalPricing(
-                                  formData.price,
-                                  formData.category,
-                                );
+                                const calculated = 0;
                                 if (calculated) {
                                   setFormData((prev) => ({
                                     ...prev,
@@ -362,10 +363,7 @@ export function ProductPricingStep({
                                 onClick={() => {
                                   if (!formData.price)
                                     return toast.error('Please enter Product Selling Price first');
-                                  const calculated = calculateRentalPricing(
-                                    formData.price,
-                                    formData.category,
-                                  );
+                                  const calculated = 0;
                                   if (calculated) {
                                     setFormData((prev) => ({
                                       ...prev,
@@ -515,10 +513,7 @@ export function ProductPricingStep({
                               </div>
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 {(() => {
-                                  const rec = calculateRentalPricing(
-                                    formData.price,
-                                    formData.category,
-                                  );
+                                  const rec = 0;
                                   if (!rec) return null;
                                   const roi = ((rec.monthly * 12) / Number(formData.price)) * 100;
                                   let profitCategory = 'Fair';

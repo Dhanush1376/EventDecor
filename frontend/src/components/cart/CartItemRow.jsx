@@ -92,7 +92,7 @@ export const CartItemRow = React.memo(function CartItemRow({
               >
                 <span className="material-symbols-outlined text-[16px]">remove</span>
               </button>
-              <div className="w-8 h-full flex items-center justify-center text-[12px] font-bold text-on-surface border-x border-outline-variant/30 bg-surface-bright">
+              <div className="w-8 h-full flex items-center justify-center font-display text-[13px] font-bold text-on-surface border-x border-outline-variant/30 bg-surface-bright">
                 {item.quantity}
               </div>
               <button
@@ -120,11 +120,11 @@ export const CartItemRow = React.memo(function CartItemRow({
             <div className="mt-3 flex flex-col gap-2 w-full">
               {/* Pricing Row */}
               <div className="flex items-baseline gap-1.5 flex-wrap">
-                <span className="text-[13px] font-extrabold text-on-surface">
+                <span className="font-display text-[15px] font-semibold text-on-surface">
                   ₹{item.price.toLocaleString()}
                 </span>
                 {itemOldPrice > item.price && (
-                  <span className="text-[10px] text-secondary line-through">
+                  <span className="font-display text-[12px] text-secondary/50 line-through font-light">
                     ₹{itemOldPrice.toLocaleString()}
                   </span>
                 )}
@@ -145,7 +145,7 @@ export const CartItemRow = React.memo(function CartItemRow({
                     <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px]">
                       <span className="material-symbols-outlined text-[13px]">keyboard_return</span>
                       <span>
-                        <span className="font-bold text-on-surface">
+                        <span className="font-display font-semibold text-on-surface text-[12px]">
                           {settings.returnPolicyDays || 14} days
                         </span>{' '}
                         return available
@@ -156,7 +156,9 @@ export const CartItemRow = React.memo(function CartItemRow({
                     <span className="material-symbols-outlined text-[13px]">local_shipping</span>
                     <span>
                       Delivery by{' '}
-                      <span className="text-on-surface font-bold">{deliveryDateStr}</span>
+                      <span className="text-on-surface font-display font-semibold text-[12px]">
+                        {deliveryDateStr}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -171,17 +173,22 @@ export const CartItemRow = React.memo(function CartItemRow({
         <div className="mt-3 pt-3 border-t border-outline-variant/10 flex flex-col gap-2.5 w-full text-[11px] text-secondary">
           {/* Total Due Row */}
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-[14px] font-black text-on-surface">
+            <span className="font-display text-[16px] font-semibold text-on-surface">
               ₹{((item.price + (item.deposit || 0)) * item.quantity).toLocaleString()}
             </span>
             <span className="text-[9px] font-bold text-secondary uppercase tracking-widest">
               Total Due
             </span>
             <span className="text-secondary/25 mx-1 font-light">|</span>
-            <span className="text-[10px]">Fee: ₹{item.price.toLocaleString()}</span>
+            <span className="text-[11px] text-secondary">
+              Fee: <span className="font-display font-medium">₹{item.price.toLocaleString()}</span>
+            </span>
             <span className="text-secondary/25 font-light">•</span>
-            <span className="text-[10px] text-primary font-bold">
-              Deposit: ₹{item.deposit?.toLocaleString() || 0}
+            <span className="text-[11px] text-primary font-bold">
+              Deposit:{' '}
+              <span className="font-display font-medium">
+                ₹{item.deposit?.toLocaleString() || 0}
+              </span>
             </span>
           </div>
 
@@ -204,7 +211,7 @@ export const CartItemRow = React.memo(function CartItemRow({
               </span>
               <span>
                 Refundable Deposit:{' '}
-                <span className="font-extrabold text-on-surface text-[9.5px] ml-1">
+                <span className="font-display font-semibold text-on-surface text-[12px] ml-1">
                   ₹{item.deposit?.toLocaleString() || 0}
                 </span>
               </span>

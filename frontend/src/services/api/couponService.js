@@ -9,6 +9,10 @@ export const couponService = {
     const response = await api.get('/coupons');
     return response.data;
   },
+  getProductCoupons: async (productId) => {
+    const response = await api.get(`/coupons/product/${productId}`);
+    return response.data;
+  },
   validate: async (code) => {
     const response = await api.get(`/coupons/validate/${code}`);
     return response.data;

@@ -1,19 +1,20 @@
 const globals = require('globals');
 const pluginReact = require('eslint-plugin-react');
 const pluginReactHooks = require('eslint-plugin-react-hooks');
-const babelParser = require('@babel/eslint-parser');
+const pluginUnusedImports = require('eslint-plugin-unused-imports');
 
 module.exports = [
   {
+    ignores: ['dist/**', 'node_modules/**']
+  },
+  {
     files: ['**/*.jsx', '**/*.js'],
     languageOptions: {
-      parser: babelParser,
       parserOptions: {
-        requireConfigFile: false,
-        babelOptions: {
-          babelrc: false,
-          configFile: false,
-          presets: ['@babel/preset-react']
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true
         }
       },
       globals: {
@@ -23,7 +24,8 @@ module.exports = [
     },
     plugins: {
       react: pluginReact,
-      'react-hooks': pluginReactHooks
+      'react-hooks': pluginReactHooks,
+      'unused-imports': pluginUnusedImports
     },
     rules: {
       'no-undef': 'error',
@@ -31,7 +33,8 @@ module.exports = [
       'react/jsx-uses-react': 'error',
       'react/jsx-uses-vars': 'error',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn'
+      'react-hooks/exhaustive-deps': 'warn',
+      'unused-imports/no-unused-imports': 'warn'
     }
   }
 ];

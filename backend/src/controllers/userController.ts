@@ -20,6 +20,7 @@ import {
   invalidateUserSessionCaches,
   sessionKeys,
 } from '../utils/userSessionCache';
+import { getFrontendUrl } from '../utils/getFrontendUrl';
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
@@ -693,11 +694,7 @@ export const inviteTeamMember = asyncHandler(async (req: any, res: Response) => 
   });
 
   // Dynamic notification to member email!
-  const frontendUrl = (
-    process.env.FRONTEND_URLS?.split(',')[0] ||
-    process.env.FRONTEND_URL ||
-    'http://localhost:5173'
-  ).trim();
+  const frontendUrl = getFrontendUrl();
   const acceptUrl = `${frontendUrl}/accept-invite?token=${token}`;
 
   const { getTeamInviteEmailTemplate } = require('../utils/emailTemplates');

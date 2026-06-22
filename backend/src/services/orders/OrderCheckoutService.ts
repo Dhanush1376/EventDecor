@@ -10,11 +10,12 @@ import logger from '../../config/logger';
 import { cmsCache } from '../../utils/MemoryCache';
 import ContentSection from '../../models/ContentSection';
 import WalletTransaction from '../../models/WalletTransaction';
-import { debitWalletBalance } from '../../utils/walletMutations';
+import { debitWalletBalance, creditWalletBalance } from '../../utils/walletMutations';
 import { LogisticsService } from '../../services/logisticsService';
 import { OrderIdempotencyManager } from './OrderIdempotencyManager';
 import OutboxEvent from '../../models/OutboxEvent';
 import { InventoryService } from '../InventoryService';
+import { getFrontendUrl } from '../../utils/getFrontendUrl';
 
 export class OrderCheckoutService {
   static async createOrder(userId: string, orderData: any) {
@@ -236,8 +237,7 @@ export class OrderCheckoutService {
       const trackingNumber = `TRK${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
       const courierPartner = 'Delhivery';
       const barcodeData = invoiceNumber;
-      const frontendUrl =
-        process.env.FRONTEND_URLS?.split(',')[0]?.trim() || 'http://localhost:5173';
+      const frontendUrl = getFrontendUrl();
       const publicTrackingToken = LogisticsService.generateTrackingToken(pendingOrderId.toString());
       const qrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
 
@@ -428,8 +428,7 @@ export class OrderCheckoutService {
 
             // 2. Refund wallet if used
             if (walletDeducted && walletDeduction > 0 && user) {
-              const { creditWalletBalance } = require('../../utils/walletMutations');
-              await creditWalletBalance(userId, walletDeduction, null);
+              await creditWalletBalance(userId, walletDeduction);
               await WalletTransaction.create({
                 userId: user._id,
                 type: 'credit',
