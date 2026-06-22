@@ -59,7 +59,7 @@ jobs:
             frontend/package-lock.json
 
       - name: Start MongoDB Replica Set (Required for Transactions)
-        uses: supercharge/mongodb-github-action@1.11.0
+        uses: supercharge/mongodb-github-action@1.12.1
         with:
           mongodb-version: '7.0'
           mongodb-replica-set: rs0
