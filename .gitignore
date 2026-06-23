@@ -93,7 +93,7 @@ explain_output.json
 
 # Hardened Generated Artifacts Phase
 coverage/
-cache/
+/cache/
 logs/
 *.log
 stats.html

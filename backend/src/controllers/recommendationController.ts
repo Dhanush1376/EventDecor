@@ -472,17 +472,21 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
         isDepositRefundable: p.isDepositRefundable,
       }));
     } else {
-      let event = await Event.findById(targetId).select('category').lean();
-      if (!event) {
-        event = await ShowcaseCollection.findById(targetId).select('category').lean();
+      let eventCategory: string | undefined;
+      const event = await Event.findById(targetId).select('category').lean();
+      if (event) {
+        eventCategory = event.category;
+      } else {
+        const showcase = await ShowcaseCollection.findById(targetId).select('category').lean();
+        if (showcase) eventCategory = showcase.category;
       }
 
-      if (!event) {
+      if (!eventCategory) {
         return res.status(404).json({ success: false, message: 'Event or Showcase not found' });
       }
 
       const fallbackEvents = await Event.find({
-        category: event.category,
+        category: eventCategory,
         _id: { $ne: targetId },
         isActive: true,
       })
@@ -574,14 +578,18 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
         }));
       }
     } else {
-      let event = await Event.findById(targetId).select('category').lean();
-      if (!event) {
-        event = await ShowcaseCollection.findById(targetId).select('category').lean();
+      let eventCategory: string | undefined;
+      const event = await Event.findById(targetId).select('category').lean();
+      if (event) {
+        eventCategory = event.category;
+      } else {
+        const showcase = await ShowcaseCollection.findById(targetId).select('category').lean();
+        if (showcase) eventCategory = showcase.category;
       }
 
-      if (event) {
+      if (eventCategory) {
         const events = await Event.find({
-          category: event.category,
+          category: eventCategory,
           _id: { $ne: targetId },
           isActive: true,
         })
